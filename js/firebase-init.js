@@ -5,33 +5,35 @@
 console.log("🔥 Initializing Firebase...");
 
 // Initialize Firebase
+let db, auth;
+
 if (typeof window.FIREBASE_CONFIG === 'undefined') {
     console.error("❌ Firebase config not found! Please create firebase-config.js from the template.");
-    alert("Error: Firebase no está configurado. Por favor, sigue las instrucciones en firebase-config.template.js");
+    // Do not alert immediately to avoid blocking UI on load, just log
 } else {
     try {
-        firebase.initializeApp(window.FIREBASE_CONFIG);
-        console.log("✅ Firebase initialized successfully");
+        if (!firebase.apps.length) {
+            firebase.initializeApp(window.FIREBASE_CONFIG);
+            console.log("✅ Firebase initialized successfully");
+        }
+        db = firebase.firestore();
+        auth = firebase.auth();
+
+        // Enable offline persistence
+        db.enablePersistence()
+            .catch((err) => {
+                if (err.code == 'failed-precondition') {
+                    console.warn("⚠️ Multiple tabs open, persistence can only be enabled in one tab at a time.");
+                } else if (err.code == 'unimplemented') {
+                    console.warn("⚠️ The current browser doesn't support persistence.");
+                }
+            });
+
+        console.log("📦 Firestore persistence enabled");
     } catch (error) {
         console.error("❌ Firebase initialization error:", error);
     }
 }
-
-// Firebase Services
-const db = firebase.firestore();
-const auth = firebase.auth();
-
-// Enable offline persistence
-db.enablePersistence()
-    .catch((err) => {
-        if (err.code == 'failed-precondition') {
-            console.warn("⚠️ Multiple tabs open, persistence can only be enabled in one tab at a time.");
-        } else if (err.code == 'unimplemented') {
-            console.warn("⚠️ The current browser doesn't support persistence.");
-        }
-    });
-
-console.log("📦 Firestore persistence enabled");
 
 // ============================================
 // FIRESTORE HELPERS
@@ -147,6 +149,9 @@ const FirebaseDB = {
         }
     }
 };
+
+// Make accessible globally
+window.FirebaseDB = FirebaseDB;
 
 // ============================================
 // SEED ADMIN USER (Run once on first load)
