@@ -1,5 +1,5 @@
 # Firebase Config (contains sensitive API keys)
-public/js/firebase-config.js
+js/firebase-config.js
 
 
 # Python
