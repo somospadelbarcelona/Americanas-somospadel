@@ -3,227 +3,71 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Americanas Padel PRO</title>
-    <!-- Relative for local file access -->
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/playtomic.css">
+    <!-- PLAYTOMIC THEME -->
+    <link rel="stylesheet" href="css/theme-playtomic.css">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <script>
-        function emergencyBypass() {
-            try {
-                const noa = {
-                    id: "admin-noa",
-                    name: "NOA (BYPASS)",
-                    phone: "NOA",
-                    role: "admin",
-                    status: "active"
-                };
-                alert("🚨 ACTIVANDO BYPASS TOTAL - NOA");
-                localStorage.setItem('currentUser', JSON.stringify(noa));
-                localStorage.setItem('adminUser', JSON.stringify(noa));
-                location.reload();
-            } catch (e) {
-                alert("❌ Error en Bypass: " + e.message);
-            }
-        }
+        console.log("🔵 Playtomic Theme Loaded");
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
-<body class="playtomic-mode">
-    <div class="app-shell">
-        <!-- Sidebar Pro -->
-        <aside class="sidebar-pro">
-            <div class="sidebar-content-inner">
-                <div class="brand-top-left">
-                    <img src="img/logo.png" class="brand-logo-main" alt="Somos Padel Logo">
-                    <div class="brand-text-main">
-                        <span class="name">SOMOSPADEL</span>
-                        <span class="location">barcelona</span>
-                    </div>
-                </div>
-                <p
-                    style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin: 1.5rem 0 1rem 0;">
-                    Enterprise Console
-                </p>
+<body>
+    <!-- App Shell Playtomic (Mobile First) -->
+    <div id="app-shell" class="flex-col">
 
-                <nav class="nav-menu">
-                    <button class="nav-item-pro active" data-view="dashboard">
-                        <span class="icon">📊</span> DASHBOARD
-                    </button>
-                    <button class="nav-item-pro" data-view="americanas">
-                        <span class="icon">📅</span> EVENTOS
-                    </button>
-                    <a href="live.html" class="nav-item-pro" style="text-decoration: none;">
-                        <span class="icon">🔴</span> LIVE HUB
-                    </a>
-                    <button class="nav-item-pro" data-view="rankings">
-                        <span class="icon">🏆</span> RANKINGS
-                    </button>
-                    <a href="admin.html" class="nav-item-pro" id="nav-admin"
-                        style="display:flex; text-decoration: none;">
-                        <span class="icon">⚙️</span> ADMIN
-                    </a>
-                </nav>
-
-                <div class="user-profile-widget">
-                    <div class="user-info">
-                        <div class="name" id="header-username">CARGANDO...</div>
-                        <div class="badge-status">
-                            <span class="dot online"></span> ACTIVE PRO
-                        </div>
-                    </div>
-                    <button class="btn-logout" onclick="Auth.logout()">🚪</button>
-                </div>
-
-                <div class="social-links-sidebar">
-                    <a href="https://instagram.com/somospadelbarcelona" target="_blank" class="social-btn instagram">
-                        <i>📸</i> INSTAGRAM
-                    </a>
-                    <a href="https://wa.me/34649219350" target="_blank" class="social-btn whatsapp">
-                        <i>💬</i> WHATSAPP
-                    </a>
-                </div>
+        <!-- Header Playtomic -->
+        <header class="playtomic-header">
+            <div class="brand-title">SOMOS PADEL</div>
+            <div class="header-actions">
+                <i class="far fa-bell"></i>
+                <i class="fas fa-bars"></i>
             </div>
-        </aside>
+        </header>
 
-        <!-- Main Workspace -->
-        <main class="main-wrapper">
-            <!-- Global Top Bar -->
-            <header class="top-bar">
-                <div class="top-bar-left">
-                    <button class="hamburger-btn" id="mobile-menu-toggle">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
-                    <div class="top-title" id="page-title">Dashboard Principal</div>
-                </div>
-
-                <div class="top-actions">
-                    <div class="notif-bell" onclick="showNotifications()">
-                        🔔<span class="bell-badge">3</span>
-                    </div>
-                    <div class="conn-status">
-                        <span class="dot online pulse"></span> CLOUD CONNECTED
-                    </div>
-                </div>
-            </header>
-
-            <!-- Dashboard Content -->
-            <div id="content-area" class="workspace-area">
-                <div class="loader"></div>
-            </div>
+        <!-- Main Content Area -->
+        <main id="content-area" style="min-height: 80vh;">
+            <div class="loader" style="margin: 50px auto;"></div>
         </main>
 
-        </aside>
-
-        <!-- Mobile Bottom Navigation (Playtomic Style) -->
-        <nav class="mobile-nav">
-            <div class="mobile-nav-item active" onclick="Router.navigate('dashboard')">
-                <i>🏠</i>
+        <!-- Bottom Navigation -->
+        <!-- Bottom Navigation -->
+        <nav class="playtomic-bottom-nav">
+            <button class="p-nav-item active" onclick="Router.navigate('dashboard')" data-view="dashboard">
+                <i class="fas fa-home"></i>
                 <span>Inicio</span>
-            </div>
-            <div class="mobile-nav-item" onclick="Router.navigate('americanas')">
-                <i>🎾</i>
-                <span>Reservar</span>
-            </div>
-            <div class="mobile-nav-item" onclick="Router.navigate('community')">
-                <i>👥</i>
-                <span>Comunidad</span>
-            </div>
-            <div class="mobile-nav-item" onclick="Router.navigate('rankings')">
-                <i>👤</i>
+            </button>
+            <button class="p-nav-item" onclick="Router.navigate('americanas')" data-view="americanas">
+                <i class="fas fa-trophy"></i>
+                <span>Americanas</span>
+            </button>
+            <button class="p-nav-item" onclick="Router.navigate('agenda')" data-view="agenda">
+                <i class="far fa-calendar-alt"></i>
+                <span>Agenda</span>
+            </button>
+            <button class="p-nav-item" onclick="Router.navigate('profile')" data-view="profile">
+                <i class="far fa-user"></i>
                 <span>Perfil</span>
-            </div>
+            </button>
         </nav>
+
     </div>
 
-    <!-- New Americana Modal -->
-    <div id="americana-modal" class="modal-overlay hidden">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2>🏆 Nueva Americana</h2>
-                <button class="close-modal-btn">&times;</button>
-            </div>
-            <form id="create-americana-form">
-                <div class="form-group">
-                    <label>Nombre del Evento</label>
-                    <input type="text" name="name" placeholder="Ej: Americana Viernes Noche" required>
-                </div>
-                <div class="form-group">
-                    <label>Fecha</label>
-                    <input type="date" name="date" required>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Categoría</label>
-                        <select name="category">
-                            <option value="open">Open</option>
-                            <option value="male">Masculino</option>
-                            <option value="female">Femenino</option>
-                            <option value="mixed">Mixto</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Max. Parejas</label>
-                        <input type="number" name="maxPairs" min="4" max="32" value="16">
-                    </div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary close-modal-btn">Cancelar</button>
-                    <button type="submit" class="btn-primary">Crear Torneo</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- New Player Modal -->
-    <div id="player-modal" class="modal-overlay hidden">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2>👥 Nuevo Jugador</h2>
-                <button class="close-modal-btn">&times;</button>
-            </div>
-            <form id="create-player-form">
-                <div class="form-group">
-                    <label>Nombre Completo</label>
-                    <input type="text" name="name" placeholder="Ej: Alejandro Galán" required>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Nivel (0-7)</label>
-                        <input type="number" step="0.1" name="level" placeholder="3.5" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Teléfono</label>
-                        <input type="tel" name="phone" placeholder="+34 600...">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" name="email" placeholder="jugador@email.com">
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary close-modal-btn">Cancelar</button>
-                    <button type="submit" class="btn-primary">Guardar Jugador</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    <!-- Login / Register Overlay -->
-    <div id="auth-modal" class="modal-overlay">
+    <!-- Modals -->
+    <div id="auth-modal" class="modal-overlay hidden">
         <div class="premium-auth-container">
             <div class="premium-auth-bg"></div>
-
             <div class="glass-login-card">
                 <div style="text-align: center;">
-                    <!-- Logo SomosPadel -->
                     <div class="auth-logo-vibe">
                         <img src="img/logo.png"
                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
@@ -231,13 +75,11 @@
                             style="width: 80px; height: 80px; border-radius: 50%; object-fit: contain;">
                         <div style="display:none; font-size: 2.5rem;">🎾</div>
                     </div>
-
                     <h1 style="color: white; font-size: 2rem; margin-bottom: 0.5rem;">SOMOS<span
                             style="color: var(--primary);">PADEL</span></h1>
                     <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 2.5rem; letter-spacing: 1px;">
                         Americanas Somospadel BCN</p>
                 </div>
-
                 <!-- Login Form -->
                 <form id="login-form">
                     <div class="auth-input-group">
@@ -249,22 +91,11 @@
                         <input type="password" name="password" placeholder="••••••" required
                             autocomplete="current-password">
                     </div>
-
                     <button type="submit" class="btn-auth-premium">Entrar</button>
-
-                    <button type="button" onclick="emergencyBypass()"
-                        style="width: 100%; padding: 0.8rem; margin-top: 1rem; background: rgba(255,0,0,0.2); border: 1px solid red; color: white; border-radius: 8px; font-weight: 800; cursor: pointer;">
-                        🆘 ACCESO DE EMERGENCIA (NOA)
-                    </button>
-
-
-                    <p class="auth-switch-text">
-                        ¿Eres nuevo?
-                        <a href="#" class="auth-switch-link" onclick="toggleAuthMode('register')">Crear cuenta pro</a>
-                    </p>
+                    <p class="auth-switch-text">¿Eres nuevo? <a href="#" class="auth-switch-link"
+                            onclick="toggleAuthMode('register')">Crear cuenta pro</a></p>
                 </form>
-
-                <!-- Register Form (Hidden by default) -->
+                <!-- Register Form -->
                 <form id="register-form" class="hidden">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="auth-input-group">
@@ -322,31 +153,83 @@
                             </select>
                         </div>
                     </div>
-
                     <button type="submit" class="btn-auth-premium">Unirme ahora</button>
-
-                    <p class="auth-switch-text">
-                        ¿Ya tienes cuenta?
-                        <a href="#" class="auth-switch-link" onclick="toggleAuthMode('login')">Iniciar sesión</a>
-                    </p>
+                    <p class="auth-switch-text">¿Ya tienes cuenta? <a href="#" class="auth-switch-link"
+                            onclick="toggleAuthMode('login')">Iniciar sesión</a></p>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Firebase SDK (v10 - Compat mode for easier migration) -->
+    <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-
-    <!-- Firebase Configuration & Initialization -->
     <script src="js/firebase-config.js"></script>
     <script src="js/firebase-init.js"></script>
 
     <!-- Core Logic -->
-    <script src="js/americana-logic.js"></script>
+    <script src="js/core/StateManager.js"></script>
+    <script src="js/core/DatabaseService.js"></script>
+    <script src="js/core/AuthService.js"></script>
+    <script src="js/modules/americanas/MatchmakingService.js"></script>
+    <script src="js/modules/americanas/AmericanaLogic.js"></script>
+    <script src="js/modules/americanas/AmericanaService.js"></script>
+    <script src="js/modules/auth/AuthController.js"></script>
+    <!-- Views -->
+    <script src="js/modules/dashboard/DashboardView.js"></script>
+    <script src="js/modules/americanas/ControlTowerView.js"></script>
 
-    <!-- Main App -->
+    <script src="js/modules/dashboard/DashboardController.js"></script>
+    <script src="js/modules/players/PlayerView.js"></script>
+    <script src="js/modules/players/PlayerController.js"></script>
+    <script src="js/modules/americanas/EventsController.js"></script>
+
+    <script>
+        window.Router = {
+            currentRoute: 'dashboard',
+            navigate: function (route) {
+                console.log("Nav ->", route);
+                this.currentRoute = route;
+
+                // Update Nav UI (Bottom Bar)
+                // Note: 'live' route isn't on bottom nav usually, so we might unselect all or keep 'home' active conceptually
+                document.querySelectorAll('.p-nav-item').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.view === route);
+                });
+
+                const content = document.getElementById('content-area');
+
+                if (route === 'dashboard') {
+                    if (window.DashboardView && window.Store) {
+                        const data = window.Store.getState('dashboardData');
+                        window.DashboardView.render(data || { activeCourts: 0 });
+                    }
+                } else if (route === 'live') {
+                    // Navigate to Control Tower
+                    if (window.ControlTowerView && window.Store) {
+                        const data = window.Store.getState('dashboardData');
+                        window.ControlTowerView.render(data);
+                    }
+                } else if (route === 'americanas' || route === 'events') {
+                    // Reuse EventsController for now
+                    if (window.EventsController) window.EventsController.init();
+                } else if (route === 'profile') {
+                    if (window.PlayerView) window.PlayerView.render();
+                } else {
+                    // Placeholders for new sections
+                    content.innerHTML = `
+                        <div style='padding:40px 20px; text-align:center;'>
+                            <i class="fas fa-tools" style="font-size:3rem; color:#ddd; margin-bottom:20px;"></i>
+                            <h2>Sección en Construcción</h2>
+                            <p>Estamos trabajando en la vista de <strong>${route.toUpperCase()}</strong>.</p>
+                            <button onclick="Router.navigate('dashboard')" style="margin-top:20px; padding:10px 20px; background:var(--playtomic-blue); color:white; border:none; border-radius:8px;">Volver</button>
+                        </div>
+                    `;
+                }
+            }
+        };
+    </script>
     <script src="js/app.js"></script>
 </body>
 

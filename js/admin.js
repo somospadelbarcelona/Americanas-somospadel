@@ -252,23 +252,25 @@ async function loadAdminView(view) {
 
             const americanas = await FirebaseDB.americanas.getAll();
             const listHtml = americanas.map(a => `
-                <div class="glass-card-enterprise" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-left: 4px solid var(--primary);">
-                    <div style="display: flex; gap: 1.5rem; align-items: center;">
-                        <div class="americana-preview-img" style="width: 80px; height: 80px; border-radius: 12px; background: url('${a.image_url || 'img/logo.png'}') center/cover; border: 1px solid rgba(255,255,255,0.1);"></div>
-                        <div class="americana-info-pro">
-                            <div style="font-weight: 800; font-size: 1.2rem; color: var(--primary); margin-bottom: 0.3rem;">${a.name.toUpperCase()}</div>
-                            <div style="display: flex; gap: 1.2rem; font-size: 0.8rem; color: var(--text-muted); flex-wrap: wrap;">
-                                <span>📅 <span style="color:var(--text)">${a.date}</span></span>
-                                <span>🕒 <span style="color:var(--text)">${a.time || '18:30'}</span></span>
-                                <span>🎾 <span style="color:var(--text)">${a.max_courts || 4} Pistas</span></span>
-                                <span>👥 <span style="color:var(--primary); font-weight: 700;">${a.players?.length || 0} Inscritos</span></span>
+                <div class="glass-card-enterprise" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-left: 4px solid var(--primary); background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%);">
+                    <div style="display: flex; gap: 1.5rem; align-items: center; flex: 1;">
+                        <div class="americana-preview-img" style="width: 90px; height: 90px; border-radius: 16px; background: url('${a.image_url || 'img/logo.png'}') center/cover; border: 2px solid rgba(204,255,0,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.1);"></div>
+                        <div class="americana-info-pro" style="flex: 1;">
+                            <div style="font-weight: 900; font-size: 1.5rem; color: #FFFFFF; margin-bottom: 0.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 0.5px; line-height: 1.2;">${a.name.toUpperCase()}</div>
+                            <div style="display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; margin-top: 0.5rem;">
+                                <span style="display: flex; align-items: center; gap: 6px;">📅 <span style="color: #FFFFFF; font-weight: 600;">${a.date}</span></span>
+                                <span style="display: flex; align-items: center; gap: 6px;">🕒 <span style="color: #FFFFFF; font-weight: 600;">${a.time || '18:30'}</span></span>
+                                <span style="display: flex; align-items: center; gap: 6px;">🎾 <span style="color: #FFFFFF; font-weight: 600;">${a.max_courts || 4} Pistas</span></span>
+                                <span style="display: flex; align-items: center; gap: 6px;">👥 <span style="color: var(--primary); font-weight: 700;">${a.players?.length || 0} Inscritos</span></span>
                             </div>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span class="pro-category-badge" style="background: var(--surface-hover); color: white;">${(a.category || 'OPEN').toUpperCase()}</span>
-                        <button class="btn-secondary" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-color: var(--danger-dim); color: var(--danger);" 
-                                onclick="deleteAmericana('${a.id}')" title="Eliminar Permanente">🗑️</button>
+                        <span class="pro-category-badge" style="background: var(--primary); color: var(--sp-navy); font-weight: 800; padding: 8px 16px;">${(a.category || 'OPEN').toUpperCase()}</span>
+                        <button class="btn-outline-pro" style="border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-color: var(--primary); color: var(--primary); font-weight: 700; font-size: 0.8rem;" 
+                                onclick='openEditAmericanaModal(${JSON.stringify(a).replace(/'/g, "&#39;")})' title="Editar Evento">✏️ EDITAR</button>
+                        <button class="btn-secondary" style="border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-color: var(--danger-dim); color: var(--danger); font-weight: 700; font-size: 0.8rem;" 
+                                onclick="deleteAmericana('${a.id}')" title="Eliminar Permanente">🗑️ BORRAR</button>
                     </div>
                 </div>`).join('');
 
@@ -354,6 +356,22 @@ async function loadAdminView(view) {
                 } catch (e) { alert(e.message); }
             };
 
+            window.openEditAmericanaModal = (americana) => {
+                const modal = document.getElementById('admin-americana-modal');
+                const form = document.getElementById('edit-americana-form');
+                if (!modal || !form) return;
+
+                form.querySelector('[name=id]').value = americana.id;
+                form.querySelector('[name=name]').value = americana.name;
+                form.querySelector('[name=date]').value = americana.date;
+                form.querySelector('[name=time]').value = americana.time || '18:30';
+                form.querySelector('[name=category]').value = americana.category || 'open';
+                form.querySelector('[name=max_courts]').value = americana.max_courts || 4;
+
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+            };
+
         } else if (view === 'simulator') {
             if (titleEl) titleEl.textContent = 'Motor de Simulación Maestro';
             content.innerHTML = `
@@ -403,8 +421,8 @@ async function loadAdminView(view) {
                             <h2 style="margin:0; color: var(--primary);">${activeAmericana.name}</h2>
                         </div>
                     </div>
-                    <div style="display: flex; gap: 0.5rem;" id="round-selector">
-                        ${[1, 2, 3, 4, 5, 6].map(r => `<button class="btn-round-tab" id="btn-round-${r}" onclick="renderMatchesForAmericana('${activeAmericana.id}', ${r})">R${r}</button>`).join('')}
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;" id="round-selector">
+                        ${[1, 2, 3, 4, 5, 6].map(r => `<button class="btn-round-tab" id="btn-round-${r}" onclick="renderMatchesForAmericana('${activeAmericana.id}', ${r})" style="min-width: 100px; font-weight: 800;">${r}º PARTIDO</button>`).join('')}
                     </div>
                 </div>
                 <div style="margin-bottom: 2rem; display: flex; align-items: center; gap: 1.5rem; background: var(--grad-dark); padding: 1.5rem; border-radius: 12px; border: var(--border-pro);">
@@ -431,10 +449,27 @@ async function loadAdminView(view) {
                             <div class="court-card-pro ${m.status}" id="match-${m.id}">
                                 <div class="court-header"><span class="court-label">PISTA ${m.court}</span><span class="status-badge ${m.status}">${(m.status || 'ESPERA').toUpperCase()}</span></div>
                                 <div class="match-teams">
-                                    <div class="team-row"><span class="team-names">${m.team_a_names}</span><div class="score-input-group"><button onclick="updateMatchScore('${m.id}', 'a', -1, '${americanaId}')">-</button><span class="score-val" id="scoreA-${m.id}">${m.score_a || 0}</span><button onclick="updateMatchScore('${m.id}', 'a', 1, '${americanaId}')">+</button></div></div>
-                                    <div class="team-row"><span class="team-names">${m.team_b_names}</span><div class="score-input-group"><button onclick="updateMatchScore('${m.id}', 'b', -1, '${americanaId}')">-</button><span class="score-val" id="scoreB-${m.id}">${m.score_b || 0}</span><button onclick="updateMatchScore('${m.id}', 'b', 1, '${americanaId}')">+</button></div></div>
+                                    <div class="team-row">
+                                        <span class="team-names">${m.team_a_names}</span>
+                                        <div class="score-input-group">
+                                            <input type="number" id="scoreA-${m.id}" value="${m.score_a || 0}" class="pro-score-input" min="0" max="99">
+                                        </div>
+                                    </div>
+                                    <div class="team-row">
+                                        <span class="team-names">${m.team_b_names}</span>
+                                        <div class="score-input-group">
+                                            <input type="number" id="scoreB-${m.id}" value="${m.score_b || 0}" class="pro-score-input" min="0" max="99">
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="court-footer"><select onchange="updateMatchStatus('${m.id}', this.value, '${americanaId}')" class="mini-select"><option value="scheduled" ${m.status === 'scheduled' ? 'selected' : ''}>PROGRAMADO</option><option value="live" ${m.status === 'live' ? 'selected' : ''}>EN JUEGO</option><option value="finished" ${m.status === 'finished' ? 'selected' : ''}>FINALIZADO</option></select><button class="save-btn" onclick="saveMatchData('${m.id}', '${americanaId}')">GUARDAR</button></div>
+                                <div class="court-footer">
+                                    <select onchange="updateMatchStatus('${m.id}', this.value, '${americanaId}')" class="mini-select">
+                                        <option value="scheduled" ${m.status === 'scheduled' ? 'selected' : ''}>PROGRAMADO</option>
+                                        <option value="live" ${m.status === 'live' ? 'selected' : ''}>EN JUEGO</option>
+                                        <option value="finished" ${m.status === 'finished' ? 'selected' : ''}>FINALIZADO</option>
+                                    </select>
+                                    <button class="save-btn" onclick="saveMatchData('${m.id}', '${americanaId}')">GUARDAR</button>
+                                </div>
                             </div>`).join('')}</div>`;
                     }
                 } catch (e) { container.innerHTML = `Error: ${e.message}`; }
@@ -482,6 +517,14 @@ window.openEditUserModal = (user) => {
 
 window.closeAdminModal = () => { document.getElementById('admin-user-modal').style.display = 'none'; };
 
+window.closeAmericanaModal = () => {
+    const modal = document.getElementById('admin-americana-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
 window.deleteUser = async (id) => {
     if (confirm("⚠️ ¿ELIMINAR este usuario?")) {
         try { await FirebaseDB.players.delete(id); loadAdminView('users'); } catch (e) { alert(e.message); }
@@ -496,7 +539,11 @@ window.generateMatches = async (americanaId, roundNum = 1) => {
             FirebaseDB.matches.getByAmericana(americanaId)
         ]);
         const result = AmericanaLogic.generateRound(players, allMatches, americana.max_courts || 4);
-        for (const m of result) {
+
+        // FIX: result is { matches: [], resting_players: [] }
+        const matchesToCreate = result.matches || [];
+
+        for (const m of matchesToCreate) {
             m.americana_id = americanaId; m.round = roundNum;
             await FirebaseDB.matches.create(m);
         }
@@ -517,8 +564,8 @@ window.updateMatchStatus = (matchId, status) => {
 
 window.saveMatchData = async (matchId, americanaId) => {
     try {
-        const scoreA = parseInt(document.getElementById(`scoreA-${matchId}`).textContent);
-        const scoreB = parseInt(document.getElementById(`scoreB-${matchId}`).textContent);
+        const scoreA = parseInt(document.getElementById(`scoreA-${matchId}`).value) || 0;
+        const scoreB = parseInt(document.getElementById(`scoreB-${matchId}`).value) || 0;
         const status = document.querySelector(`#match-${matchId} select`).value;
         await FirebaseDB.matches.update(matchId, { score_a: scoreA, score_b: scoreB, status: status });
         alert("Guardado");
@@ -680,9 +727,10 @@ const AdminSimulator = {
             for (let r = 1; r <= 6; r++) {
                 if (status) status.innerHTML += `> Generando Ronda ${r} con IA... `;
 
-                const round = AmericanaLogic.generateRound(mockPlayers, allM, numCourts);
+                const result = AmericanaLogic.generateRound(mockPlayers, allM, numCourts);
+                const roundMatches = result.matches || [];
 
-                for (const m of round) {
+                for (const m of roundMatches) {
                     const sA = 5 + Math.floor(Math.random() * 7); // 5 to 11
                     const sB = 5 + Math.floor(Math.random() * 7); // 5 to 11
 
@@ -734,5 +782,32 @@ document.addEventListener('DOMContentLoaded', () => {
             closeAdminModal(); loadAdminView('users');
         } catch (err) { alert(err.message); }
     });
+
+    // Event listener para edición de Americana
+    document.getElementById('edit-americana-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const id = fd.get('id');
+        if (!id) {
+            alert('Error: No se pudo identificar la Americana');
+            return;
+        }
+        const data = {
+            name: fd.get('name'),
+            date: fd.get('date'),
+            time: fd.get('time'),
+            category: fd.get('category'),
+            max_courts: parseInt(fd.get('max_courts'))
+        };
+        try {
+            await FirebaseDB.americanas.update(id, data);
+            alert('Americana actualizada correctamente');
+            closeAmericanaModal();
+            loadAdminView('americanas_mgmt');
+        } catch (err) {
+            alert('Error al actualizar: ' + err.message);
+        }
+    });
+
     AdminAuth.init();
 });

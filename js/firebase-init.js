@@ -2,11 +2,18 @@ console.log("🔥 Initializing Firebase...");
 
 // GLOBAL ERROR DIAGNOSTIC
 window.onerror = function (msg, url, line, col, error) {
+    if (msg.toLowerCase().includes('script error') && line === 0) {
+        console.warn("⚠️ Suppressed CORS/Script Error:", msg);
+        return false; // Let it propagate to console
+    }
+
     const errorDetail = error ? error.stack : 'No stack trace';
+    if (!url) url = 'Script Inline/Desconocido';
+
     console.error("Critical Error Catch:", msg, url, line, col, error);
     alert("🔴 ERROR DETECTADO\n" +
         "Mensaje: " + msg + "\n" +
-        "Archivo: " + (url || 'Script Externo/CORS') + "\n" +
+        "Archivo: " + url + "\n" +
         "Línea: " + line + "\n" +
         "Detalles: " + errorDetail.substring(0, 100));
     return false;
@@ -75,8 +82,21 @@ const FirebaseDB = {
         },
 
         async create(data) {
+            // Professional Validation
+            const name = (data.name || "").trim();
+            const phone = (data.phone || "").toString().replace(/\D/g, '');
+
+            if (name.split(' ').length < 2 && data.role !== 'admin') {
+                throw new Error("Por favor, introduce nombre y apellidos para un perfil profesional.");
+            }
+            if (phone.length !== 9 && data.phone !== 'NOA') {
+                throw new Error("El teléfono debe tener 9 dígitos.");
+            }
+
             const docRef = await db.collection('players').add({
                 ...data,
+                name: name,
+                phone: phone === 'NOA' ? 'NOA' : phone,
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
             });
             const doc = await docRef.get();
@@ -91,6 +111,30 @@ const FirebaseDB = {
 
         async delete(id) {
             await db.collection('players').doc(id).delete();
+        },
+
+        async cleanupFictional() {
+            console.log("🧹 Inicia limpieza de base de datos profesional...");
+            const snapshot = await db.collection('players').get();
+            let deletedCount = 0;
+
+            for (const doc of snapshot.docs) {
+                const data = doc.data();
+                const name = (data.name || "").toLowerCase();
+                const phone = (data.phone || "").toString();
+
+                // Rules for "fictional" data
+                const isTest = name.includes('test') || name.includes('ficticio') || name.includes('prueba');
+                const isInvalidPhone = phone.length < 9 && phone !== 'NOA';
+
+                if (isTest || isInvalidPhone) {
+                    console.log(`🗑️ Eliminando usuario no profesional: ${data.name} (${phone})`);
+                    await doc.ref.delete();
+                    deletedCount++;
+                }
+            }
+            console.log(`✅ Limpieza completada. ${deletedCount} registros eliminados.`);
+            return deletedCount;
         }
     },
 
@@ -211,22 +255,7 @@ async function seedInitialUsers() {
             }
         },
         {
-            name: "Sergio Test",
-            phone: "649219351",
-            data: {
-                password: "SERGIO21",
-                role: "player",
-                status: "active",
-                level: "INTERMEDIATE",
-                self_rate_level: "INTERMEDIATE",
-                play_preference: "competitive",
-                category_preference: "male",
-                matches_played: 0,
-                win_rate: 0
-            }
-        },
-        {
-            name: "NOA",
+            name: "ADMINISTRADOR (NOA)",
             phone: "NOA",
             data: {
                 password: "NOA21",
