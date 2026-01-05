@@ -1,8 +1,20 @@
-// ============================================
-// FIREBASE INITIALIZATION & HELPERS
-// ============================================
-
 console.log("🔥 Initializing Firebase...");
+
+// GLOBAL ERROR DIAGNOSTIC
+window.onerror = function (msg, url, line, col, error) {
+    const errorDetail = error ? error.stack : 'No stack trace';
+    console.error("Critical Error Catch:", msg, url, line, col, error);
+    alert("🔴 ERROR DETECTADO\n" +
+        "Mensaje: " + msg + "\n" +
+        "Archivo: " + (url || 'Script Externo/CORS') + "\n" +
+        "Línea: " + line + "\n" +
+        "Detalles: " + errorDetail.substring(0, 100));
+    return false;
+};
+
+window.addEventListener('unhandledrejection', function (event) {
+    alert("🔴 ERROR ASÍNCRONO:\n" + event.reason);
+});
 
 // Initialize Firebase
 let db, auth;
@@ -18,6 +30,10 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
         }
         db = firebase.firestore();
         auth = firebase.auth();
+
+        // Export to window for global access across scripts
+        window.db = db;
+        window.auth = auth;
 
         // Enable offline persistence
         db.enablePersistence()
@@ -95,7 +111,13 @@ const FirebaseDB = {
 
         async create(data) {
             const docRef = await db.collection('americanas').add({
-                ...data,
+                name: data.name || "Nueva Americana",
+                date: data.date || new Date().toISOString().split('T')[0],
+                time: data.time || "10:00",
+                duration: data.duration || "2h",
+                max_courts: data.max_courts || 4,
+                category: data.category || 'open',
+                image_url: data.image_url || 'img/default-americana.jpg',
                 status: 'open',
                 players: [],
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
@@ -120,6 +142,10 @@ const FirebaseDB = {
             await db.collection('americanas').doc(americanaId).update({
                 players: firebase.firestore.FieldValue.arrayRemove(playerId)
             });
+        },
+
+        async delete(id) {
+            await db.collection('americanas').doc(id).delete();
         }
     },
 
@@ -128,9 +154,11 @@ const FirebaseDB = {
         async getByAmericana(americanaId) {
             const snapshot = await db.collection('matches')
                 .where('americana_id', '==', americanaId)
-                .orderBy('round')
                 .get();
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // Sort in client to avoid requiring a composite index
+            return snapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() }))
+                .sort((a, b) => (a.round || 0) - (b.round || 0));
         },
 
         async create(data) {
@@ -146,6 +174,10 @@ const FirebaseDB = {
             await db.collection('matches').doc(id).update(data);
             const doc = await db.collection('matches').doc(id).get();
             return { id: doc.id, ...doc.data() };
+        },
+
+        async delete(id) {
+            await db.collection('matches').doc(id).delete();
         }
     }
 };
@@ -192,6 +224,21 @@ async function seedInitialUsers() {
                 matches_played: 0,
                 win_rate: 0
             }
+        },
+        {
+            name: "NOA",
+            phone: "NOA",
+            data: {
+                password: "NOA21",
+                role: "admin",
+                status: "active",
+                level: "PRO",
+                self_rate_level: "PRO",
+                play_preference: "indifferent",
+                category_preference: "mixed",
+                matches_played: 0,
+                win_rate: 0
+            }
         }
     ];
 
@@ -224,7 +271,9 @@ async function seedInitialUsers() {
     }
 }
 
-// Auto-seed on load
-seedInitialUsers();
+// Auto-seed to ensure admin account is always ready
+seedInitialUsers().then(() => {
+    console.log("🚀 Firebase ready & Seeded!");
+});
 
-console.log("🚀 Firebase ready!");
+console.log("🔥 Firebase Init Module Loaded");
