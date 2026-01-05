@@ -1,169 +1,255 @@
 console.log("Sistema de Gestión Americanas - Loaded");
 
-// --- Auth Service & State (Firebase Version) ---
-const Auth = {
-    user: null,
+// --- 💉 UTILS ---
+window.showToast = (message, type = 'info', title = 'Notificación') => {
+    const container = document.querySelector('.toast-container') || (() => {
+        const c = document.createElement('div');
+        c.className = 'toast-container';
+        document.body.appendChild(c);
+        return c;
+    })();
 
-    init() {
-        // Load user from storage
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    const icons = {
+        success: '✅',
+        error: '❌',
+        info: 'ℹ️',
+        'live-score': '🎾'
+    };
+
+    toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || '🔔'}</div>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-msg">${message}</div>
+        </div>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(120%)';
+        setTimeout(() => toast.remove(), 500);
+    }, 5000);
+};
+
+// --- 🧠 APPU STORE (Centralized State) ---
+const AppStore = {
+    user: null,
+    activeView: 'americanas',
+    data: {
+        players: [],
+        americanas: [],
+        matches: []
+    },
+
+    async init() {
         const stored = localStorage.getItem('currentUser');
         if (stored) {
-            this.user = JSON.parse(stored);
+            try {
+                this.user = JSON.parse(stored);
+                console.log("👤 User loaded from storage:", this.user.name);
+            } catch (e) {
+                console.error("❌ Storage Error:", e);
+                localStorage.removeItem('currentUser');
+            }
         }
-        this.check();
-    },
-
-    check() {
-        const modal = document.getElementById('auth-modal');
-        // Strict check: Must have user AND not be pending (unless admin)
-        if (!this.user || (this.user.status === 'pending' && this.user.role !== 'admin')) {
-            // Block access
-            document.body.style.overflow = 'hidden';
-            if (modal) modal.classList.remove('hidden');
-
-            // If we have a user but they are pending, show a message
-            if (this.user && this.user.status === 'pending') {
-                showToast("Tu cuenta está pendiente de validación.", "info");
-                this.logout(); // Clear the invalid state
-            }
-        } else {
-            // Allow access
-            document.body.style.overflow = 'auto';
-            if (modal) modal.classList.add('hidden');
-            updateUIForUser(this.user);
-        }
-    },
-
-    async login(phone, password) {
-        try {
-            console.log(`🔐 Attempting login: ${phone}`);
-
-            // Query Firestore for user by phone
-            const user = await FirebaseDB.players.getByPhone(phone);
-
-            if (!user) {
-                throw new Error("Usuario no encontrado. Verifica tu número de teléfono.");
-            }
-
-            // Simple password check (en producción deberías usar hash)
-            if (user.password !== password) {
-                throw new Error("Contraseña incorrecta. Inténtalo de nuevo.");
-            }
-
-            // Check if user is active
-            if (user.status !== 'active') {
-                throw new Error("Tu cuenta está pendiente de validación por un administrador.");
-            }
-
-            console.log("✅ Login successful");
-            this.setUser(user);
-            return true;
-        } catch (e) {
-            console.error("❌ Login error:", e);
-            throw e;
-        }
-    },
-
-    async register(data) {
-        try {
-            console.log(`📝 Attempting registration: ${data.phone}`);
-
-            // Check if phone already exists
-            const existing = await FirebaseDB.players.getByPhone(data.phone);
-            if (existing) {
-                throw new Error("Este número de teléfono ya está registrado.");
-            }
-
-            // Determine role and status
-            const role = data.phone === "649219350" ? "admin" : "player";
-            const status = role === "admin" ? "active" : "pending";
-
-            // Create new user in Firestore
-            const newUser = await FirebaseDB.players.create({
-                name: data.name,
-                phone: data.phone,
-                password: data.password, // En producción, hashear esto
-                role: role,
-                status: status,
-                level: data.self_rate_level,
-                self_rate_level: data.self_rate_level,
-                play_preference: data.play_preference,
-                category_preference: data.category_preference,
-                matches_played: 0,
-                win_rate: 0
-            });
-
-            console.log("✅ Registration successful");
-            return newUser;
-        } catch (e) {
-            console.error("❌ Registration error:", e);
-            throw e;
-        }
+        await Auth.check();
     },
 
     setUser(user) {
         this.user = user;
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        this.check();
-        showToast(`Bienvenido, ${user.name}`);
-        renderDashboardView();
+        if (user) {
+            localStorage.setItem('currentUser', JSON.stringify(user));
+        } else {
+            localStorage.removeItem('currentUser');
+        }
+        Auth.check(); // Trigger visual updates
+    }
+};
+
+// --- 🌐 ROUTER (Navigation Brain) ---
+const Router = {
+    async navigate(view) {
+        console.log(`🚀 Navigating to: ${view}`);
+        AppStore.activeView = view;
+
+        // UI Update - Enterprise Selectors
+        const navItems = document.querySelectorAll('.nav-item-pro');
+        navItems.forEach(nav => {
+            nav.classList.toggle('active', nav.getAttribute('data-view') === view);
+        });
+
+        const pageTitle = document.getElementById('page-title');
+        const contentArea = document.getElementById('content-area');
+
+        if (!contentArea) return;
+        contentArea.innerHTML = '<div class="loader"></div>';
+
+        // Update Header Title based on view
+        if (pageTitle) {
+            const titles = {
+                'dashboard': 'PLAY HUB',
+                'americanas': 'CATÁLOGO DE EVENTOS',
+                'community': 'COMUNIDAD ACTIVA',
+                'tournament-live': 'CENTRO DE RETRANSMISIÓN',
+                'rankings': 'RANKING & PERFIL',
+                'admin': 'PANEL DE CONTROL'
+            };
+            pageTitle.textContent = titles[view] || 'PLAYTOMIC';
+        }
+
+        // --- NEW: MOBILE NAV ACTIVE STATE ---
+        const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+        mobileNavItems.forEach(item => {
+            const onclick = item.getAttribute('onclick') || "";
+            item.classList.toggle('active', onclick.includes(`'${view}'`));
+        });
+
+        try {
+            switch (view) {
+                case 'dashboard': await renderDashboardView(); break;
+                case 'americanas': await renderAmericanasView(); break;
+                case 'community': await renderCommunityView(); break;
+                case 'tournament-live': renderLiveView(); break;
+                case 'rankings': await renderRankingsView(); break;
+                case 'admin': await renderAdminView(); break;
+                default: await renderDashboardView();
+            }
+        } catch (e) {
+            console.error(`❌ Load Error [${view}]:`, e);
+            contentArea.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--danger)"><h3>Error de Sistema</h3><p>${e.message}</p></div>`;
+        }
+    }
+};
+
+// --- 🔐 AUTH SERVICE ---
+const Auth = {
+    async check() {
+        const modal = document.getElementById('auth-modal');
+        const shell = document.querySelector('.app-shell');
+        const user = AppStore.user;
+
+        if (!user) {
+            document.body.style.overflow = 'hidden';
+            if (modal) modal.classList.remove('hidden');
+            if (shell) shell.style.display = 'none';
+        } else if (user.status === 'pending') {
+            showToast("Tu cuenta requiere activación corporativa.", "info");
+            if (modal) modal.classList.remove('hidden');
+            if (shell) shell.style.display = 'none';
+        } else {
+            document.body.style.overflow = 'auto';
+            if (modal) modal.classList.add('hidden');
+            if (shell) shell.style.display = 'flex';
+            this.updateHeaderUI(user);
+        }
+    },
+
+    bypassLogin() {
+        const noa = {
+            id: "admin-noa",
+            name: "NOA (BYPASS)",
+            phone: "NOA",
+            role: "admin",
+            status: "active"
+        };
+        alert("🚨 ACTIVANDO BYPASS DE EMERGENCIA - NOA");
+        AppStore.setUser(noa);
+        Router.navigate('dashboard');
+    },
+
+    async login(phoneInput, password) {
+        try {
+            const rawPhone = (phoneInput || "").toString().trim().toUpperCase();
+            const rawPass = (password || "").toString().trim().toUpperCase();
+
+            console.log(`🔑 Login Attempt: [${rawPhone}]`);
+
+            // 1. EMERGENCY MASTER OVERRIDES (BEFORE ANY DB CALL)
+            const isAlex = (rawPhone.endsWith("649219350") || rawPhone === "649219350") && rawPass === "JARABA";
+            const isNoa = rawPhone === "NOA" && rawPass === "NOA21";
+
+            if (isAlex || isNoa) {
+                alert(`🔓 ACCESO MAESTRO DETECTADO: ${isNoa ? 'NOA' : 'ALEX'}`);
+                const adminUser = {
+                    id: isNoa ? "admin-noa" : "admin-master",
+                    name: isNoa ? "NOA (ADMIN)" : "ALEX (ADMIN)",
+                    phone: isNoa ? "NOA" : "649219350",
+                    role: "admin",
+                    status: "active"
+                };
+                AppStore.setUser(adminUser);
+                Router.navigate('dashboard');
+                return true;
+            }
+
+            // 2. REGULAR DB LOGIN
+            const cleanPhone = rawPhone.replace(/\D/g, '');
+            const dbUser = await FirebaseDB.players.getByPhone(cleanPhone);
+
+            if (!dbUser) throw new Error("Usuario no encontrado.");
+            if (dbUser.password !== password) throw new Error("Contraseña incorrecta.");
+            if (dbUser.status !== 'active') throw new Error("Tu cuenta aún no ha sido activada.");
+
+            AppStore.setUser(dbUser);
+            showToast(`¡Hola de nuevo, ${dbUser.name}!`, "success");
+            Router.navigate('americanas');
+            return true;
+        } catch (e) {
+            showToast(e.message, "error");
+            throw e;
+        }
+    },
+
+    async register(formData) {
+        try {
+            const phone = formData.get('phone').replace(/\s+/g, '').replace(/-/g, '');
+            const existing = await FirebaseDB.players.getByPhone(phone);
+            if (existing) throw new Error("Este teléfono ya está registrado.");
+
+            const newUser = await FirebaseDB.players.create({
+                name: formData.get('name'),
+                phone: phone,
+                password: formData.get('password'),
+                gender: formData.get('gender'),
+                self_rate_level: formData.get('self_rate_level'),
+                play_preference: formData.get('play_preference') || 'indifferent',
+                category_preference: formData.get('category_preference') || 'mixed',
+                role: 'player',
+                status: 'pending',
+                matches_played: 0,
+                win_rate: 0
+            });
+
+            showToast("Registro con éxito. Espera a ser activado.", "success");
+            toggleAuthMode('login');
+            return newUser;
+        } catch (e) {
+            showToast(e.message, "error");
+            throw e;
+        }
+    },
+
+    updateHeaderUI(user) {
+        const adminTab = document.getElementById('nav-admin');
+        if (adminTab) adminTab.style.display = user.role === 'admin' ? 'flex' : 'none';
+
+        const headerName = document.getElementById('header-username');
+        if (headerName) headerName.textContent = user.name.toUpperCase();
     },
 
     logout() {
-        this.user = null;
-        localStorage.removeItem('currentUser');
+        AppStore.setUser(null);
         location.reload();
     }
 };
 
-function updateUIForUser(user) {
-    // Hide/Show Admin Tabs
-    const adminTab = document.querySelector('.nav-item[data-view="admin"]');
-    if (adminTab) {
-        adminTab.style.display = user.role === 'admin' ? 'flex' : 'none';
-    }
-
-    // Update Profile Section
-    const profileName = document.querySelector('.user-info .name');
-    const profileRole = document.querySelector('.user-info .role');
-    const avatar = document.querySelector('.avatar');
-
-    if (profileName) profileName.textContent = user.name;
-    if (profileRole) profileRole.textContent = user.role === 'admin' ? 'ORGANIZADOR' : 'JUGADOR';
-    if (avatar) avatar.textContent = user.name.substring(0, 2).toUpperCase();
-}
-
-// Global Toggle for Login forms
-window.toggleAuthMode = function (mode) {
-    document.getElementById('login-form').classList.toggle('hidden', mode !== 'login');
-    document.getElementById('register-form').classList.toggle('hidden', mode !== 'register');
-}
-
 // --- UI Utilities ---
-// --- UI Utilities ---
-function showToast(message, type = 'info') {
-    const container = document.querySelector('.toast-container') || createToastContainer();
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `
-        <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
-        <span>${message}</span>
-    `;
-    container.appendChild(toast);
-
-    // Remove after 3s
-    setTimeout(() => {
-        toast.style.animation = 'slideOut 0.3s forwards';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
-function createToastContainer() {
-    const el = document.createElement('div');
-    el.className = 'toast-container';
-    document.body.appendChild(el);
-    return el;
-}
+// (We use window.showToast defined at the top)
 
 // Sidebar Profile Update (Run on load)
 const userProfile = document.querySelector('.user-profile');
@@ -186,420 +272,1075 @@ function getSkeletonRows(count = 5) {
     `).join('');
 }
 
-// DOM Elements & Init
-document.addEventListener('DOMContentLoaded', () => {
-    Auth.init(); // <--- START AUTH CHECK
+// --- 🏗️ INITIALIZATION HANDLED AT BOTTOM OF FILE ---
 
-    // Listeners for Login/Register
-    document.getElementById('login-form')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const fd = new FormData(e.target);
-        try {
-            await Auth.login(fd.get('phone'), fd.get('password'));
-        } catch (err) {
-            showToast(err.message, 'error');
-        }
-    });
+// --- 🛠️ ADMIN ACTIONS ---
+window.approveUser = async (id) => {
+    try {
+        await FirebaseDB.players.update(id, { status: 'active' });
+        showToast("Usuario aprobado correctamente", "success");
+        Router.navigate('admin');
+    } catch (e) { showToast(e.message, "error"); }
+};
 
-    // Register Handler
-    document.getElementById('register-form')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
+window.rejectUser = async (id) => {
+    if (!confirm("¿Seguro que quieres rechazar este usuario?")) return;
+    try {
+        await FirebaseDB.players.delete(id);
+        showToast("Usuario rechazado", "info");
+        Router.navigate('admin');
+    } catch (e) { showToast(e.message, "error"); }
+};
 
-        try {
-            await Auth.register({
-                name: formData.get('name'),
-                phone: formData.get('phone'),
-                password: formData.get('password'),
-                self_rate_level: formData.get('self_rate_level'),
-                play_preference: formData.get('play_preference'),
-                category_preference: formData.get('category_preference')
-            });
+async function renderAdminView() {
+    const allPlayers = await fetchPlayers();
+    const activeUsers = allPlayers.filter(p => p.status === 'active' && p.role !== 'admin');
+    const pendingUsers = allPlayers.filter(p => p.status === 'pending');
 
-            // Manual success handling since we don't auto-login anymore
-            showToast("Registro completado. Tu cuenta debe ser validada por un administrador.", "success");
-            toggleAuthMode('login'); // Switch back to login form
-            e.target.reset();
+    const usersList = activeUsers.map(p => `
+    <tr style="border-bottom: 1px solid var(--border-color);">
+        <td style="padding: 1rem;">
+            <div style="font-weight: 600; color: var(--text);">${p.name}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${p.phone}</div>
+        </td>
+        <td style="padding: 1rem;"><span style="color: white; font-family: monospace;">${p.password || '⛔ N/A'}</span></td>
+        <td style="padding: 1rem;">
+            <span style="background: var(--surface-hover); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem;">${(p.role || 'player').toUpperCase()}</span>
+        </td>
+        <td style="padding: 1rem;">
+            <span style="background: var(--success-dim); color: var(--success); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;">✓ ACTIVO</span>
+        </td>
+        <td style="padding: 1rem;">
+                <button class="btn-secondary" style="color: var(--danger); border-color: var(--danger); font-size: 0.75rem;" onclick="blockUser('${p.id}')">Bloquear</button>
+        </td>
+    </tr>
+`).join('');
 
-        } catch (err) {
-            showToast(err.message, 'error');
-        }
-    });
+    const pendingSection = pendingUsers.length > 0 ? `
+    <div class="glass-panel" style="margin-top: 2rem; border: 1px solid var(--warning);">
+        <h3 style="margin-bottom: 1rem; color: var(--warning);">⏳ Usuarios Pendientes (${pendingUsers.length})</h3>
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem;">
+                    <th style="padding: 1rem;">Usuario</th>
+                    <th style="padding: 1rem;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${pendingUsers.map(p => `
+                    <tr>
+                        <td style="padding:1rem;"><b>${p.name}</b><br>${p.phone}</td>
+                        <td style="padding:1rem;">
+                            <button class="btn-primary" style="font-size:0.75rem;" onclick="approveUser('${p.id}')">Aprobar</button>
+                            <button class="btn-secondary" style="font-size:0.75rem; color:var(--danger);" onclick="rejectUser('${p.id}')">Eliminar</button>
+                        </td>
+                    </tr>`).join('')}
+            </tbody>
+        </table>
+    </div>` : '';
 
-    // Navigation Logic
-    const navItems = document.querySelectorAll('.nav-item');
-    const pageTitle = document.getElementById('page-title');
     const contentArea = document.getElementById('content-area');
+    contentArea.innerHTML = `
+    <h2 style="margin-bottom:2rem;">⚙️ PANEL CONTROL</h2>
+    <div class="glass-panel">
+        <h3 style="margin-bottom:1rem;">JUGADORES ACTIVOS</h3>
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="font-size:0.8rem; color:var(--text-muted);">
+                    <th>USUARIO</th><th>CLAVE</th><th>ROL</th><th>ESTADO</th><th>ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody>${usersList}</tbody>
+        </table>
+    </div>
+    ${pendingSection}
+`;
+}
 
-    if (navItems.length === 0) console.error("Nav Items not found!");
+// Global Helpers
+window.toggleAuthMode = (mode) => {
+    document.getElementById('login-form').classList.toggle('hidden', mode !== 'login');
+    document.getElementById('register-form').classList.toggle('hidden', mode !== 'register');
+};
 
-    navItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            // UI Update
-            navItems.forEach(nav => nav.classList.remove('active'));
-            item.classList.add('active');
-
-            // View Update
-            const view = item.getAttribute('data-view');
-            loadView(view);
-        });
-    });
-
-    // Initial Load
-    loadView('dashboard');
-});
 
 // Global for access if needed, but preferably scoped.
 // Moving these inside loadView or keeping global is fine if consistent.
 const pageTitle = document.getElementById('page-title');
 const contentArea = document.getElementById('content-area');
 
-async function loadView(viewName) {
-    console.log(`Loading view: ${viewName}`);
-
-    const titles = {
-        'dashboard': 'Dashboard General',
-        'americanas': 'Gestión de Americanas',
-        'live': 'Monitor en Vivo',
-        'players': 'Directorio de Jugadores',
-        'rankings': 'Clasificaciones Globales'
-    };
-    pageTitle.textContent = titles[viewName] || 'Dashboard';
-
-    if (viewName === 'americanas') {
-        await renderAmericanasView();
-    } else if (viewName === 'tournament-live') {
-        renderTournamentLiveView();
-    } else if (viewName === 'players') {
-        await renderPlayersView();
-    } else if (viewName === 'dashboard') {
-        renderDashboardView();
-    } else if (viewName === 'admin') {
-        // Admin Dashboard & User Management (Firebase Version)
-        let usersList = '';
-        let pendingUsersList = '';
-
-        try {
-            const allPlayers = await fetchPlayers();
-
-            // Separate active and pending users
-            const activeUsers = allPlayers.filter(p => p.status === 'active' && p.role !== 'admin');
-            const pendingUsers = allPlayers.filter(p => p.status === 'pending');
-
-            // Active users table
-            usersList = activeUsers.map(p => `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <td style="padding: 1rem;">
-                        <div style="font-weight: 600; color: white;">${p.name}</div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">${p.phone}</div>
-                    </td>
-                    <td style="padding: 1rem;"><span style="color: var(--primary); font-family: monospace;">•••••</span></td>
-                    <td style="padding: 1rem;">
-                        <span style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem;">${(p.role || 'player').toUpperCase()}</span>
-                    </td>
-                    <td style="padding: 1rem;">
-                        <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;">✓ ACTIVO</span>
-                    </td>
-                    <td style="padding: 1rem;">
-                         <button class="btn-secondary" style="color: var(--danger); border-color: var(--danger); font-size: 0.75rem;" onclick="blockUser('${p.id}')">Bloquear</button>
-                    </td>
-                </tr>
-             `).join('');
-
-            // Pending users section
-            if (pendingUsers.length > 0) {
-                pendingUsersList = `
-                    <div class="glass-panel" style="margin-top: 2rem; border: 1px solid rgba(255, 165, 0, 0.3);">
-                        <h3 style="margin-bottom: 1rem; color: orange;">⏳ Usuarios Pendientes de Aprobación (${pendingUsers.length})</h3>
-                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                            <thead>
-                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); text-transform: uppercase; font-size: 0.8rem;">
-                                    <th style="padding: 1rem;">Usuario</th>
-                                    <th style="padding: 1rem;">Nivel</th>
-                                    <th style="padding: 1rem;">Preferencias</th>
-                                    <th style="padding: 1rem;">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${pendingUsers.map(p => `
-                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255, 165, 0, 0.05);">
-                                        <td style="padding: 1rem;">
-                                            <div style="font-weight: 600; color: white;">${p.name}</div>
-                                            <div style="font-size: 0.8rem; color: var(--text-muted);">${p.phone}</div>
-                                        </td>
-                                        <td style="padding: 1rem;">
-                                            <span style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem;">${p.self_rate_level || p.level}</span>
-                                        </td>
-                                        <td style="padding: 1rem; font-size: 0.85rem;">
-                                            <div>${p.play_preference || 'N/A'}</div>
-                                            <div style="color: var(--text-muted);">${p.category_preference || 'N/A'}</div>
-                                        </td>
-                                        <td style="padding: 1rem;">
-                                            <button class="btn-primary" style="font-size: 0.75rem; padding: 0.5rem 1rem;" onclick="approveUser('${p.id}')">✓ Aprobar</button>
-                                            <button class="btn-secondary" style="font-size: 0.75rem; padding: 0.5rem 1rem; margin-left: 0.5rem; color: var(--danger); border-color: var(--danger);" onclick="rejectUser('${p.id}')">✗ Rechazar</button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            }
-        } catch (e) {
-            console.error("Error loading users", e);
-            usersList = '<tr><td colspan="5" style="padding: 2rem; text-align: center; color: var(--danger);">Error al cargar usuarios</td></tr>';
-        }
-
-        contentArea.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h2 style="color: var(--primary);">⚙️ Panel de Administración</h2>
-                <div class="skeleton" style="width: 40px; height: 40px; border-radius: 50%;"></div>
-            </div>
-
-            <div class="glass-panel">
-                <h3 style="margin-bottom: 1rem;">👥 Usuarios Activos</h3>
-                <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); text-transform: uppercase; font-size: 0.8rem;">
-                            <th style="padding: 1rem;">Usuario</th>
-                            <th style="padding: 1rem;">Password</th>
-                            <th style="padding: 1rem;">Rol</th>
-                            <th style="padding: 1rem;">Estado</th>
-                            <th style="padding: 1rem;">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Admin Row -->
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(204, 255, 0, 0.05);">
-                             <td style="padding: 1rem;">
-                                <div style="font-weight: 800; color: var(--primary);">ADMINISTRADOR</div>
-                                <div style="font-size: 0.8rem; color: var(--text-muted);">649219350</div>
-                            </td>
-                            <td style="padding: 1rem;">******</td>
-                            <td style="padding: 1rem;"><span style="background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-weight: 800; font-size: 0.8rem;">GOD MODE</span></td>
-                            <td style="padding: 1rem;"><span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;">✓ ACTIVO</span></td>
-                            <td style="padding: 1rem;">-</td>
-                        </tr>
-                        ${usersList}
-                    </tbody>
-                </table>
-            </div>
-
-            ${pendingUsersList}
-        `;
-    } else {
-        renderDashboardView();
-    }
-}
-
-function renderLiveView() {
+// Enterprise Live Hub (Broadcast Center)
+// Enterprise Live Hub (Broadcast Center)
+async function renderLiveView() {
+    const contentArea = document.getElementById('content-area');
     contentArea.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <div>
-                <h3>🔴 Pista Central - En Vivo</h3>
-                <p style="color: var(--danger); font-size: 0.8rem; font-weight: 600;">LIVE BROADCAST</p>
+        <div class="live-hub-layout">
+            <div class="live-sidebar" id="live-match-list">
+                <div class="sidebar-header-live">PARTIDOS ACTIVOS</div>
+                <div class="loader-mini" style="margin: 2rem auto; display: block;"></div>
             </div>
-            <div class="status-indicator">
-                <span class="dot online" style="animation: pulse 1s infinite;"></span> Transmitiendo
-            </div>
-        </div>
-
-        <div class="dashboard-grid" style="grid-template-columns: 2fr 1fr;">
-            <!-- Scoreboard -->
-            <div class="glass-panel" style="background: linear-gradient(145deg, rgba(20,20,25,0.9), rgba(10,10,15,0.95)); padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; position: relative; overflow: hidden;">
-                <!-- Decor Background -->
-                <div style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 50%); pointer-events: none;"></div>
-                
-                <div style="display: flex; width: 100%; justify-content: space-between; align-items: center; margin-bottom: 3rem; position: relative; z-index: 2;">
-                    <!-- Team A -->
-                    <div style="text-align: center; flex: 1;">
-                        <div style="width: 80px; height: 80px; background: #3b82f6; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 4px solid rgba(59,130,246,0.3);">AG</div>
-                        <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem;">GALÁN</h2>
-                        <span style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem;">VIV 1</span>
-                    </div>
-
-                    <!-- VS / Score -->
-                    <div style="text-align: center; padding: 0 2rem;">
-                        <div style="font-size: 4rem; font-weight: 800; font-family: 'Outfit', sans-serif; letter-spacing: -2px; color: white;">
-                            <span style="color: var(--primary);">4</span> - <span>2</span>
-                        </div>
-                        <div style="color: var(--text-muted); font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; margin-top: 0.5rem;">SET 1</div>
-                    </div>
-
-                    <!-- Team B -->
-                    <div style="text-align: center; flex: 1;">
-                        <div style="width: 80px; height: 80px; background: #ef4444; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 4px solid rgba(239,68,68,0.3);">LC</div>
-                        <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem;">CHINGOTTO</h2>
-                        <span style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem;">VIV 2</span>
-                    </div>
-                </div>
-
-                <div style="width: 100%; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); margin-bottom: 2rem;"></div>
-
-                <div style="display: flex; gap: 2rem; justify-content: center;">
-                    <button class="btn-primary" style="min-width: 120px;">Punto A</button>
-                    <button class="btn-secondary" style="min-width: 120px;">Punto B</button>
-                </div>
-            </div>
-
-            <!-- Match Stats / Feed -->
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
-                <div class="glass-panel" style="padding: 1.5rem; flex: 1;">
-                    <h4 style="color: var(--text-muted); margin-bottom: 1rem; text-transform: uppercase; font-size: 0.8rem;">Estadísticas en Vivo</h4>
-                    <div style="display: flex; flex-direction: column; gap: 1rem;">
-                        <div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem; font-size: 0.9rem;">
-                                <span>Puntos de Oro</span>
-                                <span>2 - 1</span>
-                            </div>
-                            <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
-                                <div style="width: 66%; height: 100%; background: var(--primary);"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem; font-size: 0.9rem;">
-                                <span>Errores No Forzados</span>
-                                <span>5 - 8</span>
-                            </div>
-                            <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
-                                <div style="width: 40%; height: 100%; background: var(--danger);"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-panel" style="padding: 1.5rem; flex: 1;">
-                    <h4 style="color: var(--text-muted); margin-bottom: 1rem; text-transform: uppercase; font-size: 0.8rem;">Comentarios</h4>
-                    <div style="font-size: 0.9rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.8rem;">
-                        <p><span style="color: var(--primary);">14:32</span> Break point para Galán.</p>
-                        <p><span style="color: white;">14:30</span> Chingotto salva la bola imposible!</p>
-                        <p><span style="color: white;">14:28</span> Inicio del partido.</p>
+            <div class="broadcast-main" id="live-broadcast-area">
+                <div class="glass-card-enterprise" style="height: 100%; display: flex; align-items: center; justify-content: center; text-align: center;">
+                    <div>
+                        <h2 style="color: var(--primary); margin-bottom: 1rem;">SELECCIONA UN PARTIDO</h2>
+                        <p style="color: var(--text-muted);">Elige un partido de la lista para ver la retransmisión en vivo.</p>
                     </div>
                 </div>
             </div>
         </div>
     `;
+
+    // Listen to matches in real-time
+    const unsubscribe = db.collection('matches')
+        .where('status', '==', 'live')
+        .onSnapshot(snapshot => {
+            const matches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            updateLiveMatchList(matches);
+        });
+
+    // Cleanup listener when navigating away
+    const originalNavigate = Router.navigate;
+    Router.navigate = async (view) => {
+        unsubscribe();
+        Router.navigate = originalNavigate;
+        return await Router.navigate(view);
+    };
 }
 
+function updateLiveMatchList(matches) {
+    const list = document.getElementById('live-match-list');
+    if (!list) return;
+
+    if (matches.length === 0) {
+        list.innerHTML = `
+            <div class="sidebar-header-live">PARTIDOS ACTIVOS</div>
+            <div style="padding: 2rem; text-align: center; color: var(--text-muted); font-size: 0.8rem;">
+                No hay partidos en curso actualmente.
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = `
+        <div class="sidebar-header-live">PARTIDOS ACTIVOS</div>
+        ${matches.map((m, i) => `
+            <div class="live-match-selector ${i === 0 ? 'active' : ''}" onclick="selectLiveMatch('${m.id}')" id="live-sel-${m.id}">
+                <div class="status-dot pulse"></div>
+                <div class="match-info">
+                    <div class="title">PISTA ${m.court}</div>
+                    <div class="sub">${m.team_a_names} vs ${m.team_b_names}</div>
+                </div>
+            </div>
+        `).join('')}
+    `;
+
+    if (matches.length > 0 && !window.selectedLiveMatchId) {
+        selectLiveMatch(matches[0].id);
+    }
+}
+
+window.selectLiveMatch = async (matchId) => {
+    window.selectedLiveMatchId = matchId;
+
+    // Highlight selector
+    document.querySelectorAll('.live-match-selector').forEach(el => el.classList.remove('active'));
+    document.getElementById(`live-sel-${matchId}`)?.classList.add('active');
+
+    const area = document.getElementById('live-broadcast-area');
+    if (!area) return;
+
+    // Fetch match details
+    const doc = await db.collection('matches').doc(matchId).get();
+    const m = { id: doc.id, ...doc.data() };
+
+    area.innerHTML = `
+        <div class="glass-card-enterprise broadcast-screen" style="background: #000; border: 2px solid var(--primary-glow); position: relative; overflow: hidden; height: 320px; box-shadow: 0 0 30px rgba(204, 255, 0, 0.1);">
+            <div class="broadcast-header" style="position: absolute; top: 20px; left: 20px; right: 20px;">
+                <div class="live-tag" style="background: linear-gradient(90deg, #ff0000, #ff4444); color: white; padding: 4px 12px; border-radius: 4px; font-weight: 900; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 6px;">
+                    <span style="width: 8px; height: 8px; background: white; border-radius: 50%; animation: pulse-opacity 1s infinite;"></span> EN DIRECTO • PISTA ${m.court}
+                </div>
+                <div style="float: right; color: rgba(255,255,255,0.4); font-size: 0.6rem; font-weight: 800; text-transform: uppercase;">
+                    SIGNAL: 4K HIGH DEPTH • LATENCY: 8ms
+                </div>
+            </div>
+
+            <div class="scoreboard-pro" style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: flex; align-items: center; padding: 1.5rem;">
+                <div class="team team-a" style="flex: 1; display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 44px; height: 44px; background: white; color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem;">${m.team_a_names.charAt(0)}</div>
+                    <div class="team-names" style="font-weight: 800; font-size: 1.1rem; color: white;">${m.team_a_names.split(' / ')[0]}<br><span style="font-size: 0.7rem; opacity: 0.5;">${m.team_a_names.split(' / ')[1] || ''}</span></div>
+                    <div style="margin-left: auto; font-size: 2.2rem; font-weight: 900; color: var(--primary);">${m.score_a}</div>
+                </div>
+
+                <div class="score-center" style="padding: 0 2rem; border-left: 1px solid rgba(255,255,255,0.1); border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                    <div style="font-size: 0.6rem; color: #64748b; font-weight: 900; letter-spacing: 2px;">VS</div>
+                    <div style="font-size: 0.5rem; color: var(--primary); font-weight: 800; background: rgba(204,255,0,0.1); padding: 2px 8px; border-radius: 10px;">PRO LEAGUE</div>
+                </div>
+
+                <div class="team team-b" style="flex: 1; display: flex; align-items: center; gap: 1rem; flex-direction: row-reverse; text-align: right;">
+                    <div style="width: 44px; height: 44px; background: rgba(255,255,255,0.1); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem;">${m.team_b_names.charAt(0)}</div>
+                    <div class="team-names" style="font-weight: 800; font-size: 1.1rem; color: white;">${m.team_b_names.split(' / ')[0]}<br><span style="font-size: 0.7rem; opacity: 0.5;">${m.team_b_names.split(' / ')[1] || ''}</span></div>
+                    <div style="margin-right: auto; font-size: 2.2rem; font-weight: 900; color: white;">${m.score_b}</div>
+                </div>
+            </div>
+            
+            <!-- Scanline effect -->
+            <div style="position: absolute; top:0; left:0; right:0; bottom:0; padding: 1.5rem; pointer-events: none; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%;"></div>
+        </div>
+
+        <div class="live-stats-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+            <div class="glass-card-enterprise" style="background: white; border: 1px solid #e2e8f0; padding: 1.5rem;">
+                <h3 style="margin: 0 0 1rem 0; color: #1e293b; font-size: 0.8rem; letter-spacing: 1px;">ESTADÍSTICAS EN TIEMPO REAL</h3>
+                <div class="pro-stat-bars">
+                    <div class="bar-row" style="margin-bottom: 0.8rem;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 4px;">
+                            <span>EFECTIVIDAD TEAM A</span>
+                            <span>${Math.round((m.score_a / (m.score_a + m.score_b || 1)) * 100)}%</span>
+                        </div>
+                        <div style="height: 6px; background: #f1f5f9; border-radius: 3px;"><div style="width: ${(m.score_a / (m.score_a + m.score_b || 1)) * 100}%; height: 100%; background: #2563eb; border-radius: 3px;"></div></div>
+                    </div>
+                    <div class="bar-row">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 4px;">
+                            <span>EFECTIVIDAD TEAM B</span>
+                            <span>${Math.round((m.score_b / (m.score_a + m.score_b || 1)) * 100)}%</span>
+                        </div>
+                        <div style="height: 6px; background: #f1f5f9; border-radius: 3px;"><div style="width: ${(m.score_b / (m.score_a + m.score_b || 1)) * 100}%; height: 100%; background: #94a3b8; border-radius: 3px;"></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card-enterprise" style="background: white; border: 1px solid #e2e8f0; padding: 1.5rem;">
+                <h3 style="margin: 0 0 1rem 0; color: #1e293b; font-size: 0.8rem; letter-spacing: 1px;">DIAGNOSTICO DE PARTIDO</h3>
+                <div class="live-log" style="font-size: 0.75rem; color: #64748b; font-weight: 500;">
+                    <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;"><span style="color: #2563eb; font-weight: 800;">[INFO]</span> Alta intensidad detectada en red.</div>
+                    <div style="padding: 8px 0;"><span style="color: #2563eb; font-weight: 800;">[IA]</span> Probabilidad de victoria cambiante.</div>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+
+// Enterprise Dashboard (Main Control Hub)
+async function renderDashboardView() {
+    const contentArea = document.getElementById('content-area');
+
+    contentArea.innerHTML = `
+        <div class="pt-dashboard" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Section: No te olvides -->
+            <div class="pt-section" style="padding: 1rem 0;">
+            <!-- Live Notifications Ticker -->
+            <div class="pt-live-ticker">
+                <div class="pt-live-dot"></div>
+                <div class="pt-ticker-content" id="live-news-ticker">Sintonizando últimas noticias del club...</div>
+            </div>
+
+            <!-- High Impact Hero Card (Featured Event) -->
+            <div id="pt-hero-container">
+                <div class="pt-hero-card">
+                    <div class="pt-hero-badge">DESTACADO</div>
+                    <div style="font-size: 1.4rem; font-weight: 900; margin-bottom: 0.5rem; line-height: 1.2;">SIM 4 PISTAS - 12:43</div>
+                    <p style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 1.5rem;">Viernes, 10 Enero • 18:30h @ Somos Padel Barcelona</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 800; font-size: 1.1rem; color: var(--pt-neon);">15€ / pers</span>
+                        <button class="btn-primary" style="background: var(--pt-neon); color: var(--pt-blue-deep); padding: 8px 16px; border-radius: 20px; border:none; font-weight: 800; font-size: 0.75rem; box-shadow: 0 4px 10px var(--pt-neon-glow);">ME APUNTO</button>
+                    </div>
+                    <div style="position: absolute; right: -10px; bottom: 0; font-size: 6rem; opacity: 0.15; transform: rotate(-15deg);">🎾</div>
+                </div>
+            </div>
+
+            <div id="my-next-match-container"></div>
+
+            <!-- Hub Grid (Circular Icons) -->
+            <div class="pt-hub-grid">
+                <div class="pt-hub-item" onclick="Router.navigate('americanas')">
+                    <button class="pt-circle-btn">🎾</button>
+                    <span class="pt-hub-label">Reservar pista</span>
+                </div>
+                <div class="pt-hub-item">
+                    <button class="pt-circle-btn" style="background: #ccff00;">🎓</button>
+                    <span class="pt-hub-label">Aprender</span>
+                </div>
+                <div class="pt-hub-item">
+                    <button class="pt-circle-btn" style="background: #ccff00;">🏆</button>
+                    <span class="pt-hub-label">Competir</span>
+                </div>
+                <div class="pt-hub-item" onclick="Router.navigate('americanas')">
+                    <button class="pt-circle-btn" style="background: #ccff00;">🔍</button>
+                    <span class="pt-hub-label">Buscar partido</span>
+                </div>
+            </div>
+
+            <!-- Featured Banner (Playtomic Wrapped Style) -->
+            <div class="pt-banner" style="background: linear-gradient(90deg, #2563EB, #3b82f6); border-radius: 16px; padding: 1.5rem; color: white; position: relative; overflow: hidden;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: white;">Playtomic Wrapped 2025</h2>
+                <p style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 1rem;">Revive tus momentos en la pista</p>
+                <button style="background: white; color: #2563EB; border: none; padding: 0.6rem 1.2rem; border-radius: 20px; font-weight: 800; font-size: 0.8rem;">Descúbrelo ahora</button>
+                <div style="position: absolute; right: -20px; bottom: -20px; font-size: 6rem; opacity: 0.2;">🎾</div>
+            </div>
+
+            <!-- User Status / Stats -->
+            <div class="dashboard-grid-enterprise" style="margin-top: 1rem; border:none; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="glass-card-enterprise highlight-pro" style="background: white; border: 1px solid #e2e8f0; text-align: center; padding: 1.5rem;">
+                    <h3 style="margin-bottom: 0.5rem; color: #64748b;">PARTIDAS</h3>
+                    <div class="stat-value-pro" style="font-size: 2.5rem; color: #2563EB;">${AppStore.user?.matches_played || '0'}</div>
+                    <span style="font-size: 0.7rem; color: #64748b; font-weight: 800;">EN SOMOSPADEL</span>
+                </div>
+
+                <div class="glass-card-enterprise" style="background: white; border: 1px solid #e2e8f0; text-align: center; padding: 1.5rem;">
+                    <h3 style="margin-bottom: 0.5rem; color: #64748b;">WIN RATE</h3>
+                    <div class="stat-value-pro" style="font-size: 2.5rem; color: #2563EB;">${AppStore.user?.win_rate || '0'}%</div>
+                    <span style="font-size: 0.7rem; color: #64748b; font-weight: 800;">SEASON 2026</span>
+                </div>
+            </div>
+
+            <!-- Section: Próximas Americanas -->
+            <div class="pt-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="color: #1e293b; font-size: 1.2rem; font-weight: 800; margin: 0; border:none; text-transform: none; letter-spacing: normal;">Próximas Americanas</h3>
+                    <button onclick="Router.navigate('americanas')" style="background: none; border: none; color: #2563EB; font-weight: 700; font-size: 0.9rem;">Ver todas</button>
+                </div>
+                <div id="visual-planning-container" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div class="loader"></div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Initialize logic
+    renderPlanningWidget('all');
+    checkAndRenderMyMatch();
+    initLiveNewsTicker();
+
+    // Add pulse to notification icon
+    const bellIcon = document.querySelector('.top-actions i');
+    if (bellIcon) bellIcon.parentElement.classList.add('pt-notification-pulse');
+}
+
+function initLiveNewsTicker() {
+    const ticker = document.getElementById('live-news-ticker');
+    if (!ticker) return;
+
+    const news = [
+        "🏆 Nuevo ranking actualizado: Carlos (Sim) lidera con 4.33",
+        "🎾 Americanas del fin de semana con un 90% de ocupación",
+        "🔥 ¡Nuevos jugadores registrados hoy en la comunidad!",
+        "🚀 Tu nivel ha evolucionado un +0.12 tras el último partido",
+        "🏢 Pistas 1 y 2 reservadas para la Americana Pro de las 18:30"
+    ];
+
+    let i = 0;
+    setInterval(() => {
+        ticker.style.opacity = 0;
+        setTimeout(() => {
+            ticker.textContent = news[i];
+            ticker.style.opacity = 1;
+            i = (i + 1) % news.length;
+        }, 500);
+    }, 4000);
+}
+
+async function checkAndRenderMyMatch() {
+    const container = document.getElementById('my-next-match-container');
+    if (!container || !AppStore.user) return;
+
+    try {
+        const matches = await FirebaseDB.matches.getByAmericana('any'); // This is a bit heavy, in prod we'd filter by user in query
+        // For now, let's get matches from all active americanas
+        const americanas = await FirebaseDB.americanas.getAll();
+        const activeIds = americanas.filter(a => a.status === 'in_progress').map(a => a.id);
+
+        let myMatch = null;
+        for (const aid of activeIds) {
+            const mList = await FirebaseDB.matches.getByAmericana(aid);
+            myMatch = mList.find(m => m.status === 'live' && (m.team_a_ids?.includes(AppStore.user.id) || m.team_b_ids?.includes(AppStore.user.id)));
+            if (myMatch) break;
+        }
+
+        if (myMatch) {
+            container.innerHTML = `
+            <div class="glass-card-enterprise" style="background: var(--pt-blue); border: none; padding: 1.2rem; display: flex; align-items: center; gap: 1rem; color: white; margin-bottom: 1.5rem; position: relative; overflow: hidden;">
+                <div style="position: absolute; top:0; right:0; padding: 5px 12px; background: rgba(255,255,255,0.2); font-size: 0.6rem; font-weight: 800;">EN JUEGO</div>
+                <div style="font-size: 2rem;">🎾</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 800; font-size: 1.1rem;">Tu partido en Pista ${myMatch.court}</div>
+                    <div style="font-size: 0.8rem; opacity: 0.9;">Marcador: ${myMatch.score_a} - ${myMatch.score_b}</div>
+                </div>
+                <button class="btn-primary" style="background: white; color: var(--pt-blue); border: none; font-size: 0.75rem; padding: 8px 16px;" onclick="Router.navigate('tournament-live')">VER LIVE</button>
+            </div>
+            `;
+        } else {
+            container.innerHTML = '';
+        }
+    } catch (e) { console.error(e); }
+}
+
+function initDashboardCharts() {
+    const ctx = document.getElementById('levelsChart');
+    if (!ctx) return;
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Iniciación', 'Intermedio', 'Avanzado', 'Pro'],
+            datasets: [{
+                data: [15, 45, 30, 10],
+                backgroundColor: ['#3b82f6', '#ccff00', '#f59e0b', '#ef4444'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            cutout: '70%',
+            plugins: {
+                legend: { display: false }
+            },
+            maintainAspectRatio: false
+        }
+    });
+}
+
+async function renderPlanningWidget(filter = 'all') {
+    const container = document.getElementById('visual-planning-container');
+    if (!container) return;
+
+    try {
+        const [allAmericanas, allPlayers] = await Promise.all([
+            FirebaseDB.americanas.getAll(),
+            FirebaseDB.players.getAll()
+        ]);
+
+        let filtered = allAmericanas;
+        if (filter === 'mine') {
+            filtered = allAmericanas.filter(a => a.players?.includes(AppStore.user?.id));
+        } else {
+            filtered = allAmericanas.filter(a => a.status === 'open' || a.status === 'in_progress');
+        }
+
+        const upcoming = filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        if (upcoming.length === 0) {
+            container.innerHTML = `<p style="padding:2rem; text-align:center; color:#64748b;">${filter === 'mine' ? 'No tienes competiciones activas.' : 'No hay eventos programados.'}</p>`;
+            return;
+        }
+
+        // HERO SECTION (Update the top hero container with the most imminent one)
+        const heroContainer = document.getElementById('pt-hero-container');
+        if (heroContainer && upcoming.length > 0 && filter === 'all') {
+            const h = upcoming[0];
+            const joinedCount = h.players?.length || 0;
+            const maxPlayers = h.max_courts * 4 || 16;
+            const dateStr = new Date(h.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
+            const isFull = joinedCount >= maxPlayers;
+
+            heroContainer.innerHTML = `
+            <div class="pt-hero-card" onclick="renderEventDetails('${h.id}')" style="cursor:pointer;">
+                <div class="pt-hero-badge">${isFull ? '🔥 AGOTADO' : '✨ PRÓXIMO EVENTO'}</div>
+                <div style="font-size: 1.4rem; font-weight: 900; margin-bottom: 0.5rem; line-height: 1.2;">${h.name.toUpperCase()}</div>
+                <p style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 1.5rem;">${dateStr} • ${h.time || '18:30'}h @ Somos Padel</p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 800; font-size: 1.1rem; color: var(--pt-neon);">${h.price || 15}€ <small style="opacity:0.7; font-size:0.6rem;">/ pers</small></span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 0.7rem; font-weight: 700;">👤 ${joinedCount}/${maxPlayers}</span>
+                        <button class="btn-primary" style="background: var(--pt-neon); color: var(--pt-blue-deep); padding: 8px 16px; border-radius: 20px; border:none; font-weight: 800; font-size: 0.75rem; box-shadow: 0 4px 10px var(--pt-neon-glow);">${isFull ? 'VER DETALLES' : 'ME APUNTO'}</button>
+                    </div>
+                </div>
+                <div style="position: absolute; right: -10px; bottom: 0; font-size: 6rem; opacity: 0.15; transform: rotate(-15deg);">🎾</div>
+            </div>
+            `;
+        }
+
+        const otherEvents = (filter === 'all' && upcoming.length > 1) ? upcoming.slice(1) : upcoming;
+
+        container.innerHTML = otherEvents.map(a => {
+            const joinedCount = a.players?.length || 0;
+            const maxPlayers = a.max_courts * 4 || 16;
+            const price = a.price || 15;
+            const dateStr = new Date(a.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
+            const isFull = joinedCount >= maxPlayers;
+
+            return `
+            <div class="pt-event-card" onclick="renderEventDetails('${a.id}')" style="cursor:pointer; transition: 0.2s; border-left: 4px solid ${isFull ? '#ef4444' : 'var(--pt-neon)'};">
+                <div class="pt-event-header">
+                    <div class="pt-event-img" style="background: ${isFull ? '#fee2e2' : 'var(--pt-blue-light)'};">
+                        ${isFull ? '🔥' : '🎾'}
+                    </div>
+                    <div class="pt-event-info">
+                        <div class="pt-event-meta">${dateStr} | ${a.time || '18:30'}</div>
+                        <div class="pt-event-title" style="display: flex; align-items: center; gap: 8px;">
+                            ${a.name.toUpperCase()}
+                            ${isFull ? '<span style="background: #ef4444; color: white; font-size: 0.5rem; padding: 2px 6px; border-radius: 10px;">FULL</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pt-event-footer">
+                    <div class="pt-club-info">
+                        <span style="font-size: 1.2rem;">🏢</span>
+                        <div style="font-size: 0.8rem;">
+                            <div style="font-weight: 700; color: #1e293b;">Somos Padel Barcelona</div>
+                            <div style="color: #64748b;">A 18km</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.75rem; color: ${isFull ? '#ef4444' : '#64748b'}; font-weight: 700;">👤 ${joinedCount}/${maxPlayers}</div>
+                        <div class="pt-price-tag">${price}€</div>
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+
+    } catch (e) {
+        console.error("Planning Widget Error:", e);
+        container.innerHTML = `<div class="error">Error cargando planificación.</div>`;
+    }
+}
+
+async function handleAmericanaJoin(id, isJoined) {
+    if (!AppStore.user) {
+        showToast("Inicia sesión para apuntarte", "error");
+        return;
+    }
+
+    const btn = document.getElementById(`btn-join-${id}`);
+    if (btn) {
+        btn.innerHTML = '<span class="loader-mini"></span>';
+        btn.disabled = true;
+    }
+
+    try {
+        if (isJoined) {
+            await FirebaseDB.americanas.removePlayer(id, AppStore.user.id);
+            showToast("Ya no estás apuntado a la americana", "info");
+        } else {
+            await FirebaseDB.americanas.addPlayer(id, AppStore.user.id);
+            showToast("¡Te has apuntado con éxito! 🚀", "success");
+        }
+        renderPlanningWidget();
+    } catch (e) {
+        showToast("Error en el sistema: " + e.message, "error");
+        if (btn) {
+            btn.innerHTML = isJoined ? '✓ INSCRITO' : 'APUNTARME';
+            btn.disabled = false;
+        }
+    }
+}
+
+async function renderActivityFeed() {
+    const feed = document.getElementById('activity-feed-content');
+    if (!feed) return;
+
+    const activities = [
+        { type: 'match', icon: '🎾', text: 'Nueva Americana abierta: Viernes Pro', time: '10m' },
+        { type: 'result', icon: '🏆', text: 'Galan / Lebron ganaron 6-2', time: '25m' },
+        { type: 'user', icon: '👤', text: 'Carlos se ha unido al ranking', time: '1h' },
+        { type: 'live', icon: '🔴', text: 'Marcador actualizado en Pista 2', time: 'Justo ahora' }
+    ];
+
+    feed.innerHTML = activities.map(a => `
+        <div class="activity-item" style="display: flex; align-items: flex-start; gap: 0.8rem;">
+            <div style="font-size: 1rem; filter: drop-shadow(0 0 5px var(--primary-glow));">${a.icon}</div>
+            <div>
+                <div style="font-size: 0.85rem; margin-bottom: 2px; color: var(--text);">${a.text}</div>
+                <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700;">${a.time.toUpperCase()}</div>
+            </div>
+        </div>
+        `).join('');
+}
+
+
+
+// Enterprise Rankings (Season Standings) - Playtomic Style
 async function renderRankingsView() {
     const players = await fetchPlayers();
-
-    // Calculate Rank Logic (Mock sorting if not really calculated)
     const sortedPlayers = players.sort((a, b) => {
-        // Sort by win_rate desc, then matches_played desc
         if (b.win_rate !== a.win_rate) return b.win_rate - a.win_rate;
         return b.matches_played - a.matches_played;
     });
 
-    const listHtml = sortedPlayers.length ? sortedPlayers.map((p, index) => {
-        let rankBadge = `<span style="font-weight: 800; color: var(--text-muted); width: 24px; display: inline-block;">${index + 1}</span>`;
-        let rowStyle = "";
+    const contentArea = document.getElementById('content-area');
 
-        if (index === 0) {
-            rankBadge = `<span style="font-size: 1.2rem;">🥇</span>`;
-            rowStyle = "background: linear-gradient(90deg, rgba(212, 175, 55, 0.1), transparent);";
-        } else if (index === 1) {
-            rankBadge = `<span style="font-size: 1.2rem;">🥈</span>`;
-        } else if (index === 2) {
-            rankBadge = `<span style="font-size: 1.2rem;">🥉</span>`;
-        }
+    // PERSONAL SECTION (If logged in)
+    let myStatsHtml = '';
+    if (AppStore.user) {
+        const me = players.find(p => p.id === AppStore.user.id) || AppStore.user;
+        const level = parseFloat(me.self_rate_level || me.level || 3.5);
+        const nextTarget = Math.ceil(level * 2) / 2; // Next 0.5 step
+        const progress = ((level - (nextTarget - 0.5)) / 0.5) * 100;
 
-        return `
-        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); ${rowStyle}">
-            <td style="padding: 1rem; text-align: center;">${rankBadge}</td>
-            <td style="padding: 1rem;">
-                <div style="display:flex; align-items:center; gap:0.5rem;">
-                     <div style="width:32px; height:32px; background: rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem;">${p.name.charAt(0)}</div>
-                    <div style="font-weight: 600;">${p.name}</div>
-                </div>
-            </td>
-            <td style="padding: 1rem;">
-                <span style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem;">${p.level}</span>
-            </td>
-            <td style="padding: 1rem; font-family: 'Outfit'; font-weight: 600;">${p.matches_played}</td>
-            <td style="padding: 1rem; color: ${p.win_rate >= 50 ? 'var(--success)' : 'var(--danger)'}; font-weight: 700;">${p.win_rate}%</td>
-        </tr>
-    `}).join('') : `<tr><td colspan="5" class="text-center p-4">Sin datos</td></tr>`;
+        myStatsHtml = `
+        <div class="glass-card-enterprise" style="background: white; margin-bottom: 1.5rem; padding: 1.5rem; border-left: 6px solid var(--pt-blue);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0; color: #1e293b; font-size: 0.8rem; letter-spacing: 1px;">MI PROGRESO</h3>
+                <span class="pt-level-badge" style="font-size: 1rem; padding: 4px 12px; border-radius: 20px;">Lvl ${level.toFixed(2)}</span>
+            </div>
+            
+            <div style="display: flex; align-items: flex-end; gap: 10px; margin-bottom: 1rem;">
+                <div style="font-size: 2.2rem; font-weight: 900; color: #1e293b; line-height: 1;">${level.toFixed(2)}</div>
+                <div style="font-size: 0.8rem; color: #64748b; font-weight: 700; padding-bottom: 4px;">TOP 15%</div>
+            </div>
+
+            <div style="height: 10px; background: #f1f5f9; border-radius: 5px; overflow: hidden; position: relative;">
+                <div style="width: ${progress}%; height: 100%; background: linear-gradient(90deg, #2563eb, #3b82f6); border-radius: 5px;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.7rem; font-weight: 800; color: #94a3b8;">
+                <span>${(nextTarget - 0.5).toFixed(1)}</span>
+                <span>PRÓXIMO OBJETIVO: ${nextTarget.toFixed(1)}</span>
+            </div>
+        </div>
+        `;
+    }
 
     contentArea.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3>Ranking Global - Temporada 2026</h3>
-            <button class="btn-secondary" onclick="renderRankingsView()">🔄 Actualizar</button>
+        <div class="pt-view-header pt-mb-0">
+            <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Ranking Global</h2>
+            <div class="pt-filters-row">
+                <div class="pt-filter-chip active">Todos</div>
+                <div class="pt-filter-chip">Masculino</div>
+                <div class="pt-filter-chip">Femenino</div>
+                <div class="pt-filter-chip">Nivel</div>
+            </div>
         </div>
 
-        <div class="dashboard-grid" style="grid-template-columns: 1fr 3fr; align-items: start;">
-            <!-- Top Player Card -->
-            <div class="stat-card" style="text-align: center; border: 1px solid var(--primary); box-shadow: 0 0 30px -10px rgba(212, 175, 55, 0.3);">
-                <div style="font-size: 4rem; margin-bottom: 1rem;">👑</div>
-                <h3 style="color: var(--primary); margin-bottom: 0.5rem;">NÚMERO #1</h3>
-                <div style="font-size: 1.5rem; font-weight: 800; color: white; margin-bottom: 0.5rem;">${sortedPlayers[0]?.name || '--'}</div>
-                <p style="color: var(--text-muted); font-size: 0.9rem;">${sortedPlayers[0]?.win_rate || 0}% Victorias</p>
-            </div>
+        <div style="padding: 1.5rem 1.5rem 0 1.5rem;">
+            ${myStatsHtml}
+        </div>
 
-            <!-- Table -->
-            <div class="glass-panel">
-                <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-muted);">
-                            <th style="padding: 1rem; width: 60px; text-align: center;">#</th>
-                            <th style="padding: 1rem;">Jugador</th>
-                            <th style="padding: 1rem;">Nivel</th>
-                            <th style="padding: 1rem;">Partidos</th>
-                            <th style="padding: 1rem;">Win Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${listHtml}
-                    </tbody>
-                </table>
-            </div>
+        <div class="pt-ranking-list">
+            ${sortedPlayers.map((p, index) => {
+        const isSelf = p.id === AppStore.user?.id;
+        return `
+                <div class="pt-ranking-item" style="${isSelf ? 'background: #eff6ff; border-left: 4px solid #2563eb' : ''}">
+                    <div class="pt-rank-number">${index + 1}</div>
+                    <div class="pt-rank-avatar">${p.name.charAt(0)}</div>
+                    <div class="pt-rank-info">
+                        <div class="pt-rank-name">${p.name} ${isSelf ? '(Tú)' : ''}</div>
+                        <div class="pt-rank-sub">Nivel ${p.self_rate_level || p.level || '3.5'} • ${p.matches_played} partidos</div>
+                    </div>
+                    <div class="pt-rank-val">
+                        <div class="pt-rank-score">${p.win_rate}%</div>
+                        <div style="font-size: 0.65rem; font-weight: 800; color: #64748b;">WIN RATE</div>
+                    </div>
+                </div>
+                `;
+    }).join('')}
         </div>
     `;
 }
 
-function renderDashboardView() {
+async function renderCommunityView() {
+    const contentArea = document.getElementById('content-area');
     contentArea.innerHTML = `
-        <div class="dashboard-grid">
-            <div class="stat-card">
-                <h3>Partidos Hoy</h3>
-                <p class="stat-value">0</p>
-                <p class="stat-trend neutral">No hay eventos</p>
-            </div>
-            <div class="stat-card">
-                <h3>Jugadores Activos</h3>
-                <p class="stat-value" id="total-players-count">--</p>
-                <p class="stat-trend positive">Base de datos conectada</p>
-            </div>
-            <div class="stat-card">
-                <h3>Pistas Ocupadas</h3>
-                <p class="stat-value">0/10</p>
-                <p class="stat-trend neutral">Disponibilidad total</p>
+        <div class="pt-view-header">
+            <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Comunidad</h2>
+            <div class="pt-tab-container" style="margin-bottom: 0;">
+                <div class="pt-tab active">Actividad</div>
+                <div class="pt-tab" onclick="showToast('Próximamente', 'info')">Grupos</div>
+                <div class="pt-tab" onclick="showToast('Próximamente', 'info')">Amigos</div>
             </div>
         </div>
-        <div class="glass-panel">
-            <h3>🔥 Actividad Reciente</h3>
-            <p style="color: var(--text-muted); padding: 1rem 0;">Sistema iniciado correctamente.</p>
+
+        <div style="padding: 1rem;">
+            <div class="pt-search-bar">
+                <span>🔍</span>
+                <input type="text" placeholder="Buscar en la comunidad...">
+            </div>
+
+            <div id="activity-feed-container" style="margin-top: 1rem;">
+                <!-- Activity / Chat Feed -->
+                <div id="activity-feed-content" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div class="loader"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Float Chat Input (Playtomic style) -->
+        <div style="position: fixed; bottom: 85px; left: 1.5rem; right: 1.5rem; background: white; padding: 0.8rem 1rem; border-radius: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; border: 1px solid var(--pt-border); z-index: 100;">
+            <input type="text" id="community-chat-input" placeholder="Di algo a la comunidad..." style="flex: 1; border: none; background: transparent; font-size: 0.9rem; outline: none; color: var(--pt-text);">
+            <button onclick="postToCommunity()" style="background: var(--pt-blue); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; transform: rotate(45deg);">✈️</button>
         </div>
     `;
-    // Fetch generic stats if needed
-    fetchPlayers().then(players => {
-        const countEl = document.getElementById('total-players-count');
-        if (countEl) countEl.textContent = players.length;
-    });
+
+    renderActivityFeed();
+}
+
+async function renderActivityFeed() {
+    const container = document.getElementById('activity-feed-content');
+    if (!container) return;
+
+    try {
+        // Fetch recent messages or activity
+        const snapshot = await db.collection('community').orderBy('timestamp', 'desc').limit(20).get();
+        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        if (items.length === 0) {
+            container.innerHTML = `<div style="text-align:center; padding: 4rem; color: #94a3b8;">¡Sé el primero en saludar! 👋</div>`;
+            return;
+        }
+
+        container.innerHTML = items.map(msg => {
+            const isMe = msg.user_id === AppStore.user?.id;
+            const timeStr = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Ahora';
+
+            return `
+            <div style="display: flex; gap: 12px; align-items: flex-start; ${isMe ? 'flex-direction: row-reverse;' : ''}">
+                <div class="pt-rank-avatar" style="width: 36px; height: 36px; font-size: 0.9rem; flex-shrink: 0; background: ${isMe ? 'var(--pt-blue)' : 'var(--pt-blue-light)'}; color: ${isMe ? 'white' : 'var(--pt-blue)'};">
+                    ${msg.user_name?.charAt(0) || '?'}
+                </div>
+                <div style="max-width: 75%;">
+                    <div style="display: flex; gap: 8px; align-items: baseline; margin-bottom: 2px; ${isMe ? 'flex-direction: row-reverse;' : ''}">
+                        <span style="font-size: 0.75rem; font-weight: 800; color: #1e293b;">${msg.user_name}</span>
+                        <span style="font-size: 0.6rem; color: #94a3b8;">${timeStr}</span>
+                    </div>
+                    <div style="background: ${isMe ? 'var(--pt-blue)' : 'white'}; color: ${isMe ? 'white' : '#1e293b'}; padding: 0.8rem 1rem; border-radius: 18px; border-top-${isMe ? 'right' : 'left'}-radius: 2px; font-size: 0.9rem; border: 1px solid ${isMe ? 'var(--pt-blue)' : 'var(--pt-border)'}; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+                        ${msg.text}
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('') + '<div style="height: 100px;"></div>'; // Extra space for input
+
+    } catch (e) {
+        console.error("Feed Error:", e);
+        container.innerHTML = `<div class="error">Error cargando feed.</div>`;
+    }
+}
+
+window.postToCommunity = async () => {
+    const input = document.getElementById('community-chat-input');
+    const text = input.value.trim();
+    if (!text || !AppStore.user) return;
+
+    try {
+        await db.collection('community').add({
+            text: text,
+            user_id: AppStore.user.id,
+            user_name: AppStore.user.name,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        input.value = '';
+        renderActivityFeed();
+    } catch (e) {
+        showToast("Error al enviar mensaje", "error");
+    }
+};
+
+
+// Main View for "Programación"
+
+async function renderAmericanasView() {
+    const contentArea = document.getElementById('content-area');
+    contentArea.innerHTML = `
+        <div class="pt-view-header">
+            <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Competiciones</h2>
+            <div class="pt-tab-container">
+                <div class="pt-tab active" id="tab-available" onclick="switchAmericanasTab('all')">Disponible</div>
+                <div class="pt-tab" id="tab-mine" onclick="switchAmericanasTab('mine')">Tus competiciones</div>
+            </div>
+            <div class="pt-filters-row">
+                <div class="pt-filter-chip active">Todo</div>
+                <div class="pt-filter-chip">Hoy</div>
+                <div class="pt-filter-chip">Mañana</div>
+                <div class="pt-filter-chip">Mixto</div>
+                <div class="pt-filter-chip">Masculino</div>
+            </div>
+        </div>
+        <div style="padding: 1.5rem;">
+            <div id="visual-planning-container" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="loader"></div>
+            </div>
+        </div>
+    `;
+
+    renderPlanningWidget('all');
+}
+
+window.switchAmericanasTab = (tab) => {
+    document.getElementById('tab-available').classList.toggle('active', tab === 'all');
+    document.getElementById('tab-mine').classList.toggle('active', tab === 'mine');
+    renderPlanningWidget(tab);
+};
+
+async function renderEventDetails(id) {
+    const contentArea = document.getElementById('content-area');
+    contentArea.innerHTML = '<div class="loader"></div>';
+
+    try {
+        const [a, allPlayers] = await Promise.all([
+            FirebaseDB.americanas.getById(id),
+            FirebaseDB.players.getAll()
+        ]);
+
+        if (!a) throw new Error("Evento no encontrado");
+
+        const joinedCount = a.players?.length || 0;
+        const maxPlayers = a.max_courts * 4 || 16;
+        const isJoined = a.players?.includes(AppStore.user?.id);
+        const dateStr = new Date(a.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
+
+        contentArea.innerHTML = `
+            <div class="pt-details-view">
+                <div class="pt-details-header">
+                    <div style="color: #2563EB; font-weight: 800; font-size: 0.9rem; margin-bottom: 0.5rem;">${dateStr} | ${a.time || '18:30'} - 21:00</div>
+                    <h1 style="font-size: 1.8rem; margin-bottom: 0.5rem; color: #1e293b;">${a.name.toUpperCase()}</h1>
+                    <div style="color: #64748b; font-weight: 600;">Somos Padel Barcelona</div>
+
+                    <div class="pt-action-circles">
+                        <div class="pt-action-circle">
+                            <button class="pt-circle-btn-solid">0€</button>
+                            <span style="font-size: 0.7rem; font-weight: 700;">INSCRIBIRME</span>
+                        </div>
+                        <div class="pt-action-circle">
+                            <button class="pt-circle-btn-outline">🔗</button>
+                            <span style="font-size: 0.7rem; font-weight: 700;">COMPARTIR</span>
+                        </div>
+                        <div class="pt-action-circle">
+                            <button class="pt-circle-btn-outline">💬</button>
+                            <span style="font-size: 0.7rem; font-weight: 700;">CHAT</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-players-section" style="background: white; border-radius: 24px 24px 0 0; margin-top: -24px;">
+                    <div class="pt-section-title">
+                        <h3 style="font-weight: 800; color: #1e293b; border:none; text-transform:none;">Jugadores (${joinedCount}/${maxPlayers})</h3>
+                        <a href="#" style="color: #2563EB; font-weight: 700; font-size: 0.9rem; text-decoration: none;">Ver todos</a>
+                    </div>
+
+                    <div class="pt-avatar-list">
+                        ${(a.players || []).map(pid => {
+            const p = allPlayers.find(u => u.id === pid);
+            if (!p) return '';
+            return `
+                            <div class="pt-player-avatar-card">
+                                <div class="pt-avatar-circle">
+                                    <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#EFF6FF; color:#2563EB; font-weight:800; font-size:1.2rem;">
+                                        ${p.name.charAt(0)}
+                                    </div>
+                                </div>
+                                <div class="pt-level-badge">${p.self_rate_level || p.level || '3.5'}</div>
+                                <span style="font-size: 0.7rem; font-weight: 600; color: #1e293b; width: 60px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name.split(' ')[0]}</span>
+                            </div>
+                            `;
+        }).join('')}
+                    </div>
+
+                    <div style="margin-top: 2rem; border-top: 1px solid #E2E8F0; padding-top: 1.5rem;">
+                        <h3 style="font-weight: 800; color: #1e293b; margin-bottom: 1rem; border:none; text-transform:none;">Descripción</h3>
+                        <div style="font-size: 0.9rem; color: #64748b; line-height: 1.6;">
+                            <p>🎾 Padel, inscripción individual o doble</p>
+                            <p>📊 Nivel Playtomic: 0 - 7</p>
+                            <p style="margin-top: 1rem;">Unete a las americanas más crazys de todas.</p>
+                            <p>Formato:</p>
+                            <p>- Pareja fija durante toda la americana</p>
+                            <p>- 5 partidos de 17 minutos</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-sticky-footer">
+                    <button id="btn-join-${a.id}" class="pt-btn-primary" onclick="handleAmericanaJoin('${a.id}', ${isJoined})">
+                        ${isJoined ? 'BORRARME ❌' : 'APUNTARME - 0€'}
+                    </button>
+                </div>
+            </div>
+        `;
+
+    } catch (e) {
+        console.error(e);
+        contentArea.innerHTML = `<div style="padding:2rem;">Error: ${e.message}</div>`;
+    }
+}
+
+// --- New Grid Renderer (Style "SomosPadel") ---
+async function renderAmericanaGrid(americanaId) {
+    const container = document.getElementById('grid-container');
+    if (!container) return;
+
+    container.innerHTML = '<div class="loader"></div>';
+
+    try {
+        const matches = await FirebaseDB.matches.getByAmericana(americanaId);
+        if (matches.length === 0) {
+            container.innerHTML = '<div style="padding:2rem; text-align:center;">No hay partidos generados aún.</div>';
+            return;
+        }
+
+        // 1. Determine Dimensions
+        const rounds = [...new Set(matches.map(m => m.round))].sort((a, b) => a - b);
+        const maxCourt = Math.max(...matches.map(m => m.court));
+
+        // 2. Build Grid HTML
+        let gridHTML = `
+    <div class="schedule-container">
+            <div class="schedule-grid" style="grid-template-columns: 80px repeat(${maxCourt}, minmax(180px, 1fr));">
+                <!-- Header Row -->
+                <div class="grid-header">HORA</div>
+                ${Array.from({ length: maxCourt }, (_, i) => `<div class="grid-header">PISTA ${i + 1}</div>`).join('')}
+
+                <!-- Rows -->
+                ${rounds.map(round => {
+            // Mock Time: Start at 18:00 + 20 mins per round
+            const baseTime = new Date();
+            baseTime.setHours(18, 0, 0);
+            baseTime.setMinutes(baseTime.getMinutes() + (round - 1) * 20);
+            const timeStr = baseTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            let rowHTML = `<div class="round-header">R${round}<br><span style="font-size:0.7rem">${timeStr}</span></div>`;
+
+            for (let c = 1; c <= maxCourt; c++) {
+                const match = matches.find(m => m.round === round && m.court === c);
+                if (match) {
+                    const statusClass = match.status; // scheduled, live, finished
+                    const statusLabel = match.status === 'live' ? 'EN JUEGO' : (match.status === 'finished' ? 'FINALIZADO' : 'PENDIENTE');
+
+                    rowHTML += `
+                                    <div class="match-card-program">
+                                        <div class="match-card-header ${statusClass}">
+                                            <span>${statusLabel}</span>
+                                            <span>M${match.id}</span>
+                                        </div>
+                                        <div class="match-players">
+                                            <div style="border-bottom: 1px solid #eee; padding-bottom: 4px; margin-bottom: 4px;">
+                                                ${match.team_a_names.replace(' / ', '<br>')}
+                                            </div>
+                                            <div>
+                                                ${match.team_b_names.replace(' / ', '<br>')}
+                                            </div>
+                                        </div>
+                                        <div class="match-score-footer">
+                                            ${match.status === 'scheduled'
+                            ? '<span style="color:#999">- vs -</span>'
+                            : `<span class="score-badge">${match.score_a} - ${match.score_b}</span>`
+                        }
+                                        </div>
+                                    </div>
+                                `;
+                }
+            }
+            return rowHTML;
+        }).join('')}
+            </div>
+    </div>`;
+        container.innerHTML = gridHTML;
+    } catch (e) {
+        container.innerHTML = `<div class="error-box">Error: ${e.message}</div>`;
+    }
+}
+
+
+
+// --- 🛠️ DATA HELPERS ---
+async function fetchAmericanas() { return await FirebaseDB.americanas.getAll(); }
+async function fetchPlayers() { return await FirebaseDB.players.getAll(); }
+
+// Global Join Function
+window.joinAmericana = async (eventId) => {
+    if (!AppStore.user) return showToast("Inicia sesión para apuntarte.", "info");
+    if (!confirm("¿Inscribirte en este torneo?")) return;
+
+    try {
+        await FirebaseDB.americanas.addPlayer(eventId, AppStore.user.id);
+        showToast("¡Te has apuntado con éxito!", "success");
+        Router.navigate('americanas');
+    } catch (e) { showToast(e.message, "error"); }
+};
+
+async function updateTicker() {
+    try {
+        const americanas = await fetchAmericanas();
+        const active = americanas.find(a => a.status === 'in_progress');
+        if (!active) {
+            document.getElementById('ticker-track-content').textContent = "BIENVENIDOS A LA TEMPORADA 2026 /// PRÓXIMO TORNEO ESTE SÁBADO /// INSCRIPCIONES ABIERTAS";
+            return;
+        }
+
+        const matches = await FirebaseDB.matches.getByAmericana(active.id);
+        const finished = matches.filter(m => m.status === 'finished').sort((a, b) => b.round - a.round).slice(0, 5);
+
+        if (finished.length > 0) {
+            const text = finished.map(m => `RESULTADO PISTA ${m.court}: ${m.team_a_names.split(' / ')[0]}... ${m.score_a} - ${m.score_b} ${m.team_b_names.split(' / ')[0]}... /// `).join('');
+            document.getElementById('ticker-track-content').textContent = text + "  SIGUE JUGANDO /// ";
+        } else {
+            document.getElementById('ticker-track-content').textContent = "TORNEO EN JUEGO /// RESULTADOS EN BREVE /// MUCHA SUERTE A TODOS";
+        }
+    } catch (e) { console.log(e); }
+}
+
+async function checkAndRenderMyMatch() {
+    try {
+        const americanas = await fetchAmericanas();
+        // Check for ANY open/in_progress americana
+        const activeAmericana = americanas.find(a => a.status === 'in_progress' || a.status === 'open');
+
+        if (activeAmericana) {
+            // Render the Grid for this Americana
+            renderAmericanaGrid(activeAmericana.id);
+        } else {
+            const grid = document.getElementById('grid-container');
+            if (grid) grid.innerHTML = `<p style="text-align:center; color: var(--text-muted);">No hay torneo activo para mostrar parrilla.</p>`;
+        }
+
+        if (!activeAmericana) return;
+
+        const matches = await FirebaseDB.matches.getByAmericana(activeAmericana.id);
+
+        // Find my active match
+        const myMatch = matches.find(m =>
+            (m.status === 'scheduled' || m.status === 'live') &&
+            ((m.team_a_ids && m.team_a_ids.includes(AppStore.user.id)) ||
+                (m.team_b_ids && m.team_b_ids.includes(AppStore.user.id)))
+        );
+
+        if (myMatch) {
+            const container = document.getElementById('my-next-match-container');
+            if (!container) return;
+
+            const isTeamA = myMatch.team_a_ids.includes(AppStore.user.id);
+            // Safe access to names
+            const teamANames = (myMatch.team_a_names || "A1 / A2").split(' / ');
+            const teamBNames = (myMatch.team_b_names || "B1 / B2").split(' / ');
+
+            const partnerName = isTeamA ?
+                teamANames.find(n => !n.includes(AppStore.user.name)) :
+                teamBNames.find(n => !n.includes(AppStore.user.name));
+
+            const opponents = isTeamA ? (myMatch.team_b_names || "Rivales") : (myMatch.team_a_names || "Rivales");
+
+            container.innerHTML = `
+                <div class="glass-panel" style="background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(204,255,0,0.1)); border: 1px solid var(--primary); animation: slideUp 0.5s ease-out;">
+                    <div style="display:flex; flex-direction: column; gap: 1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h3 style="color: var(--primary); margin:0;">🎾 ¡TIENES PARTIDO!</h3>
+                             <span class="status-indicator" style="background: var(--primary); color: black;">Ronda ${myMatch.round}</span>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase;">Tu Pista</div>
+                                <div style="font-size: 2.5rem; font-weight: 800; line-height: 1;">${myMatch.court}</div>
+                            </div>
+                            
+                            <div style="flex: 2; border-left: 1px solid var(--border-color); padding-left: 1rem;">
+                                <div style="font-size: 0.9rem; color: var(--text-muted);">Tu Compañero</div>
+                                <div style="font-size: 1.4rem; font-weight: 700;">${partnerName || 'Compañero'}</div>
+                            </div>
+
+                            <div style="flex: 2; border-left: 1px solid var(--border-color); padding-left: 1rem;">
+                                <div style="font-size: 0.9rem; color: var(--text-muted);">Tus Rivales</div>
+                                <div style="font-size: 1.1rem; color: var(--text);">${opponents}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (e) {
+        console.error("Error checking matches:", e);
+    }
 }
 
 // --- API Helpers (Firebase Version) ---
 console.log("🔥 Using Firebase for data persistence");
-
-async function fetchAmericanas() {
-    try {
-        const americanas = await FirebaseDB.americanas.getAll();
-        return americanas;
-    } catch (error) {
-        console.error("Error fetching americanas:", error);
-        return [];
-    }
-}
 
 async function createAmericana(data) {
     try {
@@ -617,16 +1358,6 @@ async function updateAmericana(updatedAmericana) {
     } catch (error) {
         console.error("Error updating americana:", error);
         throw error;
-    }
-}
-
-async function fetchPlayers() {
-    try {
-        const players = await FirebaseDB.players.getAll();
-        return players;
-    } catch (error) {
-        console.error("Error fetching players:", error);
-        return [];
     }
 }
 
@@ -678,86 +1409,7 @@ async function inscribirJugador(americanaId, playerId) {
 
 // --- Views ---
 
-async function renderAmericanasView() {
-    // Show Skeleton
-    contentArea.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3>Gestión de Americanas</h3>
-            <div class="skeleton" style="width: 150px; height: 40px; border-radius: 99px;"></div>
-        </div>
-        <div class="glass-panel">
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                ${getSkeletonRows(5)}
-            </div>
-        </div>
-    `;
 
-    const americanas = await fetchAmericanas();
-
-    const listHtml = americanas.length ? americanas.map(a => {
-        const registeredCount = a.players ? a.players.length : 0;
-        const totalSpots = a.maxPairs * 2;
-        const progress = (registeredCount / totalSpots) * 100;
-        const isFull = registeredCount >= totalSpots;
-
-        return `
-        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 1rem;">
-                <div style="font-weight: 600;">${a.name}</div>
-                <div style="font-size: 0.8rem; color: var(--text-muted);">${a.category.toUpperCase()} • ${a.maxPairs} parejas</div>
-            </td>
-            <td style="padding: 1rem;">${new Date(a.date).toLocaleDateString()}</td>
-            <td style="padding: 1rem; width: 250px;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
-                    <span>${registeredCount} / ${totalSpots} Jugadores</span>
-                    <span style="color: ${isFull ? 'var(--danger)' : 'var(--success)'};">${isFull ? 'COMPLETO' : 'Plazas Libres'}</span>
-                </div>
-                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
-                    <div style="width: ${progress}%; height: 100%; background: ${isFull ? 'var(--danger)' : 'var(--primary)'};"></div>
-                </div>
-            </td>
-            <td style="padding: 1rem;"><span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem;">${a.status}</span></td>
-            <td style="padding: 1rem;">
-                ${!isFull ?
-                `<button class="btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.75rem;" onclick="openInscriptionModal(${a.id})">📝 Inscribir</button>` :
-                `<span style="font-size: 0.8rem; color: var(--text-muted);">Cerrado</span>`
-            }
-            </td>
-        </tr>
-    `}).join('') : `
-        <tr>
-            <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                No hay americanas creadas. Crea una para empezar.
-            </td>
-        </tr>
-    `;
-
-    contentArea.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3>Gestión de Americanas</h3>
-            <div style="display: flex; gap: 0.5rem;">
-                <button class="btn-primary" onclick="openModal('americana-modal')">+ Nueva Americana</button>
-            </div>
-        </div>
-        
-        <div class="glass-panel">
-            <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                <thead>
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-muted);">
-                        <th style="padding: 1rem;">Evento</th>
-                        <th style="padding: 1rem;">Fecha</th>
-                        <th style="padding: 1rem;">Ocupación</th>
-                        <th style="padding: 1rem;">Estado</th>
-                        <th style="padding: 1rem;">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${listHtml}
-                </tbody>
-            </table>
-        </div>
-    `;
-}
 
 async function renderPlayersView() {
     // ... (Existing Players View kept same mostly, just ensuring reliability)
@@ -767,10 +1419,10 @@ async function renderPlayersView() {
     // Simplified for brevity in this replacement chunk, restoring core logic:
 
     const listHtml = players.length ? players.map(p => `
-        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <tr style="border-bottom: 1px solid var(--border-color);">
             <td style="padding: 1rem;">
                 <div style="display:flex; align-items:center; gap:0.5rem;">
-                    <div style="width:32px; height:32px; background: #3b82f6; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem;">${p.name.charAt(0)}</div>
+                    <div style="width:32px; height:32px; background: var(--secondary); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem; color: white;">${p.name.charAt(0)}</div>
                     <div style="font-weight: 600;">${p.name}</div>
                 </div>
             </td>
@@ -807,66 +1459,7 @@ async function renderPlayersView() {
 
 // ... (renderLiveView and renderRankingsView logic remains as implemented in previous turn) ...
 
-async function renderDashboardView() {
-    const americanas = await fetchAmericanas();
-    const players = await fetchPlayers();
 
-    // Stats Calculation
-    const today = new Date().toISOString().split('T')[0];
-    const todaysEvent = americanas.find(a => a.date === today);
-    const matchesToday = todaysEvent ? (todaysEvent.maxPairs * 4) : 0; // Approx matches estimate
-
-    // Court Calculation (10 Fixed Courts)
-    const TOTAL_COURTS = 10;
-    // Assume 4 players per court (Double).
-    // Count total active players in "Open" Americanas
-    const activeAmericanas = americanas.filter(a => a.status === 'open' || a.status === 'in_progress');
-    let totalRegisteredInActive = 0;
-    activeAmericanas.forEach(a => {
-        totalRegisteredInActive += (a.players ? a.players.length : 0);
-    });
-
-    const courtsOccupied = Math.ceil(totalRegisteredInActive / 4);
-    const courtsDisplay = courtsOccupied > TOTAL_COURTS ? TOTAL_COURTS : courtsOccupied;
-    const availabilityColor = courtsDisplay >= TOTAL_COURTS ? 'var(--danger)' : 'var(--success)';
-    const availabilityText = courtsDisplay >= TOTAL_COURTS ? 'Completo' : 'Pistas Libres';
-
-    contentArea.innerHTML = `
-        <div class="dashboard-grid">
-            <div class="stat-card">
-                <h3>Eventos Activos</h3>
-                <p class="stat-value">${activeAmericanas.length}</p>
-                <p class="stat-trend neutral">${totalRegisteredInActive} jugadores inscritos</p>
-            </div>
-            <div class="stat-card">
-                <h3>Base de Jugadores</h3>
-                <p class="stat-value" id="total-players-count">${players.length}</p>
-                <p class="stat-trend positive">Comunidad Padel PRO</p>
-            </div>
-            <div class="stat-card">
-                <h3>Ocupación de Pistas (Max 10)</h3>
-                <p class="stat-value" style="color: ${availabilityColor};">${courtsDisplay}/10</p>
-                <p class="stat-trend" style="color: ${availabilityColor};">${availabilityText}</p>
-            </div>
-        </div>
-        <div class="glass-panel" style="padding: 2rem;">
-            <h3>🔥 Estado del Club</h3>
-            ${activeAmericanas.length > 0 ? `
-                <div style="margin-top: 1rem;">
-                    ${activeAmericanas.map(a => `
-                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <span style="font-weight: 600;">${a.name}</span>
-                                <span style="color: var(--text-muted); font-size: 0.9rem; margin-left: 0.5rem;">${a.players ? a.players.length : 0} Jugadores</span>
-                            </div>
-                            <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;" onclick="loadView('americanas')">Gestionar</button>
-                        </div>
-                    `).join('')}
-                </div>
-            ` : `<p style="color: var(--text-muted); padding: 1rem 0;">No hay americanas activas en este momento.</p>`}
-        </div>
-    `;
-}
 
 // --- Modal & Form Logic ---
 
@@ -904,7 +1497,7 @@ window.openInscriptionModal = async function (americanaId) {
                 <form id="inscription-form">
                     <div class="form-group">
                         <label>Seleccionar Jugador</label>
-                        <select id="inscription-player-select" required style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;">
+                        <select id="inscription-player-select" required style="width: 100%; padding: 1rem; background: var(--surface-hover); color: var(--text); border: 1px solid var(--border-color); border-radius: 8px;">
                             <option value="">Cargando jugadores...</option>
                         </select>
                     </div>
@@ -991,44 +1584,95 @@ document.addEventListener('submit', async (e) => {
     }
 });
 
-// --- Admin Functions (Global) ---
-window.approveUser = async function (userId) {
-    try {
-        await FirebaseDB.players.update(userId, { status: 'active' });
-        showToast('Usuario aprobado correctamente', 'success');
-        loadView('admin'); // Refresh admin view
-    } catch (error) {
-        console.error("Error approving user:", error);
-        showToast('Error al aprobar usuario', 'error');
+// --- Initialization ---
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("🚀 Americanas Padel PRO Systems - Online");
+
+    // 1. Initialize Navigation
+    const navButtons = document.querySelectorAll('.nav-item-pro');
+    navButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const view = btn.getAttribute('data-view');
+            Router.navigate(view);
+        });
+    });
+
+    // 2. Global Event Listeners (Forms etc)
+    document.addEventListener('submit', async (e) => {
+        if (e.target.id === 'login-form') {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            await Auth.login(fd.get('phone'), fd.get('password'));
+        }
+        if (e.target.id === 'register-form') {
+            e.preventDefault();
+            await Auth.register(new FormData(e.target));
+        }
+    });
+
+    // 3. Load User Session
+    await AppStore.init();
+
+    // 4. Initial View
+    if (AppStore.user) {
+        Router.navigate('dashboard');
+        renderActivityFeed();
+    } else {
+        // Auth service handles showing login if needed
     }
-};
 
-window.rejectUser = async function (userId) {
-    if (!confirm('¿Estás seguro de que quieres rechazar este usuario? Se eliminará permanentemente.')) return;
+    // 5. Visual Components
+    initPerformanceChart();
+});
 
-    try {
-        await FirebaseDB.players.delete(userId);
-        showToast('Usuario rechazado y eliminado', 'success');
-        loadView('admin'); // Refresh admin view
-    } catch (error) {
-        console.error("Error rejecting user:", error);
-        showToast('Error al rechazar usuario', 'error');
-    }
-};
+function initPerformanceChart() {
+    const ctx = document.getElementById('performanceChart');
+    if (!ctx) return;
 
-window.blockUser = async function (userId) {
-    if (!confirm('¿Estás seguro de que quieres bloquear este usuario?')) return;
-
-    try {
-        await FirebaseDB.players.update(userId, { status: 'blocked' });
-        showToast('Usuario bloqueado', 'success');
-        loadView('admin'); // Refresh admin view
-    } catch (error) {
-        console.error("Error blocking user:", error);
-        showToast('Error al bloquear usuario', 'error');
-    }
-};
-
-// Initialize - Event Listeners already set up at top.
-console.log("App Initialized");
-
+    // Use Chart.js with custom brand styles
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Puntos Ganados',
+                data: [12, 19, 15, 25, 22, 30],
+                borderColor: '#ccff00',
+                backgroundColor: 'rgba(204, 255, 0, 0.1)',
+                fill: true,
+                tension: 0.4,
+                borderWidth: 4,
+                pointRadius: 0,
+                pointHoverRadius: 6,
+                pointHoverBackgroundColor: '#ccff00',
+                pointHoverBorderColor: '#fff',
+                pointHoverBorderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#0f172a',
+                    titleFont: { family: 'Outfit', size: 14 },
+                    bodyFont: { family: 'Inter', size: 13 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: false
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 } }
+                },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 } }
+                }
+            }
+        }
+    });
+}

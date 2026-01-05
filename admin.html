@@ -7,86 +7,211 @@
     <title>Panel de Control - Americanas PRO</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600&display=swap"
         rel="stylesheet">
+
+    <script>
+        function emergencyBypass() {
+            try {
+                const noa = {
+                    id: "god-master-noa",
+                    name: "NOA (MASTER BYPASS)",
+                    role: "admin",
+                    phone: "NOA",
+                    status: "active"
+                };
+                alert("🚨 ACTIVANDO BYPASS TOTAL - NOA");
+                localStorage.setItem('adminUser', JSON.stringify(noa));
+                localStorage.setItem('currentUser', JSON.stringify(noa));
+
+                if (window.AdminAuth && typeof window.AdminAuth.setUser === 'function') {
+                    AdminAuth.setUser(noa);
+                } else if (window.Router) {
+                    location.reload();
+                } else {
+                    location.href = 'index.html';
+                }
+            } catch (e) {
+                console.error("Critical Bypass Error:", e);
+                alert("❌ Error en Bypass: " + e.message);
+                location.href = 'index.html';
+            }
+        }
+    </script>
 </head>
 
 <body>
-    <div id="admin-root" style="display:flex; width:100%; height: 100vh;">
-        <!-- Admin Sidebar -->
-        <aside class="sidebar" style="border-right: 1px solid var(--primary);">
-            <div class="logo-container" style="margin-bottom: 2rem;">
-                <div class="logo-icon" style="color: var(--primary);">⚙️</div>
-                <div class="logo-text">
-                    <h2 style="font-size: 1.2rem;">CONTROL<span class="highlight">ROOM</span></h2>
+
+    <!-- Auth Modal for Admin -->
+    <div id="admin-auth-modal" class="modal-overlay auth-overlay-enterprise">
+        <div class="modal-content admin-login-card">
+            <div style="text-align: center; margin-bottom: 2.5rem;">
+                <img src="img/logo.png"
+                    style="height: 100px; margin-bottom: 1.5rem; filter: drop-shadow(0 0 15px var(--primary-glow));"
+                    alt="Somos Padel">
+                <h2
+                    style="color: white !important; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0,0,0,0.5);">
+                    ACCESO PRIVADO</h2>
+                <div
+                    style="color: var(--primary); font-size: 0.7rem; font-weight: 800; letter-spacing: 3px; margin-top: 5px;">
+                    SOMOS PÁDEL BARCELONA</div>
+            </div>
+            <form id="admin-login-form" class="pro-form">
+                <div class="form-group">
+                    <label style="color: rgba(255,255,255,0.7);">TELÉFONO DE ACCESO</label>
+                    <input type="text" name="phone" placeholder="Usuario o Teléfono" class="pro-input" required>
+                </div>
+                <div class="form-group">
+                    <label style="color: rgba(255,255,255,0.7);">CLAVE DE SEGURIDAD</label>
+                    <input type="password" name="password" placeholder="••••••" class="pro-input" required>
+                </div>
+                <button type="submit" id="admin-login-btn" class="btn-primary-pro"
+                    style="width: 100%; padding: 1.2rem; margin-top: 1rem;">ENTRAR AL PANEL PRO 🚀</button>
+
+                <button type="button" onclick="emergencyBypass()"
+                    style="width: 100%; padding: 0.8rem; margin-top: 1.5rem; background: rgba(255,0,0,0.2); border: 1px solid red; color: white; border-radius: 8px; font-weight: 800; cursor: pointer;">
+                    🆘 ACCESO DE EMERGENCIA (BYPASS NOA)
+                </button>
+
+
+                <div id="admin-login-error"
+                    style="color: var(--danger); margin-top: 1.2rem; text-align: center; font-size: 0.85rem; font-weight: 700;">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-shell">
+        <!-- Enterprise Admin Sidebar -->
+        <aside class="sidebar-pro">
+            <div class="brand-top-left">
+                <img src="img/logo.png" class="brand-logo-main" alt="Somos Padel Logo">
+                <div class="brand-text-main">
+                    <span class="name">SOMOSPADEL</span>
+                    <span class="location">barcelona</span>
                 </div>
             </div>
 
             <nav class="nav-menu">
-                <button class="nav-item active" onclick="loadAdminView('users')">
-                    <span class="icon">👥</span> Usuarios
+                <a href="index.html" class="nav-item-pro"
+                    style="text-decoration: none; margin-bottom: 1.5rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; transition: all 0.3s ease;">
+                    <span class="icon">⬅️</span> Volver al Dashboard
+                </a>
+                <button class="nav-item-pro active" data-view="users" onclick="loadAdminView('users')">
+                    <span class="icon">👥</span> Jugadores
                 </button>
-                <button class="nav-item" onclick="loadAdminView('matches')">
-                    <span class="icon">🎮</span> Control Partidos
+                <button class="nav-item-pro" data-view="americanas_mgmt" onclick="loadAdminView('americanas_mgmt')">
+                    <span class="icon">📅</span> Gestión Americanas
                 </button>
-                <button class="nav-item" onclick="loadAdminView('settings')">
-                    <span class="icon">🔧</span> Configuración
+                <button class="nav-item-pro" data-view="matches" onclick="loadAdminView('matches')">
+                    <span class="icon">🏆</span> Resultados
                 </button>
-                <button class="nav-item" style="margin-top: auto; color: var(--danger);" onclick="AdminAuth.logout()">
-                    <span class="icon">🚪</span> Salir
+                <button class="nav-item-pro" data-view="simulator" onclick="loadAdminView('simulator')">
+                    <span class="icon">🎮</span> Simulador
+                </button>
+                <button class="nav-item-pro" data-view="config" onclick="loadAdminView('config')">
+                    <span class="icon">⚙️</span> Configuración
+                </button>
+                <button class="nav-item-pro" style="color: var(--danger); margin-top: auto;"
+                    onclick="AdminAuth.logout()">
+                    <span class="icon">🚪</span> Cerrar Sesión
                 </button>
             </nav>
+
+            <div class="user-profile-widget">
+                <div class="avatar-pro" id="admin-avatar">A</div>
+                <div class="user-meta">
+                    <div class="name" id="admin-name">Cargando...</div>
+                    <div class="role">Executive Admin</div>
+                </div>
+            </div>
         </aside>
 
-        <!-- Main Admin Content -->
-        <main class="main-content" style="background: #000;">
-            <header class="top-header" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                <h1 id="page-title">Gestión de Usuarios</h1>
-                <div class="status-indicator">
-                    <span class="dot online" style="background: var(--primary);"></span> ADMIN MODE
+        <!-- Main Admin Workspace -->
+        <main class="main-wrapper">
+            <header class="top-bar">
+                <div class="top-title" id="page-title">CONSOLA DE ADMINISTRACIÓN</div>
+                <div class="top-actions">
+                    <div class="conn-status">
+                        <span class="dot online"></span> CLOUD ACTIVE
+                    </div>
                 </div>
             </header>
 
-            <div id="content-area" class="content-area" style="padding: 2rem;">
-                <!-- Content injected via JS -->
-                <div class="glass-panel" style="text-align: center; padding: 2rem;">
+            <div class="workspace-area">
+                <div id="content-area">
                     <div class="loader"></div>
-                    <p>Cargando datos del sistema...</p>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Admin Login Overlay -->
-    <div id="admin-auth-modal" class="modal-overlay" style="z-index: 10000; background: #000;">
-        <div class="modal-content glass-panel"
-            style="max-width: 400px; text-align: center; border: 1px solid var(--primary); box-shadow: 0 0 30px rgba(204,255,0,0.2);">
-            <div style="margin-bottom: 2rem;">
-                <div style="font-size: 3rem;">🛡️</div>
-                <h1 style="font-family: 'Outfit'; font-weight: 800; text-transform: uppercase;">ACCESO <span
-                        style="color: var(--primary);">ADMIN</span></h1>
+    <!-- Edit/Create User Modal -->
+    <div id="admin-user-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Editar Usuario</h2>
+                <button class="close-modal-btn" onclick="closeAdminModal()">&times;</button>
             </div>
-            <form id="admin-login-form" style="display: flex; flex-direction: column; gap: 1rem;">
-                <div class="form-group" style="text-align: left;">
-                    <label style="color: var(--text-muted); font-size: 0.8rem;">CREDENCIAL MAESTRA (TELÉFONO)</label>
-                    <input type="tel" name="phone" placeholder="649..." required
-                        style="background: #111; border: 1px solid #333; color: var(--primary); font-weight: bold;">
+            <form id="admin-user-form">
+                <input type="hidden" name="id">
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" name="name" class="pro-input" required>
                 </div>
-                <div class="form-group" style="text-align: left;">
-                    <label style="color: var(--text-muted); font-size: 0.8rem;">CLAVE DE SEGURIDAD</label>
-                    <input type="password" name="password" placeholder="••••••" required
-                        style="background: #111; border: 1px solid #333; color: var(--primary);">
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" name="phone" class="pro-input" required>
                 </div>
-                <div id="admin-login-error" style="color: var(--danger); font-size: 0.9rem; min-height: 1.2rem;"></div>
-                <button type="submit" class="btn-primary" style="margin-top: 1rem;">ACCEDER AL SISTEMA</button>
+                <div class="form-group">
+                    <label>Contraseña (Dejar en blanco para no cambiar)</label>
+                    <input type="text" name="password" placeholder="Nueva contraseña" class="pro-input">
+                </div>
+                <div class="form-group">
+                    <label>Nivel</label>
+                    <input type="number" step="0.1" name="level" class="pro-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Rol</label>
+                    <select name="role" class="pro-input">
+                        <option value="player">Jugador</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select name="status" class="pro-input">
+                        <option value="active">Activo</option>
+                        <option value="pending">Pendiente</option>
+                        <option value="blocked">Bloqueado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Partidos Jugados</label>
+                    <input type="number" name="matches_played" value="0" class="pro-input">
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%;">Guardar Cambios</button>
             </form>
-            <p style="margin-top: 2rem;"><a href="/" style="color: var(--text-muted); text-decoration: none;">← Volver a
-                    la App Pública</a></p>
         </div>
     </div>
 
+    <!-- Firebase SDK (v10 Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+    <!-- App Logic -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-init.js"></script>
+
+    <!-- Core Americana Logic (AI) -->
+    <script src="js/americana-logic.js"></script>
+
+    <!-- Admin UI Logic -->
     <script src="js/admin.js"></script>
+
 </body>
 
 </html>

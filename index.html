@@ -7,99 +7,136 @@
     <title>Americanas Padel PRO</title>
     <!-- Relative for local file access -->
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/playtomic.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600&display=swap"
         rel="stylesheet">
+    <script>
+        function emergencyBypass() {
+            try {
+                const noa = {
+                    id: "admin-noa",
+                    name: "NOA (BYPASS)",
+                    phone: "NOA",
+                    role: "admin",
+                    status: "active"
+                };
+                alert("🚨 ACTIVANDO BYPASS TOTAL - NOA");
+                localStorage.setItem('currentUser', JSON.stringify(noa));
+                localStorage.setItem('adminUser', JSON.stringify(noa));
+                location.reload();
+            } catch (e) {
+                alert("❌ Error en Bypass: " + e.message);
+            }
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
-<body>
-    <div id="root" style="display:flex; width:100%;">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="logo-container">
-                <div class="logo-icon">🎾</div>
-                <div class="logo-text">
-                    <h2>Padel<span class="highlight">PRO</span></h2>
+<body class="playtomic-mode">
+    <div class="app-shell">
+        <!-- Sidebar Pro -->
+        <aside class="sidebar-pro">
+            <div class="sidebar-content-inner">
+                <div class="brand-top-left">
+                    <img src="img/logo.png" class="brand-logo-main" alt="Somos Padel Logo">
+                    <div class="brand-text-main">
+                        <span class="name">SOMOSPADEL</span>
+                        <span class="location">barcelona</span>
+                    </div>
+                </div>
+                <p
+                    style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin: 1.5rem 0 1rem 0;">
+                    Enterprise Console
+                </p>
+
+                <nav class="nav-menu">
+                    <button class="nav-item-pro active" data-view="dashboard">
+                        <span class="icon">📊</span> DASHBOARD
+                    </button>
+                    <button class="nav-item-pro" data-view="americanas">
+                        <span class="icon">📅</span> EVENTOS
+                    </button>
+                    <a href="live.html" class="nav-item-pro" style="text-decoration: none;">
+                        <span class="icon">🔴</span> LIVE HUB
+                    </a>
+                    <button class="nav-item-pro" data-view="rankings">
+                        <span class="icon">🏆</span> RANKINGS
+                    </button>
+                    <a href="admin.html" class="nav-item-pro" id="nav-admin"
+                        style="display:flex; text-decoration: none;">
+                        <span class="icon">⚙️</span> ADMIN
+                    </a>
+                </nav>
+
+                <div class="user-profile-widget">
+                    <div class="user-info">
+                        <div class="name" id="header-username">CARGANDO...</div>
+                        <div class="badge-status">
+                            <span class="dot online"></span> ACTIVE PRO
+                        </div>
+                    </div>
+                    <button class="btn-logout" onclick="Auth.logout()">🚪</button>
+                </div>
+
+                <div class="social-links-sidebar">
+                    <a href="https://instagram.com/somospadelbarcelona" target="_blank" class="social-btn instagram">
+                        <i>📸</i> INSTAGRAM
+                    </a>
+                    <a href="https://wa.me/34649219350" target="_blank" class="social-btn whatsapp">
+                        <i>💬</i> WHATSAPP
+                    </a>
                 </div>
             </div>
+        </aside>
 
-            <nav class="nav-menu">
-                <button class="nav-item active" data-view="dashboard">
-                    <span class="icon">🏠</span> Dashboard
-                </button>
-                <button class="nav-item" data-view="americanas">
-                    <span class="icon">📅</span> Calendario
-                </button>
-                <button class="nav-item" data-view="tournament-live">
-                    <span class="icon" style="color: var(--primary);">🟢</span> Torneo en Vivo
-                </button>
-                <button class="nav-item" data-view="players">
-                    <span class="icon">👥</span> Jugadores
-                </button>
-                <button class="nav-item" data-view="admin">
-                    <span class="icon">⚙️</span> Gestión
-                </button>
-            </nav>
+        <!-- Main Workspace -->
+        <main class="main-wrapper">
+            <!-- Global Top Bar -->
+            <header class="top-bar">
+                <div class="top-title" id="page-title">Dashboard Principal</div>
 
-            <div class="user-info">
-                <p class="name">Invitado</p>
-                <p class="role">Jugador</p>
+                <div class="top-actions">
+                    <div class="notif-bell" onclick="showNotifications()">
+                        🔔<span class="bell-badge">3</span>
+                    </div>
+                    <div class="conn-status">
+                        <span class="dot online pulse"></span> CLOUD CONNECTED
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div id="content-area" class="workspace-area">
+                <div class="loader"></div>
             </div>
+        </main>
+
+        </aside>
+
+        <!-- Mobile Bottom Navigation (Playtomic Style) -->
+        <nav class="mobile-nav">
+            <div class="mobile-nav-item active" onclick="Router.navigate('dashboard')">
+                <i>🏠</i>
+                <span>Inicio</span>
+            </div>
+            <div class="mobile-nav-item" onclick="Router.navigate('americanas')">
+                <i>🎾</i>
+                <span>Reservar</span>
+            </div>
+            <div class="mobile-nav-item" onclick="Router.navigate('community')">
+                <i>👥</i>
+                <span>Comunidad</span>
+            </div>
+            <div class="mobile-nav-item" onclick="Router.navigate('rankings')">
+                <i>👤</i>
+                <span>Perfil</span>
+            </div>
+        </nav>
     </div>
 
-    <div style="margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
-        <a href="/admin"
-            style="display: flex; align-items: center; gap: 0.8rem; color: var(--text-muted); text-decoration: none; padding: 0.8rem; border-radius: 8px; transition: 0.3s;">
-            <span>🔐</span>
-            <span style="font-size: 0.9rem;">ACCESO ADMIN</span>
-        </a>
-    </div>
-    </aside>
-
-    <!-- Main Content Area -->
-    <main class="main-content">
-        <header class="top-header">
-            <h1 id="page-title">Dashboard General</h1>
-            <div class="header-actions">
-                <div class="status-indicator">
-                    <span class="dot online"></span> Sistema Online
-                </div>
-                <button class="btn-primary">+ Nueva Americana</button>
-            </div>
-        </header>
-
-        <div id="content-area" class="content-area">
-            <!-- Content injected via JS -->
-            <div class="dashboard-grid">
-                <div class="stat-card">
-                    <h3>Partidos Hoy</h3>
-                    <p class="stat-value">0</p>
-                    <p class="stat-trend neutral">No hay eventos</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Jugadores Activos</h3>
-                    <p class="stat-value">124</p>
-                    <p class="stat-trend positive">↑ 12% vs mes anterior</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Pistas Ocupadas</h3>
-                    <p class="stat-value">0/10</p>
-                    <p class="stat-trend neutral">Disponibilidad total</p>
-                </div>
-            </div>
-
-            <div class="glass-panel" style="margin-top: 2rem;">
-                <h3>🔥 Actividad Reciente</h3>
-                <p style="color: var(--text-muted); padding: 1rem 0;">No hay actividad reciente registrada.</p>
-            </div>
-        </div>
-    </main>
-    </div>
-    <!-- New Americana Modal -->
-    </div>
     <!-- New Americana Modal -->
     <div id="americana-modal" class="modal-overlay hidden">
         <div class="modal-content glass-panel">
@@ -173,135 +210,120 @@
         </div>
     </div>
     <!-- Login / Register Overlay -->
-    <div id="auth-modal" class="modal-overlay" style="z-index: 9999; background: #000;">
-        <div class="modal-content glass-panel"
-            style="max-width: 400px; text-align: center; border: 1px solid var(--primary); width: 90%; background: #000;">
-            <div style="margin-bottom: 2rem;">
-                <!-- Logo SomosPadel -->
-                <img src="img/logo.png"
-                    onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-                    alt="SomosPadel Logo"
-                    style="width: 140px; height: 140px; border-radius: 50%; box-shadow: 0 0 30px rgba(204, 255, 0, 0.4); object-fit: contain; background: black; margin-bottom: 1rem;">
+    <div id="auth-modal" class="modal-overlay">
+        <div class="premium-auth-container">
+            <div class="premium-auth-bg"></div>
 
-                <!-- Fallback Text Logo (Hidden by default unless img fails) -->
-                <div style="display:none; font-size: 3rem;">🎾</div>
+            <div class="glass-login-card">
+                <div style="text-align: center;">
+                    <!-- Logo SomosPadel -->
+                    <div class="auth-logo-vibe">
+                        <img src="img/logo.png"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+                            alt="SomosPadel Logo"
+                            style="width: 80px; height: 80px; border-radius: 50%; object-fit: contain;">
+                        <div style="display:none; font-size: 2.5rem;">🎾</div>
+                    </div>
 
-                <h1
-                    style="font-family: 'Outfit'; font-weight: 800; text-transform: uppercase; margin-top: 0.5rem; font-size: 1.8rem;">
-                    Somos<span style="color: var(--primary);">Padel</span>
-                </h1>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Bienvenido al Club</p>
-                <div style="width: 40px; height: 2px; background: var(--primary); margin: 1rem auto;"></div>
-            </div>
-
-            <!-- Login Form -->
-            <form id="login-form" style="display: flex; flex-direction: column; gap: 1rem;">
-                <div class="form-group" style="text-align: left;">
-                    <label
-                        style="font-size: 0.75rem; font-weight: 700; color: #888; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">TELÉFONO</label>
-                    <input type="tel" name="phone" placeholder="600 000 000" required autocomplete="tel"
-                        style="width: 100%; padding: 1rem; background: #161616; border: 1px solid #333; border-radius: var(--radius-sm); color: white; font-family: 'Outfit'; font-size: 1rem; transition: border-color 0.3s;">
-                </div>
-                <div class="form-group" style="text-align: left;">
-                    <label
-                        style="font-size: 0.75rem; font-weight: 700; color: #888; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">CONTRASEÑA</label>
-                    <input type="password" name="password" placeholder="••••••" required autocomplete="current-password"
-                        style="width: 100%; padding: 1rem; background: #161616; border: 1px solid #333; border-radius: var(--radius-sm); color: white; font-family: 'Outfit'; font-size: 1rem; transition: border-color 0.3s;">
+                    <h1 style="color: white; font-size: 2rem; margin-bottom: 0.5rem;">SOMOS<span
+                            style="color: var(--primary);">PADEL</span></h1>
+                    <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 2.5rem; letter-spacing: 1px;">
+                        Americanas Somospadel BCN</p>
                 </div>
 
-                <button type="submit" class="btn-primary"
-                    style="width: 100%; padding: 1rem; font-size: 1.1rem; font-weight: 800; margin-top: 1rem; color: black !important; text-transform: uppercase; background: var(--primary); border: none; cursor: pointer; border-radius: 8px;">
-                    ENTRAR
-                </button>
+                <!-- Login Form -->
+                <form id="login-form">
+                    <div class="auth-input-group">
+                        <label>Teléfono</label>
+                        <input type="text" name="phone" placeholder="Usuario o Teléfono" required>
+                    </div>
+                    <div class="auth-input-group">
+                        <label>Contraseña</label>
+                        <input type="password" name="password" placeholder="••••••" required
+                            autocomplete="current-password">
+                    </div>
 
-                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05);">
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">
-                        ¿Eres nuevo en SomosPadel?
+                    <button type="submit" class="btn-auth-premium">Entrar</button>
+
+                    <button type="button" onclick="emergencyBypass()"
+                        style="width: 100%; padding: 0.8rem; margin-top: 1rem; background: rgba(255,0,0,0.2); border: 1px solid red; color: white; border-radius: 8px; font-weight: 800; cursor: pointer;">
+                        🆘 ACCESO DE EMERGENCIA (NOA)
+                    </button>
+
+
+                    <p class="auth-switch-text">
+                        ¿Eres nuevo?
+                        <a href="#" class="auth-switch-link" onclick="toggleAuthMode('register')">Crear cuenta pro</a>
                     </p>
-                    <a href="#" onclick="toggleAuthMode('register')"
-                        style="color: var(--primary); font-weight: 600; text-decoration: none; border-bottom: 1px solid transparent; transition: 0.3s; display: inline-block; margin-top: 0.5rem;">
-                        CREAR CUENTA DE JUGADOR
-                    </a>
-                </div>
-            </form>
+                </form>
 
-            <!-- Register Form PRO (Hidden) -->
-            <form id="register-form" class="hidden"
-                style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
-
-                <!-- Personal Info -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                    <div class="form-group">
-                        <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">NOMBRE</label>
-                        <input type="text" name="name" placeholder="Tu Nombre" required
-                            style="width: 100%; padding: 0.8rem; background: #222; border: 1px solid #444; border-radius: var(--radius-sm); color: white; font-family: 'Outfit';">
+                <!-- Register Form (Hidden by default) -->
+                <form id="register-form" class="hidden">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="auth-input-group">
+                            <label>Nombre</label>
+                            <input type="text" name="name" placeholder="Tu Nombre" required>
+                        </div>
+                        <div class="auth-input-group">
+                            <label>Teléfono</label>
+                            <input type="text" name="phone" placeholder="600..." required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">TELÉFONO</label>
-                        <input type="tel" name="phone" placeholder="600..." required
-                            style="width: 100%; padding: 0.8rem; background: #222; border: 1px solid #444; border-radius: var(--radius-sm); color: white; font-family: 'Outfit';">
-                    </div>
-                </div>
 
-                <div class="form-group">
-                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">CONTRASEÑA</label>
-                    <input type="password" name="password" placeholder="Crea una contraseña" required
-                        style="width: 100%; padding: 0.8rem; background: #222; border: 1px solid #444; border-radius: var(--radius-sm); color: white; font-family: 'Outfit';">
-                </div>
-
-                <!-- Professional Questionnaire -->
-                <div
-                    style="background: rgba(255,255,255,0.05); padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
-                    <label
-                        style="font-size: 0.8rem; font-weight: 800; color: var(--primary); display: block; margin-bottom: 0.5rem;">🎾
-                        PERFIL DE JUGADOR</label>
-
-                    <div style="margin-bottom: 0.8rem;">
-                        <label style="font-size: 0.75rem; color: var(--text-muted);">TU NIVEL (Playtomic)</label>
-                        <select name="self_rate_level"
-                            style="width: 100%; padding: 0.5rem; background: #333; border: none; color: white; border-radius: 4px;">
-                            <option value="2.0">2.0 - Iniciación</option>
-                            <option value="3.0">3.0 - Intermedio Bajo</option>
-                            <option value="3.5" selected>3.5 - Intermedio</option>
-                            <option value="4.0">4.0 - Intermedio Alto</option>
-                            <option value="4.5">4.5 - Avanzado</option>
-                            <option value="5.0+">5.0+ - Competición</option>
+                    <div class="auth-input-group">
+                        <label>Soy...</label>
+                        <select name="gender" required>
+                            <option value="male">Chico 👦</option>
+                            <option value="female">Chica 👧</option>
                         </select>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                        <div>
-                            <label style="font-size: 0.75rem; color: var(--text-muted);">PREFERENCIA</label>
-                            <select name="play_preference"
-                                style="width: 100%; padding: 0.5rem; background: #333; border: none; color: white; border-radius: 4px;">
-                                <option value="indifferent">Indiferente</option>
-                                <option value="individual">Me apunto Solo</option>
-                                <option value="couple">Juego con Pareja</option>
-                            </select>
+                    <div class="auth-input-group">
+                        <label>Contraseña</label>
+                        <input type="password" name="password" placeholder="Mín. 6 caracteres" required>
+                    </div>
+
+                    <div
+                        style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid rgba(255,255,255,0.1);">
+                        <label style="color: var(--primary); margin-bottom: 0.8rem;">🎾 PERFIL DE JUGADOR</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="auth-input-group">
+                                <label>Lado de Juego</label>
+                                <select name="play_preference">
+                                    <option value="drive">Drive</option>
+                                    <option value="reves">Revés</option>
+                                    <option value="indifferent" selected>Indiferente</option>
+                                </select>
+                            </div>
+                            <div class="auth-input-group">
+                                <label>Preferencia</label>
+                                <select name="category_preference">
+                                    <option value="masculine">Masculino</option>
+                                    <option value="feminine">Femenino</option>
+                                    <option value="mixed" selected>Mixto</option>
+                                </select>
+                            </div>
                         </div>
-                        <div>
-                            <label style="font-size: 0.75rem; color: var(--text-muted);">CATEGORÍA</label>
-                            <select name="category_preference"
-                                style="width: 100%; padding: 0.5rem; background: #333; border: none; color: white; border-radius: 4px;">
-                                <option value="mixed">Mixto</option>
-                                <option value="male">Masculino</option>
-                                <option value="female">Femenino</option>
-                                <option value="both">Ambas</option>
+                        <div class="auth-input-group" style="margin-top: 1rem;">
+                            <label>Nivel (Playtomic)</label>
+                            <select name="self_rate_level">
+                                <option value="1.0">1.0 - Iniciación</option>
+                                <option value="2.5">2.5 - Intermedio Bajo</option>
+                                <option value="3.5" selected>3.5 - Intermedio Alto</option>
+                                <option value="4.5">4.5 - Avanzado</option>
+                                <option value="5.5">5.5+ - Pro</option>
                             </select>
                         </div>
                     </div>
-                </div>
 
-                <button type="submit" class="btn-primary"
-                    style="width: 100%; padding: 1rem; font-size: 1rem; margin-top: 0.2rem; color: black !important;">CREAR
-                    PERFIL PRO</button>
+                    <button type="submit" class="btn-auth-premium">Unirme ahora</button>
 
-                <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem; text-align: center;">
-                    ¿Ya tienes cuenta? <a href="#" onclick="toggleAuthMode('login')"
-                        style="color: var(--primary); text-decoration: none; border-bottom: 1px solid var(--primary);">Inicia
-                        Sesión</a>
-                </p>
-            </form>
+                    <p class="auth-switch-text">
+                        ¿Ya tienes cuenta?
+                        <a href="#" class="auth-switch-link" onclick="toggleAuthMode('login')">Iniciar sesión</a>
+                    </p>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -313,6 +335,9 @@
     <!-- Firebase Configuration & Initialization -->
     <script src="js/firebase-config.js"></script>
     <script src="js/firebase-init.js"></script>
+
+    <!-- Core Logic -->
+    <script src="js/americana-logic.js"></script>
 
     <!-- Main App -->
     <script src="js/app.js"></script>
