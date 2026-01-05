@@ -25,9 +25,106 @@
     background-color: var(--pt-bg);
     color: var(--pt-text);
     font-family: 'Inter', sans-serif;
-    padding-bottom: 80px;
-    /* Space for mobile nav */
+    padding-bottom: 90px;
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+    display: block;
 }
+
+@media (max-width: 1024px) {
+    .playtomic-mode .sidebar-pro {
+        position: fixed !important;
+        top: 0;
+        left: -280px;
+        /* Hidden off-screen */
+        height: 100vh !important;
+        width: 280px !important;
+        display: flex !important;
+        z-index: 5000;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .playtomic-mode .sidebar-pro.open {
+        transform: translateX(280px);
+        /* Slide in */
+    }
+
+    .playtomic-mode .hamburger-btn {
+        display: flex !important;
+    }
+
+    .playtomic-mode .app-shell {
+        display: block !important;
+    }
+
+    .playtomic-mode .main-wrapper {
+        width: 100% !important;
+    }
+
+    .playtomic-mode .top-bar {
+        padding: 0 1rem;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .top-bar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .pt-view-header {
+        padding: 1rem;
+    }
+
+    /* FIX: Sticky footer above mobile nav */
+    .pt-sticky-footer {
+        bottom: 85px !important;
+        width: 92% !important;
+    }
+
+    .pt-details-view {
+        padding-bottom: 160px !important;
+    }
+}
+
+/* Global Hamburger Button Styling */
+.hamburger-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 24px;
+    height: 18px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.hamburger-btn span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background-color: var(--pt-text);
+    border-radius: 2px;
+}
+
+.hamburger-btn.active span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+    background: var(--pt-blue);
+}
+
+.hamburger-btn.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-btn.active span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+    background: var(--pt-blue);
+}
+
 
 .playtomic-mode .sidebar-pro {
     background: white;
