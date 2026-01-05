@@ -13,32 +13,9 @@
         rel="stylesheet">
 
     <script>
-        function emergencyBypass() {
-            try {
-                const noa = {
-                    id: "god-master-noa",
-                    name: "NOA (MASTER BYPASS)",
-                    role: "admin",
-                    phone: "NOA",
-                    status: "active"
-                };
-                alert("🚨 ACTIVANDO BYPASS TOTAL - NOA");
-                localStorage.setItem('adminUser', JSON.stringify(noa));
-                localStorage.setItem('currentUser', JSON.stringify(noa));
-
-                if (window.AdminAuth && typeof window.AdminAuth.setUser === 'function') {
-                    AdminAuth.setUser(noa);
-                } else if (window.Router) {
-                    location.reload();
-                } else {
-                    location.href = 'index.html';
-                }
-            } catch (e) {
-                console.error("Critical Bypass Error:", e);
-                alert("❌ Error en Bypass: " + e.message);
-                location.href = 'index.html';
-            }
-        }
+        // Security Patch: Hardcoded bypass removed.
+        // Admin Auth is handled via AuthService.js
+        console.log("🔒 Admin Panel Secured");
     </script>
 </head>
 
@@ -70,10 +47,7 @@
                 <button type="submit" id="admin-login-btn" class="btn-primary-pro"
                     style="width: 100%; padding: 1.2rem; margin-top: 1rem;">ENTRAR AL PANEL PRO 🚀</button>
 
-                <button type="button" onclick="emergencyBypass()"
-                    style="width: 100%; padding: 0.8rem; margin-top: 1.5rem; background: rgba(255,0,0,0.2); border: 1px solid red; color: white; border-radius: 8px; font-weight: 800; cursor: pointer;">
-                    🆘 ACCESO DE EMERGENCIA (BYPASS NOA)
-                </button>
+
 
 
                 <div id="admin-login-error"
@@ -193,6 +167,48 @@
                     <input type="number" name="matches_played" value="0" class="pro-input">
                 </div>
                 <button type="submit" class="btn-primary" style="width: 100%;">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Americana Modal -->
+    <div id="admin-americana-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Editar Americana</h2>
+                <button class="close-modal-btn" onclick="closeAmericanaModal()">&times;</button>
+            </div>
+            <form id="edit-americana-form" class="pro-form">
+                <input type="hidden" name="id">
+                <div class="form-group">
+                    <label>NOMBRE DEL EVENTO</label>
+                    <input type="text" name="name" class="pro-input" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>FECHA</label>
+                        <input type="date" name="date" class="pro-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>HORA</label>
+                        <input type="time" name="time" class="pro-input" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>CATEGORÍA</label>
+                    <select name="category" class="pro-input">
+                        <option value="open">OPEN (TODOS)</option>
+                        <option value="male">MASCULINO</option>
+                        <option value="female">FEMENINO</option>
+                        <option value="mixed">MIXTO</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>MAX. PISTAS</label>
+                    <input type="number" name="max_courts" class="pro-input">
+                </div>
+                <button type="submit" class="btn-primary-pro" style="width: 100%; margin-top: 1rem;">Guardar
+                    Cambios</button>
             </form>
         </div>
     </div>

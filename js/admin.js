@@ -252,23 +252,25 @@ async function loadAdminView(view) {
 
             const americanas = await FirebaseDB.americanas.getAll();
             const listHtml = americanas.map(a => `
-                <div class="glass-card-enterprise" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-left: 4px solid var(--primary);">
-                    <div style="display: flex; gap: 1.5rem; align-items: center;">
-                        <div class="americana-preview-img" style="width: 80px; height: 80px; border-radius: 12px; background: url('${a.image_url || 'img/logo.png'}') center/cover; border: 1px solid rgba(255,255,255,0.1);"></div>
-                        <div class="americana-info-pro">
-                            <div style="font-weight: 800; font-size: 1.2rem; color: var(--primary); margin-bottom: 0.3rem;">${a.name.toUpperCase()}</div>
-                            <div style="display: flex; gap: 1.2rem; font-size: 0.8rem; color: var(--text-muted); flex-wrap: wrap;">
-                                <span>📅 <span style="color:var(--text)">${a.date}</span></span>
-                                <span>🕒 <span style="color:var(--text)">${a.time || '18:30'}</span></span>
-                                <span>🎾 <span style="color:var(--text)">${a.max_courts || 4} Pistas</span></span>
-                                <span>👥 <span style="color:var(--primary); font-weight: 700;">${a.players?.length || 0} Inscritos</span></span>
+                <div class="glass-card-enterprise" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-left: 4px solid var(--primary); background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%);">
+                    <div style="display: flex; gap: 1.5rem; align-items: center; flex: 1;">
+                        <div class="americana-preview-img" style="width: 90px; height: 90px; border-radius: 16px; background: url('${a.image_url || 'img/logo.png'}') center/cover; border: 2px solid rgba(204,255,0,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.1);"></div>
+                        <div class="americana-info-pro" style="flex: 1;">
+                            <div style="font-weight: 900; font-size: 1.5rem; color: #FFFFFF; margin-bottom: 0.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 0.5px; line-height: 1.2;">${a.name.toUpperCase()}</div>
+                            <div style="display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; margin-top: 0.5rem;">
+                                <span style="display: flex; align-items: center; gap: 6px;">📅 <span style="color: #FFFFFF; font-weight: 600;">${a.date}</span></span>
+                                <span style="display: flex; align-items: center; gap: 6px;">🕒 <span style="color: #FFFFFF; font-weight: 600;">${a.time || '18:30'}</span></span>
+                                <span style="display: flex; align-items: center; gap: 6px;">🎾 <span style="color: #FFFFFF; font-weight: 600;">${a.max_courts || 4} Pistas</span></span>
+                                <span style="display: flex; align-items: center; gap: 6px;">👥 <span style="color: var(--primary); font-weight: 700;">${a.players?.length || 0} Inscritos</span></span>
                             </div>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span class="pro-category-badge" style="background: var(--surface-hover); color: white;">${(a.category || 'OPEN').toUpperCase()}</span>
-                        <button class="btn-secondary" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-color: var(--danger-dim); color: var(--danger);" 
-                                onclick="deleteAmericana('${a.id}')" title="Eliminar Permanente">🗑️</button>
+                        <span class="pro-category-badge" style="background: var(--primary); color: var(--sp-navy); font-weight: 800; padding: 8px 16px;">${(a.category || 'OPEN').toUpperCase()}</span>
+                        <button class="btn-outline-pro" style="border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-color: var(--primary); color: var(--primary); font-weight: 700; font-size: 0.8rem;" 
+                                onclick='openEditAmericanaModal(${JSON.stringify(a).replace(/'/g, "&#39;")})' title="Editar Evento">✏️ EDITAR</button>
+                        <button class="btn-secondary" style="border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-color: var(--danger-dim); color: var(--danger); font-weight: 700; font-size: 0.8rem;" 
+                                onclick="deleteAmericana('${a.id}')" title="Eliminar Permanente">🗑️ BORRAR</button>
                     </div>
                 </div>`).join('');
 
@@ -352,6 +354,22 @@ async function loadAdminView(view) {
                     await FirebaseDB.americanas.delete(id);
                     loadAdminView('americanas_mgmt');
                 } catch (e) { alert(e.message); }
+            };
+
+            window.openEditAmericanaModal = (americana) => {
+                const modal = document.getElementById('admin-americana-modal');
+                const form = document.getElementById('edit-americana-form');
+                if (!modal || !form) return;
+
+                form.querySelector('[name=id]').value = americana.id;
+                form.querySelector('[name=name]').value = americana.name;
+                form.querySelector('[name=date]').value = americana.date;
+                form.querySelector('[name=time]').value = americana.time || '18:30';
+                form.querySelector('[name=category]').value = americana.category || 'open';
+                form.querySelector('[name=max_courts]').value = americana.max_courts || 4;
+
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
             };
 
         } else if (view === 'simulator') {
@@ -498,6 +516,14 @@ window.openEditUserModal = (user) => {
 };
 
 window.closeAdminModal = () => { document.getElementById('admin-user-modal').style.display = 'none'; };
+
+window.closeAmericanaModal = () => {
+    const modal = document.getElementById('admin-americana-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
 
 window.deleteUser = async (id) => {
     if (confirm("⚠️ ¿ELIMINAR este usuario?")) {
@@ -756,5 +782,32 @@ document.addEventListener('DOMContentLoaded', () => {
             closeAdminModal(); loadAdminView('users');
         } catch (err) { alert(err.message); }
     });
+
+    // Event listener para edición de Americana
+    document.getElementById('edit-americana-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const id = fd.get('id');
+        if (!id) {
+            alert('Error: No se pudo identificar la Americana');
+            return;
+        }
+        const data = {
+            name: fd.get('name'),
+            date: fd.get('date'),
+            time: fd.get('time'),
+            category: fd.get('category'),
+            max_courts: parseInt(fd.get('max_courts'))
+        };
+        try {
+            await FirebaseDB.americanas.update(id, data);
+            alert('Americana actualizada correctamente');
+            closeAmericanaModal();
+            loadAdminView('americanas_mgmt');
+        } catch (err) {
+            alert('Error al actualizar: ' + err.message);
+        }
+    });
+
     AdminAuth.init();
 });
