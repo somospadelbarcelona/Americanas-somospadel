@@ -78,15 +78,14 @@
                             <span class="dot online"></span> ACTIVE PRO
                         </div>
                     </div>
-                    <button class="btn-logout" onclick="Auth.logout()">🚪</button>
                 </div>
 
-                <div class="social-links-sidebar">
-                    <a href="https://instagram.com/somospadelbarcelona" target="_blank" class="social-btn instagram">
-                        <i>📸</i> INSTAGRAM
+                <div class="sidebar-links-group">
+                    <a href="https://instagram.com/somospadelbarcelona" target="_blank" class="nav-item-social">
+                        <i class="fab fa-instagram"></i> INSTAGRAM
                     </a>
-                    <a href="https://wa.me/34649219350" target="_blank" class="social-btn whatsapp">
-                        <i>💬</i> WHATSAPP
+                    <a href="https://wa.me/34649219350" target="_blank" class="nav-item-social">
+                        <i class="fab fa-whatsapp"></i> WHATSAPP
                     </a>
                 </div>
             </div>
@@ -98,19 +97,34 @@
             <header class="top-bar">
                 <div class="top-bar-left">
                     <button class="hamburger-btn" id="mobile-menu-toggle">
-                        <span></span>
-                        <span></span>
-                        <span></span>
+                        <span></span><span></span><span></span>
                     </button>
-                    <div class="top-title" id="page-title">Dashboard Principal</div>
+                    <div class="top-logo-container">
+                        <img src="https://somospadel.com/wp-content/uploads/2023/11/logo_somos_padel_horizontal_negro.png"
+                            class="header-logo" alt="Somos Padel Barcelona">
+                    </div>
                 </div>
 
                 <div class="top-actions">
-                    <div class="notif-bell" onclick="showNotifications()">
-                        🔔<span class="bell-badge">3</span>
+                    <div class="notif-wrapper">
+                        <div class="notif-bell" onclick="Notifications.toggle()">
+                            <i class="fas fa-bell"></i>
+                            <span class="bell-badge" id="unread-count">0</span>
+                        </div>
+                        <!-- Notification Drawer -->
+                        <div id="notification-drawer" class="notif-drawer hidden">
+                            <div class="notif-drawer-header">
+                                <h3>Notificaciones</h3>
+                                <button class="mark-all-btn" onclick="Notifications.markAllRead()">Leído</button>
+                            </div>
+                            <div class="notif-list" id="notif-list-container"></div>
+                            <div class="notif-drawer-footer">
+                                <a href="#" onclick="Notifications.goToAll()">Ver todo</a>
+                            </div>
+                        </div>
                     </div>
-                    <div class="conn-status">
-                        <span class="dot online pulse"></span> CLOUD CONNECTED
+                    <div class="conn-status-mini" title="Cloud Active">
+                        <span class="dot online pulse"></span>
                     </div>
                 </div>
             </header>

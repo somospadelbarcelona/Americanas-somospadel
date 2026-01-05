@@ -36,6 +36,84 @@ window.showToast = (message, type = 'info', title = 'Notificación') => {
     }, 5000);
 };
 
+// --- 🔕 NOTIFICATION SYSTEM ---
+const Notifications = {
+    items: [
+        { id: 1, title: '¡Bienvenido Pro!', desc: 'Tu cuenta ha sido activada. Explora las próximas Americanas.', icon: '🎾', time: 'hace 5 min', unread: true },
+        { id: 2, title: 'Pista Confirmada', desc: 'Se ha asignado la Pista 2 para la Americana del Viernes.', icon: '🏢', time: 'hace 1 hora', unread: true },
+        { id: 3, title: 'Nivel Actualizado', desc: '¡Felicidades! Tu nivel ha subido a 3.75 tras tu última victoria.', icon: '📈', time: 'ayer', unread: false }
+    ],
+
+    init() {
+        this.render();
+        this.updateBadge();
+
+        // Close drawer clicking outside
+        document.addEventListener('click', (e) => {
+            const drawer = document.getElementById('notification-drawer');
+            const bell = document.querySelector('.notif-bell');
+            if (drawer && !drawer.contains(e.target) && !bell.contains(e.target)) {
+                drawer.classList.add('hidden');
+            }
+        });
+    },
+
+    toggle() {
+        const drawer = document.getElementById('notification-drawer');
+        if (drawer) drawer.classList.toggle('hidden');
+    },
+
+    render() {
+        const container = document.getElementById('notif-list-container');
+        if (!container) return;
+
+        if (this.items.length === 0) {
+            container.innerHTML = '<div class="notif-placeholder">No tienes notificaciones nuevas</div>';
+            return;
+        }
+
+        container.innerHTML = this.items.map(n => `
+            <div class="notif-item ${n.unread ? 'unread' : ''}" onclick="Notifications.markAsRead(${n.id})">
+                <div class="notif-icon" style="background: var(--pt-blue-light);">${n.icon}</div>
+                <div class="notif-content">
+                    <div class="notif-title">${n.title}</div>
+                    <div class="notif-desc">${n.desc}</div>
+                    <div class="notif-time">${n.time}</div>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    updateBadge() {
+        const count = this.items.filter(n => n.unread).length;
+        const badge = document.getElementById('unread-count');
+        if (badge) {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'flex' : 'none';
+        }
+    },
+
+    markAsRead(id) {
+        const item = this.items.find(n => n.id === id);
+        if (item) {
+            item.unread = false;
+            this.render();
+            this.updateBadge();
+        }
+    },
+
+    markAllRead() {
+        this.items.forEach(n => n.unread = false);
+        this.render();
+        this.updateBadge();
+    },
+
+    goToAll() {
+        showToast("Cargando historial completo de actividad...", "info");
+        this.toggle();
+    }
+};
+
 // --- 🧠 APPU STORE (Centralized State) ---
 const AppStore = {
     user: null,
@@ -732,18 +810,23 @@ async function renderPlanningWidget(filter = 'all') {
             const isFull = joinedCount >= maxPlayers;
 
             heroContainer.innerHTML = `
-            <div class="pt-hero-card" onclick="renderEventDetails('${h.id}')" style="cursor:pointer;">
-                <div class="pt-hero-badge">${isFull ? '🔥 AGOTADO' : '✨ PRÓXIMO EVENTO'}</div>
-                <div style="font-size: 1.4rem; font-weight: 900; margin-bottom: 0.5rem; line-height: 1.2;">${h.name.toUpperCase()}</div>
-                <p style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 1.5rem;">${dateStr} • ${h.time || '18:30'}h @ Somos Padel</p>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: 800; font-size: 1.1rem; color: var(--pt-neon);">${h.price || 15}€ <small style="opacity:0.7; font-size:0.6rem;">/ pers</small></span>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 0.7rem; font-weight: 700;">👤 ${joinedCount}/${maxPlayers}</span>
-                        <button class="btn-primary" style="background: var(--pt-neon); color: var(--pt-blue-deep); padding: 8px 16px; border-radius: 20px; border:none; font-weight: 800; font-size: 0.75rem; box-shadow: 0 4px 10px var(--pt-neon-glow);">${isFull ? 'VER DETALLES' : 'ME APUNTO'}</button>
+            <div class="pt-hero-card" onclick="renderEventDetails('${h.id}')" style="cursor:pointer; background: var(--gradient-navy); border: 2px solid var(--sp-neon-muted); position: relative; overflow: hidden;">
+                <div class="pt-hero-badge" style="background: var(--sp-neon); color: var(--sp-navy); font-weight: 900;">${isFull ? '🔥 AGOTADO' : '✨ PRÓXIMO EVENTO'}</div>
+                <div style="font-size: 1.6rem; font-weight: 900; margin-bottom: 0.5rem; color: white; line-height: 1.1;">${h.name.toUpperCase()}</div>
+                <p style="font-size: 0.9rem; color: var(--sp-neon); font-weight: 700; margin-bottom: 1.5rem; opacity: 0.9;">${dateStr} • ${h.time || '18:30'}h @ Somos Padel</p>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 8px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                        <span style="font-weight: 800; font-size: 1.2rem; color: white;">${h.price || 15}€</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 0.8rem; font-weight: 800; color: white;">👤 ${joinedCount}/${maxPlayers}</span>
+                        <button class="btn-primary" style="background: var(--sp-neon); color: var(--sp-navy); padding: 10px 20px; border-radius: 30px; border:none; font-weight: 900; font-size: 0.8rem; box-shadow: 0 0 20px var(--sp-neon-glow);">${isFull ? 'VER DETALLES' : 'ME APUNTO'}</button>
                     </div>
                 </div>
-                <div style="position: absolute; right: -10px; bottom: 0; font-size: 6rem; opacity: 0.15; transform: rotate(-15deg);">🎾</div>
+                
+                <!-- Decorative background icon -->
+                <div style="position: absolute; right: -20px; bottom: -20px; font-size: 8rem; opacity: 0.1; transform: rotate(-15deg); color: var(--sp-neon);">🎾</div>
             </div>
             `;
         }
@@ -758,31 +841,29 @@ async function renderPlanningWidget(filter = 'all') {
             const isFull = joinedCount >= maxPlayers;
 
             return `
-            <div class="pt-event-card" onclick="renderEventDetails('${a.id}')" style="cursor:pointer; transition: 0.2s; border-left: 4px solid ${isFull ? '#ef4444' : 'var(--pt-neon)'};">
-                <div class="pt-event-header">
-                    <div class="pt-event-img" style="background: ${isFull ? '#fee2e2' : 'var(--pt-blue-light)'};">
+            <div class="pt-event-card" onclick="renderEventDetails('${a.id}')" style="cursor:pointer; padding: 1.2rem; border-left: 6px solid ${isFull ? '#ef4444' : 'var(--sp-neon)'}; background: white; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <div class="pt-event-header" style="display: flex; gap: 1rem; align-items: center;">
+                    <div class="pt-event-img" style="width: 50px; height: 50px; background: ${isFull ? '#fee2e2' : 'var(--sp-neon-muted)'}; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
                         ${isFull ? '🔥' : '🎾'}
                     </div>
-                    <div class="pt-event-info">
-                        <div class="pt-event-meta">${dateStr} | ${a.time || '18:30'}</div>
-                        <div class="pt-event-title" style="display: flex; align-items: center; gap: 8px;">
+                    <div class="pt-event-info" style="flex: 1;">
+                        <div class="pt-event-meta" style="font-size: 0.7rem; color: var(--sp-text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">${dateStr} • ${a.time || '18:30'}h</div>
+                        <div class="pt-event-title" style="font-size: 1.1rem; font-weight: 900; color: var(--sp-navy); display: flex; align-items: center; gap: 8px;">
                             ${a.name.toUpperCase()}
-                            ${isFull ? '<span style="background: #ef4444; color: white; font-size: 0.5rem; padding: 2px 6px; border-radius: 10px;">FULL</span>' : ''}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="pt-event-footer">
-                    <div class="pt-club-info">
-                        <span style="font-size: 1.2rem;">🏢</span>
-                        <div style="font-size: 0.8rem;">
-                            <div style="font-weight: 700; color: #1e293b;">Somos Padel Barcelona</div>
-                            <div style="color: #64748b;">A 18km</div>
+                            ${isFull ? '<span style="background: #ef4444; color: white; font-size: 0.6rem; padding: 2px 8px; border-radius: 20px;">LLENO</span>' : ''}
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <div style="font-size: 0.75rem; color: ${isFull ? '#ef4444' : '#64748b'}; font-weight: 700;">👤 ${joinedCount}/${maxPlayers}</div>
-                        <div class="pt-price-tag">${price}€</div>
+                         <div style="font-size: 1.2rem; font-weight: 900; color: var(--sp-navy);">${price}€</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--sp-text-muted); font-weight: 600;">
+                        <span style="font-size: 0.9rem;">📍</span> Somos Padel Barcelona
+                    </div>
+                    <div style="font-size: 0.8rem; font-weight: 800; color: ${isFull ? '#ef4444' : 'var(--sp-navy)'}; background: ${isFull ? '#fee2e2' : '#f1f5f9'}; padding: 4px 10px; border-radius: 12px;">
+                        👤 ${joinedCount}/${maxPlayers}
                     </div>
                 </div>
             </div>
@@ -812,17 +893,46 @@ async function handleAmericanaJoin(id, isJoined) {
             await FirebaseDB.americanas.removePlayer(id, AppStore.user.id);
             showToast("Ya no estás apuntado a la americana", "info");
         } else {
+            // 1. Double check capacity before joining
+            const a = await FirebaseDB.americanas.getById(id);
+            const joinedCount = a.players?.length || 0;
+            const maxPlayers = a.max_courts ? a.max_courts * 4 : (a.maxPairs ? a.maxPairs * 2 : 16);
+
+            if (joinedCount >= maxPlayers) {
+                throw new Error("Lo sentimos, esta americana se ha llenado justo ahora. ⛔");
+            }
+
             await FirebaseDB.americanas.addPlayer(id, AppStore.user.id);
             showToast("¡Te has apuntado con éxito! 🚀", "success");
+
+            // 2. WhatsApp Messaging (Free Deep Link)
+            sendConfirmationWhatsApp(a);
         }
-        renderPlanningWidget();
+        await renderPlanningWidget();
+        await renderEventDetails(id); // Refresh current view
     } catch (e) {
-        showToast("Error en el sistema: " + e.message, "error");
+        showToast(e.message, "error");
         if (btn) {
-            btn.innerHTML = isJoined ? '✓ INSCRITO' : 'APUNTARME';
+            btn.innerHTML = isJoined ? 'BORRARME ❌' : 'APUNTARME - 0€';
             btn.disabled = false;
         }
     }
+}
+
+function sendConfirmationWhatsApp(americana) {
+    const user = AppStore.user;
+    if (!user || !user.phone) return;
+
+    const message = `🎾 ¡Hola! Soy el sistema de Americanas Padel PRO.\n\n✅ Confirmamos tu inscripción:\n🏆 *${americana.name}*\n📅 ${new Date(americana.date).toLocaleDateString()}\n⏰ ${americana.time || '18:30'}h\n\n📍 Somos Padel Barcelona\n\n¡Nos vemos en la pista! 🎾🚀`;
+    const encodedMsg = encodeURIComponent(message);
+    const waUrl = `https://wa.me/${user.phone.replace(/\D/g, '')}?text=${encodedMsg}`;
+
+    // Open in a new tab after a short delay so toast is visible
+    setTimeout(() => {
+        if (confirm("¿Quieres recibir el recordatorio por WhatsApp?")) {
+            window.open(waUrl, '_blank');
+        }
+    }, 1500);
 }
 
 async function renderActivityFeed() {
@@ -868,23 +978,23 @@ async function renderRankingsView() {
         const progress = ((level - (nextTarget - 0.5)) / 0.5) * 100;
 
         myStatsHtml = `
-        <div class="glass-card-enterprise" style="background: white; margin-bottom: 1.5rem; padding: 1.5rem; border-left: 6px solid var(--pt-blue);">
+        <div class="glass-card-enterprise" style="background: white; margin-bottom: 2rem; padding: 1.5rem; border-left: 6px solid var(--sp-navy); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 style="margin: 0; color: #1e293b; font-size: 0.8rem; letter-spacing: 1px;">MI PROGRESO</h3>
-                <span class="pt-level-badge" style="font-size: 1rem; padding: 4px 12px; border-radius: 20px;">Lvl ${level.toFixed(2)}</span>
+                <h3 style="margin: 0; color: var(--sp-navy); font-size: 0.75rem; font-weight: 800; letter-spacing: 1px;">MI PROGRESO DE NIVEL</h3>
+                <span class="pt-level-badge" style="font-size: 0.9rem; padding: 6px 14px; border-radius: 20px; background: var(--sp-navy); color: var(--sp-neon); font-weight: 900; border: 2px solid var(--sp-neon);">Lvl ${level.toFixed(2)}</span>
             </div>
             
-            <div style="display: flex; align-items: flex-end; gap: 10px; margin-bottom: 1rem;">
-                <div style="font-size: 2.2rem; font-weight: 900; color: #1e293b; line-height: 1;">${level.toFixed(2)}</div>
-                <div style="font-size: 0.8rem; color: #64748b; font-weight: 700; padding-bottom: 4px;">TOP 15%</div>
+            <div style="display: flex; align-items: flex-end; gap: 10px; margin-bottom: 1.2rem;">
+                <div style="font-size: 2.5rem; font-weight: 900; color: var(--sp-navy); line-height: 1;">${level.toFixed(2)}</div>
+                <div style="font-size: 0.8rem; color: var(--sp-text-muted); font-weight: 800; padding-bottom: 6px; text-transform: uppercase;">Top Player</div>
             </div>
 
-            <div style="height: 10px; background: #f1f5f9; border-radius: 5px; overflow: hidden; position: relative;">
-                <div style="width: ${progress}%; height: 100%; background: linear-gradient(90deg, #2563eb, #3b82f6); border-radius: 5px;"></div>
+            <div style="height: 12px; background: #f1f5f9; border-radius: 10px; overflow: hidden; position: relative; border: 1px solid var(--sp-border);">
+                <div style="width: ${progress}%; height: 100%; background: var(--gradient-sp); border-radius: 10px; box-shadow: 0 0 15px var(--sp-neon-glow);"></div>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.7rem; font-weight: 800; color: #94a3b8;">
+            <div style="display: flex; justify-content: space-between; margin-top: 0.8rem; font-size: 0.7rem; font-weight: 800; color: var(--sp-text-muted);">
                 <span>${(nextTarget - 0.5).toFixed(1)}</span>
-                <span>PRÓXIMO OBJETIVO: ${nextTarget.toFixed(1)}</span>
+                <span style="color: var(--sp-navy);">OBJETIVO: ${nextTarget.toFixed(1)} 🚀</span>
             </div>
         </div>
         `;
@@ -1078,68 +1188,70 @@ async function renderEventDetails(id) {
         const dateStr = new Date(a.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
 
         contentArea.innerHTML = `
-            <div class="pt-details-view">
-                <div class="pt-details-header">
-                    <div style="color: #2563EB; font-weight: 800; font-size: 0.9rem; margin-bottom: 0.5rem;">${dateStr} | ${a.time || '18:30'} - 21:00</div>
-                    <h1 style="font-size: 1.8rem; margin-bottom: 0.5rem; color: #1e293b;">${a.name.toUpperCase()}</h1>
-                    <div style="color: #64748b; font-weight: 600;">Somos Padel Barcelona</div>
+            <div class="pt-details-view" style="padding-bottom: 120px;">
+                <div class="pt-details-header" style="background: white; border-bottom: 1px solid var(--sp-border); padding: 2.5rem 1.5rem;">
+                    <div style="color: var(--sp-navy); font-weight: 800; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.5rem; opacity: 0.6;">${dateStr} • ${a.time || '18:30'}h</div>
+                    <h1 style="font-size: 2rem; font-weight: 900; margin-bottom: 0.5rem; color: var(--sp-navy); letter-spacing: -1px;">${a.name.toUpperCase()}</h1>
+                    <div style="color: var(--sp-text-muted); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <span style="color: var(--sp-neon); filter: drop-shadow(0 0 5px var(--sp-neon-glow));">📍</span> Somos Padel Barcelona
+                    </div>
 
-                    <div class="pt-action-circles">
+                    <div class="pt-action-circles" style="margin-top: 2.5rem;">
                         <div class="pt-action-circle">
-                            <button class="pt-circle-btn-solid">0€</button>
-                            <span style="font-size: 0.7rem; font-weight: 700;">INSCRIBIRME</span>
+                            <button class="pt-circle-btn-solid" style="background: var(--sp-navy); color: var(--sp-neon); border: 2px solid var(--sp-neon);">${a.price || 15}€</button>
+                            <span style="font-size: 0.7rem; font-weight: 800; color: var(--sp-navy);">PRECIO</span>
                         </div>
                         <div class="pt-action-circle">
-                            <button class="pt-circle-btn-outline">🔗</button>
-                            <span style="font-size: 0.7rem; font-weight: 700;">COMPARTIR</span>
+                            <button class="pt-circle-btn-outline" style="border: 2px solid var(--sp-border); color: var(--sp-navy);"><i class="fas fa-share-alt"></i></button>
+                            <span style="font-size: 0.7rem; font-weight: 800; color: var(--sp-navy);">COMPARTIR</span>
                         </div>
                         <div class="pt-action-circle">
-                            <button class="pt-circle-btn-outline">💬</button>
-                            <span style="font-size: 0.7rem; font-weight: 700;">CHAT</span>
+                            <button class="pt-circle-btn-outline" style="border: 2px solid var(--sp-border); color: var(--sp-navy);"><i class="fas fa-comment-dots"></i></button>
+                            <span style="font-size: 0.7rem; font-weight: 800; color: var(--sp-navy);">CHAT</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="pt-players-section" style="background: white; border-radius: 24px 24px 0 0; margin-top: -24px;">
-                    <div class="pt-section-title">
-                        <h3 style="font-weight: 800; color: #1e293b; border:none; text-transform:none;">Jugadores (${joinedCount}/${maxPlayers})</h3>
-                        <a href="#" style="color: #2563EB; font-weight: 700; font-size: 0.9rem; text-decoration: none;">Ver todos</a>
+                <div class="pt-players-section" style="background: #f8fafc; border-radius: 32px 32px 0 0; margin-top: -32px; padding-top: 2.5rem;">
+                    <div class="pt-section-title" style="padding: 0 1.5rem;">
+                        <h3 style="font-weight: 900; color: var(--sp-navy); border:none; text-transform:none; font-size: 1.2rem;">JUGADORES <span style="color: var(--sp-neon); background: var(--sp-navy); padding: 2px 10px; border-radius: 12px; font-size: 0.9rem; margin-left: 8px;">${joinedCount}/${maxPlayers}</span></h3>
+                        <a href="#" style="color: var(--sp-navy); font-weight: 800; font-size: 0.8rem; text-decoration: none; opacity: 0.6;">VER LIGA</a>
                     </div>
 
-                    <div class="pt-avatar-list">
+                    <div class="pt-avatar-list" style="padding: 1.5rem; gap: 1.2rem;">
                         ${(a.players || []).map(pid => {
             const p = allPlayers.find(u => u.id === pid);
             if (!p) return '';
             return `
                             <div class="pt-player-avatar-card">
-                                <div class="pt-avatar-circle">
-                                    <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#EFF6FF; color:#2563EB; font-weight:800; font-size:1.2rem;">
+                                <div class="pt-avatar-circle" style="width: 64px; height: 64px; border: 3px solid white; box-shadow: 0 8px 15px rgba(0,0,0,0.1);">
+                                    <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background: var(--gradient-navy); color: var(--sp-neon); font-weight:900; font-size:1.4rem;">
                                         ${p.name.charAt(0)}
                                     </div>
                                 </div>
-                                <div class="pt-level-badge">${p.self_rate_level || p.level || '3.5'}</div>
-                                <span style="font-size: 0.7rem; font-weight: 600; color: #1e293b; width: 60px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name.split(' ')[0]}</span>
+                                <div class="pt-level-badge" style="background: var(--sp-neon); color: var(--sp-navy); font-weight: 900; border: 2px solid white; margin-top: -12px; padding: 2px 8px;">${p.self_rate_level || p.level || '3.5'}</div>
+                                <span style="font-size: 0.75rem; font-weight: 800; color: var(--sp-navy); margin-top: 4px;">${p.name.split(' ')[0]}</span>
                             </div>
                             `;
         }).join('')}
                     </div>
 
-                    <div style="margin-top: 2rem; border-top: 1px solid #E2E8F0; padding-top: 1.5rem;">
-                        <h3 style="font-weight: 800; color: #1e293b; margin-bottom: 1rem; border:none; text-transform:none;">Descripción</h3>
-                        <div style="font-size: 0.9rem; color: #64748b; line-height: 1.6;">
-                            <p>🎾 Padel, inscripción individual o doble</p>
-                            <p>📊 Nivel Playtomic: 0 - 7</p>
-                            <p style="margin-top: 1rem;">Unete a las americanas más crazys de todas.</p>
-                            <p>Formato:</p>
-                            <p>- Pareja fija durante toda la americana</p>
-                            <p>- 5 partidos de 17 minutos</p>
+                    <div style="margin: 2rem 1.5rem; border-top: 2px solid var(--sp-border); padding-top: 2rem;">
+                        <h3 style="font-weight: 900; color: var(--sp-navy); margin-bottom: 1rem; border:none; text-transform:none; font-size: 1.1rem;">INFO DEL EVENTO</h3>
+                        <div style="font-size: 0.95rem; color: var(--sp-text-muted); line-height: 1.8; font-weight: 600;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 0.5rem;"><span>🎾</span> Inscripción individual o doble</div>
+                            <div style="display: flex; gap: 10px; margin-bottom: 0.5rem;"><span>📊</span> Nivel Open: 2.0 - 5.5</div>
+                            <div style="display: flex; gap: 10px; margin-bottom: 1rem;"><span>✨</span> Formato Americano (Rey de Pista)</div>
+                            <p style="background: var(--sp-neon-muted); padding: 1rem; border-radius: 16px; border-left: 4px solid var(--sp-neon); color: var(--sp-navy);">¡Únete a la mejor comunidad de pádel de Barcelona!</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="pt-sticky-footer">
-                    <button id="btn-join-${a.id}" class="pt-btn-primary" onclick="handleAmericanaJoin('${a.id}', ${isJoined})">
-                        ${isJoined ? 'BORRARME ❌' : 'APUNTARME - 0€'}
+                <div class="pt-sticky-footer" style="padding: 1.5rem;">
+                    <button id="btn-join-${a.id}" class="pt-btn-primary" 
+                        ${!isJoined && joinedCount >= maxPlayers ? 'disabled style="background: #cbd5e1; color: #64748b; border: none; cursor: not-allowed; box-shadow: none;"' : 'style="background: var(--gradient-navy); color: var(--sp-neon); border: 2px solid var(--sp-neon); transform: none; box-shadow: 0 15px 35px var(--sp-neon-glow);"'}
+                        onclick="handleAmericanaJoin('${a.id}', ${isJoined})">
+                        ${isJoined ? 'CANCELAR INSCRIPCIÓN ❌' : (joinedCount >= maxPlayers ? 'CUPO COMPLETO ⛔' : 'APUNTARME AHORA 🎾')}
                     </button>
                 </div>
             </div>
@@ -1588,6 +1700,9 @@ document.addEventListener('submit', async (e) => {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("🚀 Americanas Padel PRO Systems - Online");
 
+    // Initialize Notification System
+    Notifications.init();
+
     // 1. Initialize Navigation
     const navButtons = document.querySelectorAll('.nav-item-pro');
     navButtons.forEach(btn => {
@@ -1676,4 +1791,34 @@ function initPerformanceChart() {
         }
     });
 }
- // --- ?? HAMBURGER MENU LOGIC ---\ndocument.addEventListener(" DOMContentLoaded\, () => {\n const menuToggle = document.getElementById(\mobile-menu-toggle\);\n const sidebar = document.querySelector(\.sidebar-pro\);\n\n if (menuToggle && sidebar) {\n menuToggle.addEventListener(\click\, (e) => {\n e.stopPropagation();\n sidebar.classList.toggle(\open\);\n menuToggle.classList.toggle(\active\);\n });\n\n // Close menu when clicking outside\n document.addEventListener(\click\, (e) => {\n if (sidebar.classList.contains(\open\) && !sidebar.contains(e.target) && !menuToggle.contains(e.target)) {\n sidebar.classList.remove(\open\);\n menuToggle.classList.remove(\active\);\n }\n });\n\n // Close menu when navigating\n const navButtons = sidebar.querySelectorAll(\button a\);\n navButtons.forEach(btn => {\n btn.addEventListener(\click\, () => {\n sidebar.classList.remove(\open\);\n menuToggle.classList.remove(\active\);\n });\n });\n }\n});\n
+// --- HAMBURGER MENU LOGIC ---
+document.addEventListener("DOMContentLoaded", () => {
+    const menuToggle = document.getElementById('mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar-pro');
+
+    if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle('open');
+            sidebar.classList.toggle('active'); // Supporting both naming conventions in CSS
+            menuToggle.classList.toggle('active');
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if ((sidebar.classList.contains('open') || sidebar.classList.contains('active')) &&
+                !sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                sidebar.classList.remove('open', 'active');
+                menuToggle.classList.remove('active');
+            }
+        });
+
+        // Close menu when navigating
+        sidebar.querySelectorAll('button, a').forEach(btn => {
+            btn.addEventListener('click', () => {
+                sidebar.classList.remove('open', 'active');
+                menuToggle.classList.remove('active');
+            });
+        });
+    }
+});

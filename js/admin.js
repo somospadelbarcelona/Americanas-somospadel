@@ -403,8 +403,8 @@ async function loadAdminView(view) {
                             <h2 style="margin:0; color: var(--primary);">${activeAmericana.name}</h2>
                         </div>
                     </div>
-                    <div style="display: flex; gap: 0.5rem;" id="round-selector">
-                        ${[1, 2, 3, 4, 5, 6].map(r => `<button class="btn-round-tab" id="btn-round-${r}" onclick="renderMatchesForAmericana('${activeAmericana.id}', ${r})">R${r}</button>`).join('')}
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;" id="round-selector">
+                        ${[1, 2, 3, 4, 5, 6].map(r => `<button class="btn-round-tab" id="btn-round-${r}" onclick="renderMatchesForAmericana('${activeAmericana.id}', ${r})" style="min-width: 100px; font-weight: 800;">${r}º PARTIDO</button>`).join('')}
                     </div>
                 </div>
                 <div style="margin-bottom: 2rem; display: flex; align-items: center; gap: 1.5rem; background: var(--grad-dark); padding: 1.5rem; border-radius: 12px; border: var(--border-pro);">
@@ -431,10 +431,27 @@ async function loadAdminView(view) {
                             <div class="court-card-pro ${m.status}" id="match-${m.id}">
                                 <div class="court-header"><span class="court-label">PISTA ${m.court}</span><span class="status-badge ${m.status}">${(m.status || 'ESPERA').toUpperCase()}</span></div>
                                 <div class="match-teams">
-                                    <div class="team-row"><span class="team-names">${m.team_a_names}</span><div class="score-input-group"><button onclick="updateMatchScore('${m.id}', 'a', -1, '${americanaId}')">-</button><span class="score-val" id="scoreA-${m.id}">${m.score_a || 0}</span><button onclick="updateMatchScore('${m.id}', 'a', 1, '${americanaId}')">+</button></div></div>
-                                    <div class="team-row"><span class="team-names">${m.team_b_names}</span><div class="score-input-group"><button onclick="updateMatchScore('${m.id}', 'b', -1, '${americanaId}')">-</button><span class="score-val" id="scoreB-${m.id}">${m.score_b || 0}</span><button onclick="updateMatchScore('${m.id}', 'b', 1, '${americanaId}')">+</button></div></div>
+                                    <div class="team-row">
+                                        <span class="team-names">${m.team_a_names}</span>
+                                        <div class="score-input-group">
+                                            <input type="number" id="scoreA-${m.id}" value="${m.score_a || 0}" class="pro-score-input" min="0" max="99">
+                                        </div>
+                                    </div>
+                                    <div class="team-row">
+                                        <span class="team-names">${m.team_b_names}</span>
+                                        <div class="score-input-group">
+                                            <input type="number" id="scoreB-${m.id}" value="${m.score_b || 0}" class="pro-score-input" min="0" max="99">
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="court-footer"><select onchange="updateMatchStatus('${m.id}', this.value, '${americanaId}')" class="mini-select"><option value="scheduled" ${m.status === 'scheduled' ? 'selected' : ''}>PROGRAMADO</option><option value="live" ${m.status === 'live' ? 'selected' : ''}>EN JUEGO</option><option value="finished" ${m.status === 'finished' ? 'selected' : ''}>FINALIZADO</option></select><button class="save-btn" onclick="saveMatchData('${m.id}', '${americanaId}')">GUARDAR</button></div>
+                                <div class="court-footer">
+                                    <select onchange="updateMatchStatus('${m.id}', this.value, '${americanaId}')" class="mini-select">
+                                        <option value="scheduled" ${m.status === 'scheduled' ? 'selected' : ''}>PROGRAMADO</option>
+                                        <option value="live" ${m.status === 'live' ? 'selected' : ''}>EN JUEGO</option>
+                                        <option value="finished" ${m.status === 'finished' ? 'selected' : ''}>FINALIZADO</option>
+                                    </select>
+                                    <button class="save-btn" onclick="saveMatchData('${m.id}', '${americanaId}')">GUARDAR</button>
+                                </div>
                             </div>`).join('')}</div>`;
                     }
                 } catch (e) { container.innerHTML = `Error: ${e.message}`; }
@@ -496,7 +513,11 @@ window.generateMatches = async (americanaId, roundNum = 1) => {
             FirebaseDB.matches.getByAmericana(americanaId)
         ]);
         const result = AmericanaLogic.generateRound(players, allMatches, americana.max_courts || 4);
-        for (const m of result) {
+
+        // FIX: result is { matches: [], resting_players: [] }
+        const matchesToCreate = result.matches || [];
+
+        for (const m of matchesToCreate) {
             m.americana_id = americanaId; m.round = roundNum;
             await FirebaseDB.matches.create(m);
         }
@@ -517,8 +538,8 @@ window.updateMatchStatus = (matchId, status) => {
 
 window.saveMatchData = async (matchId, americanaId) => {
     try {
-        const scoreA = parseInt(document.getElementById(`scoreA-${matchId}`).textContent);
-        const scoreB = parseInt(document.getElementById(`scoreB-${matchId}`).textContent);
+        const scoreA = parseInt(document.getElementById(`scoreA-${matchId}`).value) || 0;
+        const scoreB = parseInt(document.getElementById(`scoreB-${matchId}`).value) || 0;
         const status = document.querySelector(`#match-${matchId} select`).value;
         await FirebaseDB.matches.update(matchId, { score_a: scoreA, score_b: scoreB, status: status });
         alert("Guardado");
@@ -680,9 +701,10 @@ const AdminSimulator = {
             for (let r = 1; r <= 6; r++) {
                 if (status) status.innerHTML += `> Generando Ronda ${r} con IA... `;
 
-                const round = AmericanaLogic.generateRound(mockPlayers, allM, numCourts);
+                const result = AmericanaLogic.generateRound(mockPlayers, allM, numCourts);
+                const roundMatches = result.matches || [];
 
-                for (const m of round) {
+                for (const m of roundMatches) {
                     const sA = 5 + Math.floor(Math.random() * 7); // 5 to 11
                     const sB = 5 + Math.floor(Math.random() * 7); // 5 to 11
 
