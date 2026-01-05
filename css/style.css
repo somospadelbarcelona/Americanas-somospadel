@@ -1853,3 +1853,4 @@ tr:hover td {
     50% { transform: scale(1.1); opacity: 0.8; }
     100% { transform: scale(1); opacity: 1; }
 }
+@media (max-width: 1024px) { .sidebar-pro, .activity-stream { display: none !important; } .app-shell { display: block !important; } .main-wrapper { width: 100% !important; margin: 0 !important; } body { overflow-y: auto !important; height: auto !important; display: block !important; } .workspace-area { padding: 1rem !important; } }
