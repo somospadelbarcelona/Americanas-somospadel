@@ -1,22 +1,24 @@
-render() {
-    this.container = document.getElementById('content-area');
-    if (!this.container) return;
+(function () {
+    class PlayerView {
+        render() {
+            this.container = document.getElementById('content-area');
+            if (!this.container) return;
 
-    const user = window.Store ? window.Store.getState('currentUser') : null;
-    if (!user) {
-        this.renderEmptyState();
-        return;
-    }
+            const user = window.Store ? window.Store.getState('currentUser') : null;
+            if (!user) {
+                this.renderEmptyState();
+                return;
+            }
 
-    // Fallback for missing stats
-    const stats = {
-        matches: user.matches_played || 0,
-        wins: Math.round((user.win_rate || 0) * (user.matches_played || 0) / 100),
-        level: user.level || user.self_rate_level || '3.50',
-        points: user.total_score || 0
-    };
+            // Fallback for missing stats
+            const stats = {
+                matches: user.matches_played || 0,
+                wins: Math.round((user.win_rate || 0) * (user.matches_played || 0) / 100),
+                level: user.level || user.self_rate_level || '3.50',
+                points: user.total_score || 0
+            };
 
-    this.container.innerHTML = `
+            this.container.innerHTML = `
                 <div class="profile-container fade-in" style="background: #f8f9fa; min-height: 80vh; padding-bottom: 100px;">
                     
                     <!-- Top Profile Card -->
@@ -88,10 +90,10 @@ render() {
                     </div>
                 </div>
             `;
-}
+        }
 
-renderEmptyState() {
-    this.container.innerHTML = `
+        renderEmptyState() {
+            this.container.innerHTML = `
                 <div style="text-align:center; padding: 5rem 2rem;">
                     <div style="width: 100px; height: 100px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px;">
                         <i class="fas fa-user-slash" style="font-size: 3rem; color: #ccc;"></i>
@@ -101,9 +103,9 @@ renderEmptyState() {
                     <button class="btn-primary-pro" onclick="window.location.reload()" style="width: 100%;">IR AL LOGIN</button>
                 </div>
             `;
-}
+        }
     }
 
-window.PlayerView = new PlayerView();
-console.log("📱 PlayerView Hub Loaded");
-}) ();
+    window.PlayerView = new PlayerView();
+    console.log("📱 PlayerView Hub Loaded");
+})();

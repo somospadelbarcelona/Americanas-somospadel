@@ -46,9 +46,14 @@
                                 <div style="font-family:'Inter'; font-weight:600; font-size:0.65rem; color:#888; letter-spacing:1px; text-transform: uppercase;">AMERICANAS</div>
                             </div>
                         </div>
-                        <div style="text-align: right; line-height: 1.2;">
-                            <div style="font-size: 0.6rem; color: #888; font-weight: 700; text-transform: uppercase;">${this.getGreeting()},</div>
-                            <div style="font-size: 1rem; color: white; font-weight: 800;">${userName}</div>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="text-align: right; line-height: 1.2;">
+                                <div style="font-size: 0.6rem; color: #888; font-weight: 700; text-transform: uppercase;">${this.getGreeting()},</div>
+                                <div style="font-size: 1rem; color: white; font-weight: 800;">${userName}</div>
+                            </div>
+                            <div onclick="window.AuthService?.logout()" style="width: 36px; height: 36px; background: rgba(255,255,255,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #ef4444; cursor: pointer;">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </div>
                         </div>
                     </div>
 
@@ -107,6 +112,7 @@
                             </div>
                             <div style="font-size: 0.85rem; font-weight: 800; color: #111;">Resultados</div>
                         </div>
+
 
                         <!-- RANKING -->
                         <div onclick="Router.navigate('ranking')" style="background: white; padding: 25px 15px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
