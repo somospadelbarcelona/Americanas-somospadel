@@ -450,6 +450,91 @@ async function loadAdminView(view) {
                 } catch (e) { alert("Error: " + e.message); }
             };
 
+        } else if (view === 'menu_mgmt') {
+            if (titleEl) titleEl.textContent = 'Gestor de Menú Lateral (App)';
+            content.innerHTML = '<div class="loader"></div>';
+
+            const menuItems = await FirebaseDB.menu.getAll();
+
+            content.innerHTML = `
+                <div class="glass-card-enterprise">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                         <h3>BOTONES DEL MENÚ LATERAL</h3>
+                         <button class="btn-primary-pro" onclick="openMenuModal()">+ NUEVO BOTÓN</button>
+                    </div>
+
+                    <div style="background:rgba(255,255,255,0.05); border-radius:12px; overflow:hidden;">
+                        ${menuItems.length === 0 ? '<div style="padding:2rem; text-align:center; color:#888;">No hay botones configurados. Crea el primero.</div>' : ''}
+                        
+                        ${menuItems.map(item => `
+                            <div style="display:flex; align-items:center; justify-content:space-between; padding:15px; border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <div style="display:flex; align-items:center; gap:15px;">
+                                    <div style="width:40px; height:40px; background:rgba(0,0,0,0.3); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--brand-neon);">
+                                        <i class="${item.icon}" style="font-size:1.2rem;"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight:700; color:white; font-size:1.1rem;">${item.title}</div>
+                                        <div style="font-size:0.8rem; color:#888;">Ruta: /${item.action} | Orden: ${item.order}</div>
+                                    </div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <span style="padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; background:${item.active ? 'var(--primary)' : '#333'}; color:${item.active ? 'black' : '#888'};">
+                                        ${item.active ? 'VISIBLE' : 'OCULTO'}
+                                    </span>
+                                    <button class="btn-outline-pro" onclick='openMenuModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>EDITAR</button>
+                                    <button class="btn-micro" style="background:rgba(239,68,68,0.2); color:#ef4444;" onclick="deleteMenuItem('${item.id}')">🗑️</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+             `;
+
+            // Menu Helpers
+            window.openMenuModal = (item = null) => {
+                const modal = document.getElementById('admin-menu-modal');
+                const form = document.getElementById('admin-menu-form');
+                form.reset();
+                if (item) {
+                    form.querySelector('[name=id]').value = item.id;
+                    form.querySelector('[name=title]').value = item.title;
+                    form.querySelector('[name=icon]').value = item.icon;
+                    form.querySelector('[name=action]').value = item.action;
+                    form.querySelector('[name=order]').value = item.order;
+                    form.querySelector('[name=active]').value = item.active.toString();
+                } else {
+                    form.querySelector('[name=id]').value = '';
+                }
+                modal.classList.remove('hidden');
+            };
+
+            window.deleteMenuItem = async (id) => {
+                if (!confirm('¿Borrar este botón del menú?')) return;
+                await FirebaseDB.menu.delete(id);
+                loadAdminView('menu_mgmt');
+            };
+
+            // Form Handler (One-time bind check logic needed or just re-bind safely)
+            const form = document.getElementById('admin-menu-form');
+            // Improve: Remove old listeners by cloning or checking attribute
+            const newForm = form.cloneNode(true);
+            form.parentNode.replaceChild(newForm, form);
+
+            newForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const fd = new FormData(e.target);
+                const data = Object.fromEntries(fd.entries());
+                const id = data.id;
+                delete data.id;
+
+                try {
+                    if (id) await FirebaseDB.menu.update(id, data);
+                    else await FirebaseDB.menu.create(data);
+                    document.getElementById('admin-menu-modal').classList.add('hidden');
+                    loadAdminView('menu_mgmt');
+                } catch (err) { alert(err.message); }
+            });
+
         } else if (view === 'americanas_mgmt') {
             if (titleEl) titleEl.textContent = 'Centro de Planificación de Torneos';
             content.innerHTML = '<div class="loader"></div>';

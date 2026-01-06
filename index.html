@@ -47,36 +47,31 @@
     <div id="app-shell" class="flex-col">
 
         <!-- Main Content Area -->
-        <main id="content-area" style="min-height: 80vh;">
-            <div class="loader-container"
-                style="display: flex; align-items: center; justify-content: center; height: 60vh;">
+        <!-- Main Content Area (Dynamic Injection Point) -->
+        <main id="content-area" style="min-height: 100vh;">
+            <!-- Loading Skeleton -->
+            <div class="dashboard-v2-container" style="padding-top: 40px; text-align: center;">
                 <div class="loader"></div>
             </div>
         </main>
 
-        <!-- Bottom Navigation -->
-        <nav class="playtomic-bottom-nav">
-            <button class="p-nav-item active" onclick="Router.navigate('dashboard')" data-view="dashboard">
-                <i class="fas fa-home"></i>
-                <span>Club</span>
-            </button>
-            <button class="p-nav-item" onclick="Router.navigate('americanas')" data-view="americanas">
-                <i class="fas fa-trophy"></i>
-                <span>Torneos</span>
-            </button>
-            <button class="p-nav-item" onclick="Router.navigate('agenda')" data-view="agenda">
-                <i class="far fa-calendar-alt"></i>
-                <span>Agenda</span>
-            </button>
-            <button class="p-nav-item" onclick="Router.navigate('profile')" data-view="profile">
-                <i class="far fa-user"></i>
-                <span>Perfil</span>
-            </button>
-            <button class="p-nav-item" onclick="window.open('admin.html', '_blank')">
-                <i class="fas fa-user-shield"></i>
-                <span>Admin</span>
-            </button>
-        </nav>
+        <!-- Navigation Dock (Floating Glass) -->
+        <div class="nav-dock-container">
+            <nav class="playtomic-bottom-nav glass-dock">
+                <button class="p-nav-item active" onclick="Router.navigate('dashboard')" data-view="dashboard">
+                    <i class="fas fa-home"></i>
+                </button>
+                <button class="p-nav-item" onclick="Router.navigate('americanas')" data-view="americanas">
+                    <i class="fas fa-trophy"></i>
+                </button>
+                <button class="p-nav-item" onclick="Router.navigate('agenda')" data-view="agenda">
+                    <i class="far fa-calendar-alt"></i>
+                </button>
+                <button class="p-nav-item" onclick="Router.navigate('profile')" data-view="profile">
+                    <i class="far fa-user"></i>
+                </button>
+            </nav>
+        </div>
     </div>
 
     <!-- Modals -->
@@ -188,8 +183,12 @@
     <script src="js/modules/auth/AuthController.js"></script>
 
     <!-- Layer 4: Views & controllers -->
-    <script src="js/modules/dashboard/DashboardView.js?v=11"></script>
-    <script src="js/modules/americanas/ControlTowerView.js?v=11"></script>
+    <!-- Dashboard Components (NEW) -->
+    <script src="js/modules/dashboard/HeroCard.js"></script>
+    <script src="js/modules/dashboard/QuickStats.js"></script>
+    <script src="js/modules/dashboard/ActionGrid.js"></script>
+    <script src="js/modules/dashboard/DashboardView.js?v=12"></script>
+    <script src="js/modules/dashboard/DashboardView.js?v=12"></script>
     <script src="js/modules/dashboard/DashboardController.js"></script>
     <script src="js/modules/players/PlayerView.js?v=12"></script>
     <script src="js/modules/players/PlayerController.js"></script>
