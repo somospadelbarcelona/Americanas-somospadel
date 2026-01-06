@@ -1025,22 +1025,22 @@ body {
     font-size: 0.8rem;
 }
 
-/* --- TOURNAMENT VIEW REPLICAS --- */
+/* --- TOURNAMENT VIEW REPLICAS (NEW WHITE THEME) --- */
 .tournament-layout {
-    background: #050505;
-    /* Deep Black */
+    background: #F8F9FA;
+    /* Clean White/Grey */
     min-height: 100vh;
     font-family: 'Inter', sans-serif;
-    color: white;
+    color: #111;
     padding-bottom: 60px;
-    /* Space for ticker */
 }
 
 /* Nav Bar */
 .tour-nav-bar {
-    background: #111;
-    border-bottom: 1px solid #222;
-    padding: 10px 20px;
+    background: #000;
+    /* Keep nav dark for contrast */
+    border-bottom: 2px solid var(--playtomic-neon);
+    padding: 16px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1048,222 +1048,91 @@ body {
     gap: 20px;
 }
 
-.tour-brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.brand-circle {
-    width: 32px;
-    height: 32px;
-    background: var(--playtomic-neon);
-    border-radius: 50%;
-}
-
-.brand-text {
-    font-weight: 800;
-    font-size: 1rem;
-    line-height: 1.1;
-}
-
-.tour-menu {
-    display: flex;
-    gap: 4px;
-}
-
 .tour-menu-item {
-    background: #222;
+    background: rgba(255, 255, 255, 0.1);
     color: #888;
     border: none;
     padding: 8px 16px;
-    border-radius: 4px;
-    font-weight: 700;
-    font-size: 0.8rem;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 0.75rem;
     cursor: pointer;
     text-transform: uppercase;
+    transition: all 0.2s;
 }
 
 .tour-menu-item.active {
     background: var(--playtomic-neon);
     color: black;
-    box-shadow: 0 0 10px rgba(204, 255, 0, 0.3);
-}
-
-.tour-stats-row {
-    display: flex;
-    gap: 12px;
-    align-items: center;
+    box-shadow: 0 4px 10px rgba(204, 255, 0, 0.3);
 }
 
 .tour-stat-badge {
-    background: #222;
-    border-radius: 20px;
-    padding: 6px 16px;
-    font-size: 0.75rem;
-    font-weight: 700;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-size: 0.7rem;
+    font-weight: 800;
     color: #aaa;
     display: flex;
     align-items: center;
-    gap: 6px;
-    border: 1px solid #333;
-}
-
-.tour-stat-badge.live {
-    border-color: #00FF88;
-    color: white;
-}
-
-/* Filter Bar */
-.tour-filter-bar {
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-.tour-search {
-    background: #1A1A1A;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 300px;
-    color: #666;
-}
-
-.tour-search input {
-    background: none;
-    border: none;
-    color: white;
-    outline: none;
-    width: 100%;
-}
-
-.tour-categories {
-    display: flex;
     gap: 8px;
-}
-
-.cat-pill {
-    background: #111;
-    border: 1px solid #333;
-    color: #888;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.cat-pill.active {
-    background: var(--playtomic-neon);
-    color: black;
-    border-color: var(--playtomic-neon);
-}
-
-/* Controls */
-.btn-tour-control {
-    background: #333;
-    color: white;
-    border: 1px solid #555;
-    padding: 8px 16px;
-    border-radius: 4px;
-    font-weight: 700;
-    cursor: pointer;
-    font-size: 0.75rem;
-}
-
-.btn-tour-control:hover {
-    background: #444;
-}
-
-/* Grid */
-.tour-grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 16px;
-    padding: 0 20px 20px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .tour-match-card {
-    background: #000;
-    border: 1px solid #333;
-    border-radius: 8px;
+    background: white;
+    border: 1px solid #eeeff2;
+    border-radius: 16px;
     overflow: hidden;
     position: relative;
-    border-left: 4px solid #555;
-    /* Default */
+    border-left: 6px solid #555;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s;
 }
 
-/* Neon Borders */
-.tour-match-card.border-1 {
-    border-left-color: #E0B0FF;
+.tour-match-card:active {
+    transform: scale(0.98);
 }
-
-/* Purple */
-.tour-match-card.border-2 {
-    border-left-color: #00FF88;
-}
-
-/* Green */
-.tour-match-card.border-3 {
-    border-left-color: #0055FF;
-}
-
-/* Blue */
-.tour-match-card.border-4 {
-    border-left-color: #FFB0D0;
-}
-
-/* Pink */
 
 .tour-card-header {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 8px 12px;
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.7rem;
-    color: #888;
-    font-weight: 700;
-}
-
-.tour-card-body {
-    padding: 16px;
-}
-
-.tour-team-row {
+    background: #fafafa;
+    padding: 10px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    font-size: 0.65rem;
+    color: #999;
+    font-weight: 800;
+    border-bottom: 1px solid #f0f0f0;
 }
 
 .tour-team-name {
-    color: white;
-    font-weight: 700;
+    color: #111;
+    font-weight: 800;
     font-size: 0.95rem;
 }
 
-.tour-score-box {
+.score-num {
+    background: #f8f8f8;
+    color: #111;
+    font-size: 1.4rem;
+    font-weight: 900;
+    font-family: 'Outfit', sans-serif;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    border-radius: 10px;
+    border: 1px solid #f0f0f0;
 }
 
-.score-num {
-    background: #111;
-    color: var(--playtomic-neon);
-    font-size: 1.4rem;
-    font-weight: 800;
-    font-family: 'Outfit', sans-serif;
-    width: 40px;
-    text-align: center;
+.cat-label {
+    background: #eee;
+    padding: 2px 8px;
     border-radius: 4px;
-    border: 1px solid #333;
+    color: #666;
 }
 
 .score-buttons {

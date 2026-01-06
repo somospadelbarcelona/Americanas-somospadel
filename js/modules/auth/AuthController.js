@@ -69,6 +69,9 @@
                     const name = newRegisterForm.name.value.trim();
                     const phone = newRegisterForm.phone.value.trim();
                     const password = newRegisterForm.password.value.trim();
+                    const gender = newRegisterForm.gender.value;
+                    const play_preference = newRegisterForm.play_preference.value;
+                    const level = parseFloat(newRegisterForm.self_rate_level.value) || 3.5;
 
                     let email = phone;
                     if (!email.includes('@')) email = phone + '@somospadel.com';
@@ -78,7 +81,13 @@
                     if (btn) btn.textContent = "Creando cuenta...";
 
                     try {
-                        const result = await window.AuthService.register(email, password, { name, role: 'player' });
+                        const result = await window.AuthService.register(email, password, {
+                            name,
+                            gender,
+                            play_preference,
+                            level,
+                            role: 'player'
+                        });
                         if (!result.success) {
                             alert("❌ Error de registro: " + result.error);
                             if (btn) btn.textContent = originalText;

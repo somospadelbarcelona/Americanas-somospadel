@@ -261,7 +261,7 @@
             `;
         }
 
-        // --- CARD RENDERER (Classic Playtomic Style) ---
+        // --- CARD RENDERER (Enhanced for Player Experience) ---
         renderCard(evt) {
             const players = evt.players || evt.registeredPlayers || [];
             const playerCount = players.length;
@@ -276,42 +276,101 @@
             const uid = user ? user.uid : '-';
             const isJoined = players.some(p => p.uid === uid || p.id === uid);
             const isFull = playerCount >= maxPlayers;
+            const isFinished = evt.status === 'finished';
+            const isLive = evt.status === 'live';
 
-            const statusLabel = evt.status === 'live' ? 'EN VIVO' : (evt.status === 'finished' ? 'FINALIZADO' : 'ABIERTA');
-            const statusClass = evt.status === 'live' ? 'live-glow' : '';
+            // 1. Status Label Logic
+            let statusLabel = 'ABIERTA';
+            let statusClass = '';
+
+            if (isFinished) {
+                statusLabel = 'FINALIZADO';
+                statusClass = 'finished-badge';
+            } else if (isLive) {
+                statusLabel = 'EN JUEGO 🔥';
+                statusClass = 'live-glow';
+            } else if (isFull) {
+                statusLabel = 'COMPLETO';
+                statusClass = 'full-badge';
+            }
+
+            // 2. Alert Logic (Last spots)
+            const remaining = maxPlayers - playerCount;
+            const showAlert = !isFinished && !isLive && !isFull && remaining > 0 && remaining <= 4;
+            const alertHtml = showAlert ? `<div style="position: absolute; top: 12px; left: 12px; background: #ef4444; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.6rem; font-weight: 800; z-index: 5; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); border: 1px solid rgba(255,255,255,0.2);">¡ÚLTIMAS ${remaining} PLAZAS! 🔥</div>` : '';
+
+            // 3. Category & Mode Labels
+            const categoryMap = { 'male': '🚹 MASC', 'female': '🚺 FEM', 'mixed': '👫 MIXTO', 'open': '🎾 OPEN' };
+            const categoryLabel = categoryMap[evt.category] || '🎾 OPEN';
+
+            const modeMap = { 'fixed': '🔒 FIJA', 'rotating': '🔄 TWISTER' };
+            const modeLabel = modeMap[evt.pair_mode] || '🔄 TWISTER';
+
+            // 4. Button Logic
+            let btnText = 'APUNTARME';
+            let btnClass = 'active';
+            let btnAction = `event.stopPropagation(); EventsController.joinEvent('${evt.id}')`;
+            let btnDisabled = false;
+
+            if (isFinished) {
+                btnText = 'VER RESULTADOS';
+                btnClass = 'finished'; // Green style
+                btnAction = `window.ControlTowerView.load('${evt.id}'); Router.navigate('live');`;
+            } else if (isLive) {
+                btnText = 'SEGUIR EN VIVO';
+                btnClass = 'live'; // Neon style
+                btnAction = `window.ControlTowerView.load('${evt.id}'); Router.navigate('live');`;
+            } else if (isJoined) {
+                btnText = 'INSCRITO ✅';
+                btnClass = 'joined';
+                btnDisabled = true;
+            } else if (isFull) {
+                btnText = 'LISTA ESPERA';
+                btnClass = 'full';
+                btnDisabled = true; // Or enable waitlist logic
+            }
 
             return `
-                <div class="comp-card-v2" onclick="ControlTowerView.load('${evt.id}'); Router.navigate('live');">
-                    <div class="card-hero" style="background-image: linear-gradient(to bottom, transparent, #000 95%), url('${evt.image_url || 'img/americana-pro.png'}');">
+                <div class="comp-card-v2" onclick="ControlTowerView.load('${evt.id}'); Router.navigate('live');" style="cursor: pointer; transition: transform 0.2s;">
+                    <div class="card-hero" style="background-image: linear-gradient(to bottom, transparent, #000 95%), url('${evt.image_url || 'img/americana-pro.png'}'); height: 140px;">
+                        ${alertHtml}
                         <div class="date-badge">
                             <span class="day">${dayNum}</span>
                             <span class="month">${monthName}</span>
                         </div>
-                        <div class="status-overlay ${statusClass}">${statusLabel}</div>
+                        <div class="status-overlay ${statusClass}" style="
+                            background: ${isFinished ? '#25D366' : (isLive ? 'var(--playtomic-neon)' : 'rgba(255,255,255,0.2)')}; 
+                            color: ${isLive ? 'black' : 'white'}; 
+                            font-weight: 800;">
+                            ${statusLabel}
+                        </div>
                     </div>
                     
-                    <div class="card-content">
-                        <div class="card-header-row">
-                            <h3 class="card-title">${evt.name}</h3>
-                            <div class="card-price">14€</div>
+                    <div class="card-content" style="padding: 15px;">
+                        <div class="card-header-row" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 10px;">
+                            <h3 class="card-title" style="font-size: 1.1rem; line-height: 1.2;">${evt.name}</h3>
+                            <div class="card-price" style="background: var(--playtomic-neon); color: black; font-weight: 900; padding: 6px 12px; border-radius: 12px; font-size: 0.9rem; box-shadow: 0 0 10px rgba(204,255,0,0.3);">
+                                14€
+                            </div>
                         </div>
                         
-                        <div class="card-meta-grid">
-                            <div class="meta-item"><i class="far fa-clock"></i> ${evt.time}</div>
-                            <div class="meta-item"><i class="fas fa-map-marker-alt"></i> SomosPadel Indoor</div>
-                            <div class="meta-item"><i class="fas fa-layer-group"></i> Nivel ${evt.category || 'Open'}</div>
+                        <div class="card-meta-grid" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;">
+                            <div class="meta-item badge-dark"><i class="far fa-clock"></i> ${evt.time}</div>
+                            <div class="meta-item badge-dark">${categoryLabel}</div>
+                            <div class="meta-item badge-dark">${modeLabel}</div>
                         </div>
 
-                        <div class="card-footer-row">
+                        <div class="card-footer-row" style="display:flex; justify-content:space-between; align-items:center;">
                             <div class="player-count">
                                 <div class="avatars-group">${this.renderAvatars(players, 3)}</div>
-                                <span class="count-text">${playerCount}/${maxPlayers}</span>
+                                <span class="count-text" style="color:#888;">${playerCount}/${maxPlayers}</span>
                             </div>
                             
-                            <button class="join-btn-v2 ${isJoined ? 'joined' : (isFull ? 'full' : 'active')}" 
-                                    onclick="event.stopPropagation(); ${isJoined ? '' : `EventsController.joinEvent('${evt.id}')`}"
-                                    ${(isJoined || isFull) ? 'disabled' : ''}>
-                                ${isJoined ? 'INSCRITO' : (isFull ? 'COMPLETO' : 'APUNTARME')}
+                            <button class="join-btn-v2 ${btnClass}" 
+                                    onclick="${btnAction}"
+                                    ${btnDisabled ? 'disabled' : ''}
+                                    style="padding: 8px 16px; font-size: 0.75rem; border-radius: 8px; font-weight: 800; min-width: 110px;">
+                                ${btnText}
                             </button>
                         </div>
                     </div>

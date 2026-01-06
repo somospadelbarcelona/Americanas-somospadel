@@ -13,14 +13,25 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SomosPadel">
-    <meta name="theme-color" content="#0055FF">
+    <meta name="theme-color" content="#111111">
+    <meta name="description"
+        content="La plataforma de Americanas de Padel líder en Barcelona. Clasificaciones, resultados en vivo y más.">
+
+    <!-- Open Graph (SEO) -->
+    <meta property="og:title" content="Somos Padel PRO | Americanas BCN">
+    <meta property="og:description" content="Resultados en vivo y ránkings de Padel.">
+    <meta property="og:image" content="img/logo_somospadel.png">
+
+    <!-- Mobile Optimization -->
+    <meta name="HandheldFriendly" content="true">
+    <meta name="format-detection" content="telephone=no">
 
     <!-- iOS Icons & Splash Hints -->
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/33/33736.png">
     <link rel="apple-touch-startup-image" href="https://cdn-icons-png.flaticon.com/512/33/33736.png">
-    <!-- PLAYTOMIC THEME -->
-    <link rel="stylesheet" href="css/theme-playtomic.css?v=2">
 
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="css/theme-playtomic.css?v=2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -28,9 +39,6 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <script>
-        console.log("🔵 Playtomic Theme Loaded");
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -38,23 +46,23 @@
     <!-- App Shell Playtomic (Mobile First) -->
     <div id="app-shell" class="flex-col">
 
-        <!-- Header Playtomic (Removed - Handled by DashboardView) -->
-
         <!-- Main Content Area -->
         <main id="content-area" style="min-height: 80vh;">
-            <div class="loader" style="margin: 50px auto;"></div>
+            <div class="loader-container"
+                style="display: flex; align-items: center; justify-content: center; height: 60vh;">
+                <div class="loader"></div>
+            </div>
         </main>
 
-        <!-- Bottom Navigation -->
         <!-- Bottom Navigation -->
         <nav class="playtomic-bottom-nav">
             <button class="p-nav-item active" onclick="Router.navigate('dashboard')" data-view="dashboard">
                 <i class="fas fa-home"></i>
-                <span>Inicio</span>
+                <span>Club</span>
             </button>
             <button class="p-nav-item" onclick="Router.navigate('americanas')" data-view="americanas">
                 <i class="fas fa-trophy"></i>
-                <span>Americanas</span>
+                <span>Torneos</span>
             </button>
             <button class="p-nav-item" onclick="Router.navigate('agenda')" data-view="agenda">
                 <i class="far fa-calendar-alt"></i>
@@ -69,26 +77,26 @@
                 <span>Admin</span>
             </button>
         </nav>
-
     </div>
 
     <!-- Modals -->
     <div id="auth-modal" class="modal-overlay hidden">
+        <!-- Auth Modal Content stays the same -->
         <div class="premium-auth-container">
             <div class="premium-auth-bg"></div>
-            <div class="glass-login-card">
+            <div class="glass-login-card fade-in">
                 <div style="text-align: center;">
                     <div class="auth-logo-vibe">
-                        <img src="img/logo.png"
+                        <img src="img/logo_somospadel.png"
                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
                             alt="SomosPadel Logo"
                             style="width: 80px; height: 80px; border-radius: 50%; object-fit: contain;">
                         <div style="display:none; font-size: 2.5rem;">🎾</div>
                     </div>
                     <h1 style="color: white; font-size: 2rem; margin-bottom: 0.5rem;">SOMOS<span
-                            style="color: var(--primary);">PADEL</span></h1>
-                    <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 2.5rem; letter-spacing: 1px;">
-                        Americanas Somospadel BCN</p>
+                            style="color: var(--playtomic-neon);">PADEL</span></h1>
+                    <p style="color: #9CA3AF; font-size: 0.9rem; margin-bottom: 2.5rem; letter-spacing: 1px;">Americanas
+                        Somospadel BCN</p>
                 </div>
                 <!-- Login Form -->
                 <form id="login-form">
@@ -105,7 +113,7 @@
                     <p class="auth-switch-text">¿Eres nuevo? <a href="#" class="auth-switch-link"
                             onclick="toggleAuthMode('register')">Crear cuenta pro</a></p>
                 </form>
-                <!-- Register Form -->
+                <!-- Register Form (Condensed for speed) -->
                 <form id="register-form" class="hidden">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="auth-input-group">
@@ -119,48 +127,35 @@
                     </div>
 
                     <div class="auth-input-group">
-                        <label>Soy...</label>
-                        <select name="gender" required>
-                            <option value="male">Chico 👦</option>
-                            <option value="female">Chica 👧</option>
-                        </select>
-                    </div>
-
-                    <div class="auth-input-group">
                         <label>Contraseña</label>
                         <input type="password" name="password" placeholder="Mín. 6 caracteres" required>
                     </div>
 
                     <div
                         style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid rgba(255,255,255,0.1);">
-                        <label style="color: var(--primary); margin-bottom: 0.8rem;">🎾 PERFIL DE JUGADOR</label>
+                        <label
+                            style="color: var(--playtomic-neon); margin-bottom: 0.8rem; font-size: 0.7rem; font-weight: 800; display: block;">🎾
+                            PERFIL DE JUGADOR</label>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                             <div class="auth-input-group">
-                                <label>Lado de Juego</label>
+                                <label>Género</label>
+                                <select name="gender" required>
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
+                                </select>
+                            </div>
+                            <div class="auth-input-group">
+                                <label>Lado Preferido</label>
                                 <select name="play_preference">
                                     <option value="drive">Drive</option>
                                     <option value="reves">Revés</option>
                                     <option value="indifferent" selected>Indiferente</option>
                                 </select>
                             </div>
-                            <div class="auth-input-group">
-                                <label>Preferencia</label>
-                                <select name="category_preference">
-                                    <option value="masculine">Masculino</option>
-                                    <option value="feminine">Femenino</option>
-                                    <option value="mixed" selected>Mixto</option>
-                                </select>
-                            </div>
                         </div>
                         <div class="auth-input-group" style="margin-top: 1rem;">
-                            <label>Nivel (Playtomic)</label>
-                            <select name="self_rate_level">
-                                <option value="1.0">1.0 - Iniciación</option>
-                                <option value="2.5">2.5 - Intermedio Bajo</option>
-                                <option value="3.5" selected>3.5 - Intermedio Alto</option>
-                                <option value="4.5">4.5 - Avanzado</option>
-                                <option value="5.5">5.5+ - Pro</option>
-                            </select>
+                            <label>Nivel inicial (0-7)</label>
+                            <input type="number" name="self_rate_level" step="0.1" min="0" max="7" value="3.5" required>
                         </div>
                     </div>
                     <button type="submit" class="btn-auth-premium">Unirme ahora</button>
@@ -171,75 +166,48 @@
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Scripts Architecture -->
+    <!-- Layer 1: Config & Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/firebase-init.js"></script>
 
-    <!-- Core Logic -->
+    <!-- Layer 2: Core Services -->
     <script src="js/core/StateManager.js"></script>
     <script src="js/core/DatabaseService.js"></script>
     <script src="js/core/AuthService.js"></script>
+    <script src="js/core/Router.js?v=2"></script>
+
+    <!-- Layer 3: Logic Business -->
     <script src="js/modules/americanas/MatchmakingService.js"></script>
     <script src="js/modules/americanas/AmericanaLogic.js"></script>
     <script src="js/modules/americanas/AmericanaService.js"></script>
     <script src="js/rotating-pozo-logic.js"></script>
     <script src="js/modules/auth/AuthController.js"></script>
-    <!-- Views -->
-    <script src="js/modules/dashboard/DashboardView.js?v=10"></script>
-    <script src="js/modules/americanas/ControlTowerView.js?v=10"></script>
 
+    <!-- Layer 4: Views & controllers -->
+    <script src="js/modules/dashboard/DashboardView.js?v=11"></script>
+    <script src="js/modules/americanas/ControlTowerView.js?v=11"></script>
     <script src="js/modules/dashboard/DashboardController.js"></script>
-    <script src="js/modules/players/PlayerView.js?v=11"></script>
+    <script src="js/modules/players/PlayerView.js?v=12"></script>
     <script src="js/modules/players/PlayerController.js"></script>
     <script src="js/modules/americanas/EventsController.js"></script>
 
-    <script>
-        window.Router = {
-            currentRoute: 'dashboard',
-            navigate: function (route) {
-                console.log("Nav ->", route);
-                this.currentRoute = route;
+    <!-- Ranking Module -->
+    <script src="js/modules/ranking/RankingView.js"></script>
+    <script src="js/modules/ranking/RankingController.js"></script>
 
-                // Update Nav UI (Bottom Bar)
-                // Note: 'live' route isn't on bottom nav usually, so we might unselect all or keep 'home' active conceptually
-                document.querySelectorAll('.p-nav-item').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.view === route);
-                });
+    <!-- Stats Module -->
+    <script src="js/modules/stats/StatsView.js"></script>
+    <script src="js/modules/stats/StatsController.js"></script>
 
-                const content = document.getElementById('content-area');
+    <!-- Agenda Module -->
+    <script src="js/modules/agenda/AgendaView.js"></script>
+    <script src="js/modules/agenda/AgendaController.js"></script>
 
-                if (route === 'dashboard') {
-                    if (window.DashboardView && window.Store) {
-                        const data = window.Store.getState('dashboardData');
-                        window.DashboardView.render(data || { activeCourts: 0 });
-                    }
-                } else if (route === 'live') {
-                    // Navigate to Control Tower automatically picking latest
-                    if (window.ControlTowerView) {
-                        window.ControlTowerView.loadLatest();
-                    }
-                } else if (route === 'americanas' || route === 'events') {
-                    // Reuse EventsController for now
-                    if (window.EventsController) window.EventsController.init();
-                } else if (route === 'profile') {
-                    if (window.PlayerView) window.PlayerView.render();
-                } else {
-                    // Placeholders for new sections
-                    content.innerHTML = `
-                        <div style='padding:40px 20px; text-align:center;'>
-                            <i class="fas fa-tools" style="font-size:3rem; color:#ddd; margin-bottom:20px;"></i>
-                            <h2>Sección en Construcción</h2>
-                            <p>Estamos trabajando en la vista de <strong>${route.toUpperCase()}</strong>.</p>
-                            <button onclick="Router.navigate('dashboard')" style="margin-top:20px; padding:10px 20px; background:var(--playtomic-blue); color:white; border:none; border-radius:8px;">Volver</button>
-                        </div>
-                    `;
-                }
-            }
-        };
-    </script>
+    <!-- Entry Point -->
     <script src="js/app.js"></script>
 </body>
 

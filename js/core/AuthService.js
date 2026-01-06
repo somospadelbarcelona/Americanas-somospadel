@@ -39,34 +39,38 @@
         async login(email, password) {
             try {
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                return { success: true, user: userCredential.user };
+                const user = userCredential.user;
+
+                // Fetch extra data from Firestore
+                const phone = user.email ? user.email.split('@')[0] : '';
+                const playerData = await window.FirebaseDB.players.getByPhone(phone);
+
+                const finalUser = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    ...playerData
+                };
+
+                window.Store.setState('currentUser', finalUser);
+                return { success: true, user: finalUser };
             } catch (error) {
                 console.warn("⚠️ Firebase Login failed, trying Local Fallback...", error.code);
-
-                // FALLBACK: MODO LOCAL / EMERGENCIA
-                // Si falla Firebase (por CORS en file:// o config), validamos localmente al Admin
-                // Usuario: 649219350 (convertido a email: 649219350@somospadel.com)
-                // Pass: JARABA
 
                 const adminUser = "649219350@somospadel.com";
                 const adminPass = "JARABA";
 
                 if (email === adminUser && password === adminPass) {
-
-                    console.log("✅ LOCAL ADMIN LOGIN SUCCESS (Bypassing Firebase)");
-
-                    // Crear usuario falso compatible con Firebase User Object
+                    const playerData = await window.FirebaseDB.players.getByPhone("649219350");
                     const mockUser = {
-                        uid: "local-admin-alex",
+                        uid: playerData ? playerData.id : "local-admin-alex",
                         email: email,
                         displayName: "Alejandro Coscolin",
-                        role: 'admin' // Custom fields won't persist in firebase auth object naturally without claims, 
-                        // but our Store handles it.
+                        role: 'admin',
+                        ...playerData
                     };
 
-                    // Forzar estado en Store
                     window.Store.setState('currentUser', mockUser);
-
                     return { success: true, user: mockUser };
                 }
 
@@ -78,20 +82,44 @@
             try {
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
+
                 if (additionalData && additionalData.name) {
                     await user.updateProfile({ displayName: additionalData.name });
                 }
-                return { success: true, user: user };
+
+                // Create Firestore Document
+                const phone = email.split('@')[0];
+                const newPlayer = await window.FirebaseDB.players.create({
+                    ...additionalData,
+                    phone: phone,
+                    uid: user.uid,
+                    status: 'active'
+                });
+
+                const finalUser = {
+                    uid: user.uid,
+                    email: email,
+                    ...newPlayer
+                };
+
+                window.Store.setState('currentUser', finalUser);
+                return { success: true, user: finalUser };
             } catch (error) {
                 console.warn("⚠️ Firebase Register failed, using Local Simulation...", error.code);
 
-                // Allow registration in "Demo Mode" if backend is restricted
                 if (error.code === 'auth/configuration-not-found' || error.code === 'auth/network-request-failed' || error.code === 'auth/operation-not-supported-in-this-environment') {
+                    const phone = email.split('@')[0];
+                    const newPlayer = await window.FirebaseDB.players.create({
+                        ...additionalData,
+                        phone: phone,
+                        status: 'active'
+                    });
+
                     const mockUser = {
-                        uid: 'local-user-' + Date.now(),
+                        uid: newPlayer.id,
                         email: email,
                         displayName: additionalData ? additionalData.name : 'Usuario Local',
-                        role: 'player'
+                        ...newPlayer
                     };
 
                     window.Store.setState('currentUser', mockUser);

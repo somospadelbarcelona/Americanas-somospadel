@@ -153,11 +153,22 @@
             try {
                 if (window.AmericanaService) {
                     const active = await window.AmericanaService.getActiveAmericanas();
-                    const openEvent = active.find(a => a.status === 'open' || a.status === 'in_progress');
+                    const openEvent = active.find(a => (a.status === 'open' || a.status === 'pending') && !a.is_finished);
 
                     if (openEvent) {
-                        label.textContent = "Inscripciones Abiertas";
-                        label.style.color = "#25D366";
+                        const players = openEvent.players || openEvent.registeredPlayers || [];
+                        const max = (openEvent.max_courts || 0) * 4;
+                        const remaining = max - players.length;
+
+                        if (remaining > 0 && remaining <= 4) {
+                            label.innerHTML = `<span style="color:#ef4444; font-weight:900;">🔥 ¡SOLO QUEDAN ${remaining} PLAZAS!</span>`;
+                        } else if (remaining <= 0) {
+                            label.textContent = "Evento Completo";
+                            label.style.color = "#888";
+                        } else {
+                            label.textContent = "Inscripciones Abiertas";
+                            label.style.color = "#25D366";
+                        }
                     } else {
                         label.textContent = "Próximamente";
                         label.style.color = "#888";

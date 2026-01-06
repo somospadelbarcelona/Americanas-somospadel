@@ -47,6 +47,22 @@
                     throw new Error("Ya estás inscrito en este evento.");
                 }
 
+                // CAPACITY CHECK - DISABLED FOR DYNAMIC SCALING
+                // We now allow unlimited registrations, courts will scale automatically.
+                // const maxPlayers = (americana.max_courts || 0) * 4;
+                // if (players.length >= maxPlayers) {
+                //    throw new Error("Lo sentimos, este evento ya está completo.");
+                // }
+
+                // GENDER CHECK
+                const userGender = user.gender || 'M'; // Default to M if unknown, ideally fetch from profile
+                if (americana.category === 'male' && userGender !== 'M') {
+                    throw new Error("Este torneo es exclusivo para categoría MASCULINA.");
+                }
+                if (americana.category === 'female' && userGender !== 'F') {
+                    throw new Error("Este torneo es exclusivo para categoría FEMENINA.");
+                }
+
                 const newPlayerData = {
                     id: user.uid,
                     uid: user.uid,
