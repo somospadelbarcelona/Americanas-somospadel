@@ -2,7 +2,7 @@
 console.log("🚀 Admin JS Loading...");
 
 
-const AdminAuth = {
+window.AdminAuth = {
     token: localStorage.getItem('adminToken'),
     user: (() => {
         try {
@@ -15,10 +15,12 @@ const AdminAuth = {
         }
     })(),
 
-    init() {
+    async init() {
         console.log("🛠️ AdminAuth Init START");
         try {
             const modal = document.getElementById('admin-auth-modal');
+
+            // 1. Check Active Session
             const isAdmin = this.user && (this.user.role === 'admin' || this.user.role === 'admin_player');
 
             if (isAdmin) {
@@ -29,26 +31,24 @@ const AdminAuth = {
                 }
                 loadAdminView('users');
             } else {
-                console.log("🔓 No active session. Checking Master Bypass...");
-                // Check if we have a stored preference or just auto-login as Alex for now
-                const masterUser = {
-                    id: "god-master-649219350",
-                    name: "Alejandro Coscolin",
-                    role: "admin",
-                    phone: "649219350",
-                    status: "active"
-                };
+                // 2. Check "Remember Me" Credentials
+                const savedPhone = localStorage.getItem('admin_remember_phone');
+                const savedPass = localStorage.getItem('admin_remember_pass');
 
-                // For now, let's AUTO-LOGIN Alex if it's him
-                this.setUser(masterUser);
-                console.log("⚡ Auto-Login (Alex Bypass) Applied");
+                if (savedPhone && savedPass) {
+                    console.log("⚡ Auto-Login via Remember Me...");
+                    await this.login(savedPhone, atob(savedPass), true); // Pass true to skip alert
+                } else {
+                    console.log("🔒 Waiting for manual login...");
+                    // No default auto-login for safety unless specifically saved
+                }
             }
         } catch (e) {
             console.error("❌ AdminAuth Init Error:", e);
         }
     },
 
-    async login(phoneInput, password) {
+    async login(phoneInput, password, isAuto = false) {
         const loginBtn = document.getElementById('admin-login-btn');
         const errorEl = document.getElementById('admin-login-error');
 
@@ -77,7 +77,7 @@ const AdminAuth = {
             const isAlex = (cleanPhone.endsWith("649219350") || cleanPhone === "649219350") && rawPass === "JARABA";
 
             if (isAlex) {
-                alert(`🎖️ ACCESO MAESTRO ADMIN: ALEJANDRO COSCOLIN`);
+                if (!isAuto) alert(`🎖️ ACCESO MAESTRO ADMIN: ALEJANDRO COSCOLIN`);
 
                 const masterUser = {
                     id: "god-master-649219350",
@@ -88,6 +88,13 @@ const AdminAuth = {
                 };
 
                 this.setUser(masterUser);
+
+                // Handle "Remember Me"
+                const rememberCheckbox = document.getElementById('remember-me');
+                if (rememberCheckbox && rememberCheckbox.checked) {
+                    localStorage.setItem('admin_remember_phone', rawPhone);
+                    localStorage.setItem('admin_remember_pass', btoa(rawPass)); // Simple encoding
+                }
                 return;
             }
 
@@ -102,6 +109,13 @@ const AdminAuth = {
 
             this.setUser(user);
             console.log("✅ Admin access granted via DB");
+
+            // Handle "Remember Me"
+            const rememberCheckbox = document.getElementById('remember-me');
+            if (rememberCheckbox && rememberCheckbox.checked) {
+                localStorage.setItem('admin_remember_phone', cleanPhone);
+                localStorage.setItem('admin_remember_pass', btoa(rawPass));
+            }
 
         } catch (e) {
             console.error("Auth Fail:", e);
@@ -3027,4 +3041,53 @@ window.copySummaryToWhatsApp = async (americanaId) => {
         alert("Error al copiar: " + e.message);
     }
 };
-ha
+// --- Event Listeners & Init ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Force global init check with safety
+    if (window.AdminAuth && typeof window.AdminAuth.init === 'function') {
+        window.AdminAuth.init();
+    } else {
+        console.error("⚠️ CRITICAL: AdminAuth or AdminAuth.init not found.");
+        // Try to recover or warn
+        setTimeout(() => {
+            if (window.AdminAuth) window.AdminAuth.init();
+        }, 500);
+    }
+
+
+    // Login Form Handler
+    const loginForm = document.getElementById('admin-login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                if (!window.AdminAuth) throw new Error("AdminAuth is undefined");
+
+                const fd = new FormData(e.target);
+                const phone = fd.get('phone');
+                const pass = fd.get('password');
+                const remember = fd.get('remember'); // Get checkbox status
+
+                await window.AdminAuth.login(phone, pass);
+
+                // Extra safety for saving checkbox state if login succeeds (login func handles it too, but just in case)
+                if (remember) {
+                    localStorage.setItem('admin_remember_check', 'true');
+                }
+
+            } catch (err) {
+                console.error("Login Handler Error:", err);
+                alert("Error Inesperado en Login: " + (err.message || err));
+            }
+        });
+    }
+
+    // Modal Closers
+    window.closeAdminModal = () => {
+        document.getElementById('admin-user-modal').classList.add('hidden');
+    };
+    window.closeAmericanaModal = () => {
+        document.getElementById('admin-americana-modal').classList.add('hidden');
+        document.getElementById('admin-americana-modal').style.display = 'none';
+    };
+});
