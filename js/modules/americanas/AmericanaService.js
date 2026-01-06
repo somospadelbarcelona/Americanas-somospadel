@@ -35,20 +35,32 @@
                 const americana = await this.db.getById(americanaId);
                 if (!americana) throw new Error("Evento no encontrado");
 
-                const players = americana.registeredPlayers || [];
-                // Check duplicate
-                if (players.find(p => p.uid === user.uid)) {
+                // Check BOTH arrays for legacy/current compatibility
+                const players = americana.players || [];
+                const regPlayers = americana.registeredPlayers || [];
+
+                // Unified check for existing UID
+                const exists = (players.find(p => p.uid === user.uid || p.id === user.uid)) ||
+                    (regPlayers.find(p => p.uid === user.uid || p.id === user.uid));
+
+                if (exists) {
                     throw new Error("Ya estás inscrito en este evento.");
                 }
 
-                players.push({
+                const newPlayerData = {
+                    id: user.uid,
                     uid: user.uid,
-                    name: user.displayName || user.email,
-                    level: user.level || 'N/A',
+                    name: user.name || user.displayName || user.email || 'Jugador',
+                    level: user.level || user.self_rate_level || '3.5',
                     joinedAt: new Date().toISOString()
-                });
+                };
 
-                await this.db.update(americanaId, { registeredPlayers: players });
+                players.push(newPlayerData);
+
+                await this.db.update(americanaId, {
+                    players: players,
+                    registeredPlayers: players // Sync both
+                });
                 return { success: true };
             } catch (err) {
                 return { success: false, error: err.message };
