@@ -134,17 +134,38 @@
         generateMatchesForRound(courtCount, roundNum) {
             const matches = [];
             for (let i = 1; i <= courtCount; i++) {
+                const teamA_level = (Math.random() * 2 + 3).toFixed(2); // Mock for demo
+                const teamB_level = (Math.random() * 2 + 3).toFixed(2);
+
                 matches.push({
                     court: i,
-                    teamA: `Pareja ${i}A (R${roundNum})`, // Placeholder names
+                    teamA: `Pareja ${i}A (R${roundNum})`,
                     teamB: `Pareja ${i}B (R${roundNum})`,
+                    teamA_level: parseFloat(teamA_level),
+                    teamB_level: parseFloat(teamB_level),
                     scoreA: 0,
                     scoreB: 0,
                     isFinished: false,
-                    category: '4ª FEMENINA'
+                    category: '4ª FEMENINA',
+                    quality: this.predictMatchQuality(teamA_level, teamB_level)
                 });
             }
             return matches;
+        }
+
+        /**
+         * AI PREDICTOR: Calculate match balance
+         * Returns { score: 0-100, label: string }
+         */
+        predictMatchQuality(levA, levB) {
+            const diff = Math.abs(levA - levB);
+            const score = Math.max(0, 100 - (diff * 40)); // 1.0 diff = 60/100
+
+            let label = "Equilibrado";
+            if (score > 90) label = "Punto a Punto (Élite)";
+            else if (score < 40) label = "Desigual (Revisar)";
+
+            return { score: Math.round(score), label };
         }
 
         /**

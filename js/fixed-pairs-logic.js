@@ -10,11 +10,19 @@ const FixedPairsLogic = {
      * @param {Array} players - Lista de jugadores
      * @returns {Array} - Lista de parejas fijas
      */
-    createFixedPairs(players) {
-        console.log(`🔒 Creando parejas fijas para ${players.length} jugadores...`);
+    createFixedPairs(players, category = 'open') {
+        console.log(`🔒 Creando parejas fijas para ${players.length} jugadores (Modo: ${category})...`);
 
-        // Mezclar jugadores aleatoriamente
-        const shuffled = [...players].sort(() => 0.5 - Math.random());
+        let shuffled;
+        if (category === 'mixed') {
+            // Si es mixto, asumimos que vienen alternados M, F, M, F...
+            // No barajamos para no romper las parejas chico-chica preparadas
+            shuffled = [...players];
+        } else {
+            // Mezclar jugadores aleatoriamente
+            shuffled = [...players].sort(() => 0.5 - Math.random());
+        }
+
         const pairs = [];
 
         // Emparejar de 2 en 2
@@ -123,33 +131,44 @@ const FixedPairsLogic = {
                     pairA.wins++;
                     pairB.losses++;
 
-                    // Pareja A sube de pista (si no está en la 1)
-                    if (pairA.current_court > 1) {
-                        pairA.current_court--;
-                    }
+                    // Pareja A sube (si no está en 1)
+                    if (pairA.current_court > 1) pairA.current_court--;
 
-                    // Pareja B baja de pista (si no está en la última)
-                    if (pairB.current_court < maxCourts) {
-                        pairB.current_court++;
-                    }
+                    // Pareja B baja (si no está en max)
+                    pairB.current_court++;
 
                 } else if (scoreB > scoreA) {
-                    // Pareja B gana
                     pairB.wins++;
                     pairA.losses++;
 
-                    // Pareja B sube
-                    if (pairB.current_court > 1) {
-                        pairB.current_court--;
-                    }
-
-                    // Pareja A baja
-                    if (pairA.current_court < maxCourts) {
-                        pairA.current_court++;
-                    }
+                    if (pairB.current_court > 1) pairB.current_court--;
+                    pairA.current_court++;
                 }
+
+                // Mark them as having played this round to avoid double processing if needed
+                pairA.last_played_round = match.round;
+                pairB.last_played_round = match.round;
             }
         });
+
+        // --- STRICT COURT REASSIGNMENT (Smart Filling) ---
+        // Al igual que en Rotating, necesitamos asegurar que las pistas se llenan de 1 a maxCourts.
+
+        // 1. Ordenar por pista deseada (post-partido)
+        pairs.sort((a, b) => {
+            const courtA = a.current_court || 999;
+            const courtB = b.current_court || 999;
+            return courtA - courtB;
+        });
+
+        // 2. Reasignar estrictamente: 2 parejas por pista
+        pairs.forEach((p, index) => {
+            const newCourt = Math.floor(index / 2) + 1;
+            // Solo actualizamos si está dentro del rango válido
+            p.current_court = newCourt;
+        });
+
+        // -------------------------------------------------
 
         // Ordenar parejas por juegos ganados (para clasificación)
         const sortedPairs = pairs.sort((a, b) => {

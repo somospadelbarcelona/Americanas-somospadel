@@ -1,10 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;700;800&display=swap');
 
 :root {
-    /* --- ENTERPRISE DESIGN SYSTEM: PRO PADEL --- */
-    --background: #0a0f1d;
-    --surface: #161e31;
-    --surface-hover: #1e293b;
+    /* --- ENTERPRISE DESIGN SYSTEM: PRO PADEL MATTE --- */
+    --background: #101114;
+    /* Matte Charcoal */
+    --surface: #1a1c23;
+    /* Professional Gray */
+    --surface-hover: #23252e;
 
     /* Brand Colors - Somos Padel Barcelona (Yellow Ball) */
     --primary: #ccff00;
@@ -17,23 +19,23 @@
     /* Azure Blue */
     --accent: #f59e0b;
 
-    /* Enterprise Gradients */
-    --grad-dark: linear-gradient(145deg, #161e31 0%, #0a0f1d 100%);
+    /* Enterprise Gradients Refined for Matte */
+    --grad-dark: linear-gradient(180deg, #1a1c23 0%, #101114 100%);
     --grad-primary: linear-gradient(135deg, #ccff00 0%, #dfff00 100%);
-    --grad-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+    --grad-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
     --grad-ball: radial-gradient(circle at 30% 30%, #ccff00 0%, #aacc00 100%);
 
     /* Semantic */
-    --text: #f8fafc;
-    --text-muted: #94a3b8;
+    --text: #f1f5f9;
+    --text-muted: #8a8d9b;
     --danger: #ff4d4d;
     --success: #00ff88;
-    --border-pro: 1px solid rgba(255, 255, 255, 0.08);
+    --border-pro: 1px solid rgba(255, 255, 255, 0.06);
 
     /* Radius & Spacing */
     --radius-pro: 20px;
     --radius-sm: 10px;
-    --shadow-pro: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+    --shadow-pro: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
 }
 
 * {
@@ -55,8 +57,8 @@ body {
     height: 100vh;
     display: flex;
     background-image:
-        radial-gradient(circle at 0% 0%, rgba(37, 99, 235, 0.05) 0%, transparent 50%),
-        radial-gradient(circle at 100% 100%, rgba(204, 255, 0, 0.05) 0%, transparent 50%);
+        radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
+        radial-gradient(circle at 100% 100%, rgba(204, 255, 0, 0.02) 0%, transparent 50%);
 }
 
 h1,
@@ -77,8 +79,8 @@ h4 {
 
 .sidebar-pro {
     width: 280px;
-    background: linear-gradient(180deg, #111827 0%, #0a0f1d 100%);
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(180deg, #16161a 0%, #0a0a0c 100%);
+    border-right: 1px solid rgba(255, 255, 255, 0.04);
     display: flex;
     flex-direction: column;
     padding: 0;
@@ -223,8 +225,8 @@ h4 {
     justify-content: space-between;
     align-items: center;
     border-bottom: var(--border-pro);
-    background: rgba(15, 23, 42, 0.8);
-    backdrop-filter: blur(10px);
+    background: rgba(18, 18, 22, 0.85);
+    backdrop-filter: blur(20px);
 }
 
 .top-title {
@@ -510,13 +512,14 @@ th {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border-bottom: 1px solid var(--border-color);
-    background: var(--surface);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.1);
+    /* Darker header for contrast */
 }
 
 td {
     padding: 1rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     color: var(--text);
     font-size: 0.95rem;
     vertical-align: middle;
@@ -527,7 +530,7 @@ tr:last-child td {
 }
 
 tr:hover td {
-    background: var(--surface-hover);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 /* --- MODALS --- */
@@ -537,9 +540,9 @@ tr:hover td {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(15, 23, 42, 0.6);
-    /* Navy overlay */
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.85);
+    /* Darker backdrop */
+    backdrop-filter: blur(8px);
     z-index: 1000;
     display: flex;
     justify-content: center;
@@ -559,24 +562,25 @@ tr:hover td {
 }
 
 .modal-content {
-    background: var(--surface);
+    background: #1a1c23;
+    /* Matte Surface */
     color: var(--text);
-    border-radius: 20px;
+    border-radius: 24px;
     box-shadow: var(--shadow-pro);
     width: 95%;
     max-width: 500px;
     padding: 2.5rem;
     position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* Explicitly kill the white background from the admin screenshot */
 .admin-login-card {
-    background: rgba(15, 23, 42, 0.98) !important;
+    background: #0e0e11 !important;
     border: 2px solid var(--primary) !important;
     backdrop-filter: blur(20px);
     color: white !important;
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 0 0 20px var(--primary-glow) !important;
+    box-shadow: 0 0 80px rgba(0, 0, 0, 0.9), 0 0 30px var(--primary-glow) !important;
 }
 
 .modal-header {
@@ -612,8 +616,7 @@ tr:hover td {
     align-items: center;
     gap: 6px;
     padding: 4px 12px;
-    background: #ecfdf5;
-    /* Success Light */
+    background: rgba(0, 255, 136, 0.1);
     color: var(--success);
     border-radius: 99px;
     font-size: 0.8rem;
@@ -654,7 +657,7 @@ tr:hover td {
 }
 
 .toast {
-    background: var(--surface);
+    background: #1a1c23;
     color: white;
     padding: 1.2rem 1.8rem;
     border-radius: 16px;
@@ -667,6 +670,7 @@ tr:hover td {
     backdrop-filter: blur(10px);
     animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     min-width: 300px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .toast.live-score {
@@ -758,7 +762,7 @@ tr:hover td {
     color: #000000 !important;
     /* Force black text as requested */
     padding: 0.8rem 1rem;
-    border-radius: 8px;
+    border-radius: 12px;
     font-family: 'Outfit', sans-serif;
     font-size: 0.95rem;
     font-weight: 500;
@@ -767,8 +771,8 @@ tr:hover td {
 .pro-input {
     width: 100%;
     background: #ffffff !important;
-    border: 2px solid var(--primary-muted);
-    border-radius: 12px;
+    border: 3px solid rgba(204, 255, 0, 0.2);
+    border-radius: 14px;
     padding: 1.1rem;
     color: #000000 !important;
     font-size: 1.1rem;
@@ -798,7 +802,39 @@ tr:hover td {
     color: var(--text-muted);
     background: rgba(255, 255, 255, 0.02);
     text-align: center;
-    letter-spacing: 1px;
+    border-top: var(--border-pro);
+}
+
+.pro-input-micro {
+    background: rgba(255, 255, 255, 0.08) !important;
+    /* Slightly lighter for matte visibility */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    padding: 0.6rem 0.8rem !important;
+    border-radius: 8px !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    width: 100% !important;
+    transition: 0.2s !important;
+}
+
+.pro-input-micro:focus {
+    border-color: var(--primary) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 0 10px var(--primary-glow) !important;
+}
+
+.filters-row select.pro-input-micro {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.8rem center;
+    background-size: 0.8rem;
+    padding-right: 2rem !important;
+}
+
+letter-spacing: 1px;
 }
 
 .pro-avatar {
@@ -1919,3 +1955,106 @@ tr:hover td {
         padding: 1rem !important;
     }
 }
+
+/* --- MOBILE ADMIN DISPOSITION --- */
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 1024px) {
+    .sidebar-pro {
+        display: none; /* Hidden by default on tablets/mobile, requires toggle */
+    }
+}
+
+@media (max-width: 768px) {
+    .mobile-only {
+        display: block;
+    }
+
+    .app-shell {
+        flex-direction: column;
+    }
+
+    .sidebar-pro {
+        display: flex;
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 85%;
+        max-width: 300px;
+        height: 100vh;
+        z-index: 3000;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 100px 0 0 rgba(0,0,0,0.5); /* Dim effect illusion */
+    }
+
+    .sidebar-pro.active {
+        left: 0;
+    }
+
+    .main-wrapper {
+        width: 100%;
+        height: 100vh;
+    }
+
+    .top-bar {
+        padding: 0 1rem;
+        height: 60px;
+    }
+    
+    .top-title {
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .workspace-area {
+        padding: 1rem;
+    }
+
+    .glass-card-enterprise {
+        padding: 1rem;
+    }
+    
+    /* Make grids strict single column */
+    .dashboard-grid, 
+    div[style*='grid-template-columns'] {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    /* Exceptions for small grids that fit */
+    .dashboard-grid.mini-stats {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Table Responsiveness */
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    /* Adjust Modal Sizing */
+    .modal-content {
+        width: 95%;
+        padding: 1.5rem;
+    }
+    
+    .logo-pro {
+        font-size: 1.2rem;
+    }
+    
+    /* Admin Simulator Selectors */
+    #sim-courts-random, #sim-category-empty, #sim-courts-empty {
+        font-size: 1rem;
+    }
+    
+    /* Hide some less important top bar items if needed */
+    .conn-status {
+        font-size: 0.6rem;
+    }
+}
+

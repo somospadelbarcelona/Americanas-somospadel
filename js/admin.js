@@ -241,6 +241,13 @@ async function loadAdminView(view) {
                         <span class="pro-category-badge" style="background: var(--surface-hover);">${u.level || u.self_rate_level || '3.5'}</span>
                     </td>
                     <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="pro-category-badge" style="background: ${u.gender === 'chica' ? 'rgba(236, 72, 153, 0.1)' : 'rgba(59, 130, 246, 0.1)'}; color: ${u.gender === 'chica' ? '#ec4899' : '#3b82f6'}; border: 1px solid ${u.gender === 'chica' ? '#ec4899' : '#3b82f6'}; font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem;">
+                                ${u.gender === 'chica' ? '👧 CHICA' : '👦 CHICO'}
+                            </span>
+                        </div>
+                    </td>
+                    <td>
                          <span class="pro-category-badge" style="background: ${u.status === 'active' ? 'var(--primary)' : 'transparent'}; color: ${u.status === 'active' ? 'black' : 'var(--warning)'}; border-color: ${u.status === 'active' ? 'var(--primary)' : 'var(--warning)'}; font-weight: 800;">
                             ${(u.status === 'active' ? 'ACTIVO' : (u.status || 'PENDIENTE')).toUpperCase()}
                         </span>
@@ -257,12 +264,32 @@ async function loadAdminView(view) {
 
             content.innerHTML = `
                 <div class="glass-card-enterprise" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: var(--border-pro);">
+                    <div style="padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: var(--border-pro); flex-wrap: wrap; gap: 1rem;">
                         <h3 style="margin:0;">GOBERNANZA DE JUGADORES <span style="color:var(--text-muted); font-size: 0.8rem; margin-left: 10px;">TOTAL: ${users.length}</span></h3>
-                        <div style="display:flex; gap: 1rem;">
-                            <input type="text" placeholder="Buscar jugador..." class="pro-input" style="width: 250px; padding: 0.5rem 1rem;" onkeyup="filterUsers(this.value)">
+                        <div style="display:flex; gap: 0.8rem; flex-wrap: wrap;">
+                            <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #107c10; color: #107c10; background: rgba(16, 124, 16, 0.05);" onclick="exportToExcel()">
+                                📗 EXPORTAR EXCEL
+                            </button>
+                            <input type="text" id="global-search" placeholder="Buscar globalmente..." class="pro-input" style="width: 200px; padding: 0.5rem 1rem;" onkeyup="multiFilterUsers()">
                             <button class="btn-primary-pro" style="padding: 0.5rem 1.5rem;" onclick="openCreateUserModal()">+ REGISTRAR</button>
                         </div>
+                    </div>
+                    <div class="filters-row" style="padding: 1rem 2rem; background: rgba(255,255,255,0.02); display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 1fr; gap: 1rem; border-bottom: var(--border-pro);">
+                        <input type="text" id="filter-name" placeholder="Filtrar nombre..." class="pro-input-micro" onkeyup="multiFilterUsers()">
+                        <input type="text" id="filter-phone" placeholder="Filtrar teléfono..." class="pro-input-micro" onkeyup="multiFilterUsers()">
+                        <input type="text" id="filter-level" placeholder="Nivel..." class="pro-input-micro" onkeyup="multiFilterUsers()">
+                        <select id="filter-gender" class="pro-input-micro" onchange="multiFilterUsers()">
+                            <option value="">Género (Todos)</option>
+                            <option value="chico">CHICO</option>
+                            <option value="chica">CHICA</option>
+                        </select>
+                        <select id="filter-status" class="pro-input-micro" onchange="multiFilterUsers()">
+                            <option value="">Estado (Todos)</option>
+                            <option value="active">ACTIVO</option>
+                            <option value="pending">PENDIENTE</option>
+                            <option value="blocked">BLOQUEADO</option>
+                        </select>
+                        <button class="btn-micro" onclick="resetFilters()" style="background: rgba(255,255,255,0.1);">Limpiar</button>
                     </div>
                     <table class="pro-table">
                         <thead>
@@ -270,6 +297,7 @@ async function loadAdminView(view) {
                                 <th>IDENTIDAD</th>
                                 <th>CONTACTO</th>
                                 <th>NIVEL TÉCNICO</th>
+                                <th>GÉNERO</th>
                                 <th>ESTADO CUENTA</th>
                                 <th style="text-align:right;">ACCIONES DE CONTROL</th>
                             </tr>
@@ -280,6 +308,138 @@ async function loadAdminView(view) {
                 </div>`;
 
             window.allUsersCache = users;
+            window.filteredUsers = [...users];
+
+            window.renderUserRows = (data) => {
+                const tbody = document.getElementById('users-tbody');
+                if (!tbody) return;
+                tbody.innerHTML = data.map(u => {
+                    const isPending = u.status === 'pending';
+                    return `
+                    <tr class="pro-table-row" style="background: ${isPending ? 'rgba(255,165,0,0.05)' : 'transparent'}">
+                        <td>
+                            <div class="pro-player-cell">
+                                <div class="pro-avatar" style="background: ${u.role === 'admin_player' ? 'var(--primary-glow)' : ''}">${u.name.charAt(0)}</div>
+                                <div>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <div style="font-weight: 700; color: var(--text);">${u.name}</div>
+                                        ${u.membership === 'somospadel_bcn' ? '<span style="font-size:0.6rem; background: var(--primary); color:black; padding: 2px 5px; border-radius:4px; font-weight:700;">COMUNIDAD BCN</span>' : ''}
+                                    </div>
+                                    <div style="font-size: 0.7rem; font-weight: 500; color: ${u.role === 'admin_player' ? 'var(--primary)' : 'var(--text-muted)'};">
+                                        ${u.role === 'admin_player' ? '🎖️ ADMIN + JUGADOR' : (u.role || 'player').toUpperCase()}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:0.8rem;">
+                                 <span style="color: var(--primary); font-family: 'Outfit'; font-weight: 600;">${u.phone}</span>
+                                 <button onclick="openWhatsAppActions('${u.phone}', '${u.name}')" title="Abrir Chat de WhatsApp" style="cursor:pointer; background: rgba(37, 211, 102, 0.1); color: #25D366; border: 1px solid #25D366; padding: 6px 12px; border-radius: 8px; font-weight: 700; display: flex; align-items: center; gap: 6px; font-size: 0.75rem; transition: all 0.2s;">
+                                    <span style="font-size: 1rem;">💬</span> CHAT
+                                 </button>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="pro-category-badge" style="background: var(--surface-hover);">${u.level || u.self_rate_level || '3.5'}</span>
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="pro-category-badge" style="background: ${u.gender === 'chica' ? 'rgba(236, 72, 153, 0.1)' : 'rgba(59, 130, 246, 0.1)'}; color: ${u.gender === 'chica' ? '#ec4899' : '#3b82f6'}; border: 1px solid ${u.gender === 'chica' ? '#ec4899' : '#3b82f6'}; font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem;">
+                                    ${u.gender === 'chica' ? '👧 CHICA' : '👦 CHICO'}
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                             <span class="pro-category-badge" style="background: ${u.status === 'active' ? 'var(--primary)' : 'transparent'}; color: ${u.status === 'active' ? 'black' : 'var(--warning)'}; border-color: ${u.status === 'active' ? 'var(--primary)' : 'var(--warning)'}; font-weight: 800;">
+                                ${(u.status === 'active' ? 'ACTIVO' : (u.status || 'PENDIENTE')).toUpperCase()}
+                            </span>
+                        </td>
+                        <td style="text-align: right;">
+                            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                ${isPending ? `<button class="btn-primary-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick="approveUser('${u.id}')">VALIDAR</button>` : ''}
+                                <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick='openEditUserModal(${JSON.stringify(u).replace(/'/g, "&#39;")})'>EDITAR</button>
+                                <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; color: var(--danger); border-color: var(--danger-dim);" onclick="deleteUser('${u.id}')">ELIMINAR</button>
+                            </div>
+                        </td>
+                    </tr>`;
+                }).join('');
+            };
+
+            window.multiFilterUsers = () => {
+                const search = document.getElementById('global-search').value.toLowerCase();
+                const fName = document.getElementById('filter-name').value.toLowerCase();
+                const fPhone = document.getElementById('filter-phone').value.toLowerCase();
+                const fLevel = document.getElementById('filter-level').value.toLowerCase();
+                const fGender = document.getElementById('filter-gender').value;
+                const fStatus = document.getElementById('filter-status').value;
+
+                window.filteredUsers = window.allUsersCache.filter(u => {
+                    const matchesGlobal = !search ||
+                        u.name.toLowerCase().includes(search) ||
+                        u.phone.includes(search);
+
+                    const matchesName = !fName || u.name.toLowerCase().includes(fName);
+                    const matchesPhone = !fPhone || u.phone.includes(fPhone);
+                    const matchesLevel = !fLevel || (u.level || u.self_rate_level || '3.5').toString().includes(fLevel);
+                    const matchesGender = !fGender || u.gender === fGender;
+                    const matchesStatus = !fStatus || u.status === fStatus;
+
+                    return matchesGlobal && matchesName && matchesPhone && matchesLevel && matchesGender && matchesStatus;
+                });
+
+                window.renderUserRows(window.filteredUsers);
+                // Update total count display
+                const totalEl = document.querySelector('h3 span');
+                if (totalEl) totalEl.textContent = `TOTAL: ${window.filteredUsers.length}`;
+            };
+
+            window.resetFilters = () => {
+                document.getElementById('global-search').value = "";
+                document.getElementById('filter-name').value = "";
+                document.getElementById('filter-phone').value = "";
+                document.getElementById('filter-level').value = "";
+                document.getElementById('filter-gender').value = "";
+                document.getElementById('filter-status').value = "";
+                window.multiFilterUsers();
+            };
+
+            window.exportToExcel = () => {
+                if (typeof XLSX === 'undefined') {
+                    alert('Error: Librería de exportación no cargada. Por favor, recarga la página.');
+                    return;
+                }
+
+                // Prepare data for Excel
+                const data = window.filteredUsers.map(u => ({
+                    'NOMBRE': u.name,
+                    'TELÉFONO': u.phone,
+                    'NIVEL': u.level || u.self_rate_level || '3.5',
+                    'GÉNERO': u.gender === 'chica' ? 'FEMENINO' : 'MASCULINO',
+                    'ESTADO': (u.status || 'pending').toUpperCase(),
+                    'MEMBRESÍA': u.membership === 'somospadel_bcn' ? 'COMUNIDAD' : 'EXTERNO',
+                    'ROL': (u.role || 'player').toUpperCase(),
+                    'PARTIDOS JUGADOS': u.matches_played || 0
+                }));
+
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Jugadores");
+
+                // Auto-size columns (basic implementation)
+                const colWidths = [
+                    { wch: 30 }, // Nombre
+                    { wch: 15 }, // Teléfono
+                    { wch: 10 }, // Nivel
+                    { wch: 12 }, // Género
+                    { wch: 12 }, // Estado
+                    { wch: 15 }, // Membresía
+                    { wch: 15 }, // Rol
+                    { wch: 18 }  // Partidos
+                ];
+                ws['!cols'] = colWidths;
+
+                XLSX.writeFile(wb, `Jugadores_Somospadel_${new Date().toISOString().split('T')[0]}.xlsx`);
+            };
 
             window.approveUser = async (id) => {
                 if (!confirm("¿Validar acceso para este usuario?")) return;
@@ -298,7 +458,7 @@ async function loadAdminView(view) {
             const listHtml = americanas.map(a => `
                 <div class="glass-card-enterprise" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-left: 4px solid var(--primary); background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%);">
                     <div style="display: flex; gap: 1.5rem; align-items: center; flex: 1;">
-                        <div class="americana-preview-img" style="width: 90px; height: 90px; border-radius: 16px; background: url('${a.image_url || 'img/logo.png'}') center/cover; border: 2px solid rgba(204,255,0,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.1);"></div>
+                        <div class="americana-preview-img" style="width: 90px; height: 90px; border-radius: 16px; background: url('${a.image_url || 'img/logo_somospadel.png'}') center/cover; border: 2px solid rgba(204,255,0,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.1);"></div>
                         <div class="americana-info-pro" style="flex: 1;">
                             <div style="font-weight: 900; font-size: 1.5rem; color: #FFFFFF; margin-bottom: 0.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 0.5px; line-height: 1.2;">${a.name.toUpperCase()}</div>
                             <div style="display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; margin-top: 0.5rem;">
@@ -309,8 +469,19 @@ async function loadAdminView(view) {
                             </div>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span class="pro-category-badge" style="background: var(--primary); color: black; font-weight: 800; padding: 8px 16px;">${(a.category || 'OPEN').toUpperCase()}</span>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                         <!-- Category Badge -->
+                        <span class="pro-category-badge" style="background: var(--primary); color: black; font-weight: 800; padding: 6px 14px; display: flex; align-items: center; gap: 6px; font-size: 0.75rem;">
+                            ${a.category === 'female' ? '🚺' : (a.category === 'male' ? '🚹' : (a.category === 'mixed' ? '👫' : '🎾'))}
+                            ${(a.category === 'open' ? 'TODOS' : (a.category === 'male' ? 'MASCULINA' : (a.category === 'female' ? 'FEMENINA' : (a.category === 'mixed' ? 'MIXTA' : 'TODOS')))).toUpperCase()}
+                        </span>
+
+                        <!-- Pair Mode Badge (New) -->
+                        <span class="pro-category-badge" style="background: rgba(255, 255, 255, 0.1); color: white; font-weight: 700; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; gap: 6px; font-size: 0.75rem;">
+                             ${a.pair_mode === 'fixed' ? '🔒' : '🔄'}
+                             ${a.pair_mode === 'fixed' ? 'FIJA' : 'TWISTER'}
+                        </span>
+
                         <button class="btn-outline-pro" style="border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-color: var(--primary); color: var(--primary); font-weight: 700; font-size: 0.8rem;" 
                                 onclick='openEditAmericanaModal(${JSON.stringify(a).replace(/'/g, "&#39;")})' title="Editar Evento">✏️ EDITAR</button>
                         <button class="btn-secondary" style="border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-color: var(--danger-dim); color: var(--danger); font-weight: 700; font-size: 0.8rem;" 
@@ -342,10 +513,10 @@ async function loadAdminView(view) {
                             <div class="form-group">
                                 <label>CATEGORÍA DEL TORNEO</label>
                                 <select name="category" class="pro-input">
-                                    <option value="open">OPEN (TODOS)</option>
-                                    <option value="male">MASCULINO</option>
-                                    <option value="female">FEMENINO</option>
-                                    <option value="mixed">MIXTO</option>
+                                    <option value="open">TODOS</option>
+                                    <option value="male">MASCULINA</option>
+                                    <option value="female">FEMENINA</option>
+                                    <option value="mixed">MIXTA</option>
                                 </select>
                             </div>
                             
@@ -356,8 +527,8 @@ async function loadAdminView(view) {
                                     <span style="font-size: 0.65rem; color: #888; font-weight: 400;">(Importante)</span>
                                 </label>
                                 <select name="pair_mode" class="pro-input" style="font-weight: 700;">
-                                    <option value="fixed">🔒 PAREJAS FIJAS (Pozo - Suben/Bajan Juntos)</option>
-                                    <option value="rotating">🔄 PAREJAS ROTATIVAS (Americana Tradicional)</option>
+                                    <option value="fixed">🔒 PAREJA FIJA (Pozo - Suben/Bajan Juntos)</option>
+                                    <option value="rotating">🔄 TWISTER (Americana Tradicional)</option>
                                 </select>
                                 <div style="margin-top: 8px; padding: 10px; background: rgba(204,255,0,0.05); border-radius: 6px; border: 1px solid rgba(204,255,0,0.1);">
                                     <div style="font-size: 0.7rem; color: #888; line-height: 1.5;">
@@ -370,10 +541,13 @@ async function loadAdminView(view) {
                             <div class="form-group">
                                 <label>PLANTILLA VISUAL (IMAGEN)</label>
                                 <select name="image_url" class="pro-input">
+                                    <option value="img/ball-mixta.png">PELOTA SOMOSPADEL (AMARILLO)</option>
+                                    <option value="img/ball-masculina.png">PELOTA SOMOSPADEL (VERDE)</option>
+                                    <option value="img/ball-femenina.png">PELOTA SOMOSPADEL (ROSA)</option>
                                     <option value="img/americana-pro.png">SALA PRO (NEÓN AMARILLO)</option>
                                     <option value="img/americana-night.png">NIGHT SESSION (AZUL/PÚRPURA)</option>
                                     <option value="img/americana-mixed.png">MIXED VIBES (NARANJA/ROJO)</option>
-                                    <option value="img/logo.png">LOGOTIPO CLUB</option>
+                                    <option value="img/logo_somospadel.png">LOGOTIPO CLUB</option>
                                 </select>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -389,6 +563,7 @@ async function loadAdminView(view) {
                             <button type="submit" class="btn-primary-pro" style="width: 100%; margin-top: 1rem; padding: 1.2rem;">LANZAR EVENTO ELITE 🚀</button>
                         </form>
                     </div>
+                </div>
                     <div class="planning-area">
                         <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                             <h3 style="margin:0; letter-spacing: 2px; font-size: 0.85rem; color: var(--text-muted); font-weight: 800;">EVENTOS EN EL RADAR</h3>
@@ -399,6 +574,30 @@ async function loadAdminView(view) {
                         </div>
                     </div>
                 </div>`;
+
+            // Synchronization Logic for Create Form
+            const createForm = document.getElementById('create-americana-form');
+            if (createForm) {
+                const catSelect = createForm.querySelector('[name=category]');
+                const imgSelect = createForm.querySelector('[name=image_url]');
+
+                catSelect.addEventListener('change', () => {
+                    const cat = catSelect.value;
+                    if (cat === 'male') imgSelect.value = 'img/ball-masculina.png';
+                    else if (cat === 'female') imgSelect.value = 'img/ball-femenina.png';
+                    else imgSelect.value = 'img/ball-mixta.png';
+
+                    // Auto-fill Name if empty
+                    const nameInput = createForm.querySelector('[name=name]');
+                    if (!nameInput.value || nameInput.value.startsWith('AMERICANA')) {
+                        const catLabel = cat === 'male' ? 'MASCULINA' : (cat === 'female' ? 'FEMENINA' : (cat === 'mixed' ? 'MIXTA' : 'TODOS'));
+                        nameInput.value = `AMERICANA ${catLabel}`;
+                    }
+                });
+
+                // Trigger once to set defaults
+                catSelect.dispatchEvent(new Event('change'));
+            }
 
             document.getElementById('create-americana-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -460,7 +659,18 @@ async function loadAdminView(view) {
                 // Helper for quick select buttons
                 window.selectImage = (url) => {
                     imgInput.value = url;
-                    if (imgInput.oninput) imgInput.oninput(); // Trigger preview using the handler we just defined
+                    if (imgInput.oninput) imgInput.oninput();
+                };
+
+                // Auto-sync category change in Edit Modal
+                const catSelectEdit = form.querySelector('[name=category]');
+                catSelectEdit.onchange = () => {
+                    const cat = catSelectEdit.value;
+                    let url = 'img/ball-mixta.png';
+                    if (cat === 'male') url = 'img/ball-masculina.png';
+                    else if (cat === 'female') url = 'img/ball-femenina.png';
+
+                    window.selectImage(url);
                 };
 
                 modal.classList.remove('hidden');
@@ -488,25 +698,74 @@ async function loadAdminView(view) {
                     // Normalize players list (handle legacy)
                     const participants = americana.players || americana.registeredPlayers || [];
 
-                    // A. Populate Select (exclude already joined)
+                    // A. Populate Select (exclude already joined + filter by category)
                     const joinedIds = new Set(participants.map(p => p.id || p.uid));
+                    const maxPlayers = (americana.max_courts || 0) * 4;
+                    const isFull = participants.length >= maxPlayers;
 
-                    select.innerHTML = '<option value="">Seleccionar Jugador...</option>' +
-                        allUsers
-                            .filter(u => !joinedIds.has(u.id))
+                    // Gender filtering logic
+                    let filteredUsers = allUsers.filter(u => !joinedIds.has(u.id));
+
+                    if (americana.category === 'male') {
+                        filteredUsers = filteredUsers.filter(u => u.gender === 'chico');
+                    } else if (americana.category === 'female') {
+                        filteredUsers = filteredUsers.filter(u => u.gender === 'chica');
+                    } else if (americana.category === 'mixed' || americana.category === 'open') {
+                        // Tanto MIXTO como OPEN admiten ambos géneros (chico o chica)
+                        filteredUsers = filteredUsers.filter(u => u.gender === 'chico' || u.gender === 'chica');
+                    }
+
+                    const spotsText = isFull ?
+                        '<span style="color:var(--danger); font-weight:800;">🚫 AMERICANA LLENA</span>' :
+                        `<span style="color:var(--primary); font-weight:800;">👥 PLAZAS: ${participants.length}/${maxPlayers}</span>`;
+
+                    const labelEl = document.querySelector('label[for="add-player-select"]');
+                    if (labelEl) labelEl.innerHTML = `SELECCIONAR JUGADOR (${americana.category.toUpperCase()}) ${spotsText}`;
+
+                    select.innerHTML = `<option value="">${isFull ? '--- EVENTO LLENO ---' : 'Seleccionar Jugador...'}</option>` +
+                        filteredUsers
                             .sort((a, b) => a.name.localeCompare(b.name))
-                            .map(u => `<option value="${u.id}">${u.name} (${u.level || '?'})</option>`)
+                            .map(u => `<option value="${u.id}">${u.name} (${u.level || '?'}) [${u.gender || '?'}]</option>`)
                             .join('');
 
+                    select.disabled = isFull;
+
                     // B. Setup Add Button
-                    addBtn.onclick = () => addPlayerToAmericana(americanaId, select.value);
+                    addBtn.onclick = () => {
+                        // Admin override: allow adding players beyond capacity to trigger auto-scaling logic later
+                        // if (isFull) { ... } -> Removed restriction
+                        addPlayerToAmericana(americanaId, select.value);
+                    };
 
                     // C. Render List
                     if (participants.length === 0) {
                         listContainer.innerHTML = '<div style="text-align:center; color:#666; padding:15px; font-style:italic;">Sin participantes inscritos</div>';
                     } else {
+                        // NEW: Gender Summary
+                        const maleCount = participants.filter(p => p.gender === 'chico').length;
+                        const femaleCount = participants.filter(p => p.gender === 'chica').length;
+                        const summaryHtml = `
+                            <div style="display:flex; gap:10px; margin-bottom:15px; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                                <div style="flex:1; text-align:center;">
+                                    <div style="font-size:0.6rem; color:#888; font-weight:800;">HOMBRES</div>
+                                    <div style="font-size:1.1rem; font-weight:900; color:#3b82f6;">${maleCount}</div>
+                                </div>
+                                <div style="flex:1; text-align:center; border-left:1px solid rgba(255,255,255,0.1);">
+                                    <div style="font-size:0.6rem; color:#888; font-weight:800;">MUJERES</div>
+                                    <div style="font-size:1.1rem; font-weight:900; color:#ec4899;">${femaleCount}</div>
+                                </div>
+                                ${americana.category === 'mixed' ? `
+                                <div style="flex:1; text-align:center; border-left:1px solid rgba(255,255,255,0.1);">
+                                    <div style="font-size:0.6rem; color:#888; font-weight:800;">ESTADO</div>
+                                    <div style="font-size:0.8rem; font-weight:900; color:${maleCount === femaleCount ? '#25d366' : '#fbbf24'}; margin-top:3px;">
+                                        ${maleCount === femaleCount ? 'EQUILIBRADO' : 'DESCOMPENSADO'}
+                                    </div>
+                                </div>` : ''}
+                            </div>
+                        `;
+
                         // Pass index 'i' to ensure unique identification even for corrupt data
-                        listContainer.innerHTML = participants.map((p, i) => {
+                        listContainer.innerHTML = summaryHtml + participants.map((p, i) => {
                             // Find full user details if available, else use stored info
                             const userDetails = allUsers.find(u => u.id === (p.id || p.uid)) || p;
                             const pId = p.id || p.uid || 'no-id';
@@ -560,6 +819,18 @@ async function loadAdminView(view) {
                     ]);
 
                     const players = americana.players || americana.registeredPlayers || [];
+                    const maxPlayers = (americana.max_courts || 0) * 4;
+
+                    if (players.length >= maxPlayers) {
+                        throw new Error("La Americana ya alcanzó el límite de " + maxPlayers + " jugadores.");
+                    }
+
+                    // Enforce gender check in backend-style logic
+                    if (americana.category === 'male' && user.gender !== 'chico') throw new Error("Solo se permiten hombres en esta categoría.");
+                    if (americana.category === 'female' && user.gender !== 'chica') throw new Error("Solo se permiten mujeres en esta categoría.");
+                    if ((americana.category === 'mixed' || americana.category === 'open') && (user.gender !== 'chico' && user.gender !== 'chica')) {
+                        throw new Error("El jugador debe tener un género válido (chico o chica) para participar.");
+                    }
 
                     // Add new player object
                     players.push({
@@ -567,6 +838,7 @@ async function loadAdminView(view) {
                         uid: user.id, // Compatibility
                         name: user.name,
                         level: user.level || user.self_rate_level || 'N/A',
+                        gender: user.gender || '?',
                         joinedAt: new Date().toISOString(),
                         current_court: Math.floor(players.length / 4) + 1
                     });
@@ -581,6 +853,7 @@ async function loadAdminView(view) {
                     await loadParticipantsUI(americanaId);
                     btn.disabled = false;
                     btn.textContent = "AÑADIR";
+                    showToast("Jugador añadido con éxito", "success");
 
                     // Also refresh the background list if visible
                     loadAdminView('americanas_mgmt');
@@ -643,10 +916,21 @@ async function loadAdminView(view) {
                                 </select>
                             </div>
                             <div style="flex: 1;">
+                                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">🎾 CATEGORÍA</label>
+                                <select id="sim-category-empty" class="pro-input" style="width: 100%; text-align: center;">
+                                    <option value="open">TODOS (Cualquiera)</option>
+                                    <option value="male">MASCULINA (Solo chicos)</option>
+                                    <option value="female">FEMENINA (Solo chicas)</option>
+                                    <option value="mixed">MIXTA (Chico + Chica)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr; margin-top: 15px;">
+                            <div style="flex: 1;">
                                 <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">🎯 MODO DE PAREJAS</label>
                                 <select id="sim-pair-mode-empty" class="pro-input" style="width: 100%; text-align: center; font-weight: 700;">
-                                    <option value="fixed">🔒 FIJAS (Pozo)</option>
-                                    <option value="rotating">🔄 ROTATIVAS</option>
+                                    <option value="fixed">🔒 FIJA (Pozo)</option>
+                                    <option value="rotating">🔄 TWISTER</option>
                                 </select>
                             </div>
                         </div>
@@ -675,13 +959,29 @@ async function loadAdminView(view) {
                                     <option value="3" selected>3 Pistas (12 Jugadores)</option>
                                     <option value="4">4 Pistas (16 Jugadores)</option>
                                     <option value="5">5 Pistas (20 Jugadores)</option>
+                                    <option value="6">6 Pistas (24 Jugadores)</option>
+                                    <option value="7">7 Pistas (28 Jugadores)</option>
+                                    <option value="8">8 Pistas (32 Jugadores)</option>
+                                    <option value="9">9 Pistas (36 Jugadores)</option>
+                                    <option value="10">10 Pistas (40 Jugadores)</option>
                                 </select>
                             </div>
                             <div style="flex: 1;">
+                                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">🎾 CATEGORÍA</label>
+                                <select id="sim-category-random" class="pro-input" style="width: 100%; text-align: center;">
+                                    <option value="open">TODOS (Cualquiera)</option>
+                                    <option value="male">MASCULINA (Solo chicos)</option>
+                                    <option value="female">FEMENINA (Solo chicas)</option>
+                                    <option value="mixed">MIXTA (Chico + Chica)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr; margin-top: 15px;">
+                            <div style="flex: 1;">
                                 <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">🎯 MODO DE PAREJAS</label>
                                 <select id="sim-pair-mode-random" class="pro-input" style="width: 100%; text-align: center; font-weight: 700;">
-                                    <option value="fixed">🔒 FIJAS (Pozo)</option>
-                                    <option value="rotating">🔄 ROTATIVAS</option>
+                                    <option value="fixed">🔒 FIJA (Pozo)</option>
+                                    <option value="rotating">🔄 TWISTER</option>
                                 </select>
                             </div>
                         </div>
@@ -693,7 +993,6 @@ async function loadAdminView(view) {
             document.getElementById('btn-run-simulation-random').addEventListener('click', () => AdminSimulator.runRandomCycle());
 
         } else if (view === 'matches') {
-            // ... (matches view logic remains)
             if (titleEl) titleEl.textContent = 'Centro de Resultados - 6 Rondas';
 
             const americanas = await FirebaseDB.americanas.getAll();
@@ -705,49 +1004,57 @@ async function loadAdminView(view) {
             }
 
             content.innerHTML = `
-                <div class="dashboard-header-pro" style="margin-bottom: 2rem; background: linear-gradient(to right, #111, #000); padding: 2rem; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div class="dashboard-header-pro" style="margin-bottom: 2rem; background: linear-gradient(135deg, #0a0a0a 0%, #000 100%); padding: 2.5rem; border-radius: 24px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 20px;">
                         <div style="display: flex; align-items: center; gap: 1.5rem;">
-                            <div style="width: 60px; height: 60px; background: rgba(204,255,0,0.1); border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 2rem;">🏆</div>
+                            <div style="width: 70px; height: 70px; background: rgba(204,255,0,0.15); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; border: 1px solid rgba(204,255,0,0.3); box-shadow: 0 0 20px rgba(204,255,0,0.1);">🏆</div>
                             <div>
-                                <h1 style="margin:0; color: white; font-size: 2.2rem; font-weight: 900; letter-spacing: -1px;">${activeAmericana.name}</h1>
-                                <div style="color: var(--primary); font-weight: 800; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase;">Módulo de Control de Resultados</div>
+                                <h1 style="margin:0; color: white; font-size: 2.4rem; font-weight: 950; letter-spacing: -1.5px; line-height: 1;">${activeAmericana.name}</h1>
+                                <div style="color: var(--primary); font-weight: 800; font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; opacity: 0.9;">MÓDULO DE CONTROL DE RESULTADOS</div>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 10px;">
-                            <button class="btn-outline-pro" onclick="resetRoundScores('${activeAmericana.id}', window.currentAdminRound)" style="border-color: #ff4d4d; color: #ff4d4d; font-weight: 800; padding: 0.8rem 1.5rem;">🚨 REINICIAR RONDA</button>
-                            <button class="btn-primary-pro" onclick="simulateRoundScores('${activeAmericana.id}', window.currentAdminRound)" style="background: #25D366; color: black; font-weight: 800; padding: 0.8rem 1.5rem;">🎲 SIMULAR RONDA</button>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button class="btn-outline-pro" onclick="resetRoundScores('${activeAmericana.id}', window.currentAdminRound)" style="border-color: #ff4d4d; color: #ff4d4d; font-weight: 800; padding: 0.9rem 1.8rem; border-radius: 12px; font-size: 0.85rem;">🚨 REINICIAR PARTIDO</button>
+                            <button class="btn-primary-pro" onclick="simulateRoundScores('${activeAmericana.id}', window.currentAdminRound)" style="background: #25D366; color: black; border-color: #25D366; font-weight: 800; padding: 0.9rem 1.8rem; border-radius: 12px; font-size: 0.85rem;">🎲 SIMULAR PARTIDO</button>
+                            <button class="btn-primary-pro" onclick="simulateAllAmericanaMatches('${activeAmericana.id}')" style="background: var(--primary); color: black; border-color: var(--primary); font-weight: 800; padding: 0.9rem 1.8rem; border-radius: 12px; font-size: 0.85rem;">🎮 SIMULAR TORNEO COMPLETO</button>
                         </div>
                     </div>
 
-                    <div id="filter-bar" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05);">
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <label style="color: #666; font-size: 0.7rem; font-weight: 800; letter-spacing: 1px;">BUSCADOR DE EVENTO:</label>
-                            <select id="americana-select" onchange="loadSpecificAmericana(this.value)" class="pro-input" style="width: 100%; height: 50px; font-size: 1.1rem; font-weight: 800; background: #1a1a1a; border-radius: 12px; border: 1px solid #333;">
-                                ${americanas.map(a => `<option value="${a.id}" ${a.id === activeAmericana.id ? 'selected' : ''}>${a.name.toUpperCase()} — ${a.date}</option>`).join('')}
+                    <div id="filter-bar" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; background: rgba(255,255,255,0.03); padding: 1.8rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08);">
+                        <div style="display: flex; flex-direction: column; gap: 10px; flex: 2;">
+                            <label style="color: rgba(255,255,255,0.5); font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;">Buscador de Evento:</label>
+                            <select id="americana-select" onchange="loadSpecificAmericana(this.value)" class="pro-input" style="width: 100%; height: 60px !important; font-size: 1.1rem !important; font-weight: 800 !important; background: #ffffff !important; color: #000000 !important; border-radius: 14px; border: 3px solid var(--primary-muted) !important; padding: 0 15px !important; cursor: pointer;">
+                                ${americanas && americanas.length ? americanas.map(a => `<option value="${a.id}" ${a.id === activeAmericana.id ? 'selected' : ''}>${a.name ? a.name.toUpperCase() : 'SIN NOMBRE'} — ${a.date || 'Sin fecha'}</option>`).join('') : '<option>No hay eventos disponibles</option>'}
                             </select>
                         </div>
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <label style="color: #666; font-size: 0.7rem; font-weight: 800; letter-spacing: 1px;">BUSCADOR RÁPIDO JUGADOR:</label>
-                            <input type="text" placeholder="Escribe nombre para destacar..." class="pro-input" style="height: 50px; border-radius: 12px; background: #1a1a1a; border: 1px solid #333;" onkeyup="highlightPlayer(this.value)">
+                        <div style="display: flex; flex-direction: column; gap: 10px; flex: 2;">
+                            <label style="color: rgba(255,255,255,0.5); font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;">Buscador Rápido Jugador:</label>
+                            <input type="text" placeholder="Escribe nombre para destacar..." class="pro-input" style="height: 60px !important; border-radius: 14px; background: #ffffff !important; color: #000000 !important; border: 3px solid var(--primary-muted) !important; padding: 0 15px !important; font-weight: 700 !important; font-size: 1.1rem !important;" onkeyup="highlightPlayer(this.value)">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 10px; flex: 1; max-width: 150px;">
+                            <label style="color: rgba(255,255,255,0.5); font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;">Nº Pistas:</label>
+                            <div style="display: flex; gap: 5px;">
+                                <input type="number" id="quick-max-courts" value="${activeAmericana.max_courts || 0}" min="1" max="20" class="pro-input" style="width: 100%; height: 60px !important; text-align: center; font-size: 1.4rem !important; font-weight: 800 !important; background: #ffffff !important; color: #000000 !important; border-radius: 14px; border: 3px solid var(--primary-muted) !important;">
+                                <button class="btn-primary-pro" onclick="updateMaxCourtsQuick('${activeAmericana.id}')" style="height: 60px; min-width: 60px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 14px; font-size: 1.5rem;" title="Guardar Pistas">💾</button>
+                            </div>
                         </div>
                     </div>
 
-                    <div style="display: flex; gap: 0.8rem; margin-top: 1.5rem; overflow-x: auto; padding-bottom: 5px;">
-                        ${[1, 2, 3, 4, 5, 6].map(r => `<button class="btn-round-tab" id="btn-round-${r}" onclick="renderMatchesForAmericana('${activeAmericana.id}', ${r})" style="flex: 1; min-width: 140px; height: 50px; font-weight: 900; font-size: 0.9rem; border-radius: 12px; cursor: pointer; transition: all 0.3s ease;">RONDA ${r}</button>`).join('')}
-                        <button class="btn-round-tab" id="btn-round-summary" onclick="renderAmericanaSummary('${activeAmericana.id}')" style="flex: 1.2; min-width: 160px; height: 50px; font-weight: 900; background: var(--secondary); border-color: var(--secondary); border-radius: 12px;">📊 INFORME FINAL</button>
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem; overflow-x: auto; padding-bottom: 8px; scrollbar-width: thin;">
+                        ${[1, 2, 3, 4, 5, 6].map(r => `<button class="btn-round-tab" id="btn-round-${r}" onclick="renderMatchesForAmericana('${activeAmericana.id}', ${r})" style="flex: 1; min-width: 150px; height: 55px; font-weight: 900; font-size: 0.95rem; border-radius: 14px; cursor: pointer; transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); color: #888;">PARTIDO ${r}</button>`).join('')}
+                        <button class="btn-round-tab" id="btn-round-summary" onclick="renderAmericanaSummary('${activeAmericana.id}')" style="flex: 1.3; min-width: 180px; height: 55px; font-weight: 900; background: var(--secondary); border: none; border-radius: 14px; color: white; display: flex; align-items: center; justify-content: center; gap: 8px;">📊 INFORME FINAL</button>
                     </div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 2.5fr 1.2fr; gap: 2.5rem;">
                     <div id="matches-container"><div class="loader"></div></div>
                     
-                    <div class="glass-card-enterprise" style="height: fit-content; padding: 1.5rem; background: rgba(0,0,0,0.6);">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-                             <h3 style="margin:0; color:white; font-size: 1rem;">📊 CLASIFICACIÓN</h3>
-                             <span style="font-size:0.7rem; color: #888;">Orden: Juegos Ganados</span>
+                    <div class="glass-card-enterprise" style="height: fit-content; padding: 2rem; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                             <h3 style="margin:0; color:white; font-size: 1.1rem; font-weight: 900; letter-spacing: 1px;">📊 CLASIFICACIÓN</h3>
+                             <span style="font-size:0.7rem; color: var(--primary); font-weight: 800; background: rgba(204,255,0,0.1); padding: 4px 10px; border-radius: 20px;">EN VIVO</span>
                         </div>
-                        <div id="standings-container" style="max-height: 600px; overflow-y: auto;">
+                        <div id="standings-container" style="max-height: 800px; overflow-y: auto; padding-right: 5px;">
                             <!-- Standings inserted here -->
                         </div>
                     </div>
@@ -775,9 +1082,153 @@ async function loadAdminView(view) {
                     const matches = await FirebaseDB.matches.getByAmericana(americanaId);
 
                     // Fetch Americana to check pair_mode
-                    const americana = await FirebaseDB.americanas.getById(americanaId);
+                    // Fetch Americana to check pair_mode
+                    let americana = await FirebaseDB.americanas.getById(americanaId);
                     const isFixedPairs = americana.pair_mode === 'fixed';
-                    const fixedPairs = americana.fixed_pairs || [];
+                    let fixedPairs = americana.fixed_pairs || [];
+
+                    // --- AUTO-DETECT & SYNC LOOSE PLAYERS (FIX FOR MISSING COURTS) ---
+                    // --- AUTO-DETECT & SYNC LOOSE PLAYERS (FIX FOR MISSING COURTS) ---
+                    if (isFixedPairs && americana.players && americana.players.length > (fixedPairs.length * 2)) {
+                        // ... (Existing Logic for Adding Players) ...
+                        console.log("🕵️ Detectados jugadores nuevos sin pareja. Sincronizando...");
+
+                        const allPlayers = americana.players;
+                        const pairedIds = new Set();
+                        fixedPairs.forEach(p => { pairedIds.add(p.player1_id); pairedIds.add(p.player2_id); });
+
+                        const loosePlayers = allPlayers.filter(p => !pairedIds.has(p.id));
+
+                        if (loosePlayers.length >= 2) {
+                            const newPairs = FixedPairsLogic.createFixedPairs(loosePlayers, americana.category);
+
+                            // Asignar pistas al final
+                            const maxCurrentCourt = fixedPairs.length > 0 ? Math.max(...fixedPairs.map(p => p.current_court)) : 0;
+                            newPairs.forEach((p, i) => {
+                                p.current_court = maxCurrentCourt + Math.floor(i / 2) + 1;
+                                p.initial_court = p.current_court;
+                            });
+
+                            // Merge & Save Pairs
+                            const updatedFixedPairs = [...fixedPairs, ...newPairs];
+                            await FirebaseDB.americanas.update(americanaId, { fixed_pairs: updatedFixedPairs });
+
+                            // Update Local Vars
+                            fixedPairs = updatedFixedPairs;
+                            americana.fixed_pairs = fixedPairs;
+
+                            // Check & Update Max Courts
+                            const neededCourts = Math.ceil(fixedPairs.length / 2); // 2 pairs per court
+                            if (neededCourts > (americana.max_courts || 0)) {
+                                await FirebaseDB.americanas.update(americanaId, { max_courts: neededCourts });
+                                americana.max_courts = neededCourts;
+                            }
+
+                            // --- GENERATE MISSING MATCHES FOR CURRENT ROUND ---
+                            const currentRoundMatches = matches.filter(m => m.round === roundNum);
+                            const pairedInRoundIds = new Set();
+                            currentRoundMatches.forEach(m => {
+                                pairedInRoundIds.add(m.pair_a_id);
+                                pairedInRoundIds.add(m.pair_b_id);
+                            });
+
+                            const pairsNeedingMatch = newPairs.filter(p => !pairedInRoundIds.has(p.id));
+
+                            if (pairsNeedingMatch.length >= 2) {
+                                console.log(`🎾 Generando partidos extra para Ronda ${roundNum} con ${pairsNeedingMatch.length} parejas nuevas...`);
+                                const extraMatches = [];
+                                pairsNeedingMatch.sort((a, b) => a.current_court - b.current_court);
+
+                                for (let i = 0; i < pairsNeedingMatch.length; i += 2) {
+                                    if (i + 1 < pairsNeedingMatch.length) {
+                                        const pA = pairsNeedingMatch[i];
+                                        const pB = pairsNeedingMatch[i + 1];
+
+                                        const matchData = {
+                                            americana_id: americanaId,
+                                            round: roundNum,
+                                            court: pA.current_court,
+                                            pair_a_id: pA.id,
+                                            pair_b_id: pB.id,
+                                            team_a_ids: [pA.player1_id, pA.player2_id],
+                                            team_b_ids: [pB.player1_id, pB.player2_id],
+                                            team_a_names: pA.pair_name,
+                                            team_b_names: pB.pair_name,
+                                            status: 'scheduled',
+                                            score_a: 0,
+                                            score_b: 0
+                                        };
+
+                                        const newMatch = await FirebaseDB.matches.create(matchData);
+                                        matches.push({ ...matchData, id: newMatch.id });
+                                        extraMatches.push(matchData);
+                                    }
+                                }
+                                if (extraMatches.length > 0) AdminAuth.localToast(`Se han añadido ${extraMatches.length} partidos nuevos.`, 'success');
+                            }
+                        }
+                    }
+                    // --- AUTO-DETECT REMOVED PLAYERS (CLEANUP) ---
+                    else if (isFixedPairs && americana.players && (fixedPairs.length * 2) > americana.players.length) {
+                        console.log("🕵️ Detectados jugadores eliminados. Limpiando parejas...");
+
+                        const currentPlayersObj = {};
+                        americana.players.forEach(p => currentPlayersObj[p.id] = true);
+
+                        // Filter pairs where both players still exist
+                        const validPairs = fixedPairs.filter(p =>
+                            currentPlayersObj[p.player1_id] && currentPlayersObj[p.player2_id]
+                        );
+
+                        if (validPairs.length < fixedPairs.length) {
+                            // 2. Sort by current merit (current_court asc)
+                            validPairs.sort((a, b) => a.current_court - b.current_court);
+
+                            // 3. Strict Re-assignment of Courts (1, 1, 2, 2, 3, 3...)
+                            validPairs.forEach((p, i) => {
+                                p.current_court = Math.floor(i / 2) + 1;
+                            });
+
+                            // Update DB with re-ordered pairs
+                            await FirebaseDB.americanas.update(americanaId, { fixed_pairs: validPairs });
+                            fixedPairs = validPairs;
+                            americana.fixed_pairs = fixedPairs;
+
+                            // 4. Update Max Courts
+                            const neededCourts = Math.max(1, Math.ceil(validPairs.length / 2));
+                            if (neededCourts !== americana.max_courts) {
+                                await FirebaseDB.americanas.update(americanaId, { max_courts: neededCourts });
+                                americana.max_courts = neededCourts;
+                            }
+
+                            // 5. NUKE & REGENERATE SCHEDULED MATCHES
+                            // This ensures perfectly ordered courts (1, 2, 3) without gaps.
+
+                            const scheduledMatches = matches.filter(m => m.round === roundNum && m.status === 'scheduled');
+                            console.log(`🗑️ Eliminando ${scheduledMatches.length} partidos pendientes para regenerar...`);
+
+                            // Delete from DB
+                            await Promise.all(scheduledMatches.map(m => FirebaseDB.matches.delete(m.id)));
+
+                            // Remove from local array
+                            const scheduledIds = new Set(scheduledMatches.map(m => m.id));
+                            for (let i = matches.length - 1; i >= 0; i--) {
+                                if (scheduledIds.has(matches[i].id)) matches.splice(i, 1);
+                            }
+
+                            // Generate FRESH matches with new court assignments
+                            const newMatchesData = FixedPairsLogic.generatePozoRound(validPairs, roundNum, neededCourts);
+
+                            // Save & Add to local
+                            for (const mData of newMatchesData) {
+                                mData.americana_id = americanaId; // Ensure ID is linked
+                                const saved = await FirebaseDB.matches.create(mData);
+                                matches.push({ ...mData, id: saved.id });
+                            }
+
+                            AdminAuth.localToast(`♻️ Pistas reorganizadas y partidos regenerados (${neededCourts} pistas).`, 'success');
+                        }
+                    }
 
                     // --- STANDINGS CALCULATION (Live) ---
                     let standingsHtml = '';
@@ -1008,7 +1459,7 @@ async function loadAdminView(view) {
                     roundMatches.sort((a, b) => a.court - b.court);
 
                     if (roundMatches.length === 0) {
-                        container.innerHTML = `<div class="glass-card-enterprise" style="text-align: center; padding: 4rem;"><h3>RONDA ${roundNum} SIN PARTIDOS</h3><button class="btn-primary-pro" onclick="generateMatches('${americanaId}', ${roundNum})">GENERAR RONDA ${roundNum}</button></div>`;
+                        container.innerHTML = `<div class="glass-card-enterprise" style="text-align: center; padding: 4rem;"><h3>PARTIDO ${roundNum} SIN PARTIDOS</h3><button class="btn-primary-pro" onclick="generateMatches('${americanaId}', ${roundNum})">GENERAR PARTIDO ${roundNum}</button></div>`;
                     } else {
                         container.innerHTML = `<div class="court-grid-pro">${roundMatches.map(m => {
                             // Map status to Spanish labels
@@ -1022,20 +1473,30 @@ async function loadAdminView(view) {
                             return `
                             <div class="court-card-pro ${m.status}" id="match-${m.id}" data-current-status="${m.status}">
                                 <div class="court-header">
-                                    <span class="court-label">🏆 PISTA ${m.court}</span>
+                                    <span class="court-label" style="cursor: pointer; border-bottom: 1px dashed rgba(255,255,255,0.3);" onclick="editMatchCourt('${m.id}', ${m.court}, '${americanaId}')" title="Click para cambiar pista">🏆 PISTA ${m.court} ✎</span>
                                     <button class="status-badge ${m.status}" onclick="toggleMatchStatus('${m.id}', '${m.status}', '${americanaId}')" style="border:none; cursor:pointer; padding: 6px 12px; min-width: 90px; text-align:center;" title="Click para avanzar estado">
                                         ${statusLabel}
                                     </button>
                                 </div>
                                 <div class="match-teams">
                                     <div class="team-row">
-                                        <span class="team-names">${Array.isArray(m.team_a_names) ? m.team_a_names.join(' / ') : (m.team_a_names || 'Equipo A')}</span>
+                                        <span class="team-names">
+                                            ${Array.isArray(m.team_a_names) ?
+                                    m.team_a_names.map((n, i) => `<span style="cursor:pointer; border-bottom:1px dotted #888;" onclick="editPlayerInMatch('${m.id}', 'team_a', ${i}, '${americanaId}')" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color=''">${n}</span>`).join(' <span style="color:#666">/</span> ')
+                                    : (m.team_a_names || 'Equipo A')
+                                }
+                                        </span>
                                         <div class="score-input-group">
                                             <input type="number" id="scoreA-${m.id}" value="${m.score_a || 0}" class="pro-score-input" min="0" max="99" onkeypress="if(event.key==='Enter') saveMatchData('${m.id}', '${americanaId}')">
                                         </div>
                                     </div>
                                     <div class="team-row">
-                                        <span class="team-names">${Array.isArray(m.team_b_names) ? m.team_b_names.join(' / ') : (m.team_b_names || 'Equipo B')}</span>
+                                        <span class="team-names">
+                                            ${Array.isArray(m.team_b_names) ?
+                                    m.team_b_names.map((n, i) => `<span style="cursor:pointer; border-bottom:1px dotted #888;" onclick="editPlayerInMatch('${m.id}', 'team_b', ${i}, '${americanaId}')" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color=''">${n}</span>`).join(' <span style="color:#666">/</span> ')
+                                    : (m.team_b_names || 'Equipo B')
+                                }
+                                        </span>
                                         <div class="score-input-group">
                                             <input type="number" id="scoreB-${m.id}" value="${m.score_b || 0}" class="pro-score-input" min="0" max="99" onkeypress="if(event.key==='Enter') saveMatchData('${m.id}', '${americanaId}')">
                                         </div>
@@ -1054,7 +1515,59 @@ async function loadAdminView(view) {
             };
             renderMatchesForAmericana(activeAmericana.id, 1);
 
+            // New Helper: Edit Player Name
+            window.editPlayerInMatch = async (matchId, team, index, americanaId) => {
+                event.stopPropagation(); // Avoid triggering card click if any
+
+                const match = await FirebaseDB.matches.getById(matchId);
+                const currentName = match[team + '_names'][index];
+
+                const newName = prompt("Editar nombre del jugador:", currentName);
+                if (newName && newName !== currentName) {
+                    try {
+                        // 1. Update Match
+                        match[team + '_names'][index] = newName;
+                        await FirebaseDB.matches.update(matchId, { [team + '_names']: match[team + '_names'] });
+
+                        // 2. Update Fixed Pair (so it sticks)
+                        const americana = await FirebaseDB.americanas.getById(americanaId);
+                        if (americana && americana.fixed_pairs) {
+                            const pairId = team === 'team_a' ? match.pair_a_id : match.pair_b_id;
+                            const pairIndex = americana.fixed_pairs.findIndex(p => p.id === pairId);
+
+                            if (pairIndex !== -1) {
+                                const pair = americana.fixed_pairs[pairIndex];
+                                if (index === 0) pair.player1_name = newName;
+                                else pair.player2_name = newName;
+
+                                pair.pair_name = `${pair.player1_name} / ${pair.player2_name}`;
+
+                                await FirebaseDB.americanas.update(americanaId, { fixed_pairs: americana.fixed_pairs });
+                            }
+                        }
+
+                        AdminAuth.localToast('Nombre actualizado correctamente', 'success');
+                        renderMatchesForAmericana(americanaId, window.currentAdminRound);
+                    } catch (e) {
+                        console.error(e);
+                        alert("Error actualizando nombre");
+                    }
+                }
+            };
+
             // New Helper Update
+            window.editMatchCourt = async (matchId, currentCourt, americanaId) => {
+                const newVal = prompt("Introduce el nuevo número de pista:", currentCourt);
+                const parsed = parseInt(newVal);
+                if (parsed && parsed > 0 && parsed !== currentCourt) {
+                    try {
+                        await FirebaseDB.matches.update(matchId, { court: parsed });
+                        AdminAuth.localToast(`Pista cambiada a ${parsed}`, 'success');
+                        window.renderMatchesForAmericana(americanaId, window.currentAdminRound);
+                    } catch (e) { console.error(e); }
+                }
+            };
+
             window.toggleMatchStatus = async (matchId, currentStatus, americanaId) => {
                 const statusCycle = {
                     'scheduled': 'live',
@@ -1069,9 +1582,8 @@ async function loadAdminView(view) {
                     // If finishing, maybe sync rankings?
                     if (nextStatus === 'finished') await syncRankings(americanaId);
 
-                    // Refresh
-                    const currentRoundBtn = document.querySelector('.btn-round-tab.active');
-                    const round = currentRoundBtn ? parseInt(currentRoundBtn.textContent) : 1;
+                    // Refresh using the global state variable which is safe
+                    const round = window.currentAdminRound || 1;
                     renderMatchesForAmericana(americanaId, round);
                 } catch (e) { alert("Error: " + e.message); }
             };
@@ -1130,6 +1642,7 @@ window.openEditUserModal = (user) => {
         const roleField = form.querySelector('[name=role]');
         const statusField = form.querySelector('[name=status]');
         const levelField = form.querySelector('[name=level]');
+        const genderField = form.querySelector('[name=gender]');
         const membershipField = form.querySelector('[name=membership]');
         const matchesField = form.querySelector('[name=matches_played]');
         const passwordField = form.querySelector('[name=password]');
@@ -1140,6 +1653,7 @@ window.openEditUserModal = (user) => {
         if (roleField) roleField.value = user.role || "player";
         if (statusField) statusField.value = user.status || "active";
         if (levelField) levelField.value = user.level || user.self_rate_level || 3.5;
+        if (genderField) genderField.value = user.gender || "chico";
         if (membershipField) membershipField.value = user.membership || "externo";
         if (matchesField) matchesField.value = user.matches_played || 0;
         if (passwordField) passwordField.value = user.password || "";
@@ -1186,25 +1700,7 @@ window.deleteUser = async (id) => {
     }
 };
 
-window.generateMatches = async (americanaId, roundNum = 1) => {
-    try {
-        const [americana, players, allMatches] = await Promise.all([
-            FirebaseDB.americanas.getById(americanaId),
-            FirebaseDB.players.getAll(),
-            FirebaseDB.matches.getByAmericana(americanaId)
-        ]);
-        const result = AmericanaLogic.generateRound(players, allMatches, americana.max_courts || 4);
-
-        // FIX: result is { matches: [], resting_players: [] }
-        const matchesToCreate = result.matches || [];
-
-        for (const m of matchesToCreate) {
-            m.americana_id = americanaId; m.round = roundNum;
-            await FirebaseDB.matches.create(m);
-        }
-        renderMatchesForAmericana(americanaId, roundNum);
-    } catch (e) { alert("Error IA: " + e.message); }
-};
+// generateMatches is now handled by the Pozo logic at the end of the file
 
 window.updateMatchScore = (matchId, team, delta) => {
     const el = document.getElementById(`score${team.toUpperCase()}-${matchId}`);
@@ -1508,14 +2004,81 @@ window.generateNextRound = async (americanaId, nextRound) => {
         return;
     }
 
-    if (confirm(`🏆 GENERAR RONDA ${nextRound} (${isFixedPairs ? 'SISTEMA POZO' : 'EQUIPOS ROTATIVOS'})\n\n¿Proceder?`)) {
+    if (confirm(`🏆 GENERAR PARTIDO ${nextRound} (${isFixedPairs ? 'SISTEMA POZO' : 'EQUIPOS ROTATIVOS'})\n\n¿Proceder?`)) {
         const container = document.getElementById('matches-container');
         if (container) container.innerHTML = '<div class="loader"></div>';
 
         try {
+            // --- SMART COURTS: AUTO-SCALING ---
+            // Si hay más jugadores/parejas de los que caben en las pistas configuradas, ampliar automáticamente.
+            let effectiveCourts = americana.max_courts || 4;
+            let courtsUpdated = false;
+
+            if (isFixedPairs) {
+                const pairsCount = (americana.fixed_pairs || []).length;
+                const needed = Math.floor(pairsCount / 2);
+                if (needed > effectiveCourts) {
+                    effectiveCourts = needed;
+                    courtsUpdated = true;
+                }
+            } else {
+                const playersCount = (americana.players || []).length;
+                const needed = Math.floor(playersCount / 4);
+                if (needed > effectiveCourts) {
+                    effectiveCourts = needed;
+                    courtsUpdated = true;
+                }
+            }
+
+            if (courtsUpdated) {
+                console.log(`🤖 AI: Ampliando capacidad a ${effectiveCourts} pistas.`);
+                await FirebaseDB.americanas.update(americanaId, { max_courts: effectiveCourts });
+                americana.max_courts = effectiveCourts; // Update local reference
+                AdminAuth.localToast(`🤖 IA: Torneo ampliado a ${effectiveCourts} pistas automáticamente.`, 'success');
+            }
+            // -----------------------------------
+
             if (isFixedPairs) {
                 // LÓGICA POZO (PAREJAS FIJAS)
-                const pairs = americana.fixed_pairs || [];
+                // 0. AUTO-PAIR SYNC: Si hay jugadores sueltos (nuevos) que no están en parejas, emparejarlos.
+                let pairs = americana.fixed_pairs || [];
+                const allPlayers = americana.players || [];
+
+                // IDs de jugadores ya en parejas
+                const pairedPlayerIds = new Set();
+                pairs.forEach(p => {
+                    pairedPlayerIds.add(p.player1_id);
+                    pairedPlayerIds.add(p.player2_id);
+                });
+
+                // Encontrar jugadores sin pareja
+                const loosePlayers = allPlayers.filter(p => !pairedPlayerIds.has(p.id));
+
+                if (loosePlayers.length >= 2) {
+                    console.log(`🔒 Auto-Emparejando ${loosePlayers.length} jugadores nuevos...`);
+                    // Crear parejas para los nuevos
+                    const newPairs = FixedPairsLogic.createFixedPairs(loosePlayers, americana.category);
+
+                    // Asignarles pista inicial alta (final de la cola)
+                    const maxCurrentCourt = pairs.length > 0 ? Math.max(...pairs.map(p => p.current_court)) : 0;
+                    newPairs.forEach((p, i) => {
+                        p.current_court = maxCurrentCourt + Math.floor(i / 2) + 1;
+                    });
+
+                    pairs = [...pairs, ...newPairs];
+                    // Guardar actualización de parejas inmediatamente
+                    await FirebaseDB.americanas.update(americanaId, { fixed_pairs: pairs });
+                    americana.fixed_pairs = pairs; // Update local ref
+
+                    // Recalcular pistas totales necesarias tras añadir parejas
+                    const needed = Math.floor(pairs.length / 2);
+                    if (needed > (americana.max_courts || 0)) {
+                        effectiveCourts = needed;
+                        await FirebaseDB.americanas.update(americanaId, { max_courts: effectiveCourts });
+                        americana.max_courts = effectiveCourts;
+                    }
+                }
+
                 if (pairs.length === 0) throw new Error("No hay parejas fijas configuradas para esta Americana.");
 
                 // Actualizar rankings basados en la ronda anterior
@@ -1574,11 +2137,117 @@ window.generateNextRound = async (americanaId, nextRound) => {
 
 // --- NEW CONTROL HELPERS (Requested by USER) ---
 
-window.loadSpecificAmericana = (id) => {
-    loadAdminView('matches'); // Reload everything with this ID as context
-    setTimeout(() => {
-        if (window.renderMatchesForAmericana) window.renderMatchesForAmericana(id, 1);
-    }, 100);
+window.updateMaxCourtsQuick = async (id) => {
+    const el = document.getElementById('quick-max-courts');
+    if (!el) return;
+
+    const val = parseInt(el.value);
+    if (val > 0) {
+        try {
+            await FirebaseDB.americanas.update(id, { max_courts: val });
+            AdminAuth.localToast(`✅ Pistas actualizadas a ${val}.`, 'success');
+            // Recargar vista para refrescar todo
+            loadSpecificAmericana(id);
+        } catch (e) {
+            console.error(e);
+            AdminAuth.localToast('Error actualizando pistas', 'error');
+        }
+    } else {
+        AdminAuth.localToast('El número de pistas debe ser mayor a 0', 'warning');
+    }
+};
+
+window.loadSpecificAmericana = async (id) => {
+    if (!id) return;
+    try {
+        const newAmericana = await FirebaseDB.americanas.getById(id);
+        if (newAmericana) {
+            // Update global/state if needed, though loadAdminView usually handles it if we pass the ID
+            // Since loadAdminView might rely on closure variables, better to reload the 'matches' view with this specific ID if possible,
+            // OR update the closure variable if we can access it.
+            // Assuming loadAdminView is adaptable or we can reset state.
+
+            // Let's try to reload the full 'matches' view context
+            // We can hack this by calling the render path directly if loadAdminView doesn't support params nicely
+
+            // Actually, best way:
+            window.activeAmericanaId = id; // Store globally if widely used
+            // Force reload of that specific section
+
+            // If loadAdminView('matches') uses the dropdown value, it might just work if we update the selection.
+            // But we want to FORCE it.
+
+            // Let's reuse the logic inside loadAdminView for 'matches'
+            window.currentAdminRound = 1;
+
+            // Re-render the whole view with the new object
+            // To do this properly without duplicating code, we ensure loadAdminView('matches') picks up this new ID.
+            // It seems loadAdminView('matches') gets the ID from the clicked button usually.
+
+            // We will basically overwrite the "activeAmericana" in the scope? No, can't.
+            // We will call renderMatchesForAmericana directly updates the GRID, making it look like it switched.
+            // AND update the header info manually?
+
+            // ALTERNATIVE: Simulating a full refresh of the matches section using internal logic:
+
+            // 1. Update the dropdown to match just in case
+            const select = document.getElementById('americana-select');
+            if (select) select.value = id;
+
+            // 2. Render Matches
+            renderMatchesForAmericana(id, 1);
+
+            // 3. Update Title/Header (if any specific header exists outside grid)
+            // (The header might be static or part of the view we can't easily reach without a full reload)
+
+            // 4. Update URL or STATE if we were using a router (we aren't really).
+
+            // BIG FIX: Call loadAdminView('matches', id) if we modify loadAdminView to accept ID.
+            // But since I can't see loadAdminView definition fully, I'll rely on global state.
+
+            // Let's try calling renderMatchesForAmericana, AND update the simulator buttons or other context reliant on ID.
+
+            // Actually, looking at the code, `activeAmericana` is defined inside `loadAdminView`.
+            // We need to re-execute `loadAdminView` with the new ID.
+            // BUT `loadAdminView` is triggered by a click usually.
+
+            // Let's modify `loadAdminView` to accept an optional `forcedId`.
+            // Wait, I can't modify `loadAdminView` easily without seeing it all.
+
+            // PROPOSAL: Simply update the grid. The user wants to SEE the content.
+            // The dropdown ALREADY calls this function.
+            // `loadSpecificAmericana` was added by me.
+
+            window.currentAdminRound = 1;
+            await window.renderMatchesForAmericana(id, 1);
+
+            // Also need to update the "Simulate" buttons which use `${activeAmericana.id}` in their onclick!
+            // This is tricky. The HTML was generated with the OLD ID hardcoded.
+            // We MUST regenerate the control panel HTML.
+
+            // Solution: Re-render the "Results Center" HTML block completely.
+            // Since we can't easily call the internal render logic of loadAdminView, I'll try to update the buttons attributes.
+
+            document.querySelectorAll('button[onclick*="simulateRoundScores"]').forEach(b => {
+                b.setAttribute('onclick', `simulateRoundScores('${id}', window.currentAdminRound)`);
+            });
+            document.querySelectorAll('button[onclick*="simulateAllAmericanaMatches"]').forEach(b => {
+                b.setAttribute('onclick', `simulateAllAmericanaMatches('${id}')`);
+            });
+            document.querySelectorAll('button[onclick*="resetRoundScores"]').forEach(b => {
+                b.setAttribute('onclick', `resetRoundScores('${id}', window.currentAdminRound)`);
+            });
+            document.querySelectorAll('button.btn-round-tab').forEach((b, idx) => {
+                // idx 0 is round 1
+                if (b.id !== 'btn-round-summary') {
+                    const r = parseInt(b.innerText.replace('PARTIDO ', ''));
+                    b.setAttribute('onclick', `renderMatchesForAmericana('${id}', ${r})`);
+                }
+            });
+            document.getElementById('btn-round-summary')?.setAttribute('onclick', `renderAmericanaSummary('${id}')`);
+
+        }
+    } catch (e) { console.error(e); }
 };
 
 window.highlightPlayer = (name) => {
@@ -1593,7 +2262,7 @@ window.highlightPlayer = (name) => {
 };
 
 window.resetRoundScores = async (americanaId, roundNum) => {
-    if (!confirm(`¿Estás SEGURO de querer poner todos los marcadores de la RONDA ${roundNum} a 0? Esta acción no se puede deshacer.`)) return;
+    if (!confirm(`¿Estás SEGURO de querer poner todos los marcadores del PARTIDO ${roundNum} a 0? Esta acción no se puede deshacer.`)) return;
     try {
         const matches = await FirebaseDB.matches.getByAmericana(americanaId);
         const roundMatches = matches.filter(m => m.round === roundNum);
@@ -1605,13 +2274,13 @@ window.resetRoundScores = async (americanaId, roundNum) => {
                 status: 'scheduled'
             });
         }
-        showToast(`Ronda ${roundNum} reiniciada correctamente`, 'success');
+        showToast(`Partido ${roundNum} reiniciado correctamente`, 'success');
         renderMatchesForAmericana(americanaId, roundNum);
     } catch (e) { alert(e.message); }
 };
 
 window.simulateRoundScores = async (americanaId, roundNum) => {
-    if (!confirm(`¿Quieres simular resultados aleatorios para la RONDA ${roundNum}?`)) return;
+    if (!confirm(`¿Quieres simular resultados aleatorios para el PARTIDO ${roundNum}?`)) return;
     try {
         const matches = await FirebaseDB.matches.getByAmericana(americanaId);
         const roundMatches = matches.filter(m => m.round === roundNum);
@@ -1630,9 +2299,91 @@ window.simulateRoundScores = async (americanaId, roundNum) => {
         // Sync rankings if anything finished
         await syncRankings(americanaId);
 
-        showToast(`Simulación de Ronda ${roundNum} completada`, 'success');
+        showToast(`Simulación de Partido ${roundNum} completada`, 'success');
         renderMatchesForAmericana(americanaId, roundNum);
     } catch (e) { alert(e.message); }
+};
+
+window.simulateAllAmericanaMatches = async (americanaId) => {
+    if (!confirm("⚠️ SIMULACIÓN TOTAL: ¿Quieres simular automáticamente TODAS las rondas del torneo?")) return;
+
+    try {
+        const americana = await FirebaseDB.americanas.getById(americanaId);
+
+        for (let r = 1; r <= 6; r++) {
+            console.log(`🤖 Simulando Ronda ${r}...`);
+            let matches = await FirebaseDB.matches.getByAmericana(americanaId);
+            let roundMatches = matches.filter(m => m.round === r);
+
+            // Si la ronda no existe, intentamos generarla (excepto si es R1 y no hay nada)
+            if (roundMatches.length === 0) {
+                if (r > 1) {
+                    const prevRoundMatches = matches.filter(m => m.round === r - 1);
+                    if (prevRoundMatches.length > 0) {
+                        // Verificamos que la anterior esté terminada
+                        const unfinished = prevRoundMatches.filter(m => m.status !== 'finished');
+                        if (unfinished.length === 0) {
+                            // Generar siguiente ronda programáticamente
+                            const isFixedPairs = americana.pair_mode === 'fixed';
+
+                            // --- AUTO-SCALE FOR SIMULATION ---
+                            let effectiveCourts = americana.max_courts || 4;
+                            if (isFixedPairs) {
+                                const needed = Math.floor((americana.fixed_pairs || []).length / 2);
+                                if (needed > effectiveCourts) { effectiveCourts = needed; americana.max_courts = needed; await FirebaseDB.americanas.update(americanaId, { max_courts: needed }); }
+                            } else {
+                                const needed = Math.floor((americana.players || []).length / 4);
+                                if (needed > effectiveCourts) { effectiveCourts = needed; americana.max_courts = needed; await FirebaseDB.americanas.update(americanaId, { max_courts: needed }); }
+                            }
+                            // ---------------------------------
+
+                            if (isFixedPairs) {
+                                const updatedPairs = FixedPairsLogic.updatePozoRankings(americana.fixed_pairs || [], prevRoundMatches, effectiveCourts);
+                                await FirebaseDB.americanas.update(americanaId, { fixed_pairs: updatedPairs });
+                                const newMatches = FixedPairsLogic.generatePozoRound(updatedPairs, r, effectiveCourts);
+                                for (const m of newMatches) {
+                                    await FirebaseDB.matches.create({ ...m, americana_id: americanaId, status: 'scheduled', score_a: 0, score_b: 0 });
+                                }
+                            } else {
+                                const movedPlayers = RotatingPozoLogic.updatePlayerCourts(americana.players || [], prevRoundMatches, effectiveCourts);
+                                await FirebaseDB.americanas.update(americanaId, { players: movedPlayers });
+                                const newMatches = RotatingPozoLogic.generateRound(movedPlayers, r, effectiveCourts);
+                                for (const m of newMatches) {
+                                    await FirebaseDB.matches.create({ ...m, americana_id: americanaId, status: 'scheduled', score_a: 0, score_b: 0 });
+                                }
+                            }
+                            // Recargar matches
+                            matches = await FirebaseDB.matches.getByAmericana(americanaId);
+                            roundMatches = matches.filter(m => m.round === r);
+                        }
+                    }
+                }
+            }
+
+            // Simular scores para esta ronda
+            if (roundMatches.length > 0) {
+                for (const m of roundMatches) {
+                    if (m.status !== 'finished') {
+                        const sA = Math.floor(Math.random() * 5) + 2;
+                        const sB = sA === 6 ? Math.floor(Math.random() * 6) : (Math.random() > 0.5 ? sA + 1 : sA - 1);
+                        await FirebaseDB.matches.update(m.id, {
+                            score_a: Math.max(sA, sB),
+                            score_b: Math.min(sA, sB),
+                            status: 'finished'
+                        });
+                    }
+                }
+                // Sincronizar rankings tras cada ronda
+                await syncRankings(americanaId);
+            }
+        }
+
+        showToast("🚀 Torneo completo simulado con éxito", "success");
+        renderMatchesForAmericana(americanaId, 6); // Ir a la última ronda
+    } catch (e) {
+        console.error(e);
+        alert("Error en simulación total: " + e.message);
+    }
 };
 
 // Map old function name to new one for compatibility with existing buttons
@@ -1643,6 +2394,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Global Toast Redirection for Admin Panel Compatibility
     window.showToast = (msg, type) => AdminAuth.localToast(msg, type);
+
+    // --- MOBILE MENU LOGIC (New) ---
+    const mobileToggle = document.getElementById('mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar-pro');
+
+    if (mobileToggle && sidebar) {
+        mobileToggle.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent immediate close
+            sidebar.classList.toggle('active');
+        });
+
+        // Close sidebar when clicking any nav item
+        document.querySelectorAll('.nav-item-pro').forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth <= 768) sidebar.classList.remove('active');
+            });
+        });
+
+        // Close sidebar when clicking outside
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768 &&
+                sidebar.classList.contains('active') &&
+                !sidebar.contains(e.target) &&
+                e.target !== mobileToggle) {
+                sidebar.classList.remove('active');
+            }
+        });
+    }
 
     // Login Form Listener
     document.getElementById('admin-login-form')?.addEventListener('submit', (e) => {
@@ -1663,6 +2442,7 @@ document.addEventListener('DOMContentLoaded', () => {
             role: fd.get('role'),
             status: fd.get('status'),
             level: parseFloat(fd.get('level')),
+            gender: fd.get('gender') || 'chico',
             membership: fd.get('membership') || 'externo',
             matches_played: parseInt(fd.get('matches_played')) || 0,
             password: fd.get('password') || undefined
@@ -2162,3 +2942,4 @@ window.copySummaryToWhatsApp = async (americanaId) => {
         alert("Error al copiar: " + e.message);
     }
 };
+ha

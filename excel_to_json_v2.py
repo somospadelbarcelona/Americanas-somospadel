@@ -26,6 +26,12 @@ def excel_to_json_file():
                      clean_user["name"] = v
                 elif "nivel" in k.lower():
                      clean_user["level"] = v
+                elif any(x in k.lower() for x in ["genero", "género", "sexo", "gender"]):
+                     gender_val = str(v).lower()
+                     if any(x in gender_val for x in ["fem", "chica", "mujer", "f"]):
+                         clean_user["gender"] = "chica"
+                     else:
+                         clean_user["gender"] = "chico"
                 else:
                      clean_user[k] = v
             
@@ -35,7 +41,10 @@ def excel_to_json_file():
         with open('final_players.json', 'w', encoding='utf-8') as f:
             json.dump(users, f, ensure_ascii=False, indent=2)
             
-        print(f"Successfully exported {len(users)} players to final_players.json")
+        with open('players_data.json', 'w', encoding='utf-8') as f:
+            json.dump(users, f, ensure_ascii=False, indent=2)
+            
+        print(f"Successfully exported {len(users)} players to final_players.json and players_data.json")
         
     except Exception as e:
         print(f"Error: {e}")

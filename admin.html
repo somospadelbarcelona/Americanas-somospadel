@@ -12,6 +12,9 @@
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600&display=swap"
         rel="stylesheet">
 
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+
     <script>
         // Security Patch: Hardcoded bypass removed.
         // Admin Auth is handled via AuthService.js
@@ -109,6 +112,7 @@
         <!-- Main Admin Workspace -->
         <main class="main-wrapper">
             <header class="top-bar">
+                <button id="mobile-menu-toggle" class="btn-micro mobile-only" style="margin-right: 15px; background: transparent; border: none; font-size: 1.5rem; color: white;">☰</button>
                 <div class="top-title" id="page-title">CONSOLA DE ADMINISTRACIÓN</div>
                 <div class="top-actions">
                     <div class="conn-status">
@@ -146,13 +150,20 @@
                     <label>Contraseña (Dejar en blanco para no cambiar)</label>
                     <input type="text" name="password" placeholder="Nueva contraseña" class="pro-input">
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                     <div class="form-group">
-                        <label>Nivel Técnico (Puntos)</label>
+                        <label>Nivel Técnico</label>
                         <input type="number" step="0.1" name="level" class="pro-input" required>
                     </div>
                     <div class="form-group">
-                        <label>Tipo de Jugador</label>
+                        <label>Género</label>
+                        <select name="gender" class="pro-input">
+                            <option value="chico">CHICO</option>
+                            <option value="chica">CHICA</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Comunidad</label>
                         <select name="membership" class="pro-input">
                             <option value="externo">Externo (Estándar)</option>
                             <option value="somospadel_bcn">SOMOSPADEL BCN (Comunidad)</option>
@@ -210,10 +221,10 @@
                 <div class="form-group">
                     <label>CATEGORÍA</label>
                     <select name="category" class="pro-input">
-                        <option value="open">OPEN (TODOS)</option>
-                        <option value="male">MASCULINO</option>
-                        <option value="female">FEMENINO</option>
-                        <option value="mixed">MIXTO</option>
+                        <option value="open">TODOS</option>
+                        <option value="male">MASCULINA</option>
+                        <option value="female">FEMENINA</option>
+                        <option value="mixed">MIXTA</option>
                     </select>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -238,6 +249,12 @@
 
                     <!-- Quick Select Local Images -->
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                        <button type="button" class="btn-micro" onclick="selectImage('img/ball-mixta.png')"
+                            style="background: #ccff00; color: black;">Pelota Amarilla</button>
+                        <button type="button" class="btn-micro" onclick="selectImage('img/ball-masculina.png')"
+                            style="background: #25d366; color: black;">Pelota Verde</button>
+                        <button type="button" class="btn-micro" onclick="selectImage('img/ball-femenina.png')"
+                            style="background: #ff69b4; color: black;">Pelota Rosa</button>
                         <button type="button" class="btn-micro"
                             onclick="selectImage('img/logo_somospadel.png')">Logotipo</button>
                         <button type="button" class="btn-micro"

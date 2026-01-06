@@ -5,6 +5,53 @@
 
 const AdminSimulator = {
 
+    /**
+     * Helper para seleccionar jugadores según categoría (Género)
+     */
+    async getPlayersByCategory(category, count) {
+        const allPlayers = await FirebaseDB.players.getAll();
+
+        // Asignar género si no existe para la simulación
+        allPlayers.forEach(p => {
+            if (!p.gender) p.gender = (Math.random() > 0.5 ? 'chico' : 'chica');
+        });
+
+        let selected = [];
+
+        if (category === 'male') {
+            const males = allPlayers.filter(p => p.gender === 'chico');
+            if (males.length < count) throw new Error(`Faltan jugadores masculinos (${males.length}/${count})`);
+            selected = males.sort(() => 0.5 - Math.random()).slice(0, count);
+        }
+        else if (category === 'female') {
+            const females = allPlayers.filter(p => p.gender === 'chica');
+            if (females.length < count) throw new Error(`Faltan jugadores femeninos (${females.length}/${count})`);
+            selected = females.sort(() => 0.5 - Math.random()).slice(0, count);
+        }
+        else if (category === 'mixed') {
+            const males = allPlayers.filter(p => p.gender === 'chico').sort(() => 0.5 - Math.random());
+            const females = allPlayers.filter(p => p.gender === 'chica').sort(() => 0.5 - Math.random());
+
+            const half = count / 2;
+            if (males.length < half || females.length < half) {
+                throw new Error(`Faltan jugadores para MIXTO (Necesitas ${half} de cada, tienes M:${males.length} F:${females.length})`);
+            }
+
+            // Mezclar para que en "Fijas" se emparejen M+F de forma natural si los pasamos alternos
+            for (let i = 0; i < half; i++) {
+                selected.push(males[i]);
+                selected.push(females[i]);
+            }
+        }
+        else {
+            // OPEN
+            const validPlayers = allPlayers.filter(p => p.gender === 'chico' || p.gender === 'chica');
+            if (validPlayers.length < count) throw new Error(`Faltan jugadores para OPEN (${validPlayers.length}/${count})`);
+            selected = validPlayers.sort(() => 0.5 - Math.random()).slice(0, count);
+        }
+
+        return selected;
+    },
 
     /**
      * Ejecutar simulación vacía (sin resultados) - Preparar Americana
@@ -13,40 +60,52 @@ const AdminSimulator = {
         const status = document.getElementById('sim-status-empty');
         const courtSelect = document.getElementById('sim-courts-empty');
         const pairModeSelect = document.getElementById('sim-pair-mode-empty');
+        const categorySelect = document.getElementById('sim-category-empty');
 
         const numCourts = parseInt(courtSelect?.value || 3);
         const pairMode = pairModeSelect?.value || 'rotating';
+        const category = categorySelect?.value || 'open';
         const numPlayers = numCourts * 4;
 
         if (status) {
             status.style.display = 'block';
-            status.innerHTML = `📝 <b>PREPARANDO AMERICANA (${pairMode === 'fixed' ? 'PAREJAS FIJAS' : 'PAREJAS ROTATIVAS'})</b><br>`;
-            status.innerHTML += `> Seleccionando ${numCourts} pistas / ${numPlayers} jugadores aleatorios...<br>`;
+            let catName = category === 'open' ? 'LIBRE' : (category === 'male' ? 'MASCULINA' : (category === 'female' ? 'FEMENINA' : 'MIXTA'));
+            status.innerHTML = `📝 <b>PREPARANDO AMERICANA (${catName} - ${pairMode === 'fixed' ? 'FIJA' : 'TWISTER'})</b><br>`;
+            status.innerHTML += `> Seleccionando ${numCourts} pistas / ${numPlayers} jugadores cualificados...<br>`;
         }
 
         try {
-            // 1. Fetch Real Players
-            const allPlayers = await FirebaseDB.players.getAll();
-            if (allPlayers.length < numPlayers) {
-                if (status) status.innerHTML += `<br>❌ Error: Necesitas ${numPlayers} jugadores, tienes ${allPlayers.length}`;
-                return;
-            }
-
-            // Shuffle and Pick
-            const shuffled = allPlayers.sort(() => 0.5 - Math.random());
-            const selectedPlayers = shuffled.slice(0, numPlayers);
+            // 1. Fetch Players by Category
+            const selectedPlayers = await this.getPlayersByCategory(category, numPlayers);
 
             // 2. Create Americana
+            const catName = category === 'open' ? 'LIBRE' : (category === 'male' ? 'MASCULINA' : (category === 'female' ? 'FEMENINA' : 'MIXTA'));
+            const modeName = pairMode === 'fixed' ? 'FIJA' : 'TWISTER';
+
             const americanaData = {
-                name: `AMERICANA (${pairMode === 'fixed' ? 'FIJAS' : 'ROTATIVAS'}) - ${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`,
+                name: `AMERICANA ${catName} (${modeName}) - ${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`,
                 date: new Date().toISOString().split('T')[0],
                 time: String(new Date().getHours()).padStart(2, '0') + ':' + String(new Date().getMinutes()).padStart(2, '0'),
-                status: 'live',
-                players: selectedPlayers.map((p, i) => ({ id: p.id, uid: p.id, name: p.name, level: p.level || '3.5', current_court: Math.floor(i / 4) + 1 })),
-                registeredPlayers: selectedPlayers.map((p, i) => ({ id: p.id, uid: p.id, name: p.name, level: p.level || '3.5', current_court: Math.floor(i / 4) + 1 })),
+                status: 'in_progress',
+                players: selectedPlayers.map((p, i) => ({
+                    id: p.id,
+                    uid: p.id,
+                    name: p.name,
+                    level: p.level || '3.5',
+                    gender: p.gender,
+                    current_court: Math.floor(i / 4) + 1
+                })),
+                registeredPlayers: selectedPlayers.map((p, i) => ({
+                    id: p.id,
+                    uid: p.id,
+                    name: p.name,
+                    level: p.level || '3.5',
+                    gender: p.gender,
+                    current_court: Math.floor(i / 4) + 1
+                })),
                 max_courts: numCourts,
-                category: 'mixed',
-                image_url: 'img/americana-pro.png',
+                category: category,
+                image_url: category === 'male' ? 'img/ball-masculina.png' : (category === 'female' ? 'img/ball-femenina.png' : 'img/ball-mixta.png'),
                 pair_mode: pairMode
             };
 
@@ -57,19 +116,13 @@ const AdminSimulator = {
 
             // 3. Generate 6 Rounds based on pair mode
             if (pairMode === 'fixed') {
-                // PAREJAS FIJAS
                 if (status) status.innerHTML += `> Creando parejas fijas...<br>`;
-                const pairs = FixedPairsLogic.createFixedPairs(selectedPlayers);
+                const pairs = FixedPairsLogic.createFixedPairs(selectedPlayers, category);
                 await FirebaseDB.americanas.update(americanaId, { fixed_pairs: pairs });
 
-                if (status) status.innerHTML += `> Generando 6 Rondas con sistema Pozo (Marcadores a 0)...<br>`;
-
-                // For Pozo mode with 0 scores, all 6 rounds are initially generated with the same pairings 
-                // because no one moves up/down yet.
+                if (status) status.innerHTML += `> Generando 6 Rondas sistema Pozo (Marcadores a 0)...<br>`;
                 for (let round = 1; round <= 6; round++) {
-                    if (status) status.innerHTML += `> Ronda ${round}... `;
                     const matches = FixedPairsLogic.generatePozoRound(pairs, round, numCourts);
-
                     for (const m of matches) {
                         await FirebaseDB.matches.create({
                             ...m,
@@ -79,49 +132,34 @@ const AdminSimulator = {
                             score_b: 0
                         });
                     }
-                    if (status) status.innerHTML += `✅<br>`;
+                    if (status) status.innerHTML += `> Ronda ${round} ✅<br>`;
                 }
 
             } else {
-                const currentPlayerData = newAmericana.players || [];
                 let allMatches = [];
+                let currentPlayers = americanaData.players;
                 for (let round = 1; round <= 6; round++) {
-                    if (status) status.innerHTML += `> Ronda ${round}... `;
-
                     let roundMatches;
                     if (round === 1) {
-                        // First round: basic grouping
-                        roundMatches = RotatingPozoLogic.generateRound(newAmericana.players, round, numCourts);
+                        roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts, category);
                     } else {
-                        // Subsequent rounds: Up/Down logic
                         const prevRoundMatches = allMatches.filter(m => m.round === round - 1);
-                        const americanaInState = await FirebaseDB.americanas.getById(americanaId);
-                        const movedPlayers = RotatingPozoLogic.updatePlayerCourts(americanaInState.players, prevRoundMatches, numCourts);
-                        await FirebaseDB.americanas.update(americanaId, { players: movedPlayers });
-                        roundMatches = RotatingPozoLogic.generateRound(movedPlayers, round, numCourts);
+                        currentPlayers = RotatingPozoLogic.updatePlayerCourts(currentPlayers, prevRoundMatches, numCourts);
+                        await FirebaseDB.americanas.update(americanaId, { players: currentPlayers });
+                        roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts, category);
                     }
 
                     for (const m of roundMatches) {
-                        const matchData = {
-                            ...m,
-                            americana_id: americanaId,
-                            status: 'scheduled',
-                            score_a: 0,
-                            score_b: 0
-                        };
+                        const matchData = { ...m, americana_id: americanaId, status: 'scheduled', score_a: 0, score_b: 0 };
                         await FirebaseDB.matches.create(matchData);
                         allMatches.push(matchData);
                     }
-                    if (status) status.innerHTML += `✅<br>`;
+                    if (status) status.innerHTML += `> Ronda ${round} ✅<br>`;
                 }
             }
 
-            if (status) {
-                status.innerHTML += '<br>🏁 <b>PREPARACIÓN DE 6 RONDAS COMPLETADA</b><br>';
-                status.innerHTML += '> Redirigiendo a pantalla de resultados...<br>';
-            }
-
-            setTimeout(() => loadAdminView('matches'), 2000);
+            if (status) status.innerHTML += '<br>🏁 <b>PREPARACIÓN COMPLETADA</b><br>';
+            setTimeout(() => loadAdminView('matches'), 1500);
 
         } catch (e) {
             console.error(e);
@@ -136,121 +174,85 @@ const AdminSimulator = {
         const status = document.getElementById('sim-status-random');
         const courtSelect = document.getElementById('sim-courts-random');
         const pairModeSelect = document.getElementById('sim-pair-mode-random');
+        const categorySelect = document.getElementById('sim-category-random');
 
         const numCourts = parseInt(courtSelect?.value || 3);
         const pairMode = pairModeSelect?.value || 'rotating';
+        const category = categorySelect?.value || 'open';
         const numPlayers = numCourts * 4;
 
         if (status) {
             status.style.display = 'block';
-            status.innerHTML = `🎲 <b>SIMULACIÓN COMPLETA (${pairMode === 'fixed' ? 'PAREJAS FIJAS' : 'PAREJAS ROTATIVAS'})</b><br>`;
-            status.innerHTML += `> Configurando ${numCourts} pistas / ${numPlayers} jugadores...<br>`;
+            let catName = category === 'open' ? 'LIBRE' : (category === 'male' ? 'MASCULINA' : (category === 'female' ? 'FEMENINA' : 'MIXTA'));
+            status.innerHTML = `🎲 <b>SIMULACIÓN COMPLETA (${catName} - ${pairMode === 'fixed' ? 'FIJA' : 'TWISTER'})</b><br>`;
         }
 
         try {
-            // 1. Fetch Real Players
-            const allPlayers = await FirebaseDB.players.getAll();
-            if (allPlayers.length < numPlayers) {
-                if (status) status.innerHTML += `<br>❌ Error: Necesitas ${numPlayers} jugadores, tienes ${allPlayers.length}`;
-                return;
-            }
+            const selectedPlayers = await this.getPlayersByCategory(category, numPlayers);
 
-            const shuffled = allPlayers.sort(() => 0.5 - Math.random());
-            const selectedPlayers = shuffled.slice(0, numPlayers);
+            const catName = category === 'open' ? 'LIBRE' : (category === 'male' ? 'MASCULINA' : (category === 'female' ? 'FEMENINA' : 'MIXTA'));
+            const modeName = pairMode === 'fixed' ? 'FIJA' : 'TWISTER';
 
-            // 2. Create Americana
             const americanaData = {
-                name: `SIM ${pairMode === 'fixed' ? 'FIJAS' : 'ROT'} ${numCourts}P - ${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`,
+                name: `AMERICANA ${catName} ${numCourts}P - ${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`,
                 date: new Date().toISOString().split('T')[0],
                 status: 'finished',
-                players: selectedPlayers.map((p, i) => ({ id: p.id, uid: p.id, name: p.name, level: p.level || '3.5', current_court: Math.floor(i / 4) + 1 })),
+                players: selectedPlayers.map((p, i) => ({
+                    id: p.id, uid: p.id, name: p.name, level: p.level || '3.5', gender: p.gender, current_court: Math.floor(i / 4) + 1
+                })),
                 max_courts: numCourts,
-                category: 'mixed',
-                image_url: 'img/americana-pro.png',
+                category: category,
+                image_url: category === 'male' ? 'img/ball-masculina.png' : (category === 'female' ? 'img/ball-femenina.png' : 'img/ball-mixta.png'),
                 pair_mode: pairMode
             };
 
             const newAmericana = await FirebaseDB.americanas.create(americanaData);
             const americanaId = newAmericana.id;
 
-            if (status) status.innerHTML += `> Americana creada: ${americanaId}<br>`;
-
-            // 3. Simulate 6 rounds
             if (pairMode === 'fixed') {
-                // PAREJAS FIJAS
-                const pairs = FixedPairsLogic.createFixedPairs(selectedPlayers);
+                const pairs = FixedPairsLogic.createFixedPairs(selectedPlayers, category);
                 await FirebaseDB.americanas.update(americanaId, { fixed_pairs: pairs });
 
                 for (let round = 1; round <= 6; round++) {
-                    if (status) status.innerHTML += `> Simulando ronda ${round}... `;
-
                     const matches = FixedPairsLogic.generatePozoRound(pairs, round, numCourts);
-
+                    const finishMatches = [];
                     for (const m of matches) {
-                        // Simulate scores
                         const scoreA = Math.floor(Math.random() * 7) + 1;
                         const scoreB = scoreA === 7 ? Math.floor(Math.random() * 6) : (Math.random() > 0.5 ? scoreA + 1 : scoreA - 1);
-
-                        await FirebaseDB.matches.create({
-                            ...m,
-                            americana_id: americanaId,
-                            status: 'finished',
-                            score_a: Math.max(scoreA, scoreB),
-                            score_b: Math.min(scoreA, scoreB)
-                        });
+                        const match = { ...m, americana_id: americanaId, status: 'finished', score_a: Math.max(scoreA, scoreB), score_b: Math.min(scoreA, scoreB) };
+                        await FirebaseDB.matches.create(match);
+                        finishMatches.push(match);
                     }
-
-                    // Update pair rankings for next round
-                    const roundMatches = await FirebaseDB.matches.getByAmericana(americanaId);
-                    const lastRoundMatches = roundMatches.filter(m => m.round === round);
-                    FixedPairsLogic.updatePozoRankings(pairs, lastRoundMatches, numCourts);
-
-                    if (status) status.innerHTML += `✅<br>`;
+                    FixedPairsLogic.updatePozoRankings(pairs, finishMatches, numCourts);
+                    if (status) status.innerHTML += `> Ronda ${round} simulada... ✅<br>`;
                 }
-
             } else {
-                // PAREJAS ROTATIVAS (RANDOM SIM)
                 let allMatches = [];
-                let currentPlayers = selectedPlayers.map((p, i) => ({ id: p.id, uid: p.id, name: p.name, level: p.level || '3.5', current_court: Math.floor(i / 4) + 1 }));
-
+                let currentPlayers = americanaData.players;
                 for (let round = 1; round <= 6; round++) {
-                    if (status) status.innerHTML += `> Simulando ronda ${round}... `;
-
                     let roundMatches;
                     if (round === 1) {
-                        roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts);
+                        roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts, category);
                     } else {
                         const prevRoundMatches = allMatches.filter(m => m.round === round - 1);
                         currentPlayers = RotatingPozoLogic.updatePlayerCourts(currentPlayers, prevRoundMatches, numCourts);
                         await FirebaseDB.americanas.update(americanaId, { players: currentPlayers });
-                        roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts);
+                        roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts, category);
                     }
 
                     for (const m of roundMatches) {
                         const scoreA = Math.floor(Math.random() * 7) + 1;
                         const scoreB = scoreA === 7 ? Math.floor(Math.random() * 6) : (Math.random() > 0.5 ? scoreA + 1 : scoreA - 1);
-
-                        const match = {
-                            ...m,
-                            americana_id: americanaId,
-                            status: 'finished',
-                            score_a: Math.max(scoreA, scoreB),
-                            score_b: Math.min(scoreA, scoreB)
-                        };
-
+                        const match = { ...m, americana_id: americanaId, status: 'finished', score_a: Math.max(scoreA, scoreB), score_b: Math.min(scoreA, scoreB) };
                         await FirebaseDB.matches.create(match);
                         allMatches.push(match);
                     }
-                    if (status) status.innerHTML += `✅<br>`;
+                    if (status) status.innerHTML += `> Ronda ${round} simulada... ✅<br>`;
                 }
             }
 
-            if (status) {
-                status.innerHTML += '<br>🎉 <b>SIMULACIÓN COMPLETADA</b><br>';
-                status.innerHTML += '> Redirigiendo a resultados...<br>';
-            }
-
-            setTimeout(() => loadAdminView('matches'), 2000);
+            if (status) status.innerHTML += '<br>🎉 <b>SIMULACIÓN COMPLETADA</b><br>';
+            setTimeout(() => loadAdminView('matches'), 1500);
 
         } catch (e) {
             console.error(e);
@@ -259,6 +261,5 @@ const AdminSimulator = {
     }
 };
 
-// Exportar globalmente
 window.AdminSimulator = AdminSimulator;
-console.log("🎲 AdminSimulator cargado");
+console.log("🎲 AdminSimulator PRO (Categorías) cargado");
