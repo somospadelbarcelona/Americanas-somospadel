@@ -229,9 +229,42 @@ const FirebaseDB = {
             return { id: doc.id, ...doc.data() };
         },
 
-        async delete(id) {
-            await db.collection('matches').doc(id).delete();
-        }
+    },
+
+    async delete(id) {
+        await db.collection('matches').doc(id).delete();
+    }
+},
+
+    // Menu Collection (Dynamic Sidebar)
+    menu: {
+        async getAll() {
+            const snapshot = await db.collection('menu_items')
+                .orderBy('order', 'asc')
+                .get();
+return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        },
+
+        async create(data) {
+    const docRef = await db.collection('menu_items').add({
+        ...data,
+        order: parseInt(data.order || 10),
+        active: data.active === 'true' || data.active === true
+    });
+    return { id: docRef.id, ...data };
+},
+
+        async update(id, data) {
+    const updateData = { ...data };
+    if (updateData.order) updateData.order = parseInt(updateData.order);
+    if (updateData.active) updateData.active = (updateData.active === 'true' || updateData.active === true);
+
+    await db.collection('menu_items').doc(id).update(updateData);
+},
+
+        async delete (id) {
+    await db.collection('menu_items').doc(id).delete();
+}
     }
 };
 
