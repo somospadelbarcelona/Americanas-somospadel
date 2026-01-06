@@ -50,19 +50,16 @@
 
                 const adminUser = "649219350@somospadel.com";
                 const adminPass = "JARABA";
-                const noaUser = "NOA@somospadel.com";
-                const noaPass = "NOA21";
 
-                if ((email === adminUser && password === adminPass) ||
-                    (email === noaUser && password === noaPass)) {
+                if (email === adminUser && password === adminPass) {
 
                     console.log("✅ LOCAL ADMIN LOGIN SUCCESS (Bypassing Firebase)");
 
                     // Crear usuario falso compatible con Firebase User Object
                     const mockUser = {
-                        uid: email === adminUser ? "local-admin-alex" : "local-admin-noa",
+                        uid: "local-admin-alex",
                         email: email,
-                        displayName: email === adminUser ? "Alex Coscolin (Local)" : "NOA (Local)",
+                        displayName: "Alejandro Coscolin",
                         role: 'admin' // Custom fields won't persist in firebase auth object naturally without claims, 
                         // but our Store handles it.
                     };

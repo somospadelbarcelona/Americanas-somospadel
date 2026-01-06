@@ -25,7 +25,7 @@
     <div id="admin-auth-modal" class="modal-overlay auth-overlay-enterprise">
         <div class="modal-content admin-login-card">
             <div style="text-align: center; margin-bottom: 2.5rem;">
-                <img src="img/logo.png"
+                <img src="img/logo_somospadel.png"
                     style="height: 100px; margin-bottom: 1.5rem; filter: drop-shadow(0 0 15px var(--primary-glow));"
                     alt="Somos Padel">
                 <h2
@@ -61,7 +61,7 @@
         <!-- Enterprise Admin Sidebar -->
         <aside class="sidebar-pro">
             <div class="brand-top-left">
-                <img src="img/logo.png" class="brand-logo-main" alt="Somos Padel Logo">
+                <img src="img/logo_somospadel.png" class="brand-logo-main" alt="Somos Padel Logo">
                 <div class="brand-text-main">
                     <span class="name">SOMOSPADEL</span>
                     <span class="location">barcelona</span>
@@ -82,8 +82,11 @@
                 <button class="nav-item-pro" data-view="matches" onclick="loadAdminView('matches')">
                     <span class="icon">🏆</span> Resultados
                 </button>
-                <button class="nav-item-pro" data-view="simulator" onclick="loadAdminView('simulator')">
-                    <span class="icon">🎮</span> Simulador
+                <button class="nav-item-pro" data-view="simulator_empty" onclick="loadAdminView('simulator_empty')">
+                    <span class="icon">📝</span> Simulador Sin Resultado
+                </button>
+                <button class="nav-item-pro" data-view="simulator_random" onclick="loadAdminView('simulator_random')">
+                    <span class="icon">🎲</span> Simulador Al Azar
                 </button>
                 <button class="nav-item-pro" data-view="config" onclick="loadAdminView('config')">
                     <span class="icon">⚙️</span> Configuración
@@ -143,23 +146,33 @@
                     <label>Contraseña (Dejar en blanco para no cambiar)</label>
                     <input type="text" name="password" placeholder="Nueva contraseña" class="pro-input">
                 </div>
-                <div class="form-group">
-                    <label>Nivel</label>
-                    <input type="number" step="0.1" name="level" class="pro-input" required>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Nivel Técnico (Puntos)</label>
+                        <input type="number" step="0.1" name="level" class="pro-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Jugador</label>
+                        <select name="membership" class="pro-input">
+                            <option value="externo">Externo (Estándar)</option>
+                            <option value="somospadel_bcn">SOMOSPADEL BCN (Comunidad)</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label>Rol</label>
+                    <label>Rol de Sistema</label>
                     <select name="role" class="pro-input">
-                        <option value="player">Jugador</option>
-                        <option value="admin">Admin</option>
+                        <option value="player">Jugador Estándar</option>
+                        <option value="admin">Administrador (Solo Gestión)</option>
+                        <option value="admin_player">ADMIN + JUGADOR SOMOSPADEL 🎖️</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Estado</label>
+                    <label>Estado de Cuenta</label>
                     <select name="status" class="pro-input">
-                        <option value="active">Activo</option>
-                        <option value="pending">Pendiente</option>
-                        <option value="blocked">Bloqueado</option>
+                        <option value="active">Activo / Verificado</option>
+                        <option value="pending">Pendiente de Revisión</option>
+                        <option value="blocked">Bloqueado / Baja</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -203,15 +216,76 @@
                         <option value="mixed">MIXTO</option>
                     </select>
                 </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>DURACIÓN</label>
+                        <input type="text" name="duration" value="2h" class="pro-input">
+                    </div>
+                    <div class="form-group">
+                        <label>MAX. PISTAS</label>
+                        <input type="number" name="max_courts" class="pro-input">
+                    </div>
+                </div>
                 <div class="form-group">
-                    <label>MAX. PISTAS</label>
-                    <input type="number" name="max_courts" class="pro-input">
+                    <label>IMAGEN DEL EVENTO (URL)</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" name="image_url" id="edit-img-input" class="pro-input"
+                            placeholder="https://..." style="flex:1;">
+                        <button type="button" class="btn-secondary"
+                            onclick="document.getElementById('edit-img-input').value=''; document.getElementById('edit-img-input').oninput();"
+                            title="Eliminar Foto">🗑️</button>
+                    </div>
+
+                    <!-- Quick Select Local Images -->
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                        <button type="button" class="btn-micro"
+                            onclick="selectImage('img/logo_somospadel.png')">Logotipo</button>
+                        <button type="button" class="btn-micro"
+                            onclick="selectImage('img/americana-pro.png')">Neon</button>
+                        <button type="button" class="btn-micro"
+                            onclick="selectImage('img/americana-night.png')">Night</button>
+                        <button type="button" class="btn-micro"
+                            onclick="selectImage('img/americana-mixed.png')">Mixed</button>
+                        <button type="button" class="btn-micro"
+                            onclick="selectImage('img/padel-event.jpg')">Pista</button>
+                    </div>
+
+                    <div style="margin-top: 10px; text-align: center;">
+                        <img id="img-preview" src=""
+                            style="max-height: 100px; border-radius: 8px; border: 1px solid var(--primary); display: none;"
+                            onerror="this.style.display='none'">
+                    </div>
                 </div>
                 <button type="submit" class="btn-primary-pro" style="width: 100%; margin-top: 1rem;">Guardar
                     Cambios</button>
             </form>
+
+            <!-- PARTICIPANTS MANAGEMENT SECTION -->
+            <div style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">
+                <h3 style="color: var(--primary); font-size: 1rem; margin-bottom: 1rem;">GESTIONAR PARTICIPANTES</h3>
+
+                <!-- Add Player Control -->
+                <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                    <select id="add-player-select" class="pro-input" style="flex: 1;">
+                        <option value="">Seleccionar Jugador...</option>
+                    </select>
+                    <button class="btn-primary-pro" id="btn-add-player" style="padding: 0 1.5rem;">AÑADIR</button>
+                </div>
+
+                <!-- Participants List -->
+                <div id="participants-list"
+                    style="max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px;">
+                    <!-- Populated via JS -->
+                    <div style="text-align: center; color: #888; font-size: 0.8rem; padding: 10px;">Cargando
+                        participantes...</div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Analytics & Export -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <!-- Firebase SDK (v10 Compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -224,6 +298,15 @@
 
     <!-- Core Americana Logic (AI) -->
     <script src="js/americana-logic.js"></script>
+
+    <!-- Fixed Pairs Logic (Pozo System) -->
+    <script src="js/fixed-pairs-logic.js"></script>
+
+    <!-- Rotating Pozo Logic (Individual System) -->
+    <script src="js/rotating-pozo-logic.js"></script>
+
+    <!-- Admin Simulator -->
+    <script src="js/admin-simulator.js"></script>
 
     <!-- Admin UI Logic -->
     <script src="js/admin.js"></script>

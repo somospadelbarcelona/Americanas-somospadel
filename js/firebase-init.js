@@ -70,6 +70,12 @@ const FirebaseDB = {
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         },
 
+        async getById(id) {
+            const doc = await db.collection('players').doc(id).get();
+            if (!doc.exists) return null;
+            return { id: doc.id, ...doc.data() };
+        },
+
         async getByPhone(phone) {
             const snapshot = await db.collection('players')
                 .where('phone', '==', phone)
@@ -162,8 +168,11 @@ const FirebaseDB = {
                 max_courts: data.max_courts || 4,
                 category: data.category || 'open',
                 image_url: data.image_url || 'img/default-americana.jpg',
-                status: 'open',
-                players: [],
+                status: data.status || 'open',
+                players: data.players || [],
+                pair_mode: data.pair_mode || 'rotating',
+                registeredPlayers: data.registeredPlayers || data.players || [],
+                ...data,
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
             });
             const doc = await docRef.get();
@@ -244,25 +253,11 @@ async function seedInitialUsers() {
             phone: "649219350",
             data: {
                 password: "JARABA",
-                role: "admin",
+                role: "admin_player",
+                membership: "somospadel_bcn",
                 status: "active",
-                level: "PRO",
-                self_rate_level: "PRO",
-                play_preference: "indifferent",
-                category_preference: "mixed",
-                matches_played: 0,
-                win_rate: 0
-            }
-        },
-        {
-            name: "ADMINISTRADOR (NOA)",
-            phone: "NOA",
-            data: {
-                password: "NOA21",
-                role: "admin",
-                status: "active",
-                level: "PRO",
-                self_rate_level: "PRO",
+                level: 7.0,
+                self_rate_level: 7.0,
                 play_preference: "indifferent",
                 category_preference: "mixed",
                 matches_played: 0,
