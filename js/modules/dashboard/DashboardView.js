@@ -111,10 +111,10 @@
 
 
                 <!-- MAIN DASHBOARD CONTAINER (Mobile Centered) -->
-                <div class="dashboard-v2-container fade-in" style="padding-top: 120px; max-width: 480px; margin: 0 auto; width: 100%; box-sizing: border-box;">
+                <div class="dashboard-v2-container fade-in" style="padding-top: 140px; max-width: 480px; margin: 0 auto; width: 100%; box-sizing: border-box;">
                     
                     <!-- 1. LIVE MATCH WIDGET (If active) -->
-                    <div class="live-widget-container" style="margin: 0 20px 24px 20px; display:block;"> <!-- VISIBLE NOW -->
+                    <div class="live-widget-container" style="margin: 0 32px 24px 32px; display:block;"> <!-- VISIBLE NOW -->
                         <div class="live-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                             <div style="font-weight:900; font-size:1.1rem; color:var(--brand-navy); letter-spacing:-0.5px;">EN JUEGO <span style="color:var(--brand-red);">AHORA</span></div>
                             <div class="live-indicator-tag" style="background:var(--brand-red); color:white; padding:4px 8px; border-radius:6px; font-size:0.7rem; font-weight:800; display:flex; align-items:center;">
@@ -129,7 +129,7 @@
                     </div>
                     
                     <!-- 2. SMART HERO CARD (Context Dependent) -->
-                    <div style="margin: 0 20px 24px 20px;"> <!-- Standard Margin & Gap -->
+                    <div style="margin: 0 32px 24px 32px;"> <!-- Standard Margin & Gap -->
                         ${this.renderSmartHero(context, userLevel)}
                     </div>
 
@@ -137,16 +137,16 @@
                     <div class="pro-content-section" style="padding-bottom: 120px;">
                         
                         <!-- A. EVENTS FEED (Agenda) -->
-                        <div class="section-header" style="padding: 0 20px; margin-bottom: 16px; display:flex; justify-content:space-between; align-items:center;">
+                        <div class="section-header" style="padding: 0 32px; margin-bottom: 16px; display:flex; justify-content:space-between; align-items:center;">
                             <h3 style="color:var(--text-primary); font-size:1.1rem; font-weight:800; letter-spacing:-0.5px; margin:0;">PRÓXIMAS <span style="color:var(--brand-neon)">AMERICANAS</span></h3>
                             <span style="color:#666; font-size:0.8rem; font-weight:600; cursor:pointer;" onclick="Router.navigate('agenda')">Ver todo</span>
                         </div>
 
                         <!-- Horizontal Scroller for Events -->
-                        <div class="events-scroller" style="display: flex; overflow-x: auto; padding: 0 20px 20px 20px; gap: 15px; scroll-snap-type: x mandatory;">
+                        <div class="events-scroller" style="display: flex; overflow-x: auto; padding: 0 32px 20px 32px; gap: 15px; scroll-snap-type: x mandatory;">
                             
                             <!-- Card 1 -->
-                            <div class="event-card-pro" onclick="Router.navigate('americanas')" style="min-width: 280px; background: #1a1a1a; border-radius: 16px; overflow: hidden; scroll-snap-align: center; border: 1px solid #333; position:relative;">
+                            <div class="event-card-pro" onclick="Router.navigate('americanas')" style="min-width: 260px; background: #1a1a1a; border-radius: 16px; overflow: hidden; scroll-snap-align: center; border: 1px solid #333; position:relative;">
                                 <div style="height: 100px; background: url('img/default-americana.jpg') center/cover; position:relative;">
                                     <div style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.7); color:white; padding:4px 8px; border-radius:6px; font-weight:700; font-size:0.7rem;">
                                         MAÑANA
@@ -163,7 +163,7 @@
                             </div>
 
                             <!-- Card 2 -->
-                            <div class="event-card-pro" onclick="Router.navigate('americanas')" style="min-width: 280px; background: #1a1a1a; border-radius: 16px; overflow: hidden; scroll-snap-align: center; border: 1px solid #333;">
+                            <div class="event-card-pro" onclick="Router.navigate('americanas')" style="min-width: 260px; background: #1a1a1a; border-radius: 16px; overflow: hidden; scroll-snap-align: center; border: 1px solid #333;">
                                 <div style="height: 100px; background: linear-gradient(45deg, #111, #222); display:flex; align-items:center; justify-content:center;">
                                     <i class="fas fa-bolt" style="color:#333; font-size:3rem;"></i>
                                 </div>
@@ -180,12 +180,12 @@
                         </div>
 
                         <!-- B. TOP PLAYERS WIDGET -->
-                         <div class="section-header" style="padding: 0 20px; margin-bottom: 16px; margin-top: 32px; display:flex; justify-content:space-between; align-items:center;">
+                         <div class="section-header" style="padding: 0 32px; margin-bottom: 16px; margin-top: 32px; display:flex; justify-content:space-between; align-items:center;">
                             <h3 style="color:var(--text-primary); font-size:1.1rem; font-weight:800; letter-spacing:-0.5px; margin:0;">TOP <span style="color:var(--brand-gold)">RANKING</span></h3>
                             <span style="color:#666; font-size:0.8rem; font-weight:600; cursor:pointer;" onclick="Router.navigate('ranking')">Ver tabla</span>
                         </div>
 
-                        <div class="ranking-preview" style="margin: 0 20px; background: #fff; border-radius: 16px; padding: 15px; border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-card);">
+                        <div class="ranking-preview" style="margin: 0 32px; background: #fff; border-radius: 16px; padding: 15px; border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-card);">
                             <div style="display:flex; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border-subtle); padding-bottom:12px;">
                                 <div style="width:24px; font-weight:800; color:var(--brand-gold);">1</div>
                                 <div style="width:36px; height:36px; background:#333; border-radius:50%; margin-right:12px; display:flex; align-items:center; justify-content:center; font-weight:700; color:white;">A</div>

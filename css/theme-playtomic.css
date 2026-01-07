@@ -627,6 +627,86 @@ body {
     background: #f9f9f9;
 }
 
+/* --- COLOR CYCLING CARDS --- */
+.live-match-card {
+    transition: transform 0.2s;
+}
+
+.live-match-card:active {
+    transform: scale(0.98);
+}
+
+.color-cycle-0 {
+    animation: bgCycle1 10s infinite alternate;
+}
+
+.color-cycle-1 {
+    animation: bgCycle2 12s infinite alternate;
+}
+
+.color-cycle-2 {
+    animation: bgCycle3 14s infinite alternate;
+}
+
+@keyframes bgCycle1 {
+    0% {
+        background: #ce0000;
+    }
+
+    /* Red */
+    50% {
+        background: #990000;
+    }
+
+    100% {
+        background: #ff4444;
+    }
+}
+
+@keyframes bgCycle2 {
+    0% {
+        background: #0044cc;
+    }
+
+    /* Blue */
+    50% {
+        background: #002266;
+    }
+
+    100% {
+        background: #4488ff;
+    }
+}
+
+@keyframes bgCycle3 {
+    0% {
+        background: #6600cc;
+    }
+
+    /* Purple */
+    50% {
+        background: #330066;
+    }
+
+    100% {
+        background: #9933ff;
+    }
+}
+
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
 .court-badge {
     position: absolute;
     top: 10px;
