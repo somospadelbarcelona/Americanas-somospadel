@@ -1633,6 +1633,63 @@ body {
     padding: 15px;
 }
 
+/* --- TICKER (WOW NEON STYLE) --- */
+.ticker-container {
+    background: var(--brand-neon);
+    /* BACKGROUND IS NOW NEON */
+    width: 100%;
+    height: 38px;
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1002;
+    border-bottom: 2px solid #000;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 0 20px rgba(204, 255, 0, 0.6);
+    /* Strong Glow */
+}
+
+.ticker-track {
+    display: flex;
+    white-space: nowrap;
+    animation: tickerEmbed 18s linear infinite;
+    padding-left: 100%;
+}
+
+@keyframes tickerEmbed {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+.ticker-item {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 900;
+    /* Extra Bold */
+    color: #000;
+    /* Text is BLACK on NEON */
+    margin-right: 50px;
+    display: inline-flex;
+    align-items: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ticker-item span {
+    color: #000;
+    background: rgba(255, 255, 255, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 8px;
+}
+
 .date-badge {
     background: rgba(255, 255, 255, 0.95);
     padding: 6px 12px;
