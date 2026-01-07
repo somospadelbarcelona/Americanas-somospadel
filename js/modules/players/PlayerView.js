@@ -1,34 +1,25 @@
 (function () {
     class PlayerView {
-        render() {
-            this.container = document.getElementById('content-area');
-            if (!this.container) return;
+        async render() {
+            const container = document.getElementById('content-area');
+            const data = window.Store.getState('currentUser') || {};
+            const userLevel = data.level || "3.5";
 
-            const user = window.Store ? window.Store.getState('currentUser') : null;
-            if (!user) {
-                this.renderEmptyState();
-                return;
-            }
+            container.innerHTML = `
+                <div class="view-header fade-in">
+                    <h2>MI PERFIL</h2>
+                    <div class="header-actions">
+                        <button class="btn-icon" onclick="Router.navigate('dashboard')">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <button class="btn-icon" onclick="PlayerController.logout()">
+                            <i class="fas fa-sign-out-alt" style="color:var(--brand-red);"></i>
+                        </button>
+                    </div>
+                </div>
 
-            // Fallback for missing stats
-            const stats = {
-                matches: user.matches_played || 0,
-                wins: Math.round((user.win_rate || 0) * (user.matches_played || 0) / 100),
-                level: user.level || user.self_rate_level || '3.50',
-                points: user.total_score || 0
-            };
-
-            this.container.innerHTML = `
-                <div class="profile-container fade-in" style="background: #f8f9fa; min-height: 80vh; padding-bottom: 100px;">
+                <div class="profile-container fade-in-up">
                     
-                    <!-- Top Profile Card -->
-                    <div style="background: var(--playtomic-blue); padding: 40px 20px; text-align: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; position: relative; overflow: hidden;">
-                        <div style="position: absolute; top: -50px; left: -50px; width: 150px; height: 150px; background: var(--playtomic-neon); border-radius: 50%; opacity: 0.1;"></div>
-                        
-                        <div style="width: 90px; height: 90px; background: white; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; color: var(--playtomic-blue); border: 4px solid rgba(255,255,255,0.2);">
-                            ${user.name.charAt(0)}
-                        </div>
-                        <h2 style="color: white; font-weight: 800; margin: 0; font-size: 1.5rem;">${user.name}</h2>
                         <p style="color: #999; font-size: 0.8rem; margin-top: 5px; letter-spacing: 1px;">Socio SomosPadel BCN</p>
                         
                         <div style="margin-top: 25px; display: flex; justify-content: center; gap: 40px;">
