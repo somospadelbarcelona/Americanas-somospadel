@@ -214,6 +214,26 @@ const FirebaseDB = {
                 .sort((a, b) => (a.round || 0) - (b.round || 0));
         },
 
+        async getByPlayer(playerId) {
+            // We need to check both team_a_ids and team_b_ids
+            // Note: firestore doesn't support 'OR' across different fields easily in 1 query without composite index
+            // but we can just do 2 queries or one 'array-contains' if team_ids was a single array.
+            // Since they are separate, and we want it FAST, we'll do 2 queries or a single one if we refactor.
+            // For now, let's do 2 parallel queries for robustness.
+            const [snapA, snapB] = await Promise.all([
+                db.collection('matches').where('team_a_ids', 'array-contains', playerId).get(),
+                db.collection('matches').where('team_b_ids', 'array-contains', playerId).get()
+            ]);
+
+            const matches = [
+                ...snapA.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+                ...snapB.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+            ];
+
+            // Sort by creation or date?
+            return matches.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+        },
+
         async create(data) {
             const docRef = await db.collection('matches').add({
                 ...data,
@@ -279,7 +299,7 @@ window.FirebaseDB = FirebaseDB;
 async function seedInitialUsers() {
     const usersToSeed = [
         {
-            name: "Alex Coscolin",
+            name: "Alejandro Coscolín",
             phone: "649219350",
             data: {
                 password: "JARABA",
@@ -290,7 +310,7 @@ async function seedInitialUsers() {
                 self_rate_level: 7.0,
                 play_preference: "indifferent",
                 category_preference: "mixed",
-                matches_played: 0,
+                matches_played: 1,
                 win_rate: 0
             }
         }
@@ -310,13 +330,10 @@ async function seedInitialUsers() {
                 });
                 console.log(`✅ User created: ${user.name} / ${user.phone}`);
             } else {
-                // AUTO-FIX: If admin has the old placeholder name "JARABA", update it to "Alex Coscolin"
-                if (user.phone === "649219350" && existingUser.name === "JARABA") {
-                    console.log(`🔧 Updating Admin name from JARABA to ${user.name}...`);
-                    await FirebaseDB.players.update(existingUser.id, { name: user.name });
-                    console.log("✅ Admin name updated successfully");
-                } else {
-                    console.log(`👌 User already exists: ${user.name}`);
+                // Keep name fixed to Alejandro Coscolín if it's the master phone
+                if (user.phone === "649219350" && existingUser.name !== "Alejandro Coscolín") {
+                    console.log(`🔧 Enforcing Master name to Alejandro Coscolín...`);
+                    await FirebaseDB.players.update(existingUser.id, { name: "Alejandro Coscolín", role: "admin_player" });
                 }
             }
         } catch (error) {

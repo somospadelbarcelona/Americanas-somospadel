@@ -31,7 +31,7 @@
     <link rel="apple-touch-startup-image" href="https://cdn-icons-png.flaticon.com/512/33/33736.png">
 
     <!-- CSS Dependencies -->
-    <link rel="stylesheet" href="css/theme-playtomic.css?v=110">
+    <link rel="stylesheet" href="css/theme-playtomic.css?v=115">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -46,9 +46,114 @@
     <!-- App Shell Playtomic (Mobile First) -->
     <div id="app-shell" class="flex-col">
 
-        <!-- Main Content Area -->
-        <!-- Main Content Area (Dynamic Injection Point) -->
-        <main id="content-area" style="min-height: 100vh;">
+        <!-- GLOBAL FIXED HEADER (Ticker + Command Bar) -->
+        <div class="dashboard-fixed-header">
+            <!-- TOP TICKER (Running Text) -->
+            <div class="ticker-container" onclick="window.Router && window.Router.navigate('americanas')"
+                style="cursor: pointer;">
+                <div class="ticker-track" id="ticker-track">
+                    <div class="ticker-item"><span>🔴 EN JUEGO:</span> Pista 1 (Tie-Break)</div>
+                    <div class="ticker-item"><span>🏆 TORNEO:</span> Final "Rey de la Pista" 20:00h</div>
+                    <div class="ticker-item"><span>🚀 RANKING:</span> ¡Alejandro ha subido a 4.2!</div>
+                    <div class="ticker-item"><span>🔥 CLUB:</span> 120 Jugadores en pista ahora</div>
+                </div>
+            </div>
+
+            <!-- COMMAND BAR -->
+            <div class="cmd-bar">
+                <!-- LEFT HAMBURGER TRIGGER -->
+                <div class="header-burger-btn"
+                    onclick="document.getElementById('side-drawer-container').classList.add('open'); document.getElementById('side-drawer-menu').classList.add('open');">
+                    <i class="fas fa-bars"></i>
+                </div>
+
+                <div class="cmd-brand">
+                    <img src="img/logo_somospadel.png" alt="Somos Padel" class="brand-logo-img">
+                    <div style="line-height:1; display:flex; flex-direction:column; justify-content:center;">
+                        <span style="font-size:1.1rem; letter-spacing:-0.5px;">SOMOS<span
+                                style="color:var(--brand-neon)">PADEL</span></span>
+                        <span
+                            style="font-size:0.6rem; color:#888; letter-spacing:2px; font-weight:600;">AMERICANAS</span>
+                    </div>
+                </div>
+
+                <div class="cmd-avatar-container" style="display: flex; align-items: center; gap: 10px;">
+                    <div style="text-align:right; display:flex; flex-direction:column;"
+                        onclick="window.Router && window.Router.navigate('profile')">
+                        <span style="font-size:0.6rem; color:#bbb; font-weight:700;">HOLA,</span>
+                        <span style="font-size:0.9rem; font-weight:700; color:white;" id="header-user-name">ALEX</span>
+                    </div>
+                    <div class="cmd-avatar" id="header-user-avatar"
+                        onclick="window.Router && window.Router.navigate('profile')">
+                        AL
+                    </div>
+                    <!-- Logout Icon Header -->
+                    <div onclick="window.AuthController && window.AuthController.handleLogout()"
+                        style="color: rgba(255,255,255,0.4); padding: 5px; cursor: pointer; font-size: 1.1rem; margin-left: 5px;">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NAVIGATION TABS (The "3 Pestañas") -->
+            <div class="header-tabs"
+                style="display:flex; justify-content:space-around; align-items:center; height:44px; background:var(--bg-app); border-bottom:1px solid rgba(0,0,0,0.05);">
+                <div onclick="window.Router && window.Router.navigate('dashboard')"
+                    style="flex:1; text-align:center; font-weight:800; font-size:0.8rem; color:var(--text-primary); cursor:pointer; letter-spacing:0.5px; border-bottom:2px solid var(--brand-neon);">
+                    INICIO
+                </div>
+                <div onclick="window.Router && window.Router.navigate('americanas')"
+                    style="flex:1; text-align:center; font-weight:700; font-size:0.8rem; color:#888; cursor:pointer; letter-spacing:0.5px;">
+                    AMERICANAS
+                </div>
+                <div onclick="window.Router && window.Router.navigate('ranking')"
+                    style="flex:1; text-align:center; font-weight:700; font-size:0.8rem; color:#888; cursor:pointer; letter-spacing:0.5px;">
+                    FINALIZADAS
+                </div>
+            </div>
+        </div>
+
+        <!-- GLOBAL SIDE DRAWER -->
+        <div id="side-drawer-container" class="side-drawer-overlay"
+            onclick="this.classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');">
+        </div>
+        <div id="side-drawer-menu" class="side-drawer">
+            <div class="drawer-header">
+                <div style="font-weight:800; color:white; font-size:1.2rem;">MENÚ</div>
+                <i class="fas fa-times" style="color:white; font-size:1.4rem;"
+                    onclick="document.getElementById('side-drawer-container').classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');"></i>
+            </div>
+            <div class="drawer-item" onclick="window.Router && window.Router.navigate('profile')">
+                <i class="far fa-user"></i> <span>Mi Perfil</span>
+            </div>
+            <div class="drawer-item"
+                onclick="window.Router && window.Router.navigate('americanas'); setTimeout(()=>window.EventsController.setTab('events'), 100);">
+                <i class="fas fa-table-tennis"></i> <span>Americanas</span>
+            </div>
+            <div class="drawer-item"
+                onclick="window.Router && window.Router.navigate('americanas'); setTimeout(()=>window.EventsController.setTab('results'), 100);">
+                <i class="fas fa-poll"></i> <span>Mis Resultados</span>
+            </div>
+            <div class="drawer-item"
+                onclick="window.Router && window.Router.navigate('americanas'); setTimeout(()=>window.EventsController.setTab('agenda'), 100);">
+                <i class="far fa-calendar-alt"></i> <span>Mi Agenda</span>
+            </div>
+            <div class="drawer-item"
+                onclick="window.Router && window.Router.navigate('americanas'); setTimeout(()=>window.EventsController.setTab('finished'), 100);">
+                <i class="fas fa-flag-checkered"></i> <span>Finalizadas</span>
+            </div>
+
+            <!-- New Logout Drawer Item -->
+            <div class="drawer-item"
+                style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20px; color: #ff4d4d;"
+                onclick="window.AuthController && window.AuthController.handleLogout()">
+                <i class="fas fa-power-off"></i> <span>Cerrar Sesión</span>
+            </div>
+        </div>
+
+        <!-- Main Content Area (Scrollable) -->
+        <!-- Added pt-130 class logic conceptually via CSS .full-width-mobile applied to children or logic -->
+        <main id="content-area" style="min-height: 100vh; padding-top: 160px;">
             <!-- Loading Skeleton -->
             <div class="dashboard-v2-container" style="padding-top: 40px; text-align: center;">
                 <div class="loader"></div>
@@ -175,10 +280,10 @@
     <script src="js/modules/dashboard/QuickStats.js"></script>
     <script src="js/modules/dashboard/ActionGrid.js"></script>
     <script src="js/modules/dashboard/DashboardView.js?v=12"></script>
-    <script src="js/modules/dashboard/DashboardView.js?v=12"></script>
     <script src="js/modules/dashboard/DashboardController.js"></script>
     <script src="js/modules/players/PlayerView.js?v=12"></script>
     <script src="js/modules/players/PlayerController.js"></script>
+    <script src="js/modules/americanas/ControlTowerView.js"></script>
     <script src="js/modules/americanas/EventsController.js"></script>
 
     <!-- Ranking Module -->

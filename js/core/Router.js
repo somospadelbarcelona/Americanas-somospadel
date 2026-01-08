@@ -8,13 +8,13 @@
             this.currentRoute = 'dashboard';
             this.routes = {
                 'dashboard': () => this.renderDashboard(),
-                'americanas': () => window.EventsController?.init(),
-                'events': () => window.EventsController?.init(),
+                'americanas': () => { window.EventsController?.init(); window.EventsController?.setTab('events'); },
+                'events': () => { window.EventsController?.init(); window.EventsController?.setTab('events'); },
                 'profile': () => window.PlayerView?.render(),
-                'live': () => window.ControlTowerView?.loadLatest(),
-                'ranking': () => window.RankingController?.init(),
-                'stats': () => window.StatsController?.init(),
-                'agenda': () => window.AgendaController?.init()
+                'live': () => window.ControlTowerView?.handleLiveRoute(),
+                'ranking': () => { window.EventsController?.init(); window.EventsController?.setTab('finished'); },
+                'agenda': () => { window.EventsController?.init(); window.EventsController?.setTab('agenda'); },
+                'results': () => { window.EventsController?.init(); window.EventsController?.setTab('results'); }
             };
 
             // Handle browser navigation

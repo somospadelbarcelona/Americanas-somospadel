@@ -56,7 +56,7 @@ const AdminSimulator = {
     /**
      * Ejecutar simulación vacía (sin resultados) - Preparar Americana
      */
-    async runEmptyCycle() {
+    async runEmptyCycle(config = {}) {
         const status = document.getElementById('sim-status-empty');
         const courtSelect = document.getElementById('sim-courts-empty');
         const pairModeSelect = document.getElementById('sim-pair-mode-empty');
@@ -105,8 +105,11 @@ const AdminSimulator = {
                 })),
                 max_courts: numCourts,
                 category: category,
+                category: category,
                 image_url: category === 'male' ? 'img/ball-masculina.png' : (category === 'female' ? 'img/ball-femenina.png' : 'img/ball-mixta.png'),
-                pair_mode: pairMode
+                pair_mode: pairMode,
+                price_members: config.price_members || 12,
+                price_external: config.price_external || 14
             };
 
             const newAmericana = await FirebaseDB.americanas.create(americanaData);

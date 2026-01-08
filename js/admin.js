@@ -77,12 +77,12 @@ window.AdminAuth = {
             const isAlex = (cleanPhone.endsWith("649219350") || cleanPhone === "649219350") && rawPass === "JARABA";
 
             if (isAlex) {
-                if (!isAuto) alert(`🎖️ ACCESO MAESTRO ADMIN: ALEJANDRO COSCOLIN`);
+                if (!isAuto) alert(`🎖️ ACCESO MAESTRO ADMIN: Alejandro Coscolín`);
 
                 const masterUser = {
                     id: "god-master-649219350",
-                    name: "Alejandro Coscolin",
-                    role: "admin",
+                    name: "Alejandro Coscolín",
+                    role: "admin_player",
                     phone: "649219350",
                     status: "active"
                 };
@@ -580,6 +580,16 @@ async function loadAdminView(view) {
                              ${a.pair_mode === 'fixed' ? '🔒' : '🔄'}
                              ${a.pair_mode === 'fixed' ? 'FIJA' : 'TWISTER'}
                         </span>
+                        
+                        <!-- PRICE SUMMARY -->
+                        <span class="pro-category-badge" style="background: transparent; color: #aaa; border: 1px solid #444; font-size: 0.65rem;">
+                             ${a.price_members || 12}€ / ${a.price_external || 14}€
+                        </span>
+
+                        <!-- Status Badge (New) -->
+                        <span class="pro-category-badge" style="background: ${a.status === 'live' ? 'rgba(255, 45, 85, 0.1)' : (a.status === 'finished' ? 'rgba(136, 136, 136, 0.1)' : 'rgba(0, 227, 109, 0.1)')}; color: ${a.status === 'live' ? '#FF2D55' : (a.status === 'finished' ? '#888' : '#00E36D')}; border: 1px solid ${a.status === 'live' ? '#FF2D55' : (a.status === 'finished' ? '#444' : '#00E36D')}; font-size: 0.65rem; font-weight: 800; padding: 6px 14px; min-width: 90px; text-align: center;">
+                             ${(a.status === 'open' ? 'ABIERTA' : (a.status === 'live' ? 'EN JUEGO' : (a.status === 'finished' ? 'FINALIZADA' : (a.status || 'ABIERTA')))).toUpperCase()}
+                        </span>
 
                         <button class="btn-outline-pro" style="border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-color: var(--primary); color: var(--primary); font-weight: 700; font-size: 0.8rem;" 
                                 onclick='openEditAmericanaModal(${JSON.stringify(a).replace(/'/g, "&#39;")})' title="Editar Evento">✏️ EDITAR</button>
@@ -659,6 +669,17 @@ async function loadAdminView(view) {
                                     <input type="number" name="max_courts" value="4" class="pro-input">
                                 </div>
                             </div>
+                            <!-- PRECIOS -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="form-group">
+                                    <label>PRECIO SOCIOS (€)</label>
+                                    <input type="number" name="price_members" value="12" class="pro-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>PRECIO EXTERNOS (€)</label>
+                                    <input type="number" name="price_external" value="14" class="pro-input">
+                                </div>
+                            </div>
                             <button type="submit" class="btn-primary-pro" style="width: 100%; margin-top: 1rem; padding: 1.2rem;">LANZAR EVENTO ELITE 🚀</button>
                         </form>
                     </div>
@@ -730,6 +751,9 @@ async function loadAdminView(view) {
                 form.querySelector('[name=category]').value = americana.category || 'open';
                 form.querySelector('[name=max_courts]').value = americana.max_courts || 4;
                 form.querySelector('[name=duration]').value = americana.duration || '2h';
+                form.querySelector('[name=status]').value = americana.status || 'open';
+                form.querySelector('[name=price_members]').value = americana.price_members || 12;
+                form.querySelector('[name=price_external]').value = americana.price_external || 14;
                 const imgUrl = americana.image_url || '';
                 const imgInput = form.querySelector('[name=image_url]');
                 const imgPreview = document.getElementById('img-preview');
@@ -942,11 +966,20 @@ async function loadAdminView(view) {
                         current_court: Math.floor(players.length / 4) + 1
                     });
 
-                    // Update DB (update BOTH fields for safety/compatibility)
-                    await FirebaseDB.americanas.update(americanaId, {
+                    const now = new Date();
+                    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+                    const updateData = {
                         players: players,
                         registeredPlayers: players
-                    });
+                    };
+
+                    // AUTO-OPEN: If it was finished but has spots and is in the future
+                    if (players.length < maxPlayers && americana.date >= todayStr && (americana.status === 'finished' || !americana.status)) {
+                        updateData.status = 'open';
+                    }
+
+                    await FirebaseDB.americanas.update(americanaId, updateData);
 
                     // Refresh UI
                     await loadParticipantsUI(americanaId);
@@ -954,8 +987,8 @@ async function loadAdminView(view) {
                     btn.textContent = "AÑADIR";
                     showToast("Jugador añadido con éxito", "success");
 
-                    // Also refresh the background list if visible
-                    loadAdminView('americanas_mgmt');
+                    // Removed: loadAdminView('americanas_mgmt'); 
+                    // We stay in the modal to allow more edits.
 
                 } catch (e) {
                     alert("Error añadiendo jugador: " + e.message);
@@ -976,13 +1009,28 @@ async function loadAdminView(view) {
                         throw new Error("Índice de jugador no válido");
                     }
 
-                    await FirebaseDB.americanas.update(americanaId, {
+                    const now = new Date();
+                    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                    const maxPlayers = (americana.max_courts || 0) * 4;
+
+                    const updateData = {
                         players: players,
                         registeredPlayers: players
-                    });
+                    };
+
+                    // AUTO-OPEN: If it was finished but now has spots and is in the future
+                    if (players.length < maxPlayers && americana.date >= todayStr && (americana.status === 'finished' || !americana.status)) {
+                        console.log("♻️ Espacio libre detectado en fecha futura. Reabriendo Americana...");
+                        updateData.status = 'open';
+                    }
+
+                    await FirebaseDB.americanas.update(americanaId, updateData);
 
                     await loadParticipantsUI(americanaId);
-                    loadAdminView('americanas_mgmt');
+                    showToast("Jugador eliminado con éxito", "success");
+
+                    // Removed: loadAdminView('americanas_mgmt');
+                    // This avoids closing the modal or jarring state changes.
 
                 } catch (e) {
                     alert("Error eliminando: " + e.message);
@@ -1033,12 +1081,30 @@ async function loadAdminView(view) {
                                 </select>
                             </div>
                         </div>
+                        
+                         <!-- PRICES SIMULATOR -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                            <div>
+                                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">PRECIO SOCIO (€)</label>
+                                <input type="number" id="sim-price-mem-empty" value="12" class="pro-input" style="text-align: center;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">PRECIO EXTERNO (€)</label>
+                                <input type="number" id="sim-price-ext-empty" value="14" class="pro-input" style="text-align: center;">
+                            </div>
+                        </div>
                     </div>
 
                     <button class="btn-primary-pro" id="btn-run-simulation-empty" style="padding: 1.5rem 3rem; font-size: 1.1rem;">📝 GENERAR CUADROS Y EMPEZAR</button>
                     <div id="sim-status-empty" style="margin-top: 2rem; font-family: 'Courier New', monospace; font-size: 0.8rem; color: var(--primary); text-align: left; display: none; background: rgba(0,0,0,0.8); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--primary-dim);"></div>
                 </div>`;
-            document.getElementById('btn-run-simulation-empty').addEventListener('click', () => AdminSimulator.runEmptyCycle());
+            document.getElementById('btn-run-simulation-empty').addEventListener('click', () => {
+                // Capture explicit prices
+                const pMem = document.getElementById('sim-price-mem-empty').value;
+                const pExt = document.getElementById('sim-price-ext-empty').value;
+                // We pass them as extra config to the simulator
+                AdminSimulator.runEmptyCycle({ price_members: pMem, price_external: pExt });
+            });
 
         } else if (view === 'simulator_random') {
             if (titleEl) titleEl.textContent = 'Motor de Simulación (Real Random)';
@@ -2575,6 +2641,9 @@ document.addEventListener('DOMContentLoaded', () => {
             category: fd.get('category'),
             max_courts: parseInt(fd.get('max_courts')) || 4,
             duration: fd.get('duration') || '2h',
+            status: fd.get('status') || 'open',
+            price_members: parseInt(fd.get('price_members')) || 12,
+            price_external: parseInt(fd.get('price_external')) || 14,
             image_url: fd.get('image_url') || 'img/americana-pro.png'
         };
         try {

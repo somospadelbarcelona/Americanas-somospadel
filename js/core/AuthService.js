@@ -15,8 +15,8 @@
             const devUser = {
                 uid: 'dev-user-001',
                 email: 'dev@somospadel.com',
-                displayName: 'Alejandro (Dev)',
-                role: 'admin'
+                displayName: 'Alejandro Coscolín',
+                role: 'admin_player'
             };
 
             // Delay slightly to ensure Store is ready
@@ -65,9 +65,10 @@
                     const mockUser = {
                         uid: playerData ? playerData.id : "local-admin-alex",
                         email: email,
-                        displayName: "Alejandro Coscolin",
-                        role: 'admin',
-                        ...playerData
+                        ...playerData,
+                        displayName: "Alejandro Coscolín",
+                        name: "Alejandro Coscolín",
+                        role: 'admin_player'
                     };
 
                     window.Store.setState('currentUser', mockUser);
@@ -118,7 +119,7 @@
                     const mockUser = {
                         uid: newPlayer.id,
                         email: email,
-                        displayName: additionalData ? additionalData.name : 'Usuario Local',
+                        displayName: additionalData ? additionalData.name : 'Alejandro Coscolín',
                         ...newPlayer
                     };
 

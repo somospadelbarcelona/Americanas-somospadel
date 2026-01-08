@@ -120,7 +120,64 @@ body {
 }
 
 
-/* --- HERO CARDS (Magazine Style) --- */
+/* --- FIXED HEADER ARCHITECTURE (Added for Mobile Optimization) --- */
+.dashboard-fixed-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background: var(--bg-app);
+    /* Matches body background */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-fixed-header .ticker-container {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1002;
+}
+
+.dashboard-fixed-header .cmd-bar {
+    position: relative;
+    top: 0 !important;
+    /* Override inline styles */
+    margin-top: 0;
+    z-index: 1001;
+    background: transparent;
+    padding-bottom: 10px;
+    /* Space for tabs if added later */
+}
+
+/* --- FULL WIDTH MOBILE PANELS --- */
+.dashboard-v2-container.full-width-mobile {
+    padding-top: 0 !important;
+    /* Handled by #content-area globally */
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    overflow-x: hidden;
+}
+
+.mobile-panel {
+    width: 100%;
+    margin: 0 0 24px 0 !important;
+    padding: 0 16px;
+    /* Internal padding for content breathing room */
+    box-sizing: border-box;
+}
+
+/* Ensure horizontal scrollers go edge-to-edge */
+.mobile-panel .events-scroller {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+}
+
+/* HERO CARDS (Magazine Style) --- */
 .hero-card {
     margin: 20px;
     border-radius: 28px;
@@ -1734,8 +1791,8 @@ body {
 .ticker-track {
     display: flex;
     white-space: nowrap;
-    animation: tickerEmbed 18s linear infinite;
-    padding-left: 100%;
+    animation: tickerEmbed 25s linear infinite;
+    padding-left: 20px;
 }
 
 @keyframes tickerEmbed {
@@ -1749,13 +1806,11 @@ body {
 }
 
 .ticker-item {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 900;
-    /* Extra Bold */
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 800;
     color: #000;
-    /* Text is BLACK on NEON */
-    margin-right: 50px;
+    margin-right: 60px;
     display: inline-flex;
     align-items: center;
     text-transform: uppercase;
@@ -3283,4 +3338,325 @@ border: 2px solid white;
 .burger-trigger,
 .burger-menu-content {
     display: none !important;
+}
+
+/* --- NEW PLAYTOMIC-STYLE HERO CARD --- */
+.playtomic-hero-card {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    /* Slightly taller for impact */
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    margin-bottom: 24px;
+    background: #1a1a1a;
+    transition: transform 0.2s;
+    cursor: pointer;
+}
+
+.playtomic-hero-card:active {
+    transform: scale(0.98);
+}
+
+.pt-image-bg {
+    width: 100%;
+    height: 65%;
+    /* Top part for image */
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    display: flex;
+    /* To center the logo */
+    align-items: center;
+    justify-content: center;
+}
+
+/* Gradient Overlay inside image for Depth */
+.pt-image-bg::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60%;
+    background: linear-gradient(to bottom, transparent 0%, rgba(10, 10, 10, 0.95) 100%);
+}
+
+/* 1. Date Badge (Top Left) */
+.pt-date-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    background: white;
+    border-radius: 12px;
+    padding: 6px 10px;
+    text-align: center;
+    z-index: 10;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.pt-date-day {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #111;
+}
+
+.pt-date-month {
+    display: block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #666;
+    margin-top: 2px;
+}
+
+/* 2. Status Pill (Top Right) */
+.pt-status-pill {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(4px);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 20px;
+    z-index: 10;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* 3. Small Centered Logo */
+.pt-center-logo {
+    z-index: 5;
+    text-align: center;
+    opacity: 0.9;
+    transform: translateY(-10px);
+    /* Slightly pushed up */
+}
+
+.pt-logo-text {
+    font-family: var(--font-heading);
+    color: white;
+    font-weight: 900;
+    font-size: 0.9rem;
+    /* Much smaller as requested */
+    letter-spacing: 2px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    display: block;
+}
+
+.pt-sub-text {
+    font-size: 0.6rem;
+    color: var(--brand-neon);
+    letter-spacing: 3px;
+    font-weight: 700;
+    display: block;
+    margin-top: 2px;
+}
+
+/* 4. Bottom Content Area */
+.pt-card-content {
+    background: #0a0a0a;
+    /* Dark footer */
+    height: 35%;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pt-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.pt-title {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.pt-price-tag {
+    background: #1f2937;
+    color: var(--brand-neon);
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pt-details-row {
+    display: flex;
+    gap: 16px;
+    color: #888;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.pt-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.3s ease;
+}
+
+/* HOVER EFFECTS ("ILUMINAR") */
+.playtomic-hero-card:hover .pt-title {
+    color: var(--brand-neon);
+    text-shadow: 0 0 10px rgba(204, 255, 0, 0.4);
+}
+
+.playtomic-hero-card:hover .pt-price-tag {
+    background: var(--brand-neon);
+    color: black;
+    box-shadow: 0 0 15px rgba(204, 255, 0, 0.5);
+    border-color: var(--brand-neon);
+}
+
+.playtomic-hero-card:hover .pt-detail-item i {
+    color: var(--brand-neon);
+}
+
+.playtomic-hero-card:hover .pt-detail-item {
+    color: #ddd;
+}
+
+/* --- STATE-SPECIFIC ANIMATIONS & THEMES --- */
+
+/* 1. REGISTERED STATE (Success/Green) */
+.state-registered .pt-status-pill {
+    background: #059669;
+    /* Emerald 600 */
+    box-shadow: 0 0 15px rgba(5, 150, 105, 0.4);
+    animation: pulse-green 2s infinite;
+}
+
+.state-registered .pt-icon-check {
+    animation: bounce-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* 2. OPEN STATE (Urgency/Neon) */
+.state-open .pt-status-pill {
+    background: var(--brand-neon);
+    color: black;
+    font-weight: 900;
+    box-shadow: 0 0 20px rgba(204, 255, 0, 0.6);
+    animation: shake-gentle 3s infinite;
+}
+
+.state-open .pt-icon-unlock {
+    animation: swing 2s ease-in-out infinite;
+}
+
+/* 3. FINISHED STATE (Archive/Grey) */
+.state-finished .pt-image-bg {
+    filter: grayscale(100%);
+    transition: filter 0.3s;
+}
+
+.state-finished:hover .pt-image-bg {
+    filter: grayscale(0%);
+    /* Restore color on hover */
+}
+
+.state-finished .pt-status-pill {
+    background: #4b5563;
+}
+
+/* --- KEYFRAMES --- */
+@keyframes pulse-green {
+    0% {
+        box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(5, 150, 105, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(5, 150, 105, 0);
+    }
+}
+
+@keyframes shake-gentle {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(-3deg);
+    }
+
+    75% {
+        transform: rotate(3deg);
+    }
+}
+
+@keyframes bounce-in {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    60% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes swing {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    20% {
+        transform: rotate(15deg);
+    }
+
+    40% {
+        transform: rotate(-10deg);
+    }
+
+    60% {
+        transform: rotate(5deg);
+    }
+
+    80% {
+        transform: rotate(-5deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
+    }
+}
+
+/* --- EXPLANATORY TEXT --- */
+.pt-explainer-text {
+    font-size: 0.75rem;
+    color: #bbb;
+    margin-top: 4px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
