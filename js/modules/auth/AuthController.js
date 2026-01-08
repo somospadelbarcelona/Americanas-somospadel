@@ -101,6 +101,20 @@
                 });
             }
         }
+
+        async handleLogout() {
+            try {
+                const res = await window.AuthService.logout();
+                if (res.success) {
+                    window.location.reload();
+                } else {
+                    alert("Error al cerrar sesión: " + res.error);
+                }
+            } catch (err) {
+                console.error("Logout error", err);
+                window.location.reload(); // Fallback reload
+            }
+        }
     }
 
     window.AuthController = new AuthController();

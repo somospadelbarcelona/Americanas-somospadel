@@ -77,10 +77,39 @@
                     players: players,
                     registeredPlayers: players // Sync both
                 });
+
+                // --- NOTIFICATIONS ---
+                this.notifyAdminOfRegistration(americana, user);
+
                 return { success: true };
             } catch (err) {
                 return { success: false, error: err.message };
             }
+        }
+
+        notifyAdminOfRegistration(evt, user) {
+            // "cuando el jugador se apunta a la americana necesito que automaticamente me llege un mensaje de confirmación al admin"
+            const adminPhone = "34649219350"; // Based on admin.js master user
+            const msg = `🎾 *NUEVA INSCRIPCIÓN* %0A%0A👤 Jugador: ${user.name} %0A🏆 Evento: ${evt.name} %0A📅 Fecha: ${evt.date} ${evt.time}`;
+
+            // "y al jugaror que le llege tambien una notificacion de que se ha apuntado por whats app"
+            // To automate this from client side without user clicking is hard, but we can open one for the ADMIN to see.
+            // Ideally, the user sees a "Success" screen with a button "RECIBIR CONFIRMACIÓN" to chat with self or bot.
+
+            // For now, we attempt to open the Admin notification in background or new tab if allowed, 
+            // OR allow the user to send it.
+            // Since the user asked for "automatic", and we are client-side:
+            console.log("🔔 Notifying Admin via WA Link generation...");
+
+            // We can't auto-send. We can only prep result.
+            // Let's rely on the Admin Panel 'CHAT' buttons for manual follow up if needed, 
+            // BUT here we can try `window.open` if context allows, though it might be blocked.
+
+            const waLink = `https://wa.me/${adminPhone}?text=${msg}`;
+
+            // Hack: Trigger a tiny popup or just console log if we can't force it.
+            // A clearer UX is alerting the user "Inscripción Correcta. Avisando al admin..."
+            const win = window.open(waLink, '_blank');
         }
 
         async removePlayer(americanaId, userId) {

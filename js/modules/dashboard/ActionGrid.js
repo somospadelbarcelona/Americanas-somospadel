@@ -30,7 +30,7 @@
                 {
                     id: 'agenda',
                     icon: '📅',
-                    title: 'Agenda',
+                    title: 'Mi Agenda',
                     badge: context.upcomingMatches || 0,
                     badgeText: context.upcomingMatches === 1 ? 'próximo' : 'próximos',
                     route: 'agenda',
@@ -39,7 +39,7 @@
                 {
                     id: 'tournaments',
                     icon: '🏆',
-                    title: 'Torneos',
+                    title: 'Americanas',
                     badge: context.activeTournaments || 0,
                     badgeText: context.activeTournaments === 1 ? 'activo' : 'activos',
                     route: 'americanas',
@@ -48,21 +48,21 @@
                 },
                 {
                     id: 'ranking',
-                    icon: '📊',
-                    title: 'Ranking',
-                    badge: context.playerRank ? `#${context.playerRank}` : null,
-                    badgeText: context.playerRank ? 'Tu posición' : 'Ver Top 10',
+                    icon: '🏁',
+                    title: 'Finalizadas',
+                    badge: null,
+                    badgeText: 'Historial',
                     route: 'ranking',
                     color: '#FF9500'
                 },
                 {
-                    id: 'profile',
-                    icon: '👤',
-                    title: 'Perfil',
+                    id: 'results',
+                    icon: '📈',
+                    title: 'Resultados',
                     badge: null,
-                    badgeText: 'Editar',
-                    route: 'profile',
-                    color: '#8E8E93'
+                    badgeText: 'Mis Partidos',
+                    route: 'results',
+                    color: '#34A853'
                 }
             ];
         }

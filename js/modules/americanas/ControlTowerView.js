@@ -14,6 +14,31 @@
             this.currentAmericanaDoc = null;
             this.userHistory = [];
             this.unsubscribeMatches = null;
+            this.pendingId = null;
+        }
+
+        goToRound(n, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            const num = parseInt(n);
+            console.log("🚀 [TowerExpert] Navegando a ronda:", num);
+            this.selectedRound = num;
+            this.recalc();
+        }
+
+        prepareLoad(id) {
+            this.pendingId = id;
+        }
+
+        handleLiveRoute() {
+            if (this.pendingId) {
+                this.load(this.pendingId);
+                this.pendingId = null;
+            } else {
+                this.loadLatest();
+            }
         }
 
         async load(americanaId) {
@@ -127,9 +152,17 @@
         }
 
         recalc() {
-            const currentRoundMatches = this.allMatches.filter(m => m.round === this.selectedRound);
+            // Filtrado de élite: parseInt garantiza que "1", 1 y "1º" coincidan con parseInt(selectedRound)
+            const sNum = parseInt(this.selectedRound) || 1;
+            const currentRoundMatches = this.allMatches.filter(m => {
+                const mNum = parseInt(m.round);
+                return mNum === sNum;
+            });
+
+            console.log(`[Tower] Recalc. Ronda: ${sNum}. Partidos encontrados: ${currentRoundMatches.length} de ${this.allMatches.length}`);
+
             const roundData = {
-                number: this.selectedRound,
+                number: sNum,
                 matches: currentRoundMatches.map(m => {
                     const namesA = Array.isArray(m.team_a_names) ? m.team_a_names.join(' / ') : (m.team_a_names || 'Equipo A');
                     const namesB = Array.isArray(m.team_b_names) ? m.team_b_names.join(' / ') : (m.team_b_names || 'Equipo B');
@@ -180,17 +213,17 @@
             container.innerHTML = `
                 <div class="tournament-layout fade-in" style="background: #F8F9FA;">
                     
-                    <!-- NEW SUBMENU STRUCTURE -->
-                    <div style="background: #000; padding: 10px; display: flex; justify-content: center; gap: 4px; border-bottom: 2px solid var(--playtomic-neon);">
-                        <button onclick="window.ControlTowerView.switchSection('playing')" style="flex:1; border:none; background: ${this.mainSection === 'playing' ? 'var(--playtomic-neon)' : '#222'}; color: ${this.mainSection === 'playing' ? 'black' : 'white'}; padding: 14px 6px; border-radius: 8px; font-weight: 800; font-size: 0.65rem; transition: 0.3s; text-transform: uppercase;">Americanas en Juego</button>
-                        <button onclick="window.ControlTowerView.switchSection('history')" style="flex:1; border:none; background: ${this.mainSection === 'history' ? 'var(--playtomic-neon)' : '#222'}; color: ${this.mainSection === 'history' ? 'black' : 'white'}; padding: 14px 6px; border-radius: 8px; font-weight: 800; font-size: 0.65rem; transition: 0.3s; text-transform: uppercase;">Mis Americanas</button>
-                        <button onclick="window.ControlTowerView.switchSection('help')" style="flex:1; border:none; background: ${this.mainSection === 'help' ? 'var(--playtomic-neon)' : '#222'}; color: ${this.mainSection === 'help' ? 'black' : 'white'}; padding: 14px 6px; border-radius: 8px; font-weight: 800; font-size: 0.65rem; transition: 0.3s; text-transform: uppercase;">Ayuda</button>
+                    <!-- NEW SUBMENU STRUCTURE (PREMIUM GLASS) -->
+                    <div style="background: rgba(255,255,255,0.9); backdrop-filter: blur(15px); padding: 12px; display: flex; justify-content: center; gap: 8px; border-bottom: 1px solid rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1002; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                        <button onclick="window.ControlTowerView.switchSection('playing')" style="flex:1; border:none; background: ${this.mainSection === 'playing' ? 'var(--playtomic-neon)' : 'rgba(0,0,0,0.05)'}; color: ${this.mainSection === 'playing' ? 'black' : '#666'}; padding: 12px 6px; border-radius: 8px; font-weight: 900; font-size: 0.6rem; transition: 0.3s; text-transform: uppercase; letter-spacing: 0.5px;">EN JUEGO</button>
+                        <button onclick="window.ControlTowerView.switchSection('history')" style="flex:1; border:none; background: ${this.mainSection === 'history' ? 'var(--playtomic-neon)' : 'rgba(0,0,0,0.05)'}; color: ${this.mainSection === 'history' ? 'black' : '#666'}; padding: 12px 6px; border-radius: 8px; font-weight: 900; font-size: 0.6rem; transition: 0.3s; text-transform: uppercase; letter-spacing: 0.5px;">MI PASADO</button>
+                        <button onclick="window.ControlTowerView.switchSection('help')" style="flex:1; border:none; background: ${this.mainSection === 'help' ? 'var(--playtomic-neon)' : 'rgba(0,0,0,0.05)'}; color: ${this.mainSection === 'help' ? 'black' : '#666'}; padding: 12px 6px; border-radius: 8px; font-weight: 900; font-size: 0.6rem; transition: 0.3s; text-transform: uppercase; letter-spacing: 0.5px;">INFO</button>
                     </div>
 
                     ${this.renderMainArea(data, isPlayingHere)}
 
-                    <!-- BOTTOM TICKER -->
-                    <div class="tour-bottom-ticker" style="background: #000; border-top: 1px solid #1a1a1a;">
+                    <!-- BOTTOM TICKER (⚡ FIXED: REMOVED INLINE BLACK BG) -->
+                    <div class="tour-bottom-ticker">
                         <div class="ticker-label">⚡ LIVE</div>
                         <div class="ticker-scroller">
                             <span>Sincronizado con SomosPadel Server • ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -209,31 +242,34 @@
             const amName = this.currentAmericanaDoc ? this.currentAmericanaDoc.name : "Americana Activa";
 
             return `
-                <div class="tour-header-context" style="background: #000; padding: 25px 20px; text-align: center; border-bottom: 0px solid #1a1a1a;">
+                <div class="tour-header-context" style="background: linear-gradient(135deg, #CCFF00 0%, #00E36D 100%); padding: 35px 20px; text-align: center; border-bottom: 2px solid rgba(0,0,0,0.05);">
                     ${isPlayingHere ? `
-                        <div style="background: rgba(204,255,0,0.1); border: 1px solid var(--playtomic-neon); color: var(--playtomic-neon); display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.6rem; font-weight: 900; margin-bottom: 12px; letter-spacing: 0.5px;">
+                        <div style="background: rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.2); color: #000; display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 0.6rem; font-weight: 900; margin-bottom: 15px; letter-spacing: 1px; text-transform: uppercase;">
                            ESTÁS PARTICIPANDO ✅
                         </div>
                     ` : ''}
                     
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
-                        <img src="${this.currentAmericanaDoc?.image_url || 'img/logo_somospadel.png'}" 
-                             style="width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--playtomic-neon); box-shadow: 0 0 15px rgba(204,255,0,0.3);"
-                             onerror="this.src='img/logo_somospadel.png'">
-                        <h1 style="color: white; margin: 0; font-family: 'Outfit'; font-weight: 900; font-size: 1.3rem; letter-spacing: -0.5px;">${amName.toUpperCase()}</h1>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                        <div style="position: relative;">
+                            <img src="${this.currentAmericanaDoc?.image_url || 'img/logo_somospadel.png'}" 
+                                 style="width: 75px; height: 75px; border-radius: 50%; border: 3px solid white; box-shadow: 0 8px 25px rgba(0,0,0,0.2);"
+                                 onerror="this.src='img/logo_somospadel.png'">
+                        </div>
+                        <h1 style="color: #000; margin: 0; font-family: 'Outfit'; font-weight: 900; font-size: 1.5rem; letter-spacing: -0.5px; text-shadow: 0 1px 0 rgba(255,255,255,0.4);">${amName.toUpperCase()}</h1>
                     </div>
                     
-                    <div style="color: #888; font-size: 0.75rem; margin-top: 6px; font-weight: 700;">${this.currentAmericanaDoc?.date || ''} • ${(this.currentAmericanaDoc?.category === 'male' ? 'MASCULINA' :
+                    <div style="color: rgba(0,0,0,0.5); font-size: 0.8rem; margin-top: 8px; font-weight: 800; letter-spacing: 0.5px;">
+                        ${this.currentAmericanaDoc?.date || ''} • ${(this.currentAmericanaDoc?.category === 'male' ? 'MASCULINA' :
                     this.currentAmericanaDoc?.category === 'female' ? 'FEMENINA' :
                         this.currentAmericanaDoc?.category === 'mixed' ? 'MIXTA' :
                             this.currentAmericanaDoc?.category === 'open' ? 'TODOS' : 'PRO')
                 }</div>
                 </div>
 
-                <div class="tour-sub-nav" style="background: #fff; padding: 12px; display: flex; gap: 10px; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 100;">
-                    <button class="tour-menu-item ${this.activeTab === 'results' ? 'active' : ''}" style="flex:1" onclick="window.ControlTowerView.switchTab('results')">PARTIDOS</button>
-                    <button class="tour-menu-item ${this.activeTab === 'standings' ? 'active' : ''}" style="flex:1" onclick="window.ControlTowerView.switchTab('standings')">POSICIONES</button>
-                    <button class="tour-menu-item ${this.activeTab === 'summary' ? 'active' : ''}" style="flex:1" onclick="window.ControlTowerView.switchTab('summary')">ESTADÍSTICAS</button>
+                <div class="tour-sub-nav" style="background: rgba(255,255,255,0.8); backdrop-filter: blur(15px); padding: 12px 10px; display: flex; gap: 8px; border-bottom: 2px solid #CCFF00; position: sticky; top: 62px; z-index: 1001; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
+                    <button class="tour-menu-item ${this.activeTab === 'results' ? 'active' : ''}" style="flex:1; border-radius: 12px; font-size: 0.65rem; font-weight: 900; background: ${this.activeTab === 'results' ? 'linear-gradient(135deg, #CCFF00 0%, #B8E600 100%)' : '#f0f0f0'}; color: #000; border: none; box-shadow: ${this.activeTab === 'results' ? '0 4px 10px rgba(204,255,0,0.3)' : 'none'}; transition: 0.3s;" onclick="window.ControlTowerView.switchTab('results')">PARTIDOS</button>
+                    <button class="tour-menu-item ${this.activeTab === 'standings' ? 'active' : ''}" style="flex:1; border-radius: 12px; font-size: 0.65rem; font-weight: 900; background: ${this.activeTab === 'standings' ? 'linear-gradient(135deg, #CCFF00 0%, #B8E600 100%)' : '#f0f0f0'}; color: #000; border: none; box-shadow: ${this.activeTab === 'standings' ? '0 4px 10px rgba(204,255,0,0.3)' : 'none'}; transition: 0.3s;" onclick="window.ControlTowerView.switchTab('standings')">POSICIONES</button>
+                    <button class="tour-menu-item ${this.activeTab === 'summary' ? 'active' : ''}" style="flex:1; border-radius: 12px; font-size: 0.65rem; font-weight: 900; background: ${this.activeTab === 'summary' ? 'linear-gradient(135deg, #CCFF00 0%, #B8E600 100%)' : '#f0f0f0'}; color: #000; border: none; box-shadow: ${this.activeTab === 'summary' ? '0 4px 10px rgba(204,255,0,0.3)' : 'none'}; transition: 0.3s;" onclick="window.ControlTowerView.switchTab('summary')">ESTADÍSTICAS</button>
                 </div>
 
                 ${this.renderActiveContent(data, roundData)}
@@ -266,17 +302,21 @@
 
         renderRoundTabs(rounds, currentNum) {
             return `
-                <div class="round-tabs-container" style="display:flex; gap:8px;">
-                    ${rounds.map(r => `
-                        <button class="round-tab ${r.number === parseInt(currentNum) ? 'active' : ''}" 
-                                onclick="window.TowerActions.goToRound(${r.number})"
-                                style="background: ${r.number === parseInt(currentNum) ? 'var(--playtomic-neon)' : 'white'}; 
-                                       color: ${r.number === parseInt(currentNum) ? 'black' : '#666'}; 
-                                       border: 1px solid ${r.number === parseInt(currentNum) ? 'var(--playtomic-neon)' : '#ddd'};
-                                       padding: 8px 16px; border-radius: 8px; font-weight: 800;">
+                <div class="round-tabs-container" style="display:flex; gap:8px; align-items: center;">
+                    ${rounds.map(r => {
+                const isSel = parseInt(r.number) === parseInt(currentNum);
+                return `
+                        <button type="button" 
+                                class="round-tab ${isSel ? 'active' : ''}" 
+                                onclick="window.ControlTowerView.goToRound(${r.number}, event)"
+                                style="background: ${isSel ? 'var(--playtomic-neon)' : '#222'}; 
+                                       color: ${isSel ? 'black' : '#fff'}; 
+                                       border: 1px solid ${isSel ? 'var(--playtomic-neon)' : '#444'};
+                                       padding: 10px 18px; border-radius: 12px; font-weight: 900; cursor: pointer; transition: 0.3s; min-width: 60px;
+                                       box-shadow: ${isSel ? '0 0 15px rgba(204,255,0,0.3)' : 'none'};">
                             ${r.number}º
                         </button>
-                    `).join('')}
+                    `}).join('')}
                 </div>
             `;
         }
@@ -406,6 +446,28 @@
             const html = `
                 <div class="summary-dashboard animate-fade-in" style="display: flex; flex-direction: column; gap: 1.5rem; padding: 20px; padding-bottom: 120px; background: #f0f2f5;">
                     
+                    <!-- TOP 3 Clasificación (Real-time admin feel) -->
+                    <div style="background: white; border-radius: 20px; padding: 20px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                         <h3 style="margin:0 0 15px 0; font-weight: 950; font-size: 0.85rem; color: #111; letter-spacing: 1px; text-transform: uppercase;">Podio Final</h3>
+                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
+                             <div style="background: #fdfdfd; padding: 10px; border-radius: 12px;">
+                                 <div style="font-size: 1.5rem;">🥈</div>
+                                 <div style="font-weight: 800; font-size: 0.7rem; color: #333; margin-top: 5px;">${sortedPlayers[1]?.name.split(' ')[0] || '-'}</div>
+                                 <div style="font-size: 0.6rem; color: #888;">${sortedPlayers[1]?.games || 0} pts</div>
+                             </div>
+                             <div style="background: rgba(204,255,0,0.05); padding: 15px 10px; border-radius: 16px; border: 1px solid rgba(204,255,0,0.2); transform: translateY(-10px);">
+                                 <div style="font-size: 2rem;">🥇</div>
+                                 <div style="font-weight: 950; font-size: 0.8rem; color: #000;">${mvp.name.split(' ')[0]}</div>
+                                 <div style="font-size: 0.7rem; font-weight: 800; color: var(--playtomic-neon);"><sup>${mvp.games}</sup> pts</div>
+                             </div>
+                             <div style="background: #fdfdfd; padding: 10px; border-radius: 12px;">
+                                 <div style="font-size: 1.5rem;">🥉</div>
+                                 <div style="font-weight: 800; font-size: 0.7rem; color: #333; margin-top: 5px;">${sortedPlayers[2]?.name.split(' ')[0] || '-'}</div>
+                                 <div style="font-size: 0.6rem; color: #888;">${sortedPlayers[2]?.games || 0} pts</div>
+                             </div>
+                         </div>
+                    </div>
+
                     <!-- MVP Card -->
                     <div style="background: linear-gradient(135deg, #000 0%, #1a1a1a 100%); border-radius: 20px; padding: 25px; position: relative; overflow: hidden; color: white; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
                          <div style="position: absolute; right: -10px; top: -10px; font-size: 6rem; opacity: 0.1;">🏆</div>
@@ -514,7 +576,7 @@
         renderTournamentCard(match) {
             const colorClass = `border-${(match.court % 4) + 1}`;
             const statusText = match.isFinished ?
-                '<span style="color:#25D366; font-weight:800;">FINALIZADO</span>' :
+                '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">FINALIZADO</span>' :
                 (match.isLive ? '<span style="color:var(--playtomic-neon); font-weight:800; animation: blink 1.5s infinite;">EN JUEGO</span>' : '<span style="color:#BBB;">ESPERANDO</span>');
 
             const sA = parseInt(match.scoreA || 0);
@@ -525,15 +587,16 @@
             let timeLabel = "00:00";
             if (this.currentAmericanaDoc && this.currentAmericanaDoc.time) {
                 const [h, m] = this.currentAmericanaDoc.time.split(':').map(Number);
-                const roundOffset = (match.round - 1) * 20;
+                const rNum = parseInt(match.round) || 1;
+                const roundOffset = (rNum - 1) * 20;
                 const date = new Date();
                 date.setHours(h, m + roundOffset);
                 timeLabel = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             }
 
             // --- 2. Estilos WOW para Ganadores ---
-            // Fondo Neon, Texto Negro, Padding, Border Radius
-            const winnerStyle = "background: var(--playtomic-neon); color: black !important; padding: 6px 10px; border-radius: 8px; font-weight: 900 !important; box-shadow: 0 0 10px rgba(204,255,0,0.4); text-decoration: none;";
+            // Subrayado amarillo neón (logo) + Fondo suave
+            const winnerStyle = "background: rgba(204,255,0,0.1); color: black !important; padding: 6px 10px; border-radius: 8px; font-weight: 950 !important; border-bottom: 3px solid #CCFF00; text-decoration: none;";
             const normalStyle = "color: #111; font-weight: 800; padding: 6px 0;";
 
             const styleA = (match.isFinished && sA > sB) ? winnerStyle : normalStyle;
@@ -619,11 +682,5 @@
     }
 
     window.ControlTowerView = new ControlTowerView();
-    window.TowerActions = {
-        goToRound: (n) => {
-            window.ControlTowerView.selectedRound = n;
-            window.ControlTowerView.recalc();
-        }
-    };
     console.log("🗼 ControlTowerView (Pro) Initialized");
 })();
