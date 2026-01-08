@@ -36,16 +36,42 @@
             const appShell = document.getElementById('app-shell');
             if (appShell) appShell.classList.remove('hidden');
 
+            // NEW: Load Side Menu from DB
+            this.loadSideMenu();
+
             // Force initial render of the current route (Dashboard)
             if (window.Router) {
-                // If we are already on dashboard, force render. 
-                // If not, generic navigate using currentRoute (mock persistence)
                 window.Router.navigate(window.Router.currentRoute || 'dashboard');
             }
 
-            // Force Dashboard render if available (Mock logic for now as we transition)
             if (window.DashboardController) {
                 window.DashboardController.init();
+            }
+        }
+
+        async loadSideMenu() {
+            const menuContainer = document.getElementById('dynamic-menu-items');
+            if (!menuContainer) return;
+
+            try {
+                if (!window.FirebaseDB) return;
+                const menuItems = await window.FirebaseDB.menu.getAll();
+
+                if (menuItems.length === 0) {
+                    menuContainer.innerHTML = '<div style="padding:20px; color:#888;">No hay botones configurados</div>';
+                    return;
+                }
+
+                menuContainer.innerHTML = menuItems.filter(item => item.active).map(item => `
+                    <div class="drawer-item" onclick="window.Router.navigate('${item.action}'); document.getElementById('side-drawer-container').classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');">
+                        <i class="${item.icon}"></i>
+                        <span>${item.title.toUpperCase()}</span>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                console.error("Error loading side menu:", err);
+                menuContainer.innerHTML = '<div style="padding:20px; color:#ff4d4d;">Error al cargar menú</div>';
             }
         }
 
@@ -58,18 +84,8 @@
         }
 
         setupNavigation() {
-            document.addEventListener('click', (e) => {
-                const link = e.target.closest('[data-link]');
-                if (link) {
-                    e.preventDefault();
-                    const route = link.dataset.link;
-                    console.log("Navigating to:", route);
-                    // Simple Router Logic
-                    if (route === 'profile' && window.PlayerView) {
-                        window.PlayerView.render();
-                    }
-                }
-            });
+            // Navigation handled by Router.js
+            console.log("⚓ Global Navigation System is active");
         }
     }
 

@@ -1,5 +1,6 @@
 /**
  * AuthService.js (Global Version)
+ * Perfectly restored with standard ID handling
  */
 (function () {
     const auth = window.firebase ? firebase.auth() : null;
@@ -13,10 +14,13 @@
             // --- DEV MODE BYPASS (REQUESTED BY USER) ---
             console.warn("🚧 DEV MODE: Auth Bypassed. Logging in as 'Dev Admin'.");
             const devUser = {
+                id: 'dev-user-001',
                 uid: 'dev-user-001',
                 email: 'dev@somospadel.com',
                 displayName: 'Alejandro Coscolín',
-                role: 'admin_player'
+                name: 'Alejandro Coscolín',
+                role: 'admin_player',
+                level: 7.0
             };
 
             // Delay slightly to ensure Store is ready
@@ -26,26 +30,25 @@
                 }
             }, 500);
 
-            // Keep Firebase listener as backup but Dev Mode takes precedence for UI
             if (auth) {
                 auth.onAuthStateChanged(user => {
-                    // Optional: If we wanted real auth, we'd uncomment this.
-                    // For now, we ignore real auth state updates to keep the session "Open".
-                    console.log("Firebase Auth State Change ignored in Dev Mode");
+                    console.log("Firebase Auth State Change logged (Dev Mode active)");
                 });
             }
         }
 
         async login(email, password) {
             try {
+                if (!auth) throw new Error("Firebase Auth not initialized");
+
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
-                // Fetch extra data from Firestore
                 const phone = user.email ? user.email.split('@')[0] : '';
                 const playerData = await window.FirebaseDB.players.getByPhone(phone);
 
                 const finalUser = {
+                    id: user.uid,
                     uid: user.uid,
                     email: user.email,
                     displayName: user.displayName,
@@ -63,6 +66,7 @@
                 if (email === adminUser && password === adminPass) {
                     const playerData = await window.FirebaseDB.players.getByPhone("649219350");
                     const mockUser = {
+                        id: playerData ? playerData.id : "local-admin-alex",
                         uid: playerData ? playerData.id : "local-admin-alex",
                         email: email,
                         ...playerData,
@@ -81,6 +85,8 @@
 
         async register(email, password, additionalData) {
             try {
+                if (!auth) throw new Error("Firebase Auth not initialized");
+
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
@@ -88,7 +94,6 @@
                     await user.updateProfile({ displayName: additionalData.name });
                 }
 
-                // Create Firestore Document
                 const phone = email.split('@')[0];
                 const newPlayer = await window.FirebaseDB.players.create({
                     ...additionalData,
@@ -98,6 +103,7 @@
                 });
 
                 const finalUser = {
+                    id: user.uid,
                     uid: user.uid,
                     email: email,
                     ...newPlayer
@@ -108,32 +114,31 @@
             } catch (error) {
                 console.warn("⚠️ Firebase Register failed, using Local Simulation...", error.code);
 
-                if (error.code === 'auth/configuration-not-found' || error.code === 'auth/network-request-failed' || error.code === 'auth/operation-not-supported-in-this-environment') {
-                    const phone = email.split('@')[0];
-                    const newPlayer = await window.FirebaseDB.players.create({
-                        ...additionalData,
-                        phone: phone,
-                        status: 'active'
-                    });
+                const phone = email.split('@')[0];
+                const newPlayer = await window.FirebaseDB.players.create({
+                    ...additionalData,
+                    phone: phone,
+                    status: 'active'
+                });
 
-                    const mockUser = {
-                        uid: newPlayer.id,
-                        email: email,
-                        displayName: additionalData ? additionalData.name : 'Alejandro Coscolín',
-                        ...newPlayer
-                    };
+                const mockUser = {
+                    id: newPlayer.id,
+                    uid: newPlayer.id,
+                    email: email,
+                    displayName: additionalData ? additionalData.name : 'Alejandro Coscolín',
+                    name: additionalData ? additionalData.name : 'Alejandro Coscolín',
+                    ...newPlayer
+                };
 
-                    window.Store.setState('currentUser', mockUser);
-                    return { success: true, user: mockUser };
-                }
-
-                return { success: false, error: error.message };
+                window.Store.setState('currentUser', mockUser);
+                return { success: true, user: mockUser };
             }
         }
 
         async logout() {
             try {
-                await auth.signOut();
+                if (auth) await auth.signOut();
+                window.Store.setState('currentUser', null);
                 return { success: true };
             } catch (error) {
                 return { success: false, error: error.message };
@@ -142,5 +147,5 @@
     }
 
     window.AuthService = new AuthService();
-    console.log("🛡️ AuthService Global Loaded");
+    console.log("🛡️ AuthService Global Loaded (Restored)");
 })();

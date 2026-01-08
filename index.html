@@ -31,7 +31,7 @@
     <link rel="apple-touch-startup-image" href="https://cdn-icons-png.flaticon.com/512/33/33736.png">
 
     <!-- CSS Dependencies -->
-    <link rel="stylesheet" href="css/theme-playtomic.css?v=115">
+    <link rel="stylesheet" href="css/theme-playtomic.css?v=300">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -97,18 +97,22 @@
 
             <!-- NAVIGATION TABS (The "3 Pestañas") -->
             <div class="header-tabs"
-                style="display:flex; justify-content:space-around; align-items:center; height:44px; background:var(--bg-app); border-bottom:1px solid rgba(0,0,0,0.05);">
-                <div onclick="window.Router && window.Router.navigate('dashboard')"
-                    style="flex:1; text-align:center; font-weight:800; font-size:0.8rem; color:var(--text-primary); cursor:pointer; letter-spacing:0.5px; border-bottom:2px solid var(--brand-neon);">
+                style="display:flex; justify-content:space-around; align-items:center; height:48px; background:#CCFF00; border-bottom:1px solid rgba(0,0,0,0.1); box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <div class="header-tab active" onclick="window.Router && window.Router.navigate('dashboard')"
+                    style="flex:1; text-align:center; font-weight:900; font-size:0.8rem; color:#000; cursor:pointer; letter-spacing:1px; height:100%; display:flex; align-items:center; justify-content:center; border-bottom:3px solid #FF9800; transition: all 0.2s;">
                     INICIO
                 </div>
-                <div onclick="window.Router && window.Router.navigate('americanas')"
-                    style="flex:1; text-align:center; font-weight:700; font-size:0.8rem; color:#888; cursor:pointer; letter-spacing:0.5px;">
+                <div class="header-tab" onclick="window.Router && window.Router.navigate('americanas')"
+                    style="flex:1; text-align:center; font-weight:700; font-size:0.8rem; color:rgba(0,0,0,0.5); cursor:pointer; letter-spacing:1px; height:100%; display:flex; align-items:center; justify-content:center; transition: all 0.2s;">
                     AMERICANAS
                 </div>
-                <div onclick="window.Router && window.Router.navigate('ranking')"
-                    style="flex:1; text-align:center; font-weight:700; font-size:0.8rem; color:#888; cursor:pointer; letter-spacing:0.5px;">
-                    FINALIZADAS
+                <div class="header-tab" onclick="window.Router && window.Router.navigate('ranking')"
+                    style="flex:1; text-align:center; font-weight:700; font-size:0.8rem; color:rgba(0,0,0,0.5); cursor:pointer; letter-spacing:1px; height:100%; display:flex; align-items:center; justify-content:center; transition: all 0.2s;">
+                    RANKING
+                </div>
+                <div class="header-tab" onclick="window.Router && window.Router.navigate('profile')"
+                    style="flex:1; text-align:center; font-weight:700; font-size:0.8rem; color:rgba(0,0,0,0.5); cursor:pointer; letter-spacing:1px; height:100%; display:flex; align-items:center; justify-content:center; transition: all 0.2s;">
+                    MI PERFIL
                 </div>
             </div>
         </div>
@@ -123,24 +127,11 @@
                 <i class="fas fa-times" style="color:white; font-size:1.4rem;"
                     onclick="document.getElementById('side-drawer-container').classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');"></i>
             </div>
-            <div class="drawer-item" onclick="window.Router && window.Router.navigate('profile')">
-                <i class="far fa-user"></i> <span>Mi Perfil</span>
-            </div>
-            <div class="drawer-item"
-                onclick="window.Router && window.Router.navigate('americanas'); setTimeout(()=>window.EventsController.setTab('events'), 100);">
-                <i class="fas fa-table-tennis"></i> <span>Americanas</span>
-            </div>
-            <div class="drawer-item"
-                onclick="window.Router && window.Router.navigate('americanas'); setTimeout(()=>window.EventsController.setTab('results'), 100);">
-                <i class="fas fa-poll"></i> <span>Mis Resultados</span>
-            </div>
-            <div class="drawer-item"
-                onclick="window.Router && window.Router.navigate('americanas'); setTimeout(()=>window.EventsController.setTab('agenda'), 100);">
-                <i class="far fa-calendar-alt"></i> <span>Mi Agenda</span>
-            </div>
-            <div class="drawer-item"
-                onclick="window.Router && window.Router.navigate('americanas'); setTimeout(()=>window.EventsController.setTab('finished'), 100);">
-                <i class="fas fa-flag-checkered"></i> <span>Finalizadas</span>
+            <!-- Dynamic Menu Section -->
+            <div id="dynamic-menu-items">
+                <div style="padding: 20px; text-align: center; color: #888;">
+                    <span class="loader-mini"></span> Cargando menú...
+                </div>
             </div>
 
             <!-- New Logout Drawer Item -->
@@ -153,7 +144,7 @@
 
         <!-- Main Content Area (Scrollable) -->
         <!-- Added pt-130 class logic conceptually via CSS .full-width-mobile applied to children or logic -->
-        <main id="content-area" style="min-height: 100vh; padding-top: 160px;">
+        <main id="content-area" style="min-height: 100vh; padding-top: 180px;">
             <!-- Loading Skeleton -->
             <div class="dashboard-v2-container" style="padding-top: 40px; text-align: center;">
                 <div class="loader"></div>
@@ -265,7 +256,8 @@
     <script src="js/core/StateManager.js"></script>
     <script src="js/core/DatabaseService.js"></script>
     <script src="js/core/AuthService.js"></script>
-    <script src="js/core/Router.js?v=2"></script>
+    <script src="js/core/Router.js?v=304"></script>
+    <script src="js/core/SmartTicker.js"></script>
 
     <!-- Layer 3: Logic Business -->
     <script src="js/modules/americanas/MatchmakingService.js"></script>
@@ -279,12 +271,12 @@
     <script src="js/modules/dashboard/HeroCard.js"></script>
     <script src="js/modules/dashboard/QuickStats.js"></script>
     <script src="js/modules/dashboard/ActionGrid.js"></script>
-    <script src="js/modules/dashboard/DashboardView.js?v=12"></script>
+    <script src="js/modules/dashboard/DashboardView.js?v=304"></script>
     <script src="js/modules/dashboard/DashboardController.js"></script>
-    <script src="js/modules/players/PlayerView.js?v=12"></script>
+    <script src="js/modules/players/PlayerView.js?v=300"></script>
     <script src="js/modules/players/PlayerController.js"></script>
     <script src="js/modules/americanas/ControlTowerView.js"></script>
-    <script src="js/modules/americanas/EventsController.js"></script>
+    <script src="js/modules/americanas/EventsController.js?v=300"></script>
 
     <!-- Ranking Module -->
     <script src="js/modules/ranking/RankingView.js"></script>

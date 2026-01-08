@@ -48,21 +48,21 @@
                 },
                 {
                     id: 'ranking',
-                    icon: '🏁',
-                    title: 'Finalizadas',
+                    icon: '🥇',
+                    title: 'Ranking',
                     badge: null,
-                    badgeText: 'Historial',
+                    badgeText: 'Global SP',
                     route: 'ranking',
-                    color: '#FF9500'
+                    color: '#FFD700'
                 },
                 {
-                    id: 'results',
-                    icon: '📈',
-                    title: 'Resultados',
+                    id: 'profile',
+                    icon: '👤',
+                    title: 'Mi Perfil',
                     badge: null,
-                    badgeText: 'Mis Partidos',
-                    route: 'results',
-                    color: '#34A853'
+                    badgeText: 'Mis Datos',
+                    route: 'profile',
+                    color: '#FF9500'
                 }
             ];
         }

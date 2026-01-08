@@ -117,14 +117,19 @@ const AdminSimulator = {
 
             if (status) status.innerHTML += `> Evento creado (${americanaId})<br>`;
 
-            // 3. Generate 6 Rounds based on pair mode
+            // 3. Generate Rounds
+            // IMPORTANTE: En sistemas Pozo (Fija y Twister), NO pre-generamos las 6 rondas con 0-0
+            // porque la Ronda 2 depende de los resultados de la Ronda 1.
+            // Solo generamos la RONDA 1.
+            const roundsToGenerate = 1;
+
             if (pairMode === 'fixed') {
                 if (status) status.innerHTML += `> Creando parejas fijas...<br>`;
                 const pairs = FixedPairsLogic.createFixedPairs(selectedPlayers, category);
                 await FirebaseDB.americanas.update(americanaId, { fixed_pairs: pairs });
 
-                if (status) status.innerHTML += `> Generando 6 Rondas sistema Pozo (Marcadores a 0)...<br>`;
-                for (let round = 1; round <= 6; round++) {
+                if (status) status.innerHTML += `> Generando Ronda 1 sistema Pozo...<br>`;
+                for (let round = 1; round <= roundsToGenerate; round++) {
                     const matches = FixedPairsLogic.generatePozoRound(pairs, round, numCourts);
                     for (const m of matches) {
                         await FirebaseDB.matches.create({
@@ -135,29 +140,20 @@ const AdminSimulator = {
                             score_b: 0
                         });
                     }
-                    if (status) status.innerHTML += `> Ronda ${round} ✅<br>`;
+                    if (status) status.innerHTML += `> Ronda ${round} ✅ (El resto se generarán tras meter resultados)<br>`;
                 }
 
             } else {
-                let allMatches = [];
                 let currentPlayers = americanaData.players;
-                for (let round = 1; round <= 6; round++) {
-                    let roundMatches;
-                    if (round === 1) {
-                        roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts, category);
-                    } else {
-                        const prevRoundMatches = allMatches.filter(m => m.round === round - 1);
-                        currentPlayers = RotatingPozoLogic.updatePlayerCourts(currentPlayers, prevRoundMatches, numCourts);
-                        await FirebaseDB.americanas.update(americanaId, { players: currentPlayers });
-                        roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts, category);
-                    }
+                if (status) status.innerHTML += `> Generando Ronda 1 sistema Twister...<br>`;
+                for (let round = 1; round <= roundsToGenerate; round++) {
+                    let roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts, category);
 
                     for (const m of roundMatches) {
                         const matchData = { ...m, americana_id: americanaId, status: 'scheduled', score_a: 0, score_b: 0 };
                         await FirebaseDB.matches.create(matchData);
-                        allMatches.push(matchData);
                     }
-                    if (status) status.innerHTML += `> Ronda ${round} ✅<br>`;
+                    if (status) status.innerHTML += `> Ronda ${round} ✅ (El resto se generarán tras meter resultados)<br>`;
                 }
             }
 
@@ -170,98 +166,7 @@ const AdminSimulator = {
         }
     },
 
-    /**
-     * Ejecutar simulación completa con resultados aleatorios
-     */
-    async runRandomCycle() {
-        const status = document.getElementById('sim-status-random');
-        const courtSelect = document.getElementById('sim-courts-random');
-        const pairModeSelect = document.getElementById('sim-pair-mode-random');
-        const categorySelect = document.getElementById('sim-category-random');
 
-        const numCourts = parseInt(courtSelect?.value || 3);
-        const pairMode = pairModeSelect?.value || 'rotating';
-        const category = categorySelect?.value || 'open';
-        const numPlayers = numCourts * 4;
-
-        if (status) {
-            status.style.display = 'block';
-            let catName = category === 'open' ? 'LIBRE' : (category === 'male' ? 'MASCULINA' : (category === 'female' ? 'FEMENINA' : 'MIXTA'));
-            status.innerHTML = `🎲 <b>SIMULACIÓN COMPLETA (${catName} - ${pairMode === 'fixed' ? 'FIJA' : 'TWISTER'})</b><br>`;
-        }
-
-        try {
-            const selectedPlayers = await this.getPlayersByCategory(category, numPlayers);
-
-            const catName = category === 'open' ? 'LIBRE' : (category === 'male' ? 'MASCULINA' : (category === 'female' ? 'FEMENINA' : 'MIXTA'));
-            const modeName = pairMode === 'fixed' ? 'FIJA' : 'TWISTER';
-
-            const americanaData = {
-                name: `AMERICANA ${catName} ${numCourts}P - ${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`,
-                date: new Date().toISOString().split('T')[0],
-                status: 'finished',
-                players: selectedPlayers.map((p, i) => ({
-                    id: p.id, uid: p.id, name: p.name, level: p.level || '3.5', gender: p.gender, current_court: Math.floor(i / 4) + 1
-                })),
-                max_courts: numCourts,
-                category: category,
-                image_url: category === 'male' ? 'img/ball-masculina.png' : (category === 'female' ? 'img/ball-femenina.png' : 'img/ball-mixta.png'),
-                pair_mode: pairMode
-            };
-
-            const newAmericana = await FirebaseDB.americanas.create(americanaData);
-            const americanaId = newAmericana.id;
-
-            if (pairMode === 'fixed') {
-                const pairs = FixedPairsLogic.createFixedPairs(selectedPlayers, category);
-                await FirebaseDB.americanas.update(americanaId, { fixed_pairs: pairs });
-
-                for (let round = 1; round <= 6; round++) {
-                    const matches = FixedPairsLogic.generatePozoRound(pairs, round, numCourts);
-                    const finishMatches = [];
-                    for (const m of matches) {
-                        const scoreA = Math.floor(Math.random() * 7) + 1;
-                        const scoreB = scoreA === 7 ? Math.floor(Math.random() * 6) : (Math.random() > 0.5 ? scoreA + 1 : scoreA - 1);
-                        const match = { ...m, americana_id: americanaId, status: 'finished', score_a: Math.max(scoreA, scoreB), score_b: Math.min(scoreA, scoreB) };
-                        await FirebaseDB.matches.create(match);
-                        finishMatches.push(match);
-                    }
-                    FixedPairsLogic.updatePozoRankings(pairs, finishMatches, numCourts);
-                    if (status) status.innerHTML += `> Ronda ${round} simulada... ✅<br>`;
-                }
-            } else {
-                let allMatches = [];
-                let currentPlayers = americanaData.players;
-                for (let round = 1; round <= 6; round++) {
-                    let roundMatches;
-                    if (round === 1) {
-                        roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts, category);
-                    } else {
-                        const prevRoundMatches = allMatches.filter(m => m.round === round - 1);
-                        currentPlayers = RotatingPozoLogic.updatePlayerCourts(currentPlayers, prevRoundMatches, numCourts);
-                        await FirebaseDB.americanas.update(americanaId, { players: currentPlayers });
-                        roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts, category);
-                    }
-
-                    for (const m of roundMatches) {
-                        const scoreA = Math.floor(Math.random() * 7) + 1;
-                        const scoreB = scoreA === 7 ? Math.floor(Math.random() * 6) : (Math.random() > 0.5 ? scoreA + 1 : scoreA - 1);
-                        const match = { ...m, americana_id: americanaId, status: 'finished', score_a: Math.max(scoreA, scoreB), score_b: Math.min(scoreA, scoreB) };
-                        await FirebaseDB.matches.create(match);
-                        allMatches.push(match);
-                    }
-                    if (status) status.innerHTML += `> Ronda ${round} simulada... ✅<br>`;
-                }
-            }
-
-            if (status) status.innerHTML += '<br>🎉 <b>SIMULACIÓN COMPLETADA</b><br>';
-            setTimeout(() => loadAdminView('matches'), 1500);
-
-        } catch (e) {
-            console.error(e);
-            if (status) status.innerHTML += `<br>❌ Error: ${e.message}`;
-        }
-    }
 };
 
 window.AdminSimulator = AdminSimulator;

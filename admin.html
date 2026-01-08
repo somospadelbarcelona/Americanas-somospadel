@@ -11,6 +11,8 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600&display=swap"
         rel="stylesheet">
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- SheetJS for Excel Export -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -77,34 +79,45 @@
             </div>
 
             <nav class="nav-menu">
-                <a href="index.html" class="nav-item-pro"
-                    style="text-decoration: none; margin-bottom: 1.5rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; transition: all 0.3s ease;">
-                    <span class="icon">⬅️</span> Volver al Dashboard
+                <a href="index.html" class="nav-item-pro nav-item-back"
+                    style="text-decoration: none; margin-bottom: 2rem;">
+                    <span class="icon-box"><i class="fas fa-arrow-left"></i></span>
+                    <span class="nav-text">Dashboard Jugador</span>
                 </a>
+
                 <button class="nav-item-pro active" data-view="users" onclick="loadAdminView('users')">
-                    <span class="icon">👥</span> Jugadores
+                    <span class="icon-box"><i class="fas fa-users-gear"></i></span>
+                    <span class="nav-text">Base de Datos</span>
                 </button>
+
                 <button class="nav-item-pro" data-view="americanas_mgmt" onclick="loadAdminView('americanas_mgmt')">
-                    <span class="icon">📅</span> Gestión Americanas
+                    <span class="icon-box"><i class="fas fa-calendar-check"></i></span>
+                    <span class="nav-text">Gestión Torneos</span>
                 </button>
+
                 <button class="nav-item-pro" data-view="matches" onclick="loadAdminView('matches')">
-                    <span class="icon">🏆</span> Resultados
+                    <span class="icon-box"><i class="fas fa-trophy-award"></i></span>
+                    <span class="nav-text">Control Tower</span>
                 </button>
+
                 <button class="nav-item-pro" data-view="simulator_empty" onclick="loadAdminView('simulator_empty')">
-                    <span class="icon">📝</span> Simulador Sin Resultado
+                    <span class="icon-box"><i class="fas fa-robot"></i></span>
+                    <span class="nav-text">Simulador IA</span>
                 </button>
-                <button class="nav-item-pro" data-view="simulator_random" onclick="loadAdminView('simulator_random')">
-                    <span class="icon">🎲</span> Simulador Al Azar
-                </button>
+
                 <button class="nav-item-pro" data-view="menu_mgmt" onclick="loadAdminView('menu_mgmt')">
-                    <span class="icon">🍔</span> MENU HAMB
+                    <span class="icon-box"><i class="fas fa-bars-staggered"></i></span>
+                    <span class="nav-text">Personalizar App</span>
                 </button>
+
                 <button class="nav-item-pro" data-view="config" onclick="loadAdminView('config')">
-                    <span class="icon">⚙️</span> Configuración
+                    <span class="icon-box"><i class="fas fa-sliders"></i></span>
+                    <span class="nav-text">Ajustes Engine</span>
                 </button>
-                <button class="nav-item-pro" style="color: var(--danger); margin-top: auto;"
-                    onclick="AdminAuth.logout()">
-                    <span class="icon">🚪</span> Cerrar Sesión
+
+                <button class="nav-item-pro nav-item-logout" style="margin-top: auto;" onclick="AdminAuth.logout()">
+                    <span class="icon-box"><i class="fas fa-power-off"></i></span>
+                    <span class="nav-text">Cerrar Sesión</span>
                 </button>
             </nav>
 
@@ -325,36 +338,107 @@
                         participantes...</div>
                 </div>
             </div>
-        </div>
-    </div>
+            <!-- Dynamic Menu Modal (HAMB) -->
+            <div id="admin-menu-modal" class="modal-overlay hidden">
+                <div class="modal-content" style="max-width: 450px;">
+                    <div class="modal-header">
+                        <h2>Gestionar Botón Menú</h2>
+                        <button class="close-modal-btn"
+                            onclick="document.getElementById('admin-menu-modal').classList.add('hidden')">&times;</button>
+                    </div>
+                    <form id="admin-menu-form" class="pro-form">
+                        <input type="hidden" name="id">
 
-    <!-- Analytics & Export -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js?v=999"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js?v=999"></script>
+                        <div class="form-group">
+                            <label>TÍTULO DEL BOTÓN</label>
+                            <input type="text" name="title" placeholder="Ej: Mi Perfil" class="pro-input" required>
+                        </div>
 
-    <!-- Firebase SDK (v10 Compat) -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js?v=999"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js?v=999"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js?v=999"></script>
+                        <div class="form-group">
+                            <label>ICONO (FontAwesome class)</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" name="icon" id="menu-icon-input" placeholder="fas fa-star"
+                                    class="pro-input" required style="flex:1;">
+                                <div id="icon-preview-box"
+                                    style="width: 50px; height: 50px; background: rgba(255,255,255,0.05); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border: 1px solid rgba(255,255,255,0.1);">
+                                    <i class="fas fa-question"></i>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;">
+                                <button type="button" class="btn-micro" onclick="selectMenuIcon('fas fa-user')"><i
+                                        class="fas fa-user"></i></button>
+                                <button type="button" class="btn-micro"
+                                    onclick="selectMenuIcon('fas fa-calendar-alt')"><i
+                                        class="fas fa-calendar-alt"></i></button>
+                                <button type="button" class="btn-micro" onclick="selectMenuIcon('fas fa-trophy')"><i
+                                        class="fas fa-trophy"></i></button>
+                                <button type="button" class="btn-micro" onclick="selectMenuIcon('fas fa-chart-line')"><i
+                                        class="fas fa-chart-line"></i></button>
+                                <button type="button" class="btn-micro" onclick="selectMenuIcon('fas fa-shield-alt')"><i
+                                        class="fas fa-shield-alt"></i></button>
+                                <button type="button" class="btn-micro" onclick="selectMenuIcon('fas fa-headset')"><i
+                                        class="fas fa-headset"></i></button>
+                                <button type="button" class="btn-micro"
+                                    onclick="selectMenuIcon('fas fa-info-circle')"><i
+                                        class="fas fa-info-circle"></i></button>
+                            </div>
+                        </div>
 
-    <!-- App Logic -->
-    <script src="js/firebase-config.js?v=999"></script>
-    <script src="js/firebase-init.js?v=999"></script>
+                        <div class="form-group">
+                            <label>ACCIÓN / RUTA</label>
+                            <input type="text" name="action" placeholder="dashboard o https://..." class="pro-input"
+                                required>
+                            <small style="color: #888; font-size: 0.65rem;">Internas: dashboard, profile, americanas,
+                                ranking. Externas: https://...</small>
+                        </div>
 
-    <!-- Core Americana Logic (AI) -->
-    <script src="js/americana-logic.js?v=999"></script>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="form-group">
+                                <label>ORDEN</label>
+                                <input type="number" name="order" value="10" class="pro-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label>ESTADO</label>
+                                <select name="active" class="pro-input">
+                                    <option value="true">ACTIVO (Visible)</option>
+                                    <option value="false">INACTIVO (Oculto)</option>
+                                </select>
+                            </div>
+                        </div>
 
-    <!-- Fixed Pairs Logic (Pozo System) -->
-    <script src="js/fixed-pairs-logic.js?v=999"></script>
+                        <button type="submit" class="btn-primary-pro" style="width: 100%; margin-top: 1rem;">GUARDAR
+                            CONFIGURACIÓN</button>
+                    </form>
+                </div>
+            </div>
 
-    <!-- Rotating Pozo Logic (Individual System) -->
-    <script src="js/rotating-pozo-logic.js?v=999"></script>
+            <!-- Analytics & Export -->
+            <script src="https://cdn.jsdelivr.net/npm/chart.js?v=999"></script>
+            <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js?v=999"></script>
 
-    <!-- Admin Simulator -->
-    <script src="js/admin-simulator.js?v=999"></script>
+            <!-- Firebase SDK (v10 Compat) -->
+            <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js?v=999"></script>
+            <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js?v=999"></script>
+            <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js?v=999"></script>
 
-    <!-- Admin UI Logic -->
-    <script src="js/admin.js"></script>
+            <!-- App Logic -->
+            <script src="js/firebase-config.js?v=999"></script>
+            <script src="js/firebase-init.js?v=999"></script>
+
+            <!-- Core Americana Logic (AI) -->
+            <script src="js/americana-logic.js?v=999"></script>
+
+            <!-- Fixed Pairs Logic (Pozo System) -->
+            <script src="js/fixed-pairs-logic.js?v=999"></script>
+
+            <!-- Rotating Pozo Logic (Individual System) -->
+            <script src="js/rotating-pozo-logic.js?v=999"></script>
+
+            <!-- Admin Simulator -->
+            <script src="js/admin-simulator.js?v=999"></script>
+
+            <!-- Admin UI Logic -->
+            <script src="js/admin.js"></script>
 
 </body>
 

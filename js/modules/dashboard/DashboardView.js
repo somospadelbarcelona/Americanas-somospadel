@@ -16,6 +16,7 @@
         }
 
         async render(data) {
+            console.log("📊 [DashboardView] Rendering started...", data);
             const container = document.getElementById('content-area');
             if (!container) return;
 
@@ -27,442 +28,488 @@
             // Simulation of Level (In real app, fetch from Store)
             const userLevel = user ? (user.level || "3.5") : "3.5";
 
-            // 2. Build Context (The Brains) - ACTIVATED
-            const context = await this.buildContext(user);
-
             // UPDATE GLOBAL HEADER (If exists)
             const headerName = document.getElementById('header-user-name');
             const headerAvatar = document.getElementById('header-user-avatar');
             if (headerName && userName) headerName.innerText = userName.split(' ')[0].toUpperCase();
             if (headerAvatar && userInitials) headerAvatar.innerText = userInitials;
 
-            // 3. Render "Community Black/Neon" UI (CONTENT ONLY)
+            // 2. Render IMMEDIATE SHELL (Loading State)
             container.innerHTML = `
                 <!-- MAIN DASHBOARD SCROLL CONTENT -->
-                <!-- padding-top is handled by #content-area css in index.html now -->
-                <div class="dashboard-v2-container fade-in full-width-mobile">
+                <div class="dashboard-v2-container fade-in full-width-mobile" style="
+                    background: radial-gradient(circle at 50% 0%, rgba(30, 64, 175, 0.15) 0%, transparent 50%);
+                    min-height: 100vh;
+                ">
+
                     
-                    <!-- 1. LIVE MATCH WIDGET -->
-                    <div class="live-widget-container mobile-panel">
-                        <div class="live-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                            <div style="font-weight:900; font-size:1.1rem; color:var(--brand-navy); letter-spacing:-0.5px;">EN JUEGO <span style="color:var(--brand-red);">AHORA</span></div>
-                            <div class="live-indicator-tag" style="background:var(--brand-red); color:white; padding:4px 8px; border-radius:6px; font-size:0.7rem; font-weight:800; display:flex; align-items:center;">
-                                <div class="pulsing-dot" style="background:white; width:6px; height:6px; border-radius:50%; margin-right:4px; animation:blink 1s infinite;"></div>
+                    <!-- 1. LIVE REGISTRATION WIDGET (FULL WIDTH SCROLLER) -->
+                    <div id="registration-widget-root" style="
+                        background: #0a0a14;
+                        border: 1px solid rgba(0, 227, 109, 0.3);
+                        border-radius: 20px;
+                        margin: 10px 15px;
+                        padding: 12px 15px;
+                        box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+                        z-index: 10;
+                        animation: floatUp 0.8s ease-out forwards;
+                    ">
+                        <div class="live-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding: 5px 5px 0;">
+                            <div style="font-weight:950; font-size:1rem; color:white; letter-spacing:-0.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-bolt" style="color: #00E36D; font-size: 1.2rem;"></i> INSCRIPCIONES
+                            </div>
+                            <div class="live-indicator-tag" style="background:rgba(0,227,109,0.1); color:#00E36D; padding:4px 12px; border-radius:100px; font-size:0.7rem; font-weight:950; display:flex; align-items:center; border: 1px solid rgba(0,227,109,0.2);">
+                                <div class="pulsing-dot" style="background:#00E36D; width:6px; height:6px; border-radius:50%; margin-right:6px; animation:blink 1s infinite;"></div>
                                 LIVE
                             </div>
                         </div>
                         
-                        <div class="live-scroller">
-                            ${this.renderLiveWidget(context)}
+                        <div id="live-scroller-content" class="live-scroller" style="overflow-x: auto; display: flex; gap: 12px; padding-bottom: 5px; -webkit-overflow-scrolling: touch;">
+                            <div style="text-align: center; width: 100%; padding: 15px; color: rgba(255,255,255,0.4);">
+                                <i class="fas fa-spinner fa-spin" style="font-size: 1.2rem; color: #00E36D;"></i>
+                                <div style="margin-top: 8px; font-size: 0.75rem; font-weight: 700;">Buscando pistas...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1.5 ÚLTIMA HORA (AI FEED) -->
+                    <div id="ai-activity-root" style="
+                        background: rgba(30, 41, 59, 0.95);
+                        backdrop-filter: blur(20px);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: 28px;
+                        margin: 5px 15px 25px;
+                        padding: 15px;
+                        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+                        animation: floatUp 0.9s ease-out forwards;
+                    ">
+                        <div id="ai-activity-content" style="display:flex; flex-direction:column; gap:12px;">
+                            <!-- Predictive Content will be loaded here -->
                         </div>
                     </div>
                     
-                    <!-- 2. SMART HERO CARD -->
-                    <div class="mobile-panel">
-                        ${this.renderSmartHero(context, userLevel)}
+                    <div id="hero-section-root" style="margin: 0 15px; min-height: 180px;">
+                        <div class="loader-mini" style="margin: 40px auto; opacity: 0.5;"></div>
                     </div>
 
-                    <!-- 3. PRO CONTENT SECTION -->
-                    <div class="pro-content-section mobile-panel" style="padding-bottom: 120px;">
-                        
-                        <!-- A. EVENTS FEED -->
-                        <div class="section-header" style="padding: 0 4px; margin-bottom: 16px; display:flex; justify-content:space-between; align-items:center;">
-                            <h3 style="color:var(--text-primary); font-size:1.1rem; font-weight:800; letter-spacing:-0.5px; margin:0;">PRÓXIMAS <span style="color:var(--brand-neon)">AMERICANAS</span></h3>
-                            <span style="color:#666; font-size:0.8rem; font-weight:600; cursor:pointer;" onclick="Router.navigate('agenda')">Ver todo</span>
-                        </div>
-
-                        <!-- Horizontal Scroller for Events -->
-                        <div class="events-scroller" style="display: flex; overflow-x: auto; padding: 0 4px 20px 4px; gap: 10px; scroll-snap-type: x mandatory;">
-
-                            <div class="event-card-pro" onclick="Router.navigate('americanas')" style="min-width: 85vw; background: #1a1a1a; border-radius: 16px; overflow: hidden; scroll-snap-align: center; border: 1px solid #333; position:relative;">
-                                <div style="height: 120px; background: url('img/default-americana.jpg') center/cover; position:relative;">
-                                    <div style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.7); color:white; padding:4px 8px; border-radius:6px; font-weight:700; font-size:0.7rem;">
-                                        MAÑANA
-                                    </div>
-                                </div>
-                                <div style="padding: 15px;">
-                                    <div style="color:var(--brand-neon); font-size:0.7rem; font-weight:800; letter-spacing:1px; margin-bottom:5px;">NIVEL 3.5 - 4.0</div>
-                                    <div style="color:white; font-size:1.2rem; font-weight:700; margin-bottom:10px; line-height:1.2;">Americana Nocturna</div>
-                                    <div style="display:flex; justify-content:space-between; align-items:center; color:#999; font-size:0.9rem;">
-                                        <span><i class="far fa-clock"></i> 20:00 - 22:00</span>
-                                        <span style="color:white; background:var(--brand-navy); padding:6px 12px; border-radius:6px;">8€</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="event-card-pro" onclick="Router.navigate('americanas')" style="min-width: 85vw; background: #1a1a1a; border-radius: 16px; overflow: hidden; scroll-snap-align: center; border: 1px solid #333;">
-                                <div style="height: 120px; background: linear-gradient(45deg, #111, #222); display:flex; align-items:center; justify-content:center;">
-                                    <i class="fas fa-bolt" style="color:#333; font-size:4rem;"></i>
-                                </div>
-                                <div style="padding: 15px;">
-                                    <div style="color:var(--brand-blue); font-size:0.7rem; font-weight:800; letter-spacing:1px; margin-bottom:5px;">NIVEL 4.0+</div>
-                                    <div style="color:white; font-size:1.2rem; font-weight:700; margin-bottom:10px; line-height:1.2;">King of Court</div>
-                                    <div style="display:flex; justify-content:space-between; align-items:center; color:#999; font-size:0.9rem;">
-                                        <span><i class="far fa-calendar"></i> Sábado</span>
-                                        <span style="color:white; background:var(--brand-navy); padding:6px 12px; border-radius:6px;">12€</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <!-- B. LATEST PERSONAL RESULTS WIDGET -->
-                        <div class="section-header" style="padding: 0 4px; margin-bottom: 16px; margin-top: 32px; display:flex; justify-content:space-between; align-items:center;">
-                            <h3 style="color:var(--text-primary); font-size:1.1rem; font-weight:800; letter-spacing:-0.5px; margin:0;">MIS <span style="color:var(--brand-neon)">RANKING</span></h3>
-                            <span style="color:#666; font-size:0.8rem; font-weight:600; cursor:pointer;" onclick="Router.navigate('results')">Ver todos</span>
-                        </div>
-
-                        <div class="ranking-preview" style="margin: 0; background: #fff; border-radius: 16px; padding: 15px; border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-card);">
-                            <div style="display:flex; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border-subtle); padding-bottom:12px;">
-                                <div style="width:24px; font-weight:800; color:#4ADE80;">W</div>
-                                <div style="flex:1; color:var(--text-primary); font-weight:600;">Americana Nocturna</div>
-                                <div style="font-weight:700; color:var(--text-primary);">+0.12</div>
-                            </div>
-                            <div style="display:flex; align-items:center;">
-                                <div style="width:24px; font-weight:800; color:#FF4D4D;">L</div>
-                                <div style="flex:1; color:var(--text-primary); font-weight:600;">King of Court</div>
-                                <div style="font-weight:700; color:var(--text-primary);">-0.05</div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                </div>
-            `;
-        }
-
-        /**
-         * Decide which Hero Card to show based on Context Priority
-         */
-        /**
-         * 4. INTELLIGENT RENDERER: Choose the perfect Hero Card
-         */
-        /**
-         * 4. INTELLIGENT RENDERER: Choose the perfect Hero Card
-         */
-        renderSmartHero(context, userLevel) {
-            // CAROUSEL HERO (Slide Interaction)
-
-            // Slide 1: Primary Context
-            let slide1 = '';
-            if (context.status === 'LIVE_MATCH') {
-                slide1 = `
-                     <div class="hero-slide-item live-pulse">
-                        <div class="pulse-ring"></div>
-                        <div class="hero-label">🔴 TU PARTIDO EN JUEGO</div>
-                        <div class="hero-title" style="margin-top:10px;">PISTA ${context.court}</div>
-                        <div class="hero-subtitle">vs ${context.opponents}</div>
-                        <button class="btn-3d navy" onclick="Router.navigate('americanas')">VER MARCADOR</button>
-                    </div>
-                `;
-            } else if (context.status === 'UPCOMING_EVENT' || context.status === 'OPEN_REGISTRATION' || context.status === 'FINISHED') {
-
-                // --- PARSE DATE ---
-                const dateObj = new Date(context.eventDateRaw || new Date());
-                const dayMatch = context.eventDate ? context.eventDate.match(/\d+/) : null;
-                const dayNum = dayMatch ? dayMatch[0] : dateObj.getDate();
-                const monthName = "ENE";
-
-                // --- DETERMINE STATE VISUALS ---
-                let stateClass = "";
-                let pillText = "ABIERTA";
-                let btnText = "APUNTARME 14€";
-                let btnStyle = "background:var(--brand-neon); color:black;";
-                let logoText = "AMERICANAS";
-                let explainerText = "¡Quedan pocas plazas! Apúntate ya.";
-                let statusIcon = "fa-lock-open";
-                let iconAnim = "pt-icon-unlock"; // Class for animation
-
-                if (context.status === 'UPCOMING_EVENT') {
-                    // USER IS REGISTERED
-                    stateClass = "state-registered";
-                    pillText = "INSCRIT@";
-                    btnText = "VER MI PLAZA";
-                    btnStyle = "background:#059669; color:white; border:none;";
-                    logoText = "TU PLAZA";
-                    explainerText = "Todo listo. Recuerda llegar 15min antes.";
-                    statusIcon = "fa-check-circle";
-                    iconAnim = "pt-icon-check";
-                } else if (context.status === 'FINISHED') {
-                    // EVENT FINISHED
-                    stateClass = "state-finished";
-                    pillText = "FINALIZADA";
-                    btnText = "VER VIDEO / RESULTADOS";
-                    btnStyle = "background:rgba(255,255,255,0.1); border:1px solid #666; color:white;";
-                    logoText = "RESUMEN";
-                    explainerText = "Consulta los ganadores y estadísticas.";
-                    statusIcon = "fa-flag-checkered";
-                    iconAnim = "";
-                } else {
-                    // OPEN
-                    stateClass = "state-open";
-                }
-
-                slide1 = `
-                <div class="playtomic-hero-card ${stateClass}" onclick="Router.navigate('americanas')">
-                    <!-- Image Area -->
-                    <div class="pt-image-bg" style="background-image: url('img/ball_hero.jpg'), linear-gradient(45deg, #222, #444);">
-                        <div class="pt-date-badge">
-                            <span class="pt-date-day">${dayNum}</span>
-                            <span class="pt-date-month">${monthName}</span>
-                        </div>
-                        
-                        <!-- Pulse Pill -->
-                        <div class="pt-status-pill">
-                            <i class="fas ${statusIcon} ${iconAnim}" style="margin-right:4px;"></i> ${pillText}
-                        </div>
-                        
-                        <!-- Small Logo Center -->
-                        <div class="pt-center-logo">
-                            <span class="pt-logo-text">${logoText}</span>
-                            <span class="pt-sub-text">SOMOS PADEL BCN</span>
-                        </div>
-                    </div>
-
-                    <!-- Content Footer -->
-                    <div class="pt-card-content">
-                        <div class="pt-title-row">
-                            <div class="pt-title">${context.eventName}</div>
-                             ${context.status === 'OPEN_REGISTRATION' ? `<div class="pt-price-tag">14€</div>` : ''}
-                        </div>
-                        
-                        <!-- Explainer Line -->
-                        <div class="pt-explainer-text">
-                            ${explainerText}
-                        </div>
-
-                        <div class="pt-details-row" style="margin-top:8px;">
-                            <div class="pt-detail-item">
-                                <i class="far fa-clock"></i> ${context.eventTime}
-                            </div>
-                            <div class="pt-detail-item">
-                                <i class="fas fa-layer-group"></i> Nivel 3.5 - 4.5
-                            </div>
-                        </div>
-                        
-                        <!-- CTA -->
-                        <div style="margin-top:12px; width:100%;">
-                             <button style="width:100%; border-radius:12px; padding:12px 0; font-weight:800; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 10px rgba(0,0,0,0.2); ${btnStyle}">
-                                ${btnText} <i class="fas fa-arrow-right"></i>
-                             </button>
-                        </div>
-                    </div>
-                </div>
-                `;
-            } else {
-                // EMPTY / NO EVENTS
-                slide1 = `
-                <div class="playtomic-hero-card" onclick="Router.navigate('americanas')">
-                    <div class="pt-image-bg" style="background: linear-gradient(135deg, #111, #222);">
-                        <div class="pt-date-badge">
-                            <span class="pt-date-day">??</span>
-                            <span class="pt-date-month">HOY</span>
-                        </div>
-                        
-                        <div class="pt-center-logo">
-                            <span class="pt-logo-text">TU PARTIDO</span>
-                            <span class="pt-sub-text">RESERVA AHORA</span>
-                        </div>
-                    </div>
-
-                    <div class="pt-card-content">
-                         <div class="pt-title-row">
-                            <div class="pt-title">Buscar Americana</div>
-                        </div>
-                        <div class="pt-details-row">
-                            <span style="font-size:0.8rem; opacity:0.7;">No hay eventos activos. Organiza el tuyo.</span>
-                        </div>
-                        <div style="margin-top:12px; width:100%;">
-                             <button style="width:100%; border-radius:12px; padding:10px 0; font-weight:800; font-size:0.85rem; cursor:pointer; background:var(--brand-neon); color:black;">
-                                VER CALENDARIO
-                             </button>
-                        </div>
-                    </div>
-                </div>
-                `;
-            }
-
-            // Slide 2: AI / Stats Teaser (Interactive)
-            let slide2 = `
-                <div class="hero-slide-item ai-teaser" onclick="window.DashboardView.toggleAIChat()">
-                    <div class="hero-label" style="color:var(--brand-blue)">TU ASISTENTE IA</div>
-                    <div class="hero-title" style="font-size:1.4rem;">"Analizando tu nivel..."</div>
-                    <div style="margin-top:10px; font-size:0.9rem; color:#aaa;">Descubre cómo mejorar tu 3.5 🔥</div>
-                </div>
-            `;
-
-            // WRAPPER SCROLL
-            return `
-                <div class="hero-carousel-wrapper" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 16px; padding-bottom: 20px;">
-                    <style>
-                        .hero-slide-item {
-                            min-width: 90%;
-                            scroll-snap-align: center;
+                    <!-- 2.5 PLAYER PERFORMANCE & RESULTS TICKER (NEW) -->
+                    <div id="ticker-stats-root" style="margin: 0 15px 25px;">
+                        <div style="
+                            background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
+                            border: 1px solid rgba(0, 227, 109, 0.3);
                             border-radius: 24px;
-                            padding: 24px;
+                            padding: 15px;
+                            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+                            display: flex;
+                            align-items: center;
+                            gap: 15px;
+                            min-height: 100px;
                             position: relative;
                             overflow: hidden;
-                            display: flex;
-                            flex-direction: column;
-                            justify-content: center;
-                            border: 1px solid rgba(255,255,255,0.1);
-                        }
-                        .hero-slide-item.live-pulse { background: linear-gradient(135deg, #111, #300);}
-                        .hero-slide-item.upcoming-gradient { background: linear-gradient(135deg, #0f172a, #1e293b); }
-                        .hero-slide-item.empty-state { background: linear-gradient(135deg, #111, #000); }
-                        .hero-slide-item.ai-teaser { background: linear-gradient(135deg, #000, #112); border: 1px solid var(--brand-blue); }
-                    </style>
-                    ${slide1}
-                    ${slide2}
+                        ">
+                            <!-- Background Neon Glow -->
+                            <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(0, 227, 109, 0.15); filter: blur(30px); border-radius: 50%;"></div>
+                            
+                            <!-- A. MINI TICKER (Left) -->
+                            <div style="flex: 1.2; overflow: hidden; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 10px;">
+                                <div style="font-size: 0.55rem; color: #00E36D; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;">
+                                    <div style="width: 5px; height: 5px; background: #00E36D; border-radius: 50%; animation: blink 1s infinite;"></div> ÚLTIMOS RESULTADOS
+                                </div>
+                                <div id="results-ticker" style="height: 60px; position: relative;">
+                                    <!-- Dynamic Ticker Content -->
+                                    <div class="ticker-item" style="animation: slideUpDown 8s infinite;">
+                                        <div style="color: white; font-weight: 800; font-size: 0.8rem; margin-bottom: 2px;">6 - 4 <span style="color: rgba(255,255,255,0.5); font-weight: 500;">vs</span> Tapia/Coello</div>
+                                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4);">Padel Pro - Pista 1</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- B. MINI CHART (Right) -->
+                            <div style="flex: 0.8; height: 75px; display: flex; align-items: flex-end; justify-content: space-around; padding-bottom: 5px;">
+                                <div style="width: 8px; height: 40%; background: #00E36D; border-radius: 4px; box-shadow: 0 0 10px rgba(0,227,109,0.3);"></div>
+                                <div style="width: 8px; height: 70%; background: #00E36D; border-radius: 4px; box-shadow: 0 0 10px rgba(0,227,109,0.3);"></div>
+                                <div style="width: 8px; height: 55%; background: #00E36D; border-radius: 4px; box-shadow: 0 0 10px rgba(0,227,109,0.3);"></div>
+                                <div style="width: 8px; height: 90%; background: #00E36D; border-radius: 4px; box-shadow: 0 0 15px rgba(0,227,109,0.5); animation: float 3s infinite;"></div>
+                                <div style="width: 8px; height: 75%; background: #00E36D; border-radius: 4px; box-shadow: 0 0 10px rgba(0,227,109,0.3);"></div>
+                            </div>
+
+                            <!-- Floating Label -->
+                            <div style="position: absolute; bottom: 8px; right: 12px; font-size: 0.5rem; color: #00E36D; font-weight: 900; background: rgba(0,227,109,0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(0,227,109,0.2);">
+                                TREND +12%
+                            </div>
+                        </div>
+
+                        <style>
+                            @keyframes slideUpDown {
+                                0%, 20% { transform: translateY(0); opacity: 1; }
+                                25%, 45% { transform: translateY(-20px); opacity: 0; }
+                                50%, 70% { transform: translateY(-40px); opacity: 1; }
+                                75%, 95% { transform: translateY(-60px); opacity: 0; }
+                                100% { transform: translateY(0); opacity: 1; }
+                            }
+                        </style>
+                    </div>
+
+                    <div id="pro-content-root"></div>
+
+                </div>
+
+                <style>
+                    @keyframes floatUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+                    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+                    @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+                    .dashboard-v2-container ::-webkit-scrollbar { display: none; }
+                </style>
+            `;
+
+            // 3. ASYNC LOADING OF DATA-DEPENDENT COMPONENTS
+            try {
+                // Build context (Might take time)
+                const context = await this.buildContext(user);
+
+                // Load Widget Content
+                this.loadLiveWidgetContent(context);
+
+                // Populate Hero Section
+                const heroRoot = document.getElementById('hero-section-root');
+                if (heroRoot) {
+                    heroRoot.innerHTML = this.renderSmartHero(context, userLevel);
+                }
+
+                // 1. DASHBOARD COMPONENT VISIBILITY
+                const legacyHero = document.getElementById('hero-section-root');
+                const legacyTicker = document.getElementById('ticker-stats-root');
+
+                // Hide legacy hero/ticker as user requested "eliman estos dos" earlier (re-confirmed by excluded list)
+                if (legacyHero) legacyHero.style.display = 'none';
+                if (legacyTicker) legacyTicker.style.display = 'none';
+
+                // Ensure Top Widgets are visible (Inscripciones & Ultima Hora)
+                const regWidget = document.getElementById('registration-widget-root');
+                const aiActivity = document.getElementById('ai-activity-root');
+                if (regWidget) regWidget.style.display = 'block';
+                if (aiActivity) aiActivity.style.display = 'block';
+
+                // 2. Fetch Real Data for new Widgets (SILENT CALCULATION)
+                if (window.RankingController) window.RankingController.calculateSilently().catch(e => console.error("Ranking calc failed", e));
+
+                // 3. Populate Rest of Dashboard
+                const proRoot = document.getElementById('pro-content-root');
+                if (proRoot) {
+                    proRoot.innerHTML = `
+                        <div style="padding: 10px 15px 120px;">
+                            
+                            <!-- A. DUAL WEATHER WIDGETS -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px;">
+                                ${this.renderWeatherCard('EL PRAT', '19°C', '☀️')}
+                                ${this.renderWeatherCard('CORNELLÀ', '18°C', '🌤️')}
+                            </div>
+
+                            <!-- B. MI AGENDA (PLAYER'S EVENTS) -->
+                            <div class="section-header" style="padding: 0 5px; margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
+                                <h3 style="color:white; font-size:1.1rem; font-weight:950; letter-spacing:-0.5px; margin:0;">MI <span style="background: linear-gradient(90deg, #00E36D, #00c4ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AGENDA</span></h3>
+                                <span style="color:#00c4ff; font-size:0.8rem; font-weight:800; cursor:pointer;" onclick="Router.navigate('agenda')">Ver todo <i class="fas fa-chevron-right" style="font-size:0.6rem;"></i></span>
+                            </div>
+
+                            <!-- Horizontal Scroller for Agenda -->
+                            <div class="agenda-scroller" style="display: flex; overflow-x: auto; padding-bottom: 15px; gap: 15px; scroll-snap-type: x mandatory;">
+                                ${this.renderAgendaWidget(context.myEvents || [])}
+                            </div>
+
+                        </div>
+                    `;
+                }
+
+            } catch (err) {
+                console.error("Dashboard Render Error:", err);
+            }
+        }
+
+        renderWeatherCard(city, temp, icon) {
+            return `
+                <div style="
+                    background: rgba(10, 10, 20, 0.9);
+                    backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255,255,255,0.05);
+                    border-radius: 20px;
+                    padding: 15px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 1.8rem; filter: drop-shadow(0 0 10px rgba(255,204,0,0.3));">${icon}</div>
+                        <div style="background: rgba(0,227,109,0.1); color: #00E36D; padding: 2px 8px; border-radius: 6px; font-size: 0.55rem; font-weight: 950; border: 1px solid rgba(0,227,109,0.1);">ÓPTIMO</div>
+                    </div>
+                    <div>
+                        <div style="color: white; font-weight: 950; font-size: 1.2rem;">${temp}</div>
+                        <div style="color: #666; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${city}</div>
+                    </div>
                 </div>
             `;
         }
 
-        renderLiveWidget(context) {
-            // Helper to generate live cards. In a real app, Map functionality would go here.
-            // For now, we return static + context if available.
-
-            let html = '';
-
-            // If context matches, show User's match first
-            if (context.status === 'LIVE_MATCH') {
-                html += `
-                <div class="live-match-card active-user" onclick="Router.navigate('americanas')">
-                        <div class="live-court-badge">PISTA ${context.court}</div>
-                        <div style="color:#888; font-size:0.7rem; font-weight:700; margin-bottom: 4px;">TU PARTIDO</div>
-                        <div class="live-score-row">
-                            <div class="live-team" style="color:var(--brand-neon);">Tú / Comp</div>
-                            <div class="live-score-box">VS</div>
-                            <div class="live-team" style="text-align:right;">${context.opponents}</div>
-                        </div>
+        renderAgendaWidget(myEvents) {
+            if (myEvents.length === 0) {
+                return `
+                    <div style="min-width: 100%; background: rgba(255,255,255,0.03); border-radius: 24px; padding: 40px 20px; text-align: center; border: 1px dashed rgba(255,255,255,0.1);">
+                        <div style="font-size: 2.5rem; margin-bottom: 15px; opacity: 0.2;">🎾</div>
+                        <div style="color: white; font-weight: 900; font-size: 1rem;">No tienes americanas próximas</div>
+                        <p style="color: #666; font-size: 0.8rem; margin: 8px 0 20px;">¡Apúntate a una para empezar a sumar!</p>
+                        <button onclick="Router.navigate('americanas')" style="background: #00E36D; color: black; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 950; font-size: 0.8rem; text-transform: uppercase;">Explorar Americanas</button>
                     </div>
                 `;
             }
 
-            // Other matches (Simulation of "Real Time" Scoreboard)
-            html += `
-                <div class="live-match-card">
-                    <div class="live-court-badge">PISTA 1</div>
-                    <div style="color:#888; font-size:0.7rem; font-weight:700; margin-bottom: 4px;">CATEGORÍA A</div>
-                    <div class="live-score-row">
-                        <div class="live-team">Bela / Coel</div>
-                        <div class="live-score-box state-live">6 - 6</div>
-                        <div class="live-team" style="text-align:right;">Galán / Lebrón</div>
+            return myEvents.map(am => `
+                <div class="agenda-card" onclick="window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');" style="
+                    min-width: 250px; background: #1c1c1e;
+                    border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);
+                    padding: 18px; scroll-snap-align: center; position: relative;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <div style="color: #00E36D; font-size: 0.7rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">${this.formatDateShort(am.date)}</div>
+                        <div style="background: rgba(0,196,255,0.1); color: #00c4ff; padding: 3px 8px; border-radius: 6px; font-size: 0.6rem; font-weight: 900; border: 1px solid rgba(0,196,255,0.1);">CONFIRMADO</div>
+                    </div>
+                    <h4 style="margin: 0; color: white; font-size: 1.15rem; font-weight: 900; letter-spacing: -0.3px;">${am.name}</h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                        <span style="color: #888; font-size: 0.8rem; font-weight: 700;"><i class="far fa-clock" style="margin-right: 5px;"></i> ${am.time}</span>
+                        <div style="display: flex; -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);">
+                            <div style="width: 24px; height: 24px; background: #333; border-radius: 50%; border: 2px solid #1c1c1e; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; color: #888;">+</div>
+                        </div>
                     </div>
                 </div>
-                <div class="live-match-card">
-                    <div class="live-court-badge">PISTA 2</div>
-                    <div style="color:#888; font-size:0.7rem; font-weight:700; margin-bottom: 4px;">MIXTO</div>
-                    <div class="live-score-row">
-                        <div class="live-team">Ana / Pablo</div>
-                        <div class="live-score-box state-live">4 - 5</div>
-                        <div class="live-team" style="text-align:right;">Luisa / Xavi</div>
-                    </div>
-                </div>
-                 <div class="live-match-card">
-                    <div class="live-court-badge">PISTA 3</div>
-                    <div style="color:#888; font-size:0.7rem; font-weight:700; margin-bottom: 4px;">FEMENINO</div>
-                    <div class="live-score-row">
-                        <div class="live-team">Marta / Bea</div>
-                        <div class="live-score-box state-live">2 - 0</div>
-                        <div class="live-team" style="text-align:right;">Ari / Paula</div>
-                    </div>
-                </div>
-            `;
-
-            return html;
+            `).join('');
         }
 
-        renderTickerItems(context) {
+        renderSmartHero(context, userLevel) {
+            // SLIDE: VIBRANT GLASS HERO
+            let pillText = "INSCRIPCIÓN ABIERTA";
+            let btnText = "APUNTARME AHORA";
+            let btnBg = "linear-gradient(135deg, #00E36D, #00c4ff)";
+            let logoText = "AMERICANAS";
+            let explainerText = "¡Quedan pocas plazas! No te quedes fuera hoy.";
+            let heroImage = "img/ball_hero.jpg";
+
+            if (context.status === 'UPCOMING_EVENT') {
+                pillText = "ESTÁS INSCRITO";
+                btnText = "VER DETALLES";
+                btnBg = "linear-gradient(135deg, #1e40af, #00c4ff)";
+                logoText = "MI PLAZA";
+                explainerText = "¡Prepárate! Tu próximo reto está a punto de empezar.";
+            } else if (context.status === 'FINISHED') {
+                pillText = "EVENTO FINALIZADO";
+                btnText = "VER RESUMEN";
+                btnBg = "rgba(255,255,255,0.1)";
+                logoText = "HISTORY";
+                explainerText = "Consulta los resultados y revive los mejores momentos.";
+            } else if (context.status === 'LIVE_MATCH') {
+                pillText = "¡ESTÁS EN PISTA!";
+                btnText = "MARCADOR EN VIVO";
+                btnBg = "#00E36D";
+                logoText = "LIVE NOW";
+                explainerText = "Tu partido está en progreso. ¡A por todas!";
+            }
+
             return `
-                <div class="ticker-item"><span class="ticker-badge">ÚLTIMA HORA</span> Inauguramos nuevas pistas Panorámicas este fin de semana 🎉</div>
-                <div class="ticker-item"><span class="ticker-badge">TORNEO</span> Quedan 2 plazas para la Americana de Mañana 19:00h</div>
-                <div class="ticker-item"><span class="ticker-badge">CLINIC</span> Clase maestra con Pablo Lima - Apúntate en Recepción</div>
+                <div class="vibrant-hero-card" onclick="Router.navigate('live')" style="
+                    background: linear-gradient(135deg, rgba(30, 64, 175, 0.9), rgba(0, 196, 255, 0.7));
+                    backdrop-filter: blur(20px);
+                    border-radius: 28px;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    padding: 0;
+                    margin-bottom: 25px;
+                    overflow: hidden;
+                    box-shadow: 0 20px 40px rgba(30, 64, 175, 0.3);
+                    position: relative;
+                ">
+                    <div style="height: 140px; background: url('${heroImage}') center/cover; position: relative;">
+                        <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.4));"></div>
+                        <div style="position: absolute; top: 15px; left: 15px; background: rgba(255,255,255,0.9); padding: 5px 15px; border-radius: 12px; font-weight: 900; color: #1e40af; font-size: 0.8rem; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                            ${pillText}
+                        </div>
+                    </div>
+                    
+                    <div style="padding: 25px; color: white;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <h4 style="margin: 0; font-size: 0.85rem; font-weight: 800; color: #00E36D; text-transform: uppercase; letter-spacing: 1px;">${logoText}</h4>
+                                <h2 style="margin: 5px 0 0; font-size: 1.6rem; font-weight: 950; line-height: 1;">${context.eventName || 'Americana Hoy'}</h2>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.1rem; font-weight: 950;">${context.eventTime || context.matchTime || '18:00'}</div>
+                                <div style="font-size: 0.75rem; font-weight: 600; opacity: 0.7;">${context.matchDay || 'HOY'}</div>
+                            </div>
+                        </div>
+                        
+                        <p style="margin: 15px 0 20px; font-size: 0.9rem; color: rgba(255,255,255,0.85); line-height: 1.4;">
+                            ${explainerText}
+                        </p>
+                        
+                        <button style="
+                            width: 100%; height: 55px; border-radius: 16px; border: none;
+                            background: ${btnBg}; color: ${btnBg === '#00E36D' ? 'black' : 'white'};
+                            font-weight: 950; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 12px;
+                            box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: all 0.2s;
+                            text-transform: uppercase; letter-spacing: 1px;
+                        ">
+                            ${btnText} <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
             `;
         }
 
-        /**
-         * Intelligence Layer: Determine Player Context
-         */
-        /**
-         * Intelligence Layer: Determine Player Context
-         */
+        async renderLiveWidget(context) {
+            try {
+                const americanas = window.AmericanaService ? await window.AmericanaService.getActiveAmericanas() : [];
+                const openAmericanas = americanas.filter(a => ['open', 'upcoming', 'draft', 'scheduled'].includes(a.status));
+
+                if (openAmericanas.length > 0) {
+                    let html = '';
+                    openAmericanas.forEach(am => {
+                        const statusColor = am.status === 'open' ? '#00E36D' : '#00c4ff';
+                        const statusLabel = am.status === 'open' ? 'ABIERTO' : 'PRÓXIMO';
+                        const players = am.players || am.registeredPlayers || [];
+                        const maxPlayers = (am.max_courts || 0) * 4;
+                        const spotsLeft = Math.max(0, maxPlayers - players.length);
+                        const isFull = maxPlayers > 0 && players.length >= maxPlayers;
+                        const categoryIcon = am.category === 'female' ? '♀️' : (am.category === 'male' ? '♂️' : '🎾');
+
+                        html += `
+                            <div class="registration-ticker-card" 
+                                 onclick="event.stopPropagation(); window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');" 
+                                 style="
+                                min-width: 160px; 
+                                max-width: 160px;
+                                background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%); 
+                                border-top: 2px solid ${statusColor};
+                                border-radius: 12px; 
+                                padding: 10px; 
+                                flex-shrink: 0; 
+                                box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+                                display: flex; 
+                                flex-direction: column; 
+                                gap: 6px; 
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                                border: 1px solid rgba(255,255,255,0.05);
+                            "
+                            >
+                                <!-- Header with Status -->
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-size:0.5rem; font-weight:900; color:${statusColor}; background:rgba(0,227,109,0.1); padding:2px 6px; border-radius:4px;">${statusLabel}</span>
+                                    <span style="font-size:0.85rem;">${categoryIcon}</span>
+                                </div>
+                                
+                                <!-- Americana Name - Compact -->
+                                <div style="color:white; font-weight:800; font-size:0.75rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.1;">
+                                    ${am.name.toUpperCase()}
+                                </div>
+                                
+                                <!-- Date & Time - Compact -->
+                                <div style="color:#888; font-size:0.6rem; font-weight:700;">
+                                    ${this.formatDateShort(am.date)} ${am.time}
+                                </div>
+                                
+                                <!-- Status & Count - Compact -->
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.05);">
+                                    <div style="font-size:0.75rem; color:${isFull ? '#FF3B30' : '#00E36D'}; font-weight:900;">
+                                        ${isFull ? 'COMPLETO' : `${spotsLeft} LIB.`}
+                                    </div>
+                                    <div style="font-size:1.1rem; color:${isFull ? '#FF3B30' : '#00E36D'}; font-weight:900; display:flex; align-items:center; gap:4px;">
+                                        <span style="font-size:1.3rem;">${players.length}</span>
+                                        <span style="color:#666; font-size:0.8rem;">/${maxPlayers}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    return html;
+                }
+                return `<div style="width: 100%; text-align: center; color: #444; font-size: 0.75rem; font-weight: 700;">No hay Americanas disponibles</div>`;
+            } catch (err) { console.error(err); return ''; }
+        }
+
+        formatDateShort(dateString) {
+            if (!dateString) return 'HOY';
+            const date = new Date(dateString);
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            if (date.toDateString() === today.toDateString()) return 'HOY';
+            if (date.toDateString() === tomorrow.toDateString()) return 'MAÑANA';
+
+            const days = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+            return `${days[date.getDay()]} ${date.getDate()}`;
+        }
+
         async buildContext(user) {
             const context = {
-                status: 'EMPTY', // 'LIVE_MATCH' | 'UPCOMING_EVENT' | 'OPEN_REGISTRATION' | 'FINISHED' | 'EMPTY'
+                status: 'EMPTY',
                 eventName: null,
                 eventDate: null,
                 eventTime: null,
                 court: null,
                 opponents: null,
-                eventDateRaw: null // For parsing
+                partner: null,
+                eventDateRaw: null,
+                hasMatchToday: false,
+                hasOpenTournament: false,
+                activeTournaments: 0,
+                upcomingMatches: 0,
+                myEvents: []
             };
-
-            // if (!user) return context; // Allow guest view of open events
 
             try {
                 if (window.AmericanaService) {
-                    const activeButtons = await window.AmericanaService.getActiveAmericanas();
+                    const allAmericanas = await window.AmericanaService.getActiveAmericanas();
+                    if (!allAmericanas || allAmericanas.length === 0) return context;
 
-                    if (!activeButtons || activeButtons.length === 0) return context;
+                    // 1. Check for Active Tournaments (for ActionGrid badges)
+                    const openAmericanas = allAmericanas.filter(a => ['open', 'upcoming', 'scheduled'].includes(a.status));
+                    context.activeTournaments = openAmericanas.length;
+                    context.hasOpenTournament = openAmericanas.length > 0;
 
-                    // 1. Check if User is Registered in any
-                    const myEvent = user ? activeButtons.find(a =>
-                        (a.players && a.players.includes(user.uid)) ||
-                        (a.registeredPlayers && a.registeredPlayers.includes(user.uid))
-                    ) : null;
+                    if (user) {
+                        // 2. Check for User's Matches
+                        context.myEvents = allAmericanas.filter(a => {
+                            const players = a.players || a.registeredPlayers || [];
+                            return players.some(p => p === user.uid || (p.uid === user.uid) || (p.id === user.uid));
+                        });
 
-                    if (myEvent) {
-                        // USER IS REGISTERED
-                        const today = new Date().toISOString().split('T')[0];
-                        const isToday = myEvent.date === today;
-                        const isLiveStatus = myEvent.status === 'live';
+                        context.upcomingMatches = context.myEvents.filter(a => a.status !== 'finished').length;
 
-                        if (isLiveStatus) {
-                            context.status = 'LIVE_MATCH';
-                            context.eventName = myEvent.name;
-                            context.matchTime = myEvent.time;
-                            context.court = Math.floor(Math.random() * 4) + 1;
-                            context.opponents = "Pareja Rival";
-                        } else if (myEvent.status === 'finished') {
-                            context.status = 'FINISHED';
-                            context.eventName = myEvent.name;
-                            context.eventDateRaw = myEvent.date;
-                            context.eventDate = this.formatDate(myEvent.date);
-                            context.eventTime = myEvent.time;
-                        } else {
-                            // Upcoming
-                            context.status = 'UPCOMING_EVENT';
-                            context.eventName = myEvent.name;
-                            context.eventDateRaw = myEvent.date;
-                            context.eventDate = this.formatDate(myEvent.date);
-                            context.eventTime = myEvent.time || '10:00';
-                        }
-                    } else {
-                        // USER NOT REGISTERED - FIND NEXT OPEN EVENT
-                        // Filter for upcoming or live
-                        const openEvent = activeButtons.find(a => a.status === 'upcoming' || a.status === 'live');
-                        const finishedEvent = activeButtons.find(a => a.status === 'finished');
+                        const myEvent = context.myEvents.find(e => e.status !== 'finished') || context.myEvents[0];
+                        if (myEvent) {
+                            const now = new Date();
+                            const eventDate = new Date(myEvent.date);
+                            const isToday = eventDate.toDateString() === now.toDateString();
 
-                        if (openEvent) {
-                            context.status = 'OPEN_REGISTRATION';
-                            context.eventName = openEvent.name;
-                            context.eventDateRaw = openEvent.date;
-                            context.eventDate = this.formatDate(openEvent.date);
-                            context.eventTime = openEvent.time || '10:00';
-                        } else if (finishedEvent) {
-                            context.status = 'FINISHED';
-                            context.eventName = finishedEvent.name;
-                            context.eventDateRaw = finishedEvent.date;
-                            context.eventDate = this.formatDate(finishedEvent.date);
-                            context.eventTime = finishedEvent.time;
+                            if (myEvent.status === 'live' || (myEvent.status === 'scheduled' && isToday)) {
+                                context.status = 'LIVE_MATCH';
+                                context.hasMatchToday = true;
+                                context.eventName = myEvent.name;
+                                context.matchTime = myEvent.time;
+                                context.matchDay = 'HOY';
+                                context.court = myEvent.court || 'Pista 1';
+                            } else if (myEvent.status === 'finished') {
+                                context.status = 'FINISHED';
+                                context.eventName = myEvent.name;
+                            } else {
+                                context.status = 'UPCOMING_EVENT';
+                                context.eventName = myEvent.name;
+                                context.eventTime = myEvent.time || '18:00';
+                                context.matchDay = this.formatDate(myEvent.date);
+                            }
                         }
                     }
                 }
             } catch (e) {
                 console.warn("Context build failed", e);
             }
-
             return context;
         }
 
@@ -470,39 +517,112 @@
             if (!dateString) return '';
             const date = new Date(dateString);
             const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-            return `${days[date.getDay()]} ${date.getDate()} `;
+            return `${days[date.getDay()]} ${date.getDate()}`;
+        }
+
+        async loadLiveWidgetContent(context) {
+            const container = document.getElementById('live-scroller-content');
+            const aiContainer = document.getElementById('ai-activity-content');
+            if (!container) return;
+
+            try {
+                // 1. Load Registration Cards
+                this.renderLiveWidget(context).then(widgetHtml => {
+                    container.innerHTML = widgetHtml;
+                }).catch(e => {
+                    console.error("Widget render failed", e);
+                });
+
+                // 2. Load AI Activity
+                if (aiContainer) {
+                    this.renderLiveActivity().then(html => {
+                        aiContainer.innerHTML = html;
+                    }).catch(e => {
+                        console.error("AI Activity failed", e);
+                    });
+                }
+            } catch (e) {
+                console.error('❌ [DashboardView] Error loading widgets:', e);
+            }
+        }
+
+        async renderLiveActivity() {
+            try {
+                const americanas = window.AmericanaService ? await window.AmericanaService.getActiveAmericanas() : [];
+                let recentActions = [];
+
+                americanas.forEach(am => {
+                    const players = am.players || am.registeredPlayers || [];
+                    const maxPlayers = (am.max_courts || 0) * 4;
+                    const openSpots = maxPlayers - players.length;
+
+                    if (players.length > 0) {
+                        recentActions.push({
+                            text: `<b>ALGUIEN</b> se unió a <span style="color:#00E36D;">${am.name}</span>`,
+                            type: 'join',
+                            timeLabel: 'HACE POCO'
+                        });
+                    }
+
+                    if (openSpots > 0 && openSpots <= 2) {
+                        recentActions.push({
+                            text: `¡Solo quedan <b>${openSpots} plazas</b> para ${am.name}!`,
+                            type: 'alert',
+                            timeLabel: 'URGENTE'
+                        });
+                    }
+                });
+
+                if (recentActions.length === 0) {
+                    recentActions = [{ text: "Previsión de alta ocupación hoy.", type: 'info', timeLabel: 'IA INFO' }];
+                }
+
+                const urgentAm = americanas.find(am => {
+                    const pCount = (am.players || am.registeredPlayers || []).length;
+                    const maxP = (am.max_courts || 0) * 4;
+                    const spots = maxP - pCount;
+                    return maxP > 0 && spots > 0 && spots <= 4;
+                }) || americanas[0];
+
+                let html = '';
+
+                if (urgentAm) {
+                    const pCount = (urgentAm.players || urgentAm.registeredPlayers || []).length;
+                    const maxP = (urgentAm.max_courts || 0) * 4;
+                    const spots = Math.max(0, maxP - pCount);
+                    const isFull = spots === 0;
+
+                    const cardBg = isFull ? 'linear-gradient(135deg, #475569 0%, #1e293b 100%)' : 'linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)';
+                    const btnText = isFull ? 'VER LISTA DE ESPERA' : 'APUNTARME AHORA';
+                    const btnBg = isFull ? '#94a3b8' : '#00E36D';
+                    const statusDesc = isFull ? '¡Pista completa! Avisaremos bajas.' : `¡Solo <b>${spots} plazas</b>! Se llenará pronto.`;
+
+                    html += `
+                        <div class="ai-hero-card" onclick="Router.navigate('americanas');" style="background: ${cardBg}; border-radius: 16px; padding: 20px; color: white; position: relative; overflow: hidden; margin-bottom: 5px; cursor: pointer;">
+                            <div style="position: absolute; top: -20px; right: -20px; font-size: 5rem; color: rgba(255,255,255,0.1); transform: rotate(-15deg);"><i class="fas fa-brain"></i></div>
+                            <div style="background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 4px 12px; border-radius: 100px; font-size: 0.6rem; font-weight: 900; display: inline-block; margin-bottom: 12px; text-transform: uppercase;">RECOMENDACIÓN IA</div>
+                            <div style="font-size: 1.4rem; font-weight: 900; margin-bottom: 5px;">${urgentAm.name}</div>
+                            <p style="font-size: 0.8rem; opacity: 0.9; margin-bottom: 15px;">${statusDesc}</p>
+                            <div style="background: ${btnBg}; color: black; padding: 12px; border-radius: 12px; text-align: center; font-weight: 950; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 10px;">${btnText} <i class="fas fa-arrow-right"></i></div>
+                        </div>
+                    `;
+                }
+
+                html += `<div style="display:flex; gap:10px; overflow-x: auto; padding: 5px 0;">`;
+                recentActions.slice(0, 5).forEach(action => {
+                    html += `
+                        <div style="white-space: nowrap; background: rgba(255,255,255,0.08); padding: 8px 16px; border-radius: 100px; font-size: 0.75rem; color: white; font-weight: 700; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: #00E36D; box-shadow: 0 0 10px #00E36D;"></div>
+                            ${action.text.replace(/<[^>]*>?/gm, '')}
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                return html;
+            } catch (e) { return ''; }
         }
     }
 
     window.DashboardView = new DashboardView();
-    console.log("🚀 Context-First Dashboard Loaded");
-
-    // --- AI "NEO" LOGIC ---
-    window.DashboardView.toggleAIChat = function () {
-        const bubble = document.getElementById('ai-bubble');
-        if (!bubble) return;
-
-        // Force show interesting message
-        const messages = [
-            "¿Te ayudo a buscar rival?",
-            "¡Esa derecha hay que mejorarla!",
-            "El torneo empieza en 2h 🕒",
-            "¿Has visto tu ranking hoy? 🔥",
-            "Soy 100% IA, pregúntame algo."
-        ];
-        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
-        bubble.innerText = "🤖 " + randomMsg;
-        bubble.classList.add('show');
-
-        // Hide after 4 seconds
-        setTimeout(() => bubble.classList.remove('show'), 4000);
-    };
-
-    // Auto-Think Loop (Aliveness)
-    setInterval(() => {
-        if (Math.random() > 0.7) { // 30% chance every loop
-            window.DashboardView.toggleAIChat();
-        }
-    }, 10000); // Check every 10 seconds
-
+    console.log("🚀 Vibrant Dashboard Loaded");
 })();

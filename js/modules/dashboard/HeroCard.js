@@ -320,9 +320,21 @@
          * Calcula tiempo hasta el partido en minutos
          */
         static getTimeUntil(matchTime) {
-            // Implementación simplificada
-            // En producción, usar fecha/hora real del partido
-            return 45; // minutos de ejemplo
+            if (!matchTime) return 0;
+            try {
+                const now = new Date();
+                const [hours, minutes] = matchTime.split(':').map(Number);
+                const matchDate = new Date();
+                matchDate.setHours(hours, minutes, 0, 0);
+
+                const diffMs = matchDate - now;
+                const diffMins = Math.floor(diffMs / 60000);
+
+                return Math.max(0, diffMins);
+            } catch (e) {
+                console.warn('Error calculating time until:', e);
+                return 0;
+            }
         }
     }
 
