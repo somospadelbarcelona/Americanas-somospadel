@@ -10,9 +10,9 @@
                 'dashboard': () => this.renderDashboard(),
                 'americanas': () => { window.EventsController?.init(); window.EventsController?.setTab('events'); },
                 'events': () => { window.EventsController?.init(); window.EventsController?.setTab('events'); },
-                'profile': () => window.PlayerView?.render(),
+                'profile': () => window.PlayerController?.init(),
                 'live': () => window.ControlTowerView?.handleLiveRoute(),
-                'ranking': () => { window.EventsController?.init(); window.EventsController?.setTab('finished'); },
+                'ranking': () => window.RankingController?.init(),
                 'agenda': () => { window.EventsController?.init(); window.EventsController?.setTab('agenda'); },
                 'results': () => { window.EventsController?.init(); window.EventsController?.setTab('results'); }
             };
@@ -50,6 +50,7 @@
         }
 
         updateNavUI(route) {
+            // 1. Bottom Nav Dock
             document.querySelectorAll('.p-nav-item').forEach(btn => {
                 const isTarget = btn.dataset.view === route;
                 btn.classList.toggle('active', isTarget);
@@ -59,12 +60,28 @@
                     window.navigator.vibrate(10);
                 }
             });
+
+            // 2. Top Header Tabs
+            document.querySelectorAll('.header-tab').forEach(tab => {
+                const view = tab.getAttribute('onclick').match(/'([^']+)'/)[1];
+                const isActive = view === route;
+
+                tab.style.fontWeight = isActive ? '900' : '700';
+                tab.style.color = isActive ? '#000' : 'rgba(0,0,0,0.5)';
+                tab.style.borderBottom = isActive ? '3px solid #FF9800' : 'none';
+                tab.classList.toggle('active', isActive);
+            });
         }
 
         renderDashboard() {
+            console.log("🛠️ [Router] renderDashboard called");
             if (window.DashboardView && window.Store) {
                 const data = window.Store.getState('dashboardData');
+                console.log("🛠️ [Router] Data from store:", data);
                 window.DashboardView.render(data || { activeCourts: 0 });
+            } else {
+                console.warn("⚠️ [Router] DashboardView or Store missing! retrying in 100ms...");
+                setTimeout(() => this.renderDashboard(), 100);
             }
         }
 

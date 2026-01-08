@@ -185,8 +185,6 @@
          * Calcula la racha actual del jugador
          */
         static calculateStreak(player) {
-            // TODO: Implementar lógica real basada en últimos partidos
-            // Por ahora, datos de ejemplo
             const recentMatches = player.recentMatches || [];
 
             if (recentMatches.length === 0) {
@@ -202,8 +200,8 @@
             let streak = 0;
             let isWinStreak = recentMatches[0].won;
 
-            for (let match of recentMatches) {
-                if (match.won === isWinStreak) {
+            for (let i = 0; i < recentMatches.length; i++) {
+                if (recentMatches[i].won === isWinStreak) {
                     streak++;
                 } else {
                     break;

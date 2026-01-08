@@ -148,6 +148,23 @@ window.AdminAuth = {
         if (nameEl) nameEl.textContent = user.name;
         if (avatarEl) avatarEl.textContent = user.name.charAt(0);
 
+        // Helper for Icon Selection in Menu Modal
+        window.selectMenuIcon = (iconClass) => {
+            const input = document.getElementById('menu-icon-input');
+            const preview = document.getElementById('icon-preview-box');
+            if (input) input.value = iconClass;
+            if (preview) preview.innerHTML = `<i class="${iconClass}"></i>`;
+        };
+
+        // Sync Icon Selection Input
+        const menuIconInput = document.getElementById('menu-icon-input');
+        if (menuIconInput) {
+            menuIconInput.addEventListener('input', (e) => {
+                const preview = document.getElementById('icon-preview-box');
+                if (preview) preview.innerHTML = `<i class="${e.target.value}"></i>`;
+            });
+        }
+
         // Immediate view load
         loadAdminView('users');
     },
@@ -1038,11 +1055,11 @@ async function loadAdminView(view) {
             };
 
         } else if (view === 'simulator_empty') {
-            if (titleEl) titleEl.textContent = 'Generador de Cuadros (Sin Resultados)';
+            if (titleEl) titleEl.textContent = 'Simulador de americanas';
             content.innerHTML = `
                 <div class="glass-card-enterprise" style="max-width: 800px; margin: 0 auto; text-align: center; padding: 3rem;">
                     <div style="font-size: 4rem; margin-bottom: 2rem;">📝</div>
-                    <h2 style="color: var(--primary); margin-bottom: 1rem;">PREPARAR AMERICANA</h2>
+                    <h2 style="color: var(--primary); margin-bottom: 1rem;">Simulador de americanas</h2>
                     <p style="color: var(--text-muted); margin-bottom: 2.5rem;">Esta herramienta selecciona jugadores reales al azar, crea el evento y genera los cruces de las 6 rondas, pero deja los <strong>MARCADORES A 0</strong> y el estado <strong>PENDIENTE</strong>, listo para empezar a jugar.</p>
                     
                     <div style="margin-bottom: 2rem; background: rgba(255,255,255,0.03); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
@@ -1106,56 +1123,6 @@ async function loadAdminView(view) {
                 AdminSimulator.runEmptyCycle({ price_members: pMem, price_external: pExt });
             });
 
-        } else if (view === 'simulator_random') {
-            if (titleEl) titleEl.textContent = 'Motor de Simulación (Real Random)';
-            content.innerHTML = `
-                <div class="glass-card-enterprise" style="max-width: 800px; margin: 0 auto; text-align: center; padding: 3rem;">
-                    <div style="font-size: 4rem; margin-bottom: 2rem;">🎲</div>
-                    <h2 style="color: var(--primary); margin-bottom: 1rem;">SIMULADOR AL AZAR</h2>
-                    <p style="color: var(--text-muted); margin-bottom: 2.5rem;">Crea un evento usando <strong>JUGADORES REALES EXISTENTES</strong> seleccionados aleatoriamente de la base de datos. Se inscribirán, jugarán 6 rondas simuladas y puntuarán.</p>
-                    
-                    <div style="margin-bottom: 2rem; background: rgba(255,255,255,0.03); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
-                        <label style="color: var(--primary); font-weight: 800; display: block; margin-bottom: 1rem; letter-spacing: 1px;">⚙️ CONFIGURACIÓN DE ESCENARIO</label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                            <div style="flex: 1;">
-                                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">NÚMERO DE PISTAS</label>
-                                <select id="sim-courts-random" class="pro-input" style="width: 100%; text-align: center;">
-                                    <option value="2">2 Pistas (8 Jugadores)</option>
-                                    <option value="3" selected>3 Pistas (12 Jugadores)</option>
-                                    <option value="4">4 Pistas (16 Jugadores)</option>
-                                    <option value="5">5 Pistas (20 Jugadores)</option>
-                                    <option value="6">6 Pistas (24 Jugadores)</option>
-                                    <option value="7">7 Pistas (28 Jugadores)</option>
-                                    <option value="8">8 Pistas (32 Jugadores)</option>
-                                    <option value="9">9 Pistas (36 Jugadores)</option>
-                                    <option value="10">10 Pistas (40 Jugadores)</option>
-                                </select>
-                            </div>
-                            <div style="flex: 1;">
-                                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">🎾 CATEGORÍA</label>
-                                <select id="sim-category-random" class="pro-input" style="width: 100%; text-align: center;">
-                                    <option value="open">TODOS (Cualquiera)</option>
-                                    <option value="male">MASCULINA (Solo chicos)</option>
-                                    <option value="female">FEMENINA (Solo chicas)</option>
-                                    <option value="mixed">MIXTA (Chico + Chica)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr; margin-top: 15px;">
-                            <div style="flex: 1;">
-                                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">🎯 MODO DE PAREJAS</label>
-                                <select id="sim-pair-mode-random" class="pro-input" style="width: 100%; text-align: center; font-weight: 700;">
-                                    <option value="fixed">🔒 FIJA (Pozo)</option>
-                                    <option value="rotating">🔄 TWISTER</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button class="btn-primary-pro" id="btn-run-simulation-random" style="padding: 1.5rem 3rem; font-size: 1.1rem; border-color: #25D366; color: #25D366;">🎲 LANZAR SIMULACIÓN REAL</button>
-                    <div id="sim-status-random" style="margin-top: 2rem; font-family: 'Courier New', monospace; font-size: 0.8rem; color: var(--primary); text-align: left; display: none; background: rgba(0,0,0,0.8); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--primary-dim);"></div>
-                </div>`;
-            document.getElementById('btn-run-simulation-random').addEventListener('click', () => AdminSimulator.runRandomCycle());
 
         } else if (view === 'matches') {
             if (titleEl) titleEl.textContent = 'Centro de Resultados - 6 Rondas';
@@ -2270,13 +2237,13 @@ window.generateNextRound = async (americanaId, nextRound) => {
                 const currentPlayerData = americana.players || [];
 
                 // 2. Aplicar lógica Pozo para mover jugadores de pista según resultados previos
-                const movedPlayers = RotatingPozoLogic.updatePlayerCourts(currentPlayerData, prevRoundMatches, americana.max_courts || 4);
+                const movedPlayers = RotatingPozoLogic.updatePlayerCourts(currentPlayerData, prevRoundMatches, americana.max_courts || 4, americana.category);
 
                 // 3. Guardar las nuevas posiciones en la Americana
                 await FirebaseDB.americanas.update(americanaId, { players: movedPlayers });
 
-                // 4. Generar la siguiente ronda con rotación de parejas
-                const newMatches = RotatingPozoLogic.generateRound(movedPlayers, nextRound, americana.max_courts || 4);
+                // 4. Generar la siguiente ronda con rotación de parejas (TWISTER)
+                const newMatches = RotatingPozoLogic.generateRound(movedPlayers, nextRound, americana.max_courts || 4, americana.category);
 
                 for (const m of newMatches) {
                     await FirebaseDB.matches.create({
@@ -2510,9 +2477,9 @@ window.simulateAllAmericanaMatches = async (americanaId) => {
                                     await FirebaseDB.matches.create({ ...m, americana_id: americanaId, status: 'scheduled', score_a: 0, score_b: 0 });
                                 }
                             } else {
-                                const movedPlayers = RotatingPozoLogic.updatePlayerCourts(americana.players || [], prevRoundMatches, effectiveCourts);
+                                const movedPlayers = RotatingPozoLogic.updatePlayerCourts(americana.players || [], prevRoundMatches, effectiveCourts, americana.category);
                                 await FirebaseDB.americanas.update(americanaId, { players: movedPlayers });
-                                const newMatches = RotatingPozoLogic.generateRound(movedPlayers, r, effectiveCourts);
+                                const newMatches = RotatingPozoLogic.generateRound(movedPlayers, r, effectiveCourts, americana.category);
                                 for (const m of newMatches) {
                                     await FirebaseDB.matches.create({ ...m, americana_id: americanaId, status: 'scheduled', score_a: 0, score_b: 0 });
                                 }

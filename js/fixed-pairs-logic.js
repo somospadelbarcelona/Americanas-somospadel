@@ -99,13 +99,17 @@ const FixedPairsLogic = {
      * @returns {Array} - Parejas actualizadas
      */
     updatePozoRankings(pairs, lastRoundMatches, maxCourts) {
-        console.log(`📊 Actualizando rankings Pozo...`);
+        console.log(`📊 Actualizando rankings Pozo (Parejas Fijas)...`);
 
         // Crear un mapa para acceso rápido
         const pairMap = {};
-        pairs.forEach(p => pairMap[p.id] = p);
+        pairs.forEach(p => {
+            pairMap[p.id] = p;
+            // Marcar como no jugado en esta ronda
+            p.won_last_match = false;
+        });
 
-        // Procesar resultados
+        // Procesar resultados de la última ronda
         lastRoundMatches.forEach(match => {
             if (match.status === 'finished') {
                 const pairA = pairMap[match.pair_a_id];
@@ -119,59 +123,70 @@ const FixedPairsLogic = {
                 const scoreA = parseInt(match.score_a || 0);
                 const scoreB = parseInt(match.score_b || 0);
 
-                // Actualizar estadísticas
-                pairA.games_won += scoreA;
-                pairA.games_lost += scoreB;
-                pairB.games_won += scoreB;
-                pairB.games_lost += scoreA;
+                // Actualizar estadísticas generales
+                pairA.games_won = (pairA.games_won || 0) + scoreA;
+                pairA.games_lost = (pairA.games_lost || 0) + scoreB;
+                pairB.games_won = (pairB.games_won || 0) + scoreB;
+                pairB.games_lost = (pairB.games_lost || 0) + scoreA;
 
-                // Determinar ganador y aplicar lógica Pozo
+                // Determinar ganador y perdedor
+                let winner, loser;
                 if (scoreA > scoreB) {
-                    // Pareja A gana
-                    pairA.wins++;
-                    pairB.losses++;
-
-                    // Pareja A sube (si no está en 1)
-                    if (pairA.current_court > 1) pairA.current_court--;
-
-                    // Pareja B baja (si no está en max)
-                    pairB.current_court++;
-
+                    winner = pairA;
+                    loser = pairB;
+                    pairA.wins = (pairA.wins || 0) + 1;
+                    pairB.losses = (pairB.losses || 0) + 1;
                 } else if (scoreB > scoreA) {
-                    pairB.wins++;
-                    pairA.losses++;
-
-                    if (pairB.current_court > 1) pairB.current_court--;
-                    pairA.current_court++;
+                    winner = pairB;
+                    loser = pairA;
+                    pairB.wins = (pairB.wins || 0) + 1;
+                    pairA.losses = (pairA.losses || 0) + 1;
+                } else {
+                    // Empate - ambos se consideran ganadores (se mantienen)
+                    pairA.won_last_match = true;
+                    pairB.won_last_match = true;
                 }
 
-                // Mark them as having played this round to avoid double processing if needed
+                // Aplicar lógica POZO: Ganador sube, Perdedor baja
+                if (winner && loser) {
+                    winner.won_last_match = true;
+                    loser.won_last_match = false;
+
+                    // GANADOR: Sube de pista (número menor) si no está en pista 1
+                    if (winner.current_court > 1) {
+                        winner.current_court--;
+                    }
+                    // Si ya está en pista 1, se mantiene en pista 1
+
+                    // PERDEDOR: Baja de pista (número mayor)
+                    loser.current_court++;
+                }
+
+                // Marcar como jugado en esta ronda
                 pairA.last_played_round = match.round;
                 pairB.last_played_round = match.round;
             }
         });
 
-        // --- STRICT COURT REASSIGNMENT (Smart Filling) ---
-        // Al igual que en Rotating, necesitamos asegurar que las pistas se llenan de 1 a maxCourts.
-
-        // 1. Ordenar por pista deseada (post-partido)
+        // --- REORGANIZACIÓN INTELIGENTE DE PISTAS ---
+        // Ordenar parejas por su pista actual (las que están en pistas mejores primero)
+        // Esto respeta el movimiento arriba/abajo que acabamos de calcular
         pairs.sort((a, b) => {
             const courtA = a.current_court || 999;
             const courtB = b.current_court || 999;
             return courtA - courtB;
         });
 
-        // 2. Reasignar estrictamente: 2 parejas por pista
+        // Reasignar pistas secuencialmente para llenar huecos
+        // 2 parejas por pista (pista 1, pista 1, pista 2, pista 2, etc.)
         pairs.forEach((p, index) => {
-            const newCourt = Math.floor(index / 2) + 1;
-            // Solo actualizamos si está dentro del rango válido
-            p.current_court = newCourt;
+            p.current_court = Math.floor(index / 2) + 1;
         });
 
-        // -------------------------------------------------
+        console.log(`✅ Rankings actualizados - Parejas redistribuidas en ${Math.ceil(pairs.length / 2)} pistas`);
 
-        // Ordenar parejas por juegos ganados (para clasificación)
-        const sortedPairs = pairs.sort((a, b) => {
+        // Ordenar parejas por clasificación (para mostrar en ranking)
+        const sortedPairs = [...pairs].sort((a, b) => {
             // Primero por juegos ganados
             if (b.games_won !== a.games_won) return b.games_won - a.games_won;
             // Luego por victorias
@@ -180,7 +195,6 @@ const FixedPairsLogic = {
             return a.games_lost - b.games_lost;
         });
 
-        console.log(`✅ Rankings actualizados`);
         return sortedPairs;
     },
 
