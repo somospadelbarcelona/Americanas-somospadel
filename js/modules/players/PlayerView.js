@@ -150,6 +150,45 @@
                         </div>
                     </div>
 
+                    <!-- NORMATIVA Y INFO (New Section) -->
+                    <div style="padding: 40px 20px 0;">
+                        <h3 style="font-weight: 800; font-size: 1.1rem; color: #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #007AFF;">⚖️</span> NORMATIVA Y REGLAS
+                        </h3>
+                        
+                        <div style="display: grid; gap: 15px;">
+                            <!-- Ranking -->
+                            <div style="background: white; padding: 20px; border-radius: 20px; border: 1px solid #eee; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                                <div style="font-weight: 800; margin-bottom: 10px; color: #1e293b; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-trophy" style="color: #FFD700;"></i> Sistema de Ranking
+                                </div>
+                                <p style="font-size: 0.75rem; color: #64748b; line-height: 1.5; margin: 0;">
+                                    Cada juego ganado en tus Americanas suma <b>1 punto</b> directo a tu perfil. El MVP se decide por la suma total de puntos tras 6 rondas.
+                                </p>
+                            </div>
+
+                            <!-- Levels -->
+                            <div style="background: white; padding: 20px; border-radius: 20px; border: 1px solid #eee; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                                <div style="font-weight: 800; margin-bottom: 10px; color: #1e293b; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-chart-line" style="color: #10b981;"></i> Evolución de Nivel
+                                </div>
+                                <p style="font-size: 0.75rem; color: #64748b; line-height: 1.5; margin: 0;">
+                                    Tu nivel sube o baja por <b>décimas</b> según ganes o pierdas partidos. El algoritmo tiene en cuenta el nivel de tus oponentes para un ajuste justo.
+                                </p>
+                            </div>
+
+                            <!-- Comportamiento -->
+                            <div style="background: white; padding: 20px; border-radius: 20px; border: 1px solid #eee; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                                <div style="font-weight: 800; margin-bottom: 10px; color: #1e293b; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-handshake" style="color: #3b82f6;"></i> Fair Play
+                                </div>
+                                <p style="font-size: 0.75rem; color: #64748b; line-height: 1.5; margin: 0;">
+                                    Somos una comunidad. Respeta a compañeros y rivales. Los resultados son gestionados por los <b>administradores</b> para garantizar la transparencia.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- General Settings -->
                     <div style="padding: 30px 20px 0;">
                         <h3 style="font-weight: 800; font-size: 1.1rem; color: #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">

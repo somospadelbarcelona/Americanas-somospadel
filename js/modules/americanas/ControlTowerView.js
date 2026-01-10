@@ -15,6 +15,12 @@
             this.userHistory = [];
             this.unsubscribeMatches = null;
             this.pendingId = null;
+            this.userMatches = [];
+            this.userStats = {
+                games: 0,
+                wins: 0,
+                mvps: 0 // Placeholder for future logic
+            };
         }
 
         goToRound(n, event) {
@@ -44,6 +50,7 @@
         async load(americanaId) {
             this.currentAmericanaId = americanaId;
             this.selectedRound = 1;
+            this.mainSection = 'playing'; // Ensure we show the game area
 
             // Show loading
             this.render({ status: 'LOADING' });
@@ -82,15 +89,53 @@
             if (!user) return;
 
             try {
+                // 1. Fetch Americanas
                 const snap = await window.db.collection('americanas')
                     .where('players', 'array-contains', user.uid)
                     .orderBy('date', 'desc')
                     .get();
                 this.userHistory = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                // 2. Fetch Matches to calculate real stats
+                const matchSnap = await window.db.collection('matches')
+                    .where('team_a_ids', 'array-contains', user.uid)
+                    .get();
+                const matchSnapB = await window.db.collection('matches')
+                    .where('team_b_ids', 'array-contains', user.uid)
+                    .get();
+
+                this.userMatches = [
+                    ...matchSnap.docs.map(d => d.data()),
+                    ...matchSnapB.docs.map(d => d.data())
+                ];
+
+                // Calculate real games
+                let g = 0;
+                let w = 0;
+                this.userMatches.forEach(m => {
+                    const isTeamA = m.team_a_ids?.includes(user.uid);
+                    const sA = parseInt(m.score_a || 0);
+                    const sB = parseInt(m.score_b || 0);
+
+                    if (isTeamA) {
+                        g += sA;
+                        if (sA > sB) w++;
+                    } else {
+                        g += sB;
+                        if (sB > sA) w++;
+                    }
+                });
+
+                this.userStats = {
+                    games: g,
+                    wins: w,
+                    events: this.userHistory.length
+                };
+
                 this.recalc();
             } catch (e) {
                 console.error("History fail:", e);
-                // Also try registeredPlayers as fallback
+                // Fallback attempt with registeredPlayers
                 try {
                     const snap2 = await window.db.collection('americanas')
                         .where('registeredPlayers', 'array-contains', user.uid)
@@ -221,14 +266,6 @@
                     </div>
 
                     ${this.renderMainArea(data, isPlayingHere)}
-
-                    <!-- BOTTOM TICKER (⚡ FIXED: REMOVED INLINE BLACK BG) -->
-                    <div class="tour-bottom-ticker">
-                        <div class="ticker-label">⚡ LIVE</div>
-                        <div class="ticker-scroller">
-                            <span>Sincronizado con SomosPadel Server • ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                    </div>
                 </div>
             `;
         }
@@ -624,39 +661,84 @@
         }
 
         renderHistoryContent() {
-            let totalTours = this.userHistory.length;
-            let totalGames = totalTours * 25; // Placeholder
+            const s = this.userStats;
+            const winRate = s.games > 0 ? Math.round((s.wins / (this.userMatches.length || 1)) * 100) : 0;
+
             return `
-                <div class="fade-in" style="padding: 24px; min-height: 80vh; background: white;">
-                    <div style="background: #000; border-radius: 20px; padding: 25px; margin-bottom: 25px; color: white; display: flex; justify-content: space-around; text-align: center; border: 1px solid var(--playtomic-neon);">
-                        <div>
-                            <div style="color: var(--playtomic-neon); font-size: 1.5rem; font-weight: 900;">${totalTours}</div>
-                            <div style="font-size: 0.6rem; font-weight: 800; opacity: 0.6;">EVENTOS</div>
-                        </div>
-                        <div style="width: 1px; background: #333;"></div>
-                        <div>
-                            <div style="color: white; font-size: 1.5rem; font-weight: 900;">${totalGames}</div>
-                            <div style="font-size: 0.6rem; font-weight: 800; opacity: 0.6;">JUEGOS</div>
+                <div class="fade-in" style="padding: 24px; min-height: 80vh; background: #f8fafc; padding-bottom: 120px;">
+                    
+                    <!-- PREMIUM STATS HEADER -->
+                    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 28px; padding: 30px; margin-bottom: 30px; color: white; box-shadow: 0 15px 35px rgba(0,0,0,0.2); position: relative; overflow: hidden;">
+                        <div style="position: absolute; right: -20px; top: -20px; font-size: 8rem; opacity: 0.05; transform: rotate(-15deg);"><i class="fas fa-history"></i></div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; position: relative; z-index: 1;">
+                            <div style="text-align: center; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+                                <div style="color: #CCFF00; font-size: 2rem; font-weight: 950; line-height: 1;">${s.events}</div>
+                                <div style="font-size: 0.65rem; font-weight: 850; letter-spacing: 1.5px; opacity: 0.6; margin-top: 8px; text-transform: uppercase;">Eventos</div>
+                            </div>
+                            <div style="text-align: center; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+                                <div style="color: white; font-size: 2rem; font-weight: 950; line-height: 1;">${s.games}</div>
+                                <div style="font-size: 0.65rem; font-weight: 850; letter-spacing: 1.5px; opacity: 0.6; margin-top: 8px; text-transform: uppercase;">Juegos</div>
+                            </div>
+                            <div style="text-align: center; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+                                <div style="color: #60a5fa; font-size: 2.2rem; font-weight: 950; line-height: 1;">${s.wins}</div>
+                                <div style="font-size: 0.65rem; font-weight: 850; letter-spacing: 1.5px; opacity: 0.6; margin-top: 8px; text-transform: uppercase;">Victorias</div>
+                            </div>
+                            <div style="text-align: center; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+                                <div style="color: #10b981; font-size: 2.2rem; font-weight: 950; line-height: 1;">${winRate}<span style="font-size: 1rem; opacity: 0.6;">%</span></div>
+                                <div style="font-size: 0.65rem; font-weight: 850; letter-spacing: 1.5px; opacity: 0.6; margin-top: 8px; text-transform: uppercase;">Eficacia</div>
+                            </div>
                         </div>
                     </div>
-                    <h3 style="font-family:'Outfit'; font-weight: 900; color: #111; margin-bottom: 20px;">Estadísticas Históricas</h3>
-                    <div style="display: grid; gap: 12px; padding-bottom: 100px;">
-                        ${this.userHistory.length === 0 ? '<p style="color:#ccc; text-align:center;">No hay historial aún.</p>' :
-                    this.userHistory.map(h => `
-                            <div class="tour-match-card" style="padding: 18px; border: 1px solid #eee; border-radius: 16px;" onclick="window.ControlTowerView.load('${h.id}'); window.ControlTowerView.switchSection('playing');">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        <div style="font-weight: 900; font-size: 0.95rem;">${h.name}</div>
-                                        <div style="font-size: 0.7rem; color: #888;">${h.date} • ${(h.category === 'male' ? 'MASCULINA' :
-                            h.category === 'female' ? 'FEMENINA' :
-                                h.category === 'mixed' ? 'MIXTA' :
-                                    h.category === 'open' ? 'TODOS' : 'PRO')
-                        }</div>
+
+                    <h3 style="font-family:'Outfit'; font-weight: 950; color: #0f172a; margin: 0 0 20px 5px; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-list-ul" style="color: #CCFF00; font-size: 1rem;"></i> CRONOLOGÍA HISTÓRICA
+                    </h3>
+
+                    <div style="display: grid; gap: 15px;">
+                        ${this.userHistory.length === 0 ? `
+                            <div style="background: white; border-radius: 24px; padding: 60px 40px; text-align: center; border: 1px dashed #cbd5e1; color: #94a3b8;">
+                                <i class="fas fa-ghost" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.3;"></i>
+                                <p style="font-weight: 800; font-size: 1rem;">No tienes historial registrado</p>
+                                <p style="font-size: 0.8rem; opacity: 0.7;">Tus Americanas aparecerán aquí al finalizar.</p>
+                            </div>
+                        ` :
+                    this.userHistory.map(h => {
+                        const amDate = h.date ? new Date(h.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Fecha desconocida';
+                        return `
+                            <div class="history-item-card" 
+                                 onclick="window.ControlTowerView.load('${h.id}'); window.ControlTowerView.switchSection('playing');"
+                                 style="
+                                    background: white; 
+                                    padding: 20px; 
+                                    border: 1px solid #e2e8f0; 
+                                    border-radius: 24px; 
+                                    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+                                    display: flex;
+                                    justify-content: space-between;
+                                    align-items: center;
+                                    cursor: pointer;
+                                    transition: all 0.2s;
+                                 "
+                                 onmouseover="this.style.transform='translateX(5px)'; this.style.borderColor='#CCFF00';"
+                                 onmouseout="this.style.transform='none'; this.style.borderColor='#e2e8f0';"
+                            >
+                                <div>
+                                    <div style="font-weight: 950; font-size: 1rem; color: #0f172a; margin-bottom: 3px;">${h.name.toUpperCase()}</div>
+                                    <div style="display: flex; align-items: center; gap: 10px; font-size: 0.7rem; color: #64748b; font-weight: 700;">
+                                        <span><i class="far fa-calendar-alt"></i> ${amDate}</span>
+                                        <span style="opacity: 0.3;">|</span>
+                                        <span style="color: #CCFF00; background: #000; padding: 1px 6px; border-radius: 4px; font-size: 0.6rem;">${(h.category || 'PRO').toUpperCase()}</span>
                                     </div>
-                                    <div style="color: var(--playtomic-neon); font-size: 0.8rem; font-weight: 900;">DETALLES ></div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="text-align: right; margin-right: 10px;">
+                                        <div style="font-size: 0.5rem; color: #94a3b8; font-weight: 900; text-transform: uppercase;">Ver stats</div>
+                                        <i class="fas fa-chevron-right" style="color: #CCFF00; font-size: 0.8rem;"></i>
+                                    </div>
                                 </div>
                             </div>
-                        `).join('')}
+                        `}).join('')}
                     </div>
                 </div>
             `;
@@ -667,14 +749,48 @@
                 <div class="fade-in" style="padding: 30px; min-height: 80vh; background: white; padding-bottom: 100px;">
                     <h2 style="font-family:'Outfit'; font-weight: 900; color: #111; margin-bottom: 30px;">Centro de Ayuda</h2>
                     <div style="display: grid; gap: 20px;">
+                        
+                        <!-- 1. RANKING -->
                         <div style="background: #f9f9f9; padding: 25px; border-radius: 20px; border: 1px solid #eee;">
-                            <div style="font-weight: 900; margin-bottom: 10px; color: #0055ff; font-size: 1.1rem;">📑 Reglas del Ranking</div>
-                            <p style="font-size: 0.85rem; color: #555; line-height: 1.6;">Cada juego ganado suma 1 punto. Tras 6 partidos, el jugador con más puntos totales es coronado MVP.</p>
+                            <div style="font-weight: 900; margin-bottom: 12px; color: #0055ff; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-trophy"></i> Reglas del Ranking
+                            </div>
+                            <p style="font-size: 0.85rem; color: #555; line-height: 1.6; margin: 0;">
+                                En SomosPadel, cada juego cuenta. A diferencia de otros sistemas, aquí sumas <b>1 punto por cada juego ganado</b> en tus partidos. 
+                                <br><br>
+                                Al finalizar las 6 rondas de la Americana, el sistema suma todos tus juegos. El jugador con la puntuación más alta es nombrado <b>MVP</b>. Este sistema premia la regularidad y el esfuerzo en cada bola.
+                            </p>
                         </div>
+
+                        <!-- 2. NIVELES -->
                         <div style="background: #f9f9f9; padding: 25px; border-radius: 20px; border: 1px solid #eee;">
-                            <div style="font-weight: 900; margin-bottom: 10px; color: #0055ff; font-size: 1.1rem;">📈 Niveles Dinámicos</div>
-                            <p style="font-size: 0.85rem; color: #555; line-height: 1.6;">Nuestro sistema IA evalúa tu nivel cada partido. Si ganas con autoridad contra rivales fuertes, tu nivel subirá automáticamente.</p>
+                            <div style="font-weight: 900; margin-bottom: 12px; color: #0055ff; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-chart-line"></i> Niveles Dinámicos y Evolución
+                            </div>
+                            <p style="font-size: 0.85rem; color: #555; line-height: 1.6; margin: 0;">
+                                Tu nivel es el reflejo de tu juego constante. En SomosPadel, hemos implementado un sistema de **progresión por décimas**: 
+                                <br><br>
+                                • cada vez que <b>ganas un partido</b>, tu nivel subirá unas décimas automáticamente. 
+                                <br>• Si el partido es muy reñido o contra rivales de nivel superior, la recompensa es mayor. 
+                                <br>• Incluso en la derrota, si luchas cada punto, tu nivel se ajustará para reflejar tu competitividad real.
+                                <br><br>
+                                Esta es tu motivación extra: cada partido cuenta para subir de categoría y desbloquear Americanas de nivel superior.
+                            </p>
                         </div>
+
+                        <!-- 3. APP USAGE -->
+                        <div style="background: #f9f9f9; padding: 25px; border-radius: 20px; border: 1px solid #eee;">
+                            <div style="font-weight: 900; margin-bottom: 12px; color: #0055ff; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-mobile-alt"></i> Cómo usar la App
+                            </div>
+                            <p style="font-size: 0.85rem; color: #555; line-height: 1.6; margin: 0;">
+                                • <b>En Juego:</b> Consulta tus pistas y compañeros en tiempo real desde la pestaña principal.
+                                <br>• <b>Resultados:</b> Los administradores suben los marcadores y el ranking se actualiza instantáneamente.
+                                <br>• <b>Mi Pasado:</b> Revisa tu historial de Americanas y analiza tu evolución a lo largo del tiempo.
+                                <br>• <b>Check-in:</b> No olvides confirmar tu asistencia para que el sorteo de pistas sea equitativo.
+                            </p>
+                        </div>
+
                     </div>
                 </div>
             `;

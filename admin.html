@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control - Americanas PRO</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=1001">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -90,19 +90,43 @@
                     <span class="nav-text">Base de Datos</span>
                 </button>
 
-                <button class="nav-item-pro" data-view="americanas_mgmt" onclick="loadAdminView('americanas_mgmt')">
+                <button class="nav-item-pro nav-group-americana" data-view="americanas_mgmt"
+                    onclick="loadAdminView('americanas_mgmt')">
                     <span class="icon-box"><i class="fas fa-calendar-check"></i></span>
-                    <span class="nav-text">Gestión Torneos</span>
+                    <span class="nav-text">Gestión Americanas</span>
                 </button>
 
-                <button class="nav-item-pro" data-view="matches" onclick="loadAdminView('matches')">
+                <button class="nav-item-pro nav-group-americana" data-view="matches" onclick="loadAdminView('matches')">
                     <span class="icon-box"><i class="fas fa-trophy-award"></i></span>
-                    <span class="nav-text">Control Tower</span>
+                    <span class="nav-text">Resultados Americanas</span>
                 </button>
 
-                <button class="nav-item-pro" data-view="simulator_empty" onclick="loadAdminView('simulator_empty')">
+                <button class="nav-item-pro nav-group-americana" data-view="simulator_empty"
+                    onclick="loadAdminView('simulator_empty')">
                     <span class="icon-box"><i class="fas fa-robot"></i></span>
-                    <span class="nav-text">Simulador IA</span>
+                    <span class="nav-text">Simulador de Americanas</span>
+                </button>
+
+                <div
+                    style="margin: 15px 10px 5px 10px; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.3); font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
+                    Módulo Entrenos</div>
+
+                <button class="nav-item-pro nav-group-entreno" data-view="entrenos_mgmt"
+                    onclick="loadAdminView('entrenos_mgmt')">
+                    <span class="icon-box"><i class="fas fa-graduation-cap"></i></span>
+                    <span class="nav-text">Gestión Entrenos</span>
+                </button>
+
+                <button class="nav-item-pro nav-group-entreno" data-view="entrenos_results"
+                    onclick="loadAdminView('entrenos_results')">
+                    <span class="icon-box"><i class="fas fa-clipboard-check"></i></span>
+                    <span class="nav-text">Resultados Entrenos</span>
+                </button>
+
+                <button class="nav-item-pro nav-group-entreno" data-view="entrenos_simulator"
+                    onclick="loadAdminView('entrenos_simulator')">
+                    <span class="icon-box"><i class="fas fa-brain"></i></span>
+                    <span class="nav-text">Simulador de Entrenos</span>
                 </button>
 
                 <button class="nav-item-pro" data-view="menu_mgmt" onclick="loadAdminView('menu_mgmt')">
@@ -217,6 +241,166 @@
         </div>
     </div>
 
+
+
+    <!-- Edit Entreno Modal (Cloned from Americana) -->
+    <div id="admin-entreno-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Editar Entreno</h2>
+                <button class="close-modal-btn"
+                    onclick="document.getElementById('admin-entreno-modal').classList.add('hidden')">&times;</button>
+            </div>
+            <form id="edit-entreno-form" class="pro-form">
+                <input type="hidden" name="id">
+                <div class="form-group">
+                    <label>NOMBRE DEL ENTRENO</label>
+                    <input type="text" name="name" class="pro-input" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>FECHA</label>
+                        <input type="date" name="date" class="pro-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>HORA</label>
+                        <input type="time" name="time" class="pro-input" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>CATEGORÍA</label>
+                    <select name="category" class="pro-input">
+                        <option value="open">TODOS</option>
+                        <option value="male">MASCULINA</option>
+                        <option value="female">FEMENINA</option>
+                        <option value="mixed">MIXTA</option>
+                    </select>
+                </div>
+                <!-- NUEVO: Selector de Sede -->
+                <div class="form-group">
+                    <label>SEDE DEL EVENTO</label>
+                    <select name="location" class="pro-input">
+                        <option value="Barcelona Pádel el Prat">Barcelona Pádel el Prat</option>
+                        <option value="Delfos Cornellá">Delfos Cornellá</option>
+                    </select>
+                </div>
+
+                <!-- NUEVO: Modo de Parejas (Para Entrenos también) -->
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <span>🎯 MODO DE PAREJAS</span>
+                    </label>
+                    <select name="pair_mode" class="pro-input">
+                        <option value="fixed">🔒 PAREJA FIJA</option>
+                        <option value="rotating">🔄 TWISTER</option>
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>DURACIÓN</label>
+                        <input type="text" name="duration" value="1h 30m" class="pro-input">
+                    </div>
+                    <div class="form-group">
+                        <label>ESTADO</label>
+                        <select name="status" class="pro-input">
+                            <option value="open">ABIERTA (Disponible)</option>
+                            <option value="live">EN JUEGO (Live)</option>
+                            <option value="finished">FINALIZADA (Cerrada)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>MAX. PISTAS</label>
+                        <input type="number" name="max_courts" class="pro-input">
+                    </div>
+                    <div class="form-group">
+                        <label>PRECIO SOCIOS (€)</label>
+                        <input type="number" name="price_members" class="pro-input">
+                    </div>
+                    <div class="form-group">
+                        <label>PRECIO EXTERNOS (€)</label>
+                        <input type="number" name="price_external" class="pro-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>IMAGEN DEL EVENTO (URL)</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" name="image_url" id="edit-entreno-img-input" class="pro-input"
+                            placeholder="https://..." style="flex:1;">
+                    </div>
+
+                    <!-- Quick Select Local Images -->
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                        <button type="button" class="btn-micro"
+                            onclick="selectEntrenoImage('img/entreno masculino prat.jpg')"
+                            style="background: #25d366; color: black;">Prat Masculino</button>
+                        <button type="button" class="btn-micro"
+                            onclick="selectEntrenoImage('img/entreno femenino prat.jpg')"
+                            style="background: #ff69b4; color: black;">Prat Femenino</button>
+                        <button type="button" class="btn-micro"
+                            onclick="selectEntrenoImage('img/entreno mixto prat.jpg')"
+                            style="background: #ccff00; color: black;">Prat Mixto</button>
+                        <button type="button" class="btn-micro"
+                            onclick="selectEntrenoImage('img/entreno todo prat.jpg')"
+                            style="background: #ffffff; color: black;">Prat Todos</button>
+
+                        <button type="button" class="btn-micro"
+                            onclick="selectEntrenoImage('img/entreno masculino delfos.jpg')"
+                            style="background: #25d366; color: black;">Delfos Masc</button>
+                        <button type="button" class="btn-micro"
+                            onclick="selectEntrenoImage('img/entreno femenino delfos.jpg')"
+                            style="background: #ff69b4; color: black;">Delfos Fem</button>
+                        <button type="button" class="btn-micro"
+                            onclick="selectEntrenoImage('img/entreno mixto delfos.jpg')"
+                            style="background: #ccff00; color: black;">Delfos Mixto</button>
+                        <button type="button" class="btn-micro"
+                            onclick="selectEntrenoImage('img/entreno todo delfos.jpg')"
+                            style="background: #ffffff; color: black;">Delfos Todos</button>
+
+                        <button type="button" class="btn-micro"
+                            onclick="selectEntrenoImage('img/ball-mixta.png')">Pelota AM</button>
+                        <button type="button" class="btn-micro"
+                            onclick="selectEntrenoImage('img/logo_somospadel.png')">Logo</button>
+                        <button type="button" class="btn-micro"
+                            onclick="selectEntrenoImage('img/americana-pro.png')">Neon</button>
+                    </div>
+
+                    <div style="margin-top: 10px; text-align: center;">
+                        <img id="edit-entreno-img-preview" src=""
+                            style="max-height: 100px; border-radius: 8px; border: 1px solid #ccff00; display: none;"
+                            onerror="this.style.display='none'">
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary-pro" style="width: 100%; margin-top: 1rem;">Guardar
+                    Cambios</button>
+            </form>
+
+            <!-- PARTICIPANTS MANAGEMENT SECTION (Cloned) -->
+            <div style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">
+                <h3 style="color: var(--primary); font-size: 1rem; margin-bottom: 1rem;">GESTIONAR ASISTENTES</h3>
+
+                <!-- Add Player Control -->
+                <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                    <select id="add-player-select-entreno" class="pro-input" style="flex: 1;">
+                        <option value="">Seleccionar Jugador...</option>
+                    </select>
+                    <button class="btn-primary-pro" id="btn-add-player-entreno"
+                        style="padding: 0 1.5rem;">AÑADIR</button>
+                </div>
+
+                <!-- Participants List -->
+                <div id="participants-list-entreno"
+                    style="max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px;">
+                    <div style="text-align: center; color: #888; font-size: 0.8rem; padding: 10px;">Cargando
+                        asistentes...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Edit Americana Modal -->
     <div id="admin-americana-modal" class="modal-overlay hidden">
         <div class="modal-content" style="max-width: 500px;">
@@ -247,6 +431,14 @@
                         <option value="male">MASCULINA</option>
                         <option value="female">FEMENINA</option>
                         <option value="mixed">MIXTA</option>
+                    </select>
+                </div>
+                <!-- NUEVO: Selector de Sede -->
+                <div class="form-group">
+                    <label>SEDE DEL EVENTO</label>
+                    <select name="location" class="pro-input">
+                        <option value="Barcelona Pádel el Prat">Barcelona Pádel el Prat</option>
+                        <option value="Delfos Cornellá">Delfos Cornellá</option>
                     </select>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -290,22 +482,20 @@
 
                     <!-- Quick Select Local Images -->
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
-                        <button type="button" class="btn-micro" onclick="selectImage('img/ball-mixta.png')"
-                            style="background: #ccff00; color: black;">Pelota Amarilla</button>
-                        <button type="button" class="btn-micro" onclick="selectImage('img/ball-masculina.png')"
-                            style="background: #25d366; color: black;">Pelota Verde</button>
-                        <button type="button" class="btn-micro" onclick="selectImage('img/ball-femenina.png')"
-                            style="background: #ff69b4; color: black;">Pelota Rosa</button>
+                        <button type="button" class="btn-micro" onclick="selectImage('img/americana masculina.jpg')"
+                            style="background: #25d366; color: black;">Prat Masculino</button>
+                        <button type="button" class="btn-micro" onclick="selectImage('img/americana femeninas.jpg')"
+                            style="background: #ff69b4; color: black;">Prat Femenino</button>
+                        <button type="button" class="btn-micro" onclick="selectImage('img/americana mixta.jpg')"
+                            style="background: #ccff00; color: black;">Prat Mixta</button>
+                        <button type="button" class="btn-micro" onclick="selectImage('img/americana mixta.jpg')"
+                            style="background: #ffffff; color: black;">Prat Todos</button>
+                        <button type="button" class="btn-micro" onclick="selectImage('img/ball-mixta.png')">Pelota
+                            AM</button>
                         <button type="button" class="btn-micro"
-                            onclick="selectImage('img/logo_somospadel.png')">Logotipo</button>
+                            onclick="selectImage('img/logo_somospadel.png')">Logo</button>
                         <button type="button" class="btn-micro"
                             onclick="selectImage('img/americana-pro.png')">Neon</button>
-                        <button type="button" class="btn-micro"
-                            onclick="selectImage('img/americana-night.png')">Night</button>
-                        <button type="button" class="btn-micro"
-                            onclick="selectImage('img/americana-mixed.png')">Mixed</button>
-                        <button type="button" class="btn-micro"
-                            onclick="selectImage('img/padel-event.jpg')">Pista</button>
                     </div>
 
                     <div style="margin-top: 10px; text-align: center;">
@@ -320,7 +510,8 @@
 
             <!-- PARTICIPANTS MANAGEMENT SECTION -->
             <div style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">
-                <h3 style="color: var(--primary); font-size: 1rem; margin-bottom: 1rem;">GESTIONAR PARTICIPANTES</h3>
+                <h3 style="color: var(--primary); font-size: 1rem; margin-bottom: 1rem;">GESTIONAR
+                    PARTICIPANTES</h3>
 
                 <!-- Add Player Control -->
                 <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
@@ -334,7 +525,8 @@
                 <div id="participants-list"
                     style="max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px;">
                     <!-- Populated via JS -->
-                    <div style="text-align: center; color: #888; font-size: 0.8rem; padding: 10px;">Cargando
+                    <div style="text-align: center; color: #888; font-size: 0.8rem; padding: 10px;">
+                        Cargando
                         participantes...</div>
                 </div>
             </div>
@@ -388,7 +580,8 @@
                             <label>ACCIÓN / RUTA</label>
                             <input type="text" name="action" placeholder="dashboard o https://..." class="pro-input"
                                 required>
-                            <small style="color: #888; font-size: 0.65rem;">Internas: dashboard, profile, americanas,
+                            <small style="color: #888; font-size: 0.65rem;">Internas: dashboard,
+                                profile, americanas,
                                 ranking. Externas: https://...</small>
                         </div>
 
@@ -438,7 +631,7 @@
             <script src="js/admin-simulator.js?v=999"></script>
 
             <!-- Admin UI Logic -->
-            <script src="js/admin.js"></script>
+            <script src="js/admin.js?v=1001"></script>
 
 </body>
 

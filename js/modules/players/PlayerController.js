@@ -173,18 +173,19 @@
          */
         getCalculatedSkills() {
             const user = window.Store.getState('currentUser');
-            const stats = this.state.stats;
+            const stats = this.state.stats || { matches: 0, won: 0, lost: 0, points: 0, winRate: 0, gamesWon: 0, gamesLost: 0 };
             const level = parseFloat(user ? (user.level || 3.5) : 3.5);
-            const winRate = stats.winRate || 0;
 
-            // Simple heuristic mapping
-            // Higher level = better base skills
-            // High win rate = boost specifically to Control and Defense
+            const totalGames = (stats.gamesWon || 0) + (stats.gamesLost || 0);
+            const gamesEfficacy = totalGames > 0 ? Math.round((stats.gamesWon / totalGames) * 100) : 0;
+            const pointsNormalized = Math.min(100, (stats.points || 0) * 2); // 50 pts = 100%
+            const levelProgress = Math.min(100, Math.round((level / 7.5) * 100)); // Level 7.5 = 100%
+
             return {
-                power: Math.min(99, Math.round(level * 12 + (winRate / 10))),
-                control: Math.min(99, Math.round(level * 10 + (winRate / 5))),
-                net: Math.min(99, Math.round(level * 11 + (winRate / 8))),
-                defense: Math.min(99, Math.round(level * 9 + (winRate / 4)))
+                winRate: stats.winRate || 0,
+                gamesRatio: gamesEfficacy,
+                points: pointsNormalized,
+                level: levelProgress
             };
         }
     }

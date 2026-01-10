@@ -61,16 +61,19 @@ const AdminSimulator = {
         const courtSelect = document.getElementById('sim-courts-empty');
         const pairModeSelect = document.getElementById('sim-pair-mode-empty');
         const categorySelect = document.getElementById('sim-category-empty');
+        const locationSelect = document.getElementById('sim-location-empty');
 
         const numCourts = parseInt(courtSelect?.value || 3);
         const pairMode = pairModeSelect?.value || 'rotating';
         const category = categorySelect?.value || 'open';
+        const location = locationSelect?.value || 'Barcelona Pádel el Prat';
         const numPlayers = numCourts * 4;
 
         if (status) {
             status.style.display = 'block';
             let catName = category === 'open' ? 'LIBRE' : (category === 'male' ? 'MASCULINA' : (category === 'female' ? 'FEMENINA' : 'MIXTA'));
             status.innerHTML = `📝 <b>PREPARANDO AMERICANA (${catName} - ${pairMode === 'fixed' ? 'FIJA' : 'TWISTER'})</b><br>`;
+            status.innerHTML += `> Sede: ${location}<br>`;
             status.innerHTML += `> Seleccionando ${numCourts} pistas / ${numPlayers} jugadores cualificados...<br>`;
         }
 
@@ -87,6 +90,7 @@ const AdminSimulator = {
                 date: new Date().toISOString().split('T')[0],
                 time: String(new Date().getHours()).padStart(2, '0') + ':' + String(new Date().getMinutes()).padStart(2, '0'),
                 status: 'in_progress',
+                location: location,
                 players: selectedPlayers.map((p, i) => ({
                     id: p.id,
                     uid: p.id,
@@ -105,8 +109,9 @@ const AdminSimulator = {
                 })),
                 max_courts: numCourts,
                 category: category,
-                category: category,
-                image_url: category === 'male' ? 'img/ball-masculina.png' : (category === 'female' ? 'img/ball-femenina.png' : 'img/ball-mixta.png'),
+                image_url: location === 'Barcelona Pádel el Prat'
+                    ? (category === 'male' ? 'img/americana masculina.jpg' : (category === 'female' ? 'img/americana femeninas.jpg' : 'img/americana mixta.jpg'))
+                    : (category === 'male' ? 'img/ball-masculina.png' : (category === 'female' ? 'img/ball-femenina.png' : 'img/ball-mixta.png')),
                 pair_mode: pairMode,
                 price_members: config.price_members || 12,
                 price_external: config.price_external || 14
@@ -118,9 +123,6 @@ const AdminSimulator = {
             if (status) status.innerHTML += `> Evento creado (${americanaId})<br>`;
 
             // 3. Generate Rounds
-            // IMPORTANTE: En sistemas Pozo (Fija y Twister), NO pre-generamos las 6 rondas con 0-0
-            // porque la Ronda 2 depende de los resultados de la Ronda 1.
-            // Solo generamos la RONDA 1.
             const roundsToGenerate = 1;
 
             if (pairMode === 'fixed') {
@@ -166,6 +168,124 @@ const AdminSimulator = {
         }
     },
 
+    /**
+     * Ejecutar simulación vacía para ENTRENOS
+     */
+    async runTrainingCycle(config = {}) {
+        const status = document.getElementById('sim-training-status');
+        const courtSelect = document.getElementById('sim-training-courts');
+        const pairModeSelect = document.getElementById('sim-training-pair-mode');
+        const categorySelect = document.getElementById('sim-training-category');
+        const locationSelect = document.getElementById('sim-training-location');
+
+        const numCourts = parseInt(courtSelect?.value || 3);
+        const pairMode = pairModeSelect?.value || 'rotating';
+        const category = categorySelect?.value || 'open';
+        const location = locationSelect?.value || 'Barcelona Pádel el Prat';
+        const numPlayers = numCourts * 4;
+
+        if (status) {
+            status.style.display = 'block';
+            let catName = category === 'open' ? 'LIBRE' : (category === 'male' ? 'MASCULINA' : (category === 'female' ? 'FEMENINA' : 'MIXTA'));
+            status.innerHTML = `📝 <b>PREPARANDO ENTRENO (${catName} - ${pairMode === 'fixed' ? 'FIJA' : 'TWISTER'})</b><br>`;
+            status.innerHTML += `> Sede: ${location}<br>`;
+            status.innerHTML += `> Seleccionando ${numCourts} pistas / ${numPlayers} jugadores cualificados...<br>`;
+        }
+
+        try {
+            // 1. Fetch Players by Category
+            const selectedPlayers = await this.getPlayersByCategory(category, numPlayers);
+
+            // 2. Create Entreno
+            const catName = category === 'open' ? 'LIBRE' : (category === 'male' ? 'MASCULINA' : (category === 'female' ? 'FEMENINA' : 'MIXTA'));
+
+            // Determinar imagen por defecto (Same logic as admin.js sync)
+            let imageUrl = 'img/ball-mixta.png';
+            if (location === 'Barcelona Pádel el Prat') {
+                if (category === 'male') imageUrl = 'img/entreno masculino prat.jpg';
+                else if (category === 'female') imageUrl = 'img/entreno femenino prat.jpg';
+                else if (category === 'mixed') imageUrl = 'img/entreno mixto prat.jpg';
+                else imageUrl = 'img/entreno todo prat.jpg';
+            } else if (location === 'Delfos Cornellá') {
+                if (category === 'male') imageUrl = 'img/entreno masculino delfos.jpg';
+                else if (category === 'female') imageUrl = 'img/entreno femenino delfos.jpg';
+                else if (category === 'mixed') imageUrl = 'img/entreno mixto delfos.jpg';
+                else imageUrl = 'img/entreno todo delfos.jpg';
+            }
+
+            const entrenoData = {
+                name: `ENTRENO ${catName} (${pairMode === 'fixed' ? 'FIJA' : 'TWISTER'}) - ${new Date().toLocaleDateString()}`,
+                date: new Date().toISOString().split('T')[0],
+                time: String(new Date().getHours()).padStart(2, '0') + ':00',
+                status: 'live',
+                location: location,
+                players: selectedPlayers.map(p => p.id),
+                max_courts: numCourts,
+                category: category,
+                image_url: imageUrl,
+                pair_mode: pairMode,
+                price_members: config.price_members || 20,
+                price_external: config.price_external || 25
+            };
+
+            const newEntreno = await FirebaseDB.entrenos.create(entrenoData);
+            const entrenoId = newEntreno.id;
+
+            if (status) status.innerHTML += `> Evento creado (${entrenoId})<br>`;
+
+            // 3. Generate Rounds (Solo R1 para Pozo/Twister)
+            const roundsToGenerate = 1;
+
+            if (pairMode === 'fixed') {
+                if (status) status.innerHTML += `> Creando parejas fijas...<br>`;
+                const pairs = FixedPairsLogic.createFixedPairs(selectedPlayers, category);
+                await FirebaseDB.entrenos.update(entrenoId, { fixed_pairs: pairs });
+
+                if (status) status.innerHTML += `> Generando Ronda 1 sistema Pozo...<br>`;
+                for (let round = 1; round <= roundsToGenerate; round++) {
+                    const matches = FixedPairsLogic.generatePozoRound(pairs, round, numCourts);
+                    for (const m of matches) {
+                        await FirebaseDB.entrenos_matches.create({
+                            ...m,
+                            americana_id: entrenoId,
+                            status: 'scheduled',
+                            score_a: 0,
+                            score_b: 0
+                        });
+                    }
+                    if (status) status.innerHTML += `> Ronda ${round} ✅<br>`;
+                }
+
+            } else {
+                let currentPlayers = selectedPlayers.map((p, i) => ({
+                    id: p.id,
+                    uid: p.id,
+                    name: p.name,
+                    level: p.level || '3.5',
+                    gender: p.gender,
+                    current_court: Math.floor(i / 4) + 1
+                }));
+
+                if (status) status.innerHTML += `> Generando Ronda 1 sistema Twister...<br>`;
+                for (let round = 1; round <= roundsToGenerate; round++) {
+                    let roundMatches = RotatingPozoLogic.generateRound(currentPlayers, round, numCourts, category);
+
+                    for (const m of roundMatches) {
+                        const matchData = { ...m, americana_id: entrenoId, status: 'scheduled', score_a: 0, score_b: 0 };
+                        await FirebaseDB.entrenos_matches.create(matchData);
+                    }
+                    if (status) status.innerHTML += `> Ronda ${round} ✅<br>`;
+                }
+            }
+
+            if (status) status.innerHTML += '<br>🏁 <b>SIMULACIÓN COMPLETADA</b><br>';
+            setTimeout(() => loadAdminView('entrenos_results'), 1500);
+
+        } catch (e) {
+            console.error(e);
+            if (status) status.innerHTML += `<br>❌ Error: ${e.message}`;
+        }
+    },
 
 };
 

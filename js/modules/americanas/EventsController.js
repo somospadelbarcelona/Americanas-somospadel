@@ -7,15 +7,69 @@
         constructor() {
             this.state = {
                 activeTab: 'events',
-                events: [],
+                americanas: [],
+                entrenos: [],
                 users: [], // For ranking
                 personalMatches: [], // NEW: User's history
                 loading: true,
+                initialized: false,
                 loadingResults: false,
-                currentUser: null
+                currentUser: null,
+                filters: {
+                    month: 'all',
+                    category: 'all'
+                }
             };
             this.unsubscribeEvents = null;
+            this.unsubscribeEntrenos = null;
             this.unsubscribeUsers = null;
+        }
+
+        setFilter(type, value) {
+            if (this.state.filters[type] === value) return;
+            this.state.filters[type] = value;
+            this.render();
+        }
+
+        getAvailableMonths(events) {
+            const months = new Set();
+            events.forEach(e => {
+                const d = new Date(e.date);
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                months.add(key);
+            });
+            return Array.from(months).sort();
+        }
+
+        renderFilterBar(events) {
+            const months = this.getAvailableMonths(events);
+            const currentMonth = this.state.filters.month;
+            const currentCat = this.state.filters.category;
+            const monthLabels = { '01': 'ENE', '02': 'FEB', '03': 'MAR', '04': 'ABR', '05': 'MAY', '06': 'JUN', '07': 'JUL', '08': 'AGO', '09': 'SEP', '10': 'OCT', '11': 'NOV', '12': 'DIC' };
+
+            return `
+                <div class="filters-container" style="padding: 0 15px 15px 15px; display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Month Filters -->
+                    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                        <button onclick="window.EventsController.setFilter('month', 'all')" 
+                                style="white-space: nowrap; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: none; cursor: pointer; transition: all 0.2s; 
+                                ${currentMonth === 'all' ? 'background: #fff; color: #000; box-shadow: 0 4px 10px rgba(255,255,255,0.3);' : 'background: rgba(255,255,255,0.1); color: #888;'}">TODO</button>
+                        ${months.map(m => {
+                const [year, month] = m.split('-');
+                const label = `${monthLabels[month]} '${year.slice(2)}`;
+                const isActive = currentMonth === m;
+                return `<button onclick="window.EventsController.setFilter('month', '${m}')" style="white-space: nowrap; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: none; cursor: pointer; transition: all 0.2s; ${isActive ? 'background: #fff; color: #000; box-shadow: 0 4px 10px rgba(255,255,255,0.3);' : 'background: rgba(255,255,255,0.1); color: #888;'}">${label}</button>`;
+            }).join('')}
+                    </div>
+                    <!-- Category Filters -->
+                    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                        <button onclick="window.EventsController.setFilter('category', 'all')" style="white-space: nowrap; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: none; cursor: pointer; transition: all 0.2s; ${currentCat === 'all' ? 'background: var(--playtomic-neon); color: #000; box-shadow: 0 4px 10px rgba(204,255,0,0.3);' : 'background: rgba(255,255,255,0.1); color: #888;'}">TODAS</button>
+                        <button onclick="window.EventsController.setFilter('category', 'male')" style="white-space: nowrap; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: none; cursor: pointer; transition: all 0.2s; ${currentCat === 'male' ? 'background: #00E36D; color: #000;' : 'background: rgba(255,255,255,0.05); color: #888;'}">MASC</button>
+                        <button onclick="window.EventsController.setFilter('category', 'female')" style="white-space: nowrap; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: none; cursor: pointer; transition: all 0.2s; ${currentCat === 'female' ? 'background: #FF00CC; color: white;' : 'background: rgba(255,255,255,0.05); color: #888;'}">FEM</button>
+                        <button onclick="window.EventsController.setFilter('category', 'mixed')" style="white-space: nowrap; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: none; cursor: pointer; transition: all 0.2s; ${currentCat === 'mixed' ? 'background: #FFD700; color: black;' : 'background: rgba(255,255,255,0.05); color: #888;'}">MIXTO</button>
+                    </div>
+                </div>
+            `;
         }
 
         getTodayStr() {
@@ -26,19 +80,59 @@
             return `${year}-${month}-${day}`;
         }
 
+        getAllSortedEvents() {
+            // Merge Americanas and Entrenos
+            const all = [
+                ...this.state.americanas.map(e => ({ ...e, type: 'americana' })),
+                ...this.state.entrenos.map(e => ({ ...e, type: 'entreno' }))
+            ];
+            // Sort by Date ASC (nearest first) or DESC depending on need?
+            // Usually for "Upcoming" we want nearest date (ASC). 
+            // The previous code had .orderBy('date', 'desc') for Americanas, which puts future dates at the top if they are far future? No, desc means 2025 before 2024.
+            // Actually for a calendar "Disponibles", usually you want the *soonest* event first.
+            // Let's stick to the previous ordering logic which seemed to be DESC (newest created? or furthest date? 'date' is usually event date).
+            // Wait, previous code: .orderBy('date', 'desc'). 
+            // If date is "2024-10-30", then DESC will show 2025 before 2024.
+            // Let's replicate strict string comparison sort.
+            return all.sort((a, b) => {
+                if (a.date === b.date) return a.time.localeCompare(b.time);
+                return a.date.localeCompare(b.date); // ASC: Nearest date first seems more logical for a calendar
+            });
+            // Re-reading: The previous code had orderBy('date', 'desc'). If the user enters dates like "2024-05-20", descending means "2024-05-21" comes BEFORE "2024-05-20".
+            // That sounds like "Latest News" order, not "Calendar" order. 
+            // However, I will stick to ASC (Chronological) which makes more sense for "Agenda" and "Upcoming".
+        }
+
         init() {
+            if (this.state.initialized) {
+                console.log("🎟️ [EventsController] Already initialized, rendering current state.");
+                this.render();
+                return;
+            }
+            console.log("🎟️ [EventsController] Initializing for the first time...");
+            this.state.initialized = true;
+
             // grab user from global store (auth)
             this.state.currentUser = window.Store ? window.Store.getState('currentUser') : null;
 
             // 1. Real-time Americanas Listener
             if (this.unsubscribeEvents) this.unsubscribeEvents();
             this.unsubscribeEvents = window.db.collection('americanas')
-                .orderBy('date', 'desc') // Newest first
+                .orderBy('date', 'asc') // Changed to ASC for chronological order
                 .onSnapshot(snapshot => {
-                    this.state.events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    this.state.loading = false;
-                    this.render();
-                }, err => console.error("Error fetching events:", err));
+                    this.state.americanas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    this.checkLoading();
+                }, err => console.error("Error fetching americanas:", err));
+
+            // 1b. Real-time Entrenos Listener
+            if (this.unsubscribeEntrenos) this.unsubscribeEntrenos();
+            this.unsubscribeEntrenos = window.db.collection('entrenos')
+                .orderBy('date', 'asc')
+                .onSnapshot(snapshot => {
+                    this.state.entrenos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    this.checkLoading();
+                }, err => console.error("Error fetching entrenos:", err));
+
 
             // 2. Real-time Users Listener (For Ranking)
             if (this.unsubscribeUsers) this.unsubscribeUsers();
@@ -50,11 +144,25 @@
                     if (this.state.activeTab === 'ranking') this.render();
                 });
 
-            this.render();
+            // Initial render call not needed here as onSnapshot will trigger it via checkLoading
+        }
+
+        checkLoading() {
+            // Loading is complete if both are non-null
+            if (this.state.americanas !== null && this.state.entrenos !== null) {
+                this.state.loading = false;
+                console.log("🎟️ [EventsController] Loading complete. Events:", this.state.americanas.length + this.state.entrenos.length);
+                this.render();
+            }
         }
 
         async setTab(tabName) {
             this.state.activeTab = tabName;
+
+            // Haptic Feedback
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(15);
+            }
 
             // If switching to results, fetch personal matches
             if (tabName === 'results' && this.state.currentUser) {
@@ -81,73 +189,75 @@
             // --- 1. SUBMENU NAVIGATION ---
             const tabs = [
                 { id: 'events', label: 'DISPONIBLES', icon: 'fa-trophy' },
-                { id: 'agenda', label: 'MI AGENDA', icon: 'fa-circle' },
-                { id: 'results', label: 'RESULTADOS', icon: 'fa-poll' },
+                { id: 'agenda', label: 'AGENDA', icon: 'fa-circle' },
+                { id: 'results', label: 'MIS RESULTADOS', icon: 'fa-poll' },
                 { id: 'finished', label: 'FINALIZADAS', icon: 'fa-history' }
             ];
 
             const navHtml = `
                 <div class="events-submenu-container" style="
-                    background: #2C353E; 
-                    padding: 12px 6px; 
-                    border-bottom: 1px solid rgba(204,255,0,0.1); 
+                    background: #232a32; 
+                    padding: 10px 4px; 
+                    border-bottom: 1px solid rgba(204,255,0,0.15); 
                     margin-bottom: 0px; 
                     display: flex; 
                     justify-content: space-around; 
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
                     position: sticky;
-                    top: 155px; /* Adjusting slightly for better fit */
-                    z-index: 50;
-                    border-radius: 0 0 0px 0px;
+                    top: 180px; 
+                    z-index: 11000; /* Higher than header z-index */
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
                 ">
                     ${tabs.map(tab => {
                 const isActive = this.state.activeTab === tab.id;
                 const isPadelBall = tab.id === 'agenda';
 
                 return `
-                        <button onclick="window.EventsController.setTab('${tab.id}')" 
+                <button onclick="window.EventsController.setTab('${tab.id}')" 
                                 style="
                                     background: transparent; 
                                     border: none; 
                                     display: flex;
                                     flex-direction: column;
                                     align-items: center;
-                                    gap: 6px;
+                                    gap: 8px;
                                     color: ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.4)'}; 
                                     font-weight: 800; 
-                                    padding: 4px 2px;
-                                    font-size: 0.6rem;
+                                    padding: 8px 4px; /* Increased hit area */
+                                    font-size: 0.55rem;
                                     cursor: pointer;
-                                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                                    transition: all 0.2s ease;
                                     flex: 1;
-                                    letter-spacing: 0.5px;
+                                    letter-spacing: 0.3px;
                                     position: relative;
+                                    min-width: 0;
                                 ">
                             <div style="
                                 width: 44px; height: 44px; 
+                                border-radius: 14px; 
+                                background: ${isActive ? 'rgba(204,255,0,0.1)' : 'rgba(255,255,255,0.05)'};
                                 display: flex; align-items: center; justify-content: center; 
-                                border-radius: 12px; 
-                                background: ${isActive ? 'transparent' : 'rgba(255,255,255,0.1)'};
-                                border: 2px solid ${isActive ? '#CCFF00' : 'transparent'};
+                                border: 1.5px solid ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.1)'};
                                 transition: all 0.3s;
-                                box-shadow: ${isActive ? '0 0 15px rgba(204,255,0,0.8)' : 'none'};
-                                margin-bottom: 4px;
+                                box-shadow: ${isActive ? '0 0 15px rgba(204,255,0,0.3)' : 'none'};
+                                margin-bottom: 2px;
                             ">
                                 ${isPadelBall ?
                         `<div style="
                                         width: 22px; height: 22px; 
-                                        background: ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.7)'}; 
+                                        background: ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.5)'}; 
                                         border-radius: 50%; 
                                         position: relative;
                                         border: 2px solid ${isActive ? '#000' : 'transparent'};
                                     ">
                                         <div style="position:absolute; top:20%; left:10%; width:80%; height:60%; border:1.5px solid rgba(0,0,0,0.2); border-radius:50%; border-top:none; border-bottom:none;"></div>
                                     </div>` :
-                        `<i class="fas ${tab.icon}" style="font-size: 1.15rem; color: ${isActive ? '#CCFF00' : '#fff'};"></i>`
+                        `<i class="fas ${tab.icon}" style="font-size: 1.1rem; color: ${isActive ? '#CCFF00' : '#888'};"></i>`
                     }
                             </div>
-                            <span style="text-transform: uppercase;">${tab.label}</span>
-                            ${isActive ? `<div style="width: 20px; height: 4px; background: #CCFF00; border-radius: 10px; margin-top: 6px; box-shadow: 0 0 10px #CCFF00;"></div>` : ''}
+                            <span style="text-transform: uppercase; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${tab.label}</span>
+                            ${isActive ? `<div style="width: 16px; height: 3px; background: #CCFF00; border-radius: 10px; margin-top: 4px; box-shadow: 0 0 10px #CCFF00;"></div>` : ''}
                         </button>
                     `}).join('')}
                 </div>
@@ -181,11 +291,12 @@
         // --- VIEW RENDERERS ---
 
         renderEventsList(onlyMine) {
-            let events = this.state.events;
+            let events = this.getAllSortedEvents();
+            const { month, category } = this.state.filters;
             const uid = this.state.currentUser ? this.state.currentUser.uid : null;
             const todayStr = this.getTodayStr();
 
-            // DISPONIBLES Filter: Not finished AND not past
+            // 0. General Filter (Available)
             if (!onlyMine) {
                 events = events.filter(e => e.status !== 'finished' && e.date >= todayStr);
             } else if (onlyMine) {
@@ -196,7 +307,21 @@
                 });
             }
 
+            // 1. Apply Month Filter
+            if (month !== 'all') {
+                events = events.filter(e => e.date.startsWith(month));
+            }
+
+            // 2. Apply Category Filter
+            if (category !== 'all') {
+                events = events.filter(e => e.category === category);
+            }
+
             const eventsHtml = events.map(evt => this.renderCard(evt)).join('');
+
+            // Pass unfiltered (time-wise valid) events to renderFilterBar to show all valid month options
+            const availableEvents = this.getAllSortedEvents().filter(e => e.status !== 'finished' && e.date >= todayStr);
+            const filterBarHtml = !onlyMine ? this.renderFilterBar(availableEvents) : '';
 
             return `
                 <div style="min-height: 80vh; padding-top: 15px;">
@@ -207,7 +332,7 @@
                         align-items: center; 
                         background: linear-gradient(135deg, #0f172a 0%, #000000 100%); 
                         border-radius: 20px; 
-                        margin: 0 10px 20px 10px;
+                        margin: 0 10px 10px 10px;
                         box-shadow: 0 0 25px rgba(204,255,0,0.25), 0 10px 40px rgba(0,0,0,0.6);
                         border: 2px solid #CCFF00;
                         position: relative;
@@ -296,12 +421,14 @@
                         }
                     </style>
 
+                    ${filterBarHtml}
+
                     <div style="padding-bottom: 120px; padding-left:10px; padding-right:10px;">
                         ${eventsHtml.length ? eventsHtml : `
                             <div style="padding:100px 40px; text-align:center; color:#444;">
-                                <i class="fas fa-calendar-times" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.1;"></i>
-                                <h3 style="color: #666; font-weight: 800;">SIN EVENTOS DISPONIBLES</h3>
-                                <p style="font-size: 0.85rem; color: #888;">No hay americanas abiertas en este momento.</p>
+                                <i class="fas fa-filter" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.1;"></i>
+                                <h3 style="color: #666; font-weight: 800;">SIN RESULTADOS</h3>
+                                <p style="font-size: 0.85rem; color: #888;">No hay eventos que coincidan con los filtros seleccionados.</p>
                             </div>
                         `}
                     </div>
@@ -316,7 +443,7 @@
             const todayStr = this.getTodayStr();
 
             // Filter events where user is participant and NOT finished AND not past
-            const myEvents = this.state.events.filter(e => {
+            const myEvents = this.getAllSortedEvents().filter(e => {
                 if (e.status === 'finished') return false;
                 if (e.date < todayStr && e.status !== 'live') return false;
                 const players = e.players || e.registeredPlayers || [];
@@ -330,52 +457,50 @@
                             <i class="far fa-calendar-alt" style="font-size:2.5rem; color:#444;"></i>
                         </div>
                         <h3 style="color:#fff; font-weight:800;">AGUARDA TU MOMENTO</h3>
-                        <p style="font-size:0.85rem; color:#666; max-width:200px; margin:10px auto;">No tienes torneos próximos en los que estés inscrit@.</p>
-                        <button onclick="window.EventsController.setTab('events')" style="margin-top:25px; background:var(--playtomic-neon); color:black; border:none; padding:12px 25px; border-radius:30px; font-weight:900; font-size:0.8rem; cursor:pointer; box-shadow:0 10px 20px rgba(0,227,109,0.2);">EXPLORAR TORNEOS</button>
+                        <p style="font-size:0.85rem; color:#666; max-width:200px; margin:10px auto;">No tienes torneos ni entrenos próximos en los que estés inscrit@.</p>
+                        <button onclick="window.EventsController.setTab('events')" style="margin-top:25px; background:var(--playtomic-neon); color:black; border:none; padding:12px 25px; border-radius:30px; font-weight:900; font-size:0.8rem; cursor:pointer; box-shadow:0 10px 20px rgba(0,227,109,0.2);">EXPLORAR EVENTOS</button>
                     </div>
                 `;
             }
 
             return `
-                <div style="padding: 20px; background: #0a0a0a; min-height: 80vh;">
-                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px; background: #111; padding: 15px; border-radius: 16px; border: 1px solid #222;">
-                        <div style="width: 50px; height: 50px; background: var(--playtomic-neon); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: black; box-shadow:0 0 15px rgba(0,227,109,0.3);"><i class="fas fa-calendar-check"></i></div>
+                <div style="padding: 20px; background: #f8fafc; min-height: 80vh;">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px; background: white; padding: 20px; border-radius: 24px; border: 1px solid #edf2f7; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                        <div style="width: 50px; height: 50px; background: var(--playtomic-neon); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: black; box-shadow: 0 5px 15px rgba(204, 255, 0, 0.3);"><i class="fas fa-calendar-check"></i></div>
                         <div>
-                            <h2 style="font-size: 1.2rem; font-weight: 800; margin: 0; color:white;">Mi Agenda Pro</h2>
-                            <p style="font-size: 0.7rem; color: #666; margin: 0; text-transform:uppercase; letter-spacing:1px; font-weight:700;">${myEvents.length} TORNEOS CONFIRMADOS</p>
+                            <h2 style="font-size: 1.25rem; font-weight: 900; margin: 0; color: #1e293b; letter-spacing: -0.5px;">Mi Agenda Pro</h2>
+                            <p style="font-size: 0.7rem; color: #64748b; margin: 2px 0 0 0; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800;">${myEvents.length} RESERVAS ACTIVAS</p>
                         </div>
                     </div>
 
                     ${myEvents.map(evt => {
                 const isLive = evt.status === 'live';
-                const statusColor = isLive ? 'var(--playtomic-neon)' : '#007AFF';
+                const location = evt.location || 'Somospadel';
                 return `
-                            <div style="background: #111; border: 1px solid #222; border-radius: 20px; margin-bottom: 20px; overflow: hidden; position: relative;">
-                                ${isLive ? `<div style="position:absolute; top:0; right:0; background:var(--playtomic-neon); color:black; font-size:0.6rem; font-weight:950; padding:4px 12px; border-bottom-left-radius:12px; animation:pulse-bg 2s infinite;">LIVE</div>` : ''}
-                                <div style="padding: 20px;">
-                                    <div style="display: flex; gap: 15px;">
-                                        <div style="text-align: center; background: #1a1a1a; padding: 10px; border-radius: 12px; min-width: 60px; height: fit-content; border: 1px solid #333;">
-                                            <div style="font-size: 0.6rem; color: #888; font-weight: 900; text-transform: uppercase;">${new Date(evt.date).toLocaleDateString('es-ES', { month: 'short' }).replace('.', '').toUpperCase()}</div>
-                                            <div style="font-size: 1.5rem; font-weight: 900; color: white; line-height: 1;">${new Date(evt.date).getDate()}</div>
+                            <div style="background: white; border: 1px solid #f1f5f9; border-radius: 24px; margin-bottom: 16px; overflow: hidden; position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.04); transition: transform 0.2s;" ontouchstart="this.style.transform='scale(0.98)'" ontouchend="this.style.transform='scale(1)'">
+                                ${isLive ? `<div style="position:absolute; top:0; right:0; background:#FF2D55; color:white; font-size:0.6rem; font-weight:900; padding:6px 14px; border-bottom-left-radius:16px; animation:pulse-bg 2s infinite; letter-spacing: 1px;">LIVE NOW</div>` : ''}
+                                <div style="padding: 24px;">
+                                    <div style="display: flex; gap: 18px; align-items: center;">
+                                        <div style="text-align: center; background: #f8fafc; padding: 12px; border-radius: 18px; min-width: 60px; height: fit-content; border: 1px solid #e2e8f0;">
+                                            <div style="font-size: 0.65rem; color: #64748b; font-weight: 900; text-transform: uppercase;">${new Date(evt.date).toLocaleDateString('es-ES', { month: 'short' }).replace('.', '').toUpperCase()}</div>
+                                            <div style="font-size: 1.6rem; font-weight: 950; color: #1e293b; line-height: 1; margin-top: 2px;">${new Date(evt.date).getDate()}</div>
                                         </div>
-                                        <div>
-                                            <h3 style="margin: 0; font-size: 1.1rem; color: #fff; font-weight: 800;">${evt.name}</h3>
-                                            <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
-                                                <span style="font-size: 0.75rem; color: #aaa;"><i class="far fa-clock" style="color: var(--playtomic-neon); margin-right: 4px;"></i> ${evt.time}</span>
-                                                <span style="font-size: 0.75rem; color: #aaa;"><i class="fas fa-map-marker-alt" style="color: #ff4d4d; margin-right: 4px;"></i> Somospadel</span>
+                                        <div style="flex: 1;">
+                                            <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 850; letter-spacing: -0.3px;">${evt.name}</h3>
+                                            <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
+                                                <span style="font-size: 0.8rem; color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 4px;"><i class="far fa-clock" style="color: var(--playtomic-neon);"></i> ${evt.time}</span>
+                                                <span style="font-size: 0.8rem; color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 4px;"><i class="fas fa-map-marker-alt" style="color: #ef4444;"></i> ${location}</span>
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    <div style="margin-top: 20px; background: rgba(255,255,255,0.03); border-radius: 12px; padding: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05);">
+                                    <div style="margin-top: 20px; background: #f8fafc; border-radius: 16px; padding: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0;">
                                         <div style="display: flex; align-items: center; gap: 10px;">
-                                            <div style="width: 28px; height: 28px; background: #222; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #00E36D;"><i class="fas fa-check"></i></div>
-                                            <span style="font-size: 0.75rem; color: #888; font-weight: 600;">Plaza Reservada</span>
+                                            <div style="width: 28px; height: 28px; background: rgba(0, 227, 109, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #008a42;"><i class="fas fa-check"></i></div>
+                                            <span style="font-size: 0.75rem; color: #475569; font-weight: 700;">Plaza Reservada</span>
                                         </div>
-                                        <button onclick="window.ControlTowerView.load('${evt.id}'); Router.navigate('live');" 
-                                                style="background: #222; color: #fff; border: 1px solid #333; padding: 8px 18px; border-radius: 10px; font-size: 0.75rem; font-weight: 800; cursor: pointer; transition: all 0.2s;"
-                                                onmouseover="this.style.background='#333'; this.style.borderColor='var(--playtomic-neon)';"
-                                                onmouseout="this.style.background='#222'; this.style.borderColor='#333';">
+                                        <button onclick="window.ControlTowerView.load('${evt.id}'); window.Router.navigate('live');" 
+                                                style="background: #111; color: #fff; border: none; padding: 10px 20px; border-radius: 12px; font-size: 0.75rem; font-weight: 850; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
                                             VER DETALLES
                                         </button>
                                     </div>
@@ -393,15 +518,33 @@
 
         renderFinishedView() {
             const todayStr = this.getTodayStr();
+            const { month, category } = this.state.filters;
+
             // Show all finished americanas OR past americanas
-            const finishedEvents = this.state.events.filter(e => e.status === 'finished' || e.date < todayStr);
+            let finishedEvents = this.getAllSortedEvents().filter(e => e.status === 'finished' || e.date < todayStr);
+
+            // 1. Apply Month Filter
+            if (month !== 'all') finishedEvents = finishedEvents.filter(e => e.date.startsWith(month));
+
+            // 2. Apply Category Filter
+            if (category !== 'all') finishedEvents = finishedEvents.filter(e => e.category === category);
+
+            // Get valid months for filter bar from ALL finished events, not just filtered ones
+            const allFinished = this.getAllSortedEvents().filter(e => e.status === 'finished' || e.date < todayStr);
 
             if (finishedEvents.length === 0) {
                 return `
-                    <div style="text-align:center; padding:100px 40px; color:#666;">
-                        <i class="fas fa-history" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.1;"></i>
-                        <h3 style="color:#fff;">HISTORIAL VACÍO</h3>
-                        <p style="font-size:0.85rem;">No hay torneos finalizados registrados.</p>
+                    <div style="padding: 20px; background: #0a0a0a; min-height: 80vh;">
+                         <div style="margin-bottom: 25px;">
+                            <h2 style="font-size: 1.5rem; font-weight: 950; margin: 0; color: white; letter-spacing:-1px;">HISTORIAL <span style="color:var(--playtomic-neon);">DE EVENTOS</span></h2>
+                            <p style="font-size: 0.75rem; color: #666; margin: 5px 0 0 0;">RESULTADOS DE AMERICANAS Y ENTRENOS FINALIZADOS</p>
+                        </div>
+                        ${this.renderFilterBar(allFinished)}
+                        <div style="text-align:center; padding:50px 40px; color:#666;">
+                            <i class="fas fa-filter" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.1;"></i>
+                            <h3 style="color:#fff;">SIN DATOS</h3>
+                            <p style="font-size:0.85rem;">No hay eventos finalizados para estos filtros.</p>
+                        </div>
                     </div>
                 `;
             }
@@ -409,9 +552,11 @@
             return `
                 <div style="padding: 20px; background: #0a0a0a; min-height: 80vh;">
                     <div style="margin-bottom: 25px;">
-                        <h2 style="font-size: 1.5rem; font-weight: 950; margin: 0; color: white; letter-spacing:-1px;">HISTORIAL <span style="color:var(--playtomic-neon);">DE AMERICANAS</span></h2>
-                        <p style="font-size: 0.75rem; color: #666; margin: 5px 0 0 0;">RESULTADOS DE AMERICANAS FINALIZADAS</p>
+                        <h2 style="font-size: 1.5rem; font-weight: 950; margin: 0; color: white; letter-spacing:-1px;">HISTORIAL <span style="color:var(--playtomic-neon);">DE EVENTOS</span></h2>
+                        <p style="font-size: 0.75rem; color: #666; margin: 5px 0 0 0;">RESULTADOS DE AMERICANAS Y ENTRENOS FINALIZADOS</p>
                     </div>
+
+                    ${this.renderFilterBar(allFinished)}
                     
                     <div style="display: grid; gap: 15px; padding-bottom: 120px;">
                         ${finishedEvents.map(evt => this.renderCard(evt)).join('')}
@@ -509,7 +654,7 @@
                                          <span style="font-size: 0.7rem; color: #444; font-weight: 700;">
                                             <i class="far fa-calendar-alt"></i> ${m.created_at ? new Date(m.created_at.seconds * 1000).toLocaleDateString() : 'REAL TIME'}
                                          </span>
-                                         <button onclick="window.ControlTowerView.load('${m.americana_id}'); Router.navigate('live');" 
+                                         <button onclick="window.ControlTowerView.load('${m.americana_id}'); window.Router.navigate('live');" 
                                                  style="background: transparent; border: 1px solid #333; color: white; padding: 5px 12px; border-radius: 8px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">
                                             VER PARTIDO <i class="fas fa-play" style="margin-left:5px; font-size: 0.5rem; color: #00E36D;"></i>
                                          </button>
@@ -556,18 +701,18 @@
             // --- 1. ACTION BUTTON STATE (FAB STYLE) ---
             let btnContent = '<i class="fas fa-plus"></i>';
             let btnStyle = 'background: #00E36D; color: #000; box-shadow: 0 4px 15px rgba(0, 227, 109, 0.5);';
-            let btnAction = `event.stopPropagation(); EventsController.joinEvent('${evt.id}')`;
+            let btnAction = `event.stopPropagation(); window.EventsController.joinEvent('${evt.id}')`;
             let btnDisabled = false;
 
             if (isFinished) {
                 // Initial setup, will be refined below
                 btnContent = '<i class="fas fa-trophy"></i>';
                 btnStyle = 'background: #333; color: #fff; border: 2px solid #555;';
-                btnAction = `window.ControlTowerView.prepareLoad('${evt.id}'); Router.navigate('live');`;
+                btnAction = `window.ControlTowerView.prepareLoad('${evt.id}'); window.Router.navigate('live');`;
             } else if (isLive) {
                 btnContent = '<span style="font-size:0.6rem; font-weight:800;">LIVE</span>';
                 btnStyle = 'background: #FF2D55; color: white; animation: pulse 2s infinite; padding: 0;';
-                btnAction = `window.ControlTowerView.load('${evt.id}'); Router.navigate('live');`;
+                btnAction = `window.ControlTowerView.load('${evt.id}'); window.Router.navigate('live');`;
             } else if (isJoined) {
                 btnContent = '<i class="fas fa-check"></i>';
                 btnStyle = 'background: #000; color: #00E36D; border: 2px solid #00E36D;';
@@ -607,7 +752,7 @@
                 // Green for success/results
                 btnStyle = 'background: #00E36D; color: black; border: none; box-shadow: 0 0 15px rgba(0,227,109, 0.4); width: 60px; height: 60px;';
                 btnDisabled = false; // Enabled to see results!
-                btnAction = `window.ControlTowerView.prepareLoad('${evt.id}'); Router.navigate('live'); event.stopPropagation();`;
+                btnAction = `window.ControlTowerView.prepareLoad('${evt.id}'); window.Router.navigate('live'); event.stopPropagation();`;
             } else if (isFull) {
                 btnContent = '<span style="font-size:0.65rem; font-weight:800; letter-spacing:0.5px;">LLENO</span>';
                 btnStyle = 'background: #FF2D55; color: white; border: none; box-shadow: 0 4px 15px rgba(255, 45, 85, 0.4);';
@@ -616,7 +761,7 @@
 
             // OPTION C HTML STRUCTURE: THE HYBRID (REFINED - DARK MODE & ICONS)
             return `
-                <div id="event-card-${evt.id}" class="card-hybrid-c" onclick="ControlTowerView.prepareLoad('${evt.id}'); Router.navigate('live');" 
+                <div id="event-card-${evt.id}" class="card-hybrid-c" onclick="window.ControlTowerView.prepareLoad('${evt.id}'); window.Router.navigate('live');" 
                      style="
                         position: relative; 
                         background: #111;
@@ -754,14 +899,20 @@
                                 <span style="color: #bbb;">${evt.pair_mode === 'fixed' || (evt.name && evt.name.toUpperCase().includes('FIJA')) ? 'FIJA' : 'TWISTER'}</span>
                             </div>
 
-                            <!-- ROW 3: Courts & Players -->
+                            <!-- ROW 3: Courts & Location -->
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <i class="fas fa-table-tennis" style="color: #e91e63; width: 16px; text-align: center;"></i> 
                                 ${(evt.max_courts || 4)} Pistas
                             </div>
-                            <div onclick="event.stopPropagation(); EventsController.openPlayerListModal(this.getAttribute('data-players'))" 
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-map-marker-alt" style="color: #ef4444; width: 16px; text-align: center;"></i> 
+                                <span style="color: #eee;">${evt.location || 'Somospadel'}</span>
+                            </div>
+
+                            <!-- ROW 4: Players -->
+                            <div onclick="event.stopPropagation(); window.EventsController.openPlayerListModal(this.getAttribute('data-players'))" 
                                  data-players='${JSON.stringify(players).replace(/'/g, "&apos;")}'
-                                 style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--playtomic-neon);">
+                                 style="grid-column: span 2; display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--playtomic-neon); margin-top: 5px;">
                                 <i class="fas fa-users" style="width: 16px; text-align: center;"></i> 
                                 <span style="text-decoration: underline;">${playerCount} Inscritos</span>
                             </div>
@@ -1131,5 +1282,6 @@
 
     // Initialize globally
     window.EventsController = new EventsController();
+    console.log("✅ [EventsController] Global instance initialized at window.EventsController");
 
 })();
