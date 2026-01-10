@@ -208,18 +208,12 @@ const FirebaseDB = {
             const snapshot = await db.collection('matches')
                 .where('americana_id', '==', americanaId)
                 .get();
-            // Sort in client to avoid requiring a composite index
             return snapshot.docs
                 .map(doc => ({ id: doc.id, ...doc.data() }))
                 .sort((a, b) => (a.round || 0) - (b.round || 0));
         },
 
         async getByPlayer(playerId) {
-            // We need to check both team_a_ids and team_b_ids
-            // Note: firestore doesn't support 'OR' across different fields easily in 1 query without composite index
-            // but we can just do 2 queries or one 'array-contains' if team_ids was a single array.
-            // Since they are separate, and we want it FAST, we'll do 2 queries or a single one if we refactor.
-            // For now, let's do 2 parallel queries for robustness.
             const [snapA, snapB] = await Promise.all([
                 db.collection('matches').where('team_a_ids', 'array-contains', playerId).get(),
                 db.collection('matches').where('team_b_ids', 'array-contains', playerId).get()
@@ -229,8 +223,6 @@ const FirebaseDB = {
                 ...snapA.docs.map(doc => ({ id: doc.id, ...doc.data() })),
                 ...snapB.docs.map(doc => ({ id: doc.id, ...doc.data() }))
             ];
-
-            // Sort by creation or date?
             return matches.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
         },
 
@@ -248,20 +240,73 @@ const FirebaseDB = {
             const doc = await db.collection('matches').doc(id).get();
             return { id: doc.id, ...doc.data() };
         },
+
         async delete(id) {
             await db.collection('matches').doc(id).delete();
         }
     },
 
-    // Menu Collection (Dynamic Sidebar)
-    menu: {
+    // Entrenos Collection
+    entrenos: {
         async getAll() {
-            const snapshot = await db.collection('menu_items')
-                .orderBy('order', 'asc')
-                .get();
+            const snapshot = await db.collection('entrenos').orderBy('date', 'desc').get();
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         },
+        async getById(id) {
+            const doc = await db.collection('entrenos').doc(id).get();
+            return doc.exists ? { id: doc.id, ...doc.data() } : null;
+        },
+        async create(data) {
+            const docRef = await db.collection('entrenos').add({
+                name: data.name || "Nuevo Entreno",
+                date: data.date || new Date().toISOString().split('T')[0],
+                status: data.status || 'open',
+                ...data,
+                created_at: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            const doc = await docRef.get();
+            return { id: doc.id, ...doc.data() };
+        },
+        async update(id, data) {
+            await db.collection('entrenos').doc(id).update(data);
+            const doc = await db.collection('entrenos').doc(id).get();
+            return { id: doc.id, ...doc.data() };
+        },
+        async delete(id) {
+            await db.collection('entrenos').doc(id).delete();
+        }
+    },
 
+    // Entrenos Matches
+    entrenos_matches: {
+        async getByAmericana(entrenoId) {
+            const snapshot = await db.collection('entrenos_matches').where('americana_id', '==', entrenoId).get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => (a.round || 0) - (b.round || 0));
+        },
+        async create(data) {
+            const docRef = await db.collection('entrenos_matches').add({
+                ...data,
+                created_at: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            const doc = await docRef.get();
+            return { id: doc.id, ...doc.data() };
+        },
+        async update(id, data) {
+            await db.collection('entrenos_matches').doc(id).update(data);
+            const doc = await db.collection('entrenos_matches').doc(id).get();
+            return { id: doc.id, ...doc.data() };
+        },
+        async delete(id) {
+            await db.collection('entrenos_matches').doc(id).delete();
+        }
+    },
+
+    // Menu Collection
+    menu: {
+        async getAll() {
+            const snapshot = await db.collection('menu_items').orderBy('order', 'asc').get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        },
         async create(data) {
             const docRef = await db.collection('menu_items').add({
                 ...data,
@@ -270,15 +315,12 @@ const FirebaseDB = {
             });
             return { id: docRef.id, ...data };
         },
-
         async update(id, data) {
             const updateData = { ...data };
             if (updateData.order) updateData.order = parseInt(updateData.order);
             if (updateData.active) updateData.active = (updateData.active === 'true' || updateData.active === true);
-
             await db.collection('menu_items').doc(id).update(updateData);
         },
-
         async delete(id) {
             await db.collection('menu_items').doc(id).delete();
         }

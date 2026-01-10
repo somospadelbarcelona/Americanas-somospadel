@@ -253,30 +253,33 @@
         renderAgendaWidget(myEvents) {
             if (myEvents.length === 0) {
                 return `
-                    <div style="min-width: 100%; background: rgba(255,255,255,0.03); border-radius: 24px; padding: 40px 20px; text-align: center; border: 1px dashed rgba(255,255,255,0.1);">
-                        <div style="font-size: 2.5rem; margin-bottom: 15px; opacity: 0.2;">🎾</div>
-                        <div style="color: white; font-weight: 900; font-size: 1rem;">No tienes americanas próximas</div>
-                        <p style="color: #666; font-size: 0.8rem; margin: 8px 0 20px;">¡Apúntate a una para empezar a sumar!</p>
-                        <button onclick="Router.navigate('americanas')" style="background: #00E36D; color: black; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 950; font-size: 0.8rem; text-transform: uppercase;">Explorar Americanas</button>
+                    <div style="min-width: 100%; background: white; border-radius: 32px; padding: 50px 30px; text-align: center; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
+                        <div style="width: 80px; height: 80px; background: #f8fafc; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px; border: 1px solid #f1f5f9;">
+                            <i class="fas fa-calendar-plus" style="font-size: 2.2rem; color: #cbd5e1;"></i>
+                        </div>
+                        <h3 style="color: #0f172a; font-weight: 950; font-size: 1.25rem; margin-bottom: 10px; letter-spacing: -0.5px;">SIN PLANES PRÓXIMOS</h3>
+                        <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 25px; font-weight: 600; line-height: 1.5;">Apúntate a una americana para<br>empezar a sumar en el ranking.</p>
+                        <button onclick="Router.navigate('americanas')" style="background: #0f172a; color: white; border: none; padding: 14px 28px; border-radius: 16px; font-weight: 900; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); cursor: pointer;">EXPLORAR EVENTOS</button>
                     </div>
                 `;
             }
 
             return myEvents.map(am => `
                 <div class="agenda-card" onclick="window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');" style="
-                    min-width: 250px; background: #1c1c1e;
-                    border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);
-                    padding: 18px; scroll-snap-align: center; position: relative;
+                    min-width: 260px; background: white;
+                    border-radius: 28px; border: 1px solid #e2e8f0;
+                    padding: 22px; scroll-snap-align: center; position: relative;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.02);
                 ">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
-                        <div style="color: #00E36D; font-size: 0.7rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">${this.formatDateShort(am.date)}</div>
-                        <div style="background: rgba(0,196,255,0.1); color: #00c4ff; padding: 3px 8px; border-radius: 6px; font-size: 0.6rem; font-weight: 900; border: 1px solid rgba(0,196,255,0.1);">CONFIRMADO</div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px;">
+                        <div style="color: #84cc16; font-size: 0.75rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">${this.formatDateShort(am.date)}</div>
+                        <div style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900;">CONFIRMADO</div>
                     </div>
-                    <h4 style="margin: 0; color: white; font-size: 1.15rem; font-weight: 900; letter-spacing: -0.3px;">${am.name}</h4>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-                        <span style="color: #888; font-size: 0.8rem; font-weight: 700;"><i class="far fa-clock" style="margin-right: 5px;"></i> ${am.time}</span>
-                        <div style="display: flex; -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);">
-                            <div style="width: 24px; height: 24px; background: #333; border-radius: 50%; border: 2px solid #1c1c1e; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; color: #888;">+</div>
+                    <h4 style="margin: 0; color: #0f172a; font-size: 1.2rem; font-weight: 950; letter-spacing: -0.5px; line-height: 1.2;">${am.name}</h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid #f8fafc;">
+                        <span style="color: #64748b; font-size: 0.8rem; font-weight: 800;"><i class="far fa-clock" style="color: #84cc16; margin-right: 6px;"></i> ${am.time}</span>
+                        <div style="width: 32px; height: 32px; background: #0f172a; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem;">
+                            <i class="fas fa-chevron-right"></i>
                         </div>
                     </div>
                 </div>
@@ -599,8 +602,8 @@
 
                     html += `
                         <div class="ai-hero-card" onclick="Router.navigate('americanas');" style="background: ${cardBg}; border-radius: 16px; padding: 20px; color: white; position: relative; overflow: hidden; margin-bottom: 5px; cursor: pointer;">
-                            <div style="position: absolute; top: -20px; right: -20px; font-size: 5rem; color: rgba(255,255,255,0.1); transform: rotate(-15deg);"><i class="fas fa-brain"></i></div>
-                            <div style="background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 4px 12px; border-radius: 100px; font-size: 0.6rem; font-weight: 900; display: inline-block; margin-bottom: 12px; text-transform: uppercase;">RECOMENDACIÓN IA</div>
+                            <div style="position: absolute; top: -20px; right: -20px; font-size: 5rem; color: rgba(255,255,255,0.1); transform: rotate(-15deg);"><i class="fas fa-star"></i></div>
+                            <div style="background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 4px 12px; border-radius: 100px; font-size: 0.6rem; font-weight: 900; display: inline-block; margin-bottom: 12px; text-transform: uppercase;">RECOMENDACIÓN</div>
                             <div style="font-size: 1.4rem; font-weight: 900; margin-bottom: 5px;">${urgentAm.name}</div>
                             <p style="font-size: 0.8rem; opacity: 0.9; margin-bottom: 15px;">${statusDesc}</p>
                             <div style="background: ${btnBg}; color: black; padding: 12px; border-radius: 12px; text-align: center; font-weight: 950; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 10px;">${btnText} <i class="fas fa-arrow-right"></i></div>

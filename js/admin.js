@@ -567,7 +567,7 @@ async function loadAdminView(view) {
             });
 
         } else if (view === 'americanas_mgmt') {
-            if (titleEl) titleEl.textContent = 'Centro de Planificación de Torneos';
+            if (titleEl) titleEl.textContent = 'Centro de Planificación de Americanas';
             content.innerHTML = '<div class="loader"></div>';
 
             const americanas = await FirebaseDB.americanas.getAll();
@@ -645,6 +645,15 @@ async function loadAdminView(view) {
                                     <option value="mixed">MIXTA</option>
                                 </select>
                             </div>
+
+                            <!-- NUEVO: Selector de Sede -->
+                            <div class="form-group">
+                                <label>SEDE DEL EVENTO</label>
+                                <select name="location" class="pro-input">
+                                    <option value="Barcelona Pádel el Prat">Barcelona Pádel el Prat</option>
+                                    <option value="Delfos Cornellá">Delfos Cornellá</option>
+                                </select>
+                            </div>
                             
                             <!-- NUEVO: Modo de Parejas -->
                             <div class="form-group">
@@ -667,6 +676,10 @@ async function loadAdminView(view) {
                             <div class="form-group">
                                 <label>PLANTILLA VISUAL (IMAGEN)</label>
                                 <select name="image_url" class="pro-input">
+                                    <option value="img/americana mixta.jpg">AMERICANA TODOS (EL PRAT)</option>
+                                    <option value="img/americana masculina.jpg">AMERICANA MASCULINA (EL PRAT)</option>
+                                    <option value="img/americana femeninas.jpg">AMERICANA FEMENINA (EL PRAT)</option>
+                                    <option value="img/americana mixta.jpg">AMERICANA MIXTA (EL PRAT)</option>
                                     <option value="img/ball-mixta.png">PELOTA SOMOSPADEL (AMARILLO)</option>
                                     <option value="img/ball-masculina.png">PELOTA SOMOSPADEL (VERDE)</option>
                                     <option value="img/ball-femenina.png">PELOTA SOMOSPADEL (ROSA)</option>
@@ -710,42 +723,64 @@ async function loadAdminView(view) {
                             ${listHtml || '<div class="glass-card-enterprise" style="text-align:center; padding: 4rem; color: var(--text-muted);">No hay eventos operativos. Comienza creando uno.</div>'}
                         </div>
                     </div>
-                </div>`;
+                </div>`; // Correctly closes dashboard-grid-enterprise
 
             // Synchronization Logic for Create Form
             const createForm = document.getElementById('create-americana-form');
             if (createForm) {
                 const catSelect = createForm.querySelector('[name=category]');
+                const locSelect = createForm.querySelector('[name=location]');
                 const imgSelect = createForm.querySelector('[name=image_url]');
 
-                catSelect.addEventListener('change', () => {
+                const updateSync = () => {
                     const cat = catSelect.value;
-                    if (cat === 'male') imgSelect.value = 'img/ball-masculina.png';
-                    else if (cat === 'female') imgSelect.value = 'img/ball-femenina.png';
-                    else imgSelect.value = 'img/ball-mixta.png';
+                    const loc = locSelect.value;
+
+                    if (loc === 'Barcelona Pádel el Prat') {
+                        if (cat === 'male') imgSelect.value = 'img/americana masculina.jpg';
+                        else if (cat === 'female') imgSelect.value = 'img/americana femeninas.jpg';
+                        else if (cat === 'mixed') imgSelect.value = 'img/americana mixta.jpg';
+                        else imgSelect.value = 'img/americana mixta.jpg';
+                    } else if (loc === 'Delfos Cornellá') {
+                        imgSelect.value = 'img/delfos.png';
+                    } else {
+                        if (cat === 'male') imgSelect.value = 'img/ball-masculina.png';
+                        else if (cat === 'female') imgSelect.value = 'img/ball-femenina.png';
+                        else imgSelect.value = 'img/ball-mixta.png';
+                    }
 
                     // Auto-fill Name if empty
                     const nameInput = createForm.querySelector('[name=name]');
-                    if (!nameInput.value || nameInput.value.startsWith('AMERICANA')) {
+                    if (nameInput && (!nameInput.value || nameInput.value.startsWith('AMERICANA'))) {
                         const catLabel = cat === 'male' ? 'MASCULINA' : (cat === 'female' ? 'FEMENINA' : (cat === 'mixed' ? 'MIXTA' : 'TODOS'));
                         nameInput.value = `AMERICANA ${catLabel}`;
                     }
-                });
+                };
 
-                // Trigger once to set defaults
-                catSelect.dispatchEvent(new Event('change'));
+                if (catSelect && locSelect && imgSelect) {
+                    catSelect.addEventListener('change', updateSync);
+                    locSelect.addEventListener('change', updateSync);
+                    updateSync(); // Initial sync
+                }
+
+                createForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const fd = new FormData(e.target);
+                    // ... rest of submit logic
+                    const data = Object.fromEntries(fd.entries());
+                    // Convert numbers
+                    data.price_members = parseFloat(data.price_members) || 12;
+                    data.price_external = parseFloat(data.price_external) || 14;
+                    data.max_courts = parseInt(data.max_courts) || 4;
+
+                    try {
+                        await FirebaseDB.americanas.create(data);
+                        showToast("Evento creado con éxito 🚀", "success");
+                        loadAdminView('americanas_mgmt');
+                    } catch (err) { alert(err.message); }
+                });
             }
 
-            document.getElementById('create-americana-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const fd = new FormData(e.target);
-                const data = Object.fromEntries(fd.entries());
-                try {
-                    await FirebaseDB.americanas.create(data);
-                    alert("Americana programada con éxito");
-                    loadAdminView('americanas_mgmt');
-                } catch (err) { alert(err.message); }
-            });
 
             window.deleteAmericana = async (id) => {
                 if (!confirm("¿Eliminar este evento?")) return;
@@ -766,6 +801,7 @@ async function loadAdminView(view) {
                 form.querySelector('[name=date]').value = americana.date;
                 form.querySelector('[name=time]').value = americana.time || '18:30';
                 form.querySelector('[name=category]').value = americana.category || 'open';
+                form.querySelector('[name=location]').value = americana.location || 'Barcelona Pádel el Prat';
                 form.querySelector('[name=max_courts]').value = americana.max_courts || 4;
                 form.querySelector('[name=duration]').value = americana.duration || '2h';
                 form.querySelector('[name=status]').value = americana.status || 'open';
@@ -802,22 +838,285 @@ async function loadAdminView(view) {
                     if (imgInput.oninput) imgInput.oninput();
                 };
 
-                // Auto-sync category change in Edit Modal
-                const catSelectEdit = form.querySelector('[name=category]');
-                catSelectEdit.onchange = () => {
-                    const cat = catSelectEdit.value;
+                // Auto-sync category/location change in Edit Modal
+                const catEdit = form.querySelector('[name=category]');
+                const locEdit = form.querySelector('[name=location]');
+
+                const updateEditSync = () => {
+                    const cat = catEdit.value;
+                    const loc = locEdit.value;
                     let url = 'img/ball-mixta.png';
-                    if (cat === 'male') url = 'img/ball-masculina.png';
-                    else if (cat === 'female') url = 'img/ball-femenina.png';
+
+                    if (loc === 'Barcelona Pádel el Prat') {
+                        if (cat === 'male') url = 'img/americana masculina.jpg';
+                        else if (cat === 'female') url = 'img/americana femeninas.jpg';
+                        else if (cat === 'mixed') url = 'img/americana mixta.jpg';
+                        else url = 'img/americana mixta.jpg';
+                    } else if (loc === 'Delfos Cornellá') {
+                        url = 'img/delfos.png';
+                    } else {
+                        if (cat === 'male') url = 'img/ball-masculina.png';
+                        else if (cat === 'female') url = 'img/ball-femenina.png';
+                        else url = 'img/ball-mixta.png';
+                    }
 
                     window.selectImage(url);
                 };
+
+                catEdit.onchange = updateEditSync;
+                locEdit.onchange = updateEditSync;
 
                 modal.classList.remove('hidden');
                 modal.style.display = 'flex';
 
                 // 2. Load Participants Section
                 await loadParticipantsUI(americana.id);
+            };
+
+            // --- Entrenos Management ---
+
+            window.openCreateEntrenoModal = () => {
+                alert("Esta funcionalidad se está trasladando a la vista principal.");
+            };
+
+            window.openEditEntrenoModal = async (entrenoId) => {
+                const modal = document.getElementById('admin-entreno-modal');
+                const form = document.getElementById('edit-entreno-form');
+                if (!modal || !form) return;
+
+                try {
+                    const entreno = await FirebaseDB.entrenos.getById(entrenoId);
+                    if (!entreno) throw new Error("Entreno no encontrado");
+
+                    // 1. Fill Form
+                    form.querySelector('[name=id]').value = entreno.id;
+                    form.querySelector('[name=name]').value = entreno.name;
+                    form.querySelector('[name=date]').value = entreno.date;
+                    form.querySelector('[name=time]').value = entreno.time || '10:00';
+                    form.querySelector('[name=category]').value = entreno.category || 'open';
+                    form.querySelector('[name=location]').value = entreno.location || 'Barcelona Pádel el Prat';
+                    form.querySelector('[name=max_courts]').value = entreno.max_courts || 4;
+                    form.querySelector('[name=duration]').value = entreno.duration || '1h 30m';
+                    form.querySelector('[name=status]').value = entreno.status || 'open';
+                    form.querySelector('[name=price_members]').value = entreno.price_members || 20;
+                    form.querySelector('[name=price_external]').value = entreno.price_external || 25;
+                    form.querySelector('[name=image_url]').value = entreno.image_url || '';
+                    if (form.querySelector('[name=pair_mode]')) {
+                        form.querySelector('[name=pair_mode]').value = entreno.pair_mode || 'fixed';
+                    }
+
+                    // Helper for quick select buttons
+                    const imgInput = document.getElementById('edit-entreno-img-input');
+                    const imgPreview = document.getElementById('edit-entreno-img-preview');
+
+                    window.selectEntrenoImage = (url) => {
+                        if (imgInput) {
+                            imgInput.value = url;
+                            if (imgPreview) {
+                                imgPreview.src = url;
+                                imgPreview.style.display = 'inline-block';
+                            }
+                        }
+                    };
+
+                    if (imgInput && imgPreview) {
+                        imgInput.oninput = () => {
+                            const url = imgInput.value;
+                            if (url) {
+                                imgPreview.src = url;
+                                imgPreview.style.display = 'inline-block';
+                            } else {
+                                imgPreview.style.display = 'none';
+                            }
+                        };
+                        // Initial preview
+                        const initialUrl = entreno.image_url || '';
+                        if (initialUrl) {
+                            imgPreview.src = initialUrl;
+                            imgPreview.style.display = 'inline-block';
+                        }
+                    }
+
+                    // Auto-sync category/location change in Edit Modal
+                    const catEditE = form.querySelector('[name=category]');
+                    const locEditE = form.querySelector('[name=location]');
+
+                    const updateEditSyncE = () => {
+                        const cat = catEditE.value;
+                        const loc = locEditE.value;
+                        let url = 'img/ball-mixta.png';
+
+                        if (loc === 'Barcelona Pádel el Prat') {
+                            if (cat === 'male') url = 'img/entreno masculino prat.jpg';
+                            else if (cat === 'female') url = 'img/entreno femenino prat.jpg';
+                            else if (cat === 'mixed') url = 'img/entreno mixto prat.jpg';
+                            else url = 'img/entreno todo prat.jpg';
+                        } else if (loc === 'Delfos Cornellá') {
+                            if (cat === 'male') url = 'img/entreno masculino delfos.jpg';
+                            else if (cat === 'female') url = 'img/entreno femenino delfos.jpg';
+                            else if (cat === 'mixed') url = 'img/entreno mixto delfos.jpg';
+                            else url = 'img/entreno todo delfos.jpg';
+                        } else {
+                            if (cat === 'male') url = 'img/ball-masculina.png';
+                            else if (cat === 'female') url = 'img/ball-femenina.png';
+                            else url = 'img/ball-mixta.png';
+                        }
+
+                        window.selectEntrenoImage(url);
+                    };
+
+                    catEditE.onchange = updateEditSyncE;
+                    locEditE.onchange = updateEditSyncE;
+
+                    // Submit handler for Edit
+                    form.onsubmit = async (e) => {
+                        e.preventDefault();
+                        const fd = new FormData(e.target);
+                        const data = Object.fromEntries(fd.entries());
+                        const eid = data.id;
+                        delete data.id;
+
+                        // Convert numbers
+                        data.price_members = parseFloat(data.price_members) || 20;
+                        data.price_external = parseFloat(data.price_external) || 25;
+                        data.max_courts = parseInt(data.max_courts) || 4;
+
+                        try {
+                            await FirebaseDB.entrenos.update(eid, data);
+                            alert("Entreno actualizado con éxito 🚀");
+                            modal.classList.add('hidden');
+                            loadAdminView('entrenos_mgmt');
+                        } catch (err) { alert(err.message); }
+                    };
+
+                    modal.classList.remove('hidden');
+                    modal.style.display = 'flex';
+
+                    // 2. Load Participants Section
+                    await loadEntrenoParticipantsUI(entrenoId);
+
+                } catch (e) {
+                    alert("Error al cargar entreno: " + e.message);
+                }
+            };
+
+
+            window.deleteEntreno = async (id) => {
+                if (!confirm("¿Eliminar este entreno?")) return;
+                await FirebaseDB.entrenos.delete(id);
+                loadAdminView('entrenos_mgmt');
+            };
+
+
+
+            async function loadEntrenoParticipantsUI(id) {
+                const listContainer = document.getElementById('participants-list-entreno');
+                const select = document.getElementById('add-player-select-entreno');
+                const addBtn = document.getElementById('btn-add-player-entreno');
+
+                if (!listContainer || !select || !addBtn) return;
+
+                listContainer.innerHTML = '<div class="loader-mini"></div>';
+
+                try {
+                    const [entreno, allUsers] = await Promise.all([
+                        FirebaseDB.entrenos.getById(id),
+                        FirebaseDB.players.getAll()
+                    ]);
+
+                    const participants = entreno.players || [];
+                    const joinedIds = new Set(participants.map(p => typeof p === 'string' ? p : (p.id || p.uid)));
+                    const maxPlayers = (entreno.max_courts || 4) * 4;
+                    const isFull = participants.length >= maxPlayers;
+
+                    // A. Populate Select
+                    let filteredUsers = allUsers.filter(u => !joinedIds.has(u.id));
+
+                    // Simple gender filtering based on category
+                    if (entreno.category === 'male') {
+                        filteredUsers = filteredUsers.filter(u => u.gender === 'chico');
+                    } else if (entreno.category === 'female') {
+                        filteredUsers = filteredUsers.filter(u => u.gender === 'chica');
+                    }
+
+                    select.innerHTML = `<option value="">${isFull ? '--- LLENO ---' : 'Seleccionar Jugador...'}</option>` +
+                        filteredUsers
+                            .sort((a, b) => a.name.localeCompare(b.name))
+                            .map(u => `<option value="${u.id}">${u.name} (${u.level || '?'})</option>`)
+                            .join('');
+
+                    select.disabled = isFull;
+
+                    addBtn.onclick = async () => {
+                        const pid = select.value;
+                        if (!pid) return;
+
+                        const user = allUsers.find(u => u.id === pid);
+                        if (!user) return;
+
+                        // Store full object for compatibility with front-end renders
+                        const newPlayer = {
+                            id: user.id,
+                            uid: user.id,
+                            name: user.name,
+                            level: user.level || user.self_rate_level || '?',
+                            gender: user.gender || '?',
+                            joinedAt: new Date().toISOString()
+                        };
+
+                        const newPlayers = [...participants, newPlayer];
+                        await FirebaseDB.entrenos.update(id, { players: newPlayers });
+                        loadEntrenoParticipantsUI(id);
+                    };
+
+                    // B. Render List
+                    if (participants.length === 0) {
+                        listContainer.innerHTML = '<div style="text-align:center; color:#666; padding:15px; font-style:italic;">Sin alumnos inscritos</div>';
+                    } else {
+                        listContainer.innerHTML = participants.map((p, i) => {
+                            const pId = typeof p === 'string' ? p : (p.id || p.uid);
+                            const user = allUsers.find(u => u.id === pId);
+                            const pName = user ? user.name : (p.name || 'Desconocido');
+                            const pLevel = user ? (user.level || user.self_rate_level || '?') : (p.level || '?');
+
+                            return `
+                                <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,0.05); padding: 8px 12px; margin-bottom: 5px; border-radius: 6px;">
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <div style="width:24px; height:24px; background:#ccff00; color:black; border-radius:50%; font-size:0.7rem; font-weight:700; display:flex; align-items:center; justify-content:center;">
+                                            ${pName.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <div style="font-weight:600; font-size:0.9rem; color:white;">${pName}</div>
+                                            <div style="font-size:0.7rem; color:#888;">Nivel ${pLevel}</div>
+                                        </div>
+                                    </div>
+                                    <button onclick="removePlayerFromEntreno('${id}', '${pId}')" 
+                                            style="background:transparent; border:none; color:var(--danger); cursor:pointer; font-size:1.1rem; opacity:0.8;">
+                                        &times;
+                                    </button>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+
+                } catch (e) {
+                    console.error("Error loading entreno participants:", e);
+                    listContainer.innerHTML = `<div style="color:red; text-align:center;">Error: ${e.message}</div>`;
+                }
+            }
+
+            window.removePlayerFromEntreno = async (eid, pid) => {
+                if (!confirm("¿Eliminar a este jugador del entreno?")) return;
+                try {
+                    const entreno = await FirebaseDB.entrenos.getById(eid);
+                    const players = entreno.players || [];
+                    const newPlayers = players.filter(p => (typeof p === 'string' ? p : (p.id || p.uid)) !== pid);
+
+                    await FirebaseDB.entrenos.update(eid, { players: newPlayers });
+                    loadEntrenoParticipantsUI(eid);
+                } catch (e) {
+                    alert("Error eliminando: " + e.message);
+                }
             };
 
             // --- Participant Management Logic ---
@@ -1064,7 +1363,7 @@ async function loadAdminView(view) {
                     
                     <div style="margin-bottom: 2rem; background: rgba(255,255,255,0.03); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
                         <label style="color: var(--primary); font-weight: 800; display: block; margin-bottom: 1rem; letter-spacing: 1px;">⚙️ CONFIGURACIÓN DE ESCENARIO</label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
                             <div style="flex: 1;">
                                 <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">NÚMERO DE PISTAS</label>
                                 <select id="sim-courts-empty" class="pro-input" style="width: 100%; text-align: center;">
@@ -1086,6 +1385,13 @@ async function loadAdminView(view) {
                                     <option value="male">MASCULINA (Solo chicos)</option>
                                     <option value="female">FEMENINA (Solo chicas)</option>
                                     <option value="mixed">MIXTA (Chico + Chica)</option>
+                                </select>
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">📍 SEDE</label>
+                                <select id="sim-location-empty" class="pro-input" style="width: 100%; text-align: center;">
+                                    <option value="Barcelona Pádel el Prat">Barcelona Pádel el Prat</option>
+                                    <option value="Delfos Cornellá">Delfos Cornellá</option>
                                 </select>
                             </div>
                         </div>
@@ -1115,17 +1421,791 @@ async function loadAdminView(view) {
                     <button class="btn-primary-pro" id="btn-run-simulation-empty" style="padding: 1.5rem 3rem; font-size: 1.1rem;">📝 GENERAR CUADROS Y EMPEZAR</button>
                     <div id="sim-status-empty" style="margin-top: 2rem; font-family: 'Courier New', monospace; font-size: 0.8rem; color: var(--primary); text-align: left; display: none; background: rgba(0,0,0,0.8); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--primary-dim);"></div>
                 </div>`;
-            document.getElementById('btn-run-simulation-empty').addEventListener('click', () => {
-                // Capture explicit prices
-                const pMem = document.getElementById('sim-price-mem-empty').value;
-                const pExt = document.getElementById('sim-price-ext-empty').value;
-                // We pass them as extra config to the simulator
-                AdminSimulator.runEmptyCycle({ price_members: pMem, price_external: pExt });
+
+            const btnSimEmpty = document.getElementById('btn-run-simulation-empty');
+            if (btnSimEmpty) {
+                btnSimEmpty.addEventListener('click', () => {
+                    // Capture explicit prices
+                    const pMem = document.getElementById('sim-price-mem-empty').value;
+                    const pExt = document.getElementById('sim-price-ext-empty').value;
+                    // We pass them as extra config to the simulator
+                    AdminSimulator.runEmptyCycle({ price_members: pMem, price_external: pExt });
+                });
+            }
+
+        } else if (view === 'entrenos_mgmt') {
+            if (titleEl) titleEl.textContent = 'Centro de Planificación de Entrenos';
+            content.innerHTML = '<div class="loader"></div>';
+
+            const entries = await FirebaseDB.entrenos.getAll();
+            const listHtml = entries.map(a => `
+                <div class="glass-card-enterprise" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-left: 4px solid #ccff00; background: linear-gradient(135deg, rgba(204, 255, 0, 0.05) 0%, rgba(255,255,255,0.01) 100%);">
+                    <div style="display: flex; gap: 1.5rem; align-items: center; flex: 1;">
+                        <div class="americana-preview-img" style="width: 70px; height: 70px; border-radius: 12px; background: url('${a.image_url || 'img/default-entreno.jpg'}') center/cover; border: 2px solid rgba(204, 255, 0, 0.2);"></div>
+                        <div class="americana-info-pro" style="flex: 1;">
+                            <div style="font-weight: 800; font-size: 1.1rem; color: #FFFFFF; margin-bottom: 0.2rem;">${a.name.toUpperCase()} ${a.category !== 'open' ? `<span style="color:#ccff00; font-size:0.7rem;">[${a.category.toUpperCase()}]</span>` : ''}</div>
+                            <div style="display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-muted);">
+                                <span>📅 ${a.date}</span>
+                                <span>🕒 ${a.time || '10:00'}</span>
+                                <span style="color: #ccff00;">👥 ${a.players?.length || 0} Jugadores</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                         <button class="btn-action-pro" onclick="openEditEntrenoModal('${a.id}')" title="Editar" style="border-color: #ccff00; color: #ccff00;"><i class="fas fa-edit"></i></button>
+                         <button class="btn-secondary" style="border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-color: var(--danger-dim); color: var(--danger); font-weight: 700; font-size: 0.8rem;" onclick="deleteEntreno('${a.id}')" title="Borrar">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+
+            content.innerHTML = `
+                <div class="dashboard-grid-enterprise" style="display: grid; grid-template-columns: 400px 1fr; gap: 2.5rem;">
+                    
+                    <!-- LEFT COLUMN: FORM -->
+                    <div class="glass-card-enterprise" style="background: rgba(0,0,0,0.5); height: fit-content; padding: 2rem; border-color: rgba(204,255,0,0.2);">
+                        <h3 style="margin-bottom: 2rem; color: #ccff00; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.5rem;">🎯</span> CONFIGURAR ENTRENOS
+                        </h3>
+                        <form id="create-entreno-form-direct" class="pro-form">
+                            <div class="form-group">
+                                <label>NOMBRE DEL ENTRENO / EVENTO</label>
+                                <input type="text" name="name" placeholder="Ej: CLASE TÁCTICA NIVEL 4" class="pro-input" required>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="form-group">
+                                    <label>FECHA</label>
+                                    <input type="date" name="date" class="pro-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>HORA</label>
+                                    <input type="time" name="time" value="10:00" class="pro-input" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>CATEGORÍA DEL ENTRENO</label>
+                                <select name="category" class="pro-input">
+                                    <option value="open">TODOS</option>
+                                    <option value="male">MASCULINA</option>
+                                    <option value="female">FEMENINA</option>
+                                    <option value="mixed">MIXTA</option>
+                                </select>
+                            </div>
+
+                            <!-- NUEVO: Selector de Sede -->
+                            <div class="form-group">
+                                <label>SEDE DEL EVENTO</label>
+                                <select name="location" class="pro-input">
+                                    <option value="Barcelona Pádel el Prat">Barcelona Pádel el Prat</option>
+                                    <option value="Delfos Cornellá">Delfos Cornellá</option>
+                                </select>
+                            </div>
+                            
+                            <!-- NUEVO: Modo de Parejas (Clonado de Americanas) -->
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    <span>🎯 MODO DE PAREJAS</span>
+                                    <span style="font-size: 0.65rem; color: #888; font-weight: 400;">(Importante)</span>
+                                </label>
+                                <select name="pair_mode" class="pro-input" style="font-weight: 700;">
+                                    <option value="fixed">🔒 PAREJA FIJA (Pozo - Suben/Bajan Juntos)</option>
+                                    <option value="rotating">🔄 TWISTER (Americana Tradicional)</option>
+                                </select>
+                                <div style="margin-top: 8px; padding: 10px; background: rgba(204,255,0,0.05); border-radius: 6px; border: 1px solid rgba(204,255,0,0.1);">
+                                    <div style="font-size: 0.7rem; color: #888; line-height: 1.5;">
+                                        <strong style="color: #ccff00;">Fijas:</strong> Misma pareja todo el entreno, suben/bajan pistas según resultados<br>
+                                        <strong style="color: #ccff00;">Rotativas:</strong> Cambias de compañero cada ronda
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>PLANTILLA VISUAL (IMAGEN)</label>
+                                <select name="image_url" class="pro-input">
+                                    <option value="img/entreno todo prat.jpg">ENTRENO TODOS (EL PRAT)</option>
+                                    <option value="img/entreno masculino prat.jpg">ENTRENO MASCULINO (EL PRAT)</option>
+                                    <option value="img/entreno femenino prat.jpg">ENTRENO FEMENINO (EL PRAT)</option>
+                                    <option value="img/entreno mixto prat.jpg">ENTRENO MIXTO (EL PRAT)</option>
+                                    <option value="img/entreno todo delfos.jpg">ENTRENO TODOS (DELFOS)</option>
+                                    <option value="img/entreno masculino delfos.jpg">ENTRENO MASCULINO (DELFOS)</option>
+                                    <option value="img/entreno femenino delfos.jpg">ENTRENO FEMENINO (DELFOS)</option>
+                                    <option value="img/entreno mixto delfos.jpg">ENTRENO MIXTO (DELFOS)</option>
+                                    <option value="img/ball-mixta.png">PELOTA SOMOSPADEL (AMARILLO)</option>
+                                    <option value="img/ball-masculina.png">PELOTA SOMOSPADEL (VERDE)</option>
+                                    <option value="img/ball-femenina.png">PELOTA SOMOSPADEL (ROSA)</option>
+                                    <option value="img/americana-pro.png">SALA PRO (NEÓN AMARILLO)</option>
+                                    <option value="img/americana-night.png">NIGHT SESSION (AZUL/PÚRPURA)</option>
+                                    <option value="img/americana-mixed.png">MIXED VIBES (NARANJA/ROJO)</option>
+                                    <option value="img/logo_somospadel.png">LOGOTIPO CLUB</option>
+                                </select>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="form-group">
+                                    <label>DURACIÓN</label>
+                                    <input type="text" name="duration" value="1h 30m" class="pro-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>MAX. PISTAS</label>
+                                    <input type="number" name="max_courts" value="4" class="pro-input">
+                                </div>
+                            </div>
+                            <!-- PRECIOS -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="form-group">
+                                    <label>PRECIO SOCIOS (€)</label>
+                                    <input type="number" name="price_members" value="20" class="pro-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>PRECIO EXTERNOS (€)</label>
+                                    <input type="number" name="price_external" value="25" class="pro-input">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary-pro" style="width: 100%; margin-top: 1rem; padding: 1.2rem; background: #ccff00; color: black; border: none; font-weight: 900;">LANZAR ENTRENOS ELITE 🚀</button>
+                        </form>
+                    </div>
+
+                    <!-- RIGHT COLUMN: LIST -->
+                    <div class="planning-area">
+                        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3 style="margin:0; letter-spacing: 2px; font-size: 0.85rem; color: #3498db; font-weight: 800;">EVENTOS PROGRAMADOS</h3>
+                            <button class="btn-outline-pro" style="padding: 0.6rem 1.2rem; font-size: 0.75rem; border-color: #3498db; color: #3498db;" onclick="loadAdminView('entrenos_mgmt')">REFRESCAR</button>
+                        </div>
+                        <div class="americana-scroll-list" style="max-height: 75vh; overflow-y: auto; padding-right: 15px;">
+                            ${listHtml || '<div class="glass-card-enterprise" style="text-align:center; padding: 4rem; color: var(--text-muted);">No hay entrenos programados. Comienza creando uno.</div>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Sync Logic for Entrenos Create Form
+            const createFormE = document.getElementById('create-entreno-form-direct');
+            if (createFormE) {
+                const catSelectE = createFormE.querySelector('[name=category]');
+                const locSelectE = createFormE.querySelector('[name=location]');
+                const imgSelectE = createFormE.querySelector('[name=image_url]');
+
+                const updateSyncE = () => {
+                    const cat = catSelectE.value;
+                    const loc = locSelectE.value;
+
+                    if (loc === 'Barcelona Pádel el Prat') {
+                        if (cat === 'male') imgSelectE.value = 'img/entreno masculino prat.jpg';
+                        else if (cat === 'female') imgSelectE.value = 'img/entreno femenino prat.jpg';
+                        else if (cat === 'mixed') imgSelectE.value = 'img/entreno mixto prat.jpg';
+                        else imgSelectE.value = 'img/entreno todo prat.jpg';
+                    } else if (loc === 'Delfos Cornellá') {
+                        if (cat === 'male') imgSelectE.value = 'img/entreno masculino delfos.jpg';
+                        else if (cat === 'female') imgSelectE.value = 'img/entreno femenino delfos.jpg';
+                        else if (cat === 'mixed') imgSelectE.value = 'img/entreno mixto delfos.jpg';
+                        else imgSelectE.value = 'img/entreno todo delfos.jpg';
+                    } else {
+                        if (cat === 'male') imgSelectE.value = 'img/ball-masculina.png';
+                        else if (cat === 'female') imgSelectE.value = 'img/ball-femenina.png';
+                        else imgSelectE.value = 'img/ball-mixta.png';
+                    }
+
+                    const nameInput = createFormE.querySelector('[name=name]');
+                    if (nameInput && (!nameInput.value || nameInput.value.startsWith('ENTRENO') || nameInput.value.startsWith('CLASE'))) {
+                        const catLabel = cat === 'male' ? 'MASCULINO' : (cat === 'female' ? 'FEMENINO' : (cat === 'mixed' ? 'MIXTO' : 'TODOS'));
+                        nameInput.value = `ENTRENO ${catLabel}`;
+                    }
+                };
+
+                if (catSelectE && locSelectE && imgSelectE) {
+                    catSelectE.addEventListener('change', updateSyncE);
+                    locSelectE.addEventListener('change', updateSyncE);
+                    updateSyncE(); // Initial sync
+                }
+            }
+
+            document.getElementById('create-entreno-form-direct').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const fd = new FormData(e.target);
+                const data = Object.fromEntries(fd.entries());
+                try {
+                    await FirebaseDB.entrenos.create(data);
+                    alert("Entreno programado con éxito");
+                    loadAdminView('entrenos_mgmt');
+                } catch (err) { alert(err.message); }
             });
 
+        } else if (view === 'entrenos_results') {
+            if (titleEl) titleEl.textContent = 'Centro de Resultados de Entrenos';
+
+            const entries = await FirebaseDB.entrenos.getAll();
+
+            // Persistencia del entreno seleccionado
+            let activeEntreno = entries[0];
+            if (window.selectedEntrenoId) {
+                activeEntreno = entries.find(e => e.id === window.selectedEntrenoId) || activeEntreno;
+            } else {
+                activeEntreno = entries.find(a => a.status === 'live' || a.status === 'open') || activeEntreno;
+            }
+
+            if (!activeEntreno) {
+                content.innerHTML = `<div class="glass-card-enterprise text-center" style="padding: 4rem;"><p>No hay entrenos programados para registrar resultados.</p></div>`;
+                return;
+            }
+
+            content.innerHTML = `
+                <div class="dashboard-header-pro" style="margin-bottom: 2rem; background: linear-gradient(135deg, #0a0a0a 0%, #000 100%); padding: 2.5rem; border-radius: 24px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 20px;">
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <div style="width: 70px; height: 70px; background: rgba(204,255,0,0.15); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; border: 1px solid rgba(204,255,0,0.3); box-shadow: 0 0 20px rgba(204,255,0,0.1);">🏆</div>
+                            <div>
+                                <h1 style="margin:0; color: white; font-size: 2.4rem; font-weight: 950; letter-spacing: -1.5px; line-height: 1;">${activeEntreno.name}</h1>
+                                <div style="color: var(--primary); font-weight: 800; font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; opacity: 0.9;">MÓDULO DE CONTROL DE RESULTADOS</div>
+                            </div>
+                        </div>
+                         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button class="btn-outline-pro" onclick="resetEntrenoRound('${activeEntreno.id}', window.currentEntrenoRound)" style="border-color: #ff4d4d; color: #ff4d4d; font-weight: 800; padding: 0.9rem 1.8rem; border-radius: 12px; font-size: 0.85rem;">🚨 REINICIAR PARTIDO</button>
+                            <button class="btn-primary-pro" onclick="simulateEntrenoRound('${activeEntreno.id}', window.currentEntrenoRound)" style="background: #25D366; color: black; border-color: #25D366; font-weight: 800; padding: 0.9rem 1.8rem; border-radius: 12px; font-size: 0.85rem;">🎲 SIMULAR PARTIDO</button>
+                            <button class="btn-primary-pro" onclick="simulateAllEntrenoTournament('${activeEntreno.id}')" style="background: #ccff00; color: black; border-color: #ccff00; font-weight: 800; padding: 0.9rem 1.8rem; border-radius: 12px; font-size: 0.85rem;">🎮 SIMULAR TORNEO COMPLETO</button>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1.5fr 1fr 120px; gap: 20px; margin-bottom: 2rem;">
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label style="color: rgba(255,255,255,0.4); font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">BUSCADOR DE EVENTO:</label>
+                            <select id="entreno-select" onchange="loadSpecificEntrenoResults(this.value)" class="pro-input" style="width: 100%; height: 60px !important; font-size: 1.1rem !important; font-weight: 800 !important; background: #ffffff !important; color: #000000 !important; border-radius: 14px; border: 3px solid #3498db !important; padding: 0 15px !important;">
+                                ${entries.map(e => `<option value="${e.id}" ${e.id === activeEntreno.id ? 'selected' : ''}>${e.name.toUpperCase()} — ${e.date}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label style="color: rgba(255,255,255,0.4); font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">BUSCADOR RÁPIDO JUGADOR:</label>
+                            <input type="text" id="entreno-player-search" placeholder="Escribe nombre para destacar..." class="pro-input" style="width: 100%; height: 60px !important; background: white !important; color: black !important; font-weight: 700; border-radius: 14px; border: 3px solid #3498db !important;" onkeyup="highlightEntrenoPlayer()">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label style="color: rgba(255,255,255,0.4); font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">Nº PISTAS:</label>
+                            <div style="display: flex; gap: 5px;">
+                                <input type="number" id="entreno-quick-max-courts" value="${activeEntreno.max_courts || 0}" min="1" max="20" class="pro-input" style="width: 100%; height: 60px !important; text-align: center; font-size: 1.4rem !important; font-weight: 800 !important; background: #ffffff !important; color: #000000 !important; border-radius: 14px; border: 3px solid #3498db !important;">
+                                <button class="btn-primary-pro" onclick="updateEntrenoMaxCourtsQuick('${activeEntreno.id}')" style="height: 60px; min-width: 60px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 14px; font-size: 1.5rem; background:#3498db; border:none;" title="Guardar Pistas">💾</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 8px;">
+                        ${[1, 2, 3, 4, 5, 6].map(r => `<button class="btn-round-tab entreno-round-btn" id="btn-entreno-round-${r}" onclick="renderEntrenoMatches('${activeEntreno.id}', ${r})" style="flex: 1; min-width: 150px; height: 55px; font-weight: 900; font-size: 0.95rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); color: #888;">PARTIDO ${r}</button>`).join('')}
+                        <button class="btn-round-tab" id="btn-entreno-summary" onclick="renderEntrenoSummary('${activeEntreno.id}')" style="flex: 1.3; min-width: 180px; height: 55px; font-weight: 900; background: #3498db; border: none; border-radius: 14px; color: white; display: flex; align-items: center; justify-content: center; gap: 8px;">📊 INFORME FINAL</button>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2.5fr 1.2fr; gap: 2.5rem;">
+                    <div id="entreno-matches-container"><div class="loader"></div></div>
+                    
+                    <div class="glass-card-enterprise" style="height: fit-content; padding: 2rem; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                             <h3 style="margin:0; color:white; font-size: 1.1rem; font-weight: 900; letter-spacing: 1px;">📊 CLASIFICACIÓN</h3>
+                             <span style="font-size:0.7rem; color: var(--primary); font-weight: 800; background: rgba(52,152,219,0.2); color: #3498db; padding: 4px 10px; border-radius: 20px;">EN VIVO</span>
+                        </div>
+                        <div id="entreno-standings-container" style="max-height: 800px; overflow-y: auto; padding-right: 5px;">
+                            <!-- Standings inserted here -->
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            window.currentEntrenoRound = 1;
+
+            window.renderEntrenoMatches = async (entrenoId, roundNum) => {
+                window.currentEntrenoRound = roundNum;
+                const container = document.getElementById('entreno-matches-container');
+
+                // Tabs Logic
+                document.querySelectorAll('.entreno-round-btn').forEach(btn => {
+                    btn.style.background = 'rgba(255,255,255,0.03)';
+                    btn.style.color = '#888';
+                    btn.style.borderColor = 'rgba(255,255,255,0.1)';
+                });
+                const activeBtn = document.getElementById(`btn-entreno-round-${roundNum}`);
+                if (activeBtn) {
+                    activeBtn.style.background = '#3498db';
+                    activeBtn.style.color = 'white';
+                    activeBtn.style.borderColor = '#3498db';
+                }
+
+                container.innerHTML = '<div class="loader"></div>';
+
+                const matches = await FirebaseDB.entrenos_matches.getByAmericana(entrenoId);
+                const roundMatches = matches.filter(m => m.round === roundNum);
+
+                // --- CALCULAR STANDINGS (Copied Logic from Americanas) ---
+                const standingsContainer = document.getElementById('entreno-standings-container');
+                if (standingsContainer) {
+                    // Logic for Individual/Rotational Ranking
+                    const stats = {};
+                    matches.forEach(m => {
+                        // Only count if some score is present or marked finished? 
+                        // For Entrenos we usually want live updates as users type scores
+                        const tA = Array.isArray(m.team_a_names) ? m.team_a_names.join(' / ') : (m.team_a_names || 'Equipo A');
+                        const tB = Array.isArray(m.team_b_names) ? m.team_b_names.join(' / ') : (m.team_b_names || 'Equipo B');
+
+                        // Clean names from potential HTML
+                        const nameA = tA.replace(/<[^>]*>?/gm, '');
+                        const nameB = tB.replace(/<[^>]*>?/gm, '');
+
+                        // Initialize
+                        if (!stats[nameA]) stats[nameA] = { name: nameA, played: 0, won: 0, games: 0 };
+                        if (!stats[nameB]) stats[nameB] = { name: nameB, played: 0, won: 0, games: 0 };
+
+                        const sA = parseInt(m.score_a || 0);
+                        const sB = parseInt(m.score_b || 0);
+
+                        // Only count if played (score > 0 or status finished)
+                        // We'll count games regardless of status for live feel
+                        if (sA > 0 || sB > 0 || m.status === 'finished') {
+                            stats[nameA].played++;
+                            stats[nameB].played++;
+                            stats[nameA].games += sA;
+                            stats[nameB].games += sB;
+
+                            if (sA > sB) stats[nameA].won++;
+                            else if (sB > sA) stats[nameB].won++;
+                        }
+                    });
+
+                    const ranking = Object.values(stats).sort((a, b) => b.games - a.games || b.won - a.won);
+                    const maxGames = ranking.length > 0 ? Math.max(...ranking.map(r => r.games)) : 1;
+
+                    standingsContainer.innerHTML = ranking.map((r, i) => {
+                        const positionColors = {
+                            0: { bg: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', icon: '🥇', glow: '0 0 20px rgba(255,215,0,0.4)', text: '#000' },
+                            1: { bg: 'linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%)', icon: '🥈', glow: '0 0 15px rgba(192,192,192,0.3)', text: '#000' },
+                            2: { bg: 'linear-gradient(135deg, #CD7F32 0%, #B8860B 100%)', icon: '🥉', glow: '0 0 15px rgba(205,127,50,0.3)', text: '#000' }
+                        };
+
+                        const isPodium = i < 3;
+                        const style = positionColors[i] || { bg: 'rgba(255,255,255,0.02)', icon: `#${i + 1}`, glow: 'none', text: '#fff' };
+                        const barWidth = maxGames > 0 ? (r.games / maxGames) * 100 : 0;
+                        const medal = isPodium ? style.icon : style.icon;
+
+                        return `
+                                <div style="position: relative; margin-bottom: 8px; padding: 10px 12px; background: ${isPodium ? style.bg : 'rgba(255,255,255,0.02)'}; border-radius: 10px; border: ${isPodium ? 'none' : '1px solid rgba(255,255,255,0.05)'}; overflow: hidden; box-shadow: ${style.glow};">
+                                    ${!isPodium ? `<div style="position: absolute; left: 0; top: 0; height: 100%; width: ${barWidth}%; background: rgba(204,255,0,0.1); z-index: 0;"></div>` : ''}
+                                    <div style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between;">
+                                        <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                                            <div style="font-weight: 900; font-size: 0.9rem; color: ${style.text}; width: 25px; text-align: center;">${medal}</div>
+                                            <div>
+                                                <div style="font-weight: 700; font-size: 0.85rem; color: ${style.text};">${r.name}</div>
+                                                <div style="font-size: 0.7rem; color: ${isPodium ? 'rgba(0,0,0,0.6)' : '#888'};">${r.played} partidos</div>
+                                            </div>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div style="font-weight: 900; font-size: 1.1rem; color: ${style.text};">${r.games} <span style="font-size: 0.7rem; opacity: 0.7;">JUEGOS</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                             `;
+                    }).join('');
+                    if (ranking.length === 0) standingsContainer.innerHTML = '<div style="text-align:center; color:#666; padding:2rem;">Esperando resultados...</div>';
+                }
+
+
+                if (roundMatches.length === 0) {
+                    container.innerHTML = `
+                        <div class="glass-card-enterprise" style="text-align: center; padding: 4rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem;">
+                            <div style="font-size: 3rem; opacity: 0.5;">🎾</div>
+                            <h3 style="color: rgba(255,255,255,0.5); font-weight: 800; letter-spacing: 1px; margin: 0;">PARTIDO ${roundNum} SIN PARTIDOS</h3>
+                            <button class="btn-primary-pro" onclick="generateEntrenoNextRound('${entrenoId}', ${roundNum})" style="padding: 1.2rem 3rem; font-size: 1.1rem; background: #3498db; border: none;">GENERAR PARTIDO ${roundNum}</button>
+                        </div>`;
+                    return;
+                }
+
+                // Court Colors
+                const courtColors = ['#FFD700', '#C0C0C0', '#CD7F32', '#4A90E2', '#9B59B6', '#E74C3C', '#95A5A6', '#34495E'];
+
+                container.innerHTML = `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
+                    ${roundMatches.sort((a, b) => a.court - b.court).map(m => {
+                    const sA = m.score_a || 0;
+                    const sB = m.score_b || 0;
+                    // Determine winner state visually based on score
+                    const winA = sA > sB;
+                    const winB = sB > sA;
+
+                    return `
+                        <div class="glass-card-enterprise entreno-match-card" data-players="${(m.team_a_names + ' ' + m.team_b_names).toLowerCase()}" style="padding: 0; border: 1px solid rgba(255,255,255,0.08); overflow: hidden;">
+                             <div style="padding: 1rem; background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); border-left: 4px solid ${courtColors[m.court - 1] || '#666'};">
+                                <span style="font-weight: 800; color: ${courtColors[m.court - 1] || '#ccc'}; letter-spacing: 1px;">PISTA ${m.court} 🎾</span>
+                                <span style="font-size: 0.7rem; color: #555;">${m.status === 'finished' ? '<span style="color:#25D366; font-weight:800;">FINALIZADO</span>' : 'EN JUEGO'}</span>
+                            </div>
+                            
+                            <div style="padding: 1.5rem;">
+                                <!-- TEAM A -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                    <div style="font-weight: 700; font-size: 1rem; color: white; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${m.team_a_names}</div>
+                                    <button onclick="setEntrenoWinner('${m.id}', 'A')" 
+                                            style="
+                                                min-width: 100px; padding: 12px 20px; border-radius: 10px; font-weight: 900; border: none; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
+                                                background: ${winA ? '#25D366' : 'rgba(255,255,255,0.05)'}; 
+                                                color: ${winA ? 'black' : '#666'}; 
+                                                box-shadow: ${winA ? '0 0 20px rgba(37,211,102,0.4)' : 'none'};
+                                                outline: ${winA ? 'none' : '1px solid rgba(255,255,255,0.1)'};
+                                            ">
+                                        ${winA ? 'GANADOR' : 'WIN'}
+                                    </button>
+                                </div>
+
+                                <!-- TEAM B -->
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="font-weight: 700; font-size: 1rem; color: white; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${m.team_b_names}</div>
+                                    <button onclick="setEntrenoWinner('${m.id}', 'B')" 
+                                            style="
+                                                min-width: 100px; padding: 12px 20px; border-radius: 10px; font-weight: 900; border: none; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
+                                                background: ${winB ? '#25D366' : 'rgba(255,255,255,0.05)'}; 
+                                                color: ${winB ? 'black' : '#666'}; 
+                                                box-shadow: ${winB ? '0 0 20px rgba(37,211,102,0.4)' : 'none'};
+                                                outline: ${winB ? 'none' : '1px solid rgba(255,255,255,0.1)'};
+                                            ">
+                                        ${winB ? 'GANADOR' : 'WIN'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `}).join('')}
+                </div>`;
+            };
+
+            window.setEntrenoWinner = async (matchId, winnerTeam) => {
+                // Determine scores: Winner gets 1, Loser gets 0
+                const updates = {
+                    score_a: winnerTeam === 'A' ? 1 : 0,
+                    score_b: winnerTeam === 'B' ? 1 : 0,
+                    status: 'finished'
+                };
+                await FirebaseDB.entrenos_matches.update(matchId, updates);
+
+                // Refresh
+                const activeBtn = document.querySelector('.entreno-round-btn[style*="rgb(52, 152, 219)"]');
+                const roundNum = activeBtn ? parseInt(activeBtn.id.split('-').pop()) : 1;
+                const entrenoSelect = document.getElementById('entreno-select');
+                if (entrenoSelect) renderEntrenoMatches(entrenoSelect.value, roundNum);
+            };
+
+            window.updateEntrenoScore = async (matchId, field, value) => {
+                // Legacy support if needed, but primarily used for status now or debug
+                const updates = {};
+                updates[field] = value;
+                if (field === 'score_a' || field === 'score_b') updates[field] = parseInt(value);
+
+                await FirebaseDB.entrenos_matches.update(matchId, updates);
+                const activeBtn = document.querySelector('.entreno-round-btn[style*="rgb(52, 152, 219)"]');
+                const roundNum = activeBtn ? parseInt(activeBtn.id.split('-').pop()) : 1;
+                const entrenoSelect = document.getElementById('entreno-select');
+                renderEntrenoMatches(entrenoSelect.value, roundNum);
+            }
+
+            window.loadSpecificEntrenoResults = (id) => {
+                window.selectedEntrenoId = id;
+                loadAdminView('entrenos_results');
+            };
+
+            // --- PRO SIMULATION TOOLS ---
+            window.simulateEntrenoRound = async (id, round) => {
+                const matches = await FirebaseDB.entrenos_matches.getByAmericana(id);
+                const roundMatches = matches.filter(m => m.round === round);
+                for (const m of roundMatches) {
+                    const winA = Math.random() > 0.5;
+                    await FirebaseDB.entrenos_matches.update(m.id, {
+                        score_a: winA ? 1 : 0,
+                        score_b: winA ? 0 : 1,
+                        status: 'finished'
+                    });
+                }
+                renderEntrenoMatches(id, round);
+            };
+
+            window.simulateAllEntrenoTournament = async (id) => {
+                if (!confirm("⚠️ SIMULACIÓN TOTAL: ¿Quieres simular automáticamente TODAS las rondas del torneo?")) return;
+
+                try {
+                    for (let r = 1; r <= 6; r++) {
+                        let matches = await FirebaseDB.entrenos_matches.getByAmericana(id);
+                        let roundMatches = matches.filter(m => m.round === r);
+
+                        // Si la ronda no existe, intentamos generarla
+                        if (roundMatches.length === 0 && r > 1) {
+                            await generateEntrenoNextRound(id, r);
+                            matches = await FirebaseDB.entrenos_matches.getByAmericana(id);
+                            roundMatches = matches.filter(m => m.round === r);
+                        }
+
+                        // Simular scores para esta ronda
+                        if (roundMatches.length > 0) {
+                            for (const m of roundMatches) {
+                                if (m.status !== 'finished') {
+                                    const winA = Math.random() > 0.5;
+                                    await FirebaseDB.entrenos_matches.update(m.id, {
+                                        score_a: winA ? 1 : 0,
+                                        score_b: winA ? 0 : 1,
+                                        status: 'finished'
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    showToast("🚀 Torneo de Entreno completo simulado con éxito", "success");
+                    renderEntrenoMatches(id, 6); // Ir a la última ronda
+                } catch (e) {
+                    console.error(e);
+                    alert("Error en simulación total: " + e.message);
+                }
+            };
+
+            window.resetEntrenoRound = async (id, round) => {
+                const matches = await FirebaseDB.entrenos_matches.getByAmericana(id);
+                const roundMatches = matches.filter(m => m.round === round);
+                for (const m of roundMatches) {
+                    await FirebaseDB.entrenos_matches.update(m.id, { score_a: 0, score_b: 0, status: 'scheduled' });
+                }
+                renderEntrenoMatches(id, round);
+            };
+
+            // --- UI TOOLS ---
+            window.highlightEntrenoPlayer = () => {
+                const search = document.getElementById('entreno-player-search').value.toLowerCase();
+                const cards = document.querySelectorAll('.entreno-match-card');
+                cards.forEach(card => {
+                    const names = card.getAttribute('data-players');
+                    if (search && names.includes(search)) {
+                        card.style.border = '3px solid #ccff00';
+                        card.style.boxShadow = '0 0 20px rgba(204,255,0,0.3)';
+                    } else {
+                        card.style.border = '1px solid rgba(255,255,255,0.08)';
+                        card.style.boxShadow = 'none';
+                    }
+                });
+            };
+
+            window.updateEntrenoMaxCourtsQuick = async (id) => {
+                const val = parseInt(document.getElementById('entreno-quick-max-courts').value);
+                if (val > 0) {
+                    await FirebaseDB.entrenos.update(id, { max_courts: val });
+                    AdminAuth.localToast(`Pistas actualizadas a ${val}`, 'success');
+                }
+            };
+
+            // --- SUMMARY REPORT ---
+            window.renderEntrenoSummary = async (id) => {
+                const container = document.getElementById('entreno-matches-container');
+                const standingsBox = document.getElementById('entreno-standings-container')?.parentElement;
+
+                if (standingsBox) standingsBox.style.display = 'none';
+                container.style.gridColumn = '1 / -1';
+                container.innerHTML = '<div class="loader"></div>';
+
+                const matches = await FirebaseDB.entrenos_matches.getByAmericana(id);
+                const stats = {};
+                matches.forEach(m => {
+                    const tA = Array.isArray(m.team_a_names) ? m.team_a_names.join(' / ') : (m.team_a_names || 'Equipo A');
+                    const tB = Array.isArray(m.team_b_names) ? m.team_b_names.join(' / ') : (m.team_b_names || 'Equipo B');
+                    const nameA = tA.replace(/<[^>]*>?/gm, '');
+                    const nameB = tB.replace(/<[^>]*>?/gm, '');
+
+                    if (!stats[nameA]) stats[nameA] = { name: nameA, played: 0, won: 0, games: 0 };
+                    if (!stats[nameB]) stats[nameB] = { name: nameB, played: 0, won: 0, games: 0 };
+
+                    const sA = parseInt(m.score_a || 0);
+                    const sB = parseInt(m.score_b || 0);
+
+                    if (sA > 0 || sB > 0 || m.status === 'finished') {
+                        stats[nameA].played++;
+                        stats[nameB].played++;
+                        stats[nameA].games += sA;
+                        stats[nameB].games += sB;
+                        if (sA > sB) stats[nameA].won++;
+                        else if (sB > sA) stats[nameB].won++;
+                    }
+                });
+
+                const ranking = Object.values(stats).sort((a, b) => b.games - a.games || b.won - a.won);
+
+                container.innerHTML = `
+                    <div class="glass-card-enterprise" style="padding: 3rem; text-align: center;">
+                        <h2 style="color: #ccff00; font-size: 2.5rem; font-weight: 900; margin-bottom: 2rem;">🏆 INFORME FINAL DEL ENTRENO</h2>
+                        <div style="display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 20px; align-items: flex-end; margin-bottom: 4rem;">
+                            <!-- Plata -->
+                            <div style="background: linear-gradient(135deg, #C0C0C0 0%, #707070 100%); padding: 2rem; border-radius: 20px; height: 180px; display: flex; flex-direction: column; justify-content: center; border: 2px solid white;">
+                                <div style="font-size: 2rem;">🥈</div>
+                                <div style="font-weight: 950; color: black; font-size: 1.1rem;">${ranking[1]?.name || 'N/A'}</div>
+                                <div style="font-weight: 700; color: rgba(0,0,0,0.6);">${ranking[1]?.games || 0} JUEGOS</div>
+                            </div>
+                            <!-- Oro -->
+                            <div style="background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%); padding: 3rem; border-radius: 20px; height: 240px; display: flex; flex-direction: column; justify-content: center; border: 4px solid #ccff00; box-shadow: 0 0 30px rgba(204,255,0,0.4);">
+                                <div style="font-size: 3rem;">🥇</div>
+                                <div style="font-weight: 950; color: black; font-size: 1.4rem;">${ranking[0]?.name || 'N/A'}</div>
+                                <div style="font-weight: 900; color: rgba(0,0,0,0.7);">${ranking[0]?.games || 0} JUEGOS</div>
+                            </div>
+                            <!-- Bronce -->
+                            <div style="background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%); padding: 2rem; border-radius: 20px; height: 150px; display: flex; flex-direction: column; justify-content: center; border: 2px solid white;">
+                                <div style="font-size: 1.8rem;">🥉</div>
+                                <div style="font-weight: 950; color: black; font-size: 1rem;">${ranking[2]?.name || 'N/A'}</div>
+                                <div style="font-weight: 700; color: rgba(0,0,0,0.6);">${ranking[2]?.games || 0} JUEGOS</div>
+                            </div>
+                        </div>
+                        <button class="btn-primary-pro" onclick="loadAdminView('entrenos_results')" style="padding: 1rem 3rem;">VOLVER A RESULTADOS</button>
+                    </div>
+                `;
+            }
+
+            // --- ROUND GENERATION ---
+            window.generateEntrenoNextRound = async (entrenoId, nextRound) => {
+                try {
+                    AdminAuth.localToast(`Generando Partido ${nextRound}...`, 'info');
+                    const entreno = await FirebaseDB.entrenos.getById(entrenoId);
+                    if (!entreno) throw new Error("Entreno no encontrado");
+
+                    const allMatches = await FirebaseDB.entrenos_matches.getByAmericana(entrenoId);
+
+                    if (nextRound > 1) {
+                        const prevRound = nextRound - 1;
+                        const prevMatches = allMatches.filter(m => m.round === prevRound);
+
+                        if (prevMatches.length === 0) {
+                            throw new Error(`Debes generar la Ronda ${prevRound} primero.`);
+                        }
+
+                        const unfinished = prevMatches.filter(m => m.status !== 'finished');
+                        if (unfinished.length > 0) {
+                            throw new Error(`Completa todos los partidos de la Ronda ${prevRound} para generar la siguiente.`);
+                        }
+
+                        // Lógica de Movimiento (Pozo / Twister)
+                        const isFixedPairs = entreno.pair_mode === 'fixed';
+                        const effectiveCourts = entreno.max_courts || 4;
+
+                        if (isFixedPairs) {
+                            // POZO FIJO
+                            const pairs = entreno.fixed_pairs || [];
+                            const updatedPairs = FixedPairsLogic.updatePozoRankings(pairs, prevMatches, effectiveCourts);
+                            await FirebaseDB.entrenos.update(entrenoId, { fixed_pairs: updatedPairs });
+
+                            const newMatches = FixedPairsLogic.generatePozoRound(updatedPairs, nextRound, effectiveCourts);
+                            for (const mData of newMatches) {
+                                await FirebaseDB.entrenos_matches.create({
+                                    ...mData,
+                                    entreno_id: entrenoId,
+                                    status: 'scheduled',
+                                    score_a: 0,
+                                    score_b: 0
+                                });
+                            }
+                        } else {
+                            // TWISTER / ROTATIVO
+                            const players = entreno.players || [];
+                            const movedPlayers = RotatingPozoLogic.updatePlayerCourts(players, prevMatches, effectiveCourts, entreno.category);
+                            await FirebaseDB.entrenos.update(entrenoId, { players: movedPlayers });
+
+                            const newMatches = RotatingPozoLogic.generateRound(movedPlayers, nextRound, effectiveCourts, entreno.category);
+                            for (const mData of newMatches) {
+                                await FirebaseDB.entrenos_matches.create({
+                                    ...mData,
+                                    entreno_id: entrenoId,
+                                    status: 'scheduled',
+                                    score_a: 0,
+                                    score_b: 0
+                                });
+                            }
+                        }
+                    } else {
+                        // Si es Ronda 1 y no hay partidos (por si acaso se borraron)
+                        // Esta lógica suele estar en el simulador inicial, pero la ponemos por seguridad
+                        AdminAuth.localToast("La Ronda 1 debe inicializarse desde el Simulador.", "warning");
+                        return;
+                    }
+
+                    AdminAuth.localToast(`Ronda ${nextRound} generada correctamente.`, 'success');
+                    renderEntrenoMatches(entrenoId, nextRound);
+                } catch (e) {
+                    console.error(e);
+                    AdminAuth.localToast(e.message, 'error');
+                }
+            };
+
+            // Init first round
+            setTimeout(() => renderEntrenoMatches(activeEntreno.id, 1), 100);
+
+        } else if (view === 'entrenos_simulator') {
+            if (titleEl) titleEl.textContent = 'Simulador de Entrenos PRO';
+            content.innerHTML = `
+                <div class="glass-card-enterprise" style="max-width: 800px; margin: 0 auto; text-align: center; padding: 3rem;">
+                    <div style="font-size: 4rem; margin-bottom: 2rem;">🧠</div>
+                    <h2 style="color: var(--primary); margin-bottom: 1rem;">Simulador de Entrenos PRO</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 2.5rem;">Esta herramienta selecciona jugadores reales al azar, crea el evento de entrenamiento y genera los cruces iniciales. Los <strong>MARCADORES A 0</strong> y el estado <strong>EN JUEGO</strong>.</p>
+                    
+                    <div style="margin-bottom: 2rem; background: rgba(255,255,255,0.03); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                        <label style="color: var(--primary); font-weight: 800; display: block; margin-bottom: 1rem; letter-spacing: 1px;">⚙️ CONFIGURACIÓN DE ESCENARIO</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                            <div style="flex: 1;">
+                                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">NÚMERO DE PISTAS</label>
+                                <select id="sim-training-courts" class="pro-input" style="width: 100%; text-align: center;">
+                                    <option value="1">1 Pista (4 Jugadores)</option>
+                                    <option value="2">2 Pistas (8 Jugadores)</option>
+                                    <option value="3" selected>3 Pistas (12 Jugadores)</option>
+                                    <option value="4">4 Pistas (16 Jugadores)</option>
+                                    <option value="5">5 Pistas (20 Jugadores)</option>
+                                    <option value="6">6 Pistas (24 Jugadores)</option>
+                                    <option value="7">7 Pistas (28 Jugadores)</option>
+                                    <option value="8">8 Pistas (32 Jugadores)</option>
+                                    <option value="9">9 Pistas (36 Jugadores)</option>
+                                    <option value="10">10 Pistas (40 Jugadores)</option>
+                                </select>
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">🎾 CATEGORÍA</label>
+                                <select id="sim-training-category" class="pro-input" style="width: 100%; text-align: center;">
+                                    <option value="open">TODOS (Cualquiera)</option>
+                                    <option value="male">MASCULINA (Solo chicos)</option>
+                                    <option value="female">FEMENINA (Solo chicas)</option>
+                                    <option value="mixed">MIXTA (Chico + Chica)</option>
+                                </select>
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">📍 SEDE</label>
+                                <select id="sim-training-location" class="pro-input" style="width: 100%; text-align: center;">
+                                    <option value="Barcelona Pádel el Prat">Barcelona Pádel el Prat</option>
+                                    <option value="Delfos Cornellá">Delfos Cornellá</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr; margin-top: 15px;">
+                            <div style="flex: 1;">
+                                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">🎯 MODO DE PAREJAS</label>
+                                <select id="sim-training-pair-mode" class="pro-input" style="width: 100%; text-align: center; font-weight: 700;">
+                                    <option value="rotating">🔄 TWISTER</option>
+                                    <option value="fixed">🔒 FIJA (Pozo)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- PRICES SIMULATOR -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                            <div>
+                                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">PRECIO SOCIO (€)</label>
+                                <input type="number" id="sim-training-price-mem" value="20" class="pro-input" style="text-align: center;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 5px;">PRECIO EXTERNO (€)</label>
+                                <input type="number" id="sim-training-price-ext" value="25" class="pro-input" style="text-align: center;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary-pro" id="btn-run-training-sim" style="padding: 1.5rem 3rem; font-size: 1.1rem;">🚀 GENERAR CUADROS Y EMPEZAR</button>
+                    <div id="sim-training-status" style="margin-top: 2rem; font-family: 'Courier New', monospace; font-size: 0.8rem; color: var(--primary); text-align: left; display: none; background: rgba(0,0,0,0.8); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--primary-dim);"></div>
+                </div>`;
+
+            const btnTrain = document.getElementById('btn-run-training-sim');
+            if (btnTrain) {
+                btnTrain.addEventListener('click', () => {
+                    const pMem = document.getElementById('sim-training-price-mem').value;
+                    const pExt = document.getElementById('sim-training-price-ext').value;
+                    AdminSimulator.runTrainingCycle({ price_members: pMem, price_external: pExt });
+                });
+            }
 
         } else if (view === 'matches') {
-            if (titleEl) titleEl.textContent = 'Centro de Resultados - 6 Rondas';
+            if (titleEl) titleEl.textContent = 'Centro de Resultados de Americanas';
 
             const americanas = await FirebaseDB.americanas.getAll();
             const activeAmericana = americanas.find(a => a.status === 'in_progress' || a.status === 'open') || americanas[0];
@@ -1832,6 +2912,117 @@ window.deleteUser = async (id) => {
     }
 };
 
+// --- GESTIÓN DE ENTRENOS (Missing Functions) ---
+
+// Duplicate openEditEntrenoModal removed
+window.openEditEntrenoModal = async (entrenoId) => {
+    alert("Vista en mantenimiento. Estamos unificando la gestión.");
+};
+
+window.deleteEntreno = async (entrenoId) => {
+    if (!confirm("⚠️ ¿Estás SEGURO de eliminar este entreno permanentemente?")) return;
+    try {
+        await FirebaseDB.entrenos.delete(entrenoId);
+        showToast("Entreno eliminado con éxito", "success");
+        loadAdminView('entrenos_mgmt');
+    } catch (e) {
+        alert("Error al eliminar entreno: " + e.message);
+    }
+};
+
+async function loadEntrenoParticipantsUI(entrenoId) {
+    const listContainer = document.getElementById('entreno-participants-list');
+    const countEl = document.getElementById('entreno-count');
+    const select = document.getElementById('add-alumno-select');
+    const addBtn = document.getElementById('btn-add-alumno');
+
+    if (!listContainer || !select || !addBtn) return;
+
+    try {
+        const [entreno, allUsers] = await Promise.all([
+            FirebaseDB.entrenos.getById(entrenoId),
+            FirebaseDB.players.getAll()
+        ]);
+
+        const participants = entreno.players || [];
+        if (countEl) countEl.textContent = participants.length;
+
+        // Filter for select (only valid gender for the entreno category)
+        let filteredUsers = allUsers;
+        if (entreno.category === 'male') filteredUsers = allUsers.filter(u => u.gender === 'chico');
+        else if (entreno.category === 'female') filteredUsers = allUsers.filter(u => u.gender === 'chica');
+
+        select.innerHTML = '<option value="">Buscar jugador...</option>' +
+            filteredUsers
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(u => `<option value="${u.id}">${u.name} [${u.gender || '?'}]</option>`)
+                .join('');
+
+        addBtn.onclick = () => addPlayerToEntreno(entrenoId, select.value);
+
+        if (participants.length === 0) {
+            listContainer.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">Sin jugadores inscritos</div>';
+        } else {
+            listContainer.innerHTML = participants.map((p, i) => {
+                const user = allUsers.find(u => u.id === (p.id || p.uid)) || p;
+                return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:10px 15px; margin-bottom:5px; border-radius:8px;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="width:30px; height:30px; background:#3498db; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">
+                                ${user.name ? user.name.charAt(0) : '?'}
+                            </div>
+                            <div style="font-weight:600; color:white;">${user.name || 'Desconocido'}</div>
+                        </div>
+                        <button onclick="removePlayerFromEntreno('${entrenoId}', ${i})" style="background:transparent; border:none; color:#e74c3c; cursor:pointer; font-size:1.2rem;">&times;</button>
+                    </div>
+                `;
+            }).join('');
+        }
+    } catch (e) {
+        console.error(e);
+        listContainer.innerHTML = "Error al cargar";
+    }
+}
+
+window.addPlayerToEntreno = async (entrenoId, userId) => {
+    if (!userId) return;
+    try {
+        const entreno = await FirebaseDB.entrenos.getById(entrenoId);
+        const players = entreno.players || [];
+        const user = await FirebaseDB.players.getById(userId);
+
+        if (players.some(p => p.id === userId)) {
+            alert("El jugador ya está en el entreno");
+            return;
+        }
+
+        players.push({
+            id: user.id,
+            name: user.name,
+            gender: user.gender || '?'
+        });
+
+        await FirebaseDB.entrenos.update(entrenoId, { players });
+        await loadEntrenoParticipantsUI(entrenoId);
+        showToast("Jugador añadido", "success");
+    } catch (e) {
+        alert("Error: " + e.message);
+    }
+};
+
+window.removePlayerFromEntreno = async (entrenoId, index) => {
+    try {
+        const entreno = await FirebaseDB.entrenos.getById(entrenoId);
+        const players = entreno.players || [];
+        players.splice(index, 1);
+        await FirebaseDB.entrenos.update(entrenoId, { players });
+        await loadEntrenoParticipantsUI(entrenoId);
+        showToast("Jugador eliminado", "success");
+    } catch (e) {
+        alert("Error: " + e.message);
+    }
+};
+
 // generateMatches is now handled by the Pozo logic at the end of the file
 
 window.updateMatchScore = (matchId, team, delta) => {
@@ -2010,24 +3201,31 @@ async function syncRankings(americanaId) {
             const levA = (stats[teamAIds[0]]?.level + stats[teamAIds[1]]?.level) / 2;
             const levB = (stats[teamBIds[0]]?.level + stats[teamBIds[1]]?.level) / 2;
 
-            // K-Factor: Sensitivity of level changes (0.05 is fairly standard for Padel stability)
-            const K = 0.05;
+            // 🏆 MEJORA SOLICITADA: MOTIVACIÓN EXTRA (PROGRESIÓN POR DÉCIMAS)
+            // Aumentamos el factor K para que los movimientos sean en "décimas" reales (0.1+)
+            const K = 0.15;
 
             // Probability of Team A winning (Logistic function)
             const expectedA = 1 / (1 + Math.pow(10, (levB - levA) / 1.0));
 
-            // Actual outcome (1 for win, 0.5 for draw, 0 for loss)
+            // Actual outcome
             let actualA = 0.5;
-            if (sA > sB) actualA = 1;
-            else if (sB > sA) actualA = 0;
+            if (sA > sB) actualA = 1.0;
+            else if (sB > sA) actualA = 0.0;
 
-            // Level Shift
-            const shift = K * (actualA - expectedA);
+            // Level Shift calculation
+            let shift = K * (actualA - expectedA);
+
+            // Garantía de "décimas": Si ganas, mínimo subes 0.05 (media décima) 
+            // para que la progresión se note siempre como "motivación extra"
+            if (sA > sB && shift < 0.05) shift = 0.05;
+            if (sB > sA && shift > -0.05) shift = -0.05;
 
             // Update Players
             teamAIds.forEach(pid => {
                 if (!stats[pid]) return;
-                stats[pid].level = Math.max(0, Math.min(7, stats[pid].level + shift));
+                // Aplicamos el cambio
+                stats[pid].level = Math.max(1, Math.min(7.5, stats[pid].level + shift));
                 stats[pid].score += sA;
                 stats[pid].matches++;
                 if (sA > sB) stats[pid].wins++;
@@ -2624,6 +3822,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize Auth
     AdminAuth.init();
+
+    // Entreno Edit Form Listener (Professional Mode)
+    document.getElementById('edit-entreno-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const id = fd.get('id');
+        if (!id) return;
+
+        const data = {
+            name: fd.get('name'),
+            category: fd.get('category'),
+            location: fd.get('location'),
+            duration: fd.get('duration'),
+            status: fd.get('status'),
+            max_courts: parseInt(fd.get('max_courts')) || 1,
+            price_members: parseInt(fd.get('price_members')) || 0
+        };
+
+        try {
+            await FirebaseDB.entrenos.update(id, data);
+            closeAdminModal('admin-entreno-modal');
+            loadAdminView('entrenos_mgmt');
+            showToast("Entreno actualizado correctamente", "success");
+        } catch (err) {
+            alert("Error al actualizar: " + err.message);
+        }
+    });
 });
 
 // --- AMERICANA ANALYTICS & EXCEL EXPORT ---
@@ -3077,6 +4302,174 @@ window.copySummaryToWhatsApp = async (americanaId) => {
         alert("Error al copiar: " + e.message);
     }
 };
+// --- EDIT ENTRENO MODAL LOGIC (Cloned from Americana) ---
+window.openEditEntrenoModal = async (entrenoId) => {
+    const modal = document.getElementById('admin-entreno-modal');
+    const form = document.getElementById('edit-entreno-form');
+    if (!modal) return alert("Error: Modal no encontrado en el DOM");
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+
+    try {
+        const entreno = await FirebaseDB.entrenos.getById(entrenoId);
+
+        // Populate Form
+        form.id.value = entreno.id;
+        form.name.value = entreno.name;
+        form.date.value = entreno.date || '';
+        form.time.value = entreno.time || '';
+        form.category.value = entreno.category;
+        form.location.value = entreno.location || 'Barcelona Pádel el Prat';
+        form.pair_mode.value = entreno.pair_mode || 'rotating';
+        form.duration.value = entreno.duration || '1h 30m';
+        form.status.value = entreno.status;
+        form.max_courts.value = entreno.max_courts || 4;
+        form.price_members.value = entreno.price_members || 12;
+        form.price_external.value = entreno.price_external || 14;
+        form.image_url.value = entreno.image_url || '';
+
+        // Load Participants
+        loadEntrenoParticipantsUI(entrenoId);
+
+    } catch (e) {
+        console.error("Error loading entreno for edit: ", e);
+        alert("Error cargando datos del entreno");
+    }
+};
+
+// Participant Management for Entrenos
+window.loadEntrenoParticipantsUI = async (entrenoId) => {
+    const listContainer = document.getElementById('participants-list-entreno');
+    const select = document.getElementById('add-player-select-entreno');
+    const addBtn = document.getElementById('btn-add-player-entreno');
+
+    if (listContainer) listContainer.innerHTML = '<div class="loader-mini"></div>';
+
+    try {
+        const [entreno, allUsers] = await Promise.all([
+            FirebaseDB.entrenos.getById(entrenoId),
+            FirebaseDB.players.getAll()
+        ]);
+
+        const participants = entreno.players ?
+            (typeof entreno.players[0] === 'string' ?
+                allUsers.filter(u => entreno.players.includes(u.id)) :
+                entreno.players
+            ) : [];
+
+        // Populate Select
+        if (select) {
+            const joinedIds = new Set(participants.map(p => p.id));
+            let filteredUsers = allUsers.filter(u => !joinedIds.has(u.id));
+
+            if (entreno.category === 'male') filteredUsers = filteredUsers.filter(u => u.gender === 'chico');
+            else if (entreno.category === 'female') filteredUsers = filteredUsers.filter(u => u.gender === 'chica');
+
+            select.innerHTML = `<option value="">Seleccionar Jugador...</option>` +
+                filteredUsers.sort((a, b) => a.name.localeCompare(b.name))
+                    .map(u => `<option value="${u.id}">${u.name} (${u.level})</option>`).join('');
+        }
+
+        // Setup Add Button
+        if (addBtn) {
+            addBtn.onclick = async (e) => {
+                e.preventDefault();
+                if (!select.value) return;
+                try {
+                    let currentPlayers = entreno.players || [];
+                    if (currentPlayers.length > 0 && typeof currentPlayers[0] === 'object') {
+                        currentPlayers = currentPlayers.map(p => p.id);
+                    }
+                    currentPlayers.push(select.value);
+                    await FirebaseDB.entrenos.update(entrenoId, { players: currentPlayers });
+                    window.loadEntrenoParticipantsUI(entrenoId);
+                } catch (e) { console.error(e); alert("Error al añadir jugador: " + e.message); }
+            };
+        }
+
+        // Render List
+        if (listContainer) {
+            if (participants.length === 0) {
+                listContainer.innerHTML = '<div style="text-align:center; color:#666; padding:15px;">Sin participantes</div>';
+            } else {
+                listContainer.innerHTML = participants.map(p => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,0.05); padding: 8px 12px; margin-bottom: 5px; border-radius: 6px;">
+                            <div style="font-weight:600; font-size:0.9rem; color:white;">${p.name}</div>
+                            <button class="btn-micro" style="background:rgba(255,59,48,0.2); color:#ff3b30;" onclick="removePlayerFromEntreno('${entrenoId}', '${p.id}')">🗑️</button>
+                        </div>
+                    `).join('');
+            }
+        }
+
+    } catch (e) {
+        console.error(e);
+        if (listContainer) listContainer.innerHTML = 'Error cargando asistentes';
+    }
+};
+
+// Form Save Handler for Entrenos
+document.addEventListener('DOMContentLoaded', () => {
+    const editEntrenoForm = document.getElementById('edit-entreno-form');
+    if (editEntrenoForm) {
+        editEntrenoForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const data = Object.fromEntries(fd.entries());
+            const id = data.id;
+            delete data.id;
+
+            // Convert numbers
+            data.price_members = parseFloat(data.price_members) || 12;
+            data.price_external = parseFloat(data.price_external) || 14;
+            data.max_courts = parseInt(data.max_courts) || 4;
+
+            try {
+                await FirebaseDB.entrenos.update(id, data);
+                showToast("Entreno actualizado con éxito 🚀", "success");
+                document.getElementById('admin-entreno-modal').classList.add('hidden');
+                document.getElementById('admin-entreno-modal').style.display = 'none';
+                loadAdminView('entrenos_mgmt');
+            } catch (err) {
+                console.error("Error updating entreno:", err);
+                alert("Error al actualizar: " + err.message);
+            }
+        });
+    }
+});
+
+window.selectEntrenoImage = (url) => {
+    document.getElementById('edit-entreno-img-input').value = url;
+};
+
+window.removePlayerFromEntreno = async (entrenoId, playerId) => {
+    if (!confirm('¿Quitar jugador del entreno?')) return;
+    try {
+        const entreno = await FirebaseDB.entrenos.getById(entrenoId);
+        let currentPlayers = entreno.players || [];
+        // Handle ID array format
+        if (currentPlayers.length > 0 && typeof currentPlayers[0] === 'object') {
+            currentPlayers = currentPlayers.map(p => p.id);
+        }
+        const newPlayers = currentPlayers.filter(id => id !== playerId);
+        await FirebaseDB.entrenos.update(entrenoId, { players: newPlayers });
+        loadEntrenoParticipantsUI(entrenoId);
+    } catch (e) { alert(e.message); }
+};
+
+// Deletion Logic
+window.deleteEntreno = async (id) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este entreno? Se perderán los datos del evento.')) return;
+    try {
+        await FirebaseDB.entrenos.delete(id);
+        loadAdminView('entrenos_mgmt');
+        AdminAuth.localToast("Entreno eliminado", "success");
+    } catch (e) {
+        console.error(e);
+        alert("Error al eliminar entreno: " + e.message);
+    }
+};
+
 // --- Event Listeners & Init ---
 document.addEventListener('DOMContentLoaded', () => {
     // Force global init check with safety
@@ -3119,8 +4512,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Modal Closers
-    window.closeAdminModal = () => {
-        document.getElementById('admin-user-modal').classList.add('hidden');
+    window.closeAdminModal = (modalId) => {
+        const id = modalId || 'admin-user-modal';
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.add('hidden');
+            if (id === 'admin-entreno-modal') modal.style.display = 'none';
+        }
     };
     window.closeAmericanaModal = () => {
         document.getElementById('admin-americana-modal').classList.add('hidden');

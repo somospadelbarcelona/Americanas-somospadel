@@ -20,141 +20,123 @@
             const skills = window.PlayerController ? window.PlayerController.getCalculatedSkills() : { power: 50, control: 50, net: 50, defense: 50 };
 
             container.innerHTML = `
-                <div class="ranking-global-wrapper fade-in" style="background: #121212; min-height: 100vh; font-family: 'Outfit', sans-serif; color: #e1e1e1; padding-bottom: 50px;">
+                <div class="ranking-global-wrapper fade-in" style="background: #f8fafc; min-height: 100vh; font-family: 'Outfit', sans-serif; color: #1e293b; padding-bottom: 50px;">
                     
-                    <!-- 1. MATTE HEADER: MVP & SKILLS -->
-                    <div style="padding: 24px 20px 30px; background: #121212;">
+                    <!-- 1. LIGHT HEADER -->
+                    <div style="padding: 25px;">
                         
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                            <h1 style="font-weight: 900; font-size: 1.8rem; margin: 0; letter-spacing: -1px; color: white;">RANKING <span style="color: #00E36D;">PRO</span></h1>
-                            <div style="background: rgba(0,227,109,0.1); color: #00E36D; padding: 6px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 950; border: 1px solid rgba(0,227,109,0.1); letter-spacing: 1px;">MODO MATE</div>
+                            <div>
+                                <span style="background: rgba(132, 204, 22, 0.1); color: #84cc16; padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">Líderes de la Comunidad</span>
+                                <h1 style="font-weight: 950; font-size: 2rem; margin: 10px 0 0 0; letter-spacing: -1px; color: #0f172a;">RANKING <span style="color: #84cc16;">PRO</span></h1>
+                            </div>
                         </div>
 
-                        <!-- A. GLOBAL MVP SPOTLIGHT (MATTE) -->
+                        <!-- A. MVP SPOTLIGHT (HIGHLIGHTED) -->
                         ${topPlayer ? `
                         <div style="
-                            background: #1c1c1e;
-                            border: 1px solid rgba(255,255,255,0.05);
-                            border-radius: 24px;
+                            background: white;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 32px;
                             padding: 24px;
                             position: relative;
                             overflow: hidden;
                             margin-bottom: 25px;
-                            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
                         ">
-                            <div style="position: absolute; top: -10px; right: -10px; font-size: 6rem; color: rgba(255,255,255,0.02); transform: rotate(15deg);">🏆</div>
-                            <div style="display: flex; align-items: center; gap: 18px; position: relative; z-index: 2;">
-                                <!-- MVP PHOTO (STRICT) -->
+                            <div style="position: absolute; top: -10px; right: -20px; font-size: 8rem; color: rgba(132, 204, 22, 0.05); transform: rotate(15deg); font-weight: 900;">#1</div>
+                            <div style="display: flex; align-items: center; gap: 20px; position: relative; z-index: 2;">
+                                <!-- MVP PHOTO -->
                                 ${topPlayer.photo_url ? `
                                     <div style="
-                                        width: 75px; 
-                                        height: 75px; 
-                                        border-radius: 20px; 
-                                        border: 2px solid #00E36D; 
+                                        width: 80px; 
+                                        height: 80px; 
+                                        border-radius: 24px; 
+                                        border: 3px solid #84cc16; 
                                         background: url('${topPlayer.photo_url}') center/cover; 
+                                        box-shadow: 0 8px 20px rgba(132, 204, 22, 0.2);
                                     "></div>
                                 ` : `
                                     <div style="
-                                        width: 75px; 
-                                        height: 75px; 
-                                        border-radius: 20px; 
-                                        border: 2px solid #333; 
-                                        background: #2c2c2e;
+                                        width: 80px; 
+                                        height: 80px; 
+                                        border-radius: 24px; 
+                                        border: 1px solid #e2e8f0; 
+                                        background: #f8fafc;
                                         display: flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                        color: #666;
-                                        font-weight: 950;
-                                        font-size: 1.8rem;
+                                        align-items: center; justify-content: center;
+                                        color: #94a3b8; font-weight: 950; font-size: 1.8rem;
                                     ">${topPlayer.name.substring(0, 1).toUpperCase()}</div>
                                 `}
                                 <div>
-                                    <div style="color: #00E36D; font-size: 0.7rem; font-weight: 950; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px;">MVP DE LA SEMANA</div>
-                                    <div style="color: white; font-weight: 950; font-size: 1.5rem; letter-spacing: -0.5px; line-height: 1.1;">${topPlayer.name}</div>
-                                    <div style="color: #999; font-size: 0.8rem; font-weight: 800; margin-top: 6px;">
-                                        <span style="color: #00E36D; font-weight: 950;">${topPlayer.stats.americanas.points}</span> PUNTOS • NIVEL ${topPlayer.level.toFixed(2)}
+                                    <div style="color: #84cc16; font-size: 0.7rem; font-weight: 950; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px;">MVP ACTUAL</div>
+                                    <div style="color: #0f172a; font-weight: 950; font-size: 1.6rem; letter-spacing: -0.5px; line-height: 1.1;">${topPlayer.name}</div>
+                                    <div style="color: #64748b; font-size: 0.8rem; font-weight: 800; margin-top: 6px;">
+                                        <span style="color: #0f172a; font-weight: 950;">${topPlayer.stats.americanas.points} PTS</span> • NIVEL ${topPlayer.level.toFixed(2)}
                                     </div>
                                 </div>
                             </div>
                         </div>
                         ` : ''}
 
-                        <!-- B. MY SKILL RADAR (MATTE) -->
+                        <!-- B. SKILLS DASHBOARD -->
                         <div style="
-                            background: #1c1c1e;
-                            border: 1px solid rgba(255,255,255,0.05);
-                            border-radius: 24px;
+                            background: white;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 32px;
                             padding: 24px;
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
                         ">
-                            <div style="font-size: 0.75rem; color: #00E36D; font-weight: 950; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 20px;">MI RENDIMIENTO IA</div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px 30px;">
-                                <div>
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #888; margin-bottom: 10px; font-weight: 900; letter-spacing: 1px;">
-                                        <span>POTENCIA</span>
-                                        <span style="color:#00E36D;">${skills.power}%</span>
+                            <div style="font-size: 0.75rem; color: #1e293b; font-weight: 950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-chart-pie" style="color: #84cc16;"></i> MI RENDIMIENTO
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px 25px;">
+                                ${[
+                    { label: '% VICTORIAS', val: skills.winRate, color: '#84cc16' },
+                    { label: '% JUEGOS', val: skills.gamesRatio, color: '#0ea5e9' },
+                    { label: 'PUNTOS', val: skills.points, color: '#84cc16' },
+                    { label: 'EXPERIENCIA', val: skills.level, color: '#0ea5e9' }
+                ].map(s => `
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: #64748b; margin-bottom: 8px; font-weight: 900; letter-spacing: 0.5px;">
+                                            <span>${s.label}</span>
+                                            <span style="color: #0f172a;">${s.val}%</span>
+                                        </div>
+                                        <div style="height: 6px; background: #f1f5f9; border-radius: 100px; overflow: hidden;">
+                                            <div style="width: ${s.val}%; height: 100%; background: ${s.color};"></div>
+                                        </div>
                                     </div>
-                                    <div style="height: 6px; background: #2c2c2e; border-radius: 100px; overflow: hidden;">
-                                        <div style="width: ${skills.power}%; height: 100%; background: #00E36D;"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #888; margin-bottom: 10px; font-weight: 900; letter-spacing: 1px;">
-                                        <span>CONTROL</span>
-                                        <span style="color:#00c4ff;">${skills.control}%</span>
-                                    </div>
-                                    <div style="height: 6px; background: #2c2c2e; border-radius: 100px; overflow: hidden;">
-                                        <div style="width: ${skills.control}%; height: 100%; background: #00c4ff;"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #888; margin-bottom: 10px; font-weight: 900; letter-spacing: 1px;">
-                                        <span>RED</span>
-                                        <span style="color:#00E36D;">${skills.net}%</span>
-                                    </div>
-                                    <div style="height: 6px; background: #2c2c2e; border-radius: 100px; overflow: hidden;">
-                                        <div style="width: ${skills.net}%; height: 100%; background: #00E36D;"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #888; margin-bottom: 10px; font-weight: 900; letter-spacing: 1px;">
-                                        <span>DEFENSA</span>
-                                        <span style="color:#00c4ff;">${skills.defense}%</span>
-                                    </div>
-                                    <div style="height: 6px; background: #2c2c2e; border-radius: 100px; overflow: hidden;">
-                                        <div style="width: ${skills.defense}%; height: 100%; background: #00c4ff;"></div>
-                                    </div>
-                                </div>
+                                `).join('')}
                             </div>
                         </div>
                     </div>
 
-                    <!-- Main Navigation Tabs (MATTE) -->
-                    <div style="margin-top: -24px; display: flex; justify-content: center; padding: 0 20px; position: relative; z-index: 10;">
-                        <div style="background: #1c1c1e; padding: 6px; border-radius: 100px; display: flex; box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: 100%; max-width: 400px; border: 1px solid rgba(255,255,255,0.05);">
+                    <!-- Main Navigation Tabs -->
+                    <div style="margin-top: -15px; display: flex; justify-content: center; padding: 0 25px; position: relative; z-index: 10;">
+                        <div style="background: white; padding: 6px; border-radius: 20px; display: flex; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; border: 1px solid #e2e8f0;">
                             <button onclick="window.RankingView.switchView('americanas')" id="tab-americanas" 
-                                style="flex: 1; padding: 14px; border-radius: 100px; border: none; font-weight: 950; transition: all 0.3s; cursor: pointer; background: ${this.currentView === 'americanas' ? '#00E36D' : 'transparent'}; color: ${this.currentView === 'americanas' ? 'black' : '#666'}; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;">
+                                style="flex: 1; padding: 14px; border-radius: 16px; border: none; font-weight: 900; transition: all 0.3s; cursor: pointer; background: ${this.currentView === 'americanas' ? '#0f172a' : 'transparent'}; color: ${this.currentView === 'americanas' ? 'white' : '#94a3b8'}; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px;">
                                 AMERICANAS
                             </button>
                             <button onclick="window.RankingView.switchView('entrenos')" id="tab-entrenos" 
-                                style="flex: 1; padding: 14px; border-radius: 100px; border: none; font-weight: 950; transition: all 0.3s; cursor: pointer; background: ${this.currentView === 'entrenos' ? '#00E36D' : 'transparent'}; color: ${this.currentView === 'entrenos' ? 'black' : '#666'}; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;">
+                                style="flex: 1; padding: 14px; border-radius: 16px; border: none; font-weight: 900; transition: all 0.3s; cursor: pointer; background: ${this.currentView === 'entrenos' ? '#0f172a' : 'transparent'}; color: ${this.currentView === 'entrenos' ? 'white' : '#94a3b8'}; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px;">
                                 ENTRENOS
                             </button>
                         </div>
                     </div>
 
-                    <!-- Category Filters (MATTE) -->
-                    <div style="display: flex; gap: 12px; justify-content: center; padding: 40px 20px 20px; overflow-x: auto; scrollbar-width: none;">
+                    <!-- Category Filters -->
+                    <div style="display: flex; gap: 10px; justify-content: center; padding: 35px 25px 20px; overflow-x: auto; scrollbar-width: none;">
                         ${['todas', 'male', 'female', 'mixed'].map(cat => `
                             <button onclick="window.RankingView.filterByCategory('${cat}')" 
-                                class="filter-btn-${cat}"
-                                style="white-space: nowrap; padding: 12px 24px; border-radius: 12px; border: 1px solid ${this.currentCategory === cat ? '#00E36D' : 'rgba(255,255,255,0.05)'}; background: ${this.currentCategory === cat ? '#00E36D' : '#1c1c1e'}; color: ${this.currentCategory === cat ? 'black' : '#999'}; font-weight: 950; font-size: 0.75rem; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px;">
-                                ${cat === 'todas' ? 'TODAS' : (cat === 'male' ? 'MASC.' : (cat === 'female' ? 'FEM.' : 'MIXTA'))}
+                                style="white-space: nowrap; padding: 10px 20px; border-radius: 14px; border: 1px solid ${this.currentCategory === cat ? '#84cc16' : '#e2e8f0'}; background: ${this.currentCategory === cat ? '#84cc16' : 'white'}; color: ${this.currentCategory === cat ? 'white' : '#64748b'}; font-weight: 900; font-size: 0.7rem; transition: all 0.2s; text-transform: uppercase;">
+                                ${cat === 'todas' ? 'GLOBAL' : (cat === 'male' ? 'MASC.' : (cat === 'female' ? 'FEM.' : 'MIXTA'))}
                             </button>
                         `).join('')}
                     </div>
 
                     <!-- Player List Container -->
-                    <div id="ranking-list-body" style="padding: 0 20px 100px;">
+                    <div id="ranking-list-body" style="padding: 0 25px 100px;">
                         ${this.renderRankingList()}
                     </div>
                 </div>
@@ -172,14 +154,9 @@
         }
 
         renderRankingList() {
-            console.log(`🔍 [RankingView] Rendering List | View: ${this.currentView} | Category: ${this.currentCategory}`);
-
-            // Filter players who have played in the current view
             let filtered = this.playersData.filter(p => {
                 const s = p.stats[this.currentView];
                 if (!s || s.played === 0) return false;
-
-                // If a specific category is selected, check if they played in it
                 if (this.currentCategory !== 'todas') {
                     const hasCat = s.categories && s.categories[this.currentCategory] && s.categories[this.currentCategory].played > 0;
                     return hasCat;
@@ -187,36 +164,29 @@
                 return true;
             });
 
-            console.log(`📊 [RankingView] Players after filter: ${filtered.length}`);
-
-            // Sort logic: Points -> Level
             filtered.sort((a, b) => {
                 const sA = a.stats[this.currentView];
                 const sB = b.stats[this.currentView];
-
                 const pA = this.currentCategory === 'todas' ? sA.points : (sA.categories[this.currentCategory]?.points || 0);
                 const pB = this.currentCategory === 'todas' ? sB.points : (sB.categories[this.currentCategory]?.points || 0);
-
                 if (pB !== pA) return pB - pA;
                 return b.level - a.level;
             });
 
             if (filtered.length === 0) {
                 return `
-                    <div style="text-align: center; padding: 60px 40px; background: #1c1c1e; border-radius: 24px; border: 1.5px dashed rgba(255,255,255,0.05); color: #444; margin-top: 10px;">
-                         <div style="margin-bottom: 25px; opacity: 0.3;">
-                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#333" />
-                            </svg>
+                    <div style="text-align: center; padding: 60px 25px; background: white; border-radius: 32px; border: 1px solid #e2e8f0; color: #94a3b8;">
+                         <div style="margin-bottom: 20px; opacity: 0.5;">
+                            <i class="fas fa-trophy" style="font-size: 3rem; color: #cbd5e1;"></i>
                         </div>
-                        <h4 style="margin: 0; color: white; font-weight: 950; font-size: 1.1rem; letter-spacing: -0.2px;">Sin actividad registrada</h4>
-                        <p style="font-size: 0.85rem; margin-top: 8px; color: #555; font-weight: 700;">No hay datos para esta vista todavía.</p>
+                        <h4 style="margin: 0; color: #1e293b; font-weight: 900; font-size: 1.1rem;">Sin datos para mostrar</h4>
+                        <p style="font-size: 0.85rem; margin-top: 8px; font-weight: 600;">Participa en eventos para empezar a puntuar.</p>
                     </div>
                 `;
             }
 
             return `
-                <div style="background: #1c1c1e; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.03);">
+                <div style="background: white; border-radius: 32px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
                     ${filtered.map((p, i) => this.renderPlayerRow(p, i)).join('')}
                 </div>
             `;
@@ -227,49 +197,43 @@
             const pStats = this.currentCategory === 'todas' ? s : (s.categories[this.currentCategory] || { points: 0, played: 0, won: 0 });
 
             const isTop3 = index < 3;
-            const rankLabel = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
+            const rankLabel = index === 0 ? '👑' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
             const winRate = pStats.played > 0 ? Math.round((pStats.won / pStats.played) * 100) : 0;
-            const rankColor = isTop3 ? '#00E36D' : '#444';
 
             return `
-                <div style="display: flex; align-items: center; padding: 22px 18px; border-bottom: 1px solid rgba(255,255,255,0.03); position: relative; gap: 18px;">
+                <div style="display: flex; align-items: center; padding: 20px; border-bottom: 1px solid #f1f5f9; position: relative; gap: 15px;">
                     <!-- Position -->
-                    <div style="width: 35px; display: flex; justify-content: center; font-weight: 950; font-size: ${isTop3 ? '1.5rem' : '1rem'}; color: ${rankColor};">
+                    <div style="width: 30px; display: flex; justify-content: center; font-weight: 950; font-size: ${isTop3 ? '1.4rem' : '0.9rem'}; color: ${isTop3 ? '#84cc16' : '#94a3b8'};">
                         ${rankLabel}
                     </div>
 
-                    <!-- Avatar (Matte) -->
+                    <!-- Avatar -->
                     <div style="
-                        width: 55px; 
-                        height: 55px; 
-                        min-width: 55px; 
-                        background: #2c2c2e; 
-                        border-radius: 18px; 
-                        display: flex; 
-                        align-items: center; 
-                        justify-content: center; 
-                        border: 2px solid ${isTop3 ? '#00E36D' : '#333'}; 
-                        overflow: hidden; 
+                        width: 55px; height: 55px; 
+                        background: #f8fafc; border-radius: 18px; 
+                        display: flex; align-items: center; justify-content: center; 
+                        border: 2px solid ${isTop3 ? '#84cc16' : '#f1f5f9'}; 
+                        overflow: hidden;
                     ">
                         ${player.photo_url ?
                     `<div style="width:100%; height:100%; background: url('${player.photo_url}') center/cover;"></div>` :
-                    `<span style="font-weight: 950; font-size: 1.1rem; color: #666;">${player.name.substring(0, 2).toUpperCase()}</span>`
+                    `<span style="font-weight: 950; font-size: 1rem; color: #94a3b8;">${player.name.substring(0, 2).toUpperCase()}</span>`
                 }
                     </div>
 
-                    <!-- Player Info -->
+                    <!-- Info -->
                     <div style="flex: 1;">
-                        <div style="font-weight: 900; color: white; font-size: 1.05rem; line-height: 1.2; letter-spacing: -0.2px;">${player.name}</div>
-                        <div style="display: flex; gap: 10px; align-items: center; margin-top: 6px;">
-                            <span style="font-size: 0.65rem; background: rgba(255,255,255,0.03); color: #888; padding: 4px 10px; border-radius: 6px; font-weight: 950; letter-spacing: 0.5px; border: 1px solid rgba(255,255,255,0.03);">NIVEL ${player.level.toFixed(2)}</span>
-                            <span style="font-size: 0.65rem; color: #444; font-weight: 900; text-transform: uppercase;">${pStats.played}P / ${winRate}% WR</span>
+                        <div style="font-weight: 900; color: #0f172a; font-size: 1rem; line-height: 1.2;">${player.name}</div>
+                        <div style="display: flex; gap: 8px; align-items: center; margin-top: 5px;">
+                            <span style="font-size: 0.65rem; background: #f8fafc; color: #64748b; padding: 3px 8px; border-radius: 6px; font-weight: 900; border: 1px solid #f1f5f9;">LVL ${player.level.toFixed(2)}</span>
+                            <span style="font-size: 0.6rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">${pStats.played}P • ${winRate}% WR</span>
                         </div>
                     </div>
 
-                    <!-- Points Section -->
-                    <div style="text-align: right; min-width: 75px;">
-                        <div style="font-weight: 950; font-size: 1.5rem; color: white; letter-spacing: -0.5px; line-height: 1;">${pStats.points} <span style="font-size: 0.7rem; color: #00E36D; font-weight: 950; vertical-align: middle; margin-left: 2px;">PTS</span></div>
-                        <div style="font-size: 0.6rem; color: #444; font-weight: 950; text-transform: uppercase; margin-top: 5px;">
+                    <!-- Score -->
+                    <div style="text-align: right;">
+                        <div style="font-weight: 950; font-size: 1.25rem; color: #0f172a; line-height: 1;">${pStats.points} <span style="font-size: 0.6rem; color: #84cc16;">PTS</span></div>
+                        <div style="font-size: 0.6rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-top: 4px;">
                             ${pStats.won}V - ${pStats.played - pStats.won}D
                         </div>
                     </div>
@@ -279,5 +243,5 @@
     }
 
     window.RankingView = new RankingView();
-    console.log("🏆 Premium RankingView Initialized (Matte Skin)");
+    console.log("🏆 Light Premium RankingView Initialized");
 })();

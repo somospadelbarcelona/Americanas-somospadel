@@ -19,21 +19,16 @@ const RotatingPozoLogic = {
 
         // 1. Identificar jugadores y su estado actual
         const playerMap = {};
-        let playersWithCourt = [];
-        let newPlayers = [];
-
         players.forEach(p => {
-            let c = parseInt(p.current_court || 0);
-            if (c > 0 && c <= maxCourts) {
-                playersWithCourt.push({ ...p, current_court: c, won: false });
-            } else {
-                newPlayers.push({ ...p, current_court: 0, won: false });
-            }
+            playerMap[p.id] = {
+                ...p,
+                current_court: parseInt(p.current_court || maxCourts), // Por defecto abajo si no tiene pista
+                won: false,
+                played: false
+            };
         });
 
-        playersWithCourt.forEach(p => playerMap[p.id] = p);
-
-        // 2. Procesar Ascensos y Descensos NORMALES (solo para los que jugaron)
+        // 2. Procesar Resultados de Partidos
         if (matches && matches.length > 0) {
             matches.forEach(m => {
                 if (m.status === 'finished') {
@@ -42,46 +37,44 @@ const RotatingPozoLogic = {
                     const teamA = m.team_a_ids || [];
                     const teamB = m.team_b_ids || [];
 
-                    if (sA > sB) {
-                        teamA.forEach(id => { if (playerMap[id]) playerMap[id].won = true; });
-                    } else if (sB > sA) {
-                        teamB.forEach(id => { if (playerMap[id]) playerMap[id].won = true; });
-                    } else {
-                        teamA.forEach(id => { if (playerMap[id]) playerMap[id].won = true; });
-                    }
+                    const winners = sA > sB ? teamA : (sB > sA ? teamB : teamA); // Empate premia a Team A (o lógica de sorteo)
+
+                    [...teamA, ...teamB].forEach(id => {
+                        if (playerMap[id]) {
+                            playerMap[id].played = true;
+                            playerMap[id].won = winners.includes(id);
+                        }
+                    });
                 }
             });
+        }
 
-            // Aplicar lógica: Ganador sube (resta 1), Perdedor baja (suma 1)
-            playersWithCourt.forEach(p => {
+        // 3. Aplicar Movimiento Teórico (+1 / -1)
+        Object.values(playerMap).forEach(p => {
+            if (p.played) {
                 if (p.won) {
                     if (p.current_court > 1) p.current_court--;
                 } else {
                     if (p.current_court < maxCourts) p.current_court++;
                 }
-            });
-        }
+            }
+        });
 
-        // 3. REORGANIZACIÓN Y RELLENO (Smart Filling)
-        let allActivePlayers = [...playersWithCourt, ...newPlayers];
+        // 4. ESTABILIZACIÓN: Re-empaquetado inteligente para evitar huecos sin saltar pistas
+        let allPlayers = Object.values(playerMap);
 
         if (category === 'mixed') {
-            // Lógica Mixta: 2 hombres y 2 mujeres por pista
-            const males = allActivePlayers.filter(p => p.gender === 'chico').sort((a, b) => (a.current_court || 999) - (b.current_court || 999));
-            const females = allActivePlayers.filter(p => p.gender === 'chica').sort((a, b) => (a.current_court || 999) - (b.current_court || 999));
+            const males = allPlayers.filter(p => p.gender === 'chico').sort((a, b) => a.current_court - b.current_court || a.id.localeCompare(b.id));
+            const females = allPlayers.filter(p => p.gender === 'chica').sort((a, b) => a.current_court - b.current_court || a.id.localeCompare(b.id));
 
-            const updated = [];
-            males.forEach((p, i) => { p.current_court = Math.floor(i / 2) + 1; updated.push(p); });
-            females.forEach((p, i) => { p.current_court = Math.floor(i / 2) + 1; updated.push(p); });
-            return updated;
+            males.forEach((p, i) => { p.current_court = Math.floor(i / 2) + 1; });
+            females.forEach((p, i) => { p.current_court = Math.floor(i / 2) + 1; });
+
+            return [...males, ...females];
         } else {
-            // Lógica Normal: 4 jugadores por pista
-            allActivePlayers.sort((a, b) => (a.current_court || 999) - (b.current_court || 999));
-
-            return allActivePlayers.map((p, index) => ({
-                ...p,
-                current_court: Math.floor(index / 4) + 1
-            }));
+            allPlayers.sort((a, b) => a.current_court - b.current_court || a.id.localeCompare(b.id));
+            allPlayers.forEach((p, i) => { p.current_court = Math.floor(i / 4) + 1; });
+            return allPlayers;
         }
     },
 
@@ -224,5 +217,10 @@ const RotatingPozoLogic = {
     }
 };
 
-window.RotatingPozoLogic = RotatingPozoLogic;
+if (typeof window !== 'undefined') {
+    window.RotatingPozoLogic = RotatingPozoLogic;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { RotatingPozoLogic };
+}
 console.log("🌀 RotatingPozoLogic Cargado");

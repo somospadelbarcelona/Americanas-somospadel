@@ -30,14 +30,19 @@
             }
         }
 
-        async addPlayer(americanaId, user) {
+        async addPlayer(americanaId, user, type = 'americana') {
             try {
-                const americana = await this.db.getById(americanaId);
-                if (!americana) throw new Error("Evento no encontrado");
+                // Determine which collection service to use
+                const service = (type === 'entreno') ? window.createService('entrenos') : this.db;
+
+                if (!service) throw new Error("Servicio de base de datos no disponible");
+
+                const event = await service.getById(americanaId);
+                if (!event) throw new Error("Evento no encontrado (" + type + ")");
 
                 // Check BOTH arrays for legacy/current compatibility
-                const players = americana.players || [];
-                const regPlayers = americana.registeredPlayers || [];
+                const players = event.players || [];
+                const regPlayers = event.registeredPlayers || [];
 
                 // Unified check for existing UID
                 const exists = (players.find(p => p.uid === user.uid || p.id === user.uid)) ||
@@ -47,20 +52,15 @@
                     throw new Error("Ya estás inscrito en este evento.");
                 }
 
-                // CAPACITY CHECK - DISABLED FOR DYNAMIC SCALING
-                // We now allow unlimited registrations, courts will scale automatically.
-                // const maxPlayers = (americana.max_courts || 0) * 4;
-                // if (players.length >= maxPlayers) {
-                //    throw new Error("Lo sentimos, este evento ya está completo.");
-                // }
-
                 // GENDER CHECK
-                const userGender = user.gender || 'M'; // Default to M if unknown, ideally fetch from profile
-                if (americana.category === 'male' && userGender !== 'M') {
-                    throw new Error("Este torneo es exclusivo para categoría MASCULINA.");
+                const userGender = user.gender || 'M';
+                const cat = event.category || 'open';
+
+                if (cat === 'male' && userGender !== 'M' && userGender !== 'chico') {
+                    throw new Error("Este evento es exclusivo para categoría MASCULINA.");
                 }
-                if (americana.category === 'female' && userGender !== 'F') {
-                    throw new Error("Este torneo es exclusivo para categoría FEMENINA.");
+                if (cat === 'female' && userGender !== 'F' && userGender !== 'chica') {
+                    throw new Error("Este evento es exclusivo para categoría FEMENINA.");
                 }
 
                 const newPlayerData = {
@@ -73,13 +73,14 @@
 
                 players.push(newPlayerData);
 
-                await this.db.update(americanaId, {
+                // USE THE CORRECT SERVICE (Americanas or Entrenos)
+                await service.update(americanaId, {
                     players: players,
                     registeredPlayers: players // Sync both
                 });
 
-                // --- NOTIFICATIONS ---
-                this.notifyAdminOfRegistration(americana, user);
+                // --- NOTIFICATIONS (DISABLED BY REQUEST) ---
+                // this.notifyAdminOfRegistration(event, user);
 
                 return { success: true };
             } catch (err) {
@@ -109,18 +110,24 @@
 
             // Hack: Trigger a tiny popup or just console log if we can't force it.
             // A clearer UX is alerting the user "Inscripción Correcta. Avisando al admin..."
-            const win = window.open(waLink, '_blank');
+            // const win = window.open(waLink, '_blank');
         }
 
-        async removePlayer(americanaId, userId) {
+        async removePlayer(americanaId, userId, type = 'americana') {
             try {
-                const americana = await this.db.getById(americanaId);
-                if (!americana) throw new Error("Evento no encontrado");
+                const service = (type === 'entreno') ? window.createService('entrenos') : this.db;
+                if (!service) throw new Error("Servicio de base de datos no disponible");
 
-                const players = americana.registeredPlayers || [];
+                const event = await service.getById(americanaId);
+                if (!event) throw new Error("Evento no encontrado");
+
+                const players = event.registeredPlayers || [];
                 const newPlayers = players.filter(p => p.uid !== userId);
 
-                await this.db.update(americanaId, { registeredPlayers: newPlayers });
+                await service.update(americanaId, {
+                    registeredPlayers: newPlayers,
+                    players: newPlayers // Sync both
+                });
                 return { success: true };
             } catch (err) {
                 return { success: false, error: err.message };
