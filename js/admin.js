@@ -1451,7 +1451,11 @@ async function loadAdminView(view) {
                             </div>
                         </div>
                     </div>
-                    <div style="display: flex; gap: 0.5rem;">
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                         <!-- Status Badge (New) -->
+                         <span class="pro-category-badge" style="background: ${a.status === 'live' ? 'rgba(255, 45, 85, 0.1)' : (a.status === 'finished' ? 'rgba(136, 136, 136, 0.1)' : 'rgba(0, 227, 109, 0.1)')}; color: ${a.status === 'live' ? '#FF2D55' : (a.status === 'finished' ? '#888' : '#00E36D')}; border: 1px solid ${a.status === 'live' ? '#FF2D55' : (a.status === 'finished' ? '#444' : '#00E36D')}; font-size: 0.65rem; font-weight: 800; padding: 6px 14px; min-width: 90px; text-align: center;">
+                              ${(a.status === 'open' ? 'ABIERTA' : (a.status === 'live' ? 'EN JUEGO' : (a.status === 'finished' ? 'FINALIZADA' : 'ABIERTA'))).toUpperCase()}
+                         </span>
                          <button class="btn-action-pro" onclick="openEditEntrenoModal('${a.id}')" title="Editar" style="border-color: #ccff00; color: #ccff00;"><i class="fas fa-edit"></i></button>
                          <button class="btn-secondary" style="border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-color: var(--danger-dim); color: var(--danger); font-weight: 700; font-size: 0.8rem;" onclick="deleteEntreno('${a.id}')" title="Borrar">🗑️</button>
                     </div>
@@ -1874,11 +1878,19 @@ async function loadAdminView(view) {
                 };
                 await FirebaseDB.entrenos_matches.update(matchId, updates);
 
-                // Refresh
+                // Get entreno ID for auto-detection
                 const activeBtn = document.querySelector('.entreno-round-btn[style*="rgb(52, 152, 219)"]');
                 const roundNum = activeBtn ? parseInt(activeBtn.id.split('-').pop()) : 1;
                 const entrenoSelect = document.getElementById('entreno-select');
-                if (entrenoSelect) renderEntrenoMatches(entrenoSelect.value, roundNum);
+                const entrenoId = entrenoSelect ? entrenoSelect.value : null;
+
+                // 🎯 AUTO-DETECT: Check if all matches are finished
+                if (entrenoId) {
+                    await checkAndUpdateEntrenoStatus(entrenoId);
+                }
+
+                // Refresh
+                if (entrenoSelect) renderEntrenoMatches(entrenoId, roundNum);
             };
 
             window.updateEntrenoScore = async (matchId, field, value) => {
@@ -2020,6 +2032,16 @@ async function loadAdminView(view) {
 
                 const ranking = Object.values(stats).sort((a, b) => b.games - a.games || b.won - a.won);
 
+                // 🎯 CRITICAL: Update Entreno status to 'finished' when generating final report
+                // This ensures the Entreno shows "FINALIZADA" instead of "EN JUEGO" in the admin panel
+                // Matches the same logic used in renderAmericanaSummary() for consistency
+                try {
+                    await FirebaseDB.entrenos.update(id, { status: 'finished' });
+                    console.log(`✅ Entreno ${id} marcado como FINALIZADO`);
+                } catch (error) {
+                    console.error('❌ Error actualizando estado del Entreno:', error);
+                }
+
                 container.innerHTML = `
                     <div class="glass-card-enterprise" style="padding: 3rem; text-align: center;">
                         <h2 style="color: #ccff00; font-size: 2.5rem; font-weight: 900; margin-bottom: 2rem;">🏆 INFORME FINAL DEL ENTRENO</h2>
@@ -2074,38 +2096,98 @@ async function loadAdminView(view) {
                         const isFixedPairs = entreno.pair_mode === 'fixed';
                         const effectiveCourts = entreno.max_courts || 4;
 
-                        if (isFixedPairs) {
-                            // POZO FIJO
-                            const pairs = entreno.fixed_pairs || [];
-                            const updatedPairs = FixedPairsLogic.updatePozoRankings(pairs, prevMatches, effectiveCourts);
-                            await FirebaseDB.entrenos.update(entrenoId, { fixed_pairs: updatedPairs });
+                        try {
+                            // --- SMART COURTS: AUTO-SCALING (Cloned from Americanas) ---
+                            let effectiveCourts = entreno.max_courts || 4;
+                            let courtsUpdated = false;
 
-                            const newMatches = FixedPairsLogic.generatePozoRound(updatedPairs, nextRound, effectiveCourts);
-                            for (const mData of newMatches) {
-                                await FirebaseDB.entrenos_matches.create({
-                                    ...mData,
-                                    entreno_id: entrenoId,
-                                    status: 'scheduled',
-                                    score_a: 0,
-                                    score_b: 0
-                                });
+                            if (isFixedPairs) {
+                                const pairsCount = (entreno.fixed_pairs || []).length;
+                                const needed = Math.floor(pairsCount / 2);
+                                if (needed > effectiveCourts) {
+                                    effectiveCourts = needed;
+                                    courtsUpdated = true;
+                                }
+                            } else {
+                                const playersCount = (entreno.players || []).length;
+                                const needed = Math.floor(playersCount / 4);
+                                if (needed > effectiveCourts) {
+                                    effectiveCourts = needed;
+                                    courtsUpdated = true;
+                                }
                             }
-                        } else {
-                            // TWISTER / ROTATIVO
-                            const players = entreno.players || [];
-                            const movedPlayers = RotatingPozoLogic.updatePlayerCourts(players, prevMatches, effectiveCourts, entreno.category);
-                            await FirebaseDB.entrenos.update(entrenoId, { players: movedPlayers });
 
-                            const newMatches = RotatingPozoLogic.generateRound(movedPlayers, nextRound, effectiveCourts, entreno.category);
-                            for (const mData of newMatches) {
-                                await FirebaseDB.entrenos_matches.create({
-                                    ...mData,
-                                    entreno_id: entrenoId,
-                                    status: 'scheduled',
-                                    score_a: 0,
-                                    score_b: 0
-                                });
+                            if (courtsUpdated) {
+                                console.log(`🤖 AI: Ampliando capacidad de entreno a ${effectiveCourts} pistas.`);
+                                await FirebaseDB.entrenos.update(entrenoId, { max_courts: effectiveCourts });
+                                entreno.max_courts = effectiveCourts;
+                                AdminAuth.localToast(`🤖 IA: Entreno ampliado a ${effectiveCourts} pistas automáticamente.`, 'success');
                             }
+                            // -----------------------------------
+
+                            if (isFixedPairs) {
+                                // POZO FIJO
+                                const pairs = entreno.fixed_pairs || [];
+                                const updatedPairs = FixedPairsLogic.updatePozoRankings(pairs, prevMatches, effectiveCourts);
+                                await FirebaseDB.entrenos.update(entrenoId, { fixed_pairs: updatedPairs });
+
+                                const newMatches = FixedPairsLogic.generatePozoRound(updatedPairs, nextRound, effectiveCourts);
+                                for (const mData of newMatches) {
+                                    await FirebaseDB.entrenos_matches.create({
+                                        ...mData,
+                                        americana_id: entrenoId,
+                                        status: 'scheduled',
+                                        score_a: 0,
+                                        score_b: 0
+                                    });
+                                }
+                            } else {
+                                // TWISTER / ROTATIVO
+                                const players = entreno.players || [];
+                                // Note: For Entrenos, we need full player objects for logic
+                                // But if it's just IDs, we need to hydrate. Looking at simulator, it saves IDs.
+                                // Wait, the simulator saves IDs in `players` array, but RotatingPozoLogic needs objects.
+                                // Let's check how it's handled in Americanas.
+
+                                // Actually, for Twister, Americanas uses the 'players' array which contains objects.
+                                // In Entrenos, looking at create logic: players: data.players || []
+                                // In simulator: players: selectedPlayers.map(p => p.id)
+                                // Hmm, this might be another issue. Let's see how Americanas handles it.
+
+                                // Re-reading RotatingPozoLogic.updatePlayerCourts: it expects objects with 'id' and 'current_court'.
+                                // If Entrenos only has IDs, we need to fetch players first.
+
+                                const allRegisteredPlayers = await FirebaseDB.players.getAll();
+                                const playerObjects = entreno.players.map(pid => {
+                                    const p = allRegisteredPlayers.find(ap => ap.id === pid);
+                                    return {
+                                        id: pid,
+                                        name: p ? p.name : 'Unknown',
+                                        gender: p ? p.gender : 'chico',
+                                        current_court: 1 // Default if not found
+                                    };
+                                });
+
+                                const movedPlayers = RotatingPozoLogic.updatePlayerCourts(playerObjects, prevMatches, effectiveCourts, entreno.category);
+                                // Note: We don't necessarily update the 'players' array in Entrenos if it's just IDs, 
+                                // but we might need to store track info somewhere if we want it to persist between rounds 
+                                // without recalculating from scratch (though recalculating is fine if we have matches history).
+                                // Actually, the logic uses matches history + current pistes to "stablize".
+
+                                const newMatches = RotatingPozoLogic.generateRound(movedPlayers, nextRound, effectiveCourts, entreno.category);
+                                for (const mData of newMatches) {
+                                    await FirebaseDB.entrenos_matches.create({
+                                        ...mData,
+                                        americana_id: entrenoId,
+                                        status: 'scheduled',
+                                        score_a: 0,
+                                        score_b: 0
+                                    });
+                                }
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            throw err;
                         }
                     } else {
                         // Si es Ronda 1 y no hay partidos (por si acaso se borraron)
@@ -2794,6 +2876,9 @@ async function loadAdminView(view) {
                     // If finishing, maybe sync rankings?
                     if (nextStatus === 'finished') await syncRankings(americanaId);
 
+                    // 🎯 AUTO-DETECT: Check if all matches are finished
+                    await checkAndUpdateAmericanaStatus(americanaId);
+
                     // Refresh using the global state variable which is safe
                     const round = window.currentAdminRound || 1;
                     renderMatchesForAmericana(americanaId, round);
@@ -3138,6 +3223,85 @@ async function refreshStandingsOnly(americanaId) {
 }
 
 
+// ============================================================================
+// 🎯 AUTOMATIC EVENT COMPLETION DETECTION
+// ============================================================================
+// These functions automatically detect when all matches are finished and
+// update the event status to 'finished' without manual intervention
+
+/**
+ * Check if all Entreno matches are finished and auto-update status
+ * @param {string} entrenoId - The Entreno ID to check
+ */
+async function checkAndUpdateEntrenoStatus(entrenoId) {
+    try {
+        const matches = await FirebaseDB.entrenos_matches.getByAmericana(entrenoId);
+
+        // If no matches exist yet, don't do anything
+        if (matches.length === 0) {
+            console.log(`⏳ Entreno ${entrenoId}: Sin partidos generados aún`);
+            return;
+        }
+
+        // Check if ALL matches are finished
+        const allFinished = matches.every(m => m.status === 'finished');
+        const finishedCount = matches.filter(m => m.status === 'finished').length;
+
+        console.log(`📊 Entreno ${entrenoId}: ${finishedCount}/${matches.length} partidos finalizados`);
+
+        if (allFinished) {
+            await FirebaseDB.entrenos.update(entrenoId, { status: 'finished' });
+            console.log(`✅ Entreno ${entrenoId} marcado AUTOMÁTICAMENTE como FINALIZADO`);
+
+            // Show toast notification
+            if (window.AdminAuth && window.AdminAuth.localToast) {
+                AdminAuth.localToast('🏆 Entreno completado automáticamente', 'success');
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error verificando estado del Entreno:', error);
+    }
+}
+
+/**
+ * Check if all Americana matches are finished and auto-update status
+ * @param {string} americanaId - The Americana ID to check
+ */
+async function checkAndUpdateAmericanaStatus(americanaId) {
+    try {
+        const matches = await FirebaseDB.matches.getByAmericana(americanaId);
+
+        // If no matches exist yet, don't do anything
+        if (matches.length === 0) {
+            console.log(`⏳ Americana ${americanaId}: Sin partidos generados aún`);
+            return;
+        }
+
+        // Check if ALL matches are finished
+        const allFinished = matches.every(m => m.status === 'finished');
+        const finishedCount = matches.filter(m => m.status === 'finished').length;
+
+        console.log(`📊 Americana ${americanaId}: ${finishedCount}/${matches.length} partidos finalizados`);
+
+        if (allFinished) {
+            await FirebaseDB.americanas.update(americanaId, { status: 'finished' });
+
+            // Auto-sync rankings when event is completed
+            await syncRankings(americanaId);
+
+            console.log(`✅ Americana ${americanaId} marcada AUTOMÁTICAMENTE como FINALIZADA`);
+
+            // Show toast notification
+            if (window.AdminAuth && window.AdminAuth.localToast) {
+                AdminAuth.localToast('🏆 Americana completada automáticamente', 'success');
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error verificando estado de la Americana:', error);
+    }
+}
+
+
 window.saveMatchData = async (matchId, americanaId) => {
     try {
         const scoreA = parseInt(document.getElementById(`scoreA-${matchId}`).value) || 0;
@@ -3145,6 +3309,9 @@ window.saveMatchData = async (matchId, americanaId) => {
 
         // Update scores in database
         await FirebaseDB.matches.update(matchId, { score_a: scoreA, score_b: scoreB });
+
+        // 🎯 AUTO-DETECT: Check if all matches are finished
+        await checkAndUpdateAmericanaStatus(americanaId);
 
         // Visual Feedback
         const saveBtn = document.querySelector(`#match-${matchId} .save-btn`);

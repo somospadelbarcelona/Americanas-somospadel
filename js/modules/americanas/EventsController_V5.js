@@ -603,11 +603,11 @@
             if (isFinished) {
                 btnContent = '<div style="display:flex; flex-direction:column; align-items:center; line-height:1; gap:2px;"><i class="fas fa-poll" style="font-size: 1rem;"></i><span style="font-size:0.45rem; font-weight:950; text-align:center;">VER<br>RESULTADOS</span></div>';
                 btnStyle = 'background: #CCFF00; color: #000; box-shadow: 0 4px 15px rgba(204, 255, 0, 0.4); width: 55px; height: 55px;';
-                btnAction = `window.ControlTowerView.prepareLoad('${evt.id}'); window.Router.navigate('live'); event.stopPropagation();`;
+                btnAction = `event.stopPropagation(); window.ControlTowerView.prepareLoad('${evt.id}'); window.Router.navigate('live');`;
             } else if (isLive) {
                 btnContent = '<span style="font-size:0.45rem; font-weight:950; text-align:center; line-height:1.1;">EN<br>JUEGO</span>';
                 btnStyle = 'background: #0ea5e9; color: white; animation: pulse 2s infinite; padding: 0; width: 55px; height: 55px; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);';
-                btnAction = `window.ControlTowerView.prepareLoad('${evt.id}'); window.Router.navigate('live'); event.stopPropagation();`;
+                btnAction = `event.stopPropagation(); window.ControlTowerView.prepareLoad('${evt.id}'); window.Router.navigate('live');`;
             } else if (isJoined) {
                 btnContent = '<i class="fas fa-check"></i>';
                 btnStyle = 'background: white; color: #84cc16; border: 2px solid #84cc16; box-shadow: 0 4px 15px rgba(132, 204, 22, 0.3);';

@@ -47,8 +47,8 @@
             }
         }
 
-        async load(americanaId) {
-            this.currentAmericanaId = americanaId;
+        async load(eventId) {
+            this.currentAmericanaId = eventId;
             this.selectedRound = 1;
             this.mainSection = 'playing'; // Ensure we show the game area
 
@@ -56,28 +56,51 @@
             this.render({ status: 'LOADING' });
 
             try {
-                // Get doc for metadata
-                const doc = await window.db.collection('americanas').doc(americanaId).get();
-                this.currentAmericanaDoc = { id: doc.id, ...doc.data() };
+                // Try to detect if it's an Entreno or Americana
+                // First try Americana
+                let doc = await window.db.collection('americanas').doc(eventId).get();
+                let isEntreno = false;
 
-                // UX Improvement: Check status explicitly
-                if (this.currentAmericanaDoc.status === 'finished') {
-                    this.activeTab = 'summary'; // Go straight to report
+                if (!doc.exists) {
+                    // If not found, try Entreno
+                    doc = await window.db.collection('entrenos').doc(eventId).get();
+                    isEntreno = true;
+                }
+
+                if (doc.exists) {
+                    this.currentAmericanaDoc = { id: doc.id, ...doc.data(), isEntreno };
+
+                    // UX Improvement: Check status explicitly
+                    if (this.currentAmericanaDoc.status === 'finished') {
+                        this.activeTab = 'summary'; // Go straight to report
+                    } else {
+                        this.activeTab = 'results';
+                    }
                 } else {
-                    this.activeTab = 'results';
+                    console.error("Event not found in either americanas or entrenos:", eventId);
+                    this.renderEmptyState();
+                    return;
                 }
             } catch (e) {
-                console.error("Error loading americana doc:", e);
+                console.error("Error loading event doc:", e);
             }
 
             // Unsubscribe previous
             if (this.unsubscribeMatches) this.unsubscribeMatches();
 
-            // Real-time listener for matches
-            this.unsubscribeMatches = window.db.collection('matches')
-                .where('americana_id', '==', americanaId)
+            // Real-time listener for matches - use correct collection based on event type
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const matchesCollection = isEntreno ? 'entrenos_matches' : 'matches';
+            // NOTE: Both Entrenos and Americanas use 'americana_id' field for consistency
+            const fieldName = 'americana_id';
+
+            console.log(`🔍 [ControlTowerView] Loading ${isEntreno ? 'ENTRENO' : 'AMERICANA'} matches from ${matchesCollection}`);
+
+            this.unsubscribeMatches = window.db.collection(matchesCollection)
+                .where(fieldName, '==', eventId)
                 .onSnapshot(snapshot => {
                     this.allMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    console.log(`✅ [ControlTowerView] Loaded ${this.allMatches.length} matches`);
                     this.recalc();
                 }, err => {
                     console.error("Error watching matches:", err);
@@ -428,39 +451,117 @@
                 return '<div style="padding: 100px 20px; text-align: center; color: #999;">Calculando estadísticas...</div>';
             }
 
-            // --- Stats Calculation (Same as Admin) ---
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const isFija = this.currentAmericanaDoc?.is_fija || false;
+
+            // --- Stats Calculation - DIFFERENT LOGIC FOR ENTRENOS vs AMERICANAS ---
             const players = {};
             const roundStats = {};
             let totalGames = 0;
             let highIntensityMatches = 0;
 
-            finishedMatches.forEach(m => {
-                const namesA = Array.isArray(m.team_a_names) ? m.team_a_names : [m.team_a_names];
-                const namesB = Array.isArray(m.team_b_names) ? m.team_b_names : [m.team_b_names];
-                const sA = parseInt(m.score_a || 0);
-                const sB = parseInt(m.score_b || 0);
+            if (isEntreno) {
+                // ===== ENTRENO LOGIC: Count MATCH WINS (not games) =====
+                console.log(`📊 [Stats] Calculating ENTRENO stats (${isFija ? 'FIJA' : 'TWISTER'})`);
 
-                totalGames += (sA + sB);
-                if (Math.abs(sA - sB) <= 1) highIntensityMatches++;
+                finishedMatches.forEach(m => {
+                    const namesA = Array.isArray(m.team_a_names) ? m.team_a_names : [m.team_a_names];
+                    const namesB = Array.isArray(m.team_b_names) ? m.team_b_names : [m.team_b_names];
+                    const winnerA = parseInt(m.score_a || 0) > parseInt(m.score_b || 0);
+                    const winnerB = parseInt(m.score_b || 0) > parseInt(m.score_a || 0);
 
-                if (!roundStats[m.round]) roundStats[m.round] = 0;
-                roundStats[m.round] += (sA + sB);
+                    // For Entrenos, we count MATCHES won, not games
+                    totalGames++; // Total matches played
 
-                [...namesA, ...namesB].forEach(name => {
-                    if (!players[name]) players[name] = { name, games: 0, wins: 0, matches: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
+                    if (!roundStats[m.round]) roundStats[m.round] = 0;
+                    roundStats[m.round]++; // Count matches per round
+
+                    if (isFija) {
+                        // FIJA: Count wins by PAIR (team_a_names and team_b_names are pairs)
+                        const pairA = namesA.join(' / ');
+                        const pairB = namesB.join(' / ');
+
+                        if (!players[pairA]) players[pairA] = { name: pairA, games: 0, wins: 0, matches: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
+                        if (!players[pairB]) players[pairB] = { name: pairB, games: 0, wins: 0, matches: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
+
+                        players[pairA].matches++;
+                        players[pairB].matches++;
+
+                        if (winnerA) {
+                            players[pairA].wins++;
+                            players[pairA].games++; // For Entrenos, "games" = matches won
+                            players[pairB].losses++;
+                        } else if (winnerB) {
+                            players[pairB].wins++;
+                            players[pairB].games++; // For Entrenos, "games" = matches won
+                            players[pairA].losses++;
+                        }
+                    } else {
+                        // TWISTER: Count wins by INDIVIDUAL PLAYER
+                        [...namesA, ...namesB].forEach(name => {
+                            if (!name) return;
+                            if (!players[name]) players[name] = { name, games: 0, wins: 0, matches: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
+                        });
+
+                        namesA.forEach(n => {
+                            if (!n) return;
+                            players[n].matches++;
+                            if (winnerA) {
+                                players[n].wins++;
+                                players[n].games++; // For Entrenos, "games" = matches won
+                            } else {
+                                players[n].losses++;
+                            }
+                        });
+
+                        namesB.forEach(n => {
+                            if (!n) return;
+                            players[n].matches++;
+                            if (winnerB) {
+                                players[n].wins++;
+                                players[n].games++; // For Entrenos, "games" = matches won
+                            } else {
+                                players[n].losses++;
+                            }
+                        });
+                    }
                 });
 
-                namesA.forEach(n => {
-                    players[n].games += sA; players[n].matches++;
-                    players[n].pointsScored += sA; players[n].pointsAgainst += sB;
-                    if (sA > sB) players[n].wins++; else players[n].losses++;
+                // For Entrenos, intensity = close matches (not applicable, set to 0)
+                highIntensityMatches = 0;
+
+            } else {
+                // ===== AMERICANA LOGIC: Count GAMES (original logic) =====
+                console.log(`📊 [Stats] Calculating AMERICANA stats`);
+
+                finishedMatches.forEach(m => {
+                    const namesA = Array.isArray(m.team_a_names) ? m.team_a_names : [m.team_a_names];
+                    const namesB = Array.isArray(m.team_b_names) ? m.team_b_names : [m.team_b_names];
+                    const sA = parseInt(m.score_a || 0);
+                    const sB = parseInt(m.score_b || 0);
+
+                    totalGames += (sA + sB);
+                    if (Math.abs(sA - sB) <= 1) highIntensityMatches++;
+
+                    if (!roundStats[m.round]) roundStats[m.round] = 0;
+                    roundStats[m.round] += (sA + sB);
+
+                    [...namesA, ...namesB].forEach(name => {
+                        if (!players[name]) players[name] = { name, games: 0, wins: 0, matches: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
+                    });
+
+                    namesA.forEach(n => {
+                        players[n].games += sA; players[n].matches++;
+                        players[n].pointsScored += sA; players[n].pointsAgainst += sB;
+                        if (sA > sB) players[n].wins++; else players[n].losses++;
+                    });
+                    namesB.forEach(n => {
+                        players[n].games += sB; players[n].matches++;
+                        players[n].pointsScored += sB; players[n].pointsAgainst += sA;
+                        if (sB > sA) players[n].wins++; else players[n].losses++;
+                    });
                 });
-                namesB.forEach(n => {
-                    players[n].games += sB; players[n].matches++;
-                    players[n].pointsScored += sB; players[n].pointsAgainst += sA;
-                    if (sB > sA) players[n].wins++; else players[n].losses++;
-                });
-            });
+            }
 
             const sortedPlayers = Object.values(players).sort((a, b) => b.games - a.games || b.wins - a.wins);
             const mvp = sortedPlayers[0];
@@ -479,6 +580,35 @@
             const busiestCourtKey = Object.keys(courtGames).reduce((a, b) => courtGames[a] > courtGames[b] ? a : b, 1);
             const qualityStars = intensityPercent > 80 ? '⭐⭐⭐⭐⭐' : intensityPercent > 50 ? '⭐⭐⭐⭐' : '⭐⭐⭐';
 
+            // --- NEW: Additional Tournament Highlights ---
+            // Invictus: Players with 100% win rate
+            const invictusPlayers = sortedPlayers.filter(p => p.matches > 0 && p.losses === 0);
+
+            // Francotirador: Best single match performance
+            let bestSingleMatch = { player: '-', score: 0 };
+            finishedMatches.forEach(m => {
+                const sA = parseInt(m.score_a || 0);
+                const sB = parseInt(m.score_b || 0);
+                const namesA = Array.isArray(m.team_a_names) ? m.team_a_names : [m.team_a_names];
+                const namesB = Array.isArray(m.team_b_names) ? m.team_b_names : [m.team_b_names];
+
+                if (sA > bestSingleMatch.score) {
+                    bestSingleMatch = { player: namesA.join(' / '), score: sA };
+                }
+                if (sB > bestSingleMatch.score) {
+                    bestSingleMatch = { player: namesB.join(' / '), score: sB };
+                }
+            });
+
+            // Muro Defensivo: Best defense (least points conceded)
+            const bestDefense = sortedPlayers.reduce((best, p) => {
+                if (p.matches === 0) return best;
+                if (!best || p.pointsAgainst < best.pointsAgainst) {
+                    return { player: p.name, pointsAgainst: p.pointsAgainst };
+                }
+                return best;
+            }, null) || { player: '-', pointsAgainst: 0 };
+
             // --- RENDER UI (Adapted for Mobile) ---
             const html = `
                 <div class="summary-dashboard animate-fade-in" style="display: flex; flex-direction: column; gap: 1.5rem; padding: 20px; padding-bottom: 120px; background: #f0f2f5;">
@@ -490,17 +620,17 @@
                              <div style="background: #fdfdfd; padding: 10px; border-radius: 12px;">
                                  <div style="font-size: 1.5rem;">🥈</div>
                                  <div style="font-weight: 800; font-size: 0.7rem; color: #333; margin-top: 5px;">${sortedPlayers[1]?.name.split(' ')[0] || '-'}</div>
-                                 <div style="font-size: 0.6rem; color: #888;">${sortedPlayers[1]?.games || 0} pts</div>
+                                 <div style="font-size: 0.6rem; color: #888;">${sortedPlayers[1]?.games || 0} ${isEntreno ? 'partidos' : 'pts'}</div>
                              </div>
                              <div style="background: rgba(204,255,0,0.05); padding: 15px 10px; border-radius: 16px; border: 1px solid rgba(204,255,0,0.2); transform: translateY(-10px);">
                                  <div style="font-size: 2rem;">🥇</div>
                                  <div style="font-weight: 950; font-size: 0.8rem; color: #000;">${mvp.name.split(' ')[0]}</div>
-                                 <div style="font-size: 0.7rem; font-weight: 800; color: var(--playtomic-neon);"><sup>${mvp.games}</sup> pts</div>
+                                 <div style="font-size: 0.7rem; font-weight: 800; color: var(--playtomic-neon);"><sup>${mvp.games}</sup> ${isEntreno ? 'partidos' : 'pts'}</div>
                              </div>
                              <div style="background: #fdfdfd; padding: 10px; border-radius: 12px;">
                                  <div style="font-size: 1.5rem;">🥉</div>
                                  <div style="font-weight: 800; font-size: 0.7rem; color: #333; margin-top: 5px;">${sortedPlayers[2]?.name.split(' ')[0] || '-'}</div>
-                                 <div style="font-size: 0.6rem; color: #888;">${sortedPlayers[2]?.games || 0} pts</div>
+                                 <div style="font-size: 0.6rem; color: #888;">${sortedPlayers[2]?.games || 0} ${isEntreno ? 'partidos' : 'pts'}</div>
                              </div>
                          </div>
                     </div>
@@ -513,9 +643,111 @@
                              <div>
                                 <div style="font-size: 0.7rem; font-weight: 800; color: var(--playtomic-neon); letter-spacing: 2px;">MVP TORNEO</div>
                                 <div style="font-size: 1.5rem; font-weight: 900; color: white; margin: 2px 0;">${mvp.name}</div>
-                                <div style="font-size: 0.8rem; color: #aaa;">${mvp.games} Puntos Totales</div>
+                                <div style="font-size: 0.8rem; color: #aaa;">${mvp.games} ${isEntreno ? 'Partidos Ganados' : 'Puntos Totales'}</div>
                              </div>
                          </div>
+                    </div>
+
+                    <!-- AUDITORÍA DE RESULTADOS COMPLETA -->
+                    <div style="background: white; border-radius: 20px; padding: 20px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                        <h3 style="margin:0 0 20px 0; font-weight: 950; font-size: 0.85rem; color: #111; letter-spacing: 1px; text-transform: uppercase;">
+                            📋 Auditoría de Resultados Completa
+                        </h3>
+                        
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.7rem;">
+                                <thead>
+                                    <tr style="background: #fafafa; border-bottom: 2px solid #eee;">
+                                        <th style="padding: 10px 6px; text-align: left; font-weight: 900; color: #666; font-size: 0.65rem;">POS</th>
+                                        <th style="padding: 10px 6px; text-align: left; font-weight: 900; color: #666; font-size: 0.65rem;">${isEntreno ? (isFija ? 'PAREJA' : 'JUGADOR') : 'JUGADOR'}</th>
+                                        <th style="padding: 10px 6px; text-align: center; font-weight: 900; color: #666; font-size: 0.65rem;">PJ</th>
+                                        <th style="padding: 10px 6px; text-align: center; font-weight: 900; color: #666; font-size: 0.65rem;">VICT.</th>
+                                        <th style="padding: 10px 6px; text-align: center; font-weight: 900; color: #666; font-size: 0.65rem;">DERR.</th>
+                                        <th style="padding: 10px 6px; text-align: center; font-weight: 900; color: #666; font-size: 0.65rem;">${isEntreno ? 'PARTIDOS' : 'JUEGOS'}</th>
+                                        <th style="padding: 10px 6px; text-align: center; font-weight: 900; color: #666; font-size: 0.65rem;">REND. %</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${sortedPlayers.map((p, i) => {
+                const winRate = p.matches > 0 ? Math.round((p.wins / p.matches) * 100) : 0;
+                const rowBg = i === 0 ? 'rgba(255,215,0,0.08)' :
+                    i === 1 ? 'rgba(192,192,192,0.08)' :
+                        i === 2 ? 'rgba(205,127,50,0.08)' : 'white';
+
+                return `
+                                            <tr style="background: ${rowBg}; border-bottom: 1px solid #f5f5f5;">
+                                                <td style="padding: 12px 6px; font-weight: 900; color: #111; font-size: 0.9rem;">
+                                                    ${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
+                                                </td>
+                                                <td style="padding: 12px 6px; font-weight: 800; color: #111; font-size: 0.75rem;">${p.name}</td>
+                                                <td style="padding: 12px 6px; text-align: center; color: #666; font-weight: 700;">${p.matches}</td>
+                                                <td style="padding: 12px 6px; text-align: center; color: #25D366; font-weight: 800;">${p.wins}</td>
+                                                <td style="padding: 12px 6px; text-align: center; color: #FF2D55; font-weight: 800;">${p.losses}</td>
+                                                <td style="padding: 12px 6px; text-align: center; font-weight: 900; color: #000; font-size: 0.85rem;">${p.games}</td>
+                                                <td style="padding: 12px 6px; text-align: center;">
+                                                    <div style="background: ${winRate >= 70 ? '#25D366' : winRate >= 40 ? '#CCFF00' : '#FF2D55'}; 
+                                                                color: ${winRate >= 40 ? '#000' : '#fff'}; 
+                                                                padding: 4px 8px; 
+                                                                border-radius: 6px; 
+                                                                font-weight: 900; 
+                                                                display: inline-block;
+                                                                font-size: 0.7rem;">
+                                                        ${winRate}%
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        `;
+            }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- DESTACADOS DEL TORNEO -->
+                    <div style="background: white; border-radius: 20px; padding: 20px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                        <h3 style="margin:0 0 20px 0; font-weight: 950; font-size: 0.85rem; color: #111; letter-spacing: 1px; text-transform: uppercase;">
+                            🏆 Destacados del Torneo
+                        </h3>
+                        
+                        <div style="display: grid; gap: 12px;">
+                            ${invictusPlayers.length > 0 ? `
+                                <div style="background: rgba(37,211,102,0.05); padding: 15px; border-radius: 12px; border-left: 4px solid #25D366;">
+                                    <div style="font-weight: 900; font-size: 0.75rem; color: #25D366; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 1.2rem;">🛡️</span> INVICTUS (100% Victorias)
+                                    </div>
+                                    <div style="font-size: 0.8rem; color: #111; font-weight: 700;">
+                                        ${invictusPlayers.map(p => p.name).join(', ')}
+                                    </div>
+                                    <div style="font-size: 0.65rem; color: #666; margin-top: 4px;">
+                                        ${invictusPlayers.length === 1 ? 'Rendimiento perfecto' : 'Rendimientos perfectos'}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            <div style="background: rgba(204,255,0,0.05); padding: 15px; border-radius: 12px; border-left: 4px solid #CCFF00;">
+                                <div style="font-weight: 900; font-size: 0.75rem; color: #000; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 1.2rem;">🎯</span> FRANCOTIRADOR
+                                </div>
+                                <div style="font-size: 0.8rem; color: #111; font-weight: 700;">
+                                    ${bestSingleMatch.player}
+                                </div>
+                                <div style="font-size: 0.65rem; color: #666; margin-top: 4px;">
+                                    Mejor partido individual: ${bestSingleMatch.score} juegos
+                                </div>
+                            </div>
+                            
+                            <div style="background: rgba(14,165,233,0.05); padding: 15px; border-radius: 12px; border-left: 4px solid #0ea5e9;">
+                                <div style="font-weight: 900; font-size: 0.75rem; color: #0ea5e9; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 1.2rem;">🧱</span> MURO DEFENSIVO
+                                </div>
+                                <div style="font-size: 0.8rem; color: #111; font-weight: 700;">
+                                    ${bestDefense.player}
+                                </div>
+                                <div style="font-size: 0.65rem; color: #666; margin-top: 4px;">
+                                    Mejor defensa: Solo ${bestDefense.pointsAgainst} juegos encajados
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Quick Stats Grid -->
