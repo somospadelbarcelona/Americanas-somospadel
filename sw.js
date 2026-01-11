@@ -1,15 +1,13 @@
 // Service Worker para PWA - Somospadel BCN
-const CACHE_NAME = 'somospadel-v1';
+const CACHE_NAME = 'somospadel-v3-release-final';
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/admin.html',
-    '/css/styles.css',
-    '/css/admin.css',
-    '/js/app.js',
-    '/js/admin.js',
-    '/js/firebase-init.js',
-    '/img/logo_somospadel.png'
+    './',
+    './index.html',
+    './admin.html',
+    './css/style.css',
+    './js/app.js',
+    './js/core/SecurityArmor.js',
+    './img/logo_somospadel.png'
 ];
 
 // Instalación del Service Worker
