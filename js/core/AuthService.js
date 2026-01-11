@@ -171,4 +171,29 @@
 
     window.AuthService = new AuthService();
     console.log("🛡️ AuthService Global Loaded (Restored)");
+
+    // Setup login form listener
+    document.addEventListener('DOMContentLoaded', () => {
+        const loginForm = document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const phone = formData.get('phone');
+                const password = formData.get('password');
+
+                console.log('🔐 Attempting login for:', phone);
+
+                const result = await window.AuthService.login(phone, password);
+                if (result.success) {
+                    console.log('✅ Login successful');
+                    const modal = document.getElementById('auth-modal');
+                    if (modal) modal.classList.add('hidden');
+                } else {
+                    console.error('❌ Login failed:', result.error);
+                    alert('Error al iniciar sesión: ' + result.error);
+                }
+            });
+        }
+    });
 })();

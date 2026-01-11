@@ -1,93 +1,100 @@
 /**
- * 🛡️ SecurityArmor.js Elite v3.0
- * Cyber-Armor Layer for SOMOSPADEL
- * 
- * protection level: 200% (Cyber-Engineer Grade)
+ * SECURITY ARMOR v3.0 - PRO PROTECTION
+ * Módulo de defensa activa para prevenir inspección y copia no autorizada.
  */
+
 (function () {
-    'use strict';
+    const CONFIG = {
+        enableDevToolsDetection: true, // Detectar si abren F12
+        disableRightClick: true,       // Bloquear clic derecho
+        disableCopyPaste: true,        // Bloquear copiar/pegar
+        disableKeys: true,             // Bloquear F12, Ctrl+U, etc.
+        debuggerTrap: true             // Activar trampa de debugger infinito
+    };
 
-    // 1. Disable Right Click & Long Press (Mobile)
-    document.addEventListener('contextmenu', event => event.preventDefault());
-
-    // 2. Disable Inspection & Critical Shortcuts
-    document.onkeydown = function (e) {
-        // prohibited: F12 (123), I (73), J (74), U (85), S (83), P (80), F (70), C (67)
-        const prohibited = [123, 73, 74, 85, 83, 80, 70, 67];
-        const isMeta = e.ctrlKey || e.metaKey || e.altKey;
-
-        if (prohibited.includes(e.keyCode) && (isMeta || e.keyCode === 123)) {
-            // Special exception for Ctrl+C if on selective inputs (optional)
+    // 1. DISABLE RIGHT CLICK
+    if (CONFIG.disableRightClick) {
+        document.addEventListener('contextmenu', e => {
+            e.preventDefault();
             return false;
-        }
-    };
+        });
+    }
 
-    // 3. Anti-Selection & Premium UI Lock
-    const style = document.createElement('style');
-    style.innerHTML = `
-        * {
-            -webkit-user-select: none !important;
-            -moz-user-select: none !important;
-            -ms-user-select: none !important;
-            user-select: none !important;
-            -webkit-user-drag: none !important;
-            -webkit-touch-callout: none !important;
-        }
-        input, textarea {
-            -webkit-user-select: text !important;
-            user-select: text !important;
-        }
-        /* Visual Feedback for blocked actions */
-        body.blocked {
-            filter: blur(10px) grayscale(1);
-            pointer-events: none;
-            transition: all 0.5s ease;
-        }
-    `;
-    document.head.appendChild(style);
+    // 2. DISABLE KEYBOARD SHORTCUTS (F12, Ctrl+Shift+I, etc.)
+    if (CONFIG.disableKeys) {
+        document.addEventListener('keydown', e => {
+            // F12
+            if (e.key === 'F12') {
+                e.preventDefault();
+                return false;
+            }
 
-    // 4. Elite DevTools Detection & Auto-Lock
-    const secureLock = function () {
-        const start = performance.now();
-        debugger; // Trap
-        const end = performance.now();
+            // Ctrl + Shift + I/J/C (DevTools)
+            if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) {
+                e.preventDefault();
+                return false;
+            }
 
-        // Detection heuristics
-        const threshold = 160;
-        const widthDiff = window.outerWidth - window.innerWidth > threshold;
-        const heightDiff = window.outerHeight - window.innerHeight > threshold;
-        const isDebugging = end - start > 100;
+            // Ctrl + U (View Source)
+            if (e.ctrlKey && e.key.toUpperCase() === 'U') {
+                e.preventDefault();
+                return false;
+            }
 
-        if (isDebugging || widthDiff || heightDiff) {
-            document.body.classList.add('blocked');
-            document.body.innerHTML = `
-                <div style="height:100vh; background:#000; color:#00E36D; display:flex; align-items:center; justify-content:center; font-family:'Outfit', sans-serif; text-align:center; padding:40px;">
-                    <div style="max-width:600px; border:2px solid #00E36D; padding:40px; border-radius:30px; box-shadow: 0 0 50px rgba(0,227,109,0.3);">
-                        <h1 style="font-size:3.5rem; margin-bottom:20px; font-weight:900;">🛡️ ACCESO BLOQUEADO</h1>
-                        <p style="font-size:1.2rem; line-height:1.6; color:#888;">El blindaje **Cyber-Armor Elite** ha detectado un intento de inspección o depuración no autorizado.</p>
-                        <p style="font-size:1rem; margin-top:20px; color:#555;">Por seguridad, esta sesión ha sido congelada.<br>Cierra las herramientas de desarrollo y recarga la aplicación.</p>
-                        <button onclick="location.reload()" style="margin-top:30px; background:#00E36D; color:black; border:none; padding:15px 40px; border-radius:15px; font-weight:950; cursor:pointer; text-transform:uppercase;">REINTENTAR ACCESO</button>
-                    </div>
-                </div>
-            `;
-            throw new Error("Cyber-Armor Security Exception: Environment Compromised");
-        }
-    };
+            // Ctrl + S (Save Page)
+            if (e.ctrlKey && e.key.toUpperCase() === 'S') {
+                e.preventDefault();
+                alert('⚠️ Acción no permitida por seguridad.');
+                return false;
+            }
+        });
+    }
 
-    // Constant monitoring
-    setInterval(secureLock, 1500);
+    // 3. DISABLE SELECTION & COPY
+    if (CONFIG.disableCopyPaste) {
+        // CSS Injection to prevent selection
+        const style = document.createElement('style');
+        style.innerHTML = `
+            body {
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+            input, textarea {
+                -webkit-user-select: text;
+                -moz-user-select: text;
+                -ms-user-select: text;
+                user-select: text;
+            }
+        `;
+        document.head.appendChild(style);
 
-    // 5. Console Obfuscation (Stealth Mode)
-    const logs = [];
-    const originalLog = console.log;
+        document.addEventListener('copy', e => {
+            e.preventDefault();
+            return false;
+        });
+    }
 
-    // Silence common logs but keep Armor activation visible
-    console.log = (msg) => { if (typeof msg === 'string' && msg.includes('Armor')) originalLog("%c" + msg, "color: #00E36D; font-weight: bold;"); };
-    console.warn = () => { };
-    console.error = () => { };
-    console.info = () => { };
-    console.debug = () => { };
-    console.clear();
+    // 4. ADVANCED DEVTOOLS DETECTION & DEBUGGER TRAP
+    // Esta técnica usa diferencias de tiempo y el debugger statement para congelar a los curiosos.
+    if (CONFIG.debuggerTrap) {
 
-    console.log("🛡️ Blindaje Cyber-Armor Elite v3.0 [ACTIVE-SECURE]");
+        // Anti-Debugging Loop
+        setInterval(() => {
+            const start = performance.now();
+            debugger; // Si DevTools está abierto, esto pausa la ejecución aquí.
+            const end = performance.now();
+
+            // Si tardamos mucho entre start y end, es que estaba pausado (DevTools abierto)
+            if (end - start > 100) {
+                document.body.innerHTML = '<div style="background:black; color:red; height:100vh; display:flex; align-items:center; justify-content:center; font-family:monospace; font-size:2rem; text-align:center;"><h1>⚠️ ACCESO DENEGADO<br><span style="font-size:1rem; color:white;">Sistema de Seguridad Activado. Cierre las herramientas de desarrollo.</span></h1></div>';
+                window.location.reload(); // Bucle de recarga molesto
+            }
+        }, 1000);
+    }
+
+    console.log("%c STOP! ", "color: red; font-size: 50px; font-weight: bold; text-shadow: 2px 2px 0px black;");
+    console.log("%c Este es un sistema protegido. Cualquier intento de ingeniería inversa será monitorizado.", "color: white; background: red; font-size: 16px; padding: 10px;");
+
 })();
