@@ -128,8 +128,16 @@
     </div>
 
     <div class="app-shell">
+        <!-- Mobile Menu Button -->
+        <button id="mobile-menu-btn" class="mobile-menu-toggle" onclick="toggleAdminSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Sidebar Overlay for Mobile -->
+        <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+
         <!-- Enterprise Admin Sidebar -->
-        <aside class="sidebar-pro">
+        <aside id="admin-sidebar" class="sidebar-pro">
             <div class="brand-top-left">
                 <img src="img/logo_somospadel.png" class="brand-logo-main" alt="Somos Padel Logo">
                 <div class="brand-text-main">
@@ -859,7 +867,410 @@
                     const c = document.getElementById('debug-console');
                     if (c) { c.style.display = 'block'; c.innerHTML += `<div style="color:yellow">⚠️ PROMISE: ${e.reason}</div>`; }
                 };
+
+                // Mobile Sidebar Toggle Function
+                function toggleAdminSidebar() {
+                    const sidebar = document.getElementById('admin-sidebar');
+                    const overlay = document.getElementById('sidebar-overlay');
+
+                    if (sidebar && overlay) {
+                        sidebar.classList.toggle('open');
+                        overlay.classList.toggle('active');
+                    }
+                }
             </script>
+
+            <!-- Mobile Responsive Styles -->
+            <style>
+                /* Mobile Menu Button */
+                .mobile-menu-toggle {
+                    display: none;
+                    position: fixed;
+                    top: 20px;
+                    left: 20px;
+                    z-index: 1001;
+                    background: var(--brand-neon);
+                    border: none;
+                    width: 50px;
+                    height: 50px;
+                    border-radius: 12px;
+                    color: #000;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    box-shadow: 0 4px 15px rgba(204, 255, 0, 0.3);
+                    transition: all 0.3s ease;
+                }
+
+                .mobile-menu-toggle:hover {
+                    transform: scale(1.05);
+                    box-shadow: 0 6px 20px rgba(204, 255, 0, 0.5);
+                }
+
+                /* Sidebar Overlay */
+                .sidebar-overlay {
+                    display: none;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.7);
+                    z-index: 999;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                }
+
+                .sidebar-overlay.active {
+                    opacity: 1;
+                }
+
+                /* Mobile & Tablet Responsive - Premium Menu Fixed */
+                /* Mobile & Tablet Responsive - Full Viewport Width Force */
+                /* Mobile & Tablet Responsive - Full Viewport Width Force (Stacking Context Fix) */
+                @media (max-width: 1024px) {
+
+                    /* Ocultar elementos innecesarios */
+                    .mobile-menu-toggle,
+                    .sidebar-overlay,
+                    .brand-top-left,
+                    .user-profile-widget,
+                    #mobile-menu-toggle,
+                    .btn-micro.mobile-only {
+                        display: none !important;
+                    }
+
+                    /* 
+                       RESET CRÍTICO DEL CONTENEDOR PADRE 
+                       ----------------------------------
+                       Eliminamos transformaciones, filtros y containment para asegurar
+                       que position: fixed sea relativo al viewport y NO al .app-shell.
+                       También permitimos overflow visible para que no recorte.
+                    */
+                    .app-shell {
+                        display: block !important;
+                        width: 100% !important;
+                        height: auto !important;
+                        min-height: 100vh;
+                        transform: none !important;
+                        filter: none !important;
+                        perspective: none !important;
+                        contain: none !important;
+                        overflow: visible !important;
+                        /* CRITICO: Permitir que los hijos salgan */
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        position: static !important;
+                        /* Desactivar posicionamiento relativo */
+                    }
+
+                    body {
+                        overflow-x: hidden;
+                        /* Controlar scroll horizontal global aquí */
+                        background: #0a0a0f;
+                        /* Color de fondo seguro */
+                        margin: 0;
+                        padding: 0;
+                    }
+
+                    /* 
+                       BARRA SUPERIOR FIJA - LIBERADA
+                       ------------------------------
+                    */
+                    .sidebar-pro {
+                        position: fixed !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        right: 0 !important;
+                        width: 100vw !important;
+                        max-width: none !important;
+                        /* Prevenir límites heredados */
+                        min-width: 100vw !important;
+                        height: 95px !important;
+                        max-height: 95px !important;
+                        z-index: 2147483647;
+                        background: rgba(8, 8, 12, 0.98) !important;
+                        backdrop-filter: blur(10px);
+                        -webkit-backdrop-filter: blur(10px);
+                        border-bottom: 1px solid rgba(204, 255, 0, 0.3);
+                        box-shadow: 0 5px 30px rgba(0, 0, 0, 0.9);
+                        display: flex;
+                        flex-direction: row;
+                        align-items: center;
+                        padding: 0;
+                        margin: 0 !important;
+                        box-sizing: border-box;
+                    }
+
+                    /* 
+                       CONTENEDOR SCROLL 
+                    */
+                    /* 
+                       CONTENEDOR SCROLL - CON SCROLLBAR VISIBLE
+                    */
+                    .nav-menu {
+                        display: flex;
+                        flex-direction: row;
+                        align-items: center;
+                        justify-content: flex-start;
+                        gap: 12px;
+                        padding: 0 15px 5px 15px;
+                        /* Espacio inferior para scrollbar */
+                        width: 100vw !important;
+                        max-width: none !important;
+                        height: 100%;
+                        overflow-x: auto !important;
+                        -webkit-overflow-scrolling: touch;
+
+                        /* Scrollbar Firefox */
+                        scrollbar-width: thin;
+                        scrollbar-color: var(--brand-neon) transparent;
+                    }
+
+                    /* Scrollbar Webkit (Chrome, Safari, etc) */
+                    .nav-menu::-webkit-scrollbar {
+                        display: block !important;
+                        height: 3px;
+                        background: rgba(255, 255, 255, 0.02);
+                    }
+
+                    .nav-menu::-webkit-scrollbar-thumb {
+                        background: var(--brand-neon);
+                        border-radius: 10px;
+                        box-shadow: 0 0 4px var(--brand-neon);
+                    }
+
+                    .nav-menu::-webkit-scrollbar-track {
+                        background: transparent;
+                    }
+
+                    /* 
+                       BOTONES DE NAVEGACIÓN 
+                    */
+                    .nav-item-pro {
+                        flex: 0 0 auto;
+                        display: flex;
+                        flex-direction: column !important;
+                        align-items: center;
+                        justify-content: center;
+                        width: 80px !important;
+                        height: 70px !important;
+                        padding: 4px !important;
+                        background: rgba(255, 255, 255, 0.05);
+                        border-radius: 12px;
+                        border: 1px solid rgba(255, 255, 255, 0.08);
+                        margin: 0 !important;
+                        text-decoration: none !important;
+                    }
+
+                    /* Estado Activo */
+                    .nav-item-pro.active {
+                        background: rgba(204, 255, 0, 0.15) !important;
+                        border: 1px solid var(--brand-neon) !important;
+                        box-shadow: 0 0 10px rgba(204, 255, 0, 0.2);
+                    }
+
+                    .nav-item-pro.active .icon-box {
+                        color: var(--brand-neon) !important;
+                    }
+
+                    .nav-item-pro.active .nav-text {
+                        color: #fff !important;
+                        font-weight: 700;
+                    }
+
+                    /* Iconos */
+                    .icon-box {
+                        width: auto !important;
+                        height: auto !important;
+                        font-size: 1.4rem !important;
+                        margin-bottom: 3px !important;
+                        color: rgba(255, 255, 255, 0.7);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+
+                    /* Texto */
+                    .nav-text {
+                        font-size: 0.55rem !important;
+                        text-transform: uppercase;
+                        letter-spacing: 0.3px;
+                        text-align: center;
+                        line-height: 1.1;
+                        white-space: normal;
+                        color: rgba(255, 255, 255, 0.6);
+                        width: 100%;
+                        max-height: 2.4em;
+                        overflow: hidden;
+                    }
+
+                    /* Separadores ocultos */
+                    .nav-menu>div {
+                        display: none;
+                    }
+
+                    /* Contenido Principal */
+                    .main-content-pro {
+                        margin-left: 0 !important;
+                        margin-top: 100px !important;
+                        width: 100% !important;
+                        padding: 15px !important;
+                        box-sizing: border-box;
+                    }
+
+                    /* 
+                       ADAPTACIÓN DE CONTENIDO MÓVIL (Tablas y Formularios)
+                       ----------------------------------------------------
+                    */
+
+                    /* 1. Layout General y Tipografía */
+                    body,
+                    .app-shell {
+                        font-size: 14px !important;
+                    }
+
+                    .main-content-pro {
+                        padding: 10px !important;
+                    }
+
+                    /* Títulos compactos */
+                    h1,
+                    .page-title {
+                        font-size: 1.3rem !important;
+                        margin-bottom: 12px !important;
+                        line-height: 1.2 !important;
+                        word-wrap: break-word;
+                    }
+
+                    h2,
+                    h3,
+                    .section-title {
+                        font-size: 1.1rem !important;
+                        margin-bottom: 10px !important;
+                    }
+
+                    p,
+                    span,
+                    label {
+                        font-size: 0.9rem !important;
+                        line-height: 1.3;
+                    }
+
+                    /* 2. Tarjetas y Contenedores */
+                    .card,
+                    .stat-card,
+                    .dashboard-card {
+                        padding: 12px !important;
+                        margin-bottom: 12px !important;
+                        border-radius: 10px !important;
+                    }
+
+                    .modal-content {
+                        width: 94% !important;
+                        max-width: 94% !important;
+                        padding: 15px !important;
+                        margin: 10px auto !important;
+                        border-radius: 12px !important;
+                    }
+
+                    /* 3. Formularios: Vertical Stack */
+                    .pro-form div[style*="grid-template-columns"],
+                    .modal-content div[style*="grid-template-columns"] {
+                        display: flex !important;
+                        flex-direction: column !important;
+                        gap: 12px !important;
+                        grid-template-columns: 1fr !important;
+                    }
+
+                    .pro-input,
+                    select.pro-input {
+                        font-size: 16px !important;
+                        /* Previene zoom iOS */
+                        height: 44px !important;
+                        padding: 8px 10px !important;
+                    }
+
+                    label {
+                        display: block;
+                        margin-bottom: 4px !important;
+                        font-size: 0.75rem !important;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        color: rgba(255, 255, 255, 0.7) !important;
+                    }
+
+                    /* 4. Tablas Inteligentes */
+                    .table-container,
+                    .table-responsive,
+                    .datatable-wrapper {
+                        display: block !important;
+                        width: 100% !important;
+                        overflow-x: auto !important;
+                        -webkit-overflow-scrolling: touch;
+                        padding-bottom: 8px;
+                        margin-bottom: 15px;
+                        border: 1px solid rgba(255, 255, 255, 0.05);
+                        /* Borde sutil */
+                        border-radius: 8px;
+                    }
+
+                    table {
+                        width: 100% !important;
+                        min-width: 600px !important;
+                        border-collapse: collapse;
+                    }
+
+                    /* Celdas que respiran */
+                    th {
+                        font-size: 0.7rem !important;
+                        text-transform: uppercase;
+                        padding: 8px 6px !important;
+                        white-space: nowrap !important;
+                        background: rgba(255, 255, 255, 0.03);
+                    }
+
+                    td {
+                        padding: 10px 6px !important;
+                        font-size: 0.8rem !important;
+                        white-space: normal !important;
+                        /* Permite wrap */
+                        word-break: break-word;
+                        vertical-align: middle;
+                        line-height: 1.2;
+                    }
+
+                    /* 5. Botones y Acciones */
+                    .action-buttons {
+                        display: flex;
+                        gap: 5px;
+                        flex-wrap: wrap;
+                        /* Botones pasan a nueva línea si no caben */
+                    }
+
+                    .btn-icon {
+                        padding: 0 !important;
+                        width: 32px !important;
+                        height: 32px !important;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 6px !important;
+                    }
+
+                    .btn-primary,
+                    .btn-primary-pro,
+                    .btn-danger,
+                    .btn-secondary {
+                        width: 100% !important;
+                        padding: 12px !important;
+                        margin-top: 8px;
+                        font-size: 0.95rem !important;
+                        font-weight: 600;
+                        border-radius: 8px !important;
+                    }
+                }
+                }
+            </style>
 </body>
 
 </html>

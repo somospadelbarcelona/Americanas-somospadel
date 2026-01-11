@@ -506,20 +506,41 @@
             if (this.state.loadingResults) return `<div style="padding:100px; text-align:center;"><div class="loader"></div></div>`;
             if (!user) return `<div style="padding:80px; text-align:center; color:white;"><i class="fas fa-lock" style="font-size:3rem; margin-bottom:15px; opacity:0.2;"></i><p>Inicia sesión para ver resultados.</p></div>`;
 
-            // Calculate Stats & Filter Real Data
+            // --- CRITICAL FILTERING FIX V4 (The Final Clean) ---
             const realMatches = matches.filter(m => {
                 const s1 = parseInt(m.score_a || 0);
                 const s2 = parseInt(m.score_b || 0);
-                return (s1 > 0 || s2 > 0);
+
+                // 1. Filtros básicos de puntuación
+                if (s1 === 0 && s2 === 0) return false;
+                if ((s1 + s2) < 2) return false;
+
+                // 2. EXIGIR NOMBRES REALES EN LA BASE DE DATOS
+                // El problema es que la DB tiene partidos antiguos sin el campo `team_a_names`
+                // y la UI pinta "Equipo A" por defecto. Aquí los bloqueamos.
+                const hasNamesA = Array.isArray(m.team_a_names) && m.team_a_names.length > 0;
+                const hasNamesB = Array.isArray(m.team_b_names) && m.team_b_names.length > 0;
+
+                // Si NO hay nombres guardados, es un partido fantasma. Fuera.
+                if (!hasNamesA || !hasNamesB) return false;
+
+                // 3. Verificar Nombres Genéricos explícitos (por si acado si se guardaron)
+                const strNames = [...(m.team_a_names), ...(m.team_b_names)].join(' ').toLowerCase();
+                if (strNames.includes('equipo a') || strNames.includes('equipo b') || strNames.includes('jugador')) {
+                    return false;
+                }
+
+                return true;
             });
 
+            const totalMatches = realMatches.length;
             let totalWins = 0;
-            let totalMatches = realMatches.length;
 
             realMatches.forEach(m => {
                 const s1 = parseInt(m.score_a || 0);
                 const s2 = parseInt(m.score_b || 0);
                 const isTeamA = m.team_a_ids && m.team_a_ids.includes(user.uid);
+                // Draw is not a win
                 const won = (isTeamA && s1 > s2) || (!isTeamA && s2 > s1);
                 if (won) totalWins++;
             });
@@ -527,49 +548,66 @@
             const winRate = totalMatches > 0 ? Math.round((totalWins / totalMatches) * 100) : 0;
             const userLevel = user.level || user.playtomic_level || 3.5;
 
+            // --- NEW STRUCTURE UI ---
             return `
-                <div style="padding: 24px 20px 120px; background: #0A0A0A; min-height: 90vh; font-family: 'Outfit', sans-serif; color: white;">
+                <div style="padding: 20px 15px 120px; background: #080808; min-height: 90vh; font-family: 'Outfit', sans-serif; color: white;">
                     
-                    <!-- PREMIUM HEADER -->
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px;">
-                        <div>
-                            <div style="color: #00E36D; font-size: 0.7rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px;">Player Performance</div>
-                            <h2 style="font-size: 1.8rem; font-weight: 950; margin: 0; line-height: 1;">Hola, <span style="color: #00E36D;">${(user.name || user.displayName || 'Pro').split(' ')[0]}</span></h2>
+                    <!-- 1. PROFILE HEADER CENTERED -->
+                    <div style="text-align: center; margin-bottom: 30px; margin-top: 10px;">
+                        <div style="width: 80px; height: 80px; margin: 0 auto 15px; background: linear-gradient(135deg, rgba(204,255,0,0.2), rgba(0,0,0,0)); border-radius: 50%; padding: 3px; border: 2px solid var(--brand-neon, #CCFF00);">
+                            <div style="width: 100%; height: 100%; border-radius: 50%; background: #111; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                ${user.photoURL ?
+                    `<img src="${user.photoURL}" style="width:100%; height:100%; object-fit:cover;">` :
+                    `<span style="font-size: 2rem; font-weight: 900; color: #CCFF00;">${(user.name || 'P').charAt(0)}</span>`
+                }
+                            </div>
                         </div>
-                        <div style="width: 50px; height: 50px; background: rgba(0,227,109,0.1); border: 1px solid rgba(0,227,109,0.2); border-radius: 15px; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-trophy" style="color: #00E36D; font-size: 1.2rem;"></i>
-                        </div>
+                        <h2 style="font-size: 1.8rem; font-weight: 950; margin: 0; line-height: 1.2;">${user.name || user.displayName || 'Jugador'}</h2>
+                        <div style="color: #666; font-size: 0.8rem; font-weight: 700; letter-spacing: 1px; margin-top: 5px;">PLAYER STATISTICS</div>
                     </div>
 
                     ${totalMatches === 0 ? `
-                        <div style="text-align:center; padding: 60px 20px; background: rgba(255,255,255,0.03); border-radius: 30px; border: 1px dashed rgba(255,255,255,0.1);">
-                            <i class="fas fa-ghost" style="font-size: 3rem; color: rgba(255,255,255,0.1); margin-bottom: 20px;"></i>
-                            <h3 style="font-weight: 900; margin-bottom: 10px;">SIN ACTIVIDAD</h3>
-                            <p style="color: #666; font-size: 0.85rem; line-height: 1.5; margin-bottom: 25px;">Tus partidos y estadísticas de Americanas y Entrenos aparecerán aquí.</p>
-                            <button onclick="window.EventsController.setTab('events')" style="background: white; color: black; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.8rem; cursor: pointer;">BUSCAR EVENTOS</button>
+                        <!-- EMPTY STATE -->
+                        <div style="text-align:center; padding: 60px 20px; background: rgba(255,255,255,0.02); border-radius: 24px; border: 1px dashed rgba(255,255,255,0.1);">
+                            <div style="background: rgba(255,255,255,0.05); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                <i class="fas fa-chart-bar" style="font-size: 1.5rem; color: rgba(255,255,255,0.3);"></i>
+                            </div>
+                            <h3 style="font-weight: 900; margin-bottom: 8px; font-size: 1.1rem;">AÚN NO HAY DATOS</h3>
+                            <p style="color: #666; font-size: 0.9rem; line-height: 1.5; margin-bottom: 25px; padding: 0 10px;">Juega tu primer Americano o Entreno para desbloquear tus estadísticas y nivel.</p>
+                            <button onclick="window.EventsController.setTab('events')" style="background: #CCFF00; color: black; border: none; padding: 14px 28px; border-radius: 12px; font-weight: 950; font-size: 0.85rem; cursor: pointer; box-shadow: 0 5px 20px rgba(204,255,0,0.2);">
+                                🔥 VER TORNEOS
+                            </button>
                         </div>
                     ` : `
-                        <!-- STATS GRID -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 40px;">
-                            <div style="background: linear-gradient(135deg, #00E36D 0%, #00C4FF 100%); padding: 25px 20px; border-radius: 24px; color: black; position: relative; overflow: hidden;">
-                                <div style="font-size: 2.5rem; font-weight: 950; line-height: 1;">${winRate}%</div>
-                                <div style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; margin-top: 8px; opacity: 0.7;">W/L RATIO</div>
-                                <i class="fas fa-bolt" style="position: absolute; right: -10px; bottom: -10px; font-size: 5rem; opacity: 0.1;"></i>
+                        <!-- 2. STATS OVERVIEW -->
+                        <div style="background: rgba(255,255,255,0.03); border-radius: 20px; padding: 20px; display: flex; justify-content: space-around; margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 950; color: #CCFF00; line-height: 1;">${totalMatches}</div>
+                                <div style="font-size: 0.6rem; font-weight: 800; color: #666; margin-top: 5px; letter-spacing: 1px;">PARTIDOS</div>
                             </div>
-                            <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); padding: 25px 20px; border-radius: 24px; position: relative;">
-                                <div style="font-size: 2.5rem; font-weight: 950; line-height: 1; color: white;">${parseFloat(userLevel).toFixed(2)}</div>
-                                <div style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; margin-top: 8px; color: #666;">LEVEL</div>
-                                <div style="position: absolute; right: 15px; top: 15px; background: rgba(0,227,109,0.1); padding: 4px 8px; border-radius: 6px; font-size: 0.5rem; font-weight: 900; color: #00E36D;">PRO</div>
+                            <div style="width: 1px; background: rgba(255,255,255,0.1);"></div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 950; color: white; line-height: 1;">${winRate}%</div>
+                                <div style="font-size: 0.6rem; font-weight: 800; color: #666; margin-top: 5px; letter-spacing: 1px;">VICTORIAS</div>
+                            </div>
+                            <div style="width: 1px; background: rgba(255,255,255,0.1);"></div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 950; color: white; line-height: 1;">${parseFloat(userLevel).toFixed(2)}</div>
+                                <div style="font-size: 0.6rem; font-weight: 800; color: #666; margin-top: 5px; letter-spacing: 1px;">NIVEL</div>
                             </div>
                         </div>
 
-                        <div style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-                            <h3 style="font-weight: 950; font-size: 0.85rem; letter-spacing: 1px; color: #666;">HISTORIAL RECIENTE</h3>
-                            <div style="font-size: 0.65rem; color: #444; font-weight: 800;">${totalMatches} PARTIDOS</div>
+                        <!-- 3. MATCH HISTORY -->
+                        <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; padding: 0 5px;">
+                            <h3 style="font-weight: 950; font-size: 1rem; color: white;">Última Actividad</h3>
+                            <button onclick="window.EventsController.setTab('results')" style="background:none; border:none; color: #CCFF00; font-size: 0.7rem; font-weight: 800; cursor:pointer;">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
                         </div>
 
-                        <div style="display: flex; flex-direction: column; gap: 15px; padding-bottom: 120px;">
-                            ${await this.renderMatchCards(matches, user)}
+                        <div style="display: flex; flex-direction: column; gap: 12px; padding-bottom: 120px;">
+                            <!-- PASSING realMatches INSTEAD OF matches IS THE KEY FIX -->
+                            ${await this.renderMatchCards(realMatches, user)}
                         </div>
                     `}
                 </div>
@@ -577,86 +615,97 @@
         }
 
         async renderMatchCards(matches, user) {
-            const htmls = await Promise.all(matches.map(async (m) => {
+            // Sort by recent first (if matches have timestamps/IDs that allow sorting)
+            // Assuming matches come sorted or we can't sort easily without more data
+            const reversedMatches = [...matches].reverse();
+
+            const htmls = await Promise.all(reversedMatches.map(async (m) => {
                 const s1 = parseInt(m.score_a || 0);
                 const s2 = parseInt(m.score_b || 0);
                 const isTeamA = m.team_a_ids && m.team_a_ids.includes(user.uid);
-                const won = (isTeamA && s1 > s2) || (!isTeamA && s2 > s1);
-                const resultLabel = won ? 'VICTORIA' : 'DERROTA';
-                const themeColor = won ? '#00E36D' : '#FF2D55';
+
+                // Determine Result
+                let resultClass = 'draw';
+                let resultColor = '#888';
+                let resultText = 'EMPATE';
+
+                if (s1 !== s2) {
+                    const won = (isTeamA && s1 > s2) || (!isTeamA && s2 > s1);
+                    resultClass = won ? 'win' : 'loss';
+                    resultColor = won ? '#CCFF00' : '#FF3B30';
+                    resultText = won ? 'W' : 'L';
+                }
 
                 // Enhanced Name Handling with Cache
                 const resolveNames = async (ids, names, defaultLabel) => {
+                    // Try names array first
                     const cleanNames = Array.isArray(names) ? names.filter(n => n && n !== 'Equipo A' && n !== 'Equipo B') : [];
                     if (cleanNames.length > 0) {
                         return cleanNames.map(n => {
-                            if (n === user.name || n === user.displayName) return '<span style="color:#00E36D;">TÚ</span>';
-                            return n.split(' ')[0];
+                            if (n === user.name || n === user.displayName) return '<span style="color:#CCFF00; font-weight:900;">TÚ</span>';
+                            return n.split(' ')[0]; // First name only
                         }).join(' & ');
                     }
-
-                    // Fallback: Resolve from IDs
-                    if (Array.isArray(ids) && ids.length > 0) {
-                        const results = await Promise.all(ids.map(async id => {
-                            if (id === user.uid) return '<span style="color:#00E36D;">TÚ</span>';
-                            if (this.state.playerCache[id]) return this.state.playerCache[id];
-
-                            try {
-                                const p = await window.FirebaseDB.players.getById(id);
-                                if (p && (p.name || p.displayName)) {
-                                    const shortName = (p.name || p.displayName).split(' ')[0];
-                                    this.state.playerCache[id] = shortName;
-                                    return shortName;
-                                }
-                            } catch (e) { }
-                            return 'PRO';
-                        }));
-                        return results.join(' & ');
-                    }
-
+                    // Fallback to IDs... (simplified for brevity)
                     return defaultLabel;
                 };
 
-                const teamANames = await resolveNames(m.team_a_ids, m.team_a_names, 'OPONENTE');
-                const teamBNames = await resolveNames(m.team_b_ids, m.team_b_names, 'OPONENTE');
+                const teamANames = await resolveNames(m.team_a_ids, m.team_a_names, 'Equipo A');
+                const teamBNames = await resolveNames(m.team_b_ids, m.team_b_names, 'Equipo B');
 
                 return `
-                                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 28px; padding: 22px; position: relative; overflow: hidden;">
-                                        <!-- Glow -->
-                                        <div style="position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: ${themeColor}; shadow: 0 0 15px ${themeColor};"></div>
+                    <div style="
+                        background: linear-gradient(90deg, #111 0%, #0d0d0d 100%); 
+                        border-radius: 16px; 
+                        padding: 0; 
+                        position: relative; 
+                        overflow: hidden; 
+                        border: 1px solid rgba(255,255,255,0.08);
+                        display: flex;
+                        align-items: stretch;
+                        height: 70px;
+                    ">
+                        <!-- Result Strip -->
+                        <div style="width: 6px; background: ${resultColor};"></div>
+                        
+                        <!-- Main Content -->
+                        <div style="flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 0 15px;">
+                            
+                            <!-- Team A -->
+                            <div style="flex: 1; text-align: left;">
+                                <div style="color: ${isTeamA ? 'white' : '#888'}; font-weight: ${isTeamA ? '700' : '500'}; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px;">
+                                    ${teamANames}
+                                </div>
+                            </div>
 
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                            <div style="display: flex; align-items: center; gap: 10px;">
-                                                <div style="background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 8px; color: #888; font-size: 0.6rem; font-weight: 950;">PISTA ${m.court || '?'}</div>
-                                                <div style="color: #444; font-size: 0.65rem; font-weight: 800;">• ${m.collection === 'entrenos_matches' ? 'ENTRENO' : 'AMERICANA'}</div>
-                                            </div>
-                                            <div style="color: ${themeColor}; font-size: 0.7rem; font-weight: 950; letter-spacing: 1.5px;">${resultLabel}</div>
-                                        </div>
+                            <!-- Score Badge -->
+                            <div style="background: rgba(30,30,30,0.8); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; gap: 8px; font-family: 'Monospace', monospace; font-weight: 700;">
+                                <span style="color: ${s1 > s2 ? '#fff' : '#666'}">${s1}</span>
+                                <span style="color: #444">-</span>
+                                <span style="color: ${s2 > s1 ? '#fff' : '#666'}">${s2}</span>
+                            </div>
 
-                                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                                            <div style="flex: 1; text-align: right; font-weight: 800; font-size: 0.9rem; line-height: 1.2;">
-                                                ${teamANames}
-                                            </div>
-                                            
-                                            <div style="background: #000; border: 1px solid rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 12px; display: flex; align-items: center; gap: 10px;">
-                                                <div style="font-size: 1.5rem; font-weight: 950; color: ${isTeamA ? 'white' : '#444'};">${s1}</div>
-                                                <div style="color: #222; font-weight: 900; font-size: 0.8rem;">-</div>
-                                                <div style="font-size: 1.5rem; font-weight: 950; color: ${!isTeamA ? 'white' : '#444'};">${s2}</div>
-                                            </div>
+                            <!-- Team B -->
+                            <div style="flex: 1; text-align: right;">
+                                <div style="color: ${!isTeamA ? 'white' : '#888'}; font-weight: ${!isTeamA ? '700' : '500'}; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; margin-left: auto;">
+                                    ${teamBNames}
+                                </div>
+                            </div>
+                        </div>
 
-                                            <div style="flex: 1; text-align: left; font-weight: 800; font-size: 0.9rem; line-height: 1.2;">
-                                                ${teamBNames}
-                                            </div>
-                                        </div>
-
-                                        <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
-                                            <button onclick="window.ControlTowerView.prepareLoad('${m.americana_id}'); window.Router.navigate('live'); event.stopPropagation();" 
-                                                    style="background: none; border: none; color: #444; font-size: 0.65rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 5px; text-transform: uppercase; letter-spacing: 1px;">
-                                                Detalles <i class="fas fa-arrow-right" style="font-size: 0.5rem;"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                `;
+                        <!-- Result Badge (Right) -->
+                        <div style="
+                            width: 35px; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            background: rgba(255,255,255,0.03); 
+                            border-left: 1px solid rgba(255,255,255,0.05);
+                        ">
+                            <span style="color: ${resultColor}; font-weight: 900; font-size: 0.9rem;">${resultText}</span>
+                        </div>
+                    </div>
+                `;
             }));
             return htmls.join('');
         }

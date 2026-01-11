@@ -180,9 +180,9 @@
                 const legacyHero = document.getElementById('hero-section-root');
                 const legacyTicker = document.getElementById('ticker-stats-root');
 
-                // Hide legacy hero/ticker as user requested "eliman estos dos" earlier (re-confirmed by excluded list)
+                // Hide legacy hero/ticker (user requested removal)
                 if (legacyHero) legacyHero.style.display = 'none';
-                if (legacyTicker) legacyTicker.style.display = 'none';
+                if (legacyTicker) legacyTicker.style.display = 'none'; // OCULTAR ÚLTIMOS RESULTADOS
 
                 // Ensure Top Widgets are visible (Inscripciones & Ultima Hora)
                 const regWidget = document.getElementById('registration-widget-root');

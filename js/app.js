@@ -68,67 +68,118 @@
 
             if (!menuContainer && !dockContainer) return;
 
-            try {
-                if (!window.FirebaseDB) return;
-                const menuItems = await window.FirebaseDB.menu.getAll();
-                const activeItems = menuItems.filter(item => item.active).sort((a, b) => a.order - b.order);
+            // --- DEFINICIÓN DE FUNCIONES GLOBALES DE NAVEGACIÓN ---
+            // Es vital definirlas en window para que los onclick del HTML inyectado las encuentren.
+            window.closeDrawer = () => {
+                const drawer = document.getElementById('side-drawer-container');
+                const menu = document.getElementById('side-drawer-menu');
+                if (drawer) drawer.classList.remove('open');
+                if (menu) menu.classList.remove('open');
+            };
 
-                // A. Render Side Menu (Hamburger)
+            window.smartNavigate = (route, tab) => {
+                console.log(`🧭 SmartNavigate: ${route} -> tab: ${tab}`);
+
+                // 1. Navegar a la ruta base
+                if (window.Router) window.Router.navigate(route);
+
+                // 2. Controlar pestañas específicas (ej: Resultados en Americanas)
+                if (route === 'americanas' && tab) {
+                    // Esperamos un momento a que el controlador y la vista carguen
+                    setTimeout(() => {
+                        if (window.EventsController && typeof window.EventsController.setTab === 'function') {
+                            console.log(`🔄 SmartNavigate: Forzando pestaña ${tab}`);
+                            window.EventsController.setTab(tab);
+                        } else {
+                            console.warn("⚠️ EventsController no listo para setTab");
+                        }
+                    }, 200);
+                }
+
+                window.closeDrawer();
+            };
+
+            try {
+                // A. Render Side Menu (Hamburger) - STATIC
                 if (menuContainer) {
-                    // Static menu items (always visible)
-                    const staticMenuHTML = `
-                        <div class="drawer-item" onclick="window.location.href='admin.html'">
-                            <i class="fas fa-user-shield"></i>
-                            <span>ADMIN</span>
+                    // NEW MENU STRUCTURE
+                    menuContainer.innerHTML = `
+                        <!-- BRANDING HEADER IN MENU -->
+                        <div style="padding: 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
+                            <img src="img/logo_somospadel.png" style="width: 60px; height: auto; margin-bottom: 10px; filter: drop-shadow(0 0 8px rgba(204,255,0,0.4));">
+                            <div style="font-weight: 900; color: white; letter-spacing: 1px; font-size: 1.1rem;">SOMOS<span style="color: #CCFF00;">PADEL</span></div>
+                            <div style="font-size: 0.6rem; color: #888; font-weight: 700; letter-spacing: 2px;">BARCELONA</div>
                         </div>
-                        <div class="drawer-item" onclick="window.Router.navigate('americanas'); document.getElementById('side-drawer-container').classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');">
-                            <i class="fas fa-calendar-check"></i>
-                            <span>AMERICANAS DISPONIBLES</span>
+
+                        <!-- 1. MAIN NAVIGATION -->
+                        <div style="padding: 0 10px; margin-bottom: 15px;">
+                            <div style="color: #666; font-size: 0.65rem; font-weight: 800; padding: 5px 15px; letter-spacing: 1px; text-transform:uppercase;">Accesos Directos</div>
+                            
+                            <div class="drawer-item" onclick="window.smartNavigate('dashboard', null)">
+                                <i class="fas fa-home" style="color: #CCFF00;"></i>
+                                <span style="font-weight: 700;">INICIO</span>
+                            </div>
+
+                            <div class="drawer-item" onclick="window.smartNavigate('americanas', 'events')">
+                                <i class="fas fa-trophy" style="color: #CCFF00;"></i>
+                                <span style="font-weight: 700;">AMERICANAS DISPONIBLES</span>
+                            </div>
                         </div>
-                        <div class="drawer-item" onclick="window.Router.navigate('stats'); document.getElementById('side-drawer-container').classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');">
-                            <i class="fas fa-chart-bar"></i>
-                            <span>MIS RESULTADOS</span>
+
+                        <!-- 2. PLAYER ZONE -->
+                        <div style="padding: 0 10px; margin-bottom: 15px;">
+                            <div style="color: #666; font-size: 0.65rem; font-weight: 800; padding: 5px 15px; letter-spacing: 1px; text-transform:uppercase;">Zona Jugador</div>
+
+                            <div class="drawer-item" onclick="window.smartNavigate('americanas', 'results')">
+                                <i class="fas fa-chart-pie" style="color: #0ea5e9;"></i>
+                                <span>MIS RESULTADOS</span>
+                            </div>
+
+                            <div class="drawer-item" onclick="window.smartNavigate('ranking', null)">
+                                <i class="fas fa-medal" style="color: #f59e0b;"></i>
+                                <span>RANKING</span>
+                            </div>
+
+                            <div class="drawer-item" onclick="window.smartNavigate('profile', null)">
+                                <i class="fas fa-user-circle" style="color: #ec4899;"></i>
+                                <span>MI PERFIL</span>
+                            </div>
                         </div>
-                        <div class="drawer-item" onclick="alert('📱 SOMOS PADEL BCN\\n\\nVersión: 2.0 PRO\\n\\nPlataforma de gestión de Americanas y Entrenos de Pádel.\\n\\n© 2026 Somos Padel Barcelona'); document.getElementById('side-drawer-container').classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');">
-                            <i class="fas fa-info-circle"></i>
-                            <span>INFO SOBRE LA APP</span>
+
+                        <!-- 3. SYSTEMS -->
+                        <div style="padding: 0 10px;">
+                            <div class="drawer-item" onclick="window.location.href='admin.html'" style="opacity: 0.8;">
+                                <i class="fas fa-user-shield" style="color: #ccc;"></i>
+                                <span>PANEL ADMIN</span>
+                            </div>
                         </div>
                     `;
-
-                    // Dynamic menu items from Firebase
-                    let dynamicMenuHTML = '';
-                    if (activeItems.length === 0) {
-                        dynamicMenuHTML = '';
-                    } else {
-                        dynamicMenuHTML = activeItems.map(item => `
-                            <div class="drawer-item" onclick="window.Router.navigate('${item.action}'); document.getElementById('side-drawer-container').classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');">
-                                <i class="${item.icon}"></i>
-                                <span>${item.title.toUpperCase()}</span>
-                            </div>
-                        `).join('');
-                    }
-
-                    // Combine static + dynamic
-                    menuContainer.innerHTML = staticMenuHTML + dynamicMenuHTML;
                 }
 
                 // B. Render Bottom Dock (Index Navigation)
                 if (dockContainer) {
-                    if (activeItems.length > 0) {
-                        // Apply 'nav-dock' class if missing
-                        dockContainer.innerHTML = `
-                            <nav class="nav-dock">
-                                ${activeItems.map(item => `
-                                    <button class="p-nav-item" data-view="${item.action}" onclick="window.Router.navigate('${item.action}')">
-                                        <div class="nav-icon-box"><i class="${item.icon}"></i></div>
-                                        <span>${item.title}</span>
-                                    </button>
-                                `).join('')}
-                            </nav>
-                        `;
-                        // Re-trigger visual active state update from Router
-                        if (window.Router) window.Router.updateNavUI(window.Router.currentRoute);
-                    }
+                    dockContainer.innerHTML = `
+                        <nav class="nav-dock">
+                            <button class="p-nav-item" data-view="events" onclick="window.Router.navigate('events')">
+                                <div class="nav-icon-box"><i class="fas fa-calendar-check"></i></div>
+                                <span>INICIO</span>
+                            </button>
+                            <button class="p-nav-item" data-view="americanas" onclick="window.Router.navigate('americanas')">
+                                <div class="nav-icon-box"><i class="fas fa-trophy"></i></div>
+                                <span>AMERICANAS</span>
+                            </button>
+                            <button class="p-nav-item" data-view="ranking" onclick="window.Router.navigate('ranking')">
+                                <div class="nav-icon-box"><i class="fas fa-chart-line"></i></div>
+                                <span>RANKING</span>
+                            </button>
+                            <button class="p-nav-item" data-view="profile" onclick="window.Router.navigate('profile')">
+                                <div class="nav-icon-box"><i class="fas fa-user"></i></div>
+                                <span>MI PERFIL</span>
+                            </button>
+                        </nav>
+                    `;
+                    // Re-trigger visual active state update from Router
+                    if (window.Router) window.Router.updateNavUI(window.Router.currentRoute);
                 }
 
             } catch (err) {
