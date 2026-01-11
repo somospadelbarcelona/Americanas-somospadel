@@ -217,9 +217,16 @@ const AdminSimulator = {
                 name: `ENTRENO ${catName} (${pairMode === 'fixed' ? 'FIJA' : 'TWISTER'}) - ${new Date().toLocaleDateString()}`,
                 date: new Date().toISOString().split('T')[0],
                 time: String(new Date().getHours()).padStart(2, '0') + ':00',
-                status: 'live',
+                status: 'open',
                 location: location,
-                players: selectedPlayers.map(p => p.id),
+                players: selectedPlayers.map((p, i) => ({
+                    id: p.id,
+                    uid: p.id,
+                    name: p.name,
+                    level: p.level || '3.5',
+                    gender: p.gender,
+                    current_court: Math.floor(i / 4) + 1
+                })),
                 max_courts: numCourts,
                 category: category,
                 image_url: imageUrl,

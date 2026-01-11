@@ -55,8 +55,16 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
         console.log("📦 Firestore persistence enabled");
     } catch (error) {
         console.error("❌ Firebase initialization error:", error);
+        alert("🔴 FIREBASE ERROR: " + error.message);
     }
 }
+if (typeof window.FIREBASE_CONFIG === 'undefined') {
+    alert("🔴 CONFIG ERROR: firebase-config.js no cargado");
+}
+if (typeof firebase === 'undefined') {
+    alert("🔴 NETWORK ERROR: Firebase SDK no cargado. Revisa tu internet.");
+}
+
 
 // ============================================
 // FIRESTORE HELPERS
@@ -199,6 +207,62 @@ const FirebaseDB = {
 
         async delete(id) {
             await db.collection('americanas').doc(id).delete();
+        },
+
+        // ========== WAITLIST MANAGEMENT ==========
+        async addToWaitlist(eventId, player) {
+            const event = await this.getById(eventId);
+            const waitlist = event.waitlist || [];
+
+            // Evitar duplicados
+            if (waitlist.some(p => p.uid === player.uid)) {
+                throw new Error("Ya estás en la lista de reserva");
+            }
+
+            // Verificar que no esté ya inscrito
+            const players = event.players || [];
+            if (players.some(p => (typeof p === 'string' ? p : p.uid) === player.uid)) {
+                throw new Error("Ya estás inscrito en este evento");
+            }
+
+            waitlist.push({
+                uid: player.uid,
+                name: player.name,
+                joinedAt: new Date().toISOString()
+            });
+
+            await this.update(eventId, { waitlist });
+        },
+
+        async removeFromWaitlist(eventId, playerId) {
+            const event = await this.getById(eventId);
+            const waitlist = (event.waitlist || []).filter(p => p.uid !== playerId);
+            await this.update(eventId, { waitlist });
+        },
+
+        async promoteFromWaitlist(eventId) {
+            const event = await this.getById(eventId);
+            const waitlist = event.waitlist || [];
+
+            if (waitlist.length === 0) return null;
+
+            const promoted = waitlist.shift(); // Primero de la lista (FIFO)
+            const players = event.players || [];
+
+            // Añadir a players
+            players.push({
+                uid: promoted.uid,
+                name: promoted.name,
+                id: promoted.uid
+            });
+
+            await this.update(eventId, {
+                players,
+                waitlist,
+                registeredPlayers: players // Sync
+            });
+
+            return promoted;
         }
     },
 
@@ -214,16 +278,32 @@ const FirebaseDB = {
         },
 
         async getByPlayer(playerId) {
-            const [snapA, snapB] = await Promise.all([
-                db.collection('matches').where('team_a_ids', 'array-contains', playerId).get(),
-                db.collection('matches').where('team_b_ids', 'array-contains', playerId).get()
+            const collections = ['matches', 'entrenos_matches'];
+            const fetchPromises = collections.flatMap(coll => [
+                db.collection(coll).where('team_a_ids', 'array-contains', playerId).get(),
+                db.collection(coll).where('team_b_ids', 'array-contains', playerId).get()
             ]);
 
-            const matches = [
-                ...snapA.docs.map(doc => ({ id: doc.id, ...doc.data() })),
-                ...snapB.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-            ];
-            return matches.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+            const snapshots = await Promise.all(fetchPromises);
+            const matches = [];
+
+            snapshots.forEach((snap, index) => {
+                const collectionName = collections[Math.floor(index / 2)];
+                snap.docs.forEach(doc => {
+                    matches.push({
+                        id: doc.id,
+                        collection: collectionName,
+                        ...doc.data()
+                    });
+                });
+            });
+
+            // Sort by creation time DESC
+            return matches.sort((a, b) => {
+                const dateA = a.timestamp || a.createdAt || 0;
+                const dateB = b.timestamp || b.createdAt || 0;
+                return new Date(dateB) - new Date(dateA);
+            });
         },
 
         async create(data) {
@@ -274,6 +354,62 @@ const FirebaseDB = {
         },
         async delete(id) {
             await db.collection('entrenos').doc(id).delete();
+        },
+
+        // ========== WAITLIST MANAGEMENT ==========
+        async addToWaitlist(eventId, player) {
+            const event = await this.getById(eventId);
+            const waitlist = event.waitlist || [];
+
+            // Evitar duplicados
+            if (waitlist.some(p => p.uid === player.uid)) {
+                throw new Error("Ya estás en la lista de reserva");
+            }
+
+            // Verificar que no esté ya inscrito
+            const players = event.players || [];
+            if (players.some(p => (typeof p === 'string' ? p : p.uid) === player.uid)) {
+                throw new Error("Ya estás inscrito en este evento");
+            }
+
+            waitlist.push({
+                uid: player.uid,
+                name: player.name,
+                joinedAt: new Date().toISOString()
+            });
+
+            await this.update(eventId, { waitlist });
+        },
+
+        async removeFromWaitlist(eventId, playerId) {
+            const event = await this.getById(eventId);
+            const waitlist = (event.waitlist || []).filter(p => p.uid !== playerId);
+            await this.update(eventId, { waitlist });
+        },
+
+        async promoteFromWaitlist(eventId) {
+            const event = await this.getById(eventId);
+            const waitlist = event.waitlist || [];
+
+            if (waitlist.length === 0) return null;
+
+            const promoted = waitlist.shift(); // Primero de la lista (FIFO)
+            const players = event.players || [];
+
+            // Añadir a players
+            players.push({
+                uid: promoted.uid,
+                name: promoted.name,
+                id: promoted.uid
+            });
+
+            await this.update(eventId, {
+                players,
+                waitlist,
+                registeredPlayers: players // Sync
+            });
+
+            return promoted;
         }
     },
 

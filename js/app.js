@@ -3,6 +3,19 @@
  * Entry Point de la aplicación compatible con file://
  */
 (function () {
+    window.calculateMatchTime = (startTime, roundNum) => {
+        if (!startTime) return "00:00";
+        try {
+            const [hours, minutes] = startTime.split(':').map(Number);
+            const date = new Date();
+            date.setHours(hours, minutes + (roundNum - 1) * 20, 0, 0);
+            return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+        } catch (e) {
+            console.error("Error calculating match time:", e);
+            return startTime;
+        }
+    };
+
     class App {
         constructor() {
             console.log("🚀 Somos Padel PRO - Initializing (Global Mode)...");
@@ -51,27 +64,75 @@
 
         async loadSideMenu() {
             const menuContainer = document.getElementById('dynamic-menu-items');
-            if (!menuContainer) return;
+            const dockContainer = document.querySelector('.nav-dock-container');
+
+            if (!menuContainer && !dockContainer) return;
 
             try {
                 if (!window.FirebaseDB) return;
                 const menuItems = await window.FirebaseDB.menu.getAll();
+                const activeItems = menuItems.filter(item => item.active).sort((a, b) => a.order - b.order);
 
-                if (menuItems.length === 0) {
-                    menuContainer.innerHTML = '<div style="padding:20px; color:#888;">No hay botones configurados</div>';
-                    return;
+                // A. Render Side Menu (Hamburger)
+                if (menuContainer) {
+                    // Static menu items (always visible)
+                    const staticMenuHTML = `
+                        <div class="drawer-item" onclick="window.location.href='admin.html'">
+                            <i class="fas fa-user-shield"></i>
+                            <span>ADMIN</span>
+                        </div>
+                        <div class="drawer-item" onclick="window.Router.navigate('americanas'); document.getElementById('side-drawer-container').classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>AMERICANAS DISPONIBLES</span>
+                        </div>
+                        <div class="drawer-item" onclick="window.Router.navigate('stats'); document.getElementById('side-drawer-container').classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>MIS RESULTADOS</span>
+                        </div>
+                        <div class="drawer-item" onclick="alert('📱 SOMOS PADEL BCN\\n\\nVersión: 2.0 PRO\\n\\nPlataforma de gestión de Americanas y Entrenos de Pádel.\\n\\n© 2026 Somos Padel Barcelona'); document.getElementById('side-drawer-container').classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');">
+                            <i class="fas fa-info-circle"></i>
+                            <span>INFO SOBRE LA APP</span>
+                        </div>
+                    `;
+
+                    // Dynamic menu items from Firebase
+                    let dynamicMenuHTML = '';
+                    if (activeItems.length === 0) {
+                        dynamicMenuHTML = '';
+                    } else {
+                        dynamicMenuHTML = activeItems.map(item => `
+                            <div class="drawer-item" onclick="window.Router.navigate('${item.action}'); document.getElementById('side-drawer-container').classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');">
+                                <i class="${item.icon}"></i>
+                                <span>${item.title.toUpperCase()}</span>
+                            </div>
+                        `).join('');
+                    }
+
+                    // Combine static + dynamic
+                    menuContainer.innerHTML = staticMenuHTML + dynamicMenuHTML;
                 }
 
-                menuContainer.innerHTML = menuItems.filter(item => item.active).map(item => `
-                    <div class="drawer-item" onclick="window.Router.navigate('${item.action}'); document.getElementById('side-drawer-container').classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');">
-                        <i class="${item.icon}"></i>
-                        <span>${item.title.toUpperCase()}</span>
-                    </div>
-                `).join('');
+                // B. Render Bottom Dock (Index Navigation)
+                if (dockContainer) {
+                    if (activeItems.length > 0) {
+                        // Apply 'nav-dock' class if missing
+                        dockContainer.innerHTML = `
+                            <nav class="nav-dock">
+                                ${activeItems.map(item => `
+                                    <button class="p-nav-item" data-view="${item.action}" onclick="window.Router.navigate('${item.action}')">
+                                        <div class="nav-icon-box"><i class="${item.icon}"></i></div>
+                                        <span>${item.title}</span>
+                                    </button>
+                                `).join('')}
+                            </nav>
+                        `;
+                        // Re-trigger visual active state update from Router
+                        if (window.Router) window.Router.updateNavUI(window.Router.currentRoute);
+                    }
+                }
 
             } catch (err) {
-                console.error("Error loading side menu:", err);
-                menuContainer.innerHTML = '<div style="padding:20px; color:#ff4d4d;">Error al cargar menú</div>';
+                console.error("Error loading navigation:", err);
             }
         }
 

@@ -10,14 +10,15 @@
         constructor() {
             this.state = {
                 activeTab: 'events',
-                americanas: null, // Initialized to null for checkLoading
+                americanas: null,
                 entrenos: null,
-                users: [], // For ranking
-                personalMatches: [], // NEW: User's history
+                users: [],
+                personalMatches: [],
                 loading: true,
                 initialized: false,
                 loadingResults: false,
                 currentUser: null,
+                playerCache: {}, // NEW: For resolving names on the fly
                 filters: {
                     month: 'all',
                     category: 'all'
@@ -141,7 +142,59 @@
             if (this.state.americanas !== null && this.state.entrenos !== null) {
                 this.state.loading = false;
                 console.log("🎟️ [EventsController_V5] Loading complete. Events:", (this.state.americanas.length + this.state.entrenos.length));
+
+                // NEW: Automatic promotion of full events to 'live'
+                this.promoteFullEventsToLive();
+
                 this.render();
+            }
+        }
+
+        /**
+         * Robust time comparison to check if event has started
+         */
+        hasEventStarted(dateStr, timeStr) {
+            if (!dateStr || !timeStr) return false;
+            try {
+                // Combine date and time (assuming date is YYYY-MM-DD and time is HH:MM)
+                const eventDateTime = new Date(`${dateStr}T${timeStr}:00`);
+                const now = new Date();
+                return now >= eventDateTime;
+            } catch (e) {
+                console.error("Error comparing dates:", e);
+                return false;
+            }
+        }
+
+        /**
+         * Scans for open events that are full and started, then promotes them to 'live'
+         */
+        async promoteFullEventsToLive() {
+            const all = this.getAllSortedEvents();
+            const todayStr = this.getTodayStr();
+
+            for (const evt of all) {
+                if (evt.status === 'open') {
+                    const players = evt.players || evt.registeredPlayers || [];
+                    const maxPlayers = (evt.max_courts || 4) * 4;
+                    const isFull = players.length >= maxPlayers;
+                    const hasStarted = this.hasEventStarted(evt.date, evt.time);
+
+                    if (isFull && hasStarted) {
+                        console.log(`🚀 [EventsController] Promoting event ${evt.id} (${evt.name}) to LIVE!`);
+                        try {
+                            const collection = evt.type === 'entreno' ? 'entrenos' : 'americanas';
+                            await window.db.collection(collection).doc(evt.id).update({ status: 'live' });
+
+                            // NEW: Automatically generate matches for the first round
+                            if (window.AmericanaService) {
+                                await window.AmericanaService.generateFirstRoundMatches(evt.id, evt.type || 'americana');
+                            }
+                        } catch (err) {
+                            console.error(`Error promoting event ${evt.id}:`, err);
+                        }
+                    }
+                }
             }
         }
 
@@ -157,7 +210,7 @@
             // If switching to results, fetch personal matches
             if (tabName === 'results' && this.state.currentUser) {
                 this.state.loadingResults = true;
-                this.render();
+                await this.render();
                 try {
                     const matches = await window.FirebaseDB.matches.getByPlayer(this.state.currentUser.uid);
                     this.state.personalMatches = matches;
@@ -165,14 +218,14 @@
                     console.error("Error fetching personal matches:", e);
                 } finally {
                     this.state.loadingResults = false;
-                    this.render();
+                    await this.render();
                 }
             } else {
-                this.render();
+                await this.render();
             }
         }
 
-        render() {
+        async render() {
             const container = document.getElementById('content-area');
             if (!container) {
                 console.error("❌ [EventsController_V5] Content area #content-area NOT FOUND!");
@@ -266,7 +319,9 @@
                 switch (this.state.activeTab) {
                     case 'events': contentHtml = this.renderEventsList(false); break;
                     case 'agenda': contentHtml = this.renderAgendaView(); break;
-                    case 'results': contentHtml = this.renderResultsView(); break;
+                    case 'results':
+                        contentHtml = await this.renderResultsView();
+                        break;
                     case 'finished': contentHtml = this.renderFinishedView(); break;
                 }
             }
@@ -282,7 +337,13 @@
             const todayStr = this.getTodayStr();
 
             if (!onlyMine) {
-                events = events.filter(e => e.status !== 'finished' && e.date >= todayStr);
+                // Show 'open' OR 'live' events in DISPONIBLES.
+                // Filter out 'finished' events and those from significantly older days (yesterday).
+                events = events.filter(e => {
+                    if (e.status === 'finished') return false;
+                    if (e.status === 'live') return true; // Keep live events visible
+                    return e.date >= todayStr;
+                });
             } else if (onlyMine) {
                 if (!uid) return `<div style="text-align:center; padding:40px; color:#888;">Debes iniciar sesión.</div>`;
                 events = events.filter(e => {
@@ -294,8 +355,15 @@
             if (month !== 'all') events = events.filter(e => e.date.startsWith(month));
             if (category !== 'all') events = events.filter(e => e.category === category);
 
-            const eventsHtml = events.map(evt => this.renderCard(evt)).join('');
-            const availableEvents = this.getAllSortedEvents().filter(e => e.status !== 'finished' && e.date >= todayStr);
+            let eventsHtml = '';
+            try {
+                eventsHtml = events.map(evt => this.renderCard(evt)).join('');
+            } catch (e) {
+                console.error("❌ [EventsController_V5] Error rendering event cards:", e);
+                eventsHtml = `<div style="padding:40px; text-align:center; color:red;">Error al renderizar eventos.</div>`;
+            }
+
+            const availableEvents = this.getAllSortedEvents().filter(e => e.status !== 'finished' && (e.status === 'live' || e.date >= todayStr));
             const filterBarHtml = !onlyMine ? this.renderFilterBar(availableEvents) : '';
 
             return `
@@ -317,7 +385,7 @@
                     </div>
                     ${filterBarHtml}
                     <div style="padding-bottom: 120px; padding-left:10px; padding-right:10px;">
-                        ${eventsHtml.length ? eventsHtml : `<div style="padding:100px 40px; text-align:center; color:#444;"><i class="fas fa-filter" style="font-size: 4rem; opacity: 0.1;"></i><h3 style="color:#666;">SIN RESULTADOS</h3></div>`}
+                        ${events.length === 0 ? `<div style="padding:100px 40px; text-align:center; color:#444;"><i class="fas fa-filter" style="font-size: 4rem; opacity: 0.1;"></i><h3 style="color:#666;">SIN RESULTADOS</h3></div>` : eventsHtml}
                     </div>
                 </div>
             `;
@@ -431,18 +499,18 @@
             `;
         }
 
-        renderResultsView() {
+        async renderResultsView() {
             const matches = this.state.personalMatches || [];
             const user = this.state.currentUser;
 
             if (this.state.loadingResults) return `<div style="padding:100px; text-align:center;"><div class="loader"></div></div>`;
             if (!user) return `<div style="padding:80px; text-align:center; color:white;"><i class="fas fa-lock" style="font-size:3rem; margin-bottom:15px; opacity:0.2;"></i><p>Inicia sesión para ver resultados.</p></div>`;
 
-            // Calculate Stats & Filter Real Data (Exclude 0-0 unless explicitly finished with points)
+            // Calculate Stats & Filter Real Data
             const realMatches = matches.filter(m => {
                 const s1 = parseInt(m.score_a || 0);
                 const s2 = parseInt(m.score_b || 0);
-                return (s1 > 0 || s2 > 0); // Only keep matches with actual points
+                return (s1 > 0 || s2 > 0);
             });
 
             let totalWins = 0;
@@ -459,126 +527,154 @@
             const winRate = totalMatches > 0 ? Math.round((totalWins / totalMatches) * 100) : 0;
             const userLevel = user.level || user.playtomic_level || 3.5;
 
-            // Motivational Logic
-            let quote = "¡Tu camino hacia la cima del pádel empieza aquí!";
-            let motivationColor = "#CCFF00";
-            if (winRate >= 70) {
-                quote = "¡Estás imparable! Tu nivel está subiendo como la espuma. 🔥";
-                motivationColor = "#00E36D";
-            } else if (winRate >= 40) {
-                quote = "Buen progreso. Cada partido te acerca más a tu siguiente nivel.";
-                motivationColor = "#CCFF00";
-            } else if (totalMatches > 0) {
-                quote = "No te rindas. Los grandes jugadores se forjan en las derrotas. ¡A por la siguiente!";
-                motivationColor = "#FF2D55";
-            }
-
             return `
-                <div style="padding: 25px; background: #f8fafc; min-height: 80vh; font-family: 'Outfit', sans-serif;">
+                <div style="padding: 24px 20px 120px; background: #0A0A0A; min-height: 90vh; font-family: 'Outfit', sans-serif; color: white;">
                     
-                    <!-- HEADER -->
-                    <div style="margin-bottom: 25px;">
-                        <span style="background: rgba(0,0,0,0.05); color: #64748b; padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">Rendimiento Personal</span>
-                        <h2 style="font-size: 2rem; font-weight: 950; color: #0f172a; margin: 10px 0;">Mis <span style="color: #84cc16;">Resultados</span></h2>
+                    <!-- PREMIUM HEADER -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px;">
+                        <div>
+                            <div style="color: #00E36D; font-size: 0.7rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px;">Player Performance</div>
+                            <h2 style="font-size: 1.8rem; font-weight: 950; margin: 0; line-height: 1;">Hola, <span style="color: #00E36D;">${(user.name || user.displayName || 'Pro').split(' ')[0]}</span></h2>
+                        </div>
+                        <div style="width: 50px; height: 50px; background: rgba(0,227,109,0.1); border: 1px solid rgba(0,227,109,0.2); border-radius: 15px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-trophy" style="color: #00E36D; font-size: 1.2rem;"></i>
+                        </div>
                     </div>
 
                     ${totalMatches === 0 ? `
-                        <!-- EMPTY STATE (NO DATA) -->
-                        <div style="text-align:center; padding: 80px 30px; background: white; border-radius: 32px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid #e2e8f0;">
-                            <div style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px;">
-                                <i class="fas fa-chart-line" style="font-size: 2rem; color: #cbd5e1;"></i>
-                            </div>
-                            <h3 style="color: #1e293b; font-weight: 900; font-size: 1.3rem; margin-bottom: 10px;">HISTORIAL VACÍO</h3>
-                            <p style="color: #64748b; font-size: 0.9rem; line-height: 1.5; margin-bottom: 25px;">Todavía no tienes partidos registrados en Americanas. Tus estadísticas aparecerán aquí en tiempo real cuando completes tu primer evento.</p>
-                            <button onclick="window.EventsController.setTab('events')" style="background: #0f172a; color: white; border: none; padding: 14px 28px; border-radius: 16px; font-weight: 800; font-size: 0.85rem; box-shadow: 0 10px 20px rgba(0,0,0,0.1); cursor: pointer;">EXPLORAR PRÓXIMAS AMERICANAS</button>
+                        <div style="text-align:center; padding: 60px 20px; background: rgba(255,255,255,0.03); border-radius: 30px; border: 1px dashed rgba(255,255,255,0.1);">
+                            <i class="fas fa-ghost" style="font-size: 3rem; color: rgba(255,255,255,0.1); margin-bottom: 20px;"></i>
+                            <h3 style="font-weight: 900; margin-bottom: 10px;">SIN ACTIVIDAD</h3>
+                            <p style="color: #666; font-size: 0.85rem; line-height: 1.5; margin-bottom: 25px;">Tus partidos y estadísticas de Americanas y Entrenos aparecerán aquí.</p>
+                            <button onclick="window.EventsController.setTab('events')" style="background: white; color: black; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.8rem; cursor: pointer;">BUSCAR EVENTOS</button>
                         </div>
                     ` : `
-                        <!-- MOTIVATION CARD (ONLY IF DATA) -->
-                        <div style="background: white; border: 1px solid #e2e8f0; padding: 24px; border-radius: 28px; margin-bottom: 25px; border-left: 6px solid ${motivationColor}; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
-                            <p style="margin:0; color: #1e293b; font-size: 1.15rem; font-weight: 800; line-height: 1.4;">${quote}</p>
-                            <div style="margin-top: 15px; display: flex; align-items: center; gap: 8px;">
-                                <div style="padding: 4px 10px; background: #f1f5f9; border-radius: 8px; font-size: 0.65rem; font-weight: 900; color: #64748b;">
-                                    BASADO EN ${totalMatches} PARTIDOS REALES
-                                </div>
+                        <!-- STATS GRID -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 40px;">
+                            <div style="background: linear-gradient(135deg, #00E36D 0%, #00C4FF 100%); padding: 25px 20px; border-radius: 24px; color: black; position: relative; overflow: hidden;">
+                                <div style="font-size: 2.5rem; font-weight: 950; line-height: 1;">${winRate}%</div>
+                                <div style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; margin-top: 8px; opacity: 0.7;">W/L RATIO</div>
+                                <i class="fas fa-bolt" style="position: absolute; right: -10px; bottom: -10px; font-size: 5rem; opacity: 0.1;"></i>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); padding: 25px 20px; border-radius: 24px; position: relative;">
+                                <div style="font-size: 2.5rem; font-weight: 950; line-height: 1; color: white;">${parseFloat(userLevel).toFixed(2)}</div>
+                                <div style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; margin-top: 8px; color: #666;">LEVEL</div>
+                                <div style="position: absolute; right: 15px; top: 15px; background: rgba(0,227,109,0.1); padding: 4px 8px; border-radius: 6px; font-size: 0.5rem; font-weight: 900; color: #00E36D;">PRO</div>
                             </div>
                         </div>
 
-                        <!-- STATS GRID (ONLY IF DATA) -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px;">
-                            <div style="background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 24px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
-                                <div style="font-size: 2.2rem; font-weight: 950; color: #1e293b;">${winRate}<span style="font-size: 1rem; color: #94a3b8;">%</span></div>
-                                <div style="font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; margin-top: 4px;">Victoria Rate</div>
-                            </div>
-                            <div style="background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 24px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
-                                <div style="font-size: 2.2rem; font-weight: 950; color: #84cc16;">${parseFloat(userLevel).toFixed(2)}</div>
-                                <div style="font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; margin-top: 4px;">Nivel Actual</div>
-                            </div>
+                        <div style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+                            <h3 style="font-weight: 950; font-size: 0.85rem; letter-spacing: 1px; color: #666;">HISTORIAL RECIENTE</h3>
+                            <div style="font-size: 0.65rem; color: #444; font-weight: 800;">${totalMatches} PARTIDOS</div>
                         </div>
 
-                        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-                            <h3 style="color: #1e293b; font-weight: 900; font-size: 1rem; margin: 0; letter-spacing: 0.5px;">CRONOLOGÍA DE PARTIDOS</h3>
-                        </div>
-
-                        <div style="padding-bottom: 120px; display: flex; flex-direction: column; gap: 15px;">
-                            ${matches.map((m, i) => {
-                const s1 = parseInt(m.score_a || 0);
-                const s2 = parseInt(m.score_b || 0);
-                const isTeamA = m.team_a_ids && m.team_a_ids.includes(user.uid);
-                const won = (isTeamA && s1 > s2) || (!isTeamA && s2 > s1);
-                const resultColor = won ? '#22c55e' : '#ef4444';
-                const bgBadge = won ? '#f0fdf4' : '#fef2f2';
-
-                return `
-                                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 24px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); position: relative;">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
-                                            <div style="display: flex; align-items: center; gap: 10px;">
-                                                <div style="background: #f8fafc; padding: 6px 12px; border-radius: 10px; color: #64748b; font-size: 0.7rem; font-weight: 800; border: 1px solid #f1f5f9;">PISTA ${m.court || '?'}</div>
-                                                <div style="color: #94a3b8; font-size: 0.7rem; font-weight: 700;">${m.timestamp ? new Date(m.timestamp).toLocaleDateString() : 'Finalizado'}</div>
-                                            </div>
-                                            <div style="background: ${bgBadge}; color: ${resultColor}; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 900; letter-spacing: 1px;">
-                                                ${won ? 'VICTORIA' : 'DERROTA'}
-                                            </div>
-                                        </div>
-
-                                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 10px 0;">
-                                            <div style="flex: 1; text-align: center;">
-                                                <div style="font-size: 0.85rem; font-weight: 800; color: ${isTeamA ? '#0f172a' : '#94a3b8'}; line-height: 1.3;">
-                                                    ${Array.isArray(m.team_a_names) ? m.team_a_names.join('<br>') : 'Equipo A'}
-                                                </div>
-                                            </div>
-                                            
-                                            <div style="display: flex; align-items: center; gap: 12px; background: #f8fafc; padding: 10px 20px; border-radius: 16px; border: 1px solid #f1f5f9;">
-                                                <span style="font-size: 1.6rem; font-weight: 950; color: ${isTeamA ? '#0f172a' : '#cbd5e1'};">${s1}</span>
-                                                <span style="color: #e2e8f0; font-weight: 900;">:</span>
-                                                <span style="font-size: 1.6rem; font-weight: 950; color: ${!isTeamA ? '#0f172a' : '#cbd5e1'};">${s2}</span>
-                                            </div>
-
-                                            <div style="flex: 1; text-align: center;">
-                                                <div style="font-size: 0.85rem; font-weight: 800; color: ${!isTeamA ? '#0f172a' : '#94a3b8'}; line-height: 1.3;">
-                                                    ${Array.isArray(m.team_b_names) ? m.team_b_names.join('<br>') : 'Equipo B'}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #f1f5f9; display: flex; justify-content: center;">
-                                            <button onclick="window.ControlTowerView.prepareLoad('${m.americana_id}'); window.Router.navigate('live'); event.stopPropagation();" 
-                                                    style="background: none; border: none; color: #64748b; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                                                Ver americana <i class="fas fa-chevron-right" style="font-size: 0.6rem;"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                `;
-            }).reverse().join('')}
+                        <div style="display: flex; flex-direction: column; gap: 15px; padding-bottom: 120px;">
+                            ${await this.renderMatchCards(matches, user)}
                         </div>
                     `}
                 </div>
             `;
         }
 
+        async renderMatchCards(matches, user) {
+            const htmls = await Promise.all(matches.map(async (m) => {
+                const s1 = parseInt(m.score_a || 0);
+                const s2 = parseInt(m.score_b || 0);
+                const isTeamA = m.team_a_ids && m.team_a_ids.includes(user.uid);
+                const won = (isTeamA && s1 > s2) || (!isTeamA && s2 > s1);
+                const resultLabel = won ? 'VICTORIA' : 'DERROTA';
+                const themeColor = won ? '#00E36D' : '#FF2D55';
+
+                // Enhanced Name Handling with Cache
+                const resolveNames = async (ids, names, defaultLabel) => {
+                    const cleanNames = Array.isArray(names) ? names.filter(n => n && n !== 'Equipo A' && n !== 'Equipo B') : [];
+                    if (cleanNames.length > 0) {
+                        return cleanNames.map(n => {
+                            if (n === user.name || n === user.displayName) return '<span style="color:#00E36D;">TÚ</span>';
+                            return n.split(' ')[0];
+                        }).join(' & ');
+                    }
+
+                    // Fallback: Resolve from IDs
+                    if (Array.isArray(ids) && ids.length > 0) {
+                        const results = await Promise.all(ids.map(async id => {
+                            if (id === user.uid) return '<span style="color:#00E36D;">TÚ</span>';
+                            if (this.state.playerCache[id]) return this.state.playerCache[id];
+
+                            try {
+                                const p = await window.FirebaseDB.players.getById(id);
+                                if (p && (p.name || p.displayName)) {
+                                    const shortName = (p.name || p.displayName).split(' ')[0];
+                                    this.state.playerCache[id] = shortName;
+                                    return shortName;
+                                }
+                            } catch (e) { }
+                            return 'PRO';
+                        }));
+                        return results.join(' & ');
+                    }
+
+                    return defaultLabel;
+                };
+
+                const teamANames = await resolveNames(m.team_a_ids, m.team_a_names, 'OPONENTE');
+                const teamBNames = await resolveNames(m.team_b_ids, m.team_b_names, 'OPONENTE');
+
+                return `
+                                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 28px; padding: 22px; position: relative; overflow: hidden;">
+                                        <!-- Glow -->
+                                        <div style="position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: ${themeColor}; shadow: 0 0 15px ${themeColor};"></div>
+
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <div style="background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 8px; color: #888; font-size: 0.6rem; font-weight: 950;">PISTA ${m.court || '?'}</div>
+                                                <div style="color: #444; font-size: 0.65rem; font-weight: 800;">• ${m.collection === 'entrenos_matches' ? 'ENTRENO' : 'AMERICANA'}</div>
+                                            </div>
+                                            <div style="color: ${themeColor}; font-size: 0.7rem; font-weight: 950; letter-spacing: 1.5px;">${resultLabel}</div>
+                                        </div>
+
+                                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                                            <div style="flex: 1; text-align: right; font-weight: 800; font-size: 0.9rem; line-height: 1.2;">
+                                                ${teamANames}
+                                            </div>
+                                            
+                                            <div style="background: #000; border: 1px solid rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 12px; display: flex; align-items: center; gap: 10px;">
+                                                <div style="font-size: 1.5rem; font-weight: 950; color: ${isTeamA ? 'white' : '#444'};">${s1}</div>
+                                                <div style="color: #222; font-weight: 900; font-size: 0.8rem;">-</div>
+                                                <div style="font-size: 1.5rem; font-weight: 950; color: ${!isTeamA ? 'white' : '#444'};">${s2}</div>
+                                            </div>
+
+                                            <div style="flex: 1; text-align: left; font-weight: 800; font-size: 0.9rem; line-height: 1.2;">
+                                                ${teamBNames}
+                                            </div>
+                                        </div>
+
+                                        <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
+                                            <button onclick="window.ControlTowerView.prepareLoad('${m.americana_id}'); window.Router.navigate('live'); event.stopPropagation();" 
+                                                    style="background: none; border: none; color: #444; font-size: 0.65rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 5px; text-transform: uppercase; letter-spacing: 1px;">
+                                                Detalles <i class="fas fa-arrow-right" style="font-size: 0.5rem;"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+            }));
+            return htmls.join('');
+        }
+
         renderCard(evt, isLight = false) {
-            const players = evt.players || evt.registeredPlayers || [];
+            const rawPlayers = evt.players || evt.registeredPlayers || [];
+            // Robust unique player counting
+            const seenIds = new Set();
+            const players = rawPlayers.filter(p => {
+                const id = (typeof p === 'string') ? p : (p.uid || p.id);
+                if (id && !seenIds.has(id)) {
+                    seenIds.add(id);
+                    return true;
+                }
+                return false;
+            });
             const playerCount = players.length;
-            const maxPlayers = (evt.max_courts || 0) * 4;
+            const maxPlayers = (evt.max_courts || 4) * 4;
 
             const d = new Date(evt.date);
             const dayName = d.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase().replace('.', '');
@@ -590,9 +686,16 @@
             const isFull = playerCount >= maxPlayers;
 
             const todayStr = this.getTodayStr();
-            const isPast = evt.date < todayStr;
-            const isFinished = evt.status === 'finished' || (isPast && evt.status !== 'live');
-            const isLive = evt.status === 'live';
+            const isPastDate = evt.date < todayStr;
+            const hasStarted = this.hasEventStarted(evt.date, evt.time);
+            const isLive = evt.status === 'live' && (hasStarted || isPastDate);
+            // Finished only if explicitly set OR if past date AND not live.
+            // If live, display as live regardless of time until admin closes it.
+            const isFinished = evt.status === 'finished' || (isPastDate && !isLive);
+
+            // Waitlist logic
+            const waitlist = evt.waitlist || [];
+            const isInWaitlist = waitlist.some(p => p.uid === uid);
 
             // --- 1. ACTION BUTTON STATE ---
             let btnContent = '<i class="fas fa-plus" style="font-size: 1.4rem;"></i>';
@@ -613,10 +716,18 @@
                 btnStyle = 'background: white; color: #84cc16; border: 2px solid #84cc16; box-shadow: 0 4px 15px rgba(132, 204, 22, 0.3);';
                 btnAction = `event.stopPropagation(); window.EventsController.leaveEvent('${evt.id}', '${evt.type || 'americana'}')`;
                 btnDisabled = false;
+            } else if (isInWaitlist) {
+                // User is in waitlist
+                btnContent = '<div style="display:flex; flex-direction:column; align-items:center; line-height:1; gap:2px;"><i class="fas fa-clock" style="font-size: 1rem;"></i><span style="font-size:0.4rem; font-weight:950;">EN<br>RESERVA</span></div>';
+                btnStyle = 'background: #FFA500; color: white; border: 2px solid white; box-shadow: 0 4px 15px rgba(255, 165, 0, 0.5); width: 55px; height: 55px;';
+                btnAction = `event.stopPropagation(); window.EventsController.leaveWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
+                btnDisabled = false;
             } else if (isFull) {
-                btnContent = '<span style="font-size:0.55rem; font-weight:950;">LLENO</span>';
-                btnStyle = 'background: #ef4444; color: white; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); animation: none;';
-                btnDisabled = true;
+                // Event is full - show waitlist button
+                btnContent = '<div style="display:flex; flex-direction:column; align-items:center; line-height:1; gap:2px;"><i class="fas fa-clock" style="font-size: 1rem;"></i><span style="font-size:0.4rem; font-weight:950;">LISTA DE<br>RESERVA</span></div>';
+                btnStyle = 'background: #FFA500; color: white; box-shadow: 0 4px 15px rgba(255, 165, 0, 0.4); width: 55px; height: 55px;';
+                btnAction = `event.stopPropagation(); window.EventsController.joinWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
+                btnDisabled = false;
             }
 
             // --- 2. LABELS & CATEGORY COLOR ---
@@ -734,12 +845,22 @@
                         <div style="width: 100%; height: 6px; background: ${isLight ? '#f1f5f9' : '#1a1a1a'}; border-radius: 10px; margin-top: 15px; overflow: hidden;">
                             <div style="width: ${(playerCount / (maxPlayers || 1)) * 100}%; height: 100%; background: linear-gradient(90deg, #84cc16, #CCFF00); border-radius: 10px; box-shadow: 0 0 10px rgba(204, 255, 0, 0.3);"></div>
                         </div>
+
+                        <!-- Waitlist Indicator -->
+                        ${waitlist.length > 0 ? `
+                            <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(255,165,0,0.1); border-left: 3px solid #FFA500; border-radius: 6px;">
+                                <i class="fas fa-clock" style="color: #FFA500; font-size: 0.9rem;"></i>
+                                <span style="color: ${isLight ? '#0f172a' : '#FFA500'}; font-size: 0.7rem; font-weight: 800;">
+                                    ${waitlist.length} ${waitlist.length === 1 ? 'persona' : 'personas'} en lista de reserva
+                                </span>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             `;
         }
 
-        openPlayerListModal(eventId) {
+        async openPlayerListModal(eventId) {
             console.log("🎟️ [EventsController_V5] Opening player list for:", eventId);
 
             // Find the event in our state to get the players
@@ -751,7 +872,51 @@
                 return;
             }
 
-            const players = evt.players || evt.registeredPlayers || [];
+            const rawPlayers = evt.players || evt.registeredPlayers || [];
+            // Robust unique player resolving
+            const seenIds = new Set();
+            let players = rawPlayers.filter(p => {
+                const id = (typeof p === 'string') ? p : (p.uid || p.id);
+                if (id && !seenIds.has(id)) {
+                    seenIds.add(id);
+                    return true;
+                }
+                return false;
+            });
+
+            // --- HYDRATION LOGIC ---
+            // If any player is just a string or missing name/level, hydrate them
+            const needsHydration = players.some(p => typeof p === 'string' || !p.name || p.name === 'JUGADOR');
+
+            if (needsHydration) {
+                console.log("💧 [EventsController_V5] Hydrating player data...");
+                try {
+                    // Fetch all registered players to use as a dictionary
+                    const allPlayersSnapshot = await window.db.collection('players').get();
+                    const playersDict = {};
+                    allPlayersSnapshot.forEach(doc => {
+                        playersDict[doc.id] = { id: doc.id, ...doc.data() };
+                    });
+
+                    players = players.map(p => {
+                        const id = (typeof p === 'string') ? p : (p.uid || p.id);
+                        const fullData = playersDict[id];
+                        if (fullData) {
+                            return {
+                                id: id,
+                                uid: id,
+                                name: fullData.name || 'JUGADOR',
+                                level: fullData.level || fullData.playtomic_level || 3.5,
+                                gender: fullData.gender || '?'
+                            };
+                        }
+                        return (typeof p === 'string') ? { id: p, name: 'JUGADOR' } : p;
+                    });
+                } catch (err) {
+                    console.error("Error hydrating players:", err);
+                }
+            }
+            // -----------------------
 
             const modalId = 'player-list-modal';
             const existingModal = document.getElementById(modalId);
@@ -839,8 +1004,27 @@
             document.body.appendChild(modal);
         }
 
+        // Helper: Wait for AmericanaService to be ready
+        async waitForService(maxRetries = 10) {
+            for (let i = 0; i < maxRetries; i++) {
+                if (window.AmericanaService && window.AmericanaService.db) {
+                    return true;
+                }
+                await new Promise(resolve => setTimeout(resolve, 100 * (i + 1))); // Exponential backoff
+            }
+            return false;
+        }
+
         async joinEvent(id, type = 'americana') {
             if (!this.state.currentUser) { alert("Acceso denegado. Inicia sesión."); return; }
+
+            // Wait for service
+            const ready = await this.waitForService();
+            if (!ready) {
+                alert("⚠️ El sistema aún se está cargando. Por favor, espera unos segundos e inténtalo de nuevo.");
+                return;
+            }
+
             const confirm = window.confirm("¿Confirmas tu inscripción?");
             if (!confirm) return;
             try {
@@ -852,6 +1036,14 @@
 
         async leaveEvent(id, type = 'americana') {
             if (!this.state.currentUser) return;
+
+            // Wait for service
+            const ready = await this.waitForService();
+            if (!ready) {
+                alert("⚠️ El sistema aún se está cargando. Por favor, espera unos segundos e inténtalo de nuevo.");
+                return;
+            }
+
             const confirm = window.confirm("¿Deseas darte de baja de este evento?");
             if (!confirm) return;
             try {
@@ -859,6 +1051,44 @@
                 if (res.success) alert("Te has dado de baja correctamente.");
                 else alert("Error: " + res.error);
             } catch (err) { alert("Error fatal: " + err.message); }
+        }
+
+        async joinWaitlist(id, type = 'americana') {
+            if (!this.state.currentUser) {
+                alert("Acceso denegado. Inicia sesión.");
+                return;
+            }
+
+            const confirm = window.confirm("¿Quieres añadirte a la lista de reserva?\n\nSi hay una plaza disponible, te avisaremos automáticamente.");
+            if (!confirm) return;
+
+            try {
+                const db = type === 'entreno' ? window.FirebaseDB.entrenos : window.FirebaseDB.americanas;
+                await db.addToWaitlist(id, {
+                    uid: this.state.currentUser.uid,
+                    name: this.state.currentUser.name || this.state.currentUser.displayName
+                });
+                alert("✅ Te has añadido a la lista de reserva.\n\nTe avisaremos si hay plaza disponible.");
+                this.init(); // Refresh
+            } catch (e) {
+                alert("❌ " + e.message);
+            }
+        }
+
+        async leaveWaitlist(id, type = 'americana') {
+            if (!this.state.currentUser) return;
+
+            const confirm = window.confirm("¿Salir de la lista de reserva?");
+            if (!confirm) return;
+
+            try {
+                const db = type === 'entreno' ? window.FirebaseDB.entrenos : window.FirebaseDB.americanas;
+                await db.removeFromWaitlist(id, this.state.currentUser.uid);
+                alert("Has salido de la lista de reserva.");
+                this.init(); // Refresh
+            } catch (e) {
+                alert("❌ " + e.message);
+            }
         }
     }
 

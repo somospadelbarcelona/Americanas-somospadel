@@ -2029,7 +2029,7 @@ letter-spacing: 1px;
 
     .sidebar-pro,
     .activity-stream {
-        display: none !important;
+        display: none;
     }
 
     .app-shell {

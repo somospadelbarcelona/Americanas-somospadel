@@ -11,30 +11,35 @@
         }
 
         init() {
-            // --- DEV MODE BYPASS (REQUESTED BY USER) ---
-            console.warn("🚧 DEV MODE: Auth Bypassed. Logging in as 'Dev Admin'.");
-            const devUser = {
-                id: 'dev-user-001',
-                uid: 'dev-user-001',
-                email: 'dev@somospadel.com',
-                displayName: 'Alejandro Coscolín',
-                name: 'Alejandro Coscolín',
-                role: 'admin_player',
-                level: 7.0
-            };
-
-            // Delay slightly to ensure Store is ready
-            setTimeout(() => {
-                if (window.Store) {
-                    window.Store.setState('currentUser', devUser);
-                }
-            }, 500);
-
             if (auth) {
                 auth.onAuthStateChanged(user => {
-                    console.log("Firebase Auth State Change logged (Dev Mode active)");
+                    console.log("Firebase Auth State Changed:", user ? user.uid : "No user");
+                    if (user) {
+                        this.handleAuthStateChange(user);
+                    } else {
+                        window.Store.setState('currentUser', null);
+                    }
                 });
             }
+        }
+
+        async handleAuthStateChange(user) {
+            const phone = user.email ? user.email.split('@')[0] : '';
+            let playerData = null;
+            try {
+                playerData = await window.FirebaseDB.players.getByPhone(phone);
+            } catch (e) {
+                console.error("Error fetching player data on auth state change", e);
+            }
+
+            const finalUser = {
+                id: user.uid,
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                ...playerData
+            };
+            window.Store.setState('currentUser', finalUser);
         }
 
         async login(email, password) {
@@ -46,6 +51,11 @@
 
                 const phone = user.email ? user.email.split('@')[0] : '';
                 const playerData = await window.FirebaseDB.players.getByPhone(phone);
+
+                if (playerData && playerData.status === 'pending') {
+                    await auth.signOut(); // Force signout
+                    throw new Error("⏳ TU CUENTA ESTÁ PENDIENTE DE VALIDACIÓN POR UN ADMINISTRADOR.");
+                }
 
                 const finalUser = {
                     id: user.uid,
@@ -60,26 +70,54 @@
             } catch (error) {
                 console.warn("⚠️ Firebase Login failed, trying Local Fallback...", error.code);
 
-                const adminUser = "649219350@somospadel.com";
-                const adminPass = "JARABA";
+                // Re-throw pending validation error immediately
+                if (error.message.includes("PENDIENTE")) {
+                    return { success: false, error: error.message };
+                }
 
-                if (email === adminUser && password === adminPass) {
-                    const playerData = await window.FirebaseDB.players.getByPhone("649219350");
+                // === LOCAL AUTHENTICATION FALLBACK ===
+                // Try to authenticate against Firestore directly
+                try {
+                    const phone = email.includes('@') ? email.split('@')[0] : email;
+                    const playerData = await window.FirebaseDB.players.getByPhone(phone);
+
+                    if (!playerData) {
+                        throw new Error("Usuario no encontrado");
+                    }
+
+                    // Check password
+                    if (playerData.password !== password) {
+                        throw new Error("Contraseña incorrecta");
+                    }
+
+                    // Check if account is pending
+                    if (playerData.status === 'pending') {
+                        throw new Error("⏳ TU CUENTA ESTÁ PENDIENTE DE VALIDACIÓN POR UN ADMINISTRADOR.");
+                    }
+
+                    // Check if account is blocked
+                    if (playerData.status === 'blocked') {
+                        throw new Error("🚫 TU CUENTA HA SIDO BLOQUEADA. Contacta con el administrador.");
+                    }
+
+                    // Success - create mock user session
                     const mockUser = {
-                        id: playerData ? playerData.id : "local-admin-alex",
-                        uid: playerData ? playerData.id : "local-admin-alex",
-                        email: email,
+                        id: playerData.id,
+                        uid: playerData.id,
+                        email: phone + '@somospadel.com',
                         ...playerData,
-                        displayName: "Alejandro Coscolín",
-                        name: "Alejandro Coscolín",
-                        role: 'admin_player'
+                        displayName: playerData.name,
+                        localAuth: true // Flag to indicate local authentication
                     };
 
                     window.Store.setState('currentUser', mockUser);
+                    console.log("✅ LOCAL AUTH SUCCESS:", mockUser.name);
                     return { success: true, user: mockUser };
-                }
 
-                return { success: false, error: error.message };
+                } catch (localError) {
+                    console.error("Local auth also failed:", localError);
+                    return { success: false, error: localError.message || "Credenciales incorrectas" };
+                }
             }
         }
 
@@ -99,18 +137,13 @@
                     ...additionalData,
                     phone: phone,
                     uid: user.uid,
-                    status: 'active'
+                    status: 'pending' // VALIDATION REQUIRED
                 });
 
-                const finalUser = {
-                    id: user.uid,
-                    uid: user.uid,
-                    email: email,
-                    ...newPlayer
-                };
+                // DO NOT AUTO LOGIN - RETURN SUCCESS BUT PENDING
+                await auth.signOut();
 
-                window.Store.setState('currentUser', finalUser);
-                return { success: true, user: finalUser };
+                return { success: true, pendingValidation: true };
             } catch (error) {
                 console.warn("⚠️ Firebase Register failed, using Local Simulation...", error.code);
 
@@ -118,20 +151,10 @@
                 const newPlayer = await window.FirebaseDB.players.create({
                     ...additionalData,
                     phone: phone,
-                    status: 'active'
+                    status: 'pending' // VALIDATION REQUIRED
                 });
 
-                const mockUser = {
-                    id: newPlayer.id,
-                    uid: newPlayer.id,
-                    email: email,
-                    displayName: additionalData ? additionalData.name : 'Alejandro Coscolín',
-                    name: additionalData ? additionalData.name : 'Alejandro Coscolín',
-                    ...newPlayer
-                };
-
-                window.Store.setState('currentUser', mockUser);
-                return { success: true, user: mockUser };
+                return { success: true, pendingValidation: true };
             }
         }
 

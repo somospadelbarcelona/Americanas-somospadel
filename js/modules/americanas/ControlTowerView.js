@@ -14,6 +14,7 @@
             this.currentAmericanaDoc = null;
             this.userHistory = [];
             this.unsubscribeMatches = null;
+            this.unsubscribeEvent = null;
             this.pendingId = null;
             this.userMatches = [];
             this.userStats = {
@@ -85,11 +86,41 @@
                 console.error("Error loading event doc:", e);
             }
 
-            // Unsubscribe previous
+            // Unsubscribe previous listeners
             if (this.unsubscribeMatches) this.unsubscribeMatches();
+            if (this.unsubscribeEvent) this.unsubscribeEvent();
+
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+
+            // Real-time listener for EVENT STATUS CHANGES
+            const eventCollection = isEntreno ? 'entrenos' : 'americanas';
+            this.unsubscribeEvent = window.db.collection(eventCollection)
+                .doc(eventId)
+                .onSnapshot(eventDoc => {
+                    if (!eventDoc.exists) return;
+
+                    const updatedEvent = { id: eventDoc.id, ...eventDoc.data(), isEntreno };
+                    const previousStatus = this.currentAmericanaDoc?.status;
+                    this.currentAmericanaDoc = updatedEvent;
+
+                    // AUTO-TRIGGER: If status just changed to 'live', generate matches
+                    // FIX: Ignore if previous status was 'adjusting' (Manual Admin Intervention) to prevent duplicates
+                    if (updatedEvent.status === 'live' && previousStatus !== 'live' && previousStatus !== 'adjusting') {
+                        console.log("🚀 [ControlTowerView] Event status changed to LIVE. Auto-generating matches...");
+                        if (window.AmericanaService) {
+                            window.AmericanaService.generateFirstRoundMatches(eventId, isEntreno ? 'entreno' : 'americana');
+                        }
+                    }
+
+                    // Force UI update if status changed
+                    if (previousStatus !== updatedEvent.status) {
+                        this.recalc();
+                    }
+                }, err => {
+                    console.error("Error watching event status:", err);
+                });
 
             // Real-time listener for matches - use correct collection based on event type
-            const isEntreno = this.currentAmericanaDoc?.isEntreno;
             const matchesCollection = isEntreno ? 'entrenos_matches' : 'matches';
             // NOTE: Both Entrenos and Americanas use 'americana_id' field for consistency
             const fieldName = 'americana_id';
@@ -99,8 +130,38 @@
             this.unsubscribeMatches = window.db.collection(matchesCollection)
                 .where(fieldName, '==', eventId)
                 .onSnapshot(snapshot => {
-                    this.allMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    console.log(`✅ [ControlTowerView] Loaded ${this.allMatches.length} matches`);
+                    const rawMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                    // CRITICAL FIX: Deduplicate matches by unique signature (court + round + teams)
+                    // This prevents UI duplicates even if Firebase has duplicate documents
+                    const seen = new Map();
+                    const deduplicated = [];
+
+                    rawMatches.forEach(match => {
+                        // Create unique signature based on match characteristics
+                        const teamA = Array.isArray(match.team_a_names) ? match.team_a_names.sort().join('|') : match.team_a_names;
+                        const teamB = Array.isArray(match.team_b_names) ? match.team_b_names.sort().join('|') : match.team_b_names;
+                        const signature = `${match.court}-${match.round}-${teamA}-${teamB}`;
+
+                        if (!seen.has(signature)) {
+                            seen.set(signature, true);
+                            deduplicated.push(match);
+                        } else {
+                            console.warn(`⚠️ [ControlTowerView] Duplicate match detected and filtered: Court ${match.court}, Round ${match.round}`);
+                        }
+                    });
+
+                    this.allMatches = deduplicated;
+                    console.log(`✅ [ControlTowerView] Loaded ${rawMatches.length} matches (${deduplicated.length} unique after deduplication)`);
+
+                    // Safety net: If event is live but NO matches exist, attempt auto-generation
+                    if (this.currentAmericanaDoc?.status === 'live' && this.allMatches.length === 0) {
+                        console.warn("⚠️ Event is LIVE but no matches found. Attempting auto-generation...");
+                        if (window.AmericanaService) {
+                            window.AmericanaService.generateFirstRoundMatches(eventId, isEntreno ? 'entreno' : 'americana');
+                        }
+                    }
+
                     this.recalc();
                 }, err => {
                     console.error("Error watching matches:", err);
@@ -848,28 +909,68 @@
                 '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">FINALIZADO</span>' :
                 (match.isLive ? '<span style="color:var(--playtomic-neon); font-weight:800; animation: blink 1.5s infinite;">EN JUEGO</span>' : '<span style="color:#BBB;">ESPERANDO</span>');
 
-            const sA = parseInt(match.scoreA || 0);
-            const sB = parseInt(match.scoreB || 0);
+            const sA = parseInt(match.score_a || 0); // Corrected to score_a matches db field
+            const sB = parseInt(match.score_b || 0); // Corrected to score_b matches db field
 
             // --- 1. Calcular Horario del Partido ---
-            // Base: Americana Start Time. Cada ronda +20 min.
-            let timeLabel = "00:00";
-            if (this.currentAmericanaDoc && this.currentAmericanaDoc.time) {
-                const [h, m] = this.currentAmericanaDoc.time.split(':').map(Number);
-                const rNum = parseInt(match.round) || 1;
-                const roundOffset = (rNum - 1) * 20;
-                const date = new Date();
-                date.setHours(h, m + roundOffset);
-                timeLabel = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            }
+            const timeLabel = window.calculateMatchTime ? window.calculateMatchTime(this.currentAmericanaDoc?.time || "10:00", parseInt(match.round) || 1) : "Seguido";
 
             // --- 2. Estilos WOW para Ganadores ---
-            // Subrayado amarillo neón (logo) + Fondo suave
             const winnerStyle = "background: rgba(204,255,0,0.1); color: black !important; padding: 6px 10px; border-radius: 8px; font-weight: 950 !important; border-bottom: 3px solid #CCFF00; text-decoration: none;";
             const normalStyle = "color: #111; font-weight: 800; padding: 6px 0;";
 
             const styleA = (match.isFinished && sA > sB) ? winnerStyle : normalStyle;
             const styleB = (match.isFinished && sB > sA) ? winnerStyle : normalStyle;
+
+            // --- 3. Player Interaction Logic (UPDATED: ANY REGISTERED PLAYER) ---
+            const user = window.Store ? window.Store.getState('currentUser') : null;
+
+            // Check if user is registered in the Event
+            const isRegisteredInEvent = this.currentAmericanaDoc && user && (
+                (this.currentAmericanaDoc.players || []).some(p => (p.id || p.uid) === user.uid) ||
+                (this.currentAmericanaDoc.registeredPlayers || []).includes(user.uid)
+            );
+
+            // Determine if user is PART of this specific match (for UI feedback like "Ganamos")
+            const isPartA = user && (match.team_a_ids?.includes(user.uid) || (typeof match.teamA === 'string' && match.teamA.includes(user.name)));
+            const isPartB = user && (match.team_b_ids?.includes(user.uid) || (typeof match.teamB === 'string' && match.teamB.includes(user.name)));
+            const isPart = isPartA || isPartB;
+
+            // Show input if: User is REGISTERED in event (even if not playing) AND Match is NOT finished AND Event is LIVE
+            // Changed by User Request: "mejor que todos los inscritos puedan poner el resultado"
+            const canEdit = isRegisteredInEvent && !match.isFinished && this.currentAmericanaDoc?.status === 'live';
+
+            let actionArea = '';
+            if (canEdit) {
+                if (isPart) {
+                    // Playing user: "We Won"
+                    actionArea = `
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #eee; display: flex; gap: 10px; justify-content: center;">
+                            <button onclick="window.ControlTowerView.setMatchWinner('${match.id}', '${isPartA ? 'A' : 'B'}', ${parseInt(match.round)})" 
+                                    class="btn-primary-pro"
+                                    style="width: 100%; background: #25D366; border-color: #25D366; color: white; padding: 12px; font-size: 0.9rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);">
+                                ✅ ¡HEMOS GANADO!
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    // External user (Scorer): "Win A / Win B"
+                    actionArea = `
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #eee; display: flex; gap: 10px; justify-content: center;">
+                            <button onclick="window.ControlTowerView.setMatchWinner('${match.id}', 'A', ${parseInt(match.round)})" 
+                                    class="btn-outline-pro"
+                                    style="flex: 1; border-color: #25D366; color: #25D366; font-size: 0.75rem; padding: 8px;">
+                                GANA P1
+                            </button>
+                             <button onclick="window.ControlTowerView.setMatchWinner('${match.id}', 'B', ${parseInt(match.round)})" 
+                                    class="btn-outline-pro"
+                                    style="flex: 1; border-color: #25D366; color: #25D366; font-size: 0.75rem; padding: 8px;">
+                                GANA P2
+                            </button>
+                        </div>
+                    `;
+                }
+            }
 
             return `
                 <div class="tour-match-card ${colorClass}" style="background:white; border-radius:20px; border: 1px solid #eeeff2; overflow:hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
@@ -880,16 +981,51 @@
                     <div style="padding: 18px;">
                         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px;">
                             <div style="font-size: 0.95rem; flex:1; transition: all 0.3s; margin-right: 10px; ${styleA}">${match.teamA}</div>
-                            <div style="background: ${match.isFinished && sA > sB ? 'var(--playtomic-neon)' : '#f0f0f0'}; color: ${match.isFinished && sA > sB ? 'black' : 'black'}; width: 35px; height: 35px; border-radius: 10px; display:flex; align-items:center; justify-content:center; font-weight: 900; font-size: 1.2rem; box-shadow: ${match.isFinished && sA > sB ? '0 0 10px rgba(204,255,0,0.5)' : 'none'};">${match.scoreA || 0}</div>
+                            <div style="background: ${match.isFinished && sA > sB ? 'var(--playtomic-neon)' : '#f0f0f0'}; color: ${match.isFinished && sA > sB ? 'black' : 'black'}; width: 35px; height: 35px; border-radius: 10px; display:flex; align-items:center; justify-content:center; font-weight: 900; font-size: 1.2rem; box-shadow: ${match.isFinished && sA > sB ? '0 0 10px rgba(204,255,0,0.5)' : 'none'};">${sA}</div>
                         </div>
                         <div style="height:1px; background:#f5f5f5; margin-bottom:12px;"></div>
                         <div style="display:flex; align-items:center; justify-content:space-between;">
                             <div style="font-size: 0.95rem; flex:1; transition: all 0.3s; margin-right: 10px; ${styleB}">${match.teamB}</div>
-                            <div style="background: ${match.isFinished && sB > sA ? 'var(--playtomic-neon)' : '#f0f0f0'}; color: ${match.isFinished && sB > sA ? 'black' : 'black'}; width: 35px; height: 35px; border-radius: 10px; display:flex; align-items:center; justify-content:center; font-weight: 900; font-size: 1.2rem; box-shadow: ${match.isFinished && sB > sA ? '0 0 10px rgba(204,255,0,0.5)' : 'none'};">${match.scoreB || 0}</div>
+                            <div style="background: ${match.isFinished && sB > sA ? 'var(--playtomic-neon)' : '#f0f0f0'}; color: ${match.isFinished && sB > sA ? 'black' : 'black'}; width: 35px; height: 35px; border-radius: 10px; display:flex; align-items:center; justify-content:center; font-weight: 900; font-size: 1.2rem; box-shadow: ${match.isFinished && sB > sA ? '0 0 10px rgba(204,255,0,0.5)' : 'none'};">${sB}</div>
                         </div>
+                        ${actionArea}
                     </div>
                 </div>
             `;
+        }
+
+        async setMatchWinner(matchId, winnerTeam, round) {
+            if (!confirm("¿Confirmas que habéis ganado este partido?\n\nEsta acción no se puede deshacer.")) return;
+
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const collection = isEntreno ? 'entrenos_matches' : 'matches';
+
+            try {
+                // Update match result
+                await window.db.collection(collection).doc(matchId).update({
+                    score_a: winnerTeam === 'A' ? 1 : 0,
+                    score_b: winnerTeam === 'B' ? 1 : 0,
+                    status: 'finished'
+                });
+
+                // Trigger Next Round check (Automation)
+                const eventType = isEntreno ? 'entreno' : 'americana';
+                console.log(`✅ Match Result Saved. Checking for Next Round (${eventType})...`);
+
+                // We use a small delay to ensure Firestore propagation or just call immediately
+                setTimeout(async () => {
+                    if (window.AmericanaService && window.AmericanaService.generateNextRound) {
+                        await window.AmericanaService.generateNextRound(this.currentAmericanaDoc.id, round, eventType);
+                    } else if (window.AmericanaService && window.AmericanaService.generateEntrenoNextRound && isEntreno) {
+                        // Fallback
+                        await window.AmericanaService.generateEntrenoNextRound(this.currentAmericanaDoc.id, round);
+                    }
+                }, 500);
+
+            } catch (e) {
+                console.error("Error setting match winner:", e);
+                alert("Error al guardar resultado. Inténtalo de nuevo.");
+            }
         }
 
         renderHistoryContent() {
