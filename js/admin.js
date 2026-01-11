@@ -1,6 +1,28 @@
 // Admin Dashboard Logic
 console.log("🚀 Admin JS Loading...");
+try { alert("Admin JS: Loaded & Parsing..."); } catch (e) { }
 
+
+// --- HELPER DE TIEMPO ---
+window.calculateMatchTime = (startTime, roundNum) => {
+    if (!startTime) return "00:00";
+    try {
+        const [hours, minutes] = startTime.split(':').map(Number);
+        const date = new Date();
+        date.setHours(hours, minutes, 0, 0);
+
+        // Cada ronda suma 20 minutos
+        // Ronda 1: 0 min offset
+        // Ronda 2: 20 min offset
+        const totalMinutes = (roundNum - 1) * 20;
+        date.setMinutes(date.getMinutes() + totalMinutes);
+
+        return date.getHours().toString().padStart(2, '0') + ":" +
+            date.getMinutes().toString().padStart(2, '0');
+    } catch (e) {
+        return startTime;
+    }
+};
 
 window.AdminAuth = {
     token: localStorage.getItem('adminToken'),
@@ -15,32 +37,47 @@ window.AdminAuth = {
         }
     })(),
 
+    // Centralized Role Validation Helper
+    hasAdminRole(role) {
+        if (!role) return false;
+        const r = role.toString().toLowerCase().trim();
+        return [
+            'super_admin', 'superadmin',
+            'admin', 'admin_player',
+            'captain', 'capitan', 'capitanes'
+        ].includes(r);
+    },
+
     async init() {
-        console.log("🛠️ AdminAuth Init START");
+        console.log("🛠️ AdminAuth Init START (PIN System)");
         try {
             const modal = document.getElementById('admin-auth-modal');
 
             // 1. Check Active Session
-            const isAdmin = this.user && (this.user.role === 'admin' || this.user.role === 'admin_player');
+            const isAdmin = this.user && this.hasAdminRole(this.user.role);
 
             if (isAdmin) {
                 console.log("💎 Active Admin Session:", this.user.name);
                 if (modal) {
                     modal.classList.add('hidden');
                     modal.style.display = 'none';
+                    modal.style.visibility = 'hidden';
+                    modal.style.opacity = '0';
                 }
-                loadAdminView('users');
+                // Try to load view if not already loaded
+                if (typeof loadAdminView === 'function') {
+                    // Slight delay to ensure DOM is ready
+                    setTimeout(() => loadAdminView('users'), 100);
+                }
             } else {
-                // 2. Check "Remember Me" Credentials
-                const savedPhone = localStorage.getItem('admin_remember_phone');
-                const savedPass = localStorage.getItem('admin_remember_pass');
+                // 2. Check "Remember Me" Credentials (PIN)
+                const savedPin = localStorage.getItem('admin_remember_pin');
 
-                if (savedPhone && savedPass) {
+                if (savedPin) {
                     console.log("⚡ Auto-Login via Remember Me...");
-                    await this.login(savedPhone, atob(savedPass), true); // Pass true to skip alert
+                    await this.login(savedPin, true);
                 } else {
-                    console.log("🔒 Waiting for manual login...");
-                    // No default auto-login for safety unless specifically saved
+                    console.log("🔒 Waiting for manual PIN login...");
                 }
             }
         } catch (e) {
@@ -48,85 +85,72 @@ window.AdminAuth = {
         }
     },
 
-    async login(phoneInput, password, isAuto = false) {
+    async login(pinInput, isAuto = false) {
         const loginBtn = document.getElementById('admin-login-btn');
         const errorEl = document.getElementById('admin-login-error');
 
-        try {
-            const rawPhone = (phoneInput || "").toString().trim().toUpperCase();
-            const rawPass = (password || "").toString().trim().toUpperCase();
+        // === CONFIGURACIÓN DE PINS ===
+        const ACCESS_CODES = {
+            '212121': { role: 'super_admin', name: 'Super Admin', id: 'sa-001', phone: '000000000' },
+            '501501': { role: 'admin', name: 'Admin', id: 'ad-001', phone: '000000001' },
+            '262524': { role: 'captain', name: 'Capitán', id: 'cp-001', phone: '000000002' }
+        };
 
-            console.log(`[ADMIN - AUTH] Attempt: ${rawPhone}`);
+        try {
+            const pin = (pinInput || "").toString().trim();
 
             if (errorEl) {
                 errorEl.textContent = "";
                 errorEl.style.display = 'none';
             }
 
-            if (!phoneInput || !password) {
-                throw new Error("⚠️ POR FAVOR, RELLENA TODOS LOS CAMPOS.");
+            if (!pin || pin.length < 6) {
+                throw new Error("⚠️ INTRODUCE LOS 6 DÍGITOS");
             }
+
+            console.log(`[ADMIN - AUTH] Attempting Access...`);
 
             if (loginBtn) {
                 loginBtn.disabled = true;
-                loginBtn.innerHTML = '<span class="loader-mini"></span> AUTENTICANDO...';
+                loginBtn.innerHTML = '<span class="loader-mini"></span> VERIFICANDO...';
             }
 
-            // 1. EMERGENCY MASTER OVERRIDE - SOLO ALEX
-            const cleanPhone = rawPhone.replace(/\D/g, '');
-            const isAlex = (cleanPhone.endsWith("649219350") || cleanPhone === "649219350") && rawPass === "JARABA";
+            // SIMULATED DELAY FOR UX
+            if (!isAuto) await new Promise(r => setTimeout(r, 600));
 
-            if (isAlex) {
-                if (!isAuto) alert(`🎖️ ACCESO MAESTRO ADMIN: Alejandro Coscolín`);
+            // VERIFICATION LOGIC
+            const validUser = ACCESS_CODES[pin];
 
-                const masterUser = {
-                    id: "god-master-649219350",
-                    name: "Alejandro Coscolín",
-                    role: "admin_player",
-                    phone: "649219350",
-                    status: "active"
+            if (validUser) {
+                // Construct the user object
+                const user = {
+                    ...validUser,
+                    status: 'active',
+                    lastLogin: new Date().toISOString()
                 };
 
-                this.setUser(masterUser);
+                this.setUser(user);
+                console.log(`✅ ACCESS GRANTED: ${user.name} (${user.role})`);
 
                 // Handle "Remember Me"
                 const rememberCheckbox = document.getElementById('remember-me');
                 if (rememberCheckbox && rememberCheckbox.checked) {
-                    localStorage.setItem('admin_remember_phone', rawPhone);
-                    localStorage.setItem('admin_remember_pass', btoa(rawPass)); // Simple encoding
+                    localStorage.setItem('admin_remember_pin', pin);
                 }
-                return;
-            }
-
-            // 2. REGULAR DB LOGIN
-            const user = await FirebaseDB.players.getByPhone(cleanPhone);
-
-            if (!user) throw new Error("⚠️ EL TELÉFONO NO ESTÁ REGISTRADO.");
-            if (user.password !== password && user.password !== rawPass) throw new Error("❌ CONTRASEÑA INCORRECTA.");
-
-            const hasPrivileges = user.role === 'admin' || user.role === 'admin_player';
-            if (!hasPrivileges) throw new Error("🚫 ACCESO DENEGADO: NO ERES ADMINISTRADOR.");
-
-            this.setUser(user);
-            console.log("✅ Admin access granted via DB");
-
-            // Handle "Remember Me"
-            const rememberCheckbox = document.getElementById('remember-me');
-            if (rememberCheckbox && rememberCheckbox.checked) {
-                localStorage.setItem('admin_remember_phone', cleanPhone);
-                localStorage.setItem('admin_remember_pass', btoa(rawPass));
+            } else {
+                throw new Error("❌ CÓDIGO INCORRECTO");
             }
 
         } catch (e) {
             console.error("Auth Fail:", e);
             if (errorEl) {
-                errorEl.innerHTML = `<div style="background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid #ef4444; color: #ef4444; font-weight: 800; font-size: 0.8rem;">${e.message}</div>`;
+                errorEl.innerHTML = `<div style="background: rgba(239, 68, 68, 0.1); padding: 0.8rem; border-radius: 8px; border: 1px solid #ef4444; color: #ef4444; font-weight: 800; font-size: 0.8rem;">${e.message}</div>`;
                 errorEl.style.display = 'block';
             }
         } finally {
             if (loginBtn) {
                 loginBtn.disabled = false;
-                loginBtn.innerHTML = 'ENTRAR AL PANEL PRO 🚀';
+                loginBtn.innerHTML = 'ENTRAR A LA APP 🚀';
             }
         }
     },
@@ -136,10 +160,14 @@ window.AdminAuth = {
         this.user = user;
         localStorage.setItem('adminUser', JSON.stringify(user));
 
+        // CRITICAL: Hide the login modal with multiple approaches
         const modal = document.getElementById('admin-auth-modal');
         if (modal) {
             modal.classList.add('hidden');
             modal.style.display = 'none';
+            modal.style.visibility = 'hidden';
+            modal.style.opacity = '0';
+            console.log("🔒 Login modal hidden successfully");
         }
 
         // Update Admin Profile Widget
@@ -166,6 +194,7 @@ window.AdminAuth = {
         }
 
         // Immediate view load
+        console.log("📊 Loading admin view: users");
         loadAdminView('users');
     },
 
@@ -227,6 +256,9 @@ async function loadAdminView(view) {
             await new Promise(r => setTimeout(r, 200));
             retries++;
         }
+        if (!window.db) {
+            alert("⚠️ ERROR DE CONEXIÓN: La base de datos no responde.\n\nEl panel intentará cargar igualmente, pero algunas funciones pueden fallar.");
+        }
     }
 
     // Update Sidebar Active State
@@ -234,8 +266,27 @@ async function loadAdminView(view) {
         btn.classList.toggle('active', btn.getAttribute('data-view') === view);
     });
 
+    // 1. Dynamic Module Loading Check
+    // If the view exists in our new modular system, run it from there!
+    if (window.AdminViews && window.AdminViews[view]) {
+        try {
+            console.log(`📡 Route Handled by Module: ${view}`);
+            await window.AdminViews[view]();
+            return; // Stop execution in main file
+        } catch (err) {
+            console.error(`Module Error (${view}):`, err);
+            content.innerHTML = `<div class="error-box">Error en módulo ${view}: ${err.message}</div>`;
+            return;
+        }
+    }
+
+    // 2. Fallback to Legacy Monolith (For views not yet migrated)
     try {
         if (view === 'users') {
+            // LEGACY BLOCK - Should be handled by module now
+            content.innerHTML = '<div style="color:yellow">⚠️ Alerta: Cargando vista USERS clásica (No modular)</div>';
+            // ... old logic falls through if module fails
+
             if (titleEl) titleEl.textContent = 'BBDD JUGADORES';
             content.innerHTML = '<div class="loader"></div>';
 
@@ -346,18 +397,26 @@ async function loadAdminView(view) {
                 if (!tbody) return;
                 tbody.innerHTML = data.map(u => {
                     const isPending = u.status === 'pending';
+                    const canManageUsers = AdminAuth.user && AdminAuth.hasAdminRole(AdminAuth.user.role);
+
+                    let roleBadge = (u.role || 'player').toUpperCase();
+                    if (u.role === 'super_admin') roleBadge = '👑 SUPER ADMIN';
+                    else if (u.role === 'admin_player') roleBadge = '🎖️ ADMIN + JUGADOR';
+
+                    const isSuper = u.role === 'super_admin';
+
                     return `
-                    <tr class="pro-table-row" style="background: ${isPending ? 'rgba(255,165,0,0.05)' : 'transparent'}">
+                        <tr class="pro-table-row" style="background: ${isPending ? 'rgba(255,165,0,0.05)' : 'transparent'}">
                         <td>
                             <div class="pro-player-cell">
-                                <div class="pro-avatar" style="background: ${u.role === 'admin_player' ? 'var(--primary-glow)' : ''}">${u.name.charAt(0)}</div>
+                                <div class="pro-avatar" style="background: ${isSuper ? 'linear-gradient(135deg, #FFD700, #FFA500)' : (u.role === 'admin_player' ? 'var(--primary-glow)' : '')}; color: ${isSuper ? 'black' : 'white'}; box-shadow: ${isSuper ? '0 0 10px #FFD700' : 'none'};">${u.name.charAt(0)}</div>
                                 <div>
                                     <div style="display:flex; align-items:center; gap:8px;">
-                                        <div style="font-weight: 700; color: var(--text);">${u.name}</div>
+                                        <div style="font-weight: 700; color: ${isSuper ? '#FFD700' : 'var(--text)'};">${u.name}</div>
                                         ${u.membership === 'somospadel_bcn' ? '<span style="font-size:0.6rem; background: var(--primary); color:black; padding: 2px 5px; border-radius:4px; font-weight:700;">COMUNIDAD BCN</span>' : ''}
                                     </div>
-                                    <div style="font-size: 0.7rem; font-weight: 500; color: ${u.role === 'admin_player' ? 'var(--primary)' : 'var(--text-muted)'};">
-                                        ${u.role === 'admin_player' ? '🎖️ ADMIN + JUGADOR' : (u.role || 'player').toUpperCase()}
+                                    <div style="font-size: 0.7rem; font-weight: 500; color: ${isSuper ? '#FFD700' : (u.role === 'admin_player' ? 'var(--primary)' : 'var(--text-muted)')};">
+                                        ${roleBadge}
                                     </div>
                                 </div>
                             </div>
@@ -387,12 +446,14 @@ async function loadAdminView(view) {
                         </td>
                         <td style="text-align: right;">
                             <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                                ${isPending ? `<button class="btn-primary-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick="approveUser('${u.id}')">VALIDAR</button>` : ''}
-                                <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick='openEditUserModal(${JSON.stringify(u).replace(/'/g, "&#39;")})'>EDITAR</button>
-                                <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; color: var(--danger); border-color: var(--danger-dim);" onclick="deleteUser('${u.id}')">ELIMINAR</button>
+                                ${canManageUsers ? `
+                                    ${isPending ? `<button class="btn-primary-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick="approveUser('${u.id}')">VALIDAR</button>` : ''}
+                                    <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick='openEditUserModal(${JSON.stringify(u).replace(/'/g, "&#39;")})'>EDITAR</button>
+                                    <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; color: var(--danger); border-color: var(--danger-dim);" onclick="deleteUser('${u.id}')">ELIMINAR</button>
+                                ` : '<span style="color:var(--text-muted); font-size:0.7rem;">👁️ SOLO LECTURA</span>'}
                             </div>
                         </td>
-                    </tr>`;
+                    </tr > `;
                 }).join('');
             };
 
@@ -421,7 +482,7 @@ async function loadAdminView(view) {
                 window.renderUserRows(window.filteredUsers);
                 // Update total count display
                 const totalEl = document.querySelector('h3 span');
-                if (totalEl) totalEl.textContent = `TOTAL: ${window.filteredUsers.length}`;
+                if (totalEl) totalEl.textContent = `TOTAL: ${window.filteredUsers.length} `;
             };
 
             window.resetFilters = () => {
@@ -432,6 +493,24 @@ async function loadAdminView(view) {
                 document.getElementById('filter-gender').value = "";
                 document.getElementById('filter-status').value = "";
                 window.multiFilterUsers();
+            };
+
+            // USER ACTIONS: APPROVE PENDING USER
+            window.approveUser = async (id) => {
+                if (!confirm("¿Confirmar acceso para este jugador? Pasará a estado ACTIVO.")) return;
+                try {
+                    await FirebaseDB.players.update(id, { status: 'active' });
+
+                    // Refresh data
+                    const users = await FirebaseDB.players.getAll();
+                    window.allUsersCache = users;
+                    window.multiFilterUsers(); // Re-apply filters
+
+                    alert("✅ Usuario validado correctamente");
+                } catch (e) {
+                    console.error("Error validando usuario:", e);
+                    alert("❌ Error al validar: " + e.message);
+                }
             };
 
             window.exportToExcel = () => {
@@ -482,54 +561,124 @@ async function loadAdminView(view) {
             };
 
         } else if (view === 'menu_mgmt') {
-            if (titleEl) titleEl.textContent = 'Gestor de Menú Lateral (App)';
+            if (titleEl) titleEl.textContent = 'Gestor de Menú (3 Pestañas)';
             content.innerHTML = '<div class="loader"></div>';
 
-            const menuItems = await FirebaseDB.menu.getAll();
+            let menuItems = await FirebaseDB.menu.getAll();
+
+            // AUTO-INIT: If empty, create defaults
+            if (menuItems.length === 0) {
+                try {
+                    await FirebaseDB.menu.create({ title: 'Inicio', icon: 'fas fa-home', action: 'dashboard', order: 1, active: true });
+                    await FirebaseDB.menu.create({ title: 'Mi Perfil', icon: 'fas fa-user', action: 'profile', order: 2, active: true });
+                    await FirebaseDB.menu.create({ title: 'Ranking', icon: 'fas fa-trophy', action: 'ranking', order: 3, active: true });
+                    menuItems = await FirebaseDB.menu.getAll(); // Reload
+                } catch (e) { console.error("Auto-init menu failed", e); }
+            }
 
             content.innerHTML = `
-                <div class="glass-card-enterprise">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
-                         <h3>BOTONES DEL MENÚ LATERAL</h3>
-                         <button class="btn-primary-pro" onclick="openMenuModal()">+ NUEVO BOTÓN</button>
+                <div style="display: grid; grid-template-columns: 1fr 380px; gap: 2rem; align-items: start;">
+                    
+                    <!-- LEFT: EDITOR -->
+                    <div>
+                        <div class="glass-card-enterprise">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                                <div>
+                                    <h3 style="margin:0;">PERSONALIZAR PESTAÑAS</h3>
+                                    <p style="color:var(--text-muted); font-size:0.8rem; margin:5px 0 0 0;">Configura los botones del MENÚ HAMBURGUESA (3 Rayas).</p>
+                                </div>
+                                <button class="btn-primary-pro" onclick="openMenuModal()">+ AÑADIR PESTAÑA</button>
+                            </div>
+
+                            <div style="background:rgba(255,255,255,0.03); border-radius:12px; overflow:hidden;">
+                                ${menuItems.sort((a, b) => a.order - b.order).map(item => `
+                                    <div style="display:flex; align-items:center; justify-content:space-between; padding:15px; border-bottom:1px solid rgba(255,255,255,0.05); transition: background 0.2s;">
+                                        <div style="display:flex; align-items:center; gap:15px;">
+                                            <div style="width:40px; height:40px; background:rgba(0,0,0,0.5); border-radius:10px; display:flex; align-items:center; justify-content:center; color:${item.active ? 'var(--brand-neon)' : '#666'}; border: 1px solid rgba(255,255,255,0.1);">
+                                                <i class="${item.icon}" style="font-size:1.2rem;"></i>
+                                            </div>
+                                            <div>
+                                                <div style="font-weight:700; color:white; font-size:1rem;">${item.title}</div>
+                                                <div style="font-size:0.75rem; color:#888; font-family:monospace;">Route: /${item.action} | Orden: ${item.order}</div>
+                                            </div>
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <span style="padding:4px 8px; border-radius:4px; font-size:0.65rem; font-weight:800; letter-spacing:0.5px; background:${item.active ? 'rgba(204,255,0,0.1)' : 'rgba(255,255,255,0.05)'}; color:${item.active ? 'var(--brand-neon)' : '#888'}; border: 1px solid ${item.active ? 'var(--brand-neon)' : 'transparent'};">
+                                                ${item.active ? 'VISIBLE' : 'OCULTO'}
+                                            </span>
+                                            <button class="btn-micro" style="background:rgba(255,255,255,0.1);" onclick='openMenuModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>✏️</button>
+                                            <button class="btn-micro" style="background:rgba(239,68,68,0.2); color:#ef4444;" onclick="deleteMenuItem('${item.id}')">🗑️</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
                     </div>
 
-                    <div style="background:rgba(255,255,255,0.05); border-radius:12px; overflow:hidden;">
-                        ${menuItems.length === 0 ? '<div style="padding:2rem; text-align:center; color:#888;">No hay botones configurados. Crea el primero.</div>' : ''}
-                        
-                        ${menuItems.map(item => `
-                            <div style="display:flex; align-items:center; justify-content:space-between; padding:15px; border-bottom:1px solid rgba(255,255,255,0.1);">
-                                <div style="display:flex; align-items:center; gap:15px;">
-                                    <div style="width:40px; height:40px; background:rgba(0,0,0,0.3); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--brand-neon);">
-                                        <i class="${item.icon}" style="font-size:1.2rem;"></i>
+                    <!-- RIGHT: PREVIEW -->
+                    <div style="position: sticky; top: 20px;">
+                        <div style="text-align: center; margin-bottom: 10px; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; color: var(--text-muted);">VISTA PREVIA (HAMBURGUESA)</div>
+                        <div class="iphone-mockup" style="width: 320px; height: 650px; background: #000; border-radius: 40px; border: 8px solid #333; position: relative; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin: 0 auto;">
+                            <!-- Top Bar -->
+                            <div style="height: 30px; background: rgba(0,0,0,0.8); display:flex; justify-content:space-between; align-items:center; padding: 0 20px; font-size: 10px; color: white;">
+                                <span>9:41</span>
+                                <div><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></div>
+                            </div>
+                            
+                            <!-- App Content Mock -->
+                            <div style="height: calc(100% - 30px); background: #111; position:relative; display:flex; flex-direction:column;">
+                                <!-- Header -->
+                                <div style="padding: 20px; background: linear-gradient(to bottom, rgba(30,30,30,1), rgba(17,17,17,0)); opacity:0.3;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <img src="img/logo_somospadel.png" style="height: 30px;">
+                                        <div style="width:30px; height:30px; background:#333; border-radius:50%;"></div>
                                     </div>
-                                    <div>
-                                        <div style="font-weight:700; color:white; font-size:1.1rem;">${item.title}</div>
-                                        <div style="font-size:0.8rem; color:#888;">Ruta: /${item.action} | Orden: ${item.order}</div>
-                                    </div>
+                                    <div style="height: 100px; background: rgba(255,255,255,0.05); margin-top:20px; border-radius:12px;"></div>
                                 </div>
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <span style="padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; background:${item.active ? 'var(--primary)' : '#333'}; color:${item.active ? 'black' : '#888'};">
-                                        ${item.active ? 'VISIBLE' : 'OCULTO'}
-                                    </span>
-                                    <button class="btn-outline-pro" onclick='openMenuModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>EDITAR</button>
-                                    <button class="btn-micro" style="background:rgba(239,68,68,0.2); color:#ef4444;" onclick="deleteMenuItem('${item.id}')">🗑️</button>
+                                
+                                <!-- SIDE DRAWER PREVIEW -->
+                                <div style="position:absolute; top:0; left:0; width:75%; height:100%; background: linear-gradient(180deg, #1e1e1e 0%, #000000 100%); border-right: 1px solid rgba(255,255,255,0.1); box-shadow: 10px 0 30px rgba(0,0,0,0.5); display: flex; flex-direction: column;">
+                                    <div style="padding: 60px 20px 20px 20px; background: linear-gradient(to bottom, rgba(204, 255, 0, 0.05), transparent); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                                            <div style="font-weight:800; color:white; font-size:1.2rem; font-family:'Outfit';">MENÚ</div>
+                                            <i class="fas fa-times" style="color:white; font-size:1.2rem; opacity:0.7;"></i>
+                                        </div>
+                                    </div>
+                                    <div style="flex:1; padding-top:10px;">
+                                        ${menuItems.filter(i => i.active).sort((a, b) => a.order - b.order).map(item => `
+                                            <div style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; align-items: center; gap: 15px;">
+                                                <i class="${item.icon}" style="color: var(--brand-neon); font-size: 1.2rem; width: 24px; text-align: center; text-shadow: 0 0 10px rgba(204, 255, 0, 0.5);"></i>
+                                                <span style="color: white; font-weight: 700; font-size: 1rem; letter-spacing:0.5px; font-family:'Outfit';">${item.title}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                    <div style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                        <div style="color: #ff4d4d; font-weight:700; font-size:0.9rem; display:flex; gap:10px; align-items:center;">
+                                            <i class="fas fa-power-off"></i> Cerrar Sesión
+                                        </div>
+                                        <div style="font-size: 0.65rem; color: #444; margin-top:10px;">v1.0.5 PRO</div>
+                                    </div>
                                 </div>
                             </div>
-                        `).join('')}
+
+                            <!-- Notch -->
+                            <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 30px; background: #333; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;"></div>
+                        </div>
                     </div>
                 </div>
-             `;
+            `;
 
-            // Menu Helpers
-            window.openMenuModal = (item = null) => {
+            window.openMenuModal = (item) => {
                 const modal = document.getElementById('admin-menu-modal');
                 const form = document.getElementById('admin-menu-form');
                 form.reset();
+
                 if (item) {
                     form.querySelector('[name=id]').value = item.id;
                     form.querySelector('[name=title]').value = item.title;
                     form.querySelector('[name=icon]').value = item.icon;
+                    window.selectMenuIcon(item.icon);
+                    // Continue with existing code below...
                     form.querySelector('[name=action]').value = item.action;
                     form.querySelector('[name=order]').value = item.order;
                     form.querySelector('[name=active]').value = item.active.toString();
@@ -565,6 +714,86 @@ async function loadAdminView(view) {
                     loadAdminView('menu_mgmt');
                 } catch (err) { alert(err.message); }
             });
+
+        } else if (view === 'config') {
+            if (titleEl) titleEl.textContent = 'Ajustes del Sistema';
+            content.innerHTML = `
+                <div class="glass-card-enterprise" style="border-left: 4px solid var(--primary);">
+                    <h3>⚙️ HERRAMIENTAS DE MANTENIMIENTO</h3>
+                    <p style="color:var(--text-muted); margin-bottom: 2rem;">Acciones masivas y configuración avanzada del motor.</p>
+
+                    <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 1.5rem;">
+                        <h4 style="color: var(--danger); margin-top: 0;">⚠️ ZONA DE PELIGRO</h4>
+                        
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+                            <div>
+                                <div style="font-weight: 700;">Restablecimiento Masivo de Contraseñas</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                    Cambia la contraseña de TODOS los usuarios (menos el tuyo) a <strong>PADEL26</strong>.
+                                </div>
+                            </div>
+                            <button class="btn-primary-pro" style="background: var(--danger); border: none;" onclick="resetAllPasswords()">
+                                EJECUTAR RESET
+                            </button>
+                        </div>
+                    </div>
+                </div >
+
+                <div class="glass-card-enterprise" style="margin-top: 2rem;">
+                    <h3>📊 DIAGNÓSTICO DE ROLES</h3>
+                    <button class="btn-outline-pro" onclick="checkRoleDistribution()">VER DISTRIBUCIÓN DE ROLES</button>
+                </div>
+            `;
+
+            window.resetAllPasswords = async () => {
+                if (!confirm("⚠️ PELIGRO CRÍTICO\n\n¿Estás SEGURO de que quieres cambiar la contraseña de TODOS los usuarios a 'PADEL26'?\n\nEsta acción no se puede deshacer. Tu usuario Admin (JARABA) NO se verá afectado.")) return;
+
+                const promptCheck = prompt("Para confirmar, escribe: RESETEAR");
+                if (promptCheck !== "RESETEAR") {
+                    alert("Cancelado.");
+                    return;
+                }
+
+                try {
+                    const content = document.getElementById('content-area');
+                    content.innerHTML = '<div class="loader"></div><div style="text-align:center; margin-top:1rem;">Procesando... no cierres la ventana</div>';
+
+                    const users = await FirebaseDB.players.getAll();
+                    let count = 0;
+                    let skipped = 0;
+
+                    for (const u of users) {
+                        // PROTECT SUPER ADMIN
+                        if (u.phone === '649219350' || (u.phone && u.phone.endsWith('649219350'))) {
+                            console.log(`🛡️ SKIPPING SUPER ADMIN: ${u.name} `);
+                            skipped++;
+                            continue;
+                        }
+
+                        // Update password
+                        await FirebaseDB.players.update(u.id, { password: 'PADEL26' });
+                        count++;
+                    }
+
+                    alert(`✅ OPERACIÓN COMPLETADA\n\n - ${count} contraseñas cambiadas a PADEL26\n - ${skipped} usuarios admin protegidos(JARABA) \n\nAhora todos pueden entrar con 'PADEL26'.`);
+                    loadAdminView('config');
+
+                } catch (e) {
+                    console.error("Critical Error:", e);
+                    alert("❌ ERROR: " + e.message);
+                    loadAdminView('config');
+                }
+            };
+
+            window.checkRoleDistribution = async () => {
+                const users = await FirebaseDB.players.getAll();
+                const counts = {};
+                users.forEach(u => {
+                    const r = u.role || 'player';
+                    counts[r] = (counts[r] || 0) + 1;
+                });
+                alert("Distibución de Roles:\n" + JSON.stringify(counts, null, 2));
+            };
 
         } else if (view === 'americanas_mgmt') {
             if (titleEl) titleEl.textContent = 'Centro de Planificación de Americanas';
@@ -654,7 +883,7 @@ async function loadAdminView(view) {
                                     <option value="Delfos Cornellá">Delfos Cornellá</option>
                                 </select>
                             </div>
-                            
+
                             <!-- NUEVO: Modo de Parejas -->
                             <div class="form-group">
                                 <label style="display: flex; align-items: center; gap: 8px;">
@@ -668,11 +897,11 @@ async function loadAdminView(view) {
                                 <div style="margin-top: 8px; padding: 10px; background: rgba(204,255,0,0.05); border-radius: 6px; border: 1px solid rgba(204,255,0,0.1);">
                                     <div style="font-size: 0.7rem; color: #888; line-height: 1.5;">
                                         <strong style="color: var(--primary);">Fijas:</strong> Misma pareja todo el torneo, suben/bajan pistas según resultados<br>
-                                        <strong style="color: var(--primary);">Rotativas:</strong> Cambias de compañero cada ronda
+                                            <strong style="color: var(--primary);">Rotativas:</strong> Cambias de compañero cada ronda
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label>PLANTILLA VISUAL (IMAGEN)</label>
                                 <select name="image_url" class="pro-input">
@@ -713,17 +942,17 @@ async function loadAdminView(view) {
                             <button type="submit" class="btn-primary-pro" style="width: 100%; margin-top: 1rem; padding: 1.2rem;">LANZAR EVENTO ELITE 🚀</button>
                         </form>
                     </div>
-                </div>
-                    <div class="planning-area">
-                        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                            <h3 style="margin:0; letter-spacing: 2px; font-size: 0.85rem; color: var(--text-muted); font-weight: 800;">EVENTOS EN EL RADAR</h3>
-                            <button class="btn-outline-pro" style="padding: 0.6rem 1.2rem; font-size: 0.75rem;" onclick="loadAdminView('americanas_mgmt')">REFRESCAR SISTEMA</button>
-                        </div>
-                        <div class="americana-scroll-list" style="max-height: 75vh; overflow-y: auto; padding-right: 15px;">
-                            ${listHtml || '<div class="glass-card-enterprise" style="text-align:center; padding: 4rem; color: var(--text-muted);">No hay eventos operativos. Comienza creando uno.</div>'}
-                        </div>
+                </div >
+                <div class="planning-area">
+                    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <h3 style="margin:0; letter-spacing: 2px; font-size: 0.85rem; color: var(--text-muted); font-weight: 800;">EVENTOS EN EL RADAR</h3>
+                        <button class="btn-outline-pro" style="padding: 0.6rem 1.2rem; font-size: 0.75rem;" onclick="loadAdminView('americanas_mgmt')">REFRESCAR SISTEMA</button>
                     </div>
-                </div>`; // Correctly closes dashboard-grid-enterprise
+                    <div class="americana-scroll-list" style="max-height: 75vh; overflow-y: auto; padding-right: 15px;">
+                        ${listHtml || '<div class="glass-card-enterprise" style="text-align:center; padding: 4rem; color: var(--text-muted);">No hay eventos operativos. Comienza creando uno.</div>'}
+                    </div>
+                </div>
+                </div > `; // Correctly closes dashboard-grid-enterprise
 
             // Synchronization Logic for Create Form
             const createForm = document.getElementById('create-americana-form');
@@ -753,7 +982,7 @@ async function loadAdminView(view) {
                     const nameInput = createForm.querySelector('[name=name]');
                     if (nameInput && (!nameInput.value || nameInput.value.startsWith('AMERICANA'))) {
                         const catLabel = cat === 'male' ? 'MASCULINA' : (cat === 'female' ? 'FEMENINA' : (cat === 'mixed' ? 'MIXTA' : 'TODOS'));
-                        nameInput.value = `AMERICANA ${catLabel}`;
+                        nameInput.value = `AMERICANA ${catLabel} `;
                     }
                 };
 
@@ -873,7 +1102,64 @@ async function loadAdminView(view) {
                 await loadParticipantsUI(americana.id);
             };
 
-            // --- Entrenos Management ---
+        } else if (view === 'americanas_results') {
+            if (titleEl) titleEl.textContent = 'Resultados Americanas';
+            content.innerHTML = '<div class="loader"></div>';
+            try {
+                const americanas = await FirebaseDB.americanas.getAll();
+                const finished = americanas.filter(a => a.status === 'finished' || a.status === 'live').sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                if (finished.length === 0) {
+                    content.innerHTML = '<div class="glass-card-enterprise" style="text-align:center; padding:3rem; color:var(--text-muted);">No hay Americanas finalizadas o en juego.</div>';
+                } else {
+                    const listHtml = finished.map(a => `
+                < div class="glass-card-enterprise" style = "margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-left: 4px solid var(--brand-neon);" >
+                                <div>
+                                    <h4 style="margin:0; color:white; font-size:1.2rem;">${a.name}</h4>
+                                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:5px;">📅 ${a.date} | 👥 ${a.players ? a.players.length : 0} Jugadores</div>
+                                </div>
+                                <button class="btn-primary-pro" onclick="window.ControlTowerView ? (content.innerHTML = '', new ControlTowerView().load('${a.id}')) : alert('ControlTower no cargado')">
+                                    VER RESULTADOS
+                                </button>
+                            </div >
+                `).join('');
+                    content.innerHTML = `< div style = "max-width:800px; margin:0 auto;" > ${listHtml}</div > `;
+                }
+            } catch (e) { content.innerHTML = `< div class="error-box" > ${e.message}</div > `; }
+
+        } else if (view === 'entrenos_mgmt') {
+            if (titleEl) titleEl.textContent = 'Gestión de Entrenos';
+            content.innerHTML = '<div class="loader"></div>';
+
+            // Fetch and Render Entrenos List
+            const entrenos = await FirebaseDB.entrenos.getAll();
+            const listHtml = entrenos.sort((a, b) => new Date(b.date) - new Date(a.date)).map(e => `
+                < div class="glass-card-enterprise" style = "margin-bottom: 1rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #ccff00;" >
+                         <div style="display:flex; gap:15px; align-items:center;">
+                            <div style="width:60px; height:60px; background:url('${e.image_url || 'img/logo_somospadel.png'}') center/cover; border-radius:8px;"></div>
+                            <div>
+                                <div style="font-weight:700; color:white;">${e.name}</div>
+                                <div style="font-size:0.8rem; color:#888;">${e.date} @ ${e.time} | ${e.location}</div>
+                            </div>
+                         </div>
+                         <div style="display:flex; gap:10px;">
+                            <button class="btn-outline-pro" onclick='openEditEntrenoModal("${e.id}")'>EDITAR</button>
+                            <button class="btn-micro" style="background:rgba(239,68,68,0.2); color:#ef4444;" onclick="deleteEntreno('${e.id}')">🗑️</button>
+                         </div>
+                    </div >
+                `).join('');
+
+            content.innerHTML = `
+                < div class="dashboard-grid-enterprise" style = "grid-template-columns: 1fr;" >
+                        <div style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+                            <h3>📅 PRÓXIMOS ENTRENOS</h3>
+                            <button class="btn-primary-pro" onclick="openCreateEntrenoModal()">+ NUEVO ENTRENO</button>
+                        </div>
+                        <div>${listHtml.length ? listHtml : '<div style="padding:2rem; text-align:center; color:#666;">No hay entrenos creados.</div>'}</div>
+                    </div >
+                `;
+
+            // --- Entrenos Management Helpers (Keep within block) ---
 
             window.openCreateEntrenoModal = () => {
                 alert("Esta funcionalidad se está trasladando a la vista principal.");
@@ -1039,10 +1325,10 @@ async function loadAdminView(view) {
                         filteredUsers = filteredUsers.filter(u => u.gender === 'chica');
                     }
 
-                    select.innerHTML = `<option value="">${isFull ? '--- LLENO ---' : 'Seleccionar Jugador...'}</option>` +
+                    select.innerHTML = `< option value = "" > ${isFull ? '--- LLENO ---' : 'Seleccionar Jugador...'}</option > ` +
                         filteredUsers
                             .sort((a, b) => a.name.localeCompare(b.name))
-                            .map(u => `<option value="${u.id}">${u.name} (${u.level || '?'})</option>`)
+                            .map(u => `< option value = "${u.id}" > ${u.name} (${u.level || '?'})</option > `)
                             .join('');
 
                     select.disabled = isFull;
@@ -1080,7 +1366,7 @@ async function loadAdminView(view) {
                             const pLevel = user ? (user.level || user.self_rate_level || '?') : (p.level || '?');
 
                             return `
-                                <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,0.05); padding: 8px 12px; margin-bottom: 5px; border-radius: 6px;">
+                < div style = "display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,0.05); padding: 8px 12px; margin-bottom: 5px; border-radius: 6px;" >
                                     <div style="display:flex; align-items:center; gap:10px;">
                                         <div style="width:24px; height:24px; background:#ccff00; color:black; border-radius:50%; font-size:0.7rem; font-weight:700; display:flex; align-items:center; justify-content:center;">
                                             ${pName.charAt(0)}
@@ -1095,7 +1381,7 @@ async function loadAdminView(view) {
                                         &times;
                                     </button>
                                 </div>
-                            `;
+                `;
                         }).join('');
                     }
 
@@ -1119,72 +1405,109 @@ async function loadAdminView(view) {
                 }
             };
 
-            // --- Participant Management Logic ---
-            async function loadParticipantsUI(americanaId) {
-                const listContainer = document.getElementById('participants-list');
-                const select = document.getElementById('add-player-select');
-                const addBtn = document.getElementById('btn-add-player');
+        } else if (view === 'entrenos_results') {
+            if (titleEl) titleEl.textContent = 'Resultados Entrenos';
+            content.innerHTML = '<div class="loader"></div>';
+            try {
+                const entrenos = await FirebaseDB.entrenos.getAll();
+                // Filter for past/today entrenos? Or all.
+                const listHtml = entrenos.sort((a, b) => new Date(b.date) - new Date(a.date)).map(e => `
+                <div class="glass-card-enterprise" style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-left: 4px solid #ccff00;">
+                            <div>
+                                <h4 style="margin:0; color:white; font-size:1.2rem;">${e.name}</h4>
+                                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:5px;">📅 ${e.date} | 📍 ${e.location}</div>
+                            </div>
+                            <button class="btn-primary-pro" onclick="loadAdminView('entrenos_simulator'); setTimeout(() => { alert('Para simular, ve al Simulador de Entrenos'); }, 500);">
+                                VER RESULTADOS
+                            </button>
+                    </div>
+                `).join('');
+                content.innerHTML = `<div style="max-width:800px; margin:0 auto;">${listHtml}</div>`;
+            } catch (e) { content.innerHTML = `Error: ${e.message} `; }
 
-                listContainer.innerHTML = '<div class="loader-mini"></div>';
+        } else if (view === 'entrenos_simulator') {
+            if (titleEl) titleEl.textContent = 'Simulador de Entrenos';
+            content.innerHTML = `
+                <div class="glass-card-enterprise" style="text-align:center; padding:3rem;">
+                        <h3>🧠 SIMULADOR DE ENTRENOS</h3>
+                        <p style="color:var(--text-muted);">Selecciona un entreno para gestionar sus rondas y resultados.</p>
+                        <div style="margin-top:20px;">
+                            <button class="btn-primary-pro" onclick="alert('Funcionalidad en desarrollo: Conectar con Logic Engine')">INICIAR SIMULACIÓN</button>
+                        </div>
+                    </div>
+                `;
+        }
+        /* 
+           REMOVED PREMATURE CLOSURE - Code continues below 
+           (Merged split loadAdminView logic)
+        */
 
-                try {
-                    // Fetch latest data
-                    const [americana, allUsers] = await Promise.all([
-                        FirebaseDB.americanas.getById(americanaId),
-                        FirebaseDB.players.getAll()
-                    ]);
+        // --- Participant Management Logic ---
+        async function loadParticipantsUI(americanaId) {
+            const listContainer = document.getElementById('participants-list');
+            const select = document.getElementById('add-player-select');
+            const addBtn = document.getElementById('btn-add-player');
 
-                    // Normalize players list (handle legacy)
-                    const participants = americana.players || americana.registeredPlayers || [];
+            listContainer.innerHTML = '<div class="loader-mini"></div>';
 
-                    // A. Populate Select (exclude already joined + filter by category)
-                    const joinedIds = new Set(participants.map(p => p.id || p.uid));
-                    const maxPlayers = (americana.max_courts || 0) * 4;
-                    const isFull = participants.length >= maxPlayers;
+            try {
+                // Fetch latest data
+                const [americana, allUsers] = await Promise.all([
+                    FirebaseDB.americanas.getById(americanaId),
+                    FirebaseDB.players.getAll()
+                ]);
 
-                    // Gender filtering logic
-                    let filteredUsers = allUsers.filter(u => !joinedIds.has(u.id));
+                // Normalize players list (handle legacy)
+                const participants = americana.players || americana.registeredPlayers || [];
 
-                    if (americana.category === 'male') {
-                        filteredUsers = filteredUsers.filter(u => u.gender === 'chico');
-                    } else if (americana.category === 'female') {
-                        filteredUsers = filteredUsers.filter(u => u.gender === 'chica');
-                    } else if (americana.category === 'mixed' || americana.category === 'open') {
-                        // Tanto MIXTO como OPEN admiten ambos géneros (chico o chica)
-                        filteredUsers = filteredUsers.filter(u => u.gender === 'chico' || u.gender === 'chica');
-                    }
+                // A. Populate Select (exclude already joined + filter by category)
+                const joinedIds = new Set(participants.map(p => p.id || p.uid));
+                const maxPlayers = (americana.max_courts || 0) * 4;
+                const isFull = participants.length >= maxPlayers;
 
-                    const spotsText = isFull ?
-                        '<span style="color:var(--danger); font-weight:800;">🚫 AMERICANA LLENA</span>' :
-                        `<span style="color:var(--primary); font-weight:800;">👥 PLAZAS: ${participants.length}/${maxPlayers}</span>`;
+                // Gender filtering logic
+                let filteredUsers = allUsers.filter(u => !joinedIds.has(u.id));
 
-                    const labelEl = document.querySelector('label[for="add-player-select"]');
-                    if (labelEl) labelEl.innerHTML = `SELECCIONAR JUGADOR (${americana.category.toUpperCase()}) ${spotsText}`;
+                if (americana.category === 'male') {
+                    filteredUsers = filteredUsers.filter(u => u.gender === 'chico');
+                } else if (americana.category === 'female') {
+                    filteredUsers = filteredUsers.filter(u => u.gender === 'chica');
+                } else if (americana.category === 'mixed' || americana.category === 'open') {
+                    // Tanto MIXTO como OPEN admiten ambos géneros (chico o chica)
+                    filteredUsers = filteredUsers.filter(u => u.gender === 'chico' || u.gender === 'chica');
+                }
 
-                    select.innerHTML = `<option value="">${isFull ? '--- EVENTO LLENO ---' : 'Seleccionar Jugador...'}</option>` +
-                        filteredUsers
-                            .sort((a, b) => a.name.localeCompare(b.name))
-                            .map(u => `<option value="${u.id}">${u.name} (${u.level || '?'}) [${u.gender || '?'}]</option>`)
-                            .join('');
+                const spotsText = isFull ?
+                    '<span style="color:var(--danger); font-weight:800;">🚫 AMERICANA LLENA</span>' :
+                    `< span style = "color:var(--primary); font-weight:800;" >👥 PLAZAS: ${participants.length} / ${maxPlayers}</span > `;
 
-                    select.disabled = isFull;
+                const labelEl = document.querySelector('label[for="add-player-select"]');
+                if (labelEl) labelEl.innerHTML = `SELECCIONAR JUGADOR(${americana.category.toUpperCase()}) ${spotsText} `;
 
-                    // B. Setup Add Button
-                    addBtn.onclick = () => {
-                        // Admin override: allow adding players beyond capacity to trigger auto-scaling logic later
-                        // if (isFull) { ... } -> Removed restriction
-                        addPlayerToAmericana(americanaId, select.value);
-                    };
+                select.innerHTML = `< option value = "" > ${isFull ? '--- EVENTO LLENO ---' : 'Seleccionar Jugador...'}</option > ` +
+                    filteredUsers
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map(u => `< option value = "${u.id}" > ${u.name} (${u.level || '?'})[${u.gender || '?'}]</option > `)
+                        .join('');
 
-                    // C. Render List
-                    if (participants.length === 0) {
-                        listContainer.innerHTML = '<div style="text-align:center; color:#666; padding:15px; font-style:italic;">Sin participantes inscritos</div>';
-                    } else {
-                        // NEW: Gender Summary
-                        const maleCount = participants.filter(p => p.gender === 'chico').length;
-                        const femaleCount = participants.filter(p => p.gender === 'chica').length;
-                        const summaryHtml = `
-                            <div style="display:flex; gap:10px; margin-bottom:15px; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                select.disabled = isFull;
+
+                // B. Setup Add Button
+                addBtn.onclick = () => {
+                    // Admin override: allow adding players beyond capacity to trigger auto-scaling logic later
+                    // if (isFull) { ... } -> Removed restriction
+                    addPlayerToAmericana(americanaId, select.value);
+                };
+
+                // C. Render List
+                if (participants.length === 0) {
+                    listContainer.innerHTML = '<div style="text-align:center; color:#666; padding:15px; font-style:italic;">Sin participantes inscritos</div>';
+                } else {
+                    // NEW: Gender Summary
+                    const maleCount = participants.filter(p => p.gender === 'chico').length;
+                    const femaleCount = participants.filter(p => p.gender === 'chica').length;
+                    const summaryHtml = `
+                < div style = "display:flex; gap:10px; margin-bottom:15px; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);" >
                                 <div style="flex:1; text-align:center;">
                                     <div style="font-size:0.6rem; color:#888; font-weight:800;">HOMBRES</div>
                                     <div style="font-size:1.1rem; font-weight:900; color:#3b82f6;">${maleCount}</div>
@@ -1199,26 +1522,27 @@ async function loadAdminView(view) {
                                     <div style="font-size:0.8rem; font-weight:900; color:${maleCount === femaleCount ? '#25d366' : '#fbbf24'}; margin-top:3px;">
                                         ${maleCount === femaleCount ? 'EQUILIBRADO' : 'DESCOMPENSADO'}
                                     </div>
-                                </div>` : ''}
-                            </div>
-                        `;
+                                </div>` : ''
+                        }
+                            </div >
+                `;
 
-                        // Pass index 'i' to ensure unique identification even for corrupt data
-                        listContainer.innerHTML = summaryHtml + participants.map((p, i) => {
-                            // Find full user details if available, else use stored info
-                            const userDetails = allUsers.find(u => u.id === (p.id || p.uid)) || p;
-                            const pId = p.id || p.uid || 'no-id';
-                            // Prioritize: Live User Data > Snapshot Name > 'Desconocido'
-                            let pName = userDetails.name || p.name || 'Desconocido';
-                            const pLevel = userDetails.level || p.level || '?';
+                    // Pass index 'i' to ensure unique identification even for corrupt data
+                    listContainer.innerHTML = summaryHtml + participants.map((p, i) => {
+                        // Find full user details if available, else use stored info
+                        const userDetails = allUsers.find(u => u.id === (p.id || p.uid)) || p;
+                        const pId = p.id || p.uid || 'no-id';
+                        // Prioritize: Live User Data > Snapshot Name > 'Desconocido'
+                        let pName = userDetails.name || p.name || 'Desconocido';
+                        const pLevel = userDetails.level || p.level || '?';
 
-                            // If name is unknown, show ID to help identify ghost
-                            if (pName === 'Desconocido') {
-                                pName = `<span style="font-family:monospace; color:#ef4444;">ID: ${pId.substring(0, 8)}...</span>`;
-                            }
+                        // If name is unknown, show ID to help identify ghost
+                        if (pName === 'Desconocido') {
+                            pName = `<span style="font-family:monospace; color:#ef4444;">ID: ${pId.substring(0, 8)}...</span>`;
+                        }
 
-                            return `
-                                <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,0.05); padding: 8px 12px; margin-bottom: 5px; border-radius: 6px;">
+                        return `
+                <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,0.05); padding: 8px 12px; margin-bottom: 5px; border-radius: 6px;">
                                     <div style="display:flex; align-items:center; gap:10px;">
                                         <div style="width:24px; height:24px; background:var(--primary); color:black; border-radius:50%; font-size:0.7rem; font-weight:700; display:flex; align-items:center; justify-content:center;">
                                             ${pName.toString().charAt(0) === '<' ? '?' : pName.charAt(0)}
@@ -1228,132 +1552,28 @@ async function loadAdminView(view) {
                                             <div style="font-size:0.7rem; color:#888;">Nivel ${pLevel}</div>
                                         </div>
                                     </div>
-                                    <!-- Use index for 1-click removal reliability -->
-                                    <button onclick="removePlayerFromAmericana('${americanaId}', ${i})" 
-                                            style="background:transparent; border:none; color:var(--danger); cursor:pointer; font-size:1.1rem; opacity:0.8; transition:opacity 0.2s;"
-                                            onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8" title="Eliminar (1-click)">
-                                        &times;
-                                    </button>
+                                    <!--Use index for 1 - click removal reliability-- >
+                <button onclick="removePlayerFromAmericana('${americanaId}', ${i})"
+                    style="background:transparent; border:none; color:var(--danger); cursor:pointer; font-size:1.1rem; opacity:0.8; transition:opacity 0.2s;"
+                    onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8" title="Eliminar (1-click)">
+                    &times;
+                </button>
                                 </div>
-                            `;
-                        }).join('');
-                    }
-
-                } catch (e) {
-                    console.error("Error loading participants:", e);
-                    listContainer.innerHTML = `<div style="color:red; text-align:center;">Error al cargar: ${e.message}</div>`;
+                `;
+                    }).join('');
                 }
+
+            } catch (e) {
+                console.error("Error loading participants:", e);
+                listContainer.innerHTML = `<div style="color:red; text-align:center;">Error al cargar: ${e.message}</div>`;
             }
+        }
 
-            window.addPlayerToAmericana = async (americanaId, userId) => {
-                if (!userId) return;
-                try {
-                    const btn = document.getElementById('btn-add-player');
-                    btn.disabled = true;
-                    btn.textContent = "...";
 
-                    const [americana, user] = await Promise.all([
-                        FirebaseDB.americanas.getById(americanaId),
-                        FirebaseDB.players.getById(userId)
-                    ]);
 
-                    const players = americana.players || americana.registeredPlayers || [];
-                    const maxPlayers = (americana.max_courts || 0) * 4;
 
-                    if (players.length >= maxPlayers) {
-                        throw new Error("La Americana ya alcanzó el límite de " + maxPlayers + " jugadores.");
-                    }
 
-                    // Enforce gender check in backend-style logic
-                    if (americana.category === 'male' && user.gender !== 'chico') throw new Error("Solo se permiten hombres en esta categoría.");
-                    if (americana.category === 'female' && user.gender !== 'chica') throw new Error("Solo se permiten mujeres en esta categoría.");
-                    if ((americana.category === 'mixed' || americana.category === 'open') && (user.gender !== 'chico' && user.gender !== 'chica')) {
-                        throw new Error("El jugador debe tener un género válido (chico o chica) para participar.");
-                    }
-
-                    // Add new player object
-                    players.push({
-                        id: user.id,
-                        uid: user.id, // Compatibility
-                        name: user.name,
-                        level: user.level || user.self_rate_level || 'N/A',
-                        gender: user.gender || '?',
-                        joinedAt: new Date().toISOString(),
-                        current_court: Math.floor(players.length / 4) + 1
-                    });
-
-                    const now = new Date();
-                    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-
-                    const updateData = {
-                        players: players,
-                        registeredPlayers: players
-                    };
-
-                    // AUTO-OPEN: If it was finished but has spots and is in the future
-                    if (players.length < maxPlayers && americana.date >= todayStr && (americana.status === 'finished' || !americana.status)) {
-                        updateData.status = 'open';
-                    }
-
-                    await FirebaseDB.americanas.update(americanaId, updateData);
-
-                    // Refresh UI
-                    await loadParticipantsUI(americanaId);
-                    btn.disabled = false;
-                    btn.textContent = "AÑADIR";
-                    showToast("Jugador añadido con éxito", "success");
-
-                    // Removed: loadAdminView('americanas_mgmt'); 
-                    // We stay in the modal to allow more edits.
-
-                } catch (e) {
-                    alert("Error añadiendo jugador: " + e.message);
-                    document.getElementById('btn-add-player').disabled = false;
-                }
-            };
-
-            window.removePlayerFromAmericana = async (americanaId, playerIndex) => {
-                // NO CONFIRMATION - IMPLIED 1-CLICK ACTION
-                try {
-                    const americana = await FirebaseDB.americanas.getById(americanaId);
-                    let players = americana.players || americana.registeredPlayers || [];
-
-                    // Remove by INDEX to handle 'no-id' or duplicate entries correctly
-                    if (playerIndex >= 0 && playerIndex < players.length) {
-                        players.splice(playerIndex, 1);
-                    } else {
-                        throw new Error("Índice de jugador no válido");
-                    }
-
-                    const now = new Date();
-                    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-                    const maxPlayers = (americana.max_courts || 0) * 4;
-
-                    const updateData = {
-                        players: players,
-                        registeredPlayers: players
-                    };
-
-                    // AUTO-OPEN: If it was finished but now has spots and is in the future
-                    if (players.length < maxPlayers && americana.date >= todayStr && (americana.status === 'finished' || !americana.status)) {
-                        console.log("♻️ Espacio libre detectado en fecha futura. Reabriendo Americana...");
-                        updateData.status = 'open';
-                    }
-
-                    await FirebaseDB.americanas.update(americanaId, updateData);
-
-                    await loadParticipantsUI(americanaId);
-                    showToast("Jugador eliminado con éxito", "success");
-
-                    // Removed: loadAdminView('americanas_mgmt');
-                    // This avoids closing the modal or jarring state changes.
-
-                } catch (e) {
-                    alert("Error eliminando: " + e.message);
-                }
-            };
-
-        } else if (view === 'simulator_empty') {
+        if (view === 'simulator_empty') {
             if (titleEl) titleEl.textContent = 'Simulador de americanas';
             content.innerHTML = `
                 <div class="glass-card-enterprise" style="max-width: 800px; margin: 0 auto; text-align: center; padding: 3rem;">
@@ -1460,12 +1680,12 @@ async function loadAdminView(view) {
                          <button class="btn-secondary" style="border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-color: var(--danger-dim); color: var(--danger); font-weight: 700; font-size: 0.8rem;" onclick="deleteEntreno('${a.id}')" title="Borrar">🗑️</button>
                     </div>
                 </div>
-            `).join('');
+                `).join('');
 
             content.innerHTML = `
                 <div class="dashboard-grid-enterprise" style="display: grid; grid-template-columns: 400px 1fr; gap: 2.5rem;">
                     
-                    <!-- LEFT COLUMN: FORM -->
+                    <!--LEFT COLUMN: FORM-->
                     <div class="glass-card-enterprise" style="background: rgba(0,0,0,0.5); height: fit-content; padding: 2rem; border-color: rgba(204,255,0,0.2);">
                         <h3 style="margin-bottom: 2rem; color: #ccff00; display: flex; align-items: center; gap: 10px;">
                             <span style="font-size: 1.5rem;">🎯</span> CONFIGURAR ENTRENOS
@@ -1568,18 +1788,18 @@ async function loadAdminView(view) {
                         </form>
                     </div>
 
-                    <!-- RIGHT COLUMN: LIST -->
-                    <div class="planning-area">
-                        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                            <h3 style="margin:0; letter-spacing: 2px; font-size: 0.85rem; color: #3498db; font-weight: 800;">EVENTOS PROGRAMADOS</h3>
-                            <button class="btn-outline-pro" style="padding: 0.6rem 1.2rem; font-size: 0.75rem; border-color: #3498db; color: #3498db;" onclick="loadAdminView('entrenos_mgmt')">REFRESCAR</button>
-                        </div>
-                        <div class="americana-scroll-list" style="max-height: 75vh; overflow-y: auto; padding-right: 15px;">
-                            ${listHtml || '<div class="glass-card-enterprise" style="text-align:center; padding: 4rem; color: var(--text-muted);">No hay entrenos programados. Comienza creando uno.</div>'}
-                        </div>
+                    <!--RIGHT COLUMN: LIST-- >
+                <div class="planning-area">
+                    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <h3 style="margin:0; letter-spacing: 2px; font-size: 0.85rem; color: #3498db; font-weight: 800;">EVENTOS PROGRAMADOS</h3>
+                        <button class="btn-outline-pro" style="padding: 0.6rem 1.2rem; font-size: 0.75rem; border-color: #3498db; color: #3498db;" onclick="loadAdminView('entrenos_mgmt')">REFRESCAR</button>
+                    </div>
+                    <div class="americana-scroll-list" style="max-height: 75vh; overflow-y: auto; padding-right: 15px;">
+                        ${listHtml || '<div class="glass-card-enterprise" style="text-align:center; padding: 4rem; color: var(--text-muted);">No hay entrenos programados. Comienza creando uno.</div>'}
                     </div>
                 </div>
-            `;
+                </div>
+                `;
 
             // Sync Logic for Entrenos Create Form
             const createFormE = document.getElementById('create-entreno-form-direct');
@@ -1611,7 +1831,7 @@ async function loadAdminView(view) {
                     const nameInput = createFormE.querySelector('[name=name]');
                     if (nameInput && (!nameInput.value || nameInput.value.startsWith('ENTRENO') || nameInput.value.startsWith('CLASE'))) {
                         const catLabel = cat === 'male' ? 'MASCULINO' : (cat === 'female' ? 'FEMENINO' : (cat === 'mixed' ? 'MIXTO' : 'TODOS'));
-                        nameInput.value = `ENTRENO ${catLabel}`;
+                        nameInput.value = `ENTRENO ${catLabel} `;
                     }
                 };
 
@@ -1647,7 +1867,7 @@ async function loadAdminView(view) {
             }
 
             if (!activeEntreno) {
-                content.innerHTML = `<div class="glass-card-enterprise text-center" style="padding: 4rem;"><p>No hay entrenos programados para registrar resultados.</p></div>`;
+                content.innerHTML = `<div class="glass-card-enterprise text-center" style="padding: 4rem;"> <p>No hay entrenos programados para registrar resultados.</p></div>`;
                 return;
             }
 
@@ -1696,11 +1916,11 @@ async function loadAdminView(view) {
 
                 <div style="display: grid; grid-template-columns: 2.5fr 1.2fr; gap: 2.5rem;">
                     <div id="entreno-matches-container"><div class="loader"></div></div>
-                    
+
                     <div class="glass-card-enterprise" style="height: fit-content; padding: 2rem; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
-                             <h3 style="margin:0; color:white; font-size: 1.1rem; font-weight: 900; letter-spacing: 1px;">📊 CLASIFICACIÓN</h3>
-                             <span style="font-size:0.7rem; color: var(--primary); font-weight: 800; background: rgba(52,152,219,0.2); color: #3498db; padding: 4px 10px; border-radius: 20px;">EN VIVO</span>
+                            <h3 style="margin:0; color:white; font-size: 1.1rem; font-weight: 900; letter-spacing: 1px;">📊 CLASIFICACIÓN</h3>
+                            <span style="font-size:0.7rem; color: var(--primary); font-weight: 800; background: rgba(52,152,219,0.2); color: #3498db; padding: 4px 10px; border-radius: 20px;">EN VIVO</span>
                         </div>
                         <div id="entreno-standings-container" style="max-height: 800px; overflow-y: auto; padding-right: 5px;">
                             <!-- Standings inserted here -->
@@ -1731,7 +1951,9 @@ async function loadAdminView(view) {
                 container.innerHTML = '<div class="loader"></div>';
 
                 const matches = await FirebaseDB.entrenos_matches.getByAmericana(entrenoId);
+                const entreno = await FirebaseDB.entrenos.getById(entrenoId);
                 const roundMatches = matches.filter(m => m.round === roundNum);
+                const roundTime = window.calculateMatchTime(entreno?.time || "00:00", roundNum);
 
                 // --- CALCULAR STANDINGS (Copied Logic from Americanas) ---
                 const standingsContainer = document.getElementById('entreno-standings-container');
@@ -1779,27 +2001,27 @@ async function loadAdminView(view) {
                         };
 
                         const isPodium = i < 3;
-                        const style = positionColors[i] || { bg: 'rgba(255,255,255,0.02)', icon: `#${i + 1}`, glow: 'none', text: '#fff' };
+                        const style = positionColors[i] || { bg: 'rgba(255,255,255,0.02)', icon: `#${i + 1} `, glow: 'none', text: '#fff' };
                         const barWidth = maxGames > 0 ? (r.games / maxGames) * 100 : 0;
                         const medal = isPodium ? style.icon : style.icon;
 
                         return `
-                                <div style="position: relative; margin-bottom: 8px; padding: 10px 12px; background: ${isPodium ? style.bg : 'rgba(255,255,255,0.02)'}; border-radius: 10px; border: ${isPodium ? 'none' : '1px solid rgba(255,255,255,0.05)'}; overflow: hidden; box-shadow: ${style.glow};">
-                                    ${!isPodium ? `<div style="position: absolute; left: 0; top: 0; height: 100%; width: ${barWidth}%; background: rgba(204,255,0,0.1); z-index: 0;"></div>` : ''}
-                                    <div style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between;">
-                                        <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                                            <div style="font-weight: 900; font-size: 0.9rem; color: ${style.text}; width: 25px; text-align: center;">${medal}</div>
-                                            <div>
-                                                <div style="font-weight: 700; font-size: 0.85rem; color: ${style.text};">${r.name}</div>
-                                                <div style="font-size: 0.7rem; color: ${isPodium ? 'rgba(0,0,0,0.6)' : '#888'};">${r.played} partidos</div>
-                                            </div>
-                                        </div>
-                                        <div style="text-align: right;">
-                                            <div style="font-weight: 900; font-size: 1.1rem; color: ${style.text};">${r.games} <span style="font-size: 0.7rem; opacity: 0.7;">JUEGOS</span></div>
-                                        </div>
-                                    </div>
+                <div style="position: relative; margin-bottom: 8px; padding: 10px 12px; background: ${isPodium ? style.bg : 'rgba(255,255,255,0.02)'}; border-radius: 10px; border: ${isPodium ? 'none' : '1px solid rgba(255,255,255,0.05)'}; overflow: hidden; box-shadow: ${style.glow};">
+                    ${!isPodium ? `<div style="position: absolute; left: 0; top: 0; height: 100%; width: ${barWidth}%; background: rgba(204,255,0,0.1); z-index: 0;"></div>` : ''}
+            <div style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                    <div style="font-weight: 900; font-size: 0.9rem; color: ${style.text}; width: 25px; text-align: center;">${medal}</div>
+                    <div>
+                        <div style="font-weight: 700; font-size: 0.85rem; color: ${style.text};">${r.name}</div>
+                        <div style="font-size: 0.7rem; color: ${isPodium ? 'rgba(0,0,0,0.6)' : '#888'};">${r.played} partidos</div>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-weight: 900; font-size: 1.1rem; color: ${style.text};">${r.games} <span style="font-size: 0.7rem; opacity: 0.7;">JUEGOS</span></div>
+                </div>
+            </div>
                                 </div>
-                             `;
+                `;
                     }).join('');
                     if (ranking.length === 0) standingsContainer.innerHTML = '<div style="text-align:center; color:#666; padding:2rem;">Esperando resultados...</div>';
                 }
@@ -1807,7 +2029,7 @@ async function loadAdminView(view) {
 
                 if (roundMatches.length === 0) {
                     container.innerHTML = `
-                        <div class="glass-card-enterprise" style="text-align: center; padding: 4rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem;">
+                <div class="glass-card-enterprise" style="text-align: center; padding: 4rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem;">
                             <div style="font-size: 3rem; opacity: 0.5;">🎾</div>
                             <h3 style="color: rgba(255,255,255,0.5); font-weight: 800; letter-spacing: 1px; margin: 0;">PARTIDO ${roundNum} SIN PARTIDOS</h3>
                             <button class="btn-primary-pro" onclick="generateEntrenoNextRound('${entrenoId}', ${roundNum})" style="padding: 1.2rem 3rem; font-size: 1.1rem; background: #3498db; border: none;">GENERAR PARTIDO ${roundNum}</button>
@@ -1819,7 +2041,7 @@ async function loadAdminView(view) {
                 const courtColors = ['#FFD700', '#C0C0C0', '#CD7F32', '#4A90E2', '#9B59B6', '#E74C3C', '#95A5A6', '#34495E'];
 
                 container.innerHTML = `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
-                    ${roundMatches.sort((a, b) => a.court - b.court).map(m => {
+                ${roundMatches.sort((a, b) => a.court - b.court).map(m => {
                     const sA = m.score_a || 0;
                     const sB = m.score_b || 0;
                     // Determine winner state visually based on score
@@ -1829,7 +2051,7 @@ async function loadAdminView(view) {
                     return `
                         <div class="glass-card-enterprise entreno-match-card" data-players="${(m.team_a_names + ' ' + m.team_b_names).toLowerCase()}" style="padding: 0; border: 1px solid rgba(255,255,255,0.08); overflow: hidden;">
                              <div style="padding: 1rem; background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); border-left: 4px solid ${courtColors[m.court - 1] || '#666'};">
-                                <span style="font-weight: 800; color: ${courtColors[m.court - 1] || '#ccc'}; letter-spacing: 1px;">PISTA ${m.court} 🎾</span>
+                                <span style="font-weight: 800; color: ${courtColors[m.court - 1] || '#ccc'}; letter-spacing: 1px;">PISTA ${m.court} • <i class="far fa-clock"></i> ${roundTime}</span>
                                 <span style="font-size: 0.7rem; color: #555;">${m.status === 'finished' ? '<span style="color:#25D366; font-weight:800;">FINALIZADO</span>' : 'EN JUEGO'}</span>
                             </div>
                             
@@ -1865,7 +2087,8 @@ async function loadAdminView(view) {
                                 </div>
                             </div>
                         </div>
-                    `}).join('')}
+                    `}).join('')
+                    }
                 </div>`;
             };
 
@@ -1889,7 +2112,31 @@ async function loadAdminView(view) {
                     await checkAndUpdateEntrenoStatus(entrenoId);
                 }
 
-                // Refresh
+                // 🚀 AUTO-PROGRESSION: Check if current round is finished
+                if (entrenoId) {
+                    const allMatches = await FirebaseDB.entrenos_matches.getByAmericana(entrenoId);
+                    const roundMatches = allMatches.filter(m => m.round === roundNum);
+                    const allFinished = roundMatches.every(m => m.status === 'finished');
+
+                    if (allFinished && roundNum < 6) {
+                        const nextRound = roundNum + 1;
+                        const nextMatches = allMatches.filter(m => m.round === nextRound);
+
+                        if (nextMatches.length === 0) {
+                            console.log(`🎯 Ronda ${roundNum} completada. Generando Ronda ${nextRound} automáticamente...`);
+                            AdminAuth.localToast(`¡Ronda ${roundNum} completada! Generando siguiente...`, 'success');
+                            await generateEntrenoNextRound(entrenoId, nextRound);
+                            return; // generateEntrenoNextRound already calls renderEntrenoMatches
+                        } else {
+                            // If next round already exists, just switch to it
+                            AdminAuth.localToast(`¡Ronda ${roundNum} completada! Pasando a la siguiente...`, 'info');
+                            renderEntrenoMatches(entrenoId, nextRound);
+                            return;
+                        }
+                    }
+                }
+
+                // Refresh current round if no auto-progression happened
                 if (entrenoSelect) renderEntrenoMatches(entrenoId, roundNum);
             };
 
@@ -1993,7 +2240,7 @@ async function loadAdminView(view) {
                 const val = parseInt(document.getElementById('entreno-quick-max-courts').value);
                 if (val > 0) {
                     await FirebaseDB.entrenos.update(id, { max_courts: val });
-                    AdminAuth.localToast(`Pistas actualizadas a ${val}`, 'success');
+                    AdminAuth.localToast(`Pistas actualizadas a ${val} `, 'success');
                 }
             };
 
@@ -2043,7 +2290,7 @@ async function loadAdminView(view) {
                 }
 
                 container.innerHTML = `
-                    <div class="glass-card-enterprise" style="padding: 3rem; text-align: center;">
+                < div class="glass-card-enterprise" style = "padding: 3rem; text-align: center;" >
                         <h2 style="color: #ccff00; font-size: 2.5rem; font-weight: 900; margin-bottom: 2rem;">🏆 INFORME FINAL DEL ENTRENO</h2>
                         <div style="display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 20px; align-items: flex-end; margin-bottom: 4rem;">
                             <!-- Plata -->
@@ -2065,8 +2312,10 @@ async function loadAdminView(view) {
                                 <div style="font-weight: 700; color: rgba(0,0,0,0.6);">${ranking[2]?.games || 0} JUEGOS</div>
                             </div>
                         </div>
-                        <button class="btn-primary-pro" onclick="loadAdminView('entrenos_results')" style="padding: 1rem 3rem;">VOLVER A RESULTADOS</button>
-                    </div>
+                        <button class="btn-primary-pro" onclick="loadAdminView('entrenos_results')" style="padding: 1.2rem 3.5rem; background: #3498db; color: white; border: none; font-weight: 900; box-shadow: 0 0 25px rgba(52,152,219,0.3);">
+                            VOLVER A CONTROL DE RESULTADOS (MODO EDICIÓN) ✎
+                        </button>
+                    </div >
                 `;
             }
 
@@ -2275,7 +2524,7 @@ async function loadAdminView(view) {
 
                     <button class="btn-primary-pro" id="btn-run-training-sim" style="padding: 1.5rem 3rem; font-size: 1.1rem;">🚀 GENERAR CUADROS Y EMPEZAR</button>
                     <div id="sim-training-status" style="margin-top: 2rem; font-family: 'Courier New', monospace; font-size: 0.8rem; color: var(--primary); text-align: left; display: none; background: rgba(0,0,0,0.8); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--primary-dim);"></div>
-                </div>`;
+                </div> `;
 
             const btnTrain = document.getElementById('btn-run-training-sim');
             if (btnTrain) {
@@ -2293,7 +2542,7 @@ async function loadAdminView(view) {
             const activeAmericana = americanas.find(a => a.status === 'in_progress' || a.status === 'open') || americanas[0];
 
             if (!activeAmericana) {
-                content.innerHTML = `<div class="glass-card-enterprise text-center" style="padding: 4rem;"><p>No hay americanas activas.</p></div>`;
+                content.innerHTML = `<div class="glass-card-enterprise text-center" style="padding: 4rem;"> <p>No hay americanas activas.</p></div>`;
                 return;
             }
 
@@ -2342,11 +2591,11 @@ async function loadAdminView(view) {
 
                 <div style="display: grid; grid-template-columns: 2.5fr 1.2fr; gap: 2.5rem;">
                     <div id="matches-container"><div class="loader"></div></div>
-                    
+
                     <div class="glass-card-enterprise" style="height: fit-content; padding: 2rem; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
-                             <h3 style="margin:0; color:white; font-size: 1.1rem; font-weight: 900; letter-spacing: 1px;">📊 CLASIFICACIÓN</h3>
-                             <span style="font-size:0.7rem; color: var(--primary); font-weight: 800; background: rgba(204,255,0,0.1); padding: 4px 10px; border-radius: 20px;">EN VIVO</span>
+                            <h3 style="margin:0; color:white; font-size: 1.1rem; font-weight: 900; letter-spacing: 1px;">📊 CLASIFICACIÓN</h3>
+                            <span style="font-size:0.7rem; color: var(--primary); font-weight: 800; background: rgba(204,255,0,0.1); padding: 4px 10px; border-radius: 20px;">EN VIVO</span>
                         </div>
                         <div id="standings-container" style="max-height: 800px; overflow-y: auto; padding-right: 5px;">
                             <!-- Standings inserted here -->
@@ -2520,7 +2769,7 @@ async function loadAdminView(view) {
                                 matches.push({ ...mData, id: saved.id });
                             }
 
-                            AdminAuth.localToast(`♻️ Pistas reorganizadas y partidos regenerados (${neededCourts} pistas).`, 'success');
+                            AdminAuth.localToast(`♻️ Pistas reorganizadas y partidos regenerados(${neededCourts} pistas).`, 'success');
                         }
                     }
 
@@ -2610,47 +2859,47 @@ async function loadAdminView(view) {
                             const courtColor = courtColors[currentCourt - 1] || '#666';
 
                             return `
-                            <div style="
-                                position: relative;
-                                margin-bottom: ${isPodium ? '12px' : '6px'};
-                                padding: ${isPodium ? '14px 12px' : '10px 12px'};
-                                background: ${isPodium ? style.bg : 'rgba(255,255,255,0.02)'};
-                                border-radius: ${isPodium ? '12px' : '8px'};
-                                border: ${isPodium ? '2px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.05)'};
-                                box-shadow: ${style.glow};
-                                transition: all 0.3s ease;
-                                overflow: hidden;
-                            " onmouseover="this.style.transform='translateX(4px)'; this.style.boxShadow='${style.glow}, 0 4px 12px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='${style.glow}';">
-                                <div style="position: absolute; left: 0; top: 0; height: 100%; width: ${barWidth}%; background: ${isPodium ? 'rgba(255,255,255,0.15)' : 'var(--primary-dim)'}; transition: width 0.5s ease; z-index: 0;"></div>
-                                <div style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between;">
-                                    <div style="display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden;">
-                                        <div style="min-width: ${isPodium ? '36px' : '28px'}; height: ${isPodium ? '36px' : '28px'}; display: flex; align-items: center; justify-content: center; background: ${isPodium ? 'rgba(0,0,0,0.3)' : 'rgba(204,255,0,0.1)'}; border-radius: 50%; font-weight: 900; font-size: ${isPodium ? '1.1rem' : '0.85rem'}; color: ${isPodium ? '#000' : 'var(--primary)'}; border: 2px solid ${isPodium ? 'rgba(0,0,0,0.2)' : 'rgba(204,255,0,0.2)'};">
-                                            ${style.icon || `#${i + 1}`}
-                                        </div>
-                                        <div style="flex: 1; overflow: hidden;">
-                                            <div style="display: flex; align-items: center; gap: 8px;">
-                                                <div style="font-weight: ${isPodium ? '800' : '600'}; font-size: ${isPodium ? '0.9rem' : '0.8rem'}; color: ${isPodium ? '#000' : '#FFF'}; text-shadow: ${isPodium ? 'none' : '0 1px 2px rgba(0,0,0,0.5)'}; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 2px; line-height: 1.1;" title="${r.pair_name}">${r.pair_name}</div>
-                                                <div style="display: flex; align-items: center; gap: 4px; font-size: 0.7rem; background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 12px; border: 1px solid ${courtColor};">
-                                                    <span style="color: ${courtColor}; font-weight: 800;">🎾 P${currentCourt}</span>
-                                                    <span style="color: ${trendColor}; font-size: 0.9rem; font-weight: 900;" title="${trendText}">${trend}</span>
-                                                </div>
-                                            </div>
-                                            <div style="font-size: 0.7rem; color: ${isPodium ? 'rgba(0,0,0,0.6)' : '#888'}; margin-top: 2px;">${r.played} partidos • ${r.wins}V-${r.losses}D</div>
-                                        </div>
-                                    </div>
-                                    <div style="display: flex; gap: 12px; align-items: center;">
-                                        <div style="text-align: center; min-width: 50px;">
-                                            <div style="font-size: ${isPodium ? '1.4rem' : '1.1rem'}; font-weight: 900; color: ${isPodium ? '#000' : 'var(--primary)'}; line-height: 1;">${r.games_won}</div>
-                                            <div style="font-size: 0.65rem; color: ${isPodium ? 'rgba(0,0,0,0.5)' : '#666'}; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Juegos</div>
-                                        </div>
-                                        <div style="text-align: center; min-width: 45px;">
-                                            <div style="font-size: ${isPodium ? '1.2rem' : '0.95rem'}; font-weight: 800; color: ${isPodium ? 'rgba(0,0,0,0.7)' : '#25D366'}; line-height: 1;">${r.wins}</div>
-                                            <div style="font-size: 0.65rem; color: ${isPodium ? 'rgba(0,0,0,0.5)' : '#666'}; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Vict.</div>
-                                        </div>
+                <div style="
+            position: relative;
+            margin-bottom: ${isPodium ? '12px' : '6px'};
+            padding: ${isPodium ? '14px 12px' : '10px 12px'};
+            background: ${isPodium ? style.bg : 'rgba(255,255,255,0.02)'};
+            border-radius: ${isPodium ? '12px' : '8px'};
+            border: ${isPodium ? '2px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.05)'};
+            box-shadow: ${style.glow};
+            transition: all 0.3s ease;
+            overflow: hidden;
+            " onmouseover="this.style.transform = 'translateX(4px)'; this.style.boxShadow = '${style.glow}, 0 4px 12px rgba(0,0,0,0.3)';" onmouseout="this.style.transform = 'translateX(0)'; this.style.boxShadow = '${style.glow}';">
+                <div style="position: absolute; left: 0; top: 0; height: 100%; width: ${barWidth}%; background: ${isPodium ? 'rgba(255,255,255,0.15)' : 'var(--primary-dim)'}; transition: width 0.5s ease; z-index: 0;"></div>
+                    <div style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden;">
+                            <div style="min-width: ${isPodium ? '36px' : '28px'}; height: ${isPodium ? '36px' : '28px'}; display: flex; align-items: center; justify-content: center; background: ${isPodium ? 'rgba(0,0,0,0.3)' : 'rgba(204,255,0,0.1)'}; border-radius: 50%; font-weight: 900; font-size: ${isPodium ? '1.1rem' : '0.85rem'}; color: ${isPodium ? '#000' : 'var(--primary)'}; border: 2px solid ${isPodium ? 'rgba(0,0,0,0.2)' : 'rgba(204,255,0,0.2)'};">
+                                ${style.icon || `#${i + 1}`}
+                            </div>
+                            <div style="flex: 1; overflow: hidden;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="font-weight: ${isPodium ? '800' : '600'}; font-size: ${isPodium ? '0.9rem' : '0.8rem'}; color: ${isPodium ? '#000' : '#FFF'}; text-shadow: ${isPodium ? 'none' : '0 1px 2px rgba(0,0,0,0.5)'}; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 2px; line-height: 1.1;" title="${r.pair_name}">${r.pair_name}</div>
+                                    <div style="display: flex; align-items: center; gap: 4px; font-size: 0.7rem; background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 12px; border: 1px solid ${courtColor};">
+                                        <span style="color: ${courtColor}; font-weight: 800;">🎾 P${currentCourt}</span>
+                                        <span style="color: ${trendColor}; font-size: 0.9rem; font-weight: 900;" title="${trendText}">${trend}</span>
                                     </div>
                                 </div>
+                                <div style="font-size: 0.7rem; color: ${isPodium ? 'rgba(0,0,0,0.6)' : '#888'}; margin-top: 2px;">${r.played} partidos • ${r.wins}V-${r.losses}D</div>
                             </div>
-                            `;
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <div style="text-align: center; min-width: 50px;">
+                                <div style="font-size: ${isPodium ? '1.4rem' : '1.1rem'}; font-weight: 900; color: ${isPodium ? '#000' : 'var(--primary)'}; line-height: 1;">${r.games_won}</div>
+                                <div style="font-size: 0.65rem; color: ${isPodium ? 'rgba(0,0,0,0.5)' : '#666'}; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Juegos</div>
+                            </div>
+                            <div style="text-align: center; min-width: 45px;">
+                                <div style="font-size: ${isPodium ? '1.2rem' : '0.95rem'}; font-weight: 800; color: ${isPodium ? 'rgba(0,0,0,0.7)' : '#25D366'}; line-height: 1;">${r.wins}</div>
+                                <div style="font-size: 0.65rem; color: ${isPodium ? 'rgba(0,0,0,0.5)' : '#666'}; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Vict.</div>
+                            </div>
+                        </div>
+                    </div>
+                            </div>
+                `;
                         }).join('');
 
                     } else {
@@ -2693,7 +2942,7 @@ async function loadAdminView(view) {
                             const barWidth = maxGames > 0 ? (r.games / maxGames) * 100 : 0;
 
                             return `
-                            <div style="position: relative; margin-bottom: ${isPodium ? '12px' : '6px'}; padding: ${isPodium ? '14px 12px' : '10px 12px'}; background: ${isPodium ? style.bg : 'rgba(255,255,255,0.02)'}; border-radius: ${isPodium ? '12px' : '8px'}; border: ${isPodium ? '2px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.05)'}; box-shadow: ${style.glow}; transition: all 0.3s ease; overflow: hidden;" onmouseover="this.style.transform='translateX(4px)'; this.style.boxShadow='${style.glow}, 0 4px 12px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='${style.glow}';">
+                <div style="position: relative; margin-bottom: ${isPodium ? '12px' : '6px'}; padding: ${isPodium ? '14px 12px' : '10px 12px'}; background: ${isPodium ? style.bg : 'rgba(255,255,255,0.02)'}; border-radius: ${isPodium ? '12px' : '8px'}; border: ${isPodium ? '2px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.05)'}; box-shadow: ${style.glow}; transition: all 0.3s ease; overflow: hidden;" onmouseover="this.style.transform='translateX(4px)'; this.style.boxShadow='${style.glow}, 0 4px 12px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='${style.glow}';">
                                 <div style="position: absolute; left: 0; top: 0; height: 100%; width: ${barWidth}%; background: ${isPodium ? 'rgba(255,255,255,0.15)' : 'var(--primary-dim)'}; transition: width 0.5s ease; z-index: 0;"></div>
                                 <div style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between;">
                                     <div style="display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden;">
@@ -2715,7 +2964,7 @@ async function loadAdminView(view) {
                                     </div>
                                 </div>
                             </div>
-                            `;
+                `;
                         }).join('');
                     }
 
@@ -2728,27 +2977,27 @@ async function loadAdminView(view) {
                                 'Clasificación actualizada en tiempo real basada en juegos ganados y victorias';
 
                             stContainer.innerHTML = `
-                                <div style="margin-bottom: 15px; padding: 12px; background: rgba(204,255,0,0.05); border-radius: 8px; border: 1px solid rgba(204,255,0,0.2);">
+                <div style="margin-bottom: 15px; padding: 12px; background: rgba(204,255,0,0.05); border-radius: 8px; border: 1px solid rgba(204,255,0,0.2);">
                                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
                                         <span style="font-size: 1.2rem;">🏆</span>
                                         <span style="font-weight: 800; color: var(--primary); font-size: 0.85rem; letter-spacing: 1px;">RANKING EN VIVO</span>
                                     </div>
-                                    <div style="font-size: 0.7rem; color: var(--primary); font-weight: 600; margin-bottom: 4px;">${modeLabel}</div>
                                     <div style="font-size: 0.7rem; color: #888; line-height: 1.4;">${modeDesc}</div>
                                 </div>
-                                ${standingsHtml}
-                            `;
+                ${standingsHtml}
+            `;
                         } else {
                             stContainer.innerHTML = `
-                                <div style="text-align: center; padding: 40px 20px; color: #666;">
+                <div style="text-align: center; padding: 40px 20px; color: #666;">
                                     <div style="font-size: 3rem; margin-bottom: 10px; opacity: 0.3;">🎾</div>
                                     <div style="font-size: 0.9rem; font-weight: 600;">Sin datos aún</div>
                                     <div style="font-size: 0.75rem; margin-top: 5px;">Completa partidos para ver la clasificación</div>
                                 </div>
-                            `;
+                `;
                         }
                     }
 
+                    const roundTime = window.calculateMatchTime(americana?.time || "00:00", roundNum);
                     let roundMatches = matches.filter(m => m.round === roundNum);
                     roundMatches.sort((a, b) => a.court - b.court);
 
@@ -2767,7 +3016,7 @@ async function loadAdminView(view) {
                             return `
                             <div class="court-card-pro ${m.status}" id="match-${m.id}" data-current-status="${m.status}">
                                 <div class="court-header">
-                                    <span class="court-label" style="cursor: pointer; border-bottom: 1px dashed rgba(255,255,255,0.3);" onclick="editMatchCourt('${m.id}', ${m.court}, '${americanaId}')" title="Click para cambiar pista">🏆 PISTA ${m.court} ✎</span>
+                                    <span class="court-label" style="cursor: pointer; border-bottom: 1px dashed rgba(255,255,255,0.3);" onclick="editMatchCourt('${m.id}', ${m.court}, '${americanaId}')" title="Click para cambiar pista">🏆 PISTA ${m.court} • <i class="far fa-clock"></i> ${roundTime}</span>
                                     <button class="status-badge ${m.status}" onclick="toggleMatchStatus('${m.id}', '${m.status}', '${americanaId}')" style="border:none; cursor:pointer; padding: 6px 12px; min-width: 90px; text-align:center;" title="Click para avanzar estado">
                                         ${statusLabel}
                                     </button>
@@ -2805,7 +3054,7 @@ async function loadAdminView(view) {
                             </div>`;
                         }).join('')}</div>`;
                     }
-                } catch (e) { container.innerHTML = `Error: ${e.message}`; }
+                } catch (e) { container.innerHTML = `Error: ${e.message} `; }
             };
             renderMatchesForAmericana(activeAmericana.id, 1);
 
@@ -3920,13 +4169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Login Form Listener
-    document.getElementById('admin-login-form')?.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const fd = new FormData(e.target);
-        console.log("📞 Admin Login Clicked");
-        AdminAuth.login(fd.get('phone'), fd.get('password'));
-    });
+    // Login Listener handled in main init block below
 
     // User Edit Form Listener
     document.getElementById('admin-user-form')?.addEventListener('submit', async (e) => {
@@ -4307,6 +4550,13 @@ window.renderAmericanaSummary = async (americanaId) => {
                         </tbody>
                     </table>
                 </div>
+
+                <!-- ACTIONS -->
+                <div style="text-align: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 2rem; display: flex; justify-content: center; gap: 15px;">
+                    <button class="btn-primary-pro" onclick="loadAdminView('matches')" style="padding: 1.2rem 3.5rem; background: var(--primary); color: black; border: none; font-weight: 900; box-shadow: 0 0 25px rgba(204,255,0,0.3);">
+                        VOLVER A CONTROL DE RESULTADOS (MODO EDICIÓN) ✎
+                    </button>
+                </div>
             </div>
         `;
 
@@ -4639,56 +4889,91 @@ window.deleteEntreno = async (id) => {
 
 // --- Event Listeners & Init ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Force global init check with safety
-    if (window.AdminAuth && typeof window.AdminAuth.init === 'function') {
-        window.AdminAuth.init();
-    } else {
-        console.error("⚠️ CRITICAL: AdminAuth or AdminAuth.init not found.");
-        // Try to recover or warn
-        setTimeout(() => {
-            if (window.AdminAuth) window.AdminAuth.init();
-        }, 500);
+    try {
+        // Force global init check with safety
+        if (window.AdminAuth && typeof window.AdminAuth.init === 'function') {
+            window.AdminAuth.init();
+        } else {
+            console.error("⚠️ CRITICAL: AdminAuth or AdminAuth.init not found.");
+            // Try to recover or warn
+            setTimeout(() => {
+                if (window.AdminAuth) window.AdminAuth.init();
+            }, 500);
+        }
+
+
+        // Login Form Handler
+        const loginForm = document.getElementById('admin-login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                try {
+                    if (!window.AdminAuth) throw new Error("AdminAuth is undefined");
+
+                    const fd = new FormData(e.target);
+                    const phone = fd.get('phone');
+                    const pass = fd.get('password');
+                    const remember = fd.get('remember'); // Get checkbox status
+
+                    await window.AdminAuth.login(phone, pass);
+
+                    // Extra safety for saving checkbox state if login succeeds (login func handles it too, but just in case)
+                    if (remember) {
+                        localStorage.setItem('admin_remember_check', 'true');
+                    }
+
+                } catch (err) {
+                    console.error("Login Handler Error:", err);
+                    alert("Error Inesperado en Login: " + (err.message || err));
+                }
+            });
+        }
+
+
+    } catch (e) {
+        console.error("GLOBAL ADMIN VIEW ERROR:", e);
+        if (content) content.innerHTML = `<div class="error-box">Error crítico en vista: ${e.message}</div>`;
     }
 
+});
 
-    // Login Form Handler
-    const loginForm = document.getElementById('admin-login-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            try {
-                if (!window.AdminAuth) throw new Error("AdminAuth is undefined");
+// Modal Closers
+window.closeAdminModal = (modalId) => {
+    const id = modalId || 'admin-user-modal';
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.classList.add('hidden');
+        if (id === 'admin-entreno-modal') modal.style.display = 'none';
+    }
+};
+window.closeAmericanaModal = () => {
+    document.getElementById('admin-americana-modal').classList.add('hidden');
+    document.getElementById('admin-americana-modal').style.display = 'none';
+};
 
-                const fd = new FormData(e.target);
-                const phone = fd.get('phone');
-                const pass = fd.get('password');
-                const remember = fd.get('remember'); // Get checkbox status
+// --- MOBILE RESPONSIVE LOGIC ---
+const mobileToggle = document.getElementById('mobile-menu-toggle');
+const sidebar = document.querySelector('.sidebar-pro');
 
-                await window.AdminAuth.login(phone, pass);
+if (mobileToggle && sidebar) {
+    mobileToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('active');
+        // Overlay effect if needed, or rely on CSS
+    });
 
-                // Extra safety for saving checkbox state if login succeeds (login func handles it too, but just in case)
-                if (remember) {
-                    localStorage.setItem('admin_remember_check', 'true');
-                }
-
-            } catch (err) {
-                console.error("Login Handler Error:", err);
-                alert("Error Inesperado en Login: " + (err.message || err));
+    // Close sidebar when clicking a nav item
+    document.querySelectorAll('.nav-item-pro').forEach(item => {
+        item.addEventListener('click', () => {
+            if (window.innerWidth <= 1024) {
+                sidebar.classList.remove('active');
             }
         });
-    }
+    });
 
-    // Modal Closers
-    window.closeAdminModal = (modalId) => {
-        const id = modalId || 'admin-user-modal';
-        const modal = document.getElementById(id);
-        if (modal) {
-            modal.classList.add('hidden');
-            if (id === 'admin-entreno-modal') modal.style.display = 'none';
+    // Close when clicking outside (on the main content)
+    document.querySelector('.main-wrapper').addEventListener('click', (e) => {
+        if (window.innerWidth <= 1024 && sidebar.classList.contains('active') && !mobileToggle.contains(e.target)) {
+            sidebar.classList.remove('active');
         }
-    };
-    window.closeAmericanaModal = () => {
-        document.getElementById('admin-americana-modal').classList.add('hidden');
-        document.getElementById('admin-americana-modal').style.display = 'none';
-    };
-});
+    });
+}

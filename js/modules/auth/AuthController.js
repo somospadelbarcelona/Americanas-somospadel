@@ -10,6 +10,22 @@
             } else {
                 this.init();
             }
+
+            // Global Helper for UI switching
+            window.toggleAuthMode = (mode) => {
+                const loginForm = document.getElementById('login-form');
+                const registerForm = document.getElementById('register-form');
+
+                if (!loginForm || !registerForm) return;
+
+                if (mode === 'register') {
+                    loginForm.classList.add('hidden');
+                    registerForm.classList.remove('hidden');
+                } else {
+                    registerForm.classList.add('hidden');
+                    loginForm.classList.remove('hidden');
+                }
+            };
         }
 
         init() {
@@ -88,8 +104,15 @@
                             level,
                             role: 'player'
                         });
+
                         if (!result.success) {
                             alert("❌ Error de registro: " + result.error);
+                            if (btn) btn.textContent = originalText;
+                        } else if (result.pendingValidation) {
+                            alert("✅ SOLICITUD ENVIADA.\n\nTu cuenta ha sido creada y está pendiente de validación por un administrador (Alejandro).\n\nTe avisaremos cuando esté activa.");
+                            // Reset form and go to login
+                            newRegisterForm.reset();
+                            if (window.toggleAuthMode) window.toggleAuthMode('login');
                             if (btn) btn.textContent = originalText;
                         } else {
                             alert("✅ ¡Cuenta Creada! Iniciando sesión...");

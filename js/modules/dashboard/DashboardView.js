@@ -48,7 +48,7 @@
                         background: #0a0a14;
                         border: 1px solid rgba(0, 227, 109, 0.3);
                         border-radius: 20px;
-                        margin: 10px 15px;
+                        margin: 25px 15px 15px;
                         padding: 12px 15px;
                         box-shadow: 0 15px 35px rgba(0,0,0,0.5);
                         z-index: 10;
@@ -199,10 +199,10 @@
                     proRoot.innerHTML = `
                         <div style="padding: 10px 15px 120px;">
                             
-                            <!-- A. DUAL WEATHER WIDGETS -->
+                             <!-- A. DUAL WEATHER WIDGETS -->
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px;">
-                                ${this.renderWeatherCard('EL PRAT', '19°C', '☀️')}
-                                ${this.renderWeatherCard('CORNELLÀ', '18°C', '🌤️')}
+                                ${this.renderWeatherCard('EL PRAT', '19°C', '☀️', { wind: '12 km/h', hum: '65%', rain: '0%' })}
+                                ${this.renderWeatherCard('CORNELLÀ', '18°C', '🌤️', { wind: '10 km/h', hum: '68%', rain: '5%' })}
                             </div>
 
                             <!-- B. MI AGENDA (PLAYER'S EVENTS) -->
@@ -225,26 +225,43 @@
             }
         }
 
-        renderWeatherCard(city, temp, icon) {
+        renderWeatherCard(city, temp, icon, details = {}) {
             return `
                 <div style="
                     background: rgba(10, 10, 20, 0.9);
                     backdrop-filter: blur(20px);
                     border: 1px solid rgba(255,255,255,0.05);
-                    border-radius: 20px;
-                    padding: 15px;
+                    border-radius: 24px;
+                    padding: 16px;
                     display: flex;
                     flex-direction: column;
-                    gap: 8px;
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+                    gap: 12px;
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+                    position: relative;
+                    overflow: hidden;
                 ">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="font-size: 1.8rem; filter: drop-shadow(0 0 10px rgba(255,204,0,0.3));">${icon}</div>
-                        <div style="background: rgba(0,227,109,0.1); color: #00E36D; padding: 2px 8px; border-radius: 6px; font-size: 0.55rem; font-weight: 950; border: 1px solid rgba(0,227,109,0.1);">ÓPTIMO</div>
+                    <!-- Glow effect -->
+                    <div style="position: absolute; top: -10%; right: -10%; width: 50%; height: 50%; background: radial-gradient(circle, rgba(0, 227, 109, 0.1) 0%, transparent 70%);"></div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="font-size: 2.2rem; filter: drop-shadow(0 0 15px rgba(255,204,0,0.4));">${icon}</div>
+                        <div style="background: rgba(0,227,109,0.1); color: #00E36D; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; border: 1px solid rgba(0,227,109,0.1); letter-spacing: 0.5px;">ÓPTIMO</div>
                     </div>
+                    
                     <div>
-                        <div style="color: white; font-weight: 950; font-size: 1.2rem;">${temp}</div>
-                        <div style="color: #666; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${city}</div>
+                        <div style="color: white; font-weight: 950; font-size: 1.6rem; line-height: 1;">${temp}</div>
+                        <div style="color: rgba(255,255,255,0.5); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">${city}</div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05);">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-wind" style="font-size: 0.6rem; color: #00c4ff;"></i>
+                            <span style="font-size: 0.65rem; color: #888; font-weight: 700;">${details.wind || '8km/h'}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-tint" style="font-size: 0.6rem; color: #00c4ff;"></i>
+                            <span style="font-size: 0.65rem; color: #888; font-weight: 700;">${details.hum || '60%'}</span>
+                        </div>
                     </div>
                 </div>
             `;
@@ -366,12 +383,12 @@
 
         async renderLiveWidget(context) {
             try {
-                const americanas = window.AmericanaService ? await window.AmericanaService.getActiveAmericanas() : [];
-                const openAmericanas = americanas.filter(a => ['open', 'upcoming', 'draft', 'scheduled'].includes(a.status));
+                const allEvents = window.AmericanaService ? await window.AmericanaService.getAllActiveEvents() : [];
+                const openEvents = allEvents.filter(a => ['open', 'upcoming', 'draft', 'scheduled'].includes(a.status));
 
-                if (openAmericanas.length > 0) {
+                if (openEvents.length > 0) {
                     let html = '';
-                    openAmericanas.forEach(am => {
+                    openEvents.forEach(am => {
                         const statusColor = am.status === 'open' ? '#00E36D' : '#00c4ff';
                         const statusLabel = am.status === 'open' ? 'ABIERTO' : 'PRÓXIMO';
                         const players = am.players || am.registeredPlayers || [];
@@ -379,6 +396,7 @@
                         const spotsLeft = Math.max(0, maxPlayers - players.length);
                         const isFull = maxPlayers > 0 && players.length >= maxPlayers;
                         const categoryIcon = am.category === 'female' ? '♀️' : (am.category === 'male' ? '♂️' : '🎾');
+                        const typeLabel = am.type === 'entreno' ? 'ENTRENO' : 'AMERICANA';
 
                         html += `
                             <div class="registration-ticker-card" 
@@ -406,10 +424,11 @@
                                     <span style="font-size:0.85rem;">${categoryIcon}</span>
                                 </div>
                                 
-                                <!-- Americana Name - Compact -->
+                                <!-- Event Name - Compact -->
                                 <div style="color:white; font-weight:800; font-size:0.75rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.1;">
                                     ${am.name.toUpperCase()}
                                 </div>
+                                <div style="color:${statusColor}; font-size:0.5rem; font-weight:900; opacity:0.8; letter-spacing:1px;">${typeLabel}</div>
                                 
                                 <!-- Date & Time - Compact -->
                                 <div style="color:#888; font-size:0.6rem; font-weight:700;">
@@ -431,7 +450,7 @@
                     });
                     return html;
                 }
-                return `<div style="width: 100%; text-align: center; color: #444; font-size: 0.75rem; font-weight: 700;">No hay Americanas disponibles</div>`;
+                return `<div style="width: 100%; text-align: center; color: #444; font-size: 0.75rem; font-weight: 700;">No hay eventos disponibles</div>`;
             } catch (err) { console.error(err); return ''; }
         }
 
@@ -485,7 +504,9 @@
 
                         context.upcomingMatches = context.myEvents.filter(a => a.status !== 'finished').length;
 
-                        const myEvent = context.myEvents.find(e => e.status !== 'finished') || context.myEvents[0];
+                        // ONLY focus on events that are NOT finished
+                        const myEvent = context.myEvents.find(e => !['finished', 'closed'].includes(e.status));
+
                         if (myEvent) {
                             const now = new Date();
                             const eventDate = new Date(myEvent.date);
@@ -498,15 +519,15 @@
                                 context.matchTime = myEvent.time;
                                 context.matchDay = 'HOY';
                                 context.court = myEvent.court || 'Pista 1';
-                            } else if (myEvent.status === 'finished') {
-                                context.status = 'FINISHED';
-                                context.eventName = myEvent.name;
                             } else {
                                 context.status = 'UPCOMING_EVENT';
                                 context.eventName = myEvent.name;
                                 context.eventTime = myEvent.time || '18:00';
                                 context.matchDay = this.formatDate(myEvent.date);
                             }
+                        } else {
+                            // No active events, just show default or nothing
+                            context.status = 'EMPTY';
                         }
                     }
                 }
@@ -551,10 +572,10 @@
 
         async renderLiveActivity() {
             try {
-                const americanas = window.AmericanaService ? await window.AmericanaService.getActiveAmericanas() : [];
+                const events = window.AmericanaService ? await window.AmericanaService.getAllActiveEvents() : [];
                 let recentActions = [];
 
-                americanas.forEach(am => {
+                events.forEach(am => {
                     const players = am.players || am.registeredPlayers || [];
                     const maxPlayers = (am.max_courts || 0) * 4;
                     const openSpots = maxPlayers - players.length;
@@ -580,12 +601,12 @@
                     recentActions = [{ text: "Previsión de alta ocupación hoy.", type: 'info', timeLabel: 'IA INFO' }];
                 }
 
-                const urgentAm = americanas.find(am => {
+                const urgentAm = events.find(am => {
                     const pCount = (am.players || am.registeredPlayers || []).length;
                     const maxP = (am.max_courts || 0) * 4;
                     const spots = maxP - pCount;
                     return maxP > 0 && spots > 0 && spots <= 4;
-                }) || americanas[0];
+                }) || events[0];
 
                 let html = '';
 
