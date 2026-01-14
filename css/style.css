@@ -668,6 +668,8 @@ tr:hover td {
     padding: 2.5rem;
     position: relative;
     border: 1px solid rgba(255, 255, 255, 0.08);
+    max-height: 90vh; /* Ensure it fits in viewport */
+    overflow-y: auto; /* Enable internal scrolling */
 }
 
 /* Explicitly kill the white background from the admin screenshot */

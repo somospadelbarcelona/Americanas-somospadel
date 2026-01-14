@@ -38,7 +38,7 @@
             container.innerHTML = `
                 <!-- MAIN DASHBOARD SCROLL CONTENT -->
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
-                    background: radial-gradient(circle at 50% 0%, rgba(30, 64, 175, 0.15) 0%, transparent 50%);
+                    background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.08) 0%, transparent 70%);
                     min-height: 100vh;
                 ">
 
@@ -270,32 +270,33 @@
         renderAgendaWidget(myEvents) {
             if (myEvents.length === 0) {
                 return `
-                    <div style="min-width: 100%; background: white; border-radius: 32px; padding: 50px 30px; text-align: center; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
-                        <div style="width: 80px; height: 80px; background: #f8fafc; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px; border: 1px solid #f1f5f9;">
+                    <div style="min-width: 100%; background: var(--bg-card); border-radius: 32px; padding: 50px 30px; text-align: center; border: 1px solid var(--border-subtle); box-shadow: var(--shadow-lg);">
+                        <div style="width: 80px; height: 80px; background: var(--bg-app); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px; border: 1px solid var(--border-subtle);">
                             <i class="fas fa-calendar-plus" style="font-size: 2.2rem; color: #cbd5e1;"></i>
                         </div>
-                        <h3 style="color: #0f172a; font-weight: 950; font-size: 1.25rem; margin-bottom: 10px; letter-spacing: -0.5px;">SIN PLANES PRÓXIMOS</h3>
-                        <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 25px; font-weight: 600; line-height: 1.5;">Apúntate a una americana para<br>empezar a sumar en el ranking.</p>
-                        <button onclick="Router.navigate('americanas')" style="background: #0f172a; color: white; border: none; padding: 14px 28px; border-radius: 16px; font-weight: 900; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); cursor: pointer;">EXPLORAR EVENTOS</button>
+                        <h3 style="color: var(--text-primary); font-weight: 950; font-size: 1.25rem; margin-bottom: 10px; letter-spacing: -0.5px;">SIN PLANES PRÓXIMOS</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 25px; font-weight: 600; line-height: 1.5;">Apúntate a una americana para<br>empezar a sumar en el ranking.</p>
+                        <button onclick="Router.navigate('americanas')" class="btn-3d primary" style="width: auto; padding: 14px 28px;">EXPLORAR EVENTOS</button>
                     </div>
                 `;
             }
 
             return myEvents.map(am => `
                 <div class="agenda-card" onclick="window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');" style="
-                    min-width: 260px; background: white;
-                    border-radius: 28px; border: 1px solid #e2e8f0;
-                    padding: 22px; scroll-snap-align: center; position: relative;
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.02);
+                    min-width: 280px; background: var(--bg-card);
+                    border-radius: 32px; border: 1px solid var(--border-subtle);
+                    padding: 24px; scroll-snap-align: center; position: relative;
+                    box-shadow: var(--shadow-md);
+                    transition: all 0.2s;
                 ">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px;">
-                        <div style="color: #84cc16; font-size: 0.75rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">${this.formatDateShort(am.date)}</div>
-                        <div style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900;">CONFIRMADO</div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                        <div style="color: var(--brand-neon); background: var(--brand-navy); padding: 4px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">${this.formatDateShort(am.date)}</div>
+                        <div style="background: rgba(6, 182, 212, 0.1); color: var(--brand-accent); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900;">CONFIRMADO</div>
                     </div>
-                    <h4 style="margin: 0; color: #0f172a; font-size: 1.2rem; font-weight: 950; letter-spacing: -0.5px; line-height: 1.2;">${am.name}</h4>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid #f8fafc;">
-                        <span style="color: #64748b; font-size: 0.8rem; font-weight: 800;"><i class="far fa-clock" style="color: #84cc16; margin-right: 6px;"></i> ${am.time}</span>
-                        <div style="width: 32px; height: 32px; background: #0f172a; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem;">
+                    <h4 style="margin: 0; color: var(--text-primary); font-size: 1.3rem; font-weight: 950; letter-spacing: -0.5px; line-height: 1.2;">${am.name}</h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
+                        <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 800;"><i class="far fa-clock" style="color: var(--brand-neon); margin-right: 8px;"></i> ${am.time}</span>
+                        <div style="width: 36px; height: 36px; background: var(--brand-navy); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; box-shadow: var(--shadow-sm);">
                             <i class="fas fa-chevron-right"></i>
                         </div>
                     </div>
@@ -307,74 +308,72 @@
             // SLIDE: VIBRANT GLASS HERO
             let pillText = "INSCRIPCIÓN ABIERTA";
             let btnText = "APUNTARME AHORA";
-            let btnBg = "linear-gradient(135deg, #00E36D, #00c4ff)";
+            let btnClass = "primary";
             let logoText = "AMERICANAS";
             let explainerText = "¡Quedan pocas plazas! No te quedes fuera hoy.";
             let heroImage = "img/ball_hero.jpg";
+            let overlayColor = "linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 64, 175, 0.7))";
 
             if (context.status === 'UPCOMING_EVENT') {
                 pillText = "ESTÁS INSCRITO";
                 btnText = "VER DETALLES";
-                btnBg = "linear-gradient(135deg, #1e40af, #00c4ff)";
+                btnClass = "navy";
                 logoText = "MI PLAZA";
                 explainerText = "¡Prepárate! Tu próximo reto está a punto de empezar.";
+                overlayColor = "linear-gradient(135deg, rgba(2, 6, 23, 0.95), rgba(6, 182, 212, 0.7))";
             } else if (context.status === 'FINISHED') {
                 pillText = "EVENTO FINALIZADO";
                 btnText = "VER RESUMEN";
-                btnBg = "rgba(255,255,255,0.1)";
+                btnClass = "secondary";
                 logoText = "HISTORY";
                 explainerText = "Consulta los resultados y revive los mejores momentos.";
+                overlayColor = "linear-gradient(135deg, rgba(31, 41, 55, 0.95), rgba(107, 114, 128, 0.7))";
             } else if (context.status === 'LIVE_MATCH') {
                 pillText = "¡ESTÁS EN PISTA!";
                 btnText = "MARCADOR EN VIVO";
-                btnBg = "#00E36D";
+                btnClass = "primary";
                 logoText = "LIVE NOW";
                 explainerText = "Tu partido está en progreso. ¡A por todas!";
+                overlayColor = "linear-gradient(135deg, rgba(225, 29, 72, 0.95), rgba(204, 255, 0, 0.4))";
             }
 
             return `
                 <div class="vibrant-hero-card" onclick="Router.navigate('live')" style="
-                    background: linear-gradient(135deg, rgba(30, 64, 175, 0.9), rgba(0, 196, 255, 0.7));
-                    backdrop-filter: blur(20px);
-                    border-radius: 28px;
-                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    background: ${overlayColor};
+                    backdrop-filter: var(--backdrop-blur);
+                    border-radius: 32px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
                     padding: 0;
-                    margin-bottom: 25px;
+                    margin-bottom: 30px;
                     overflow: hidden;
-                    box-shadow: 0 20px 40px rgba(30, 64, 175, 0.3);
+                    box-shadow: var(--shadow-xl);
                     position: relative;
                 ">
-                    <div style="height: 140px; background: url('${heroImage}') center/cover; position: relative;">
-                        <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.4));"></div>
-                        <div style="position: absolute; top: 15px; left: 15px; background: rgba(255,255,255,0.9); padding: 5px 15px; border-radius: 12px; font-weight: 900; color: #1e40af; font-size: 0.8rem; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                    <div style="height: 160px; background: url('${heroImage}') center/cover; position: relative;">
+                        <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.6));"></div>
+                        <div style="position: absolute; top: 20px; left: 20px; background: var(--brand-neon); padding: 6px 16px; border-radius: 12px; font-weight: 950; color: #000; font-size: 0.75rem; box-shadow: var(--shadow-neon); letter-spacing: 1px;">
                             ${pillText}
                         </div>
                     </div>
                     
-                    <div style="padding: 25px; color: white;">
+                    <div style="padding: 28px; color: white;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div>
-                                <h4 style="margin: 0; font-size: 0.85rem; font-weight: 800; color: #00E36D; text-transform: uppercase; letter-spacing: 1px;">${logoText}</h4>
-                                <h2 style="margin: 5px 0 0; font-size: 1.6rem; font-weight: 950; line-height: 1;">${context.eventName || 'Americana Hoy'}</h2>
+                                <h4 style="margin: 0; font-size: 0.8rem; font-weight: 900; color: var(--brand-neon); text-transform: uppercase; letter-spacing: 2px;">${logoText}</h4>
+                                <h2 style="margin: 8px 0 0; font-size: 1.8rem; font-weight: 950; line-height: 1.1; letter-spacing: -0.5px;">${context.eventName || 'Americana Hoy'}</h2>
                             </div>
                             <div style="text-align: right;">
-                                <div style="font-size: 1.1rem; font-weight: 950;">${context.eventTime || context.matchTime || '18:00'}</div>
-                                <div style="font-size: 0.75rem; font-weight: 600; opacity: 0.7;">${context.matchDay || 'HOY'}</div>
+                                <div style="font-size: 1.3rem; font-weight: 950; color: var(--brand-neon);">${context.eventTime || context.matchTime || '18:00'}</div>
+                                <div style="font-size: 0.75rem; font-weight: 700; opacity: 0.7; letter-spacing: 1px;">${context.matchDay || 'HOY'}</div>
                             </div>
                         </div>
                         
-                        <p style="margin: 15px 0 20px; font-size: 0.9rem; color: rgba(255,255,255,0.85); line-height: 1.4;">
+                        <p style="margin: 20px 0 25px; font-size: 0.95rem; color: rgba(255,255,255,0.9); line-height: 1.5; font-weight: 500;">
                             ${explainerText}
                         </p>
                         
-                        <button style="
-                            width: 100%; height: 55px; border-radius: 16px; border: none;
-                            background: ${btnBg}; color: ${btnBg === '#00E36D' ? 'black' : 'white'};
-                            font-weight: 950; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 12px;
-                            box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: all 0.2s;
-                            text-transform: uppercase; letter-spacing: 1px;
-                        ">
-                            ${btnText} <i class="fas fa-arrow-right"></i>
+                        <button class="btn-3d ${btnClass}" style="margin-top: 0; font-size: 1.1rem; height: 60px;">
+                            ${btnText} <i class="fas fa-chevron-right" style="margin-left: 10px; font-size: 0.9rem;"></i>
                         </button>
                     </div>
                 </div>

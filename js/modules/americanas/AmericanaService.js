@@ -122,6 +122,21 @@
                     registeredPlayers: players // Sync both
                 });
 
+                // --- AUTO-FILL VACANCIES IN MATCHES (Global Fix) ---
+                // If the event has active matches with VACANT spots, fill them immediately.
+                if (window.MatchMakingService) {
+                    const matchColl = (type === 'entreno') ? 'entrenos_matches' : 'matches';
+                    const hasMatches = await window.db.collection(matchColl).where('americana_id', '==', americanaId).limit(1).get();
+
+                    if (!hasMatches.empty) {
+                        console.log(`🔍 [Service] New player ${user.name} joined active event. Checking for vacancies...`);
+                        // Try standard variants of VACANT
+                        await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', '🔴 VACANTE', user.uid, user.name);
+                        await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', 'VACANTE', user.uid, user.name);
+                        await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', 'VACANT', user.uid, user.name);
+                    }
+                }
+
                 // --- NOTIFICATIONS (DISABLED BY REQUEST) ---
                 // this.notifyAdminOfRegistration(event, user);
 
@@ -220,6 +235,33 @@
             }
         }
 
+        /**
+         * Delete a specific round (used for regenerating logic)
+         */
+        async deleteRound(eventId, round, type = 'americana') {
+            try {
+                const collectionName = (type === 'entreno') ? 'entrenos_matches' : 'matches';
+                const snapshot = await window.db.collection(collectionName)
+                    .where('americana_id', '==', eventId)
+                    .where('round', '==', parseInt(round))
+                    .get();
+
+                if (snapshot.empty) return 0;
+
+                const batch = window.db.batch();
+                snapshot.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                await batch.commit();
+                console.log(`[AmericanaService] Deleted Round ${round} (${snapshot.size} matches)`);
+                return snapshot.size;
+            } catch (err) {
+                console.error("Error deleting round:", err);
+                throw err;
+            }
+        }
+
         async createAmericana(data) {
             if (!data.name || !data.date) throw new Error("Invalid Americana Data");
             return await this.db.create({
@@ -234,114 +276,9 @@
          */
         async generateFirstRoundMatches(eventId, type = 'americana') {
             try {
-                console.log(`🎲 [AmericanaService] Automating Round 1 for ${type.toUpperCase()} ${eventId}`);
-
-                const service = this._getCollectionService(type);
-                if (!service) throw new Error("No database service available");
-
-                const event = await service.getById(eventId);
-                if (!event) return;
-
-                const players = event.players || event.registeredPlayers || [];
-                const maxCourts = event.max_courts || 4;
-                const pairMode = event.pair_mode || 'rotating';
-                const category = event.category || 'open';
-                const matchCollection = (type === 'entreno') ? 'entrenos_matches' : 'matches';
-
-                // 1. Check if matches already exist (safety)
-                const existing = await window.db.collection(matchCollection)
-                    .where('americana_id', '==', eventId)
-                    .get();
-
-                if (!existing.empty) {
-                    console.log(`⚠️ matches already exist for ${eventId}, skipping auto-generation`);
-                    return;
-                }
-
-                // 2. Prepare Match data
-                let matches = [];
-
-                // NEW: Ensure players have an initial court if they joined via public UI
-                // We distribute them sequentially (4 per court)
-                const playersWithCourts = players.map((p, i) => ({
-                    ...p,
-                    current_court: p.current_court || (Math.floor(i / 4) + 1)
-                }));
-
-                if (pairMode === 'fixed') {
-                    // Logic depends on FixedPairsLogic (loaded in index.html now)
-                    if (window.FixedPairsLogic) {
-                        let pairs = [];
-
-                        // 1. Check for manual fixed pairs from Admin
-                        if (event.fixed_pairs && event.fixed_pairs.length > 0) {
-                            console.log(`🔒 Using ${event.fixed_pairs.length} manually defined pairs`);
-
-                            // Convert Admin format to Logic format
-                            pairs = event.fixed_pairs.map((p, i) => ({
-                                id: `pair_manual_${eventId}_${i}`,
-                                player1_id: p.player1.id || p.player1.uid,
-                                player2_id: p.player2.id || p.player2.uid,
-                                player1_name: p.player1.name,
-                                player2_name: p.player2.name,
-                                pair_name: `${p.player1.name} / ${p.player2.name}`,
-                                wins: 0,
-                                losses: 0,
-                                games_won: 0,
-                                games_lost: 0,
-                                // Assign 2 pairs per court: 0,1->Court 1; 2,3->Court 2
-                                current_court: Math.floor(i / 2) + 1,
-                                initial_court: Math.floor(i / 2) + 1
-                            }));
-
-                            // If there are leftover players not in manual pairs, we currently ignore them or they are left out.
-                            // Ideally we would randomly pair the remainder, but for this iteration manual means manual.
-
-                        } else {
-                            // 2. Fallback to automatic generation
-                            pairs = window.FixedPairsLogic.createFixedPairs(playersWithCourts, category);
-                        }
-
-                        // Save fixed pairs for persistence (needed by future rounds)
-                        await service.update(eventId, { fixed_pairs: pairs });
-                        matches = window.FixedPairsLogic.generatePozoRound(pairs, 1, maxCourts);
-                    } else {
-                        throw new Error("FixedPairsLogic not loaded");
-                    }
-                } else {
-                    // Twister / Rotating
-                    if (window.RotatingPozoLogic) {
-                        matches = window.RotatingPozoLogic.generateRound(playersWithCourts, 1, maxCourts, category);
-                    } else {
-                        throw new Error("RotatingPozoLogic not loaded");
-                    }
-                }
-
-                // 3. Batch write matches
-                if (matches.length > 0) {
-                    const batch = window.db.batch();
-                    matches.forEach(m => {
-                        const newMatchRef = window.db.collection(matchCollection).doc();
-                        batch.set(newMatchRef, {
-                            ...m,
-                            americana_id: eventId,
-                            status: 'scheduled',
-                            score_a: 0,
-                            score_b: 0,
-                            createdAt: new Date().toISOString()
-                        });
-                    });
-
-                    // Also update players in the event doc to persist their assigned courts
-                    batch.update(window.db.collection(type === 'entreno' ? 'entrenos' : 'americanas').doc(eventId), {
-                        players: playersWithCourts,
-                        registeredPlayers: playersWithCourts
-                    });
-
-                    await batch.commit();
-                    console.log(`✅ [AmericanaService] Automatically generated ${matches.length} matches for R1 and assigned initial courts.`);
-                }
-
+                if (!window.MatchMakingService) throw new Error("MatchMakingService not loaded");
+                console.log(`🎲 [AmericanaService] Delegating R1 generation to MatchMakingService for ${type} ${eventId}`);
+                return await window.MatchMakingService.generateRound(eventId, type, 1);
             } catch (err) {
                 console.error("Error in generateFirstRoundMatches:", err);
             }
@@ -353,135 +290,9 @@
          */
         async generateNextRound(eventId, currentRound, type = 'entreno') {
             try {
-                console.log(`🤖 [AmericanaService] Checking Auto-Generation for ${type.toUpperCase()} - Round ${currentRound + 1}...`);
-
-                const nextRound = currentRound + 1;
-
-                const service = this._getCollectionService(type);
-                if (!service) throw new Error("No database service available");
-
-                const matchesColl = (type === 'entreno') ? 'entrenos_matches' : 'matches';
-
-                const event = await service.getById(eventId);
-                // nextRound already declared above
-
-                if (!event) return;
-                if (nextRound > (event.rounds || 6)) {
-                    console.log("🏁 Event Reached Max Rounds!");
-                    return;
-                }
-
-                // 1. Validate ALL matches of current round are finished
-                console.log(`🔍 [AmericanaService] Checking Round ${currentRound} for Event ${eventId} (Type: ${type})...`);
-
-                const matchesSnapshot = await window.db.collection(matchesColl)
-                    .where('americana_id', '==', eventId)
-                    .where('round', '==', currentRound)
-                    .get();
-
-                const currentRoundMatches = matchesSnapshot.docs.map(d => d.data());
-                const finishedMatches = currentRoundMatches.filter(m => m.status === 'finished');
-
-                console.log(`📊 [AmericanaService] Status: ${finishedMatches.length}/${currentRoundMatches.length} finished.`);
-                currentRoundMatches.forEach(m => console.log(`   - Match ${m.id}: ${m.status} (Score: ${m.score_a}-${m.score_b})`));
-
-                const allFinished = currentRoundMatches.length > 0 && currentRoundMatches.every(m => m.status === 'finished');
-
-                if (!allFinished) {
-                    console.log(`⏳ [AmericanaService] Round ${currentRound} incomplete. Waiting.`);
-                    return;
-                }
-
-                // 2. Check if Next Round already exists (prevent double generation)
-                console.log(`🔍 [AmericanaService] Checking if Round ${nextRound} exists...`);
-                const nextRoundCheck = await window.db.collection(matchesColl)
-                    .where('americana_id', '==', eventId)
-                    .where('round', '==', nextRound)
-                    .get();
-
-                if (!nextRoundCheck.empty) {
-                    console.log(`⚠️ [AmericanaService] Round ${nextRound} already exists. Aborting.`);
-                    return;
-                }
-
-                console.log(`🚀 [AmericanaService] All systems go. Generating Round ${nextRound}...`);
-
-                // 3. Logic Selection (Twister vs Fixed)
-                const pairMode = event.pair_mode || 'rotating';
-                const maxCourts = event.max_courts || 4;
-                const category = event.category || 'open';
-                let matches = [];
-
-                // Polyfill for Service (Support Admin & Public) - ALREADY DECLARED ABOVE
-                // let service;
-                // if (window.createService) {
-                //     service = (type === 'entreno') ? window.createService('entrenos') : this.db;
-                // } else if (window.FirebaseDB) {
-                //     service = (type === 'entreno') ? window.FirebaseDB.entrenos : window.FirebaseDB.americanas;
-                // }
-
-                // if (!service) {
-                //     console.error("❌ [AmericanaService] No database service available (createService or FirebaseDB missing).");
-                //     return;
-                // }
-
-                if (pairMode === 'fixed') {
-                    // --- POZO / FIJO ---
-                    if (!window.FixedPairsLogic) throw new Error("FixedPairsLogic Missing");
-
-                    // a. Update Rankings based on results
-                    const currentPairs = event.fixed_pairs || [];
-                    console.log("Updating Fixed Rankings...", currentPairs);
-                    // NOTE: updatePozoRankings logic should be generic enough, assumes score_a/score_b exist
-                    const updatedPairs = window.FixedPairsLogic.updatePozoRankings(currentPairs, currentRoundMatches, maxCourts);
-
-                    // b. Save updated rankings to Event
-                    await service.update(eventId, { fixed_pairs: updatedPairs });
-
-                    // c. Generate Next Round
-                    matches = window.FixedPairsLogic.generatePozoRound(updatedPairs, nextRound, maxCourts);
-
-                } else {
-                    // --- TWISTER / ROTATING ---
-                    if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic Missing");
-
-                    // a. Update Individual Court Positions
-                    const currentPlayers = event.players || [];
-                    console.log("Updating Twister Courts...", currentPlayers.length);
-                    // NOTE: updatePlayerCourts logic should be generic enough
-                    const updatedPlayers = window.RotatingPozoLogic.updatePlayerCourts(currentPlayers, currentRoundMatches, maxCourts);
-
-                    // b. Save updated player states to Event
-                    await service.update(eventId, {
-                        players: updatedPlayers,
-                        registeredPlayers: updatedPlayers // Sync both
-                    });
-
-                    // c. Generate Next Round
-                    matches = window.RotatingPozoLogic.generateRound(updatedPlayers, nextRound, maxCourts, category);
-                }
-
-                // 4. Batch Write New Matches
-                if (matches.length > 0) {
-                    const batch = window.db.batch();
-                    matches.forEach(m => {
-                        const newRef = window.db.collection(matchesColl).doc();
-                        batch.set(newRef, {
-                            ...m,
-                            americana_id: eventId,
-                            status: 'scheduled',
-                            score_a: 0,
-                            score_b: 0,
-                            createdAt: new Date().toISOString()
-                        });
-                    });
-                    await batch.commit();
-                    console.log(`✅ [AmericanaService] Round ${nextRound} Generated Successfully (${matches.length} matches)`);
-
-                    // Optional: Notification toast if UI library available
-                    if (window.showToast) window.showToast(`Ronda ${nextRound} Generada!`, 'success');
-                }
-
+                if (!window.MatchMakingService) throw new Error("MatchMakingService not loaded");
+                console.log(`🤖 [AmericanaService] Delegating Next Round generation to MatchMakingService for ${type} ${eventId}`);
+                return await window.MatchMakingService.generateRound(eventId, type, currentRound + 1);
             } catch (err) {
                 console.error("❌ Error generating next round:", err);
             }

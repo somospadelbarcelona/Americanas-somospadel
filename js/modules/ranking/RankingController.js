@@ -36,16 +36,21 @@
             console.log("📊 [RankingController] Silent calculation starting...");
             try {
                 // 1. Fetch All Data
-                const [players, allAmericanas] = await Promise.all([
+                const [players, allAmericanas, allEntrenos] = await Promise.all([
                     this.db.players.getAll(),
-                    this.db.americanas.getAll()
+                    this.db.americanas.getAll(),
+                    this.db.entrenos.getAll()
                 ]);
 
-                const validEvents = allAmericanas.filter(a => {
+                const allEvents = [
+                    ...allAmericanas.map(e => ({ ...e, type: 'americana' })),
+                    ...allEntrenos.map(e => ({ ...e, type: 'entreno' }))
+                ];
+
+                const validEvents = allEvents.filter(a => {
                     const status = (a.status || "").toLowerCase();
-                    // Include 'open' so results in open americanas sync immediately to ranking
-                    const isValid = status === 'finished' || status === 'in_progress' || status === 'open';
-                    if (!isValid) console.log(`⏩ [RankingController] Skipping event "${a.name}" (Status: ${a.status})`);
+                    // Include 'open' and 'live' so rankings/stats can start showing data even before finishing
+                    const isValid = status === 'finished' || status === 'live' || status === 'in_progress' || status === 'open';
                     return isValid;
                 });
                 console.log(`🎯 [RankingController] Found ${validEvents.length} events to process.`);
@@ -68,48 +73,28 @@
 
                 // 2. Process each valid event
                 for (const event of validEvents) {
-                    const nameUpper = (event.name || "").toUpperCase();
-
-                    // Rule: Strictly by prefix
-                    let eventType = null;
-                    if (nameUpper.startsWith('AMERICANA')) {
-                        eventType = 'americanas';
-                    } else if (nameUpper.startsWith('ENTRENO')) {
-                        eventType = 'entrenos';
-                    }
-
-                    if (!eventType) {
-                        console.log(`⏭️ [RankingController] Omitiendo "${event.name}" - No cumple con regla de prefijo (AMERICANA/ENTRENO)`);
-                        continue;
-                    }
+                    const eventType = event.type === 'entreno' ? 'entrenos' : 'americanas';
+                    const matchCollection = event.type === 'entreno' ? this.db.entrenos_matches : this.db.matches;
 
                     let categoryRaw = (event.category || 'open').toLowerCase();
                     let categoryFinal = 'open';
 
-                    // Normalize categories for UI consistency
+                    // Normalize categories
                     if (categoryRaw === 'female' || categoryRaw === 'femenina') categoryFinal = 'female';
                     else if (categoryRaw === 'male' || categoryRaw === 'masculina') categoryFinal = 'male';
                     else if (categoryRaw === 'mixed' || categoryRaw === 'mixta') categoryFinal = 'mixed';
-                    else {
-                        // Fallback: search in event name
-                        if (nameUpper.includes('FEMENINA') || nameUpper.includes('FEMALE')) categoryFinal = 'female';
-                        else if (nameUpper.includes('MASCULINA') || nameUpper.includes('MALE')) categoryFinal = 'male';
-                        else if (nameUpper.includes('MIXTA') || nameUpper.includes('MIXED')) categoryFinal = 'mixed';
-                        else categoryFinal = 'open';
-                    }
+                    else categoryFinal = 'open';
 
                     console.log(`🏟️ [RankingController] Processing ${eventType}: "${event.name}" | Final Category: ${categoryFinal}`);
 
-                    // Fetch matches for this event
-                    const matches = await this.db.matches.getByAmericana(event.id);
+                    // Fetch matches for this event (using corrected service)
+                    const matches = await matchCollection.getByAmericana(event.id);
 
                     matches.forEach(m => {
-                        // Corrected: use .status instead of non-existent .isFinished
                         if (m.status !== 'finished') return;
 
                         const teamA = m.team_a_ids || [];
                         const teamB = m.team_b_ids || [];
-                        // Corrected: use score_a / score_b (database naming)
                         const scoreA = parseInt(m.score_a || 0);
                         const scoreB = parseInt(m.score_b || 0);
 
