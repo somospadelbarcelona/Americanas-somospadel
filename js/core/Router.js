@@ -14,7 +14,8 @@
                 'live': () => window.ControlTowerView?.handleLiveRoute(),
                 'ranking': () => window.RankingController?.init(),
                 'agenda': () => { window.EventsController?.init(); window.EventsController?.setTab('agenda'); },
-                'results': () => { window.EventsController?.init(); window.EventsController?.setTab('results'); }
+                'results': () => { window.EventsController?.init(); window.EventsController?.setTab('results'); },
+                'entrenos': () => { window.EventsController?.init(); window.EventsController?.setTab('entrenos'); }
             };
 
             // Handle browser navigation

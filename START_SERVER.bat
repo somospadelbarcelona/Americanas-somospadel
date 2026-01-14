@@ -1,19 +1,17 @@
 @echo off
 echo ========================================
-echo   SERVIDOR LOCAL SOMOSPADEL
+echo   SERVIDOR LOCAL - AMERICANAS APP
 echo ========================================
 echo.
 echo Iniciando servidor en http://localhost:8000
 echo.
-echo IMPORTANTE:
-echo - Abre tu navegador en: http://localhost:8000
-echo - NO uses file:// (doble clic en index.html)
-echo - Para ADMIN: http://localhost:8000/admin.html
+echo IMPORTANTE: Deja esta ventana abierta mientras uses la app
+echo Para detener el servidor, cierra esta ventana o presiona Ctrl+C
 echo.
-echo Presiona Ctrl+C para detener el servidor
 echo ========================================
 echo.
 
+cd /d "%~dp0"
 python -m http.server 8000
 
 pause

@@ -435,15 +435,16 @@
                                 </div>
                                 
                                 <!-- Status & Count - Compact -->
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.05);">
-                                    <div style="font-size:0.75rem; color:${isFull ? '#FF3B30' : '#00E36D'}; font-weight:900;">
-                                        ${isFull ? 'COMPLETO' : `${spotsLeft} LIB.`}
-                                    </div>
-                                    <div style="font-size:1.1rem; color:${isFull ? '#FF3B30' : '#00E36D'}; font-weight:900; display:flex; align-items:center; gap:4px;">
-                                        <span style="font-size:1.3rem;">${players.length}</span>
-                                        <span style="color:#666; font-size:0.8rem;">/${maxPlayers}</span>
-                                    </div>
-                                </div>
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.05); cursor: pointer;"
+									 onclick="event.stopPropagation(); window.EventsController?.openPlayerListModal('${am.id}')">
+									<div style="font-size: 0.75rem; color: ${isFull ? '#FF3B30' : '#00E36D'}; font-weight: 900;">
+										${isFull ? 'COMPLETO' : `${spotsLeft} LIB.`}
+									</div>
+									<div style="font-size: 1.1rem; color: ${isFull ? '#FF3B30' : '#00E36D'}; font-weight: 900; display: flex; align-items: center; gap: 4px;">
+										<span style="font-size: 1.3rem;">${players.length}</span>
+										<span style="color: #666; font-size: 0.8rem;">/${maxPlayers}</span>
+									</div>
+								</div>
                             </div>
                         `;
                     });
