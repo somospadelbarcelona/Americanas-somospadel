@@ -25,63 +25,85 @@
                 console.error("[PlayerController] User object has no ID or UID", user);
                 return;
             }
+
+            // Real-time listener for personal matches to update stats instantly
+            if (this.unsubMatches) this.unsubMatches();
+            if (this.unsubEntrenos) this.unsubEntrenos();
+
+            const updateStats = async () => {
+                await this.fetchPlayerData(userId);
+            };
+
+            this.unsubMatches = window.db.collection('matches')
+                .where('team_a_ids', 'array-contains', userId)
+                .onSnapshot(updateStats);
+            this.unsubMatchesB = window.db.collection('matches')
+                .where('team_b_ids', 'array-contains', userId)
+                .onSnapshot(updateStats);
+
+            this.unsubEntrenos = window.db.collection('entrenos_matches')
+                .where('team_a_ids', 'array-contains', userId)
+                .onSnapshot(updateStats);
+            this.unsubEntrenosB = window.db.collection('entrenos_matches')
+                .where('team_b_ids', 'array-contains', userId)
+                .onSnapshot(updateStats);
+
             await this.fetchPlayerData(userId);
         }
 
         async fetchPlayerData(userId) {
             try {
-                // 1. Fetch all finished events and player data
-                const [allEvents, userDoc] = await Promise.all([
-                    this.db.americanas.getAll(),
-                    this.db.players.getById(userId)
+                // 1. Fetch player data and ALL personal matches (unifies matches & entrenos_matches)
+                const [userDoc, personalMatches] = await Promise.all([
+                    this.db.players.getById(userId),
+                    this.db.matches.getByPlayer(userId)
                 ]);
 
-                const finishedEvents = allEvents.filter(a => a.status === 'finished');
-                let matchesList = [];
                 let stats = { matches: 0, won: 0, lost: 0, points: 0, winRate: 0, gamesWon: 0, gamesLost: 0 };
+                let matchesList = [];
 
-                // 2. Process each event to find user matches
-                for (const event of finishedEvents) {
-                    const eventMatches = await this.db.matches.getByAmericana(event.id);
-                    eventMatches.forEach(m => {
-                        if (!m.isFinished) return;
+                // 2. Process each match
+                personalMatches.forEach(m => {
+                    // Inclusion rule: must be finished OR have a score (for live updates)
+                    const sA = parseInt(m.score_a || 0);
+                    const sB = parseInt(m.score_b || 0);
+                    const isFinished = m.status === 'finished' || (sA + sB > 0);
 
-                        const isTeamA = (m.team_a_ids || []).includes(userId);
-                        const isTeamB = (m.team_b_ids || []).includes(userId);
+                    if (!isFinished) return;
 
-                        if (isTeamA || isTeamB) {
-                            stats.matches++;
-                            const scoreA = parseInt(m.scoreA || 0);
-                            const scoreB = parseInt(m.scoreB || 0);
+                    const isTeamA = (m.team_a_ids || []).includes(userId);
+                    const isTeamB = (m.team_b_ids || []).includes(userId);
 
-                            // Detailed games tracking
-                            if (isTeamA) {
-                                stats.gamesWon += scoreA;
-                                stats.gamesLost += scoreB;
-                            } else {
-                                stats.gamesWon += scoreB;
-                                stats.gamesLost += scoreA;
-                            }
+                    if (isTeamA || isTeamB) {
+                        stats.matches++;
 
-                            const iWon = (isTeamA && scoreA > scoreB) || (isTeamB && scoreB > scoreA);
-                            const isTie = scoreA === scoreB;
-
-                            if (iWon) { stats.won++; stats.points += 3; }
-                            else if (isTie) { stats.points += 1; }
-                            else { stats.lost++; }
-
-                            // Format match for history
-                            matchesList.push({
-                                id: m.id,
-                                date: event.date,
-                                eventName: event.name,
-                                score: `${scoreA} - ${scoreB}`,
-                                result: iWon ? 'W' : (isTie ? 'D' : 'L'),
-                                color: iWon ? '#22c55e' : (isTie ? '#94a3b8' : '#ef4444')
-                            });
+                        // Detailed games tracking
+                        if (isTeamA) {
+                            stats.gamesWon += sA;
+                            stats.gamesLost += sB;
+                        } else {
+                            stats.gamesWon += sB;
+                            stats.gamesLost += sA;
                         }
-                    });
-                }
+
+                        const iWon = (isTeamA && sA > sB) || (isTeamB && sB > sA);
+                        const isTie = sA === sB;
+
+                        if (iWon) { stats.won++; stats.points += 3; }
+                        else if (isTie) { stats.points += 1; }
+                        else { stats.lost++; }
+
+                        // Format match for history
+                        matchesList.push({
+                            id: m.id,
+                            date: m.date || '---',
+                            eventName: m.americana_name || m.event_name || (m.collection === 'entrenos_matches' ? 'Entreno' : 'Americana'),
+                            score: `${sA} - ${sB}`,
+                            result: iWon ? 'W' : (isTie ? 'D' : 'L'),
+                            color: iWon ? '#22c55e' : (isTie ? '#94a3b8' : '#ef4444')
+                        });
+                    }
+                });
 
                 // Sort matches by date descending
                 matchesList.sort((a, b) => new Date(b.date) - new Date(a.date));

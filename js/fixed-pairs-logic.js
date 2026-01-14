@@ -78,8 +78,10 @@ const FixedPairsLogic = {
                     pair_b_id: pairB.id,
                     team_a_ids: [pairA.player1_id, pairA.player2_id],
                     team_b_ids: [pairB.player1_id, pairB.player2_id],
-                    team_a_names: pairA.pair_name,
-                    team_b_names: pairB.pair_name,
+                    team_a_names: [pairA.player1_name, pairA.player2_name],
+                    team_b_names: [pairB.player1_name, pairB.player2_name],
+                    teamA: pairA.pair_name, // Redundant field for UI
+                    teamB: pairB.pair_name, // Redundant field for UI
                     status: 'scheduled',
                     score_a: 0,
                     score_b: 0
@@ -112,11 +114,23 @@ const FixedPairsLogic = {
         // Procesar resultados de la última ronda
         lastRoundMatches.forEach(match => {
             if (match.status === 'finished') {
-                const pairA = pairMap[match.pair_a_id];
-                const pairB = pairMap[match.pair_b_id];
+                const teamAIds = Array.isArray(match.team_a_ids) ? match.team_a_ids.map(String) : [];
+                const teamBIds = Array.isArray(match.team_b_ids) ? match.team_b_ids.map(String) : [];
+
+                // Fallback: search pairs containing players if IDs missing (Robustness)
+                let pairA = pairMap[match.pair_a_id];
+                let pairB = pairMap[match.pair_b_id];
+
+                if (!pairA) {
+                    // Try finding by player composition
+                    pairA = pairs.find(p => teamAIds.includes(String(p.player1_id)) || teamAIds.includes(String(p.player2_id)));
+                }
+                if (!pairB) {
+                    pairB = pairs.find(p => teamBIds.includes(String(p.player1_id)) || teamBIds.includes(String(p.player2_id)));
+                }
 
                 if (!pairA || !pairB) {
-                    console.warn(`⚠️ Pareja no encontrada en match ${match.id}`);
+                    console.warn(`⚠️ Pareja no encontrada en match ${match.id} (Ronda ${match.round})`);
                     return;
                 }
 
@@ -131,6 +145,9 @@ const FixedPairsLogic = {
 
                 // Determinar ganador y perdedor
                 let winner, loser;
+                // Strict win (no draw handling for court movement in original?)
+                // If draw, we keep them in place or random?
+                // Logic says: winners go up. Draw -> Stick?
                 if (scoreA > scoreB) {
                     winner = pairA;
                     loser = pairB;
@@ -142,9 +159,10 @@ const FixedPairsLogic = {
                     pairB.wins = (pairB.wins || 0) + 1;
                     pairA.losses = (pairA.losses || 0) + 1;
                 } else {
-                    // Empate - ambos se consideran ganadores (se mantienen)
-                    pairA.won_last_match = true;
+                    // EMPATE / TIE
+                    pairA.won_last_match = true; // Neutral
                     pairB.won_last_match = true;
+                    // No movement if tie? Or treat as status quo
                 }
 
                 // Aplicar lógica POZO: Ganador sube, Perdedor baja
@@ -159,7 +177,9 @@ const FixedPairsLogic = {
                     // Si ya está en pista 1, se mantiene en pista 1
 
                     // PERDEDOR: Baja de pista (número mayor)
-                    loser.current_court++;
+                    if (loser.current_court < maxCourts) {
+                        loser.current_court++;
+                    }
                 }
 
                 // Marcar como jugado en esta ronda

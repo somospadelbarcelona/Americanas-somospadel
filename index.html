@@ -243,6 +243,64 @@
                     <input type="password" name="password" placeholder="Mín. 6 caracteres" class="pro-input" required>
                 </div>
 
+                <style>
+                    .glass-card {
+                        background: rgba(255, 255, 255, 0.95);
+                        backdrop-filter: blur(10px);
+                        border-radius: 20px;
+                        border: 1px solid rgba(0, 0, 0, 0.05);
+                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+                    }
+
+                    /* --- WOW EFFECTS (LIVE MATCHES) --- */
+                    @keyframes neonPulse {
+                        0% {
+                            box-shadow: 0 0 5px rgba(204, 255, 0, 0.2), 0 0 10px rgba(204, 255, 0, 0.1);
+                            border-color: rgba(204, 255, 0, 0.5);
+                        }
+
+                        50% {
+                            box-shadow: 0 0 20px rgba(204, 255, 0, 0.6), 0 0 30px rgba(204, 255, 0, 0.4);
+                            border-color: #CCFF00;
+                        }
+
+                        100% {
+                            box-shadow: 0 0 5px rgba(204, 255, 0, 0.2), 0 0 10px rgba(204, 255, 0, 0.1);
+                            border-color: rgba(204, 255, 0, 0.5);
+                        }
+                    }
+
+                    .match-card-live {
+                        animation: neonPulse 2s infinite ease-in-out;
+                        background: radial-gradient(circle at center, rgba(204, 255, 0, 0.03) 0%, rgba(255, 255, 255, 1) 100%) !important;
+                        transform: scale(1.02);
+                        z-index: 10;
+                        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+                    }
+
+                    .status-badge-live {
+                        background: #CCFF00;
+                        color: black !important;
+                        box-shadow: 0 0 10px #ccff00;
+                        padding: 4px 12px !important;
+                        border-radius: 12px;
+                        /* Fixed radius */
+                        font-size: 0.6rem !important;
+                        font-weight: 900 !important;
+                        text-transform: uppercase;
+                        animation: blink 1s infinite alternate;
+                    }
+
+                    @keyframes blink {
+                        from {
+                            opacity: 1;
+                        }
+
+                        to {
+                            opacity: 0.7;
+                        }
+                    }
+                </style>
                 <div
                     style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
                     <label
@@ -296,7 +354,8 @@
     <script src="js/core/SmartTicker.js"></script>
 
     <!-- Layer 3: Logic Business -->
-    <script src="js/modules/americanas/MatchmakingService.js"></script>
+    <script src="js/modules/common/ParticipantService.js"></script>
+    <script src="js/modules/logic/MatchMakingService.js"></script>
     <script src="js/modules/americanas/AmericanaLogic.js"></script>
     <script src="js/modules/americanas/AmericanaService.js?v=1009"></script>
     <script src="js/fixed-pairs-logic.js"></script>
@@ -312,8 +371,8 @@
     <script src="js/modules/dashboard/DashboardController.js"></script>
     <script src="js/modules/players/PlayerView.js?v=300"></script>
     <script src="js/modules/players/PlayerController.js"></script>
-    <script src="js/modules/americanas/ControlTowerView.js?v=1002"></script>
-    <script src="js/modules/americanas/EventsController_V5.js?v=511"></script>
+    <script src="js/modules/americanas/ControlTowerView.js?v=4006"></script>
+    <script src="js/modules/americanas/EventsController_V5.js?v=516"></script>
 
     <!-- Ranking Module -->
     <script src="js/modules/ranking/RankingView.js"></script>
@@ -328,7 +387,7 @@
     <script src="js/modules/agenda/AgendaController.js"></script>
 
     <!-- Entry Point -->
-    <script src="js/app.js?v=2025"></script>
+    <script src="js/app.js?v=2026"></script>
 
     <!-- PWA Service Worker Registration -->
     <script>

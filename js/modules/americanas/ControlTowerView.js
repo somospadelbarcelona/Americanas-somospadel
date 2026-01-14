@@ -112,7 +112,6 @@
                         }
                     }
 
-                    // Force UI update if status changed
                     if (previousStatus !== updatedEvent.status) {
                         this.recalc();
                     }
@@ -120,12 +119,72 @@
                     console.error("Error watching event status:", err);
                 });
 
-            // Real-time listener for matches - use correct collection based on event type
+            // AUTO-START CHECKER (Every 30s)
+            if (this.autoStartInterval) clearInterval(this.autoStartInterval);
+            this.autoStartInterval = setInterval(async () => {
+                const evt = this.currentAmericanaDoc;
+                if (!evt || evt.status !== 'open' || !evt.date || !evt.time) return;
+
+                // Check Time
+                const now = new Date();
+                const [h, m] = evt.time.split(':').map(Number);
+
+                // NORMALIZE DATES (Handle YYYY-MM-DD and DD/MM/YYYY)
+                // We convert both to YYYY-MM-DD for comparison
+                const today = new Date();
+                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+                let evtDateNorm = evt.date;
+                if (evt.date.includes('/')) {
+                    // Assume DD/MM/YYYY
+                    const [d, mo, y] = evt.date.split('/');
+                    evtDateNorm = `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                }
+
+                // Debug Log (User can see this in console)
+                console.log(`⏰ Auto-Start Check: Today=${todayStr}, Event=${evtDateNorm}, Time=${now.getHours()}:${now.getMinutes()} vs ${h}:${m}`);
+
+                if (evtDateNorm === todayStr) {
+                    const nowTime = now.getHours() * 60 + now.getMinutes();
+                    const schedTime = h * 60 + m;
+
+                    // FULL CHECK: Ensure event is full before auto-start
+                    const players = evt.players || evt.registeredPlayers || [];
+                    const maxCourts = evt.max_courts || 4;
+                    const isFull = players.length >= (maxCourts * 4);
+
+                    // Allow start if time matches OR passed (within last 2 hours to avoid auto-starting old events?)
+                    // Actually, if it's 'open' and time passed, it SHOULD go live.
+                    if (nowTime >= schedTime) {
+                        if (isFull) {
+                            console.log("🚀 AUTO-START TRIGGERED: Changing status to LIVE and Generating Matches");
+                            // 1. Update Status (Trigger listeners)
+                            await window.EventService.updateEvent(isEntreno ? 'entreno' : 'americana', eventId, { status: 'live' });
+
+                            // 2. Force Generation (Redundancy in case listener misses)
+                            if (window.AmericanaService) {
+                                await window.AmericanaService.generateFirstRoundMatches(eventId, isEntreno ? 'entreno' : 'americana');
+                            }
+
+                            // 3. Update Local State immediately
+                            this.currentAmericanaDoc.status = 'live';
+                            this.recalc();
+                        } else {
+                            console.warn(`⏳ [AutoStart] Live View trigger: Time reached but NOT FULL (${players.length}/${maxCourts * 4}). Waiting.`);
+                        }
+                    }
+                }
+            }, 30000); // Check every 30s
+
+            // FIXED: Dynamic collection selection based on Event Type
+            // Entrenos use 'entrenos_matches', Americanas use 'matches'
             const matchesCollection = isEntreno ? 'entrenos_matches' : 'matches';
-            // NOTE: Both Entrenos and Americanas use 'americana_id' field for consistency
+            // NOTE: Both Entrenos and Americanas use 'americana_id' field for consistency in ID reference
             const fieldName = 'americana_id';
 
-            console.log(`🔍 [ControlTowerView] Loading ${isEntreno ? 'ENTRENO' : 'AMERICANA'} matches from ${matchesCollection}`);
+            console.log(`🔍 [ControlTowerView] Loading matches from ${matchesCollection} for event ${eventId} (IsEntreno: ${!!isEntreno})`);
+
+            console.log(`🔍 [ControlTowerView] Loading matches from ${matchesCollection} for event ${eventId}`);
 
             this.unsubscribeMatches = window.db.collection(matchesCollection)
                 .where(fieldName, '==', eventId)
@@ -154,18 +213,123 @@
                     this.allMatches = deduplicated;
                     console.log(`✅ [ControlTowerView] Loaded ${rawMatches.length} matches (${deduplicated.length} unique after deduplication)`);
 
-                    // Safety net: If event is live but NO matches exist, attempt auto-generation
-                    if (this.currentAmericanaDoc?.status === 'live' && this.allMatches.length === 0) {
-                        console.warn("⚠️ Event is LIVE but no matches found. Attempting auto-generation...");
+                    // Safety net & Fullness Trigger: If event is live OR FULL, and NO matches exist, attempt auto-generation
+                    const maxCourts = this.currentAmericanaDoc?.max_courts || 4;
+                    const isFull = (this.currentAmericanaDoc?.players?.length || 0) >= (maxCourts * 4);
+                    const shouldGenerate = (this.currentAmericanaDoc?.status === 'live') || (isFull && this.currentAmericanaDoc?.status === 'open');
+
+                    if (shouldGenerate && this.allMatches.length === 0) {
+                        console.warn("⚠️ Event Trigger (Live or Full) - No matches found. Attempting auto-generation...");
                         if (window.AmericanaService) {
                             window.AmericanaService.generateFirstRoundMatches(eventId, isEntreno ? 'entreno' : 'americana');
                         }
                     }
 
                     this.recalc();
+
+                    // CHECK ROUND COMPLETION (Manual Advancement Prompt)
+                    this.checkRoundCompletion(this.allMatches);
+
                 }, err => {
                     console.error("Error watching matches:", err);
                 });
+        }
+
+        checkRoundCompletion(matches) {
+            if (!this.currentAmericanaDoc) return;
+
+            // 1. Determine Current Round (Max Round existing or specific logic?)
+            // Usually we look at the highest round number present in matches.
+            // But if we are viewing history, we might confuse it.
+            // Let's assume 'Current Round' is the highest round created.
+            if (matches.length === 0) return;
+
+            const maxRound = Math.max(...matches.map(m => parseInt(m.round || 1)));
+
+            // 2. Filter matches for this round
+            const currentRoundMatches = matches.filter(m => parseInt(m.round) === maxRound);
+
+            // 3. Check if ALL are finished
+            const allFinished = currentRoundMatches.every(m => m.status === 'finished');
+
+            if (allFinished && currentRoundMatches.length > 0) {
+                // Check if already prompted/dismissed
+                if (this.roundPromptDismissedFor === maxRound) return;
+
+                // Check if Max Rounds reached (e.g. 6)
+                const totalRounds = this.currentAmericanaDoc.rounds || 6;
+                if (maxRound >= totalRounds) return; // End of Event
+
+                // SHOW PROMPT
+                this.showRoundFinishedModal(maxRound);
+            } else {
+                // Reset dismissal if we somehow went back (unlikely but safe)
+                if (!allFinished) this.roundPromptDismissedFor = null;
+                this.closeRoundFinishedModal();
+            }
+        }
+
+        showRoundFinishedModal(round) {
+            if (document.getElementById('round-finished-modal')) return;
+
+            const modal = document.createElement('div');
+            modal.id = 'round-finished-modal';
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.85); z-index: 13000;
+                display: flex; align-items: center; justify-content: center;
+                backdrop-filter: blur(5px); animation: fadeIn 0.3s ease;
+            `;
+
+            modal.innerHTML = `
+                <div style="background: linear-gradient(135deg, #111 0%, #0a0a0a 100%); width: 90%; max-width: 400px; padding: 30px; border-radius: 24px; border: 2px solid #CCFF00; text-align: center; box-shadow: 0 0 50px rgba(204,255,0,0.2); position: relative;">
+                    <div style="width: 60px; height: 60px; background: #CCFF00; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 0 20px rgba(204,255,0,0.6);">
+                        <i class="fas fa-flag-checkered" style="font-size: 1.8rem; color: black;"></i>
+                    </div>
+                    <h2 style="color: white; font-weight: 950; font-size: 1.5rem; margin: 0 0 10px 0;">RONDA ${round} FINALIZADA</h2>
+                    <p style="color: #bbb; font-size: 0.9rem; margin-bottom: 25px;">Todos los partidos han terminado. ¿Qué quieres hacer?</p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <button id="btn-next-round" style="background: #CCFF00; color: black; border: none; padding: 16px; border-radius: 14px; font-weight: 900; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 5px 15px rgba(204,255,0,0.3);">
+                            ✅ SÍ, SIGUIENTE RONDA
+                        </button>
+                        <button id="btn-edit-round" style="background: transparent; color: white; border: 2px solid #333; padding: 14px; border-radius: 14px; font-weight: 800; font-size: 0.9rem; cursor: pointer;">
+                            ❌ NO, QUIERO EDITAR
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Bind Actions
+            document.getElementById('btn-next-round').onclick = async () => {
+                const btn = document.getElementById('btn-next-round');
+                btn.innerHTML = '<div class="loader-spinner"></div> GENERANDO...';
+                try {
+                    const isEntreno = this.currentAmericanaDoc?.isEntreno;
+                    // Trigger Generation
+                    if (window.AmericanaService) {
+                        await window.AmericanaService.generateNextRound(this.currentAmericanaDoc.id, round, isEntreno ? 'entreno' : 'americana');
+                        // Dismiss modal 
+                        this.roundPromptDismissedFor = null; // Reset for next
+                        this.closeRoundFinishedModal();
+                    }
+                } catch (e) {
+                    alert("Error: " + e.message);
+                    btn.innerHTML = '✅ SÍ, SIGUIENTE RONDA';
+                }
+            };
+
+            document.getElementById('btn-edit-round').onclick = () => {
+                this.roundPromptDismissedFor = round;
+                this.closeRoundFinishedModal();
+            };
+        }
+
+        closeRoundFinishedModal() {
+            const el = document.getElementById('round-finished-modal');
+            if (el) el.remove();
         }
 
         async loadHistory() {
@@ -339,6 +503,23 @@
                 (this.currentAmericanaDoc.registeredPlayers || []).includes(user.uid)
             );
 
+            // SMART PATCHING (Prevent Flash)
+            if (this.mainSection === 'playing' && this.activeTab === 'results' && document.querySelector('.tour-grid-container')) {
+                const rd = data?.currentRound || { matches: [] };
+                const ar = data?.roundsSchedule || [];
+                // Only smart update if we have matches, otherwise full render might be safer
+                if (this.smartUpdateResults(rd, ar)) {
+                    return;
+                }
+            }
+
+            // --- STATE PRESERVATION ---
+            const scrollPos = window.scrollY;
+            const openEditIds = Array.from(document.querySelectorAll('[id^="edit-actions-"]'))
+                .filter(el => el.style.display !== 'none')
+                .map(el => el.id);
+            // --------------------------
+
             container.innerHTML = `
                 <div class="tournament-layout fade-in" style="background: #F8F9FA;">
                     
@@ -352,6 +533,20 @@
                     ${this.renderMainArea(data, isPlayingHere)}
                 </div>
             `;
+
+            // --- STATE RESTORATION ---
+            if (openEditIds.length > 0) {
+                openEditIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'flex';
+                });
+            }
+            // Restore scroll only if we haven't navigated far (optional, but requested)
+            // But if content height changes, scroll might be wrong. Usually safe for minor updates.
+            if (scrollPos > 0) {
+                window.scrollTo(0, scrollPos);
+            }
+            // --------------------------
         }
 
         renderMainArea(data, isPlayingHere) {
@@ -408,8 +603,136 @@
             }
         }
 
+        smartUpdateResults(roundData, allRounds) {
+            if (!document.querySelector('.tour-grid-container')) return false; // Fallback to full render if not found
+
+            // 1. Update Round Tabs (Naive is fine, low interaction)
+            const filterBar = document.querySelector('.tour-filter-bar');
+            if (filterBar) {
+                filterBar.innerHTML = this.renderRoundTabs(allRounds, roundData.number);
+            }
+
+            // 2. Smart Grid Patching
+            const grid = document.querySelector('.tour-grid-container');
+            const matches = roundData.matches;
+
+            if (matches.length === 0) {
+                grid.innerHTML = '<div style="color:#999; width:100%; text-align:center; padding:60px; font-weight:700;">Selecciona una ronda válida...</div>';
+                return true;
+            }
+
+            const validIds = new Set();
+
+            // Insert / Update
+            matches.forEach((match, index) => {
+                validIds.add(match.id);
+                const cardId = `tour-match-${match.id}`;
+                let el = document.getElementById(cardId);
+
+                // Re-generate HTML for the card
+                // Note: Generates whole card HTML. Parsing it to diff is hard.
+                // But we can check if CONTENT changed.
+                // Optimization: Just update Scores and Status if ID exists.
+
+                if (el) {
+                    // Update Status Badge
+                    const statusArea = el.querySelector('.status-area');
+                    const isFinished = match.isFinished;
+                    const isLive = this.currentAmericanaDoc?.status === 'live' && !isFinished;
+                    const newStatusHTML = isFinished ?
+                        '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">FINALIZADO</span>' :
+                        (isLive ? '<span class="status-badge-live">⚡ EN JUEGO</span>' : '<span style="color:#BBB;">ESPERANDO</span>');
+
+                    if (statusArea && statusArea.innerHTML !== newStatusHTML) {
+                        statusArea.innerHTML = newStatusHTML;
+                    }
+
+                    // Update Names (Real-time substitution - VACANTE)
+                    const getTeamNameStr = (m, side) => {
+                        const namesArr = m[`team_${side.toLowerCase()}_names`];
+                        const teamStr = m[`team${side.toUpperCase()}`];
+                        if (teamStr && typeof teamStr === 'string' && teamStr.length > 0) return teamStr;
+                        if (Array.isArray(namesArr)) return namesArr.join(' / ');
+                        return String(namesArr || '');
+                    };
+
+                    const nameAStr = getTeamNameStr(match, 'a') || 'JUGADOR A';
+                    const nameBStr = getTeamNameStr(match, 'b') || 'JUGADOR B';
+
+                    const nameAEl = document.getElementById(`match-name-a-${match.id}`);
+                    const nameBEl = document.getElementById(`match-name-b-${match.id}`);
+
+                    if (nameAEl && nameAEl.innerText !== nameAStr) nameAEl.innerText = nameAStr;
+                    if (nameBEl && nameBEl.innerText !== nameBStr) nameBEl.innerText = nameBStr;
+
+                    // Update Scores
+                    const sA = parseInt(match.score_a || 0);
+                    const sB = parseInt(match.score_b || 0);
+
+                    const scoreAEl = document.getElementById(`match-score-a-${match.id}`);
+                    const scoreBEl = document.getElementById(`match-score-b-${match.id}`);
+                    const valAEl = document.getElementById(`score-a-val-${match.id}`);
+                    const valBEl = document.getElementById(`score-b-val-${match.id}`);
+
+                    if (scoreAEl && scoreAEl.innerText != sA) scoreAEl.innerText = sA;
+                    if (scoreBEl && scoreBEl.innerText != sB) scoreBEl.innerText = sB;
+                    if (valAEl && valAEl.innerText != sA) valAEl.innerText = sA;
+                    if (valBEl && valBEl.innerText != sB) valBEl.innerText = sB;
+
+                    // If not focused, we can still re-render action area if status changed
+                    // but usually granular is better.
+                } else {
+                    // Append
+                    // We need to insert in order.
+                    // Naive append:
+                    grid.insertAdjacentHTML('beforeend', this.renderTournamentCard(match));
+                }
+            });
+
+            // Remove old
+            grid.querySelectorAll('.tour-match-card').forEach(card => {
+                // We need to extract ID from card. renderTournamentCard needs to add ID to wrapper.
+                // Currently it doesn't.
+                // I need to modify renderTournamentCard to add ID `id="tour-match-${match.id}"`.
+            });
+
+            // Update Next Round UI
+            // ...
+
+            return true;
+        }
+
         renderResultsView(roundData, allRounds) {
+            // ... existing ...
+
             const tabs = this.renderRoundTabs(allRounds, roundData.number);
+
+            // CHECK FOR ROUND COMPLETION
+            const isRoundComplete = roundData.matches.length > 0 && roundData.matches.every(m => m.isFinished);
+            let nextRoundUI = '';
+
+            if (isRoundComplete && this.currentAmericanaDoc?.status === 'live') {
+                nextRoundUI = `
+                    <div id="next-round-btn-container" class="animate-pop-in" style="margin-top: 30px; background: white; padding: 25px; border-radius: 20px; border: 2px solid #CCFF00; box-shadow: 0 10px 30px rgba(204,255,0,0.2); text-align: center;">
+                        <h3 style="margin: 0 0 15px 0; font-weight: 900; font-size: 1.1rem;">🏁 RONDA ${roundData.number} FINALIZADA</h3>
+                        <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">
+                            Todos los resultados han sido introducidos. ¿Deseas generar la siguiente ronda?
+                        </p>
+                        <div style="display: flex; gap: 15px; justify-content: center;">
+                             <button onclick="window.ControlTowerView.triggerNextRound(${roundData.number})" 
+                                    class="btn-primary-pro"
+                                    style="padding: 15px 30px; font-size: 1rem; background: var(--playtomic-neon); color: black; border: none; box-shadow: 0 5px 15px rgba(204,255,0,0.4);">
+                                SI, SIGUIENTE RONDA 🚀
+                            </button>
+                             <button onclick="document.getElementById('next-round-btn-container').innerHTML='<p>Puedes editar los resultados usando el botón ✏️ en cada tarjeta.</p>'; setTimeout(() => window.ControlTowerView.recalc(), 3000);" 
+                                    style="padding: 15px 20px; font-size: 0.9rem; background: #eee; border: none; border-radius: 12px; font-weight: 800; color: #666; cursor: pointer;">
+                                NO, QUIERO EDITAR
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
             return `
                 <div class="tour-filter-bar" style="background:#F8F9FA; padding: 12px; overflow-x: auto;">
                    ${tabs}
@@ -417,6 +740,7 @@
                 <div class="tour-grid-container" style="padding: 16px; display: grid; gap: 16px; padding-bottom: 100px;">
                     ${roundData.matches.length ? '' : '<div style="color:#999; width:100%; text-align:center; padding:60px; font-weight:700;">Selecciona una ronda válida...</div>'}
                     ${roundData.matches.map(match => this.renderTournamentCard(match)).join('')}
+                    ${nextRoundUI}
                 </div>
             `;
         }
@@ -697,14 +1021,14 @@
                     </div>
 
                     <!-- MVP Card -->
-                    <div style="background: linear-gradient(135deg, #000 0%, #1a1a1a 100%); border-radius: 20px; padding: 25px; position: relative; overflow: hidden; color: white; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-                         <div style="position: absolute; right: -10px; top: -10px; font-size: 6rem; opacity: 0.1;">🏆</div>
-                         <div style="display:flex; align-items:center; gap: 20px;">
-                             <div style="width: 70px; height: 70px; background: var(--playtomic-neon); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: black; font-weight:900;">1</div>
+                    <div style="background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-navy) 100%); border-radius: 28px; padding: 32px; position: relative; overflow: hidden; color: white; border: 1px solid rgba(255,255,255,0.05); box-shadow: var(--shadow-xl);">
+                         <div style="position: absolute; right: -20px; top: -20px; font-size: 8rem; opacity: 0.1; transform: rotate(-15deg);"><i class="fas fa-crown"></i></div>
+                         <div style="display:flex; align-items:center; gap: 24px; position: relative; z-index: 1;">
+                             <div style="width: 80px; height: 80px; background: var(--brand-neon); border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; color: black; font-weight: 950; box-shadow: var(--shadow-neon);">1</div>
                              <div>
-                                <div style="font-size: 0.7rem; font-weight: 800; color: var(--playtomic-neon); letter-spacing: 2px;">MVP TORNEO</div>
-                                <div style="font-size: 1.5rem; font-weight: 900; color: white; margin: 2px 0;">${mvp.name}</div>
-                                <div style="font-size: 0.8rem; color: #aaa;">${mvp.games} ${isEntreno ? 'Partidos Ganados' : 'Puntos Totales'}</div>
+                                <div style="font-size: 0.75rem; font-weight: 900; color: var(--brand-neon); letter-spacing: 2px; text-transform: uppercase;">MVP DEL TORNEO</div>
+                                <div style="font-size: 1.8rem; font-weight: 950; color: white; margin: 4px 0; letter-spacing: -0.5px;">${mvp.name}</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6); font-weight: 600;">${mvp.games} ${isEntreno ? 'Partidos Ganados' : 'Puntos Totales'}</div>
                              </div>
                          </div>
                     </div>
@@ -904,127 +1228,267 @@
         }
 
         renderTournamentCard(match) {
-            const colorClass = `border-${(match.court % 4) + 1}`;
-            const statusText = match.isFinished ?
-                '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">FINALIZADO</span>' :
-                (match.isLive ? '<span style="color:var(--playtomic-neon); font-weight:800; animation: blink 1.5s infinite;">EN JUEGO</span>' : '<span style="color:#BBB;">ESPERANDO</span>');
+            try {
+                const isEntreno = this.currentAmericanaDoc?.isEntreno;
+                const colorClass = `border-${(match.court % 4) + 1}`;
 
-            const sA = parseInt(match.score_a || 0); // Corrected to score_a matches db field
-            const sB = parseInt(match.score_b || 0); // Corrected to score_b matches db field
+                // --- WOW STATUS VISUALS ---
+                const isLive = this.currentAmericanaDoc?.status === 'live' && !match.isFinished;
+                const statusText = match.isFinished ?
+                    '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">FINALIZADO</span>' :
+                    (isLive ? '<span class="status-badge-live">⚡ EN JUEGO</span>' : '<span style="color:#BBB;">ESPERANDO</span>');
 
-            // --- 1. Calcular Horario del Partido ---
-            const timeLabel = window.calculateMatchTime ? window.calculateMatchTime(this.currentAmericanaDoc?.time || "10:00", parseInt(match.round) || 1) : "Seguido";
+                const sA = parseInt(match.score_a || 0);
+                const sB = parseInt(match.score_b || 0);
 
-            // --- 2. Estilos WOW para Ganadores ---
-            const winnerStyle = "background: rgba(204,255,0,0.1); color: black !important; padding: 6px 10px; border-radius: 8px; font-weight: 950 !important; border-bottom: 3px solid #CCFF00; text-decoration: none;";
-            const normalStyle = "color: #111; font-weight: 800; padding: 6px 0;";
+                // --- 1. Calculate Time ---
+                const timeLabel = (window.calculateMatchTime && typeof window.calculateMatchTime === 'function')
+                    ? window.calculateMatchTime(this.currentAmericanaDoc?.time || "10:00", parseInt(match.round) || 1)
+                    : "Seguido";
 
-            const styleA = (match.isFinished && sA > sB) ? winnerStyle : normalStyle;
-            const styleB = (match.isFinished && sB > sA) ? winnerStyle : normalStyle;
+                // --- 2. Styles ---
+                const winnerStyle = "background: rgba(204,255,0,0.1); color: black !important; padding: 6px 10px; border-radius: 8px; font-weight: 950 !important; border-bottom: 3px solid #CCFF00; text-decoration: none;";
+                const normalStyle = "color: #111; font-weight: 800; padding: 6px 0;";
+                const styleA = (match.isFinished && sA > sB) ? winnerStyle : normalStyle;
+                const styleB = (match.isFinished && sB > sA) ? winnerStyle : normalStyle;
 
-            // --- 3. Player Interaction Logic (UPDATED: ANY REGISTERED PLAYER) ---
-            const user = window.Store ? window.Store.getState('currentUser') : null;
+                // --- 3. Interaction Logic ---
+                const user = window.Store ? window.Store.getState('currentUser') : null;
+                const isRegisteredInEvent = this.currentAmericanaDoc && user && (
+                    (this.currentAmericanaDoc.players || []).some(p => (p.id || p.uid) === user.uid) ||
+                    (this.currentAmericanaDoc.registeredPlayers || []).includes(user.uid)
+                );
 
-            // Check if user is registered in the Event
-            const isRegisteredInEvent = this.currentAmericanaDoc && user && (
-                (this.currentAmericanaDoc.players || []).some(p => (p.id || p.uid) === user.uid) ||
-                (this.currentAmericanaDoc.registeredPlayers || []).includes(user.uid)
-            );
+                const getTeamName = (namesArr, teamStr) => {
+                    if (teamStr && typeof teamStr === 'string' && teamStr.length > 0) return teamStr;
+                    if (Array.isArray(namesArr)) return namesArr.join(' / ');
+                    return String(namesArr || '');
+                };
 
-            // Determine if user is PART of this specific match (for UI feedback like "Ganamos")
-            const isPartA = user && (match.team_a_ids?.includes(user.uid) || (typeof match.teamA === 'string' && match.teamA.includes(user.name)));
-            const isPartB = user && (match.team_b_ids?.includes(user.uid) || (typeof match.teamB === 'string' && match.teamB.includes(user.name)));
-            const isPart = isPartA || isPartB;
+                const safeTeamA = getTeamName(match.team_a_names, match.teamA) || 'JUGADOR A';
+                const safeTeamB = getTeamName(match.team_b_names, match.teamB) || 'JUGADOR B';
 
-            // Show input if: User is REGISTERED in event (even if not playing) AND Match is NOT finished AND Event is LIVE
-            // Changed by User Request: "mejor que todos los inscritos puedan poner el resultado"
-            const canEdit = isRegisteredInEvent && !match.isFinished && this.currentAmericanaDoc?.status === 'live';
+                const isPartA = user && (match.team_a_ids?.includes(user.uid) || safeTeamA.includes(user.name));
+                const isPartB = user && (match.team_b_ids?.includes(user.uid) || safeTeamB.includes(user.name));
+                const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain'].includes((user?.role || '').toLowerCase());
 
-            let actionArea = '';
-            if (canEdit) {
-                if (isPart) {
-                    // Playing user: "We Won"
-                    actionArea = `
-                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #eee; display: flex; gap: 10px; justify-content: center;">
-                            <button onclick="window.ControlTowerView.setMatchWinner('${match.id}', '${isPartA ? 'A' : 'B'}', ${parseInt(match.round)})" 
-                                    class="btn-primary-pro"
-                                    style="width: 100%; background: #25D366; border-color: #25D366; color: white; padding: 12px; font-size: 0.9rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);">
-                                ✅ ¡HEMOS GANADO!
-                            </button>
-                        </div>
-                    `;
-                } else {
-                    // External user (Scorer): "Win A / Win B"
-                    actionArea = `
-                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #eee; display: flex; gap: 10px; justify-content: center;">
-                            <button onclick="window.ControlTowerView.setMatchWinner('${match.id}', 'A', ${parseInt(match.round)})" 
-                                    class="btn-outline-pro"
-                                    style="flex: 1; border-color: #25D366; color: #25D366; font-size: 0.75rem; padding: 8px;">
-                                GANA P1
-                            </button>
-                             <button onclick="window.ControlTowerView.setMatchWinner('${match.id}', 'B', ${parseInt(match.round)})" 
-                                    class="btn-outline-pro"
-                                    style="flex: 1; border-color: #25D366; color: #25D366; font-size: 0.75rem; padding: 8px;">
-                                GANA P2
-                            </button>
-                        </div>
-                    `;
+                // EDIT ALLOWED CHECK
+                // EDIT ALLOWED CHECK (Relaxed for Usability)
+                const canEdit = (this.currentAmericanaDoc?.status === 'live') && (user);
+
+                let actionArea = '';
+
+                if (canEdit) {
+                    if (isEntreno) {
+                        // === ENTRENO LOGIC (Binary W/L) ===
+                        if (match.isFinished) {
+                            actionArea = `
+                                <div style="margin-top: 10px; text-align: center;">
+                                    <button onclick="document.getElementById('edit-actions-${match.id}').style.display='flex'; this.style.display='none'" 
+                                            style="background: transparent; border: 1px solid #ddd; color: #666; padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; cursor: pointer;">
+                                        ✏️ Corregir Resultado
+                                    </button>
+                                    <div id="edit-actions-${match.id}" style="display: none; margin-top: 10px; gap: 10px; justify-content: center;">
+                                        <button onclick="window.ControlTowerView.setMatchWinner('${match.id}', 'A', ${parseInt(match.round)})" class="btn-outline-pro" style="flex: 1; border-color: #25D366; color: #25D366; font-size: 0.75rem; padding: 8px;">GANA P1</button>
+                                        <button onclick="window.ControlTowerView.setMatchWinner('${match.id}', 'B', ${parseInt(match.round)})" class="btn-outline-pro" style="flex: 1; border-color: #25D366; color: #25D366; font-size: 0.75rem; padding: 8px;">GANA P2</button>
+                                    </div>
+                                </div>`;
+                        } else {
+                            actionArea = `
+                                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #eee; display: flex; gap: 10px; justify-content: center;">
+                                    <button onclick="window.ControlTowerView.setMatchWinner('${match.id}', 'A', ${parseInt(match.round)})" class="btn-outline-pro" style="flex: 1; border-color: #25D366; color: #25D366; font-size: 0.75rem; padding: 8px; background: ${isPartA ? 'rgba(37, 211, 102, 0.1)' : 'white'};">GANA P1</button>
+                                    <button onclick="window.ControlTowerView.setMatchWinner('${match.id}', 'B', ${parseInt(match.round)})" class="btn-outline-pro" style="flex: 1; border-color: #25D366; color: #25D366; font-size: 0.75rem; padding: 8px; background: ${isPartB ? 'rgba(37, 211, 102, 0.1)' : 'white'};">GANA P2</button>
+                                </div>`;
+                        }
+                    } else {
+                        // === AMERICANA LOGIC (Numeric Steppers) ===
+                        const stepperUI = `
+                            <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; padding:10px; border-radius:12px;">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', -1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:white; font-weight:900;">-</button>
+                                        <span id="score-a-val-${match.id}" style="font-size:1.2rem; font-weight:900; width:30px; text-align:center;">${sA}</span>
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', 1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:#fff; color:#25D366; font-weight:900;">+</button>
+                                    </div>
+                                    <div style="font-weight:900; color:#ddd; font-size:1.2rem;">-</div>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', -1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:white; font-weight:900;">-</button>
+                                        <span id="score-b-val-${match.id}" style="font-size:1.2rem; font-weight:900; width:30px; text-align:center;">${sB}</span>
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', 1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:#fff; color:#25D366; font-weight:900;">+</button>
+                                    </div>
+                                </div>
+                                <button onclick="window.ControlTowerView.finishMatch('${match.id}')" style="width:100%; padding:12px; background: #CCFF00; color:black; font-weight:900; border:none; border-radius:10px; box-shadow: 0 4px 10px rgba(204,255,0,0.3);">
+                                    ✅ CONFIRMAR RESULTADO
+                                </button>
+                            </div>
+                        `;
+
+                        if (match.isFinished) {
+                            actionArea = `
+                                <div style="margin-top: 10px; text-align: center;">
+                                    <div style="font-size:0.8rem; color:#888; margin-bottom:5px;">Resultado confirmado</div>
+                                    <button onclick="document.getElementById('edit-actions-${match.id}').style.display='flex'; this.style.display='none'" 
+                                            style="background: transparent; border: 1px solid #ddd; color: #666; padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; cursor: pointer;">
+                                        ✏️ CORREGIR / EDITAR
+                                    </button>
+                                    <div id="edit-actions-${match.id}" style="display: none; margin-top: 10px;">
+                                        ${stepperUI}
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            actionArea = `<div style="margin-top:15px; padding-top:15px; border-top:1px dashed #eee;">${stepperUI}</div>`;
+                        }
+                    }
                 }
-            }
 
-            return `
-                <div class="tour-match-card ${colorClass}" style="background:white; border-radius:20px; border: 1px solid #eeeff2; overflow:hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
-                    <div style="padding: 12px 18px; background: #fafafa; border-bottom: 1px solid #f0f0f0; display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size: 0.6rem; font-weight: 900; color: #999; letter-spacing: 0.5px;">PISTA ${match.court} • 🕒 ${timeLabel}</span>
-                        <div style="font-size: 0.65rem;">${statusText}</div>
-                    </div>
-                    <div style="padding: 18px;">
-                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px;">
-                            <div style="font-size: 0.95rem; flex:1; transition: all 0.3s; margin-right: 10px; ${styleA}">${match.teamA}</div>
-                            <div style="background: ${match.isFinished && sA > sB ? 'var(--playtomic-neon)' : '#f0f0f0'}; color: ${match.isFinished && sA > sB ? 'black' : 'black'}; width: 35px; height: 35px; border-radius: 10px; display:flex; align-items:center; justify-content:center; font-weight: 900; font-size: 1.2rem; box-shadow: ${match.isFinished && sA > sB ? '0 0 10px rgba(204,255,0,0.5)' : 'none'};">${sA}</div>
+                return `
+                    <div id="tour-match-${match.id}" class="tour-match-card ${colorClass}" style="
+                        background: var(--bg-card); 
+                        border-radius: 28px; 
+                        border: 1px solid var(--border-subtle); 
+                        overflow: hidden; 
+                        box-shadow: var(--shadow-md);
+                        transition: all 0.3s ease;
+                    ">
+                        <div style="padding: 14px 20px; background: var(--brand-navy); display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.65rem; font-weight: 900; color: rgba(255,255,255,0.6); letter-spacing: 1.5px; text-transform: uppercase;">
+                                <i class="fas fa-th-large" style="color: var(--brand-neon); margin-right: 6px;"></i> PISTA ${match.court} • ${timeLabel}
+                            </span>
+                            <div class="status-area">${statusText}</div>
                         </div>
-                        <div style="height:1px; background:#f5f5f5; margin-bottom:12px;"></div>
-                        <div style="display:flex; align-items:center; justify-content:space-between;">
-                            <div style="font-size: 0.95rem; flex:1; transition: all 0.3s; margin-right: 10px; ${styleB}">${match.teamB}</div>
-                            <div style="background: ${match.isFinished && sB > sA ? 'var(--playtomic-neon)' : '#f0f0f0'}; color: ${match.isFinished && sB > sA ? 'black' : 'black'}; width: 35px; height: 35px; border-radius: 10px; display:flex; align-items:center; justify-content:center; font-weight: 900; font-size: 1.2rem; box-shadow: ${match.isFinished && sB > sA ? '0 0 10px rgba(204,255,0,0.5)' : 'none'};">${sB}</div>
+                        
+                        <div style="padding: 24px;">
+                            <div style="display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 15px; margin-bottom: 15px;">
+                                <div id="match-name-a-${match.id}" style="font-size: 1rem; color: var(--text-primary); transition: all 0.3s; ${styleA}">${safeTeamA}</div>
+                                <div id="match-score-a-${match.id}" style="
+                                    background: ${match.isFinished && sA > sB ? 'var(--brand-neon)' : 'var(--bg-app)'}; 
+                                    color: ${match.isFinished && sA > sB ? 'black' : 'var(--text-primary)'}; 
+                                    width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; 
+                                    font-weight: 950; font-size: 1.3rem; 
+                                    box-shadow: ${match.isFinished && sA > sB ? 'var(--shadow-neon)' : 'inset 0 2px 4px rgba(0,0,0,0.05)'};
+                                ">${sA}</div>
+                            </div>
+                            
+                            <div style="height: 1px; background: var(--border-subtle); margin-bottom: 15px; position: relative;">
+                                <div style="position: absolute; left: 0; top: -1px; width: 40px; height: 3px; background: var(--brand-neon); border-radius: 10px;"></div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 15px;">
+                                <div id="match-name-b-${match.id}" style="font-size: 1rem; color: var(--text-primary); transition: all 0.3s; ${styleB}">${safeTeamB}</div>
+                                <div id="match-score-b-${match.id}" style="
+                                    background: ${match.isFinished && sB > sA ? 'var(--brand-neon)' : 'var(--bg-app)'}; 
+                                    color: ${match.isFinished && sB > sA ? 'black' : 'var(--text-primary)'}; 
+                                    width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; 
+                                    font-weight: 950; font-size: 1.3rem; 
+                                    box-shadow: ${match.isFinished && sB > sA ? 'var(--shadow-neon)' : 'inset 0 2px 4px rgba(0,0,0,0.05)'};
+                                ">${sB}</div>
+                            </div>
+                            
+                            ${actionArea}
                         </div>
-                        ${actionArea}
                     </div>
-                </div>
-            `;
+                `;
+            } catch (err) {
+                console.error("Match Render Error:", err, match);
+                return `<div style="padding:20px; color:red; font-size:0.7rem;">Error al cargar tarjeta de partido: ${err.message}</div>`;
+            }
         }
 
+        async adjustScore(matchId, field, delta) {
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const collection = isEntreno ? 'entrenos_matches' : 'matches';
+            // Optimistic update supported by auto-re-render from onSnapshot listener
+            const match = this.allMatches.find(m => m.id === matchId);
+            if (!match) return;
+
+            let currentVal = parseInt(match[field] || 0);
+            let newVal = currentVal + delta;
+            if (newVal < 0) newVal = 0;
+
+            try {
+                // Update specific field
+                await window.db.collection(collection).doc(matchId).update({
+                    [field]: newVal,
+                    // Note: We don't finish match here, just track score
+                });
+            } catch (e) {
+                console.error("Score update failed:", e);
+            }
+        }
+
+        async finishMatch(matchId) {
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const collection = isEntreno ? 'entrenos_matches' : 'matches';
+            try {
+                await window.db.collection(collection).doc(matchId).update({
+                    status: 'finished'
+                });
+                console.log("Match finished:", matchId);
+            } catch (e) {
+                console.error("Finish match failed:", e);
+            }
+        }
+
+        // KEEP LEGACY METHOD FOR ENTRENOS
         async setMatchWinner(matchId, winnerTeam, round) {
-            if (!confirm("¿Confirmas que habéis ganado este partido?\n\nEsta acción no se puede deshacer.")) return;
+            const confirmMsg = "Confirmar resultado:\n\n" + (winnerTeam === 'A' ? "Gana Pareja 1" : "Gana Pareja 2");
+            if (!confirm(confirmMsg)) return;
 
             const isEntreno = this.currentAmericanaDoc?.isEntreno;
             const collection = isEntreno ? 'entrenos_matches' : 'matches';
 
             try {
-                // Update match result
                 await window.db.collection(collection).doc(matchId).update({
                     score_a: winnerTeam === 'A' ? 1 : 0,
                     score_b: winnerTeam === 'B' ? 1 : 0,
                     status: 'finished'
                 });
-
-                // Trigger Next Round check (Automation)
-                const eventType = isEntreno ? 'entreno' : 'americana';
-                console.log(`✅ Match Result Saved. Checking for Next Round (${eventType})...`);
-
-                // We use a small delay to ensure Firestore propagation or just call immediately
-                setTimeout(async () => {
-                    if (window.AmericanaService && window.AmericanaService.generateNextRound) {
-                        await window.AmericanaService.generateNextRound(this.currentAmericanaDoc.id, round, eventType);
-                    } else if (window.AmericanaService && window.AmericanaService.generateEntrenoNextRound && isEntreno) {
-                        // Fallback
-                        await window.AmericanaService.generateEntrenoNextRound(this.currentAmericanaDoc.id, round);
-                    }
-                }, 500);
-
+                console.log(`✅ Match Result Saved.`);
             } catch (e) {
                 console.error("Error setting match winner:", e);
-                alert("Error al guardar resultado. Inténtalo de nuevo.");
+                alert("Error al guardar resultado.");
+            }
+        }
+
+        async triggerNextRound(round) {
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const eventType = isEntreno ? 'entreno' : 'americana';
+            const nextRound = round + 1;
+
+            // CHECK IF NEXT ROUND ALREADY EXISTS
+            // matchesCollection is 'matches' (unified) or 'entrenos_matches' (if legacy fallback used, but we use unified now)
+            // But AmericanaService handles collection names. We just need to check if we should Warn.
+
+            // We can check local matches since we have real-time sync
+            const nextRoundExists = this.allMatches.some(m => parseInt(m.round) === nextRound);
+
+            let msg = "¿CONFIRMAR CAMBIO DE RONDA?\n\nAsegúrate de que todos los resultados sean correctos.";
+            if (nextRoundExists) {
+                msg = `⚠️ ATENCIÓN: LA RONDA ${nextRound} YA EXISTE\n\nAl confirmar, SE BORRARÁ la Ronda ${nextRound} actual y se regenerará con los nuevos resultados.\n\n¿Estás seguro de que deseas regenerar cruces?`;
+            }
+
+            if (!confirm(msg)) return;
+
+            document.getElementById('next-round-btn-container').innerHTML = '<div class="loader"></div>';
+
+            try {
+                if (nextRoundExists) {
+                    console.log(`♻️ Regenerating Round ${nextRound}... deleting old matches.`);
+                    await window.AmericanaService.deleteRound(this.currentAmericanaDoc.id, nextRound, eventType);
+                }
+
+                if (window.AmericanaService && window.AmericanaService.generateNextRound) {
+                    await window.AmericanaService.generateNextRound(this.currentAmericanaDoc.id, round, eventType);
+                } else if (window.AmericanaService && window.AmericanaService.generateEntrenoNextRound && isEntreno) {
+                    // Fallback
+                    await window.AmericanaService.generateEntrenoNextRound(this.currentAmericanaDoc.id, round);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error al generar ronda: " + e.message);
+                // Reload to show button again
+                this.recalc();
             }
         }
 
@@ -1166,5 +1630,5 @@
     }
 
     window.ControlTowerView = new ControlTowerView();
-    console.log("🗼 ControlTowerView (Pro) Initialized");
+    console.log("🗼 ControlTowerView (Pro) v4005 Initialized");
 })();

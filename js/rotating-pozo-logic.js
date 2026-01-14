@@ -34,15 +34,17 @@ const RotatingPozoLogic = {
                 if (m.status === 'finished') {
                     const sA = parseInt(m.score_a || 0);
                     const sB = parseInt(m.score_b || 0);
-                    const teamA = m.team_a_ids || [];
-                    const teamB = m.team_b_ids || [];
+                    const teamA = (m.team_a_ids || []).map(String);
+                    const teamB = (m.team_b_ids || []).map(String);
 
-                    const winners = sA > sB ? teamA : (sB > sA ? teamB : teamA); // Empate premia a Team A (o lógica de sorteo)
+                    const winners = (sA > sB) ? teamA : ((sB > sA) ? teamB : teamA); // Draw favors A
 
                     [...teamA, ...teamB].forEach(id => {
-                        if (playerMap[id]) {
-                            playerMap[id].played = true;
-                            playerMap[id].won = winners.includes(id);
+                        // Find key that matches loosely
+                        const pKey = Object.keys(playerMap).find(k => String(k) === String(id));
+                        if (pKey && playerMap[pKey]) {
+                            playerMap[pKey].played = true;
+                            playerMap[pKey].won = winners.includes(String(id));
                         }
                     });
                 }

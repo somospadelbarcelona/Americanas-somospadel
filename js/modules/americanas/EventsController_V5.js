@@ -136,6 +136,63 @@
                     this.state.users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     if (this.state.activeTab === 'ranking') this.render();
                 });
+
+            // 3. Auto-Start Loop (Every 30s)
+            if (this.autoStartInterval) clearInterval(this.autoStartInterval);
+            this.autoStartInterval = setInterval(() => {
+                this.checkAutoStartEvents();
+                // REMOVED: Force re-render - Now using real-time listeners
+                // if (['events', 'agenda'].includes(this.state.activeTab)) {
+                //     this.render();
+                // }
+            }, 30000); // 30 seconds
+        }
+
+        hasEventStarted(dateStr, timeStr) {
+            if (!dateStr || !timeStr) return false;
+            try {
+                let eventDate;
+                if (dateStr.includes('/')) {
+                    const [day, month, year] = dateStr.split('/');
+                    eventDate = new Date(`${year}-${month}-${day}T${timeStr}:00`);
+                } else {
+                    eventDate = new Date(`${dateStr}T${timeStr}:00`);
+                }
+                const now = new Date();
+                return now >= eventDate;
+            } catch (e) {
+                console.warn("Error parsing date/time:", dateStr, timeStr, e);
+                return false;
+            }
+        }
+
+        checkAutoStartEvents() {
+            if (!this.state.americanas || !this.state.entrenos) return;
+            const allEvents = [
+                ...this.state.americanas.map(e => ({ ...e, type: 'americana' })),
+                ...this.state.entrenos.map(e => ({ ...e, type: 'entreno' }))
+            ];
+            allEvents.forEach(evt => {
+                if (evt.status !== 'open') return;
+
+                // FULL CHECK: Ensure event is full before auto-start
+                const players = evt.players || evt.registeredPlayers || [];
+                const maxCourts = evt.max_courts || 4;
+                const isFull = players.length >= (maxCourts * 4);
+
+                if (this.hasEventStarted(evt.date, evt.time)) {
+                    // Only start if FULL
+                    if (isFull) {
+                        console.log(`⏰ [AutoStart] Event ${evt.name} has started and is FULL.`);
+                        if (window.EventService) {
+                            window.EventService.updateStatus(evt.id, 'live', evt.type)
+                                .catch(err => console.warn(`⚠️ [AutoStart] Silent fail (permissions?):`, err));
+                        }
+                    } else {
+                        console.warn(`⏳ [AutoStart] Event ${evt.name} reached start time but is NOT FULL (${players.length}/${maxCourts * 4}). Waiting.`);
+                    }
+                }
+            });
         }
 
         checkLoading() {
@@ -143,58 +200,11 @@
                 this.state.loading = false;
                 console.log("🎟️ [EventsController_V5] Loading complete. Events:", (this.state.americanas.length + this.state.entrenos.length));
 
-                // NEW: Automatic promotion of full events to 'live'
-                this.promoteFullEventsToLive();
+                // NEW: Automatic promotion check
+                this.checkAutoStartEvents();
 
                 this.render();
-            }
-        }
-
-        /**
-         * Robust time comparison to check if event has started
-         */
-        hasEventStarted(dateStr, timeStr) {
-            if (!dateStr || !timeStr) return false;
-            try {
-                // Combine date and time (assuming date is YYYY-MM-DD and time is HH:MM)
-                const eventDateTime = new Date(`${dateStr}T${timeStr}:00`);
-                const now = new Date();
-                return now >= eventDateTime;
-            } catch (e) {
-                console.error("Error comparing dates:", e);
-                return false;
-            }
-        }
-
-        /**
-         * Scans for open events that are full and started, then promotes them to 'live'
-         */
-        async promoteFullEventsToLive() {
-            const all = this.getAllSortedEvents();
-            const todayStr = this.getTodayStr();
-
-            for (const evt of all) {
-                if (evt.status === 'open') {
-                    const players = evt.players || evt.registeredPlayers || [];
-                    const maxPlayers = (evt.max_courts || 4) * 4;
-                    const isFull = players.length >= maxPlayers;
-                    const hasStarted = this.hasEventStarted(evt.date, evt.time);
-
-                    if (isFull && hasStarted) {
-                        console.log(`🚀 [EventsController] Promoting event ${evt.id} (${evt.name}) to LIVE!`);
-                        try {
-                            const collection = evt.type === 'entreno' ? 'entrenos' : 'americanas';
-                            await window.db.collection(collection).doc(evt.id).update({ status: 'live' });
-
-                            // NEW: Automatically generate matches for the first round
-                            if (window.AmericanaService) {
-                                await window.AmericanaService.generateFirstRoundMatches(evt.id, evt.type || 'americana');
-                            }
-                        } catch (err) {
-                            console.error(`Error promoting event ${evt.id}:`, err);
-                        }
-                    }
-                }
+                this.render();
             }
         }
 
@@ -207,19 +217,60 @@
                 window.navigator.vibrate(15);
             }
 
-            // If switching to results, fetch personal matches
+            // If switching to results, fetch personal matches in real-time
             if (tabName === 'results' && this.state.currentUser) {
                 this.state.loadingResults = true;
                 await this.render();
-                try {
-                    const matches = await window.FirebaseDB.matches.getByPlayer(this.state.currentUser.uid);
-                    this.state.personalMatches = matches;
-                } catch (e) {
-                    console.error("Error fetching personal matches:", e);
-                } finally {
+
+                // Clear previous listeners if any
+                if (this.unsubscribeMatchesA) this.unsubscribeMatchesA();
+                if (this.unsubscribeMatchesB) this.unsubscribeMatchesB();
+                if (this.unsubscribeEntrenosA) this.unsubscribeEntrenosA();
+                if (this.unsubscribeEntrenosB) this.unsubscribeEntrenosB();
+
+                const uid = this.state.currentUser.uid;
+                const updatePersonalMatches = () => {
+                    const all = [
+                        ...(this.state.rawMatchesA || []),
+                        ...(this.state.rawMatchesB || []),
+                        ...(this.state.rawEntrenosA || []),
+                        ...(this.state.rawEntrenosB || [])
+                    ];
+                    // Deduplicate by ID
+                    const unique = [];
+                    const seen = new Set();
+                    all.forEach(m => {
+                        if (!seen.has(m.id)) {
+                            seen.add(m.id);
+                            unique.push(m);
+                        }
+                    });
+
+                    this.state.personalMatches = unique.sort((a, b) => {
+                        const dateA = a.timestamp || a.createdAt || 0;
+                        const dateB = b.timestamp || b.createdAt || 0;
+                        return new Date(dateB) - new Date(dateA);
+                    });
                     this.state.loadingResults = false;
-                    await this.render();
-                }
+                    this.render();
+                };
+
+                this.unsubscribeMatchesA = window.db.collection('matches').where('team_a_ids', 'array-contains', uid).onSnapshot(snap => {
+                    this.state.rawMatchesA = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    updatePersonalMatches();
+                });
+                this.unsubscribeMatchesB = window.db.collection('matches').where('team_b_ids', 'array-contains', uid).onSnapshot(snap => {
+                    this.state.rawMatchesB = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    updatePersonalMatches();
+                });
+                this.unsubscribeEntrenosA = window.db.collection('entrenos_matches').where('team_a_ids', 'array-contains', uid).onSnapshot(snap => {
+                    this.state.rawEntrenosA = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    updatePersonalMatches();
+                });
+                this.unsubscribeEntrenosB = window.db.collection('entrenos_matches').where('team_b_ids', 'array-contains', uid).onSnapshot(snap => {
+                    this.state.rawEntrenosB = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    updatePersonalMatches();
+                });
             } else {
                 await this.render();
             }
@@ -381,7 +432,9 @@
                                 <p style="color: rgba(204,255,0,0.9); font-size: 0.65rem; font-weight: 850; text-transform: uppercase; letter-spacing: 2px; margin: 0; animation: glow-text 2s ease-in-out infinite alternate;">¡Apúntate en tiempo real!</p>
                             </div>
                         </div>
-                        <div style="background: #000; padding: 6px 14px; border-radius: 14px; border: 1.5px solid #00E36D; color: white; font-weight: 950;"><i class="fas fa-bolt" style="color: #00E36D;"></i> ${events.length}</div>
+                        <div style="display:flex; gap: 8px; align-items: center;">
+                             <div style="background: #000; padding: 6px 14px; border-radius: 14px; border: 1.5px solid #00E36D; color: white; font-weight: 950;"><i class="fas fa-bolt" style="color: #00E36D;"></i> ${events.length}</div>
+                        </div>
                     </div>
                     ${filterBarHtml}
                     <div style="padding-bottom: 120px; padding-left:10px; padding-right:10px;">
@@ -638,15 +691,23 @@
 
                 // Enhanced Name Handling with Cache
                 const resolveNames = async (ids, names, defaultLabel) => {
-                    // Try names array first
-                    const cleanNames = Array.isArray(names) ? names.filter(n => n && n !== 'Equipo A' && n !== 'Equipo B') : [];
+                    if (!names) return defaultLabel;
+
+                    let cleanNames = [];
+                    if (Array.isArray(names)) {
+                        cleanNames = names.filter(n => n && n !== 'Equipo A' && n !== 'Equipo B');
+                    } else if (typeof names === 'string') {
+                        // Split by common separators if it's a string
+                        cleanNames = names.split(/[&/]/).map(n => n.trim()).filter(n => n && n !== 'Equipo A' && n !== 'Equipo B');
+                    }
+
                     if (cleanNames.length > 0) {
                         return cleanNames.map(n => {
-                            if (n === user.name || n === user.displayName) return '<span style="color:#CCFF00; font-weight:900;">TÚ</span>';
+                            if (n === user.name || (user.displayName && n === user.displayName)) return '<span style="color:#CCFF00; font-weight:900;">TÚ</span>';
+                            if (n.includes('VACANTE')) return '<span style="color:#FF3B30; font-weight:900;">🔴 VACANTE</span>';
                             return n.split(' ')[0]; // First name only
                         }).join(' & ');
                     }
-                    // Fallback to IDs... (simplified for brevity)
                     return defaultLabel;
                 };
 
@@ -737,9 +798,12 @@
             const todayStr = this.getTodayStr();
             const isPastDate = evt.date < todayStr;
             const hasStarted = this.hasEventStarted(evt.date, evt.time);
-            const isLive = evt.status === 'live' && (hasStarted || isPastDate);
-            // Finished only if explicitly set OR if past date AND not live.
-            // If live, display as live regardless of time until admin closes it.
+            // VISUAL FORCE: If it is 'open' but time has passed, show as live visually
+            const isLive = evt.status === 'live' || (evt.status === 'open' && hasStarted);
+
+            // Finished only if explicitly set OR if past date AND not live (logic check: if isLive is true due to start time, it won't be finished unless explicit)
+            // But if it is significantly past (e.g. yesterday) and still open, we might consider it finished? 
+            // For now, keep simple:
             const isFinished = evt.status === 'finished' || (isPastDate && !isLive);
 
             // Waitlist logic
@@ -757,9 +821,22 @@
                 btnStyle = 'background: #CCFF00; color: #000; box-shadow: 0 4px 15px rgba(204, 255, 0, 0.4); width: 55px; height: 55px;';
                 btnAction = `event.stopPropagation(); window.ControlTowerView.prepareLoad('${evt.id}'); window.Router.navigate('live');`;
             } else if (isLive) {
-                btnContent = '<span style="font-size:0.45rem; font-weight:950; text-align:center; line-height:1.1;">EN<br>JUEGO</span>';
-                btnStyle = 'background: #0ea5e9; color: white; animation: pulse 2s infinite; padding: 0; width: 55px; height: 55px; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);';
-                btnAction = `event.stopPropagation(); window.ControlTowerView.prepareLoad('${evt.id}'); window.Router.navigate('live');`;
+                if (isJoined) {
+                    btnContent = '<span style="font-size:0.45rem; font-weight:950; text-align:center; line-height:1.1;">EN<br>JUEGO</span>';
+                    btnStyle = 'background: #0ea5e9; color: white; animation: pulse 2s infinite; padding: 0; width: 55px; height: 55px; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);';
+                    btnAction = `event.stopPropagation(); window.ControlTowerView.prepareLoad('${evt.id}'); window.Router.navigate('live');`;
+                } else if (!isFull) {
+                    // LIVE BUT VACANCY AVAILABLE -> ALLOW JOIN
+                    // Use pulsing alert style to indicate urgency
+                    btnContent = '<i class="fas fa-plus" style="font-size: 1.4rem;"></i>';
+                    btnStyle = 'background: #FF2D55; color: white; box-shadow: 0 0 20px rgba(255, 45, 85, 0.6); animation: pulse-neon-btn 1s infinite;';
+                    btnAction = `event.stopPropagation(); window.EventsController.joinEvent('${evt.id}', '${evt.type || 'americana'}')`;
+                } else {
+                    // Live and Full -> Just View
+                    btnContent = '<span style="font-size:0.45rem; font-weight:950; text-align:center; line-height:1.1;">EN<br>JUEGO</span>';
+                    btnStyle = 'background: #0ea5e9; color: white; animation: pulse 2s infinite; padding: 0; width: 55px; height: 55px; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);';
+                    btnAction = `event.stopPropagation(); window.ControlTowerView.prepareLoad('${evt.id}'); window.Router.navigate('live');`;
+                }
             } else if (isJoined) {
                 btnContent = '<i class="fas fa-check"></i>';
                 btnStyle = 'background: white; color: #84cc16; border: 2px solid #84cc16; box-shadow: 0 4px 15px rgba(132, 204, 22, 0.3);';
@@ -868,8 +945,34 @@
                         <h3 style="color: ${isLight ? '#0f172a' : 'white'}; font-size: 1.3rem; font-weight: 950; margin: 0 0 20px 0; line-height: 1.2; padding-right: 60px; letter-spacing: -0.5px;">${evt.name}</h3>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 0.75rem; font-weight: 850;">
-                            <div style="display: flex; align-items: center; gap: 8px; color: ${isLight ? '#64748b' : '#aaa'};">
-                                <i class="far fa-clock" style="color: #CCFF00; font-size: 0.9rem;"></i> ${evt.time || '00:00'} h
+                            <div style="display: flex; align-items: center; gap: 8px; color: ${isLight ? '#64748b' : '#aaa'};" title="Horario: ${evt.time || '00:00'} a ${(() => {
+                    try {
+                        const [h, m] = (evt.time || '00:00').split(':').map(Number);
+                        let totalMin = h * 60 + m;
+                        const dur = evt.duration || '1h 30m';
+                        const hMatch = dur.match(/(\d+)h/);
+                        const mMatch = dur.match(/(\d+)m/);
+                        if (hMatch) totalMin += parseInt(hMatch[1]) * 60;
+                        if (mMatch) totalMin += parseInt(mMatch[1]);
+                        const endH = Math.floor(totalMin / 60) % 24;
+                        const endM = totalMin % 60;
+                        return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+                    } catch (e) { return '??:??'; }
+                })()}">
+                                <i class="far fa-clock" style="color: #CCFF00; font-size: 0.9rem;"></i> ${evt.time || '00:00'} - ${evt.time_end ? evt.time_end : (() => {
+                    try {
+                        const [h, m] = (evt.time || '00:00').split(':').map(Number);
+                        let totalMin = h * 60 + m;
+                        const dur = evt.duration || '1h 30m';
+                        const hMatch = dur.match(/(\d+)h/);
+                        const mMatch = dur.match(/(\d+)m/);
+                        if (hMatch) totalMin += parseInt(hMatch[1]) * 60;
+                        if (mMatch) totalMin += parseInt(mMatch[1]);
+                        const endH = Math.floor(totalMin / 60) % 24;
+                        const endM = totalMin % 60;
+                        return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+                    } catch (e) { return '??:??'; }
+                })()}
                             </div>
                             <div style="display: flex; align-items: center; gap: 8px; color: ${catColor};">
                                 <i class="fas ${catIcon}" style="font-size: 0.9rem;"></i> ${categoryLabel}
@@ -912,17 +1015,11 @@
         async openPlayerListModal(eventId) {
             console.log("🎟️ [EventsController_V5] Opening player list for:", eventId);
 
-            // Find the event in our state to get the players
             const allEvents = this.getAllSortedEvents();
             const evt = allEvents.find(e => e.id === eventId);
-
-            if (!evt) {
-                console.error("Event not found for list modal:", eventId);
-                return;
-            }
+            if (!evt) return;
 
             const rawPlayers = evt.players || evt.registeredPlayers || [];
-            // Robust unique player resolving
             const seenIds = new Set();
             let players = rawPlayers.filter(p => {
                 const id = (typeof p === 'string') ? p : (p.uid || p.id);
@@ -933,39 +1030,33 @@
                 return false;
             });
 
-            // --- HYDRATION LOGIC ---
-            // If any player is just a string or missing name/level, hydrate them
-            const needsHydration = players.some(p => typeof p === 'string' || !p.name || p.name === 'JUGADOR');
+            // Hydration helper
+            const playersDict = {};
+            try {
+                const allPlayersSnapshot = await window.db.collection('players').get();
+                allPlayersSnapshot.forEach(doc => { playersDict[doc.id] = { id: doc.id, ...doc.data() }; });
+            } catch (err) { console.error("Error fetching players for hydration:", err); }
 
-            if (needsHydration) {
-                console.log("💧 [EventsController_V5] Hydrating player data...");
+            const hydratedPlayers = players.map(p => {
+                const id = (typeof p === 'string') ? p : (p.uid || p.id);
+                const fullData = playersDict[id] || {};
+                return {
+                    id: id,
+                    name: fullData.name || p.name || 'JUGADOR',
+                    level: fullData.level || fullData.playtomic_level || p.level || 3.5,
+                    photoURL: fullData.photoURL || p.photoURL || null,
+                    joinedAt: p.joinedAt || null
+                };
+            });
+
+            const formatJoinedAt = (iso) => {
+                if (!iso) return "CONFIRMADO";
                 try {
-                    // Fetch all registered players to use as a dictionary
-                    const allPlayersSnapshot = await window.db.collection('players').get();
-                    const playersDict = {};
-                    allPlayersSnapshot.forEach(doc => {
-                        playersDict[doc.id] = { id: doc.id, ...doc.data() };
-                    });
-
-                    players = players.map(p => {
-                        const id = (typeof p === 'string') ? p : (p.uid || p.id);
-                        const fullData = playersDict[id];
-                        if (fullData) {
-                            return {
-                                id: id,
-                                uid: id,
-                                name: fullData.name || 'JUGADOR',
-                                level: fullData.level || fullData.playtomic_level || 3.5,
-                                gender: fullData.gender || '?'
-                            };
-                        }
-                        return (typeof p === 'string') ? { id: p, name: 'JUGADOR' } : p;
-                    });
-                } catch (err) {
-                    console.error("Error hydrating players:", err);
-                }
-            }
-            // -----------------------
+                    const d = new Date(iso);
+                    const days = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+                    return `${days[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                } catch (e) { return "CONFIRMADO"; }
+            };
 
             const modalId = 'player-list-modal';
             const existingModal = document.getElementById(modalId);
@@ -976,80 +1067,64 @@
             modal.style.cssText = `
                 position: fixed; top: 0; left: 0; width: 100%; height: 100%;
                 background: radial-gradient(circle at center, #001a4d 0%, #000 100%);
-                z-index: 20000; display: flex; flex-direction: column;
+                z-index: 99999; display: flex; flex-direction: column;
                 animation: fadeInModal 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-                font-family: 'Inter', 'Outfit', sans-serif;
-                color: white;
-                overflow: hidden;
+                font-family: 'Inter', 'Outfit', sans-serif; color: white; overflow: hidden;
             `;
 
-            const content = `
-                <!-- BACKGROUND FX -->
+            modal.innerHTML = `
                 <div style="position: absolute; inset: 0; pointer-events: none; z-index: 1;">
                     <div style="position: absolute; inset: 0; background: radial-gradient(circle at 50% -20%, rgba(30, 64, 175, 0.4) 0%, transparent 70%);"></div>
                     <div style="position: absolute; inset: 0; background: linear-gradient(rgba(255, 255, 255, 0.03) 50%, transparent 50%); background-size: 100% 4px;"></div>
                 </div>
 
-                <!-- FOX HEADER -->
-                <div style="
-                    position: relative; z-index: 10;
-                    background: linear-gradient(90deg, #1e40af 0%, #001a4d 60%, #000 100%);
-                    padding: 45px 30px 35px;
-                    border-bottom: 5px solid #00E36D;
-                    box-shadow: 0 15px 50px rgba(0,0,0,0.6);
-                    display: flex; align-items: flex-end; justify-content: space-between;
-                ">
+                <div style="position: relative; z-index: 10; background: linear-gradient(90deg, #1e40af 0%, #001a4d 60%, #000 100%); padding: 45px 30px 35px; border-bottom: 5px solid #00E36D; box-shadow: 0 15px 50px rgba(0,0,0,0.6); display: flex; align-items: flex-end; justify-content: space-between;">
                     <div>
                         <div style="background: white; color: #1e40af; display: inline-block; padding: 4px 15px; font-weight: 900; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2.5px; transform: skew(-15deg); margin-bottom: 18px;">SOMOSPADEL LIVE</div>
                         <h2 style="margin: 0; font-size: 2.2rem; font-weight: 950; text-transform: uppercase; line-height: 0.9; color: white;">PARTICIPANTES <br> <span style="color: #00E36D;">CONFIRMADOS</span></h2>
                     </div>
-                    <div style="text-align: right; border-left: 2px solid rgba(255,255,255,0.15); padding-left: 25px;">
-                        <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); text-transform: uppercase;">TOTAL</div>
-                        <div style="font-size: 4rem; font-weight: 950; line-height: 0.8; margin-top: 5px; color: white;">${players.length}</div>
-                    </div>
-                </div>
-
-                <!-- PLAYER GRID -->
-                <div style="position: relative; z-index: 5; flex: 1; overflow-y: auto; padding: 30px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px;">
-                    ${players.length === 0 ? '<div style="grid-column:1/-1; text-align:center; padding:100px; opacity:0.5;">Cargando...</div>' : players.map((p, i) => {
-                const lvl = parseFloat(p.level || p.playtomic_level || 3.5);
-                const lvlColor = lvl >= 4.5 ? '#FF2D55' : (lvl >= 4 ? '#FFCC00' : '#00E36D');
-                return `
-                        <div style="background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-top: 4px solid ${lvlColor}; border-radius: 12px; padding: 20px 10px; text-align: center; animation: enterCard 0.5s ease-out forwards; opacity:0; animation-delay:${i * 0.05}s;">
-                            <div style="position: absolute; top: 10px; right: 8px; background: ${lvlColor}; color: #000; font-size: 0.7rem; font-weight: 950; padding: 2px 6px; border-radius: 4px;">${lvl.toFixed(2)}</div>
-                            <div style="width: 60px; height: 60px; margin: 0 auto 15px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid rgba(255,255,255,0.1);">
-                                <i class="fas fa-user-ninja" style="font-size: 2rem; color: #1e40af;"></i>
-                            </div>
-                            <div style="font-size: 0.85rem; font-weight: 950; color: white; text-transform: uppercase;">${p.name ? p.name.split(' ')[0] : 'JUGADOR'}</div>
-                            <div style="font-size: 0.6rem; color: #888; margin-top: 4px;">VERIFICADO</div>
-                        </div>`;
-            }).join('')}
-                </div>
-
-                <!-- TICKER -->
-                <div style="background: #000; height: 40px; border-top: 2px solid #CCFF00; display: flex; align-items: center; position: relative; z-index: 10;">
-                    <div style="background: #CCFF00; color: black; font-weight: 950; font-size: 0.7rem; padding: 0 15px; height: 100%; display: flex; align-items: center; z-index: 20;">TICKER EN VIVO</div>
-                    <div style="flex: 1; overflow: hidden; white-space: nowrap;">
-                        <div style="display: inline-block; animation: newsTicker 30s linear infinite; color: white; font-weight: 800; font-size: 0.8rem; padding-left: 100%;">
-                            • NIVEL MEDIO: ${(players.reduce((a, b) => a + (parseFloat(b.level) || 3.5), 0) / (players.length || 1)).toFixed(2)} 
-                            ${players.map(p => `• ${p.name ? p.name.toUpperCase() : 'JUGADOR'} (LVL: ${(parseFloat(p.level || p.playtomic_level || 3.5)).toFixed(2)})`).join(' ')}
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 15px;">
+                        <button onclick="this.closest('#player-list-modal').remove()" style="background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); color: white; width: 45px; height: 45px; border-radius: 12px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px); margin-bottom: 10px;">&times;</button>
+                        <div style="text-align: right; border-left: 2px solid rgba(255,255,255,0.15); padding-left: 25px;">
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); text-transform: uppercase;">TOTAL</div>
+                            <div style="font-size: 4rem; font-weight: 950; line-height: 0.8; margin-top: 5px; color: white;">${hydratedPlayers.length}</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- EXIT BUTTON -->
-                <div style="background: #000; padding: 20px; text-align: center; border-top: 1px solid #222; position: relative; z-index: 10;">
-                    <button onclick="document.getElementById('${modalId}').remove()" style="background: #00E36D; color: black; border: none; padding: 15px 80px; border-radius: 12px; font-weight: 950; text-transform: uppercase; cursor: pointer; box-shadow: 0 0 20px rgba(0,227,109,0.4);">SALIR</button>
+                <div style="position: relative; z-index: 5; flex: 1; overflow-y: auto; padding: 30px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px;">
+                    ${hydratedPlayers.map((p, i) => {
+                const lvl = parseFloat(p.level || 3.5);
+                const lvlColor = lvl >= 4.5 ? '#FF2D55' : (lvl >= 4 ? '#FFCC00' : '#00E36D');
+                return `
+                        <div style="background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-top: 4px solid ${lvlColor}; border-radius: 16px; padding: 22px 12px; text-align: center; animation: enterCard 0.5s ease-out forwards; opacity:0; animation-delay:${i * 0.04}s; position: relative;">
+                            <div style="position: absolute; top: 10px; right: 8px; background: ${lvlColor}; color: #000; font-size: 0.7rem; font-weight: 950; padding: 2px 6px; border-radius: 4px; box-shadow: 0 0 10px ${lvlColor}44;">${lvl.toFixed(2)}</div>
+                            <div style="width: 70px; height: 70px; margin: 0 auto 15px; background: #1a1a1a; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
+                                ${p.photoURL ? `<img src="${p.photoURL}" style="width:100%; height:100%; object-fit:cover;">` : `<i class="fas fa-user-ninja" style="font-size: 2.2rem; color: #1e40af;"></i>`}
+                            </div>
+                            <div style="font-size: 0.85rem; font-weight: 950; color: white; text-transform: uppercase; margin-bottom: 6px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${p.name}</div>
+                            <div style="font-size: 0.6rem; color: #CCFF00; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${formatJoinedAt(p.joinedAt)}</div>
+                        </div>`;
+            }).join('')}
                 </div>
 
-                <style>
-                    @keyframes fadeInModal { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: scale(1); } }
-                    @keyframes enterCard { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-                    @keyframes newsTicker { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+                <div style="background: #000; height: 45px; border-top: 2px solid #CCFF00; display: flex; align-items: center; position: relative; z-index: 10;">
+                    <div style="background: #CCFF00; color: black; font-weight: 950; font-size: 0.75rem; padding: 0 20px; height: 100%; display: flex; align-items: center; z-index: 20; skew(-15deg);">INFO LIVE</div>
+                    <div style="flex: 1; overflow: hidden; white-space: nowrap;">
+                        <div style="display: inline-block; animation: newsTicker 30s linear infinite; color: white; font-weight: 800; font-size: 0.85rem; padding-left: 100%;">
+                            • NIVEL MEDIO: ${(hydratedPlayers.reduce((a, b) => a + (parseFloat(b.level) || 3.5), 0) / (hydratedPlayers.length || 1)).toFixed(2)} 
+                            ${hydratedPlayers.map(p => `• ${p.name.toUpperCase()} (LVL: ${(parseFloat(p.level || 3.5)).toFixed(2)})`).join(' ')}
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: #000; padding: 25px; text-align: center; border-top: 1px solid #222; position: relative; z-index: 10;">
+                    <button onclick="document.getElementById('${modalId}').remove()" style="background: #00E36D; color: black; border: none; padding: 16px 100px; border-radius: 14px; font-weight: 950; text-transform: uppercase; cursor: pointer; box-shadow: 0 0 25px rgba(0,227,109,0.5); letter-spacing: 1px; transition: all 0.2s;">SALIR</button>
+                </div>
+
                 </style>
             `;
 
-            modal.innerHTML = content;
             document.body.appendChild(modal);
         }
 
