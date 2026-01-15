@@ -6,6 +6,28 @@
 (function () {
     console.log("🔥 [EventsController_V5] SCRIPT LOADED AND EXECUTING!");
 
+    // Global handler for results navigation - USE PREMIUM CONTROLTOWER VIEW
+    window.openResultsView = (id) => {
+        console.log("🚀 [EventsController] Opening Results for:", id);
+
+        // Wait for ControlTowerView to be ready
+        const waitForControlTower = (attempts = 0) => {
+            if (window.ControlTowerView && typeof window.ControlTowerView.prepareLoad === 'function') {
+                console.log("✅ ControlTowerView ready, loading event");
+                window.ControlTowerView.prepareLoad(id);
+                window.Router.navigate('live');
+            } else if (attempts < 20) {
+                console.log(`⏳ Waiting for ControlTowerView... (attempt ${attempts + 1})`);
+                setTimeout(() => waitForControlTower(attempts + 1), 100);
+            } else {
+                console.error("❌ ControlTowerView not available, using fallback");
+                window.location.href = `resultados.html?id=${id}`;
+            }
+        };
+
+        waitForControlTower();
+    };
+
     class EventsController {
         constructor() {
             this.state = {
@@ -285,9 +307,9 @@
 
             // --- 1. SUBMENU NAVIGATION ---
             const tabs = [
-                { id: 'events', label: 'DISPONIBLES', icon: 'fa-trophy' },
+                { id: 'entrenos', label: 'ENTRENOS', icon: 'fa-user-graduate' },
+                { id: 'events', label: 'AMERICANAS', icon: 'fa-trophy' },
                 { id: 'agenda', label: 'AGENDA', icon: 'fa-circle' },
-                { id: 'results', label: 'MIS RESULTADOS', icon: 'fa-poll' },
                 { id: 'finished', label: 'FINALIZADAS', icon: 'fa-history' }
             ];
 
@@ -368,7 +390,8 @@
                 contentHtml = '<div style="padding:40px; text-align:center;"><div class="loader"></div><p style="color:#888; margin-top:10px;">Cargando datos...</p></div>';
             } else {
                 switch (this.state.activeTab) {
-                    case 'events': contentHtml = this.renderEventsList(false); break;
+                    case 'events': contentHtml = this.renderEventsList(false, false); break;
+                    case 'entrenos': contentHtml = this.renderEventsList(false, true); break;
                     case 'agenda': contentHtml = this.renderAgendaView(); break;
                     case 'results':
                         contentHtml = await this.renderResultsView();
@@ -381,7 +404,7 @@
             console.log("✅ [EventsController_V5] Content rendered successfully");
         }
 
-        renderEventsList(onlyMine) {
+        renderEventsList(onlyMine, onlyEntrenos = false) {
             let events = this.getAllSortedEvents();
             const { month, category } = this.state.filters;
             const uid = this.state.currentUser ? this.state.currentUser.uid : null;
@@ -391,9 +414,13 @@
                 // Show 'open' OR 'live' events in DISPONIBLES.
                 // Filter out 'finished' events and those from significantly older days (yesterday).
                 events = events.filter(e => {
+                    const isCorrectType = onlyEntrenos ? e.type === 'entreno' : e.type === 'americana';
+
+                    // CRITICAL: Finished events MUST only show in "FINALIZADAS" tab.
                     if (e.status === 'finished') return false;
-                    if (e.status === 'live') return true; // Keep live events visible
-                    return e.date >= todayStr;
+
+                    if (e.status === 'live') return isCorrectType; // Keep live events visible
+                    return e.date >= todayStr && isCorrectType;
                 });
             } else if (onlyMine) {
                 if (!uid) return `<div style="text-align:center; padding:40px; color:#888;">Debes iniciar sesión.</div>`;
@@ -816,10 +843,12 @@
             let btnAction = `event.stopPropagation(); window.EventsController.joinEvent('${evt.id}', '${evt.type || 'americana'}')`;
             let btnDisabled = false;
 
+
+
             if (isFinished) {
                 btnContent = '<div style="display:flex; flex-direction:column; align-items:center; line-height:1; gap:2px;"><i class="fas fa-poll" style="font-size: 1rem;"></i><span style="font-size:0.45rem; font-weight:950; text-align:center;">VER<br>RESULTADOS</span></div>';
                 btnStyle = 'background: #CCFF00; color: #000; box-shadow: 0 4px 15px rgba(204, 255, 0, 0.4); width: 55px; height: 55px;';
-                btnAction = `event.stopPropagation(); window.ControlTowerView.prepareLoad('${evt.id}'); window.Router.navigate('live');`;
+                btnAction = `event.stopPropagation(); window.openResultsView('${evt.id}');`;
             } else if (isLive) {
                 if (isJoined) {
                     btnContent = '<span style="font-size:0.45rem; font-weight:950; text-align:center; line-height:1.1;">EN<br>JUEGO</span>';
@@ -1030,34 +1059,7 @@
                 return false;
             });
 
-            // Hydration helper
-            const playersDict = {};
-            try {
-                const allPlayersSnapshot = await window.db.collection('players').get();
-                allPlayersSnapshot.forEach(doc => { playersDict[doc.id] = { id: doc.id, ...doc.data() }; });
-            } catch (err) { console.error("Error fetching players for hydration:", err); }
-
-            const hydratedPlayers = players.map(p => {
-                const id = (typeof p === 'string') ? p : (p.uid || p.id);
-                const fullData = playersDict[id] || {};
-                return {
-                    id: id,
-                    name: fullData.name || p.name || 'JUGADOR',
-                    level: fullData.level || fullData.playtomic_level || p.level || 3.5,
-                    photoURL: fullData.photoURL || p.photoURL || null,
-                    joinedAt: p.joinedAt || null
-                };
-            });
-
-            const formatJoinedAt = (iso) => {
-                if (!iso) return "CONFIRMADO";
-                try {
-                    const d = new Date(iso);
-                    const days = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
-                    return `${days[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-                } catch (e) { return "CONFIRMADO"; }
-            };
-
+            // Create Modal Shell Immediately (UX: Fast Feedback)
             const modalId = 'player-list-modal';
             const existingModal = document.getElementById(modalId);
             if (existingModal) existingModal.remove();
@@ -1073,59 +1075,147 @@
             `;
 
             modal.innerHTML = `
-                <div style="position: absolute; inset: 0; pointer-events: none; z-index: 1;">
-                    <div style="position: absolute; inset: 0; background: radial-gradient(circle at 50% -20%, rgba(30, 64, 175, 0.4) 0%, transparent 70%);"></div>
-                    <div style="position: absolute; inset: 0; background: linear-gradient(rgba(255, 255, 255, 0.03) 50%, transparent 50%); background-size: 100% 4px;"></div>
+                <!-- Background Effects -->
+                <div style="position: absolute; inset: 0; pointer-events: none; z-index: 1; overflow: hidden;">
+                    <div style="position: absolute; top: -10%; left: -10%; width: 120%; height: 120%; background: radial-gradient(circle at 50% 0%, rgba(204, 255, 0, 0.15) 0%, transparent 70%);"></div>
+                    <div style="position: absolute; inset: 0; background: linear-gradient(rgba(255, 255, 255, 0.02) 50%, transparent 50%); background-size: 100% 4px; opacity: 0.3;"></div>
                 </div>
 
-                <div style="position: relative; z-index: 10; background: linear-gradient(90deg, #1e40af 0%, #001a4d 60%, #000 100%); padding: 45px 30px 35px; border-bottom: 5px solid #00E36D; box-shadow: 0 15px 50px rgba(0,0,0,0.6); display: flex; align-items: flex-end; justify-content: space-between;">
-                    <div>
-                        <div style="background: white; color: #1e40af; display: inline-block; padding: 4px 15px; font-weight: 900; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2.5px; transform: skew(-15deg); margin-bottom: 18px;">SOMOSPADEL LIVE</div>
-                        <h2 style="margin: 0; font-size: 2.2rem; font-weight: 950; text-transform: uppercase; line-height: 0.9; color: white;">PARTICIPANTES <br> <span style="color: #00E36D;">CONFIRMADOS</span></h2>
-                    </div>
-                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 15px;">
-                        <button onclick="this.closest('#player-list-modal').remove()" style="background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); color: white; width: 45px; height: 45px; border-radius: 12px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px); margin-bottom: 10px;">&times;</button>
-                        <div style="text-align: right; border-left: 2px solid rgba(255,255,255,0.15); padding-left: 25px;">
-                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); text-transform: uppercase;">TOTAL</div>
-                            <div style="font-size: 4rem; font-weight: 950; line-height: 0.8; margin-top: 5px; color: white;">${hydratedPlayers.length}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="position: relative; z-index: 5; flex: 1; overflow-y: auto; padding: 30px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px;">
-                    ${hydratedPlayers.map((p, i) => {
-                const lvl = parseFloat(p.level || 3.5);
-                const lvlColor = lvl >= 4.5 ? '#FF2D55' : (lvl >= 4 ? '#FFCC00' : '#00E36D');
-                return `
-                        <div style="background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-top: 4px solid ${lvlColor}; border-radius: 16px; padding: 22px 12px; text-align: center; animation: enterCard 0.5s ease-out forwards; opacity:0; animation-delay:${i * 0.04}s; position: relative;">
-                            <div style="position: absolute; top: 10px; right: 8px; background: ${lvlColor}; color: #000; font-size: 0.7rem; font-weight: 950; padding: 2px 6px; border-radius: 4px; box-shadow: 0 0 10px ${lvlColor}44;">${lvl.toFixed(2)}</div>
-                            <div style="width: 70px; height: 70px; margin: 0 auto 15px; background: #1a1a1a; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
-                                ${p.photoURL ? `<img src="${p.photoURL}" style="width:100%; height:100%; object-fit:cover;">` : `<i class="fas fa-user-ninja" style="font-size: 2.2rem; color: #1e40af;"></i>`}
-                            </div>
-                            <div style="font-size: 0.85rem; font-weight: 950; color: white; text-transform: uppercase; margin-bottom: 6px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${p.name}</div>
-                            <div style="font-size: 0.6rem; color: #CCFF00; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${formatJoinedAt(p.joinedAt)}</div>
-                        </div>`;
-            }).join('')}
-                </div>
-
-                <div style="background: #000; height: 45px; border-top: 2px solid #CCFF00; display: flex; align-items: center; position: relative; z-index: 10;">
-                    <div style="background: #CCFF00; color: black; font-weight: 950; font-size: 0.75rem; padding: 0 20px; height: 100%; display: flex; align-items: center; z-index: 20; skew(-15deg);">INFO LIVE</div>
-                    <div style="flex: 1; overflow: hidden; white-space: nowrap;">
-                        <div style="display: inline-block; animation: newsTicker 30s linear infinite; color: white; font-weight: 800; font-size: 0.85rem; padding-left: 100%;">
-                            • NIVEL MEDIO: ${(hydratedPlayers.reduce((a, b) => a + (parseFloat(b.level) || 3.5), 0) / (hydratedPlayers.length || 1)).toFixed(2)} 
-                            ${hydratedPlayers.map(p => `• ${p.name.toUpperCase()} (LVL: ${(parseFloat(p.level || 3.5)).toFixed(2)})`).join(' ')}
-                        </div>
-                    </div>
-                </div>
-
-                <div style="background: #000; padding: 25px; text-align: center; border-top: 1px solid #222; position: relative; z-index: 10;">
-                    <button onclick="document.getElementById('${modalId}').remove()" style="background: #00E36D; color: black; border: none; padding: 16px 100px; border-radius: 14px; font-weight: 950; text-transform: uppercase; cursor: pointer; box-shadow: 0 0 25px rgba(0,227,109,0.5); letter-spacing: 1px; transition: all 0.2s;">SALIR</button>
-                </div>
-
+                <style>
+                    @keyframes fadeInModal { from { opacity: 0; transform: scale(0.98) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+                    @keyframes enterCard { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+                    @keyframes newsTicker { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
+                    @keyframes pulseNeon { 0% { box-shadow: 0 0 10px rgba(204,255,0,0.2); } 50% { box-shadow: 0 0 25px rgba(204,255,0,0.5); } 100% { box-shadow: 0 0 10px rgba(204,255,0,0.2); } }
+                    @keyframes rotateBall { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                    @keyframes slideHeader { from { transform: translateY(-100%); } to { transform: translateY(0); } }
                 </style>
+
+                <!-- WOW HEADER -->
+                <div style="position: relative; z-index: 10; padding: 40px 25px 30px; background: linear-gradient(to bottom, rgba(0,0,0,0.95), transparent); animation: slideHeader 0.6s cubic-bezier(0.16, 1, 0.3, 1);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                <div style="width: 52px; height: 52px; background: #CCFF00; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 25px #CCFF00; animation: rotateBall 4s linear infinite;">
+                                    <i class="fas fa-baseball-ball" style="color: black; font-size: 1.7rem;"></i>
+                                </div>
+                                <div>
+                                    <h1 style="font-size: 2rem; font-weight: 950; margin: 0; color: white; letter-spacing: -1px; text-transform: uppercase; line-height: 0.9;">
+                                        LISTA DE <span style="color: #CCFF00;">INSCRITOS</span>
+                                    </h1>
+                                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px;">${evt.name}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 15px;">
+                            <button onclick="this.closest('#player-list-modal').remove()" style="background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); color: white; width: 44px; height: 44px; border-radius: 12px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)';" onmouseout="this.style.background='rgba(255,255,255,0.05)';">&times;</button>
+                            <div style="background: rgba(0,0,0,0.5); padding: 12px 20px; border-radius: 16px; border: 1px solid rgba(204,255,0,0.3); text-align: right; box-shadow: 0 0 20px rgba(204,255,0,0.15); animation: pulseNeon 2s infinite;">
+                                <div style="font-size: 0.65rem; color: #CCFF00; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">Total Plazas</div>
+                                <div style="display: flex; align-items: baseline; gap: 4px; justify-content: flex-end;">
+                                    <span id="player-count-display" style="font-size: 2.5rem; font-weight: 950; color: white; line-height: 1;">${players.length}</span>
+                                    <span style="font-size: 1rem; color: rgba(255,255,255,0.4); font-weight: 800;">/ ${(evt.max_courts || 4) * 4}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PLAYERS GRID -->
+                <div id="player-grid-container" style="position: relative; z-index: 5; flex: 1; overflow-y: auto; padding: 10px 25px 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px; scrollbar-width: none;">
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 100px 20px;">
+                        <div class="loader-mini" style="margin: 0 auto 20px; border-top-color: #CCFF00;"></div>
+                        <p style="color: rgba(255,255,255,0.5); font-weight: 800; font-size: 0.8rem; letter-spacing: 2px;">ESCANEANDO JUGADORES...</p>
+                    </div>
+                </div>
+
+                <!-- BOTTOM INFO TICKER -->
+                <div style="background: #000; height: 45px; border-top: 2px solid #CCFF00; display: flex; align-items: center; position: relative; z-index: 10; box-shadow: 0 -10px 30px rgba(0,0,0,0.5);">
+                    <div style="background: #CCFF00; color: black; font-weight: 950; font-size: 0.75rem; padding: 0 20px; height: 100%; display: flex; align-items: center; z-index: 20; letter-spacing: 1px;">SISTEMA LIVE</div>
+                    <div style="flex: 1; overflow: hidden; white-space: nowrap; position: relative; display: flex; align-items: center;">
+                        <div id="player-ticker-content" style="display: inline-block; color: white; font-weight: 800; font-size: 0.8rem; padding-left: 100%;">
+                            • CARGANDO ESTADÍSTICAS EN TIEMPO REAL...
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: rgba(0,0,0,0.98); padding: 30px; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); position: relative; z-index: 10;">
+                    <button onclick="document.getElementById('${modalId}').remove()" style="background: transparent; border: 2px solid rgba(255,255,255,0.2); color: white; padding: 16px 80px; border-radius: 14px; font-weight: 950; text-transform: uppercase; cursor: pointer; letter-spacing: 2px; transition: all 0.3s; font-size: 0.9rem;" onmouseover="this.style.borderColor='#CCFF00'; this.style.color='#CCFF00';" onmouseout="this.style.borderColor='rgba(255,255,255,0.2)'; this.style.color='white';">CERRAR VISTA</button>
+                </div>
             `;
 
             document.body.appendChild(modal);
+
+            // Fetch Hydrated Data in background
+            try {
+                const playerIds = players.map(p => (typeof p === 'string') ? p : (p.uid || p.id));
+                let hydratedPlayers = [];
+
+                if (playerIds.length > 0) {
+                    const chunks = [];
+                    for (let i = 0; i < playerIds.length; i += 30) chunks.push(playerIds.slice(i, i + 30));
+
+                    const snapshots = await Promise.all(chunks.map(chunk =>
+                        window.db.collection('players').where('id', 'in', chunk).get()
+                    ));
+
+                    const playersDict = {};
+                    snapshots.forEach(snap => {
+                        snap.forEach(doc => { playersDict[doc.id] = { id: doc.id, ...doc.data() }; });
+                    });
+
+                    hydratedPlayers = players.map(p => {
+                        const id = (typeof p === 'string') ? p : (p.uid || p.id);
+                        const fullData = playersDict[id] || {};
+                        // Ensure we get joinedAt from the original event player object if possible
+                        const originalJoinedAt = (typeof p === 'object' && p.joinedAt) ? p.joinedAt : null;
+
+                        return {
+                            id: id,
+                            name: fullData.name || p.name || 'JUGADOR',
+                            level: fullData.level || fullData.playtomic_level || p.level || 3.5,
+                            photoURL: fullData.photoURL || p.photoURL || null,
+                            joinedAt: originalJoinedAt
+                        };
+                    });
+                }
+
+                // Render Grid Internal Helper
+                const grid = document.getElementById('player-grid-container');
+                const formatJoinedAt = (iso) => {
+                    if (!iso) return "CONFIRMADO";
+                    try {
+                        const d = new Date(iso);
+                        return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                    } catch (e) { return "CONFIRMADO"; }
+                };
+
+                if (grid) {
+                    grid.innerHTML = hydratedPlayers.map((p, i) => {
+                        const lvl = parseFloat(p.level || 3.5);
+                        const lvlColor = lvl >= 4.5 ? '#FF2D55' : (lvl >= 4 ? '#FFCC00' : '#00E36D');
+                        return `
+                            <div style="background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-bottom: 4px solid ${lvlColor}; border-radius: 24px; padding: 30px 15px 20px; text-align: center; animation: enterCard 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity:0; animation-delay:${i * 0.05}s; position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">
+                                <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: ${lvlColor}; color: #000; font-size: 0.7rem; font-weight: 950; padding: 4px 12px; border-radius: 20px; box-shadow: 0 0 20px ${lvlColor}66;">NIVEL ${lvl.toFixed(2)}</div>
+                                <div style="width: 75px; height: 75px; margin: 0 auto 18px; background: #000; border-radius: 22px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 8px 16px rgba(0,0,0,0.4);">
+                                    ${p.photoURL ? `<img src="${p.photoURL}" style="width:100%; height:100%; object-fit:cover;">` : `<i class="fas fa-user-ninja" style="font-size: 2.2rem; color: #CCFF00; opacity: 0.8;"></i>`}
+                                </div>
+                                <div style="font-size: 0.9rem; font-weight: 950; color: white; text-transform: uppercase; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">${p.name}</div>
+                                <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Confirmado</div>
+                            </div>`;
+                    }).join('');
+                }
+
+                const ticker = document.getElementById('player-ticker-content');
+                if (ticker && hydratedPlayers.length > 0) {
+                    const avgLvl = (hydratedPlayers.reduce((a, b) => a + (parseFloat(b.level) || 3.5), 0) / hydratedPlayers.length).toFixed(2);
+                    ticker.style.animation = 'newsTicker 30s linear infinite';
+                    ticker.innerHTML = `• NIVEL MEDIO: ${avgLvl} ${hydratedPlayers.map(p => `• ${p.name.toUpperCase()} (LVL: ${(parseFloat(p.level || 3.5)).toFixed(2)})`).join(' ')}`;
+                }
+            } catch (err) {
+                console.error("Error hydrating players:", err);
+                const grid = document.getElementById('player-grid-container');
+                if (grid) grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #ff3b30; padding: 20px;">Error al cargar jugadores.</div>`;
+            }
         }
 
         // Helper: Wait for AmericanaService to be ready
