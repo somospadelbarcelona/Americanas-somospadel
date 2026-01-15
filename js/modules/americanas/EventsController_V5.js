@@ -1075,55 +1075,71 @@
             `;
 
             modal.innerHTML = `
-                <div style="position: absolute; inset: 0; pointer-events: none; z-index: 1;">
-                    <div style="position: absolute; inset: 0; background: radial-gradient(circle at 50% -20%, rgba(30, 64, 175, 0.4) 0%, transparent 70%);"></div>
-                    <div style="position: absolute; inset: 0; background: linear-gradient(rgba(255, 255, 255, 0.03) 50%, transparent 50%); background-size: 100% 4px;"></div>
+                <!-- Background Effects -->
+                <div style="position: absolute; inset: 0; pointer-events: none; z-index: 1; overflow: hidden;">
+                    <div style="position: absolute; top: -10%; left: -10%; width: 120%; height: 120%; background: radial-gradient(circle at 50% 0%, rgba(204, 255, 0, 0.15) 0%, transparent 70%);"></div>
+                    <div style="position: absolute; inset: 0; background: linear-gradient(rgba(255, 255, 255, 0.02) 50%, transparent 50%); background-size: 100% 4px; opacity: 0.3;"></div>
                 </div>
 
                 <style>
-                    @keyframes fadeInModal {
-                        from { opacity: 0; transform: scale(0.95); }
-                        to { opacity: 1; transform: scale(1); }
-                    }
-                    @keyframes enterCard {
-                        from { opacity: 0; transform: translateY(20px); }
-                        to { opacity: 1; transform: translateY(0); }
-                    }
-                    @keyframes newsTicker {
-                        from { transform: translateX(0); }
-                        to { transform: translateX(-100%); }
-                    }
+                    @keyframes fadeInModal { from { opacity: 0; transform: scale(0.98) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+                    @keyframes enterCard { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+                    @keyframes newsTicker { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
+                    @keyframes pulseNeon { 0% { box-shadow: 0 0 10px rgba(204,255,0,0.2); } 50% { box-shadow: 0 0 25px rgba(204,255,0,0.5); } 100% { box-shadow: 0 0 10px rgba(204,255,0,0.2); } }
+                    @keyframes rotateBall { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                    @keyframes slideHeader { from { transform: translateY(-100%); } to { transform: translateY(0); } }
                 </style>
 
-
-                    </div>
-                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 15px;">
-                        <button onclick="this.closest('#player-list-modal').remove()" style="background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); color: white; width: 45px; height: 45px; border-radius: 12px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px); margin-bottom: 10px;">&times;</button>
-                        <div style="text-align: right; border-left: 2px solid rgba(255,255,255,0.15); padding-left: 25px;">
-                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); text-transform: uppercase;">TOTAL</div>
-                            <div id="player-count-display" style="font-size: 4rem; font-weight: 950; line-height: 0.8; margin-top: 5px; color: white;">${players.length}</div>
+                <!-- WOW HEADER -->
+                <div style="position: relative; z-index: 10; padding: 40px 25px 30px; background: linear-gradient(to bottom, rgba(0,0,0,0.95), transparent); animation: slideHeader 0.6s cubic-bezier(0.16, 1, 0.3, 1);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                <div style="width: 52px; height: 52px; background: #CCFF00; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 25px #CCFF00; animation: rotateBall 4s linear infinite;">
+                                    <i class="fas fa-baseball-ball" style="color: black; font-size: 1.7rem;"></i>
+                                </div>
+                                <div>
+                                    <h1 style="font-size: 2rem; font-weight: 950; margin: 0; color: white; letter-spacing: -1px; text-transform: uppercase; line-height: 0.9;">
+                                        LISTA DE <span style="color: #CCFF00;">INSCRITOS</span>
+                                    </h1>
+                                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px;">${evt.name}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 15px;">
+                            <button onclick="this.closest('#player-list-modal').remove()" style="background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); color: white; width: 44px; height: 44px; border-radius: 12px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)';" onmouseout="this.style.background='rgba(255,255,255,0.05)';">&times;</button>
+                            <div style="background: rgba(0,0,0,0.5); padding: 12px 20px; border-radius: 16px; border: 1px solid rgba(204,255,0,0.3); text-align: right; box-shadow: 0 0 20px rgba(204,255,0,0.15); animation: pulseNeon 2s infinite;">
+                                <div style="font-size: 0.65rem; color: #CCFF00; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">Total Plazas</div>
+                                <div style="display: flex; align-items: baseline; gap: 4px; justify-content: flex-end;">
+                                    <span id="player-count-display" style="font-size: 2.5rem; font-weight: 950; color: white; line-height: 1;">${players.length}</span>
+                                    <span style="font-size: 1rem; color: rgba(255,255,255,0.4); font-weight: 800;">/ ${(evt.max_courts || 4) * 4}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="player-grid-container" style="position: relative; z-index: 5; flex: 1; overflow-y: auto; padding: 30px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px;">
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 50px;">
-                        <div class="loader-mini" style="margin: 0 auto 20px;"></div>
-                        <p style="color: rgba(255,255,255,0.6); font-weight: 700;">HIDRATANDO JUGADORES...</p>
+                <!-- PLAYERS GRID -->
+                <div id="player-grid-container" style="position: relative; z-index: 5; flex: 1; overflow-y: auto; padding: 10px 25px 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px; scrollbar-width: none;">
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 100px 20px;">
+                        <div class="loader-mini" style="margin: 0 auto 20px; border-top-color: #CCFF00;"></div>
+                        <p style="color: rgba(255,255,255,0.5); font-weight: 800; font-size: 0.8rem; letter-spacing: 2px;">ESCANEANDO JUGADORES...</p>
                     </div>
                 </div>
 
-                <div style="background: #000; height: 45px; border-top: 2px solid #CCFF00; display: flex; align-items: center; position: relative; z-index: 10;">
-                    <div style="background: #CCFF00; color: black; font-weight: 950; font-size: 0.75rem; padding: 0 20px; height: 100%; display: flex; align-items: center; z-index: 20;">INFO LIVE</div>
-                    <div style="flex: 1; overflow: hidden; white-space: nowrap;">
-                        <div id="player-ticker-content" style="display: inline-block; color: white; font-weight: 800; font-size: 0.85rem; padding-left: 100%;">
+                <!-- BOTTOM INFO TICKER -->
+                <div style="background: #000; height: 45px; border-top: 2px solid #CCFF00; display: flex; align-items: center; position: relative; z-index: 10; box-shadow: 0 -10px 30px rgba(0,0,0,0.5);">
+                    <div style="background: #CCFF00; color: black; font-weight: 950; font-size: 0.75rem; padding: 0 20px; height: 100%; display: flex; align-items: center; z-index: 20; letter-spacing: 1px;">SISTEMA LIVE</div>
+                    <div style="flex: 1; overflow: hidden; white-space: nowrap; position: relative; display: flex; align-items: center;">
+                        <div id="player-ticker-content" style="display: inline-block; color: white; font-weight: 800; font-size: 0.8rem; padding-left: 100%;">
                             • CARGANDO ESTADÍSTICAS EN TIEMPO REAL...
                         </div>
                     </div>
                 </div>
 
-                <div style="background: #000; padding: 25px; text-align: center; border-top: 1px solid #222; position: relative; z-index: 10;">
-                    <button onclick="document.getElementById('${modalId}').remove()" style="background: #00E36D; color: black; border: none; padding: 16px 100px; border-radius: 14px; font-weight: 950; text-transform: uppercase; cursor: pointer; box-shadow: 0 0 25px rgba(0,227,109,0.5); letter-spacing: 1px; transition: all 0.2s;">SALIR</button>
+                <div style="background: rgba(0,0,0,0.98); padding: 30px; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); position: relative; z-index: 10;">
+                    <button onclick="document.getElementById('${modalId}').remove()" style="background: transparent; border: 2px solid rgba(255,255,255,0.2); color: white; padding: 16px 80px; border-radius: 14px; font-weight: 950; text-transform: uppercase; cursor: pointer; letter-spacing: 2px; transition: all 0.3s; font-size: 0.9rem;" onmouseover="this.style.borderColor='#CCFF00'; this.style.color='#CCFF00';" onmouseout="this.style.borderColor='rgba(255,255,255,0.2)'; this.style.color='white';">CERRAR VISTA</button>
                 </div>
             `;
 
@@ -1178,13 +1194,13 @@
                         const lvl = parseFloat(p.level || 3.5);
                         const lvlColor = lvl >= 4.5 ? '#FF2D55' : (lvl >= 4 ? '#FFCC00' : '#00E36D');
                         return `
-                            <div style="background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-top: 4px solid ${lvlColor}; border-radius: 16px; padding: 22px 12px; text-align: center; animation: enterCard 0.5s ease-out forwards; opacity:0; animation-delay:${i * 0.04}s; position: relative;">
-                                <div style="position: absolute; top: 10px; right: 8px; background: ${lvlColor}; color: #000; font-size: 0.7rem; font-weight: 950; padding: 2px 6px; border-radius: 4px; box-shadow: 0 0 10px ${lvlColor}44;">${lvl.toFixed(2)}</div>
-                                <div style="width: 70px; height: 70px; margin: 0 auto 15px; background: #1a1a1a; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
-                                    ${p.photoURL ? `<img src="${p.photoURL}" style="width:100%; height:100%; object-fit:cover;">` : `<i class="fas fa-user-ninja" style="font-size: 2.2rem; color: #1e40af;"></i>`}
+                            <div style="background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-bottom: 4px solid ${lvlColor}; border-radius: 24px; padding: 30px 15px 20px; text-align: center; animation: enterCard 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity:0; animation-delay:${i * 0.05}s; position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">
+                                <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: ${lvlColor}; color: #000; font-size: 0.7rem; font-weight: 950; padding: 4px 12px; border-radius: 20px; box-shadow: 0 0 20px ${lvlColor}66;">NIVEL ${lvl.toFixed(2)}</div>
+                                <div style="width: 75px; height: 75px; margin: 0 auto 18px; background: #000; border-radius: 22px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 8px 16px rgba(0,0,0,0.4);">
+                                    ${p.photoURL ? `<img src="${p.photoURL}" style="width:100%; height:100%; object-fit:cover;">` : `<i class="fas fa-user-ninja" style="font-size: 2.2rem; color: #CCFF00; opacity: 0.8;"></i>`}
                                 </div>
-                                <div style="font-size: 0.85rem; font-weight: 950; color: white; text-transform: uppercase; margin-bottom: 6px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${p.name}</div>
-                                <div style="font-size: 0.6rem; color: #CCFF00; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${formatJoinedAt(p.joinedAt)}</div>
+                                <div style="font-size: 0.9rem; font-weight: 950; color: white; text-transform: uppercase; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">${p.name}</div>
+                                <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Confirmado</div>
                             </div>`;
                     }).join('');
                 }
