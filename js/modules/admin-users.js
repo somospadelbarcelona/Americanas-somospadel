@@ -49,6 +49,10 @@ window.AdminViews.users = async function () {
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <div style="font-weight: 700; color: ${isSuper ? '#FFD700' : 'var(--text)'};">${u.name || 'Sin Nombre'}</div>
                                 ${u.membership === 'somospadel_bcn' ? '<span style="font-size:0.6rem; background: var(--primary); color:black; padding: 2px 5px; border-radius:4px; font-weight:700;">COMUNIDAD BCN</span>' : ''}
+                                ${u.team_somospadel ? (Array.isArray(u.team_somospadel)
+                    ? u.team_somospadel.map(t => `<span style="font-size:0.6rem; background: #6366f1; color:white; padding: 2px 5px; border-radius:4px; font-weight:700;">${t.toUpperCase()}</span>`).join(' ')
+                    : `<span style="font-size:0.6rem; background: #6366f1; color:white; padding: 2px 5px; border-radius:4px; font-weight:700;">${u.team_somospadel.toUpperCase()}</span>`
+                ) : ''}
                             </div>
                             <div style="font-size: 0.7rem; font-weight: 500; color: ${isSuper ? '#FFD700' : (u.role === 'admin_player' ? 'var(--primary)' : 'var(--text-muted)')};">
                                 ${roleBadge}
@@ -104,6 +108,10 @@ window.AdminViews.users = async function () {
                     <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05);" onclick="batchResetLevels()">
                         ⚠️ RESET NIVEL 3
                     </button>
+                    <!-- NEW RECALC STATS BUTTON -->
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #eab308; color: #eab308; background: rgba(234, 179, 8, 0.05); margin-left: auto;" onclick="recalculateMatchesPlayed()">
+                        🔄 REPARAR STATS
+                    </button>
 
                     <input type="text" id="global-search" placeholder="Buscar globalmente..." class="pro-input" style="width: 200px; padding: 0.5rem 1rem;" onkeyup="multiFilterUsers()">
                     <button class="btn-primary-pro" style="padding: 0.5rem 1.5rem;" onclick="openCreateUserModal()">+ REGISTRAR</button>
@@ -123,6 +131,17 @@ window.AdminViews.users = async function () {
                     <option value="active">ACTIVO</option>
                     <option value="pending">PENDIENTE</option>
                     <option value="blocked">BLOQUEADO</option>
+                </select>
+                <select id="filter-team" class="pro-input-micro" onchange="multiFilterUsers()">
+                    <option value="">Equipo (Todos)</option>
+                    <option value="3º Masculino A">3º Masculino A</option>
+                    <option value="3º Masculino B">3º Masculino B</option>
+                    <option value="4º Masculino">4º Masculino</option>
+                    <option value="4º Femenino">4º Femenino</option>
+                    <option value="4º Mixto A">4º Mixto A</option>
+                    <option value="4º Mixto B">4º Mixto B</option>
+                    <option value="3º Mixto">3º Mixto</option>
+                    <option value="2º Femenino">2º Femenino</option>
                 </select>
                 <button class="btn-micro" onclick="resetFilters()" style="background: rgba(255,255,255,0.1);">Limpiar</button>
             </div>
@@ -156,6 +175,7 @@ window.AdminViews.users = async function () {
         const fLevel = document.getElementById('filter-level').value.toLowerCase();
         const fGender = document.getElementById('filter-gender').value;
         const fStatus = document.getElementById('filter-status').value;
+        const fTeam = document.getElementById('filter-team').value;
 
         window.filteredUsers = window.allUsersCache.filter(u => {
             const matchesGlobal = !search ||
@@ -167,8 +187,9 @@ window.AdminViews.users = async function () {
             const matchesLevel = !fLevel || (u.level || u.self_rate_level || '3.5').toString().includes(fLevel);
             const matchesGender = !fGender || u.gender === fGender;
             const matchesStatus = !fStatus || u.status === fStatus;
+            const matchesTeam = !fTeam || (Array.isArray(u.team_somospadel) ? u.team_somospadel.includes(fTeam) : u.team_somospadel === fTeam);
 
-            return matchesGlobal && matchesName && matchesPhone && matchesLevel && matchesGender && matchesStatus;
+            return matchesGlobal && matchesName && matchesPhone && matchesLevel && matchesGender && matchesStatus && matchesTeam;
         });
 
         window.renderUserRows(window.filteredUsers);
@@ -183,7 +204,9 @@ window.AdminViews.users = async function () {
         document.getElementById('filter-phone').value = "";
         document.getElementById('filter-level').value = "";
         document.getElementById('filter-gender').value = "";
+        document.getElementById('filter-gender').value = "";
         document.getElementById('filter-status').value = "";
+        document.getElementById('filter-team').value = "";
         window.multiFilterUsers();
     };
 
@@ -247,6 +270,146 @@ window.AdminViews.users = async function () {
     window.resetFilters = resetFilters;
     window.approveUser = approveUser;
     window.exportToExcel = exportToExcel;
+
+    // ==========================================
+    // MODULE: USER MODALS LOGIC
+    // ==========================================
+
+    window.openCreateUserModal = () => {
+        const form = document.getElementById('admin-user-form');
+        form.reset();
+        form.elements['id'].value = ''; // Clear ID for new creation
+        document.getElementById('modal-title').textContent = "Registrar Nuevo Jugador";
+
+        document.getElementById('admin-user-modal').classList.remove('hidden');
+    };
+
+    window.openEditUserModal = (user) => {
+        const form = document.getElementById('admin-user-form');
+        form.reset();
+
+        // Populate fields
+        form.elements['id'].value = user.id;
+        form.elements['name'].value = user.name || '';
+        form.elements['phone'].value = user.phone || '';
+        form.elements['level'].value = user.level || user.self_rate_level || 3.5;
+        form.elements['gender'].value = user.gender || 'chico';
+        form.elements['membership'].value = user.membership || 'externo';
+        form.elements['role'].value = user.role || 'player';
+        form.elements['status'].value = user.status || 'active';
+        form.elements['matches_played'].value = user.matches_played || 0;
+
+        // Populate Team Checkboxes
+        // Limpiar todos primero
+        const checkboxes = form.querySelectorAll('input[name="teams_somospadel_check"]');
+        checkboxes.forEach(cb => cb.checked = false);
+
+        if (user.team_somospadel) {
+            if (Array.isArray(user.team_somospadel)) {
+                user.team_somospadel.forEach(team => {
+                    const cb = Array.from(checkboxes).find(c => c.value === team);
+                    if (cb) cb.checked = true;
+                });
+            } else {
+                // Legacy string support
+                const cb = Array.from(checkboxes).find(c => c.value === user.team_somospadel);
+                if (cb) cb.checked = true;
+            }
+        }
+
+        document.getElementById('modal-title').textContent = `Editar: ${user.name}`;
+        document.getElementById('admin-user-modal').classList.remove('hidden');
+    };
+
+    window.closeAdminModal = () => {
+        document.getElementById('admin-user-modal').classList.add('hidden');
+    };
+
+    // NEW: DELETE USER FUNCTION
+    window.deleteUser = async (id) => {
+        if (!confirm("⚠️ ¿Estás seguro de que quieres ELIMINAR este usuario?\n\nEsta acción no se puede deshacer.")) return;
+
+        try {
+            await FirebaseDB.players.delete(id);
+            alert("✅ Usuario eliminado correctamente.");
+
+            // Refresh data
+            const users = await FirebaseDB.players.getAll();
+            window.allUsersCache = users;
+            window.multiFilterUsers();
+        } catch (e) {
+            console.error(e);
+            alert("❌ Error al eliminar usuario: " + e.message);
+        }
+    };
+
+    // FORM SUBMIT HANDLER
+    const userForm = document.getElementById('admin-user-form');
+    // Remove previous listener if exists (to avoid duplicates on reload)
+    const newForm = userForm.cloneNode(true);
+    userForm.parentNode.replaceChild(newForm, userForm);
+
+    newForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = newForm.querySelector('button[type="submit"]');
+        const originalText = btn.textContent;
+        btn.textContent = "Guardando...";
+        btn.disabled = true;
+
+        try {
+            const formData = new FormData(newForm);
+            const id = formData.get('id');
+
+            // Get Checked Teams
+            const selectedTeams = [];
+            newForm.querySelectorAll('input[name="teams_somospadel_check"]:checked').forEach(cb => {
+                selectedTeams.push(cb.value);
+            });
+
+            const userData = {
+                name: formData.get('name'),
+                phone: formData.get('phone'),
+                level: parseFloat(formData.get('level')),
+                gender: formData.get('gender'),
+                membership: formData.get('membership'),
+                role: formData.get('role'),
+                status: formData.get('status'),
+                matches_played: parseInt(formData.get('matches_played') || 0),
+                team_somospadel: selectedTeams.length > 0 ? selectedTeams : null // Save as Array
+            };
+
+            const pwd = formData.get('password');
+            if (pwd && pwd.trim() !== '') {
+                userData.password = pwd.trim(); // Only send if changed
+                // Note: Password update logic might need backend support or special handling
+            }
+
+            if (id) {
+                // UPDATE
+                await FirebaseDB.players.update(id, userData);
+                alert("✅ Jugador actualizado correctamente.");
+            } else {
+                // CREATE
+                // Validations for new user
+                if (!userData.phone) throw new Error("El teléfono es obligatorio.");
+                await FirebaseDB.players.create(userData); // Assuming create handles ID generation or logic
+                alert("✅ Jugador registrado correctamente.");
+            }
+
+            // Refresh & Close
+            const users = await FirebaseDB.players.getAll();
+            window.allUsersCache = users;
+            window.multiFilterUsers();
+            window.closeAdminModal();
+
+        } catch (err) {
+            console.error(err);
+            alert("❌ Error al guardar: " + err.message);
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    });
 };
 
 // WhatsApp Actions Helper (Global)
@@ -256,6 +419,166 @@ window.openWhatsAppActions = (phone, name) => {
     const safePhone = phone.replace(/\D/g, '');
     const url = `https://wa.me/${safePhone}`;
     window.open(url, '_blank');
+};
+
+// NEW: RECALCULATE STATS FUNCTION (DESTRUCTIVE CLEANUP)
+window.recalculateMatchesPlayed = async () => {
+    if (!confirm("⚠️ MODO LIMPIEZA TOTAL: ¿Deseas ELIMINAR permanentemente los partidos huérfanos de la base de datos?\n\nEl sistema escaneará cada partido. Si pertenece a un evento que ya no existe, el partido será BORRADO físicamente. Luego se recalcularán las estadísticas.")) return;
+
+    const btn = document.querySelector('button[onclick="recalculateMatchesPlayed()"]');
+    let originalText = "";
+    if (btn) {
+        originalText = btn.textContent;
+        btn.textContent = "Limpiando DB...";
+        btn.disabled = true;
+        btn.style.backgroundColor = 'red';
+        btn.style.color = 'white';
+    }
+
+    try {
+        console.log("🧹 Iniciando LIMPIEZA DEEP CLEAN...");
+
+        const players = await FirebaseDB.players.getAll();
+        const statsMap = {};
+        players.forEach(p => {
+            statsMap[p.id] = { matches_played: 0, wins: 0, games_won: 0, total_points: 0 };
+        });
+
+        // 1. Fetch Active Events
+        console.log("🔍 Identificando eventos activos...");
+        const activeAmericanas = await FirebaseDB.americanas.getAll();
+        const activeEntrenos = await FirebaseDB.entrenos.getAll();
+        const validIds = new Set([
+            ...activeAmericanas.map(a => a.id),
+            ...activeEntrenos.map(e => e.id)
+        ]);
+
+        let deletedMatches = 0;
+        let processedMatches = 0;
+
+        // Helper Processor
+        const processCollection = async (collectionName) => {
+            const snapshot = await db.collection(collectionName).get();
+            let batch = db.batch();
+            let batchCount = 0;
+            const MAX_BATCH = 450;
+
+            for (const doc of snapshot.docs) {
+                const m = doc.data();
+
+                // CHECK INTEGRITY
+                const parentId = m.americana_id;
+
+                // If orphan -> DELETE
+                if (parentId && !validIds.has(parentId)) {
+                    batch.delete(doc.ref);
+                    deletedMatches++;
+                    batchCount++;
+                } else if (!m.status || m.status === 'deleted') {
+                    // Skip or Delete explicitly deleted
+                    if (m.status === 'deleted') {
+                        // batch.delete(doc.ref); // Optional clean deleted flags
+                    }
+                } else {
+                    // VALID MATCH -> Process Stats
+                    const isFinished = (m.status === 'finished') || (m.result && (m.result.set1 || m.score));
+                    if (isFinished) {
+                        calculateMatchStats(m, statsMap);
+                        processedMatches++;
+                    }
+                }
+
+                // Commit batch if full
+                if (batchCount >= MAX_BATCH) {
+                    await batch.commit();
+                    batch = db.batch();
+                    batchCount = 0;
+                }
+            }
+            if (batchCount > 0) await batch.commit();
+        };
+
+        // Logic split to reuse
+        const calculateMatchStats = (m, statsMap) => {
+            let teamA = [], teamB = [];
+            if (m.player1) teamA.push((m.player1.id || m.player1));
+            if (m.player2) teamA.push((m.player2.id || m.player2));
+            if (m.player3) teamB.push((m.player3.id || m.player3));
+            if (m.player4) teamB.push((m.player4.id || m.player4));
+
+            if (m.team_a_ids && m.team_a_ids.length > 0) teamA = m.team_a_ids;
+            if (m.team_b_ids && m.team_b_ids.length > 0) teamB = m.team_b_ids;
+
+            let scoreA = 0, scoreB = 0;
+            if (m.result && m.result.set1) {
+                scoreA = parseInt(m.result.set1.a || 0); scoreB = parseInt(m.result.set1.b || 0);
+            } else if (typeof m.score === 'string' && m.score.includes('-')) {
+                const p = m.score.split('-'); scoreA = parseInt(p[0]); scoreB = parseInt(p[1]);
+            }
+
+            [...teamA, ...teamB].forEach(pid => {
+                const id = (typeof pid === 'object' && pid.id) ? pid.id : pid;
+                if (statsMap[id]) {
+                    statsMap[id].matches_played++;
+                    if (teamA.some(p => (p.id || p) === id)) statsMap[id].games_won += scoreA;
+                    if (teamB.some(p => (p.id || p) === id)) statsMap[id].games_won += scoreB;
+                }
+            });
+
+            if (scoreA > scoreB) teamA.forEach(pid => { if (statsMap[(pid.id || pid)]) statsMap[(pid.id || pid)].wins++; });
+            else if (scoreB > scoreA) teamB.forEach(pid => { if (statsMap[(pid.id || pid)]) statsMap[(pid.id || pid)].wins++; });
+        };
+
+        // EXECUTE
+        await processCollection('matches');
+        await processCollection('entrenos_matches');
+
+        console.log(`🗑️ Eliminados ${deletedMatches} partidos huérfanos.`);
+        console.log(`📊 Procesados ${processedMatches} partidos reales.`);
+
+        // UPDATE PLAYERS
+        let updatedCount = 0;
+        const updates = [];
+        for (const pid in statsMap) {
+            const c = statsMap[pid];
+            const player = players.find(p => p.id === pid);
+            if (!player) continue;
+
+            const winRate = c.matches_played > 0 ? Math.round((c.wins / c.matches_played) * 100) : 0;
+            const newData = { matches_played: c.matches_played, wins: c.wins, games_won: c.games_won, win_rate: winRate };
+
+            const current = {
+                matches_played: player.matches_played || 0,
+                wins: player.wins || 0,
+                games_won: player.games_won || 0,
+                win_rate: player.win_rate || 0
+            };
+
+            if (JSON.stringify(newData) !== JSON.stringify(current)) {
+                updates.push(FirebaseDB.players.update(pid, newData));
+                updatedCount++;
+            }
+        }
+        await Promise.all(updates);
+
+        alert(`✅ LIMPIEZA COMPLETA.\n\n- Partidos huérfanos ELIMINADOS: ${deletedMatches}\n- Perfiles actualizados: ${updatedCount}`);
+
+        // Refresh
+        const users = await FirebaseDB.players.getAll();
+        window.allUsersCache = users;
+        window.multiFilterUsers();
+
+    } catch (e) {
+        console.error(e);
+        alert("❌ Error crítico: " + e.message);
+    } finally {
+        if (btn) {
+            btn.textContent = originalText;
+            btn.disabled = false;
+            btn.style.backgroundColor = '';
+            btn.style.color = '';
+        }
+    }
 };
 
 // --- BATCH ACTION: RESET LEVELS ---

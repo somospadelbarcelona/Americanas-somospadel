@@ -32,8 +32,8 @@
                             </div>
                         </div>
 
-                        <!-- A. MVP SPOTLIGHT (HIGHLIGHTED) -->
-                        ${topPlayer ? `
+                        <!-- A. MVP SPOTLIGHT (HIGHLIGHTED) - ONLY SHOW IF DATA EXISTS -->
+                        ${(topPlayer && topPlayer.stats && topPlayer.stats.americanas && topPlayer.stats.americanas.points > 0) ? `
                         <div style="
                             background: white;
                             border: 1px solid #e2e8f0;

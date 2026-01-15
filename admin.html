@@ -305,6 +305,90 @@
                         <option value="collaborator">COLABORADOR / PATROCINADOR 🤝</option>
                     </select>
                 </div>
+                <div class="form-group" style="grid-column: span 3;">
+                    <label
+                        style="margin-bottom: 8px; color: var(--primary); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.5px;">EQUIPOS
+                        SOMOSPADEL (Selección Múltiple)</label>
+                    <div
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; padding: 2px;">
+                        <!-- Estilos encapsulados para este componente -->
+                        <style>
+                            .team-checkbox-label {
+                                display: flex;
+                                align-items: center;
+                                gap: 10px;
+                                font-size: 0.75rem !important;
+                                text-transform: uppercase;
+                                cursor: pointer;
+                                background: rgba(255, 255, 255, 0.03);
+                                border: 1px solid rgba(255, 255, 255, 0.1);
+                                padding: 10px 12px;
+                                border-radius: 8px;
+                                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                                user-select: none;
+                                color: rgba(255, 255, 255, 0.7);
+                                position: relative;
+                                overflow: hidden;
+                            }
+
+                            .team-checkbox-label:hover {
+                                background: rgba(255, 255, 255, 0.08);
+                                border-color: rgba(255, 255, 255, 0.3);
+                                transform: translateY(-1px);
+                                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+                            }
+
+                            .team-checkbox-label input[type="checkbox"] {
+                                accent-color: var(--primary);
+                                width: 16px;
+                                height: 16px;
+                                margin: 0;
+                            }
+
+                            /* Estado ACTIVO mediante JS (si se aplica clase) o fallback nativo */
+                            .team-checkbox-label:has(input:checked) {
+                                background: rgba(99, 102, 241, 0.2);
+                                border-color: #6366f1;
+                                color: white;
+                                font-weight: 700;
+                                box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+                            }
+                        </style>
+
+                        <label class="team-checkbox-label" title="3º Categoría Masculina A">
+                            <input type="checkbox" name="teams_somospadel_check" value="3º Masculino A">
+                            <span>3º Masculino A</span>
+                        </label>
+                        <label class="team-checkbox-label" title="3º Categoría Masculina B">
+                            <input type="checkbox" name="teams_somospadel_check" value="3º Masculino B">
+                            <span>3º Masculino B</span>
+                        </label>
+                        <label class="team-checkbox-label" title="4º Categoría Masculina">
+                            <input type="checkbox" name="teams_somospadel_check" value="4º Masculino">
+                            <span>4º Masculino</span>
+                        </label>
+                        <label class="team-checkbox-label" title="4º Categoría Femenina">
+                            <input type="checkbox" name="teams_somospadel_check" value="4º Femenino">
+                            <span>4º Femenino</span>
+                        </label>
+                        <label class="team-checkbox-label" title="4º Categoría Mixta A">
+                            <input type="checkbox" name="teams_somospadel_check" value="4º Mixto A">
+                            <span>4º Mixto A</span>
+                        </label>
+                        <label class="team-checkbox-label" title="4º Categoría Mixta B">
+                            <input type="checkbox" name="teams_somospadel_check" value="4º Mixto B">
+                            <span>4º Mixto B</span>
+                        </label>
+                        <label class="team-checkbox-label" title="3º Categoría Mixta">
+                            <input type="checkbox" name="teams_somospadel_check" value="3º Mixto">
+                            <span>3º Mixto</span>
+                        </label>
+                        <label class="team-checkbox-label" title="2º Categoría Femenina">
+                            <input type="checkbox" name="teams_somospadel_check" value="2º Femenino">
+                            <span>2º Femenino</span>
+                        </label>
+                    </div>
+                </div>
                 <div class="form-group">
                     <label>Estado de Cuenta</label>
                     <select name="status" class="pro-input">
