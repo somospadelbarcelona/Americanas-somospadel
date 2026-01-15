@@ -1200,7 +1200,7 @@
                                     ${p.photoURL ? `<img src="${p.photoURL}" style="width:100%; height:100%; object-fit:cover;">` : `<i class="fas fa-user-ninja" style="font-size: 2.2rem; color: #CCFF00; opacity: 0.8;"></i>`}
                                 </div>
                                 <div style="font-size: 0.9rem; font-weight: 950; color: white; text-transform: uppercase; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">${p.name}</div>
-                                <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Confirmado</div>
+                                <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">${formatJoinedAt(p.joinedAt)}</div>
                             </div>`;
                     }).join('');
                 }
