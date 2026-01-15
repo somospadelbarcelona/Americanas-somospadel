@@ -1,5 +1,5 @@
 // Service Worker para PWA - Somospadel BCN
-const CACHE_NAME = 'somospadel-v3-release-final';
+const CACHE_NAME = 'somospadel-v4-wow-upgrade';
 const urlsToCache = [
     './',
     './index.html',
