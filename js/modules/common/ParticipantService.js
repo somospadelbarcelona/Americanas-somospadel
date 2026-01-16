@@ -48,35 +48,37 @@ window.ParticipantService = {
             waitlist.push(newPlayer);
             await collection.update(eventId, { waitlist });
             return { status: 'waitlist', position: waitlist.length };
-            currentPlayers.push(newPlayer);
-            await collection.update(eventId, { players: currentPlayers, registeredPlayers: currentPlayers });
+        }
 
-            // 5. Intelligent Substitution (If event is live/has VACANTE slots)
-            if (event.status === 'live' || event.status === 'en_juego' || event.status === 'in_game') {
-                console.log("♻️ Event is LIVE. Checking for VACANTE slots to fill...");
-                if (window.MatchmakingService && window.MatchmakingService.substitutePlayerInMatchesRobust) {
-                    // Try to fill various VACANTE aliases
-                    const aliases = ['VACANT', '🔴 VACANTE', 'VACANTE'];
-                    let filledTotal = 0;
-                    for (const alias of aliases) {
-                        const count = await window.MatchmakingService.substitutePlayerInMatchesRobust(
-                            eventId,
-                            'vacante_id', // Target ID for Vacante
-                            alias,
-                            newPlayer.id,
-                            newPlayer.name,
-                            eventType
-                        );
-                        filledTotal += count;
-                    }
-                    if (filledTotal > 0) {
-                        console.log(`✅ Filled ${filledTotal} VACANTE slots with ${newPlayer.name}`);
-                    }
+        // Add to Participants
+        currentPlayers.push(newPlayer);
+        await collection.update(eventId, { players: currentPlayers, registeredPlayers: currentPlayers });
+
+        // 5. Intelligent Substitution (If event is live/has VACANTE slots)
+        if (event.status === 'live' || event.status === 'en_juego' || event.status === 'in_game') {
+            console.log("♻️ Event is LIVE. Checking for VACANTE slots to fill...");
+            if (window.MatchmakingService && window.MatchmakingService.substitutePlayerInMatchesRobust) {
+                // Try to fill various VACANTE aliases
+                const aliases = ['VACANT', '🔴 VACANTE', 'VACANTE'];
+                let filledTotal = 0;
+                for (const alias of aliases) {
+                    const count = await window.MatchmakingService.substitutePlayerInMatchesRobust(
+                        eventId,
+                        'vacante_id', // Target ID for Vacante
+                        alias,
+                        newPlayer.id,
+                        newPlayer.name,
+                        eventType
+                    );
+                    filledTotal += count;
+                }
+                if (filledTotal > 0) {
+                    console.log(`✅ Filled ${filledTotal} VACANTE slots with ${newPlayer.name}`);
                 }
             }
-
-            return { status: 'enrolled', count: currentPlayers.length };
         }
+
+        return { status: 'enrolled', count: currentPlayers.length };
     },
 
     /**

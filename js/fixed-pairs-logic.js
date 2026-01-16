@@ -10,13 +10,13 @@ const FixedPairsLogic = {
      * @param {Array} players - Lista de jugadores
      * @returns {Array} - Lista de parejas fijas
      */
-    createFixedPairs(players, category = 'open') {
-        console.log(`🔒 Creando parejas fijas para ${players.length} jugadores (Modo: ${category})...`);
+    createFixedPairs(players, category = 'open', preserveOrder = false) {
+        console.log(`🔒 Creando parejas fijas para ${players.length} jugadores (Modo: ${category}, Ordenado: ${preserveOrder})...`);
 
         let shuffled;
-        if (category === 'mixed') {
-            // Si es mixto, asumimos que vienen alternados M, F, M, F...
-            // No barajamos para no romper las parejas chico-chica preparadas
+        if (category === 'mixed' || preserveOrder) {
+            // Si es mixto o se pide preservar orden (Entrenos por nivel)
+            // No barajamos
             shuffled = [...players];
         } else {
             // Mezclar jugadores aleatoriamente

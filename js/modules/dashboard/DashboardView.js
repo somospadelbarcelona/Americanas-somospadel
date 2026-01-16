@@ -92,63 +92,8 @@
                         <div class="loader-mini" style="margin: 40px auto; opacity: 0.5;"></div>
                     </div>
 
-                    <!-- 2.5 PLAYER PERFORMANCE & RESULTS TICKER (NEW) -->
-                    <div id="ticker-stats-root" style="margin: 0 15px 25px;">
-                        <div style="
-                            background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
-                            border: 1px solid rgba(0, 227, 109, 0.3);
-                            border-radius: 24px;
-                            padding: 15px;
-                            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-                            display: flex;
-                            align-items: center;
-                            gap: 15px;
-                            min-height: 100px;
-                            position: relative;
-                            overflow: hidden;
-                        ">
-                            <!-- Background Neon Glow -->
-                            <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(0, 227, 109, 0.15); filter: blur(30px); border-radius: 50%;"></div>
-                            
-                            <!-- A. MINI TICKER (Left) -->
-                            <div style="flex: 1.2; overflow: hidden; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 10px;">
-                                <div style="font-size: 0.55rem; color: #00E36D; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;">
-                                    <div style="width: 5px; height: 5px; background: #00E36D; border-radius: 50%; animation: blink 1s infinite;"></div> ÚLTIMOS RESULTADOS
-                                </div>
-                                <div id="results-ticker" style="height: 60px; position: relative;">
-                                    <!-- Dynamic Ticker Content -->
-                                    <div class="ticker-item" style="animation: slideUpDown 8s infinite;">
-                                        <div style="color: white; font-weight: 800; font-size: 0.8rem; margin-bottom: 2px;">6 - 4 <span style="color: rgba(255,255,255,0.5); font-weight: 500;">vs</span> Tapia/Coello</div>
-                                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4);">Padel Pro - Pista 1</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- B. MINI CHART (Right) -->
-                            <div style="flex: 0.8; height: 75px; display: flex; align-items: flex-end; justify-content: space-around; padding-bottom: 5px;">
-                                <div style="width: 8px; height: 40%; background: #00E36D; border-radius: 4px; box-shadow: 0 0 10px rgba(0,227,109,0.3);"></div>
-                                <div style="width: 8px; height: 70%; background: #00E36D; border-radius: 4px; box-shadow: 0 0 10px rgba(0,227,109,0.3);"></div>
-                                <div style="width: 8px; height: 55%; background: #00E36D; border-radius: 4px; box-shadow: 0 0 10px rgba(0,227,109,0.3);"></div>
-                                <div style="width: 8px; height: 90%; background: #00E36D; border-radius: 4px; box-shadow: 0 0 15px rgba(0,227,109,0.5); animation: float 3s infinite;"></div>
-                                <div style="width: 8px; height: 75%; background: #00E36D; border-radius: 4px; box-shadow: 0 0 10px rgba(0,227,109,0.3);"></div>
-                            </div>
-
-                            <!-- Floating Label -->
-                            <div style="position: absolute; bottom: 8px; right: 12px; font-size: 0.5rem; color: #00E36D; font-weight: 900; background: rgba(0,227,109,0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(0,227,109,0.2);">
-                                TREND +12%
-                            </div>
-                        </div>
-
-                        <style>
-                            @keyframes slideUpDown {
-                                0%, 20% { transform: translateY(0); opacity: 1; }
-                                25%, 45% { transform: translateY(-20px); opacity: 0; }
-                                50%, 70% { transform: translateY(-40px); opacity: 1; }
-                                75%, 95% { transform: translateY(-60px); opacity: 0; }
-                                100% { transform: translateY(0); opacity: 1; }
-                            }
-                        </style>
-                    </div>
+                    <!-- TICKER STATS REMOVED PER USER REQUEST -->
+                    <!-- <div id="ticker-stats-root"></div> -->
 
                     <div id="pro-content-root"></div>
 

@@ -281,12 +281,29 @@ window.loadAmericanaParticipantsUI = async (id) => {
     // Use repaired data for rendering
     const finalPlayers = needsRepair ? repairedPlayers : (event.players || []);
 
-    // Select
-    const enrolled = new Set(finalPlayers.map(p => p.id || p.uid));
-    const available = users.filter(u => !enrolled.has(u.id));
-    select.innerHTML = available.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+    // NEW: Render Autocomplete
+    if (window.PlayerAutocomplete) {
+        const enrolledIds = new Set(finalPlayers.map(p => p.id || p.uid));
+        window.PlayerAutocomplete.render(
+            'autocomplete-container-americana',
+            users,
+            enrolledIds,
+            async (uid) => {
+                try {
+                    const user = users.find(u => u.id === uid);
+                    if (!user) return;
+                    await ParticipantService.addPlayer(id, 'americana', user);
+                    window.loadAmericanaParticipantsUI(id);
+                } catch (e) { alert(e.message); }
+            },
+            "🔍 Buscar jugador para añadir..."
+        );
+    } else {
+        // Fallback or Error if component missing
+        console.warn("PlayerAutocomplete not found");
+    }
 
-    // List
+    // Render List
     list.innerHTML = finalPlayers.map((p, i) => {
         const playerId = p.id || p.uid || p.player_id || '';
         if (!playerId) {
@@ -308,16 +325,6 @@ window.loadAmericanaParticipantsUI = async (id) => {
             </div>
         `;
     }).join('');
-
-
-    btn.onclick = async () => {
-        try {
-            const uid = select.value;
-            const user = users.find(u => u.id === uid);
-            await ParticipantService.addPlayer(id, 'americana', user);
-            window.loadAmericanaParticipantsUI(id);
-        } catch (e) { alert(e.message); }
-    };
 };
 
 window.removeAmericanaPlayer = async (eid, uid) => {

@@ -417,6 +417,35 @@
                     onclick="document.getElementById('admin-entreno-modal').classList.add('hidden')">&times;</button>
             </div>
             <form id="edit-entreno-form" class="pro-form">
+                <style>
+                    /* COMPACT MODE FOR THIS FORM */
+                    #edit-entreno-form .form-group {
+                        margin-bottom: 8px !important;
+                    }
+
+                    #edit-entreno-form label {
+                        font-size: 0.65rem !important;
+                        margin-bottom: 2px !important;
+                        letter-spacing: 0.5px;
+                    }
+
+                    #edit-entreno-form .pro-input {
+                        padding: 6px 10px !important;
+                        font-size: 0.85rem !important;
+                        height: 36px !important;
+                        min-height: 0 !important;
+                    }
+
+                    #edit-entreno-form select.pro-input {
+                        padding-right: 25px !important;
+                        /* Adjust for arrow */
+                    }
+
+                    #edit-entreno-form .btn-micro {
+                        padding: 4px 8px !important;
+                        font-size: 0.7rem !important;
+                    }
+                </style>
                 <input type="hidden" name="id">
                 <div class="form-group">
                     <label>NOMBRE DEL ENTRENO</label>
@@ -588,12 +617,13 @@
                     PARTICIPANTES</h3>
 
                 <!-- Add Player Control -->
-                <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
-                    <select id="add-player-select-entreno" class="pro-input" style="flex: 1;">
-                        <option value="">Seleccionar Jugador...</option>
-                    </select>
-                    <button class="btn-primary-pro" id="btn-add-player-entreno"
-                        style="padding: 0 1.5rem;">AÑADIR</button>
+                <div style="display: flex; gap: 10px; margin-bottom: 1rem; align-items: flex-start;">
+                    <div id="autocomplete-container-entreno" style="flex: 1;"></div>
+                    <!-- Button logic will be handled by Autocomplete selection directly or we can keep button for manual trigger if needed, but Autocomplete usually adds on click. 
+                         Let's keep the button hidden or specialized? 
+                         User wants "rapido". Autocomplete click -> Add is fastest. 
+                         We can remove the button or keep it as specific "Add by ID"? 
+                         Let's rely on Autocomplete callback. -->
                 </div>
 
                 <!-- Participants List -->
@@ -795,11 +825,8 @@
                     PARTICIPANTES</h3>
 
                 <!-- Add Player Control -->
-                <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
-                    <select id="add-player-select" class="pro-input" style="flex: 1;">
-                        <option value="">Seleccionar Jugador...</option>
-                    </select>
-                    <button class="btn-primary-pro" id="btn-add-player" style="padding: 0 1.5rem;">AÑADIR</button>
+                <div style="display: flex; gap: 10px; margin-bottom: 1rem; align-items: flex-start;">
+                    <div id="autocomplete-container-americana" style="flex: 1;"></div>
                 </div>
 
                 <!-- Participants List -->
@@ -911,7 +938,9 @@
 
             <!-- NEW ARCHITECTURE: CORE & SERVICES -->
             <script src="js/modules/core/Constants.js?v=2000"></script>
-            <script src="js/modules/common/EventService.js?v=2000"></script>
+            <!-- Module Logic -->
+            <script src="js/modules/ui/PlayerAutocomplete.js"></script>
+            <script src="js/modules/common/EventService.js"></script>
             <script src="js/modules/common/ParticipantService.js?v=2001"></script>
 
             <!-- LOGIC MODULES (Legacy Logic Wrapped) -->
@@ -922,9 +951,9 @@
             <script src="js/admin-simulator.js?v=2000"></script>
 
             <!-- LEGACY SERVICES (Keep for compatibility if needed during transition) -->
-            <script src="js/modules/americanas/AmericanaService.js?v=4001"></script>
+            <!-- AmericanaService duplicated above -->
 
-            <!-- VIEW CONTROLLERS -->
+            <!-- Admin Modules (Lazy Loaded Logic) -->
             <script src="js/modules/admin-pairs-ui.js?v=2000"></script>
             <script src="js/modules/admin-results.js?v=4007"></script>
             <script src="js/modules/admin-users.js?v=1100"></script>

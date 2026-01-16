@@ -391,7 +391,7 @@
             } else {
                 switch (this.state.activeTab) {
                     case 'events': contentHtml = this.renderEventsList(false, false); break;
-                    case 'entrenos': contentHtml = this.renderEventsList(false, true); break;
+                    case 'entrenos': contentHtml = this.renderEventsList(false, false, true); break;
                     case 'agenda': contentHtml = this.renderAgendaView(); break;
                     case 'results':
                         contentHtml = await this.renderResultsView();
@@ -404,7 +404,7 @@
             console.log("✅ [EventsController_V5] Content rendered successfully");
         }
 
-        renderEventsList(onlyMine, onlyEntrenos = false) {
+        renderEventsList(onlyMine, onlyEntrenos = false, showBothTypes = false) {
             let events = this.getAllSortedEvents();
             const { month, category } = this.state.filters;
             const uid = this.state.currentUser ? this.state.currentUser.uid : null;
@@ -414,7 +414,7 @@
                 // Show 'open' OR 'live' events in DISPONIBLES.
                 // Filter out 'finished' events and those from significantly older days (yesterday).
                 events = events.filter(e => {
-                    const isCorrectType = onlyEntrenos ? e.type === 'entreno' : e.type === 'americana';
+                    const isCorrectType = showBothTypes ? true : (onlyEntrenos ? e.type === 'entreno' : e.type === 'americana');
 
                     // CRITICAL: Finished events MUST only show in "FINALIZADAS" tab.
                     if (e.status === 'finished') return false;
@@ -1120,8 +1120,8 @@
                     </div>
                 </div>
 
-                <!-- PLAYERS GRID -->
-                <div id="player-grid-container" style="position: relative; z-index: 5; flex: 1; overflow-y: auto; padding: 10px 25px 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px; scrollbar-width: none;">
+                // PLAYERS GRID - UPDATED TO 4 COLUMNS (PISTA LLENA)
+                <div id="player-grid-container" style="position: relative; z-index: 5; flex: 1; overflow-y: auto; padding: 10px 25px 40px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; scrollbar-width: none;">
                     <div style="grid-column: 1 / -1; text-align: center; padding: 100px 20px;">
                         <div class="loader-mini" style="margin: 0 auto 20px; border-top-color: #CCFF00;"></div>
                         <p style="color: rgba(255,255,255,0.5); font-weight: 800; font-size: 0.8rem; letter-spacing: 2px;">ESCANEANDO JUGADORES...</p>
@@ -1149,35 +1149,87 @@
             try {
                 const playerIds = players.map(p => (typeof p === 'string') ? p : (p.uid || p.id));
                 let hydratedPlayers = [];
+                const playersDict = {}; // Dictionary to store player data by ID
 
                 if (playerIds.length > 0) {
-                    const chunks = [];
-                    for (let i = 0; i < playerIds.length; i += 30) chunks.push(playerIds.slice(i, i + 30));
+                    // Filter invalid IDs to prevent Firestore errors
+                    const validIds = playerIds.filter(id => id && typeof id === 'string' && id.trim() !== '');
 
-                    const snapshots = await Promise.all(chunks.map(chunk =>
-                        window.db.collection('players').where('id', 'in', chunk).get()
-                    ));
+                    if (validIds.length > 0) {
+                        // Optimized fetching: Use 'in' query with documentId()
+                        // Chunk size 10 is safe for 'in' queries on document IDs
+                        const chunks = [];
+                        for (let i = 0; i < validIds.length; i += 10) chunks.push(validIds.slice(i, i + 10));
 
-                    const playersDict = {};
-                    snapshots.forEach(snap => {
-                        snap.forEach(doc => { playersDict[doc.id] = { id: doc.id, ...doc.data() }; });
-                    });
+                        try {
+                            if (!window.db) throw new Error("Database not initialized");
 
-                    hydratedPlayers = players.map(p => {
-                        const id = (typeof p === 'string') ? p : (p.uid || p.id);
-                        const fullData = playersDict[id] || {};
-                        // Ensure we get joinedAt from the original event player object if possible
-                        const originalJoinedAt = (typeof p === 'object' && p.joinedAt) ? p.joinedAt : null;
+                            const snapshots = await Promise.all(chunks.map(chunk =>
+                                window.db.collection('players')
+                                    .where(firebase.firestore.FieldPath.documentId(), 'in', chunk)
+                                    .get()
+                            ));
 
-                        return {
-                            id: id,
-                            name: fullData.name || p.name || 'JUGADOR',
-                            level: fullData.level || fullData.playtomic_level || p.level || 3.5,
-                            photoURL: fullData.photoURL || p.photoURL || null,
-                            joinedAt: originalJoinedAt
-                        };
-                    });
+                            snapshots.forEach(snap => {
+                                snap.forEach(doc => {
+                                    // Store by BOTH id formats to be safe
+                                    const data = doc.data();
+                                    data.id = doc.id; // Ensure ID is present
+                                    playersDict[doc.id] = data;
+                                });
+                            });
+                        } catch (err) {
+                            console.error("Hydration Error (Inner):", err);
+                            // Siently fail hydration and fall back to default data
+                        }
+                    }
                 }
+
+
+                hydratedPlayers = players.map(p => {
+                    const id = (typeof p === 'string') ? p : (p.uid || p.id);
+                    const fullData = playersDict[id] || {};
+                    // Ensure we get joinedAt from the original event player object if possible
+                    const originalJoinedAt = (typeof p === 'object' && p.joinedAt) ? p.joinedAt : null;
+
+                    // TEAM RESOLUTION - ROBUST
+                    // Prioritize team_somospadel (Array) > team (String)
+                    let teamName = fullData.team_somospadel || fullData.team || fullData.team_name || fullData.level_name || fullData.category || p.team || null;
+
+                    if (Array.isArray(teamName)) {
+                        // If user has multiple teams, try to find one that matches the event category/gender? 
+                        // For simplicity, take the first one or join them?
+                        // User wants to see "THE" team. Usually the first one is primary.
+                        // Let's take the first non-empty one.
+                        teamName = teamName.length > 0 ? teamName[0] : null;
+                    }
+                    if (teamName && typeof teamName === 'string') teamName = teamName.toUpperCase();
+
+                    // LEVEL RESOLUTION
+                    let level = parseFloat(fullData.level || fullData.playtomic_level || p.level || 0);
+
+                    // Smart Level Deduction from Team (If level is 0 or missing)
+                    // Also, if 'sync levels' is desired, we might overwrite?
+                    // User complaint: "tampoco detecta los niveles reales". 
+                    // It implies the level in DB is more accurate than 0, OR the team level should be used.
+                    // Let's prioritize: DB Level > Team Level > Default.
+
+                    if ((!level || level === 0) && teamName && window.AppConstants && window.AppConstants.TEAM_LEVELS) {
+                        if (window.AppConstants.TEAM_LEVELS[teamName]) {
+                            level = window.AppConstants.TEAM_LEVELS[teamName];
+                        }
+                    }
+                    if (!level) level = 3.5; // Default fallback
+
+                    return {
+                        id: id,
+                        name: fullData.name || p.name || 'JUGADOR',
+                        level: level,
+                        photoURL: fullData.photoURL || p.photoURL || null,
+                        team: teamName,
+                        joinedAt: originalJoinedAt
+                    };
+                });
 
                 // Render Grid Internal Helper
                 const grid = document.getElementById('player-grid-container');
@@ -1190,17 +1242,60 @@
                 };
 
                 if (grid) {
+                    // NEON PALETTE FOR TEAMS (BRIGHTER)
+                    const teamColors = [
+                        '#00FFFF', // Cyan Neon
+                        '#FF00FF', // Magenta Neon
+                        '#FFFF00', // Yellow Neon
+                        '#00FF00', // Green Neon
+                        '#FFA500', // Orange Neon
+                        '#AD00FF', // Purple Neon
+                        '#FF0055', // Pink Neon
+                        '#00FF99', // Teal Neon
+                    ];
+
+                    const getTeamColor = (name) => {
+                        if (!name) return '#CCFF00';
+                        let hash = 0;
+                        for (let i = 0; i < name.length; i++) {
+                            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+                        }
+                        const index = Math.abs(hash) % teamColors.length;
+                        return teamColors[index];
+                    };
+
                     grid.innerHTML = hydratedPlayers.map((p, i) => {
                         const lvl = parseFloat(p.level || 3.5);
                         const lvlColor = lvl >= 4.5 ? '#FF2D55' : (lvl >= 4 ? '#FFCC00' : '#00E36D');
+
+                        let teamHtml = '';
+                        if (p.team) {
+                            const tColor = getTeamColor(p.team);
+                            // WOW EFFECT: Bigger scale + Double Shadow
+                            teamHtml = `<div style="
+                                font-size: 0.85rem; 
+                                color: ${tColor}; 
+                                font-weight: 950; 
+                                text-transform: uppercase; 
+                                margin-bottom: 5px; 
+                                letter-spacing: 1.5px; 
+                                text-shadow: 0 0 5px ${tColor}, 0 0 15px ${tColor};
+                                animation: pulseText 2s infinite alternate;
+                            ">${p.team}</div>`;
+                        } else {
+                            // FALLBACK IF NO TEAM: Show placeholder to avoid empty gap
+                            teamHtml = `<div style="font-size: 0.5rem; color: #555; font-weight: 700; margin-bottom: 5px;">SIN EQUIPO</div>`;
+                        }
+
                         return `
-                            <div style="background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-bottom: 4px solid ${lvlColor}; border-radius: 24px; padding: 30px 15px 20px; text-align: center; animation: enterCard 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity:0; animation-delay:${i * 0.05}s; position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">
-                                <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: ${lvlColor}; color: #000; font-size: 0.7rem; font-weight: 950; padding: 4px 12px; border-radius: 20px; box-shadow: 0 0 20px ${lvlColor}66;">NIVEL ${lvl.toFixed(2)}</div>
-                                <div style="width: 75px; height: 75px; margin: 0 auto 18px; background: #000; border-radius: 22px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 8px 16px rgba(0,0,0,0.4);">
-                                    ${p.photoURL ? `<img src="${p.photoURL}" style="width:100%; height:100%; object-fit:cover;">` : `<i class="fas fa-user-ninja" style="font-size: 2.2rem; color: #CCFF00; opacity: 0.8;"></i>`}
+                            <div style="background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-bottom: 4px solid ${lvlColor}; border-radius: 24px; padding: 20px 5px 15px; text-align: center; animation: enterCard 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity:0; animation-delay:${i * 0.05}s; position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">
+                                <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: ${lvlColor}; color: #000; font-size: 0.6rem; font-weight: 950; padding: 3px 10px; border-radius: 20px; box-shadow: 0 0 15px ${lvlColor}66; white-space:nowrap;">NIVEL ${lvl.toFixed(2)}</div>
+                                <div style="width: 55px; height: 55px; margin: 5px auto 10px; background: #000; border-radius: 18px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 5px 10px rgba(0,0,0,0.4);">
+                                    ${p.photoURL ? `<img src="${p.photoURL}" style="width:100%; height:100%; object-fit:cover;">` : `<i class="fas fa-user-ninja" style="font-size: 1.5rem; color: #CCFF00; opacity: 0.8;"></i>`}
                                 </div>
-                                <div style="font-size: 0.9rem; font-weight: 950; color: white; text-transform: uppercase; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">${p.name}</div>
-                                <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">${formatJoinedAt(p.joinedAt)}</div>
+                                ${teamHtml}
+                                <div style="font-size: 0.75rem; font-weight: 950; color: white; text-transform: uppercase; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px; padding: 0 5px;">${p.name.split(' ')[0]} ${p.name.split(' ')[1] ? p.name.split(' ')[1].charAt(0) + '.' : ''}</div>
+                                <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">${formatJoinedAt(p.joinedAt)}</div>
                             </div>`;
                     }).join('');
                 }

@@ -70,6 +70,18 @@ window.AppConstants = {
             female: 'img/ball-femenina.png',
             mixed: 'img/ball-mixta.png'
         }
+    },
+
+    // Niveles predefinidos por equipo
+    TEAM_LEVELS: {
+        '3º Masculino A': 3.75,
+        '3º Masculino B': 3.5,
+        '4º Masculino': 3,
+        '4º Mixto A': 3, // Assuming all 4 mixed are level 3 based on '4ºMIXTO'
+        '4º Mixto B': 3,
+        '3º Mixto': 3.5,
+        '2º Femenino': 3.5,
+        '4º Femenino': 3
     }
 };
 

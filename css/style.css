@@ -586,6 +586,12 @@ select:focus {
     box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
 }
 
+/* FIX DROPDOWN VISIBILITY */
+option {
+    color: #000 !important;
+    background: #fff !important;
+}
+
 label {
     display: block;
     margin-bottom: 0.5rem;
@@ -668,8 +674,10 @@ tr:hover td {
     padding: 2.5rem;
     position: relative;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    max-height: 90vh; /* Ensure it fits in viewport */
-    overflow-y: auto; /* Enable internal scrolling */
+    max-height: 90vh;
+    /* Ensure it fits in viewport */
+    overflow-y: auto;
+    /* Enable internal scrolling */
 }
 
 /* Explicitly kill the white background from the admin screenshot */

@@ -261,8 +261,10 @@ window.closeEntrenoModal = () => {
 
 window.loadEntrenoParticipantsUI = async (id) => {
     const list = document.getElementById('participants-list-entreno');
-    const select = document.getElementById('add-player-select-entreno');
-    const btn = document.getElementById('btn-add-player-entreno');
+
+    // Legacy elements check (removed in HTML update) or keep reference for safety
+    // const select = document.getElementById('add-player-select-entreno'); 
+    // const btn = document.getElementById('btn-add-player-entreno');
 
     if (!list) return;
     list.innerHTML = 'Loading...';
@@ -302,10 +304,24 @@ window.loadEntrenoParticipantsUI = async (id) => {
     // Use repaired data for rendering
     const finalPlayers = needsRepair ? repairedPlayers : (event.players || []);
 
-    // Populate Select
-    const enrolled = new Set(finalPlayers.map(p => p.id || p.uid));
-    const available = users.filter(u => !enrolled.has(u.id));
-    select.innerHTML = available.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+    // NEW: Render Autocomplete
+    if (window.PlayerAutocomplete) {
+        const enrolledIds = new Set(finalPlayers.map(p => p.id || p.uid));
+        window.PlayerAutocomplete.render(
+            'autocomplete-container-entreno',
+            users,
+            enrolledIds,
+            async (uid) => {
+                try {
+                    const user = users.find(u => u.id === uid);
+                    if (!user) return;
+                    await ParticipantService.addPlayer(id, 'entreno', user);
+                    window.loadEntrenoParticipantsUI(id); // Reload
+                } catch (e) { alert(e.message); }
+            },
+            "🔍 Buscar jugador para añadir..."
+        );
+    }
 
     // Render List
     list.innerHTML = finalPlayers.map((p, i) => {
@@ -329,18 +345,6 @@ window.loadEntrenoParticipantsUI = async (id) => {
             </div>
         `;
     }).join('');
-
-    btn.onclick = async () => {
-        try {
-            const uid = select.value;
-            const user = users.find(u => u.id === uid);
-            if (!user) return;
-
-            // 1. Add Player to List
-            await ParticipantService.addPlayer(id, 'entreno', user);
-            window.loadEntrenoParticipantsUI(id);
-        } catch (e) { alert(e.message); }
-    };
 };
 
 window.removeEntrenoPlayer = async (eid, uid) => {

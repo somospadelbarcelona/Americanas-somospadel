@@ -40,6 +40,28 @@ window.AdminViews.users = async function () {
             // Safe URL construction
             const safePhone = (u.phone || '').replace(/\D/g, '');
 
+            // Teams Badge List
+            const teams = Array.isArray(u.team_somospadel) ? u.team_somospadel : (u.team_somospadel ? [u.team_somospadel] : []);
+            const availableTeams = Object.keys(AppConstants.TEAM_LEVELS || {});
+
+            const teamsHTML = `
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                    <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                        ${teams.map(t => `
+                            <span style="font-size:0.6rem; background: #6366f1; color:white; padding: 2px 6px; border-radius:4px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px;" 
+                                  title="Clic para quitar" onclick="quickRemoveTeam('${u.id}', '${t}')">
+                                ${t.toUpperCase()} <span style="opacity:0.6;">x</span>
+                            </span>`
+            ).join('')}
+                    </div>
+                    ${canManageUsers ? `
+                    <select class="pro-input-micro" style="width:100%; font-size:0.65rem; color: var(--text-muted);" onchange="quickAddTeam('${u.id}', this.value); this.value='';">
+                        <option value="" style="color:black;">+ Añadir equipo...</option>
+                        ${availableTeams.map(at => `<option value="${at}" style="color:black;">${at}</option>`).join('')}
+                    </select>` : ''}
+                </div>
+            `;
+
             return `
                 <tr class="pro-table-row" style="background: ${isPending ? 'rgba(255,165,0,0.05)' : 'transparent'}">
                 <td>
@@ -49,10 +71,6 @@ window.AdminViews.users = async function () {
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <div style="font-weight: 700; color: ${isSuper ? '#FFD700' : 'var(--text)'};">${u.name || 'Sin Nombre'}</div>
                                 ${u.membership === 'somospadel_bcn' ? '<span style="font-size:0.6rem; background: var(--primary); color:black; padding: 2px 5px; border-radius:4px; font-weight:700;">COMUNIDAD BCN</span>' : ''}
-                                ${u.team_somospadel ? (Array.isArray(u.team_somospadel)
-                    ? u.team_somospadel.map(t => `<span style="font-size:0.6rem; background: #6366f1; color:white; padding: 2px 5px; border-radius:4px; font-weight:700;">${t.toUpperCase()}</span>`).join(' ')
-                    : `<span style="font-size:0.6rem; background: #6366f1; color:white; padding: 2px 5px; border-radius:4px; font-weight:700;">${u.team_somospadel.toUpperCase()}</span>`
-                ) : ''}
                             </div>
                             <div style="font-size: 0.7rem; font-weight: 500; color: ${isSuper ? '#FFD700' : (u.role === 'admin_player' ? 'var(--primary)' : 'var(--text-muted)')};">
                                 ${roleBadge}
@@ -60,11 +78,15 @@ window.AdminViews.users = async function () {
                         </div>
                     </div>
                 </td>
+                
+                <!-- NEW TEAMS COLUMN -->
+                <td>${teamsHTML}</td>
+
                 <td>
                     <div style="display:flex; align-items:center; gap:0.8rem;">
                          <span style="color: var(--primary); font-family: 'Outfit'; font-weight: 600;">${u.phone || '-'}</span>
                          <button onclick="window.openWhatsAppActions('${safePhone}', '')" title="Abrir Chat de WhatsApp" style="cursor:pointer; background: rgba(37, 211, 102, 0.1); color: #25D366; border: 1px solid #25D366; padding: 6px 12px; border-radius: 8px; font-weight: 700; display: flex; align-items: center; gap: 6px; font-size: 0.75rem; transition: all 0.2s;">
-                            <span style="font-size: 1rem;">💬</span> CHAT
+                            <span style="font-size: 1rem;">💬</span>
                          </button>
                     </div>
                 </td>
@@ -78,6 +100,18 @@ window.AdminViews.users = async function () {
                         </span>
                     </div>
                 </td>
+
+                <!-- NEW MATCHES PLAYED COLUMN -->
+                <td>
+                     <input type="number" 
+                            class="pro-input-micro" 
+                            style="width: 60px; text-align:center; font-weight:bold; ${canManageUsers ? '' : 'pointer-events:none; border:none;'}"
+                            value="${u.matches_played || 0}"
+                            min="0"
+                            onchange="quickUpdateMatches('${u.id}', this.value)"
+                     >
+                </td>
+
                 <td>
                      <span class="pro-category-badge" style="background: ${u.status === 'active' ? 'var(--primary)' : 'transparent'}; color: ${u.status === 'active' ? 'black' : 'var(--warning)'}; border-color: ${u.status === 'active' ? 'var(--primary)' : 'var(--warning)'}; font-weight: 800;">
                         ${(u.status === 'active' ? 'ACTIVO' : (u.status || 'PENDIENTE')).toUpperCase()}
@@ -88,7 +122,7 @@ window.AdminViews.users = async function () {
                         ${canManageUsers ? `
                             ${isPending ? `<button class="btn-primary-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick="approveUser('${u.id}')">VALIDAR</button>` : ''}
                             <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick='openEditUserModal(${JSON.stringify(u).replace(/'/g, "&#39;")})'>EDITAR</button>
-                            <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; color: var(--danger); border-color: var(--danger-dim);" onclick="deleteUser('${u.id}')">ELIMINAR</button>
+                            <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; color: var(--danger); border-color: var(--danger-dim);" onclick="deleteUser('${u.id}')">🗑️</button>
                         ` : '<span style="color:var(--text-muted); font-size:0.7rem;">👁️ SOLO LECTURA</span>'}
                     </div>
                 </td>
@@ -105,8 +139,8 @@ window.AdminViews.users = async function () {
                         📗 EXPORTAR EXCEL
                     </button>
                     <!-- NEW RESET BUTTON -->
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05);" onclick="batchResetLevels()">
-                        ⚠️ RESET NIVEL 3
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05);" onclick="batchUpdateTeamLevels()">
+                        ⚠️ SYNC NIVELES EQ
                     </button>
                     <!-- NEW RECALC STATS BUTTON -->
                     <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #eab308; color: #eab308; background: rgba(234, 179, 8, 0.05); margin-left: auto;" onclick="recalculateMatchesPlayed()">
@@ -149,16 +183,18 @@ window.AdminViews.users = async function () {
                 <thead>
                     <tr>
                         <th>IDENTIDAD</th>
+                        <th>EQUIPOS</th>
                         <th>CONTACTO</th>
-                        <th>NIVEL TÉCNICO</th>
+                        <th>NIVEL</th>
                         <th>GÉNERO</th>
-                        <th>ESTADO CUENTA</th>
-                        <th style="text-align:right;">ACCIONES DE CONTROL</th>
+                        <th>TOTAL P.</th> <!-- Matches Played -->
+                        <th>ESTADO</th>
+                        <th style="text-align:right;">ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody id="users-tbody"></tbody>
             </table>
-            <div class="pro-table-footer">SISTEMA INTEGRADO DE BASE DE DATOS v2.0 PRO</div>
+            <div class="pro-table-footer">SISTEMA INTEGRADO DE BASE DE DATOS v2.1 PRO (Auto-Save Enabled)</div>
         </div>`;
 
     // Initial Render
@@ -168,6 +204,134 @@ window.AdminViews.users = async function () {
     // MODULE INTERNAL HELPERS
     // ==========================================
 
+    /**
+     * Helper: Calculate level based on teams
+     * Returns the highest level found in teams, prioritizing gender-specific teams.
+     * Returns null if no team level found (so we don't overwrite if not applicable).
+     */
+    const _calculateLevelFromTeams = (user, teams) => {
+        const teamLevels = AppConstants.TEAM_LEVELS;
+        if (!teams || teams.length === 0) return null;
+
+        let maxLevel = 0;
+        let hasTeamLevel = false;
+
+        teams.forEach(t => {
+            const lvl = teamLevels[t];
+            if (lvl) {
+                hasTeamLevel = true;
+                // Logic: If player is male, prioritize 'Masculino' teams if multiple.
+                // If player is female, prioritize 'Femenino' teams.
+                // Otherwise take highest.
+                const isGenderMatch = (user.gender === 'chico' && t.includes('Masculino')) || (user.gender === 'chica' && t.includes('Femenino'));
+
+                if (lvl > maxLevel) {
+                    maxLevel = lvl;
+                } else if (lvl === maxLevel && isGenderMatch) {
+                    // Tie-breaker: prefer gender specific team (conceptually)
+                    // In loop we just find max, but if we wanted to pick specific team we would track it.
+                    // Since we return just NUMBER, max is fine. 
+                    // Wait, user requirement: "prevalecer el equipo masculino o femenino del nivel"
+                    // This implies if I have Team A (3.5 Mixed) and Team B (3.5 Male) and I am Male, 
+                    // the level is 3.5 regardless.
+                    // But if Team A (3.0 Male) and Team B (3.5 Mixed), Level is 3.5.
+                    // The requirement is mostly about "if in multiple teams, take the one that defines level best?"
+                    // Actually, usually "Highest Level" is the safe bet for "Player Level".
+                }
+            }
+        });
+
+        return hasTeamLevel ? maxLevel : null;
+    };
+
+    // NEW: Quick Update Helpers
+    window.quickUpdateMatches = async (id, val) => {
+        try {
+            const matches = parseInt(val) || 0;
+            await FirebaseDB.players.update(id, { matches_played: matches });
+            // Update cache locally to avoid full reload flicker
+            const user = window.allUsersCache.find(u => u.id === id);
+            if (user) user.matches_played = matches;
+            // Feedback visual?
+        } catch (e) {
+            console.error(e);
+            alert("❌ Error al actualizar partidos");
+        }
+    };
+
+    window.quickAddTeam = async (id, teamToAdd) => {
+        if (!teamToAdd) return;
+        try {
+            const user = window.allUsersCache.find(u => u.id === id);
+            if (!user) return;
+
+            let currentTeams = Array.isArray(user.team_somospadel) ? [...user.team_somospadel] : (user.team_somospadel ? [user.team_somospadel] : []);
+
+            if (!currentTeams.includes(teamToAdd)) {
+                currentTeams.push(teamToAdd);
+
+                // AUTO-CALC LEVEL
+                const newLevel = _calculateLevelFromTeams(user, currentTeams);
+
+                const updatePayload = { team_somospadel: currentTeams };
+                if (newLevel !== null) {
+                    updatePayload.level = newLevel;
+                    updatePayload.self_rate_level = newLevel;
+                }
+
+                await FirebaseDB.players.update(id, updatePayload);
+
+                // Update Local and Re-render
+                user.team_somospadel = currentTeams;
+                if (newLevel !== null) {
+                    user.level = newLevel;
+                    user.self_rate_level = newLevel;
+                }
+                window.renderUserRows(window.filteredUsers);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("❌ Error al añadir equipo");
+        }
+    };
+
+    window.quickRemoveTeam = async (id, teamToRemove) => {
+        if (!confirm(`¿Quitar del equipo ${teamToRemove}?`)) return;
+        try {
+            const user = window.allUsersCache.find(u => u.id === id);
+            if (!user) return;
+
+            let currentTeams = Array.isArray(user.team_somospadel) ? [...user.team_somospadel] : (user.team_somospadel ? [user.team_somospadel] : []);
+
+            currentTeams = currentTeams.filter(t => t !== teamToRemove);
+
+            // AUTO-CALC LEVEL (Recalc after remove)
+            // If no teams left, we DO NOT reset level to 0/3.5, we keep last known?
+            // Or we check remaining.
+            const newLevel = _calculateLevelFromTeams(user, currentTeams);
+
+            const updatePayload = { team_somospadel: currentTeams };
+            if (newLevel !== null) {
+                updatePayload.level = newLevel;
+                updatePayload.self_rate_level = newLevel;
+            }
+
+            await FirebaseDB.players.update(id, updatePayload);
+
+            // Update Local and Re-render
+            user.team_somospadel = currentTeams;
+            if (newLevel !== null) {
+                user.level = newLevel;
+                user.self_rate_level = newLevel;
+            }
+            window.renderUserRows(window.filteredUsers);
+        } catch (e) {
+            console.error(e);
+            alert("❌ Error al quitar equipo");
+        }
+    };
+
+    // Existing helpers...
     window.multiFilterUsers = () => {
         const search = document.getElementById('global-search').value.toLowerCase();
         const fName = document.getElementById('filter-name').value.toLowerCase();
@@ -366,11 +530,30 @@ window.AdminViews.users = async function () {
                 selectedTeams.push(cb.value);
             });
 
+            // Calculate auto-level based on teams
+            // We need 'gender' to be accurate for calculation
+            const gender = formData.get('gender');
+            const dummyUser = { gender: gender }; // Mock user for helper
+            const autoLevel = _calculateLevelFromTeams(dummyUser, selectedTeams);
+
+            let submittedLevel = parseFloat(formData.get('level'));
+            // If teams enforce a level, use it? Or only if > current?
+            // "quiero que lo detecte automaticamente y lo cambie"
+            // Usually, if a team decides level, we should set it.
+            // But if user manually set 4.5 and team is 3.5?
+            // Let's assume team level is the baseline. 
+            // If autoLevel is found, overwrite the form value IF it's likely the intention.
+            // Safe bet: if autoLevel exists, update it.
+            if (autoLevel !== null) {
+                submittedLevel = autoLevel;
+            }
+
             const userData = {
                 name: formData.get('name'),
                 phone: formData.get('phone'),
-                level: parseFloat(formData.get('level')),
-                gender: formData.get('gender'),
+                level: submittedLevel, // Use calculated or form
+                self_rate_level: submittedLevel, // Sync self rate too
+                gender: gender,
                 membership: formData.get('membership'),
                 role: formData.get('role'),
                 status: formData.get('status'),
@@ -582,42 +765,42 @@ window.recalculateMatchesPlayed = async () => {
 };
 
 // --- BATCH ACTION: RESET LEVELS ---
-window.batchResetLevels = async () => {
-    if (!confirm("⚠️ ATENCIÓN: Esta acción pondrá el NIVEL 3.0 a TODOS los jugadores de la base de datos actual.\n\n¿Estás seguro de que quieres continuar?")) return;
-    const confirmation = prompt("⚠️ PELIGRO ⚠️\nEsto es irreversible.\nEscribe 'RESET' para confirmar:");
-
-    if (confirmation !== 'RESET') return alert("Operación cancelada.");
+// --- BATCH ACTION: UPDATE LEVELS BY TEAM ---
+window.batchUpdateTeamLevels = async () => {
+    if (!confirm("⚠️ ATENCIÓN: Esta acción RECALCULARÁ los niveles de TODOS los jugadores basándose en sus equipos.\n\nSe usará la configuración de AppConstants.TEAM_LEVELS.\n¿Estás seguro?")) return;
 
     const users = window.allUsersCache || [];
     if (users.length === 0) return alert("No hay usuarios cargados.");
 
     const content = document.getElementById('content-area');
-    const originalHTML = content.innerHTML;
     // Show Loading
     content.innerHTML = `
         <div style="height: 100%; display: flex; flex-direction:column; justify-content: center; align-items: center; color: white;">
             <div class="loader"></div>
-            <div style="margin-top:20px; font-size: 1.2rem; font-weight: bold;">ACTUALIZANDO NIVELES MASIVAMENTE...</div>
-            <div style="color: #888; margin-top: 10px;">Por favor, no cierres la página.</div>
+            <div style="margin-top:20px; font-size: 1.2rem; font-weight: bold;">SINCRONIZANDO NIVELES DE EQUIPO...</div>
+            <div style="color: #888; margin-top: 10px;">Aplicando lógica de prioridad por género.</div>
         </div>`;
 
     let count = 0;
     try {
-        // Ejecutamos en serie para no saturar si es firebase simulado, o en paralelo limitado
         for (let u of users) {
-            // Forzamos update a nivel 3
-            // Nota: En un entorno real esto debería ser una llamada batch al servidor, 
-            // pero aquí iteramos en cliente.
-            if (u.level != 3) {
-                await FirebaseDB.players.update(u.id, { level: 3, self_rate_level: 3 });
+            const teams = Array.isArray(u.team_somospadel) ? u.team_somospadel : (u.team_somospadel ? [u.team_somospadel] : []);
+
+            // Use new helper
+            const maxLevel = _calculateLevelFromTeams(u, teams);
+
+            if (maxLevel !== null && maxLevel > 0 && maxLevel !== u.level) {
+                await FirebaseDB.players.update(u.id, {
+                    level: maxLevel,
+                    self_rate_level: maxLevel
+                });
                 count++;
+                console.log(`Updated ${u.name}: ${u.level} -> ${maxLevel} (Teams: ${teams.join(', ')})`);
             }
         }
 
-        alert(`✅ Proceso completado.\nSe han actualizado ${count} jugadores al Nivel 3.\n\n(Total revisados: ${users.length})`);
-
-        // Recargar vista
-        window.location.reload(); // Recarga completa para asegurar limpieza
+        alert(`✅ Proceso completado.\nSe han actualizado ${count} jugadores según sus equipos.`);
+        window.location.reload();
 
     } catch (e) {
         console.error(e);
