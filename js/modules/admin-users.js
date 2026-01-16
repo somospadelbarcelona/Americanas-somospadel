@@ -209,7 +209,12 @@ window.AdminViews.users = async function () {
      * Returns the highest level found in teams, prioritizing gender-specific teams.
      * Returns null if no team level found (so we don't overwrite if not applicable).
      */
-    const _calculateLevelFromTeams = (user, teams) => {
+    /**
+     * Helper: Calculate level based on teams
+     * Returns the highest level found in teams, prioritizing gender-specific teams.
+     * Returns null if no team level found (so we don't overwrite if not applicable).
+     */
+    window._calculateLevelFromTeams = (user, teams) => {
         const teamLevels = AppConstants.TEAM_LEVELS;
         if (!teams || teams.length === 0) return null;
 
@@ -271,7 +276,7 @@ window.AdminViews.users = async function () {
                 currentTeams.push(teamToAdd);
 
                 // AUTO-CALC LEVEL
-                const newLevel = _calculateLevelFromTeams(user, currentTeams);
+                const newLevel = window._calculateLevelFromTeams(user, currentTeams);
 
                 const updatePayload = { team_somospadel: currentTeams };
                 if (newLevel !== null) {
@@ -308,7 +313,7 @@ window.AdminViews.users = async function () {
             // AUTO-CALC LEVEL (Recalc after remove)
             // If no teams left, we DO NOT reset level to 0/3.5, we keep last known?
             // Or we check remaining.
-            const newLevel = _calculateLevelFromTeams(user, currentTeams);
+            const newLevel = window._calculateLevelFromTeams(user, currentTeams);
 
             const updatePayload = { team_somospadel: currentTeams };
             if (newLevel !== null) {
@@ -534,7 +539,7 @@ window.AdminViews.users = async function () {
             // We need 'gender' to be accurate for calculation
             const gender = formData.get('gender');
             const dummyUser = { gender: gender }; // Mock user for helper
-            const autoLevel = _calculateLevelFromTeams(dummyUser, selectedTeams);
+            const autoLevel = window._calculateLevelFromTeams(dummyUser, selectedTeams);
 
             let submittedLevel = parseFloat(formData.get('level'));
             // If teams enforce a level, use it? Or only if > current?
@@ -787,7 +792,7 @@ window.batchUpdateTeamLevels = async () => {
             const teams = Array.isArray(u.team_somospadel) ? u.team_somospadel : (u.team_somospadel ? [u.team_somospadel] : []);
 
             // Use new helper
-            const maxLevel = _calculateLevelFromTeams(u, teams);
+            const maxLevel = window._calculateLevelFromTeams(u, teams);
 
             if (maxLevel !== null && maxLevel > 0 && maxLevel !== u.level) {
                 await FirebaseDB.players.update(u.id, {

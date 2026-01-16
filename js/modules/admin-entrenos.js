@@ -74,6 +74,9 @@ function renderEntrenoCard(e) {
                 <span class="pro-category-badge" style="border:1px solid #444; color:#aaa;">${priceStr}</span>
                 <span class="pro-category-badge" style="color:${statusColor}; border-color:${statusColor}; background:${statusColor}10;">${statusLabel}</span>
                 
+                <button class="btn-outline-pro" style="color:#25D366; border-color:#25D366;" onclick='window.WhatsAppService.shareStartFromAdmin(${JSON.stringify(e).replace(/'/g, "&#39;")})'>
+                    <i class="fab fa-whatsapp"></i> WA
+                </button>
                 <button class="btn-outline-pro" onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})'>✏️ EDITAR</button>
                 <button class="btn-secondary" onclick="window.deleteEntreno('${e.id}')">🗑️</button>
             </div>
