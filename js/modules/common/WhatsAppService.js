@@ -121,9 +121,12 @@ window.WhatsAppService = {
                     const allUsers = await window.FirebaseDB.players.getAll();
                     richPlayers = event.players.map(p => {
                         const user = allUsers.find(u => (u.id === p.id) || (u.uid === p.id));
+                        // Prefer fresh user level, fallback to event stored level
+                        const freshLevel = user ? (user.level || user.self_rate_level || p.level) : p.level;
                         return {
                             ...p,
                             team: user ? (user.team_somospadel || user.team || '') : '',
+                            level: freshLevel,
                             // Ensure we preserve joinedAt from the event player object, not the user profile
                             joinedAt: p.joinedAt
                         };

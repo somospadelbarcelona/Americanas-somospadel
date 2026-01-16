@@ -1120,8 +1120,7 @@
                     </div>
                 </div>
 
-                // PLAYERS GRID - UPDATED TO 4 COLUMNS (PISTA LLENA)
-                <div id="player-grid-container" style="position: relative; z-index: 5; flex: 1; overflow-y: auto; padding: 10px 25px 40px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; scrollbar-width: none;">
+                <div id="player-grid-container" style="position: relative; z-index: 5; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: 10px 25px 40px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; scrollbar-width: none;">
                     <div style="grid-column: 1 / -1; text-align: center; padding: 100px 20px;">
                         <div class="loader-mini" style="margin: 0 auto 20px; border-top-color: #CCFF00;"></div>
                         <p style="color: rgba(255,255,255,0.5); font-weight: 800; font-size: 0.8rem; letter-spacing: 2px;">ESCANEANDO JUGADORES...</p>
