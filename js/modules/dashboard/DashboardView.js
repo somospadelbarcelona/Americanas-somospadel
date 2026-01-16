@@ -43,14 +43,15 @@
                 ">
 
                     
+                    <!-- LOGIC TO HIDE WEATHER IF EMPTY -->
                     <!-- 1. LIVE REGISTRATION WIDGET (FULL WIDTH SCROLLER) -->
                     <div id="registration-widget-root" style="
                         background: #0a0a14;
                         border: 1px solid rgba(0, 227, 109, 0.3);
                         border-radius: 20px;
-                        margin: 25px 15px 15px;
+                        margin: 25px 15px 0px; /* MORE TOP MARGIN, ZERO BOTTOM */
                         padding: 12px 15px;
-                        box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+                        box-shadow: 0 5px 25px rgba(0,0,0,0.5); /* REDUCED SHADOW */
                         z-index: 10;
                         animation: floatUp 0.8s ease-out forwards;
                     ">
@@ -64,11 +65,41 @@
                             </div>
                         </div>
                         
-                        <div id="live-scroller-content" class="live-scroller" style="overflow-x: auto; display: flex; gap: 12px; padding-bottom: 5px; -webkit-overflow-scrolling: touch;">
+                        <div id="live-scroller-content" class="live-scroller" style="overflow-x: auto; display: flex; gap: 15px; justify-content: center; padding-bottom: 5px; -webkit-overflow-scrolling: touch;">
                             <div style="text-align: center; width: 100%; padding: 15px; color: rgba(255,255,255,0.4);">
                                 <i class="fas fa-spinner fa-spin" style="font-size: 1.2rem; color: #00E36D;"></i>
                                 <div style="margin-top: 8px; font-size: 0.75rem; font-weight: 700;">Buscando pistas...</div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- NEW WEATHER WIDGET -->
+                    <div id="weather-widget-root" style="
+                        margin: 0 15px;
+                        display: none; /* HIDDEN BY DEFAULT */ 
+                        gap: 10px; 
+                        overflow-x: auto; 
+                        animation: floatUp 0.8s ease-out forwards;
+                    ">
+                        <!-- Content loaded via JS -->
+                    </div>
+
+                    <!-- 1.25 ACTIVIDAD RECIENTE -->
+                    <div id="activity-feed-root" style="
+                        background: rgba(10, 10, 20, 0.9);
+                        backdrop-filter: blur(20px);
+                        border: 1px solid rgba(0, 227, 109, 0.2);
+                        border-radius: 20px;
+                        margin: 5px 15px 10px; /* BALANCED MARGINS */
+                        padding: 15px;
+                        box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+                        animation: floatUp 0.85s ease-out forwards;
+                    ">
+                        <div style="font-weight:950; font-size:0.85rem; color:white; letter-spacing:-0.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                            <i class="fas fa-rss" style="color: #00E36D; font-size: 1rem;"></i> ACTIVIDAD RECIENTE
+                        </div>
+                        <div id="activity-feed-content" style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- Content will be loaded here -->
                         </div>
                     </div>
 
@@ -78,7 +109,7 @@
                         backdrop-filter: blur(20px);
                         border: 1px solid rgba(255, 255, 255, 0.1);
                         border-radius: 28px;
-                        margin: 5px 15px 25px;
+                        margin: 0 15px 25px; /* Removed top margin */
                         padding: 15px;
                         box-shadow: 0 20px 40px rgba(0,0,0,0.5);
                         animation: floatUp 0.9s ease-out forwards;
@@ -342,14 +373,30 @@
                         const categoryIcon = am.category === 'female' ? '♀️' : (am.category === 'male' ? '♂️' : '🎾');
                         const typeLabel = am.type === 'entreno' ? 'ENTRENO' : 'AMERICANA';
 
+                        /* 
+                                                    Registration Ticker Card 
+                                                 */
+                        let catColor = '#84cc16'; // Default (Green/Generic)
+                        const lowerName = am.name.toLowerCase();
+                        if (lowerName.includes('femenina') || lowerName.includes('chicas')) {
+                            catColor = '#ec4899'; // Pink
+                        } else if (lowerName.includes('masculina') || lowerName.includes('chicos')) {
+                            catColor = '#06b6d4'; // Cyan
+                        } else if (lowerName.includes('mixto') || lowerName.includes('mix')) {
+                            catColor = '#8b5cf6'; // Violet
+                        }
+
                         html += `
                             <div class="registration-ticker-card" 
                                  onclick="event.stopPropagation(); window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');" 
                                  style="
                                 min-width: 160px; 
                                 max-width: 160px;
-                                background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%); 
-                                border-top: 2px solid ${statusColor};
+                                background: linear-gradient(135deg, ${catColor}44 0%, rgba(10,10,10,0.95) 100%);
+                                border-top: 3px solid ${statusColor};
+                                border-bottom: 1px solid ${catColor}30;
+                                border-left: 1px solid ${catColor}30;
+                                border-right: 1px solid ${catColor}30;
                                 border-radius: 12px; 
                                 padding: 10px; 
                                 flex-shrink: 0; 
@@ -359,35 +406,36 @@
                                 gap: 6px; 
                                 cursor: pointer;
                                 transition: all 0.3s ease;
-                                border: 1px solid rgba(255,255,255,0.05);
+                                backdrop-filter: blur(5px);
+                                -webkit-backdrop-filter: blur(5px);
                             "
                             >
                                 <!-- Header with Status -->
                                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <span style="font-size:0.5rem; font-weight:900; color:${statusColor}; background:rgba(0,227,109,0.1); padding:2px 6px; border-radius:4px;">${statusLabel}</span>
-                                    <span style="font-size:0.85rem;">${categoryIcon}</span>
+                                    <span style="font-size:0.5rem; font-weight:900; color:${statusColor}; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">${statusLabel}</span>
+                                    <span style="font-size:0.85rem; filter: drop-shadow(0 0 5px ${catColor});">${categoryIcon}</span>
                                 </div>
                                 
                                 <!-- Event Name - Compact -->
-                                <div style="color:white; font-weight:800; font-size:0.75rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.1;">
+                                <div style="color:white; font-weight:800; font-size:0.75rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.1; text-shadow: 0 0 10px ${catColor}80;">
                                     ${am.name.toUpperCase()}
                                 </div>
                                 <div style="color:${statusColor}; font-size:0.5rem; font-weight:900; opacity:0.8; letter-spacing:1px;">${typeLabel}</div>
                                 
                                 <!-- Date & Time - Compact -->
-                                <div style="color:#888; font-size:0.6rem; font-weight:700;">
+                                <div style="color:#aaa; font-size:0.6rem; font-weight:700;">
                                     ${this.formatDateShort(am.date)} ${am.time}
                                 </div>
                                 
                                 <!-- Status & Count - Compact -->
-								<div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.05); cursor: pointer;"
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; padding-top:6px; border-top:1px solid ${catColor}30; cursor: pointer;"
 									 onclick="event.stopPropagation(); window.EventsController?.openPlayerListModal('${am.id}')">
 									<div style="font-size: 0.75rem; color: ${isFull ? '#FF3B30' : '#00E36D'}; font-weight: 900;">
 										${isFull ? 'COMPLETO' : `${spotsLeft} LIB.`}
 									</div>
 									<div style="font-size: 1.1rem; color: ${isFull ? '#FF3B30' : '#00E36D'}; font-weight: 900; display: flex; align-items: center; gap: 4px;">
 										<span style="font-size: 1.3rem;">${players.length}</span>
-										<span style="color: #666; font-size: 0.8rem;">/${maxPlayers}</span>
+										<span style="color: #888; font-size: 0.8rem;">/${maxPlayers}</span>
 									</div>
 								</div>
                             </div>
@@ -510,9 +558,348 @@
                         console.error("AI Activity failed", e);
                     });
                 }
+
+                // 3. Load Activity Feed
+                const activityContainer = document.getElementById('activity-feed-content');
+                if (activityContainer) {
+                    this.renderActivityFeed().then(html => {
+                        activityContainer.innerHTML = html;
+                    }).catch(e => {
+                        console.error("Activity Feed failed", e);
+                    });
+                }
             } catch (e) {
                 console.error('❌ [DashboardView] Error loading widgets:', e);
             }
+        }
+
+        async renderActivityFeed() {
+            try {
+                // Inyectar estilos de animación si no existen
+                if (!document.getElementById('activity-feed-styles')) {
+                    const style = document.createElement('style');
+                    style.id = 'activity-feed-styles';
+                    style.textContent = `
+                        @keyframes gradientFlow {
+                            0% { background-position: 0% 50%; }
+                            50% { background-position: 100% 50%; }
+                            100% { background-position: 0% 50%; }
+                        }
+                        @keyframes pulseGlow {
+                            0% { opacity: 0.5; transform: scaleY(0.95); }
+                            50% { opacity: 1; transform: scaleY(1); }
+                            100% { opacity: 0.5; transform: scaleY(0.95); }
+                        }
+                        .activity-item-hover:hover {
+                            background: rgba(255,255,255,0.06) !important;
+                            transform: translateX(5px);
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+
+                const activities = [];
+
+                // 1. Obtener datos de múltiples fuentes en paralelo
+                const [registrations, urgentAlerts, rankingChanges] = await Promise.all([
+                    this.getRecentRegistrations(60),
+                    this.getUrgentAlerts(),
+                    this.getRankingChanges()
+                ]);
+
+                // 2. Convertir inscripciones a formato de actividad
+                registrations.forEach(reg => {
+                    // Determinar color según categoría (Nombre del evento)
+                    let catColor = '#84cc16'; // Default Green (Lime)
+                    let catColorSec = '#bef264';
+
+                    const lowerName = reg.eventName.toLowerCase();
+                    if (lowerName.includes('femenina') || lowerName.includes('chicas')) {
+                        catColor = '#ec4899'; // Pink-500
+                        catColorSec = '#f472b6'; // Pink-400
+                    } else if (lowerName.includes('masculina') || lowerName.includes('chicos')) {
+                        catColor = '#06b6d4'; // Cyan-500
+                        catColorSec = '#22d3ee'; // Cyan-400
+                    } else if (lowerName.includes('mixto') || lowerName.includes('mix')) {
+                        catColor = '#8b5cf6'; // Violet-500
+                        catColorSec = '#a78bfa'; // Violet-400
+                    }
+
+                    activities.push({
+                        type: 'registration',
+                        icon: '🎾',
+                        title: `${reg.playerName} se unió a ${reg.eventName}`,
+                        time: this.formatRelativeTime(reg.timestamp),
+                        color: catColor,
+                        secondaryColor: catColorSec,
+                        timestamp: reg.timestamp,
+                        score: 0
+                    });
+                });
+
+                // 3. Convertir alertas de urgencia
+                urgentAlerts.forEach(alert => {
+                    activities.push({
+                        type: 'urgent',
+                        icon: '⚠️',
+                        title: alert.title,
+                        time: 'ahora',
+                        color: '#ef4444',
+                        secondaryColor: '#f87171', // Red-400
+                        timestamp: alert.timestamp,
+                        priority: 'critical',
+                        score: 0
+                    });
+                });
+
+                // 4. Convertir cambios de ranking
+                rankingChanges.forEach(change => {
+                    activities.push({
+                        type: 'ranking',
+                        icon: change.position === 1 ? '👑' : '📈',
+                        title: `${change.playerName} ${change.position === 1 ? 'lidera el ranking' : `está en TOP ${change.position}`}`,
+                        time: this.formatRelativeTime(change.timestamp),
+                        color: '#f59e0b',
+                        secondaryColor: '#fbbf24', // Amber-400
+                        timestamp: change.timestamp,
+                        score: 0
+                    });
+                });
+
+                // 5. Calcular scores para cada actividad
+                activities.forEach(a => {
+                    a.score = this.calculateActivityScore(a);
+                    if (!a.secondaryColor) a.secondaryColor = a.color;
+                });
+
+                // 6. Ordenar por score y limitar a top 5
+                const top5 = activities
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 5);
+
+                // 7. Renderizar
+                if (top5.length === 0) {
+                    return `
+                        <div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.4);">
+                            <i class="fas fa-inbox" style="font-size: 1.5rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
+                            <div style="font-size: 0.75rem; font-weight: 700;">Sin actividad reciente</div>
+                        </div>
+                    `;
+                }
+
+                return top5.map((activity, index) => `
+                    <div class="activity-item-hover" style="
+                        position: relative;
+                        display: flex;
+                        align-items: start;
+                        gap: 12px;
+                        padding: 12px 14px;
+                        background: linear-gradient(90deg, ${activity.color}55 0%, rgba(0,0,0,0.4) 100%);
+                        backdrop-filter: blur(10px);
+                        -webkit-backdrop-filter: blur(10px);
+                        border-radius: 12px;
+                        margin-bottom: 8px;
+                        border: 1px solid ${activity.color}30;
+                        overflow: hidden;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        animation: slideIn 0.5s ease-out backwards;
+                        animation-delay: ${index * 0.1}s;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                    ">
+                        <!-- Living Color Bar -->
+                        <div style="
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            bottom: 0;
+                            width: 4px;
+                            background: linear-gradient(180deg, ${activity.color}, ${activity.secondaryColor}, ${activity.color});
+                            background-size: 100% 200%;
+                            animation: gradientFlow 3s infinite linear;
+                            box-shadow: 0 0 10px ${activity.color}60;
+                        "></div>
+
+                        <!-- Icon Container with Glow -->
+                        <div style="
+                            font-size: 1.2rem;
+                            position: relative;
+                            z-index: 2;
+                            text-shadow: 0 0 15px ${activity.color}80;
+                            animation: pulseGlow 2s infinite ease-in-out;
+                        ">${activity.icon}</div>
+
+                        <div style="flex: 1; z-index: 2;">
+                            <div style="
+                                font-size: 0.8rem; 
+                                font-weight: 700; 
+                                color: white; 
+                                line-height: 1.3;
+                                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+                            ">
+                                ${activity.title}
+                            </div>
+                            <div style="
+                                font-size: 0.65rem; 
+                                color: rgba(255,255,255,0.6); 
+                                margin-top: 4px; 
+                                font-weight: 600;
+                                display: flex;
+                                align-items: center;
+                                gap: 4px;
+                            ">
+                                <span style="
+                                    display: inline-block;
+                                    width: 6px;
+                                    height: 6px;
+                                    border-radius: 50%;
+                                    background: ${activity.color};
+                                    box-shadow: 0 0 5px ${activity.color};
+                                "></span>
+                                ${activity.time}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error('Activity Feed error:', e);
+                return '';
+            }
+        }
+
+        async getRecentRegistrations(minutesAgo = 60) {
+            try {
+                const cutoff = Date.now() - (minutesAgo * 60 * 1000);
+                const events = window.AmericanaService ? await window.AmericanaService.getAllActiveEvents() : [];
+                const registrations = [];
+
+                events.forEach(event => {
+                    const players = event.players || event.registeredPlayers || [];
+                    if (players.length > 0) {
+                        // Simular timestamp reciente para últimos jugadores
+                        const recentPlayers = players.slice(-Math.min(3, players.length));
+                        recentPlayers.forEach((playerId, index) => {
+                            const timestamp = Date.now() - (index * 15 * 60 * 1000); // Cada 15 min
+                            if (timestamp > cutoff) {
+                                registrations.push({
+                                    type: 'registration',
+                                    playerName: this.getPlayerName(playerId),
+                                    eventName: event.name,
+                                    timestamp: timestamp,
+                                    eventId: event.id
+                                });
+                            }
+                        });
+                    }
+                });
+
+                return registrations;
+            } catch (e) {
+                console.error('Error getting registrations:', e);
+                return [];
+            }
+        }
+
+        async getUrgentAlerts() {
+            try {
+                const events = window.AmericanaService ? await window.AmericanaService.getAllActiveEvents() : [];
+                const alerts = [];
+
+                events.forEach(event => {
+                    if (!['open', 'upcoming', 'scheduled'].includes(event.status)) return;
+
+                    const players = (event.players || event.registeredPlayers || []).length;
+                    const maxPlayers = (event.max_courts || 0) * 4;
+                    const spotsLeft = maxPlayers - players;
+
+                    if (spotsLeft > 0 && spotsLeft <= 2 && maxPlayers > 0) {
+                        alerts.push({
+                            type: 'urgent',
+                            title: `¡ÚLTIMA${spotsLeft === 1 ? '' : 'S'} ${spotsLeft} PLAZA${spotsLeft === 1 ? '' : 'S'}! ${event.name}`,
+                            eventName: event.name,
+                            spotsLeft,
+                            timestamp: Date.now(),
+                            priority: 'critical'
+                        });
+                    }
+                });
+
+                return alerts;
+            } catch (e) {
+                console.error('Error getting urgent alerts:', e);
+                return [];
+            }
+        }
+
+        async getRankingChanges() {
+            try {
+                if (!window.RankingController) return [];
+
+                const players = await window.RankingController.calculateSilently();
+                const changes = [];
+
+                // Top 3 jugadores con puntos
+                players.slice(0, 3).forEach((player, index) => {
+                    const points = player.stats?.americanas?.points || 0;
+                    if (points > 0) {
+                        changes.push({
+                            type: 'ranking',
+                            playerName: player.name,
+                            position: index + 1,
+                            points: points,
+                            timestamp: Date.now() - Math.random() * 7200000 // Últimas 2 horas
+                        });
+                    }
+                });
+
+                return changes;
+            } catch (e) {
+                console.error('Error getting ranking changes:', e);
+                return [];
+            }
+        }
+
+        calculateActivityScore(activity) {
+            let score = 0;
+
+            // 1. Urgencia temporal (0-100 puntos)
+            const minutesAgo = (Date.now() - activity.timestamp) / 60000;
+            score += Math.max(0, 100 - minutesAgo);
+
+            // 2. Prioridad por tipo (0-100 puntos)
+            const priorityScores = {
+                'urgent': 100,      // Alertas de urgencia
+                'registration': 70, // Inscripciones
+                'ranking': 50,      // Cambios ranking
+                'match': 30,        // Partidos finalizados
+                'event': 20         // Nuevos eventos
+            };
+            score += priorityScores[activity.type] || 0;
+
+            // 3. Bonus por criticidad
+            if (activity.priority === 'critical') score += 50;
+
+            return score;
+        }
+
+        formatRelativeTime(timestamp) {
+            const seconds = Math.floor((Date.now() - timestamp) / 1000);
+
+            if (seconds < 60) return 'ahora';
+            if (seconds < 3600) return `hace ${Math.floor(seconds / 60)} min`;
+            if (seconds < 86400) return `hace ${Math.floor(seconds / 3600)}h`;
+            return `hace ${Math.floor(seconds / 86400)}d`;
+        }
+
+        getPlayerName(playerId) {
+            // Intentar obtener nombre del jugador
+            if (typeof playerId === 'string') {
+                // Es solo un ID, devolver "Alguien"
+                return 'Alguien';
+            } else if (playerId && playerId.name) {
+                // Es un objeto con nombre
+                return playerId.name.split(' ')[0];
+            }
+            return 'Alguien';
         }
 
         async renderLiveActivity() {
@@ -520,32 +907,7 @@
                 const events = window.AmericanaService ? await window.AmericanaService.getAllActiveEvents() : [];
                 let recentActions = [];
 
-                events.forEach(am => {
-                    const players = am.players || am.registeredPlayers || [];
-                    const maxPlayers = (am.max_courts || 0) * 4;
-                    const openSpots = maxPlayers - players.length;
-
-                    if (players.length > 0) {
-                        recentActions.push({
-                            text: `<b>ALGUIEN</b> se unió a <span style="color:#00E36D;">${am.name}</span>`,
-                            type: 'join',
-                            timeLabel: 'HACE POCO'
-                        });
-                    }
-
-                    if (openSpots > 0 && openSpots <= 2) {
-                        recentActions.push({
-                            text: `¡Solo quedan <b>${openSpots} plazas</b> para ${am.name}!`,
-                            type: 'alert',
-                            timeLabel: 'URGENTE'
-                        });
-                    }
-                });
-
-                if (recentActions.length === 0) {
-                    recentActions = [{ text: "Previsión de alta ocupación hoy.", type: 'info', timeLabel: 'IA INFO' }];
-                }
-
+                // Find the most urgent event (fewest spots left)
                 const urgentAm = events.find(am => {
                     const pCount = (am.players || am.registeredPlayers || []).length;
                     const maxP = (am.max_courts || 0) * 4;
@@ -553,10 +915,9 @@
                     return maxP > 0 && spots > 0 && spots <= 4;
                 }) || events[0];
 
-                let html = '';
-
                 if (urgentAm) {
-                    const pCount = (urgentAm.players || urgentAm.registeredPlayers || []).length;
+                    const players = urgentAm.players || urgentAm.registeredPlayers || [];
+                    const pCount = players.length;
                     const maxP = (urgentAm.max_courts || 0) * 4;
                     const spots = Math.max(0, maxP - pCount);
                     const isFull = spots === 0;
@@ -566,28 +927,91 @@
                     const btnBg = isFull ? '#94a3b8' : '#00E36D';
                     const statusDesc = isFull ? '¡Pista completa! Avisaremos bajas.' : `¡Solo <b>${spots} plazas</b>! Se llenará pronto.`;
 
+                    // FIXED: Route explicitly to entrenos using global Router
+                    const navigateAction = "window.Router.navigate('entrenos'); setTimeout(() => { if(window.EventsController) window.EventsController.filterByType('entreno'); }, 200);";
+
+                    let html = '';
+
+                    // Styles for seamless marquee
                     html += `
-                        <div class="ai-hero-card" onclick="Router.navigate('americanas');" style="background: ${cardBg}; border-radius: 16px; padding: 20px; color: white; position: relative; overflow: hidden; margin-bottom: 5px; cursor: pointer;">
+                        <style>
+                            @keyframes marquee-scroll {
+                                0% { transform: translateX(0); }
+                                100% { transform: translateX(-50%); } 
+                            }
+                            .ticker-marquee-container {
+                                overflow: hidden;
+                                white-space: nowrap;
+                                position: relative;
+                                mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+                                -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+                            }
+                            .ticker-marquee-content {
+                                display: inline-block;
+                                animation: marquee-scroll 20s linear infinite;
+                                white-space: nowrap;
+                            }
+                            .ticker-tag {
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 6px;
+                                background: rgba(255,255,255,0.08);
+                                padding: 6px 14px;
+                                border-radius: 100px;
+                                font-size: 0.75rem;
+                                color: white;
+                                font-weight: 700;
+                                border: 1px solid rgba(255,255,255,0.1);
+                                margin-right: 12px;
+                            }
+                        </style>
+                    `;
+
+                    html += `
+                        <div class="ai-hero-card" onclick="${navigateAction}" style="background: ${cardBg}; border-radius: 16px; padding: 20px; color: white; position: relative; overflow: hidden; margin-bottom: 5px; cursor: pointer;">
                             <div style="position: absolute; top: -20px; right: -20px; font-size: 5rem; color: rgba(255,255,255,0.1); transform: rotate(-15deg);"><i class="fas fa-star"></i></div>
                             <div style="background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 4px 12px; border-radius: 100px; font-size: 0.6rem; font-weight: 900; display: inline-block; margin-bottom: 12px; text-transform: uppercase;">RECOMENDACIÓN</div>
                             <div style="font-size: 1.4rem; font-weight: 900; margin-bottom: 5px;">${urgentAm.name}</div>
                             <p style="font-size: 0.8rem; opacity: 0.9; margin-bottom: 15px;">${statusDesc}</p>
-                            <div style="background: ${btnBg}; color: black; padding: 12px; border-radius: 12px; text-align: center; font-weight: 950; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 10px;">${btnText} <i class="fas fa-arrow-right"></i></div>
+                            <div style="background: ${btnBg}; color: black; padding: 12px; border-radius: 12px; text-align: center; font-weight: 950; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                                ${btnText} <i class="fas fa-arrow-right"></i>
+                            </div>
                         </div>
                     `;
+
+                    // Generate Hype Content
+                    const hypeMessages = [
+                        `🔥 <b>${pCount + 3} personas</b> viéndolo`,
+                        `⚡ <b>Alta Demanda</b>: Se llenará hoy`,
+                        `🏆 <b>Nivel Garantizado</b>`
+                    ];
+
+                    if (players.length > 0) {
+                        // Pick a random player to show "X just joined"
+                        const randomPlayer = players[Math.floor(Math.random() * players.length)];
+                        const pName = (randomPlayer.name || 'Jugador').split(' ')[0];
+                        hypeMessages.unshift(`🚀 <b>${pName}</b> acaba de unirse`);
+                    }
+
+                    // Duplicate messages for smooth infinite scroll
+                    const tickerContent = [...hypeMessages, ...hypeMessages, ...hypeMessages].map(msg => `
+                        <div class="ticker-tag">
+                            <div style="width: 6px; height: 6px; border-radius: 50%; background: #00E36D; box-shadow: 0 0 5px #00E36D;"></div>
+                            ${msg}
+                        </div>
+                    `).join('');
+
+                    html += `
+                        <div class="ticker-marquee-container" style="padding: 5px 0;">
+                            <div class="ticker-marquee-content">
+                                ${tickerContent}
+                            </div>
+                        </div>
+                    `;
+                    return html;
                 }
 
-                html += `<div style="display:flex; gap:10px; overflow-x: auto; padding: 5px 0;">`;
-                recentActions.slice(0, 5).forEach(action => {
-                    html += `
-                        <div style="white-space: nowrap; background: rgba(255,255,255,0.08); padding: 8px 16px; border-radius: 100px; font-size: 0.75rem; color: white; font-weight: 700; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1);">
-                            <div style="width: 8px; height: 8px; border-radius: 50%; background: #00E36D; box-shadow: 0 0 10px #00E36D;"></div>
-                            ${action.text.replace(/<[^>]*>?/gm, '')}
-                        </div>
-                    `;
-                });
-                html += `</div>`;
-                return html;
+                return '';
             } catch (e) { return ''; }
         }
     }

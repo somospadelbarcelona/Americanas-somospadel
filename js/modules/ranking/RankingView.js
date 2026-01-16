@@ -79,6 +79,24 @@
                         </div>
                         ` : ''}
 
+                        <!-- C. ACTIVIDAD RECIENTE -->
+                        <div style="
+                            background: white;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 32px;
+                            padding: 24px;
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+                            margin-bottom: 25px;
+                        ">
+                            <div style="font-size: 0.75rem; color: #1e293b; font-weight: 950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-rss" style="color: #84cc16;"></i> ACTIVIDAD RECIENTE
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                ${this.renderRecentActivity()}
+                            </div>
+                        </div>
+
+                        <!-- B. MI RENDIMIENTO -->
                         <div style="
                             background: white;
                             border: 1px solid #e2e8f0;
@@ -277,6 +295,89 @@
                     </div>
                 </div>
             `;
+        }
+
+        renderRecentActivity() {
+            const activities = this.getRecentActivities();
+
+            if (activities.length === 0) {
+                return `
+                    <div style="text-align: center; padding: 20px; color: #94a3b8;">
+                        <i class="fas fa-inbox" style="font-size: 2rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
+                        <div style="font-size: 0.85rem; font-weight: 600;">Sin actividad reciente</div>
+                    </div>
+                `;
+            }
+
+            return activities.slice(0, 5).map(activity => `
+                <div style="
+                    display: flex;
+                    align-items: start;
+                    gap: 12px;
+                    padding: 12px;
+                    background: #f8fafc;
+                    border-radius: 16px;
+                    border-left: 3px solid ${activity.color};
+                    transition: all 0.2s;
+                    cursor: pointer;
+                " onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+                    <div style="font-size: 1.2rem;">${activity.icon}</div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #0f172a; line-height: 1.3;">
+                            ${activity.title}
+                        </div>
+                        <div style="font-size: 0.65rem; color: #64748b; margin-top: 4px; font-weight: 600;">
+                            ${activity.time}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        getRecentActivities() {
+            const activities = [];
+            const now = new Date();
+
+            // Añadir actividades de ejemplo (TODO: obtener desde Firebase en tiempo real)
+            const sampleActivities = [
+                {
+                    icon: '🎾',
+                    title: 'Nuevo jugador se unió a AMERICANA MIXTA',
+                    time: 'hace 15 min',
+                    color: '#84cc16',
+                    timestamp: now.getTime() - 900000
+                },
+                {
+                    icon: '✅',
+                    title: 'Partido finalizado en MASCULINA',
+                    time: 'hace 1h',
+                    color: '#0ea5e9',
+                    timestamp: now.getTime() - 3600000
+                },
+                {
+                    icon: '🆕',
+                    title: 'Nueva americana FEMENINA creada',
+                    time: 'hace 3h',
+                    color: '#a855f7',
+                    timestamp: now.getTime() - 10800000
+                },
+                {
+                    icon: '📈',
+                    title: 'Cambio en el TOP 3 del ranking',
+                    time: 'hace 5h',
+                    color: '#f59e0b',
+                    timestamp: now.getTime() - 18000000
+                },
+                {
+                    icon: '⏰',
+                    title: 'ENTRENO MIXTO comienza pronto',
+                    time: 'en 2h',
+                    color: '#ec4899',
+                    timestamp: now.getTime() + 7200000
+                }
+            ];
+
+            return sampleActivities.sort((a, b) => b.timestamp - a.timestamp);
         }
     }
 
