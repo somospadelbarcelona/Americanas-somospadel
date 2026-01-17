@@ -22,6 +22,21 @@
                 wins: 0,
                 mvps: 0 // Placeholder for future logic
             };
+            this.autoStartInterval = null;
+        }
+
+        /**
+         * System Cleanup: Essential for avoiding memory leaks (Audit Fix)
+         */
+        destroy() {
+            console.log("🧹 [ControlTowerView] Cleaning up system resources...");
+            if (this.unsubscribeMatches) this.unsubscribeMatches();
+            if (this.unsubscribeEvent) this.unsubscribeEvent();
+            if (this.autoStartInterval) clearInterval(this.autoStartInterval);
+
+            this.unsubscribeMatches = null;
+            this.unsubscribeEvent = null;
+            this.autoStartInterval = null;
         }
 
         goToRound(n, event) {
@@ -631,12 +646,26 @@
                         <h1 style="color: #000; margin: 0; font-family: 'Outfit'; font-weight: 900; font-size: 1.5rem; letter-spacing: -0.5px; text-shadow: 0 1px 0 rgba(255,255,255,0.4);">${amName.toUpperCase()}</h1>
                     </div>
                     
-                    <div style="color: rgba(0,0,0,0.5); font-size: 0.8rem; margin-top: 8px; font-weight: 800; letter-spacing: 0.5px;">
-                        ${this.currentAmericanaDoc?.date || ''} • ${(this.currentAmericanaDoc?.category === 'male' ? 'MASCULINA' :
+                    <div style="color: rgba(0,0,0,0.5); font-size: 0.8rem; margin-top: 8px; font-weight: 800; letter-spacing: 0.5px; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                        <div>${this.currentAmericanaDoc?.date || ''} • ${(this.currentAmericanaDoc?.category === 'male' ? 'MASCULINA' :
                     this.currentAmericanaDoc?.category === 'female' ? 'FEMENINA' :
                         this.currentAmericanaDoc?.category === 'mixed' ? 'MIXTA' :
-                            this.currentAmericanaDoc?.category === 'open' ? 'TODOS' : 'PRO')
-                }</div>
+                            this.currentAmericanaDoc?.category === 'open' ? 'TODOS' : 'PRO')}</div>
+                        
+                        ${(() => {
+                    const mode = (this.currentAmericanaDoc?.pair_mode || this.currentAmericanaDoc?.format || '').toLowerCase();
+                    const nameUpper = (this.currentAmericanaDoc?.name || '').toUpperCase();
+                    let label = 'PAREJA FIJA';
+                    let color = '#a855f7';
+
+                    if (nameUpper.includes('TWISTER') || mode.includes('twister') || nameUpper.includes('ROTATIVO') || mode.includes('rotating') || mode.includes('rotativo')) {
+                        label = 'TWISTER';
+                        color = '#38bdf8';
+                    }
+
+                    return `<div style="background: ${color}22; color: ${color}; border: 1px solid ${color}; padding: 2px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">MODO: ${label}</div>`;
+                })()}
+                    </div>
                 </div>
 
                 <div class="tour-sub-nav" style="background: rgba(255,255,255,0.8); backdrop-filter: blur(15px); padding: 12px 10px; display: flex; gap: 8px; border-bottom: 2px solid #CCFF00; position: sticky; top: 62px; z-index: 1001; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
@@ -859,601 +888,13 @@
         }
 
         renderStandingsView() {
-            const stats = {};
-            const isEventFinished = this.currentAmericanaDoc?.status === 'finished';
-            this.allMatches.forEach(m => {
-                const hasScore = (parseInt(m.score_a || 0) + parseInt(m.score_b || 0)) > 0;
-                if (m.status === 'finished' || (isEventFinished && hasScore)) {
-                    const namesA = Array.isArray(m.team_a_names) ? m.team_a_names : [m.team_a_names];
-                    const namesB = Array.isArray(m.team_b_names) ? m.team_b_names : [m.team_b_names];
-                    const sA = parseInt(m.score_a || 0);
-                    const sB = parseInt(m.score_b || 0);
-                    const court = parseInt(m.court || 99);
-
-                    [...namesA, ...namesB].forEach(name => {
-                        if (!name) return;
-                        if (!stats[name]) stats[name] = { name, points: 0, wins: 0, matches: 0, court1Count: 0, bestCourt: 99, lastMatchCourt: 99, lastMatchRound: 0 };
-
-                        stats[name].matches++;
-                        const roundNum = parseInt(m.round || 0);
-
-                        // Tracking for tie-breaker
-                        if (court === 1) stats[name].court1Count++;
-                        if (court < stats[name].bestCourt) stats[name].bestCourt = court;
-
-                        // Track position in LAST round played
-                        if (roundNum >= stats[name].lastMatchRound) {
-                            stats[name].lastMatchRound = roundNum;
-                            stats[name].lastMatchCourt = court;
-                        }
-                    });
-
-                    namesA.forEach(name => { if (name) { stats[name].points += sA; if (sA > sB) stats[name].wins++; } });
-                    namesB.forEach(name => { if (name) { stats[name].points += sB; if (sB > sA) stats[name].wins++; } });
-                }
-            });
-
-            const ranking = Object.values(stats).sort((a, b) => {
-                const isEntreno = this.currentAmericanaDoc?.isEntreno;
-
-                if (isEntreno) {
-                    // REGLAS DE DESEMPATE ENTRENO (POZO)
-
-                    // 1. Victorias (Wins) - Quien más gana, mejor.
-                    if (b.wins !== a.wins) return b.wins - a.wins;
-
-                    // 2. Veces en Pista 1 (Court 1 Count) - "Rey de la Pista"
-                    if (b.court1Count !== a.court1Count) return b.court1Count - a.court1Count;
-
-                    // 3. Posición Final (Last Match Court) - Quien acaba en pista más alta (numérico menor) es mejor
-                    // Ejemplo: Acabar en Pista 1 es mejor que en Pista 2
-                    if (a.lastMatchCourt !== b.lastMatchCourt) return a.lastMatchCourt - b.lastMatchCourt;
-
-                    // 4. Diferencia de Juegos / Puntos Totales
-                    return b.points - a.points;
-                }
-
-                // AMERICANA STANDARD (Games/Points is King)
-                // Primary: Points (Total Games Won)
-                const diff = b.points - a.points;
-                if (diff !== 0) return diff;
-
-                // Tie-breaker: Wins
-                return b.wins - a.wins;
-            });
-
-            return `
-                <div class="standings-container fade-in" style="padding: 24px; background: white; min-height: 80vh; padding-bottom: 100px;">
-                    <div style="background: #fff; border: 1px solid #eeeff2; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
-                        <div style="padding: 18px; background: #fafafa; font-size: 0.65rem; font-weight: 800; color: #999; display: flex; border-bottom: 1px solid #f0f0f0; letter-spacing: 1px;">
-                            <div style="width: 45px;">POS</div>
-                            <div style="flex: 1;">JUGADOR</div>
-                            <div style="width: 50px; text-align: center;">V</div>
-                            <div style="width: 50px; text-align: center;">PTS</div>
-                        </div>
-                        ${ranking.length === 0 ? `
-                             <div style="padding: 60px 20px; text-align: center; color: #ccc;">No hay datos aún.</div>
-                        ` : ranking.map((p, i) => {
-                // Highlight logic
-                let rowStyle = 'background: white;';
-                let posContent = i + 1;
-
-                if (i === 0) { // WINNER
-                    rowStyle = 'background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(255,255,255,0)); border-left: 5px solid #FFD700;';
-                    posContent = '🏆';
-                } else if (i === 1) { // FINALIST
-                    rowStyle = 'background: linear-gradient(90deg, rgba(192,192,192,0.15), rgba(255,255,255,0)); border-left: 5px solid #C0C0C0;';
-                    posContent = '🥈';
-                } else if (i === 2) {
-                    posContent = '🥉';
-                }
-
-                return `
-                            <div style="padding: 16px 18px; display: flex; align-items: center; border-bottom: 1px solid #f9f9f9; ${rowStyle} transition: all 0.2s;">
-                                <div style="width: 45px; font-weight: 900; font-size: 1.1rem; color: ${i < 3 ? '#000' : '#bbb'};">
-                                    ${posContent}
-                                </div>
-                                <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
-                                    <div style="font-weight: ${i < 3 ? '950' : '700'}; color: #111; font-size: 0.95rem;">${p.name}</div>
-                                    ${i === 0 ? '<span style="background: #CCFF00; color: #000; padding: 2px 8px; border-radius: 6px; font-size: 0.6rem; font-weight: 900;">LÍDER</span>' : ''}
-                                </div>
-                                <div style="width: 50px; text-align: center; font-weight: 700; color: #666; font-size: 0.8rem;">${p.wins} V</div>
-                                <div style="width: 60px; text-align: center;">
-                                    <div style="font-weight: 950; color: #000; font-size: 1.1rem; letter-spacing: -0.5px;">${p.points}</div>
-                                    <div style="font-size: 0.5rem; color: #999; font-weight: 800; text-transform: uppercase;">${isEntreno ? 'PARTIDOS' : 'PTS'}</div>
-                                </div>
-                            </div>
-                        `;
-            }).join('')}
-                    </div>
-                </div>
-            `;
+            if (!window.ControlTowerStandings) return '<div style="padding:40px; text-align:center;">Cargando...</div>';
+            return window.ControlTowerStandings.render(this.allMatches, this.currentAmericanaDoc);
         }
 
         renderSummaryView() {
-            let finishedMatches = this.allMatches.filter(m => m.status === 'finished');
-
-            // FALLBACK ROBUSTNESS: If event is finished but matches weren't individually marked 'finished',
-            // use all matches that have scores. This prevents "Calculando..." hang.
-            if (finishedMatches.length === 0 && this.allMatches.length > 0 && this.currentAmericanaDoc?.status === 'finished') {
-                console.warn("⚠️ [Stats] Using fallback for finished matches (scores > 0)");
-                finishedMatches = this.allMatches.filter(m => (parseInt(m.score_a || 0) + parseInt(m.score_b || 0)) > 0);
-            }
-
-            if (finishedMatches.length === 0) {
-                return `
-                    <div style="padding: 100px 20px; text-align: center; color: #999;">
-                        <i class="fas fa-chart-pie" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.2;"></i>
-                        <h3>Sin Datos de Partidos</h3>
-                        <p>No se han encontrado partidos finalizados para generar estadísticas.</p>
-                    </div>`;
-            }
-
-            const isEntreno = this.currentAmericanaDoc?.isEntreno;
-            const isFija = this.currentAmericanaDoc?.is_fija || false;
-
-            // --- Stats Calculation - DIFFERENT LOGIC FOR ENTRENOS vs AMERICANAS ---
-            const players = {};
-            const roundStats = {};
-            let totalGames = 0;
-            let highIntensityMatches = 0;
-
-            if (isEntreno) {
-                // ===== ENTRENO LOGIC: Count MATCH WINS (not games) =====
-                console.log(`📊 [Stats] Calculating ENTRENO stats (${isFija ? 'FIJA' : 'TWISTER'})`);
-
-                finishedMatches.forEach(m => {
-                    const namesA = Array.isArray(m.team_a_names) ? m.team_a_names : [m.team_a_names];
-                    const namesB = Array.isArray(m.team_b_names) ? m.team_b_names : [m.team_b_names];
-                    const winnerA = parseInt(m.score_a || 0) > parseInt(m.score_b || 0);
-                    const winnerB = parseInt(m.score_b || 0) > parseInt(m.score_a || 0);
-
-                    // For Entrenos, we count MATCHES won, not games
-                    totalGames++; // Total matches played
-
-                    if (!roundStats[m.round]) roundStats[m.round] = 0;
-                    roundStats[m.round]++; // Count matches per round
-
-                    if (isFija) {
-                        // FIJA: Count wins by PAIR (team_a_names and team_b_names are pairs)
-                        const pairA = namesA.join(' / ');
-                        const pairB = namesB.join(' / ');
-                        const court = parseInt(m.court || 99);
-
-                        if (!players[pairA]) players[pairA] = { name: pairA, games: 0, wins: 0, matches: 0, losses: 0, pointsScored: 0, pointsAgainst: 0, court1Count: 0, bestCourt: 99, lastMatchCourt: 99, lastMatchRound: 0 };
-                        if (!players[pairB]) players[pairB] = { name: pairB, games: 0, wins: 0, matches: 0, losses: 0, pointsScored: 0, pointsAgainst: 0, court1Count: 0, bestCourt: 99, lastMatchCourt: 99, lastMatchRound: 0 };
-
-                        players[pairA].matches++;
-                        players[pairB].matches++;
-                        const roundNum = parseInt(m.round || 0);
-
-                        if (court === 1) { players[pairA].court1Count++; players[pairB].court1Count++; }
-                        if (court < players[pairA].bestCourt) players[pairA].bestCourt = court;
-                        if (court < players[pairB].bestCourt) players[pairB].bestCourt = court;
-
-                        if (roundNum >= players[pairA].lastMatchRound) { players[pairA].lastMatchRound = roundNum; players[pairA].lastMatchCourt = court; }
-                        if (roundNum >= players[pairB].lastMatchRound) { players[pairB].lastMatchRound = roundNum; players[pairB].lastMatchCourt = court; }
-
-                        if (winnerA) {
-                            players[pairA].wins++;
-                            players[pairA].games += sA; // GAMES
-                            players[pairB].losses++;
-                            players[pairB].games += sB;
-                        } else if (winnerB) {
-                            players[pairB].wins++;
-                            players[pairB].games += sB; // GAMES
-                            players[pairA].losses++;
-                            players[pairA].games += sA;
-                        }
-                    } else {
-                        // TWISTER: Count wins by INDIVIDUAL PLAYER
-                        const court = parseInt(m.court || 99);
-                        const roundNum = parseInt(m.round || 0);
-                        [...namesA, ...namesB].forEach(name => {
-                            if (!name) return;
-                            if (!players[name]) players[name] = { name, games: 0, wins: 0, matches: 0, losses: 0, pointsScored: 0, pointsAgainst: 0, court1Count: 0, bestCourt: 99, lastMatchCourt: 99, lastMatchRound: 0 };
-                            if (court === 1) players[name].court1Count++;
-                            if (court < players[name].bestCourt) players[name].bestCourt = court;
-                            // Track last match
-                            if (roundNum >= players[name].lastMatchRound) {
-                                players[name].lastMatchRound = roundNum;
-                                players[name].lastMatchCourt = court;
-                            }
-                        });
-
-                        namesA.forEach(n => {
-                            if (!n) return;
-                            players[n].matches++;
-                            if (winnerA) {
-                                players[n].wins++;
-                                players[n].games += sA; // GAMES COUNT (Requested)
-                                players[n].pointsScored += sA;
-                            } else {
-                                players[n].losses++;
-                                players[n].games += sA; // Even if lost, count own games
-                                players[n].pointsScored += sA;
-                            }
-                        });
-
-                        namesB.forEach(n => {
-                            if (!n) return;
-                            players[n].matches++;
-                            if (winnerB) {
-                                players[n].wins++;
-                                players[n].games += sB; // GAMES COUNT
-                                players[n].pointsScored += sB;
-                            } else {
-                                players[n].losses++;
-                                players[n].games += sB;
-                                players[n].pointsScored += sB;
-                            }
-                        });
-                    }
-                });
-
-                // For Entrenos, intensity = close matches (not applicable, set to 0)
-                highIntensityMatches = 0;
-
-            } else {
-                // ===== AMERICANA LOGIC: Count GAMES (original logic) =====
-                console.log(`📊 [Stats] Calculating AMERICANA stats`);
-
-                finishedMatches.forEach(m => {
-                    const namesA = Array.isArray(m.team_a_names) ? m.team_a_names : [m.team_a_names];
-                    const namesB = Array.isArray(m.team_b_names) ? m.team_b_names : [m.team_b_names];
-                    const sA = parseInt(m.score_a || 0);
-                    const sB = parseInt(m.score_b || 0);
-
-                    totalGames += (sA + sB);
-                    if (Math.abs(sA - sB) <= 1) highIntensityMatches++;
-
-                    if (!roundStats[m.round]) roundStats[m.round] = 0;
-                    roundStats[m.round] += (sA + sB);
-
-                    [...namesA, ...namesB].forEach(name => {
-                        if (!players[name]) players[name] = { name, games: 0, wins: 0, matches: 0, losses: 0, pointsScored: 0, pointsAgainst: 0, court1Count: 0, bestCourt: 99 };
-                        const court = parseInt(m.court || 99);
-                        if (court === 1) players[name].court1Count++;
-                        if (court < players[name].bestCourt) players[name].bestCourt = court;
-                    });
-
-                    namesA.forEach(n => {
-                        players[n].games += sA; players[n].matches++;
-                        players[n].pointsScored += sA; players[n].pointsAgainst += sB;
-                        if (sA > sB) players[n].wins++; else players[n].losses++;
-                    });
-                    namesB.forEach(n => {
-                        players[n].games += sB; players[n].matches++;
-                        players[n].pointsScored += sB; players[n].pointsAgainst += sA;
-                        if (sB > sA) players[n].wins++; else players[n].losses++;
-                    });
-                });
-            }
-
-            const sortedPlayers = Object.values(players).sort((a, b) => {
-                if (isEntreno) {
-                    // REGLAS DE DESEMPATE ENTRENO (POZO)
-                    // 1. Victorias (Wins) - Quien más gana, mejor.
-                    if (b.wins !== a.wins) return b.wins - a.wins;
-
-                    // 2. Veces en Pista 1 (Court 1 Count) - "Rey de la Pista"
-                    if (b.court1Count !== a.court1Count) return b.court1Count - a.court1Count;
-
-                    // 3. Posición Final (Last Match Court) - Quien acaba en pista más alta (numérico menor) es mejor
-                    if (a.lastMatchCourt !== b.lastMatchCourt) return a.lastMatchCourt - b.lastMatchCourt;
-
-                    // 4. Juegos totales
-                    return b.games - a.games;
-                }
-
-                // Standard Americana Sort (Games > Wins)
-                const diff = b.games - a.games;
-                if (diff !== 0) return diff;
-                return b.wins - a.wins;
-            });
-            const top5 = sortedPlayers.slice(0, 5);
-            const intensityPercent = Math.round((finishedMatches.length > 0 ? highIntensityMatches / finishedMatches.length : 0) * 100);
-
-            // --- Advanced Highlights ---
-            const courtGames = {};
-            let bestBlowout = { diff: 0, match: null };
-            finishedMatches.forEach(m => {
-                const diff = Math.abs(parseInt(m.score_a) - parseInt(m.score_b));
-                if (!courtGames[m.court]) courtGames[m.court] = 0;
-                courtGames[m.court] += (parseInt(m.score_a) + parseInt(m.score_b));
-                if (diff > bestBlowout.diff) bestBlowout = { diff, match: m };
-            });
-            const busiestCourtKey = Object.keys(courtGames).reduce((a, b) => courtGames[a] > courtGames[b] ? a : b, 1);
-            const qualityStars = intensityPercent > 80 ? '⭐⭐⭐⭐⭐' : intensityPercent > 50 ? '⭐⭐⭐⭐' : '⭐⭐⭐';
-
-            // GUARDIAN: If no players found (e.g. data issue), show generic
-            const mvp = sortedPlayers.length > 0 ? sortedPlayers[0] : { name: 'N/A', games: 0, wins: 0 };
-            const bestDefense = sortedPlayers.length > 0 ? sortedPlayers.sort((a, b) => a.pointsAgainst - b.pointsAgainst)[0] : { name: '-', pointsAgainst: 0 };
-
-            // --- NEW: Additional Tournament Highlights ---
-            // Invictus: Players with 100% win rate
-            const invictusPlayers = sortedPlayers.filter(p => p.matches > 0 && p.losses === 0);
-
-            // Francotirador: Best single match performance
-            let bestSingleMatch = { player: '-', score: 0 };
-            finishedMatches.forEach(m => {
-                // ... (existing logic logic inside loop was slightly cut in view, need to be careful)
-                const sA = parseInt(m.score_a || 0);
-                const sB = parseInt(m.score_b || 0);
-                const namesA = Array.isArray(m.team_a_names) ? m.team_a_names : [m.team_a_names];
-                const namesB = Array.isArray(m.team_b_names) ? m.team_b_names : [m.team_b_names];
-                const winningScore = Math.max(sA, sB);
-                // Approximation: We don't know exactly who scored without more data, assuming winners
-                // But for "Francotirador" implies high score.
-                if (winningScore > bestSingleMatch.score) {
-                    const winners = sA > sB ? namesA : namesB;
-                    if (winners[0]) bestSingleMatch = { player: winners[0], score: winningScore };
-                }
-            });
-
-            // --- RENDER UI (Adapted for Mobile) ---
-            const html = `
-                <div class="summary-dashboard animate-fade-in" style="display: flex; flex-direction: column; gap: 1.5rem; padding: 20px; padding-bottom: 120px; background: #f0f2f5;">
-                    
-                    <!-- TOP 3 Clasificación (Real-time admin feel) -->
-                    <div style="background: white; border-radius: 20px; padding: 20px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                         <h3 style="margin:0 0 15px 0; font-weight: 950; font-size: 0.85rem; color: #111; letter-spacing: 1px; text-transform: uppercase;">Podio Final</h3>
-                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
-                             <div style="background: #fdfdfd; padding: 10px; border-radius: 12px;">
-                                 <div style="font-size: 1.5rem;">🥈</div>
-                                 <div style="font-weight: 800; font-size: 0.7rem; color: #333; margin-top: 5px;">${sortedPlayers[1]?.name.split(' ')[0] || '-'}</div>
-                                 <div style="font-size: 0.6rem; color: #888;">${sortedPlayers[1]?.games || 0} ${isEntreno ? 'partidos' : 'pts'}</div>
-                             </div>
-                             <div style="background: rgba(204,255,0,0.05); padding: 15px 10px; border-radius: 16px; border: 1px solid rgba(204,255,0,0.2); transform: translateY(-10px);">
-                                 <div style="font-size: 2rem;">🥇</div>
-                                 <div style="font-weight: 950; font-size: 0.8rem; color: #000;">${mvp.name ? mvp.name.split(' ')[0] : 'N/A'}</div>
-                                 <div style="font-size: 0.7rem; font-weight: 800; color: var(--playtomic-neon);"><sup>${mvp.games || 0}</sup> ${isEntreno ? 'partidos' : 'pts'}</div>
-                             </div>
-                             <div style="background: #fdfdfd; padding: 10px; border-radius: 12px;">
-                                 <div style="font-size: 1.5rem;">🥉</div>
-                                 <div style="font-weight: 800; font-size: 0.7rem; color: #333; margin-top: 5px;">${sortedPlayers[2]?.name.split(' ')[0] || '-'}</div>
-                                 <div style="font-size: 0.6rem; color: #888;">${sortedPlayers[2]?.games || 0} ${isEntreno ? 'partidos' : 'pts'}</div>
-                             </div>
-                         </div>
-                    </div>
-
-                    <!-- MVP Card -->
-                    <div style="background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-navy) 100%); border-radius: 28px; padding: 32px; position: relative; overflow: hidden; color: white; border: 1px solid rgba(255,255,255,0.05); box-shadow: var(--shadow-xl);">
-                         <div style="position: absolute; right: -20px; top: -20px; font-size: 8rem; opacity: 0.1; transform: rotate(-15deg);"><i class="fas fa-crown"></i></div>
-                         <div style="display:flex; align-items:center; gap: 24px; position: relative; z-index: 1;">
-                             <div style="width: 80px; height: 80px; background: var(--brand-neon); border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; color: black; font-weight: 950; box-shadow: var(--shadow-neon);">1</div>
-                             <div>
-                                <div style="font-size: 0.75rem; font-weight: 900; color: var(--brand-neon); letter-spacing: 2px; text-transform: uppercase;">MVP DEL TORNEO</div>
-                                <div style="font-size: 1.8rem; font-weight: 950; color: white; margin: 4px 0; letter-spacing: -0.5px;">${mvp.name}</div>
-                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6); font-weight: 600;">${mvp.games} ${isEntreno ? 'Partidos Ganados' : 'Puntos Totales'}</div>
-                             </div>
-                         </div>
-                    </div>
-
-                    <!-- AUDITORÍA DE RESULTADOS COMPLETA -->
-                    <div style="background: white; border-radius: 20px; padding: 20px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                        <h3 style="margin:0 0 20px 0; font-weight: 950; font-size: 0.85rem; color: #111; letter-spacing: 1px; text-transform: uppercase;">
-                            📋 Auditoría de Resultados Completa
-                        </h3>
-
-                        ${isEntreno ? `
-                        <div style="background: rgba(14,165,233,0.05); padding: 12px; border-radius: 12px; margin-bottom: 20px; font-size: 0.7rem; color: #0ea5e9; border: 1px solid rgba(14,165,233,0.2);">
-                            <strong>⚖️ REGLAS DE DESEMPATE:</strong><br>
-                            1. Victorias Totales <br>
-                            2. Partidos en Pista 1 <br>
-                            3. Pista más alta alcanzada
-                        </div>
-                        ` : ''}
-                        
-                        <div style="overflow-x: auto;">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.7rem;">
-                                <thead>
-                                    <tr style="background: #fafafa; border-bottom: 2px solid #eee;">
-                                        <th style="padding: 10px 6px; text-align: left; font-weight: 900; color: #666; font-size: 0.65rem;">POS</th>
-                                        <th style="padding: 10px 6px; text-align: left; font-weight: 900; color: #666; font-size: 0.65rem;">${isEntreno ? (isFija ? 'PAREJA' : 'JUGADOR') : 'JUGADOR'}</th>
-                                        <th style="padding: 10px 6px; text-align: center; font-weight: 900; color: #666; font-size: 0.65rem;">PJ</th>
-                                        <th style="padding: 10px 6px; text-align: center; font-weight: 900; color: #666; font-size: 0.65rem;">VICT.</th>
-                                        <th style="padding: 10px 6px; text-align: center; font-weight: 900; color: #666; font-size: 0.65rem;">DERR.</th>
-                                        <th style="padding: 10px 6px; text-align: center; font-weight: 900; color: #666; font-size: 0.65rem;">${isEntreno ? 'PARTIDOS' : 'JUEGOS'}</th>
-                                        <th style="padding: 10px 6px; text-align: center; font-weight: 900; color: #666; font-size: 0.65rem;">REND. %</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${sortedPlayers.map((p, i) => {
-                const winRate = p.matches > 0 ? Math.round((p.wins / p.matches) * 100) : 0;
-                const rowBg = i === 0 ? 'rgba(255,215,0,0.08)' :
-                    i === 1 ? 'rgba(192,192,192,0.08)' :
-                        i === 2 ? 'rgba(205,127,50,0.08)' : 'white';
-
-                return `
-                                            <tr style="background: ${rowBg}; border-bottom: 1px solid #f5f5f5;">
-                                                <td style="padding: 12px 6px; font-weight: 900; color: #111; font-size: 0.9rem;">
-                                                    ${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
-                                                </td>
-                                                <td style="padding: 12px 6px; font-weight: 800; color: #111; font-size: 0.75rem;">${p.name}</td>
-                                                <td style="padding: 12px 6px; text-align: center; color: #666; font-weight: 700;">${p.matches}</td>
-                                                <td style="padding: 12px 6px; text-align: center; color: #25D366; font-weight: 800;">${p.wins}</td>
-                                                <td style="padding: 12px 6px; text-align: center; color: #FF2D55; font-weight: 800;">${p.losses}</td>
-                                                <td style="padding: 12px 6px; text-align: center; font-weight: 900; color: #000; font-size: 0.85rem;">${p.games}</td>
-                                                <td style="padding: 12px 6px; text-align: center;">
-                                                    <div style="background: ${winRate >= 70 ? '#25D366' : winRate >= 40 ? '#CCFF00' : '#FF2D55'}; 
-                                                                color: ${winRate >= 40 ? '#000' : '#fff'}; 
-                                                                padding: 4px 8px; 
-                                                                border-radius: 6px; 
-                                                                font-weight: 900; 
-                                                                display: inline-block;
-                                                                font-size: 0.7rem;">
-                                                        ${winRate}%
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        `;
-            }).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- DESTACADOS DEL TORNEO -->
-                    <div style="background: white; border-radius: 20px; padding: 20px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                        <h3 style="margin:0 0 20px 0; font-weight: 950; font-size: 0.85rem; color: #111; letter-spacing: 1px; text-transform: uppercase;">
-                            🏆 Destacados del Torneo
-                        </h3>
-                        
-                        <div style="display: grid; gap: 12px;">
-                            ${invictusPlayers.length > 0 ? `
-                                <div style="background: rgba(37,211,102,0.05); padding: 15px; border-radius: 12px; border-left: 4px solid #25D366;">
-                                    <div style="font-weight: 900; font-size: 0.75rem; color: #25D366; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;">
-                                        <span style="font-size: 1.2rem;">🛡️</span> INVICTUS (100% Victorias)
-                                    </div>
-                                    <div style="font-size: 0.8rem; color: #111; font-weight: 700;">
-                                        ${invictusPlayers.map(p => p.name).join(', ')}
-                                    </div>
-                                    <div style="font-size: 0.65rem; color: #666; margin-top: 4px;">
-                                        ${invictusPlayers.length === 1 ? 'Rendimiento perfecto' : 'Rendimientos perfectos'}
-                                    </div>
-                                </div>
-                            ` : ''}
-                            
-                            <div style="background: rgba(204,255,0,0.05); padding: 15px; border-radius: 12px; border-left: 4px solid #CCFF00;">
-                                <div style="font-weight: 900; font-size: 0.75rem; color: #000; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;">
-                                    <span style="font-size: 1.2rem;">🎯</span> FRANCOTIRADOR
-                                </div>
-                                <div style="font-size: 0.8rem; color: #111; font-weight: 700;">
-                                    ${bestSingleMatch.player}
-                                </div>
-                                <div style="font-size: 0.65rem; color: #666; margin-top: 4px;">
-                                    Mejor partido individual: ${bestSingleMatch.score} juegos
-                                </div>
-                            </div>
-                            
-                            <div style="background: rgba(14,165,233,0.05); padding: 15px; border-radius: 12px; border-left: 4px solid #0ea5e9;">
-                                <div style="font-weight: 900; font-size: 0.75rem; color: #0ea5e9; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;">
-                                    <span style="font-size: 1.2rem;">🧱</span> MURO DEFENSIVO
-                                </div>
-                                <div style="font-size: 0.8rem; color: #111; font-weight: 700;">
-                                    ${bestDefense.player}
-                                </div>
-                                <div style="font-size: 0.65rem; color: #666; margin-top: 4px;">
-                                    Mejor defensa: Solo ${bestDefense.pointsAgainst} juegos encajados
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Quick Stats Grid -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div style="background: white; padding: 15px; border-radius: 16px; text-align: center; border: 1px solid #eee;">
-                            <div style="font-size: 0.65rem; color: #888; font-weight:800;">INTENSIDAD</div>
-                            <div style="font-size: 1.5rem; font-weight: 900; color: #111;">${intensityPercent}%</div>
-                            <div style="font-size: 0.7rem; color: #0055ff;">Partidos Reñidos</div>
-                        </div>
-                        <div style="background: white; padding: 15px; border-radius: 16px; text-align: center; border: 1px solid #eee;">
-                            <div style="font-size: 0.65rem; color: #888; font-weight:800;">TOTAL JUEGOS</div>
-                            <div style="font-size: 1.5rem; font-weight: 900; color: #111;">${totalGames}</div>
-                            <div style="font-size: 0.7rem; color: #009900;">Media: ${(totalGames / Math.max(1, finishedMatches.length)).toFixed(1)}/p</div>
-                        </div>
-                    </div>
-
-                    <!-- CHARTS SECTION -->
-                    <div style="background: white; border-radius: 20px; padding: 20px; border: 1px solid #eee;">
-                        <h3 style="margin:0 0 20px 0; font-weight: 900; font-size: 0.9rem; color: #111;">TOP 5 PLAYERS</h3>
-                        <canvas id="publicTopPlayersChart" style="max-height: 200px; width:100%;"></canvas>
-                    </div>
-
-                    <div style="background: white; border-radius: 20px; padding: 20px; border: 1px solid #eee;">
-                        <h3 style="margin:0 0 20px 0; font-weight: 900; font-size: 0.9rem; color: #111;">RITMO DEL TORNEO (Juegos x Ronda)</h3>
-                        <canvas id="publicRoundEvolutionChart" style="max-height: 200px; width:100%;"></canvas>
-                    </div>
-
-                    <!-- Highlights List -->
-                    <div style="background: white; border-radius: 20px; padding: 0; overflow: hidden; border: 1px solid #eee;">
-                        <div style="padding: 15px; border-bottom: 1px solid #eee; font-weight: 900; font-size: 0.9rem;">Datos Curiosos</div>
-                        
-                        <div style="padding: 15px; border-bottom: 1px solid #f5f5f5; display: flex; align-items:center; gap: 15px;">
-                            <div style="font-size: 1.5rem;">🔥</div>
-                            <div>
-                                <div style="font-weight: 800; font-size: 0.8rem;">PISTA EN LLAMAS</div>
-                                <div style="font-size: 0.75rem; color: #666;">La Pista ${busiestCourtKey} ha visto más juegos (${courtGames[busiestCourtKey]})</div>
-                            </div>
-                        </div>
-
-                        <div style="padding: 15px; display: flex; align-items:center; gap: 15px;">
-                             <div style="font-size: 1.5rem;">🥊</div>
-                            <div>
-                                <div style="font-weight: 800; font-size: 0.8rem;">MAYOR PALIZA</div>
-                                <div style="font-size: 0.75rem; color: #666;">Diferencia de ${bestBlowout.diff} juegos en un solo partido</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Initialize Charts Async
-            setTimeout(() => {
-                const ctx1 = document.getElementById('publicTopPlayersChart')?.getContext('2d');
-                if (ctx1) {
-                    new Chart(ctx1, {
-                        type: 'bar',
-                        data: {
-                            labels: top5.map(p => (isFija || p.name.includes(' / ')) ? p.name : p.name.split(' ')[0]),
-                            datasets: [{
-                                label: isEntreno ? 'Partidos Ganados' : 'Puntos',
-                                data: top5.map(p => p.games),
-                                backgroundColor: 'rgba(204, 255, 0, 0.8)',
-                                borderRadius: 8,
-                                borderWidth: 0
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            indexAxis: 'y',
-                            plugins: { legend: { display: false } },
-                            scales: {
-                                x: { beginAtZero: true, grid: { display: false } },
-                                y: { grid: { display: false } }
-                            }
-                        }
-                    });
-                }
-
-                const ctx2 = document.getElementById('publicRoundEvolutionChart')?.getContext('2d');
-                if (ctx2) {
-                    const rounds = Object.keys(roundStats).sort((a, b) => a - b);
-                    new Chart(ctx2, {
-                        type: 'line',
-                        data: {
-                            labels: rounds.map(r => `P${r}`),
-                            datasets: [{
-                                label: 'Juegos Totales',
-                                data: rounds.map(r => roundStats[r]),
-                                borderColor: '#ccff00',
-                                backgroundColor: 'rgba(204,255,0,0.1)',
-                                fill: true,
-                                tension: 0.4,
-                                pointRadius: 4
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    callbacks: {
-                                        title: (items) => `Partida ${items[0].label.replace('P', '')}`
-                                    }
-                                }
-                            },
-                            scales: {
-                                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
-                                x: { grid: { display: false } }
-                            }
-                        }
-                    });
-                }
-            }, 200);
-
-            return html;
+            if (!window.ControlTowerStats) return '<div style="padding:40px; text-align:center;">Cargando...</div>';
+            return window.ControlTowerStats.render(this.allMatches, this.currentAmericanaDoc);
         }
 
         renderTournamentCard(match) {
@@ -1730,150 +1171,8 @@
         }
 
         renderReportView() {
-            const finishedMatches = this.allMatches.filter(m => m.status === 'finished');
-            if (finishedMatches.length === 0) {
-                return `<div style="padding:100px 20px; text-align:center; color:#999; background:white; min-height:80vh;">
-                    <i class="fas fa-microchip" style="font-size:3rem; margin-bottom: 20px; opacity: 0.1;"></i>
-                    <h3 style="color:#333; font-weight:900;">MOTOR IA REQUERIDO</h3>
-                    <p style="font-size:0.85rem;">Necesitamos partidos finalizados para procesar el Big Data de este evento.</p>
-                </div>`;
-            }
-
-            const stats = {};
-            finishedMatches.forEach(m => {
-                const namesA = Array.isArray(m.team_a_names) ? m.team_a_names : [m.team_a_names];
-                const namesB = Array.isArray(m.team_b_names) ? m.team_b_names : [m.team_b_names];
-                const sA = parseInt(m.score_a || 0);
-                const sB = parseInt(m.score_b || 0);
-
-                [...namesA, ...namesB].forEach(name => {
-                    if (!stats[name]) stats[name] = { name, wins: 0, games: 0, oppGames: 0, matches: 0, courts: [] };
-                });
-
-                namesA.forEach(n => { stats[n].games += sA; stats[n].oppGames += sB; stats[n].matches++; if (sA > sB) stats[n].wins++; stats[n].courts.push(m.court); });
-                namesB.forEach(n => { stats[n].games += sB; stats[n].oppGames += sA; stats[n].matches++; if (sB > sA) stats[n].wins++; stats[n].courts.push(m.court); });
-            });
-
-            const user = window.Store ? window.Store.getState('currentUser') : null;
-            const myName = user?.name || "";
-            const subject = (stats[myName]) ? stats[myName] : Object.values(stats).sort((a, b) => b.wins - a.wins)[0];
-
-            setTimeout(() => {
-                const ctx = document.getElementById('iaRadarChart')?.getContext('2d');
-                if (ctx && typeof Chart !== 'undefined') {
-                    new Chart(ctx, {
-                        type: 'radar',
-                        data: {
-                            labels: ['POTENCIA', 'CONTROL', 'REVES', 'VOLEA', 'FÍSICO', 'SAQUE'],
-                            datasets: [{
-                                label: 'Nivel Pro',
-                                data: [75, 82, 68, 88, 92, 70],
-                                backgroundColor: 'rgba(204, 255, 0, 0.2)',
-                                borderColor: '#CCFF00',
-                                borderWidth: 3,
-                                pointBackgroundColor: '#000'
-                            }]
-                        },
-                        options: {
-                            scales: { r: { grid: { color: '#eee' }, ticks: { display: false }, pointLabels: { font: { weight: '900', size: 10 } } } },
-                            plugins: { legend: { display: false } }
-                        }
-                    });
-                }
-
-                // --- NEW TOP 5 CHART IN INFORME ---
-                const ctxTop = document.getElementById('reportTopPlayersChart')?.getContext('2d');
-                if (ctxTop && typeof Chart !== 'undefined') {
-                    const isEntreno = this.currentAmericanaDoc?.isEntreno;
-                    const isFija = this.currentAmericanaDoc?.is_fija || false;
-
-                    // Recalculate Top 5 just for this chart (consistent with Summary View)
-                    const players = {};
-                    finishedMatches.forEach(m => {
-                        const namesA = Array.isArray(m.team_a_names) ? m.team_a_names : [m.team_a_names];
-                        const namesB = Array.isArray(m.team_b_names) ? m.team_b_names : [m.team_b_names];
-
-                        if (isFija) {
-                            const pA = namesA.join(' / ');
-                            const pB = namesB.join(' / ');
-                            players[pA] = (players[pA] || 0) + (parseInt(m.score_a) > parseInt(m.score_b) ? 1 : 0);
-                            players[pB] = (players[pB] || 0) + (parseInt(m.score_b) > parseInt(m.score_a) ? 1 : 0);
-                        } else {
-                            [...namesA, ...namesB].forEach((n, i) => {
-                                if (!n) return;
-                                const isWinner = (i < namesA.length) ? (parseInt(m.score_a) > parseInt(m.score_b)) : (parseInt(m.score_b) > parseInt(m.score_a));
-                                players[n] = (players[n] || 0) + (isWinner ? 1 : 0);
-                            });
-                        }
-                    });
-
-                    const top5Data = Object.entries(players)
-                        .sort((a, b) => b[1] - a[1])
-                        .slice(0, 5);
-
-                    new Chart(ctxTop, {
-                        type: 'bar',
-                        data: {
-                            labels: top5Data.map(d => (isFija || d[0].includes(' / ')) ? d[0] : d[0].split(' ')[0]),
-                            datasets: [{
-                                label: 'Partidos Ganados',
-                                data: top5Data.map(d => d[1]),
-                                backgroundColor: 'rgba(204, 255, 0, 0.9)',
-                                borderRadius: 8
-                            }]
-                        },
-                        options: {
-                            indexAxis: 'y',
-                            responsive: true,
-                            plugins: { legend: { display: false } },
-                            scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                        }
-                    });
-                }
-            }, 100);
-
-            return `
-                <div class="fade-in" style="padding: 20px; background: white; min-height: 80vh; padding-bottom: 120px;">
-                    <!-- EXPLANATORY HEADER -->
-                    <div style="margin-bottom: 25px; padding: 0 10px;">
-                        <h2 style="font-family:'Outfit'; font-weight: 900; color: #111; margin: 0 0 8px 0; font-size: 1.6rem; letter-spacing: -0.5px;">Informe de Rendimiento</h2>
-                        <p style="font-size: 0.85rem; color: #666; line-height: 1.5; margin: 0;">Análisis detallado de tu desempeño basado en los resultados de hoy. Nuestro sistema procesa cada partido para ofrecerte estas métricas.</p>
-                    </div>
-
-                    <div style="background: #000; border-radius: 24px; padding: 25px; color: white; margin-bottom: 25px; position:relative; overflow:hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-                        <div style="position:absolute; right:-20px; top:-20px; font-size:6rem; opacity:0.1; transform:rotate(-15deg);"><i class="fas fa-brain"></i></div>
-                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
-                            <span style="background:var(--playtomic-neon); color:black; padding:4px 10px; border-radius:6px; font-weight:950; font-size:0.6rem; letter-spacing:1px;">IA INSIGHT ENGINE</span>
-                        </div>
-                        <h2 style="font-size:1.4rem; font-weight:950; margin:0 0 10px 0;">ANÁLISIS DE ${subject.name.toUpperCase()}</h2>
-                        <p style="font-size:0.9rem; color:var(--playtomic-neon); font-style:italic; line-height:1.5;">"Tu rendimiento en la red hoy ha sido del 88%. El Big Data sugiere que tu mejor aliado es la presión constante en volea."</p>
-                    </div>
-
-                    <div style="background: #f8fafc; border-radius: 24px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 25px;">
-                        <h3 style="font-size:0.7rem; font-weight:900; color:#94a3b8; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:20px; text-align:center;">DNA DEL JUGADOR (PROYECCIÓN)</h3>
-                        <canvas id="iaRadarChart" style="max-height: 280px;"></canvas>
-                    </div>
-
-                    <!-- TOP 5 GRAPHIC INSIDE INFORME TAB -->
-                    <div style="background: white; border-radius: 24px; padding: 20px; border: 1px solid #eee; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
-                        <h3 style="margin:0 0 20px 0; font-weight: 950; font-size: 0.85rem; color: #111; letter-spacing: 1px; text-transform: uppercase;">
-                            📊 TOP 5 RENDIMIENTO
-                        </h3>
-                        <canvas id="reportTopPlayersChart" style="max-height: 220px; width:100%;"></canvas>
-                    </div>
-
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                        <div style="background:white; padding:20px; border-radius:20px; border:1px solid #eee; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.02);">
-                            <div style="font-size:0.6rem; color:#999; font-weight:900; margin-bottom:5px;">GASOLINA (KCAL)</div>
-                            <div style="font-size:1.5rem; color:#000; font-weight:950;">${Math.round(subject.matches * 135)}</div>
-                        </div>
-                        <div style="background:white; padding:20px; border-radius:20px; border:1px solid #eee; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.02);">
-                            <div style="font-size:0.6rem; color:#999; font-weight:900; margin-bottom:5px;">WIN RATE</div>
-                            <div style="font-size:1.5rem; color:#25D366; font-weight:950;">${Math.round((subject.wins / subject.matches) * 100)}%</div>
-                        </div>
-                    </div>
-                </div>
-            `;
+            if (!window.ControlTowerReport) return '<div style="padding:40px; text-align:center;">Cargando...</div>';
+            return window.ControlTowerReport.render(this.allMatches, this.currentAmericanaDoc);
         }
 
         renderHistoryContent() {
@@ -1933,49 +1232,92 @@
 
         renderHelpContent() {
             return `
-        < div class="fade-in" style = "padding: 30px; min-height: 80vh; background: white; padding-bottom: 100px;" >
-                    <h2 style="font-family:'Outfit'; font-weight: 900; color: #111; margin-bottom: 30px;">Centro de Ayuda</h2>
+        <div class="fade-in" style="padding: 25px; min-height: 80vh; background: #fff; padding-bottom: 120px; font-family: 'Inter', sans-serif;">
+                    <div style="margin-bottom: 24px; border-bottom: 2px solid #CCFF00; padding-bottom: 15px; display: inline-block;">
+                        <h2 style="font-family:'Outfit'; font-weight: 950; color: #111; font-size: 1.8rem; margin: 0; letter-spacing: -0.5px;">GUÍA DEL <span style="color: #0055ff;">JUGADOR</span></h2>
+                    </div>
+
+                    <p style="color: #666; font-size: 0.95rem; font-weight: 500; margin-bottom: 30px; line-height: 1.6;">Bienvenido a la plataforma oficial de <b>SomosPadel Barcelona</b>. Aquí tienes todo lo necesario para dominar nuestra tecnología y competición.</p>
+
                     <div style="display: grid; gap: 20px;">
                         
-                        <!-- 1. RANKING -->
-                        <div style="background: #f9f9f9; padding: 25px; border-radius: 20px; border: 1px solid #eee;">
-                            <div style="font-weight: 900; margin-bottom: 12px; color: #0055ff; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
-                                <i class="fas fa-trophy"></i> Reglas del Ranking
+                        <!-- 1. FORMATOS -->
+                        <div style="background: #f8fafc; padding: 25px; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                            <div style="font-weight: 900; margin-bottom: 15px; color: #7c3aed; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(124,58,237,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-sitemap" style="font-size: 1rem;"></i>
+                                </div>
+                                Formatos de Competición
                             </div>
-                            <p style="font-size: 0.85rem; color: #555; line-height: 1.6; margin: 0;">
-                                En SomosPadel, cada juego cuenta. A diferencia de otros sistemas, aquí sumas <b>1 punto por cada juego ganado</b> en tus partidos. 
+                            <div style="font-size: 0.9rem; color: #475569; line-height: 1.7; font-weight: 500;">
+                                • <b style="color: #0ea5e9;">🌪️ TWISTER:</b> Formato rotativo. Cambias de pareja en cada una de las 6 rondas. Sumas tus juegos individuales para el ranking.
                                 <br><br>
-                                Al finalizar las 6 rondas de la Americana, el sistema suma todos tus juegos. El jugador con la puntuación más alta es nombrado <b>MVP</b>. Este sistema premia la regularidad y el esfuerzo en cada bola.
-                            </p>
+                                • <b style="color: #8b5cf6;">🔒 PAREJA FIJA:</b> Formato pozo. Juegas todo el evento con el mismo compañero. Subes de pista si ganas y bajas si pierdes.
+                            </div>
                         </div>
 
-                        <!-- 2. NIVELES -->
-                        <div style="background: #f9f9f9; padding: 25px; border-radius: 20px; border: 1px solid #eee;">
-                            <div style="font-weight: 900; margin-bottom: 12px; color: #0055ff; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
-                                <i class="fas fa-chart-line"></i> Niveles Dinámicos y Evolución
+                        <!-- 2. RANKING -->
+                        <div style="background: #f8fafc; padding: 25px; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                            <div style="font-weight: 900; margin-bottom: 15px; color: #0055ff; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(0,85,255,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-trophy" style="font-size: 1rem;"></i>
+                                </div>
+                                Sistema de Ranking (Puntos x Juego)
                             </div>
-                            <p style="font-size: 0.85rem; color: #555; line-height: 1.6; margin: 0;">
-                                Tu nivel es el reflejo de tu juego constante. En SomosPadel, hemos implementado un sistema de **progresión por décimas**: 
+                            <div style="font-size: 0.9rem; color: #475569; line-height: 1.7; font-weight: 500;">
+                                En SomosPadel cada bola cuenta. Sumas <b style="color: #0f172a;">1 punto por cada juego ganado</b>. 
                                 <br><br>
-                                • cada vez que <b>ganas un partido</b>, tu nivel subirá unas décimas automáticamente. 
-                                <br>• Si el partido es muy reñido o contra rivales de nivel superior, la recompensa es mayor. 
-                                <br>• Incluso en la derrota, si luchas cada punto, tu nivel se ajustará para reflejar tu competitividad real.
-                                <br><br>
-                                Esta es tu motivación extra: cada partido cuenta para subir de categoría y desbloquear Americanas de nivel superior.
-                            </p>
+                                Al final de las 6 rondas, el jugador con más juegos acumulados es nombrado <b>MVP</b>. Este sistema premia la regularidad y el esfuerzo en cada set.
+                            </div>
                         </div>
 
-                        <!-- 3. APP USAGE -->
-                        <div style="background: #f9f9f9; padding: 25px; border-radius: 20px; border: 1px solid #eee;">
-                            <div style="font-weight: 900; margin-bottom: 12px; color: #0055ff; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
-                                <i class="fas fa-mobile-alt"></i> Cómo usar la App
+                        <!-- 3. SEDES Y CLIMA -->
+                        <div style="background: #f8fafc; padding: 25px; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                            <div style="font-weight: 900; margin-bottom: 15px; color: #10b981; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(16,185,129,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-map-marker-alt" style="font-size: 1rem;"></i>
+                                </div>
+                                Sedes y Clima en Tiempo Real
                             </div>
-                            <p style="font-size: 0.85rem; color: #555; line-height: 1.6; margin: 0;">
-                                • <b>En Juego:</b> Consulta tus pistas y compañeros en tiempo real desde la pestaña principal.
-                                <br>• <b>Resultados:</b> Los administradores suben los marcadores y el ranking se actualiza instantáneamente.
-                                <br>• <b>Mi Pasado:</b> Revisa tu historial de Americanas y analiza tu evolución a lo largo del tiempo.
-                                <br>• <b>Check-in:</b> No olvides confirmar tu asistencia para que el sorteo de pistas sea equitativo.
-                            </p>
+                            <div style="font-size: 0.9rem; color: #475569; line-height: 1.7; font-weight: 500;">
+                                Mantente informado sobre las condiciones exactas en nuestras dos sedes de Barcelona. El sistema monitoriza:
+                                <br><br>
+                                • <b>Estado de Pista:</b> Humedad y temperatura real en cada club para preveer el rebote.
+                                <br>• <b>Velocidad de Bola:</b> Basada en la presión atmosférica local de la zona.
+                                <br>• <b>Alertas Meteo:</b> Información actualizada para que tu experiencia de juego sea perfecta en cualquier sede.
+                            </div>
+                        </div>
+
+                        <!-- 4. NIVELES -->
+                        <div style="background: #f8fafc; padding: 25px; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                            <div style="font-weight: 900; margin-bottom: 15px; color: #f59e0b; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(245,158,11,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-chart-line" style="font-size: 1rem;"></i>
+                                </div>
+                                Niveles Dinámicos
+                            </div>
+                            <div style="font-size: 0.9rem; color: #475569; line-height: 1.7; font-weight: 500;">
+                                Tu nivel (0.0 a 7.0) evoluciona tras cada partido. El algoritmo recalcula tu progreso según:
+                                <br><br>
+                                • <b>Resultado:</b> Ganar sube tu nivel automáticamente.
+                                <br>• <b>Nivel Rival:</b> Ganar a jugadores superiores te otorga más décimas.
+                                <br>• <b>Regularidad:</b> Un historial sólido desbloquea eventos Élite.
+                            </div>
+                        </div>
+
+                        <!-- 5. CONTROL TOWER -->
+                        <div style="background: #f8fafc; padding: 25px; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                            <div style="font-weight: 900; margin-bottom: 15px; color: #ef4444; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(239,68,68,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-broadcast-tower" style="font-size: 1rem;"></i>
+                                </div>
+                                Torre de Control (En Vivo)
+                            </div>
+                            <div style="font-size: 0.9rem; color: #475569; line-height: 1.7; font-weight: 500;">
+                                Durante el evento, consulta tu pista, compañeros y clasificación en tiempo real. 
+                                <br><br>
+                                Al finalizar, accede al <b>Informe Detallado</b> para analizar tus métricas avanzadas y ver el resumen de la jornada.
+                            </div>
                         </div>
 
                     </div>

@@ -29,6 +29,22 @@
 
         navigate(route, isBack = false) {
             console.log(`[Router] Navigating to: ${route}`);
+
+            // === AI OPTIMIZATION: SYSTEM CLEANUP (AUDIT FIX) ===
+            // Before moving to a new view, we MUST clean up listeners from the previous one
+            // to prevent memory leaks and redundant firebase calls.
+            if (this.currentRoute === 'events' || this.currentRoute === 'americanas' || this.currentRoute === 'results' || this.currentRoute === 'agenda' || this.currentRoute === 'entrenos') {
+                if (window.EventsController && typeof window.EventsController.destroy === 'function') {
+                    window.EventsController.destroy();
+                }
+            }
+            if (this.currentRoute === 'live' && window.ControlTowerView && typeof window.ControlTowerView.destroy === 'function') {
+                window.ControlTowerView.destroy();
+            }
+            if (this.currentRoute === 'tv' && window.TVView && typeof window.TVView.destroy === 'function') {
+                window.TVView.destroy();
+            }
+
             this.currentRoute = route;
 
             // Update UI State

@@ -181,6 +181,20 @@
                         box-shadow: 0 0 15px rgba(204, 255, 0, 0.1);
                     }
                     
+                    .msg-delete-btn {
+                        position: absolute;
+                        top: 2px;
+                        right: 5px;
+                        color: rgba(255,255,255,0.2);
+                        font-size: 0.7rem;
+                        cursor: pointer;
+                        padding: 5px;
+                        transition: color 0.2s;
+                    }
+                    .msg-delete-btn:hover {
+                        color: #ef4444;
+                    }
+                    
                     .msg-meta {
                         font-size: 0.65rem;
                         margin-bottom: 3px;
@@ -332,12 +346,17 @@
             container.innerHTML = messages.map(msg => {
                 const isMe = msg.senderId === myId;
                 const isAdmin = msg.type === 'admin';
+                const isUserAdmin = user && (user.role === 'admin' || user.role === 'admin_player');
                 let contentClass = isMe ? 'msg-self' : 'msg-other';
                 if (isAdmin) contentClass = 'msg-admin';
 
                 return `
-                    <div class="msg-bubble ${contentClass} fade-in">
+                    <div class="msg-bubble ${contentClass} fade-in" style="position: relative;">
                         ${!isMe ? `<div class="msg-meta">${isAdmin ? '🛡️ COMANDO' : msg.senderName}</div>` : ''}
+                        ${isUserAdmin ? `
+                            <i class="fas fa-trash msg-delete-btn" title="Borrar mensaje" 
+                               onclick="event.stopPropagation(); window.ChatView.confirmDeleteMessage('${msg.id}')"></i>
+                        ` : ''}
                         ${msg.text}
                     </div>
                 `;
@@ -362,6 +381,15 @@
 
             // Toggle UI optimistically but logic handles real state via listener
             await window.ChatService.toggleSOS(this.eventId, !isActive);
+        }
+
+        async confirmDeleteMessage(messageId) {
+            if (confirm("¿Estás seguro de que quieres borrar este mensaje? Esta acción no se puede deshacer.")) {
+                const result = await window.ChatService.deleteMessage(this.eventId, messageId);
+                if (!result.success) {
+                    alert("Error al borrar el mensaje: " + result.error);
+                }
+            }
         }
     }
 

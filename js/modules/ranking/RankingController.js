@@ -71,71 +71,61 @@
                     };
                 });
 
-                // 2. Process each valid event
-                for (const event of validEvents) {
-                    const eventType = event.type === 'entreno' ? 'entrenos' : 'americanas';
-                    const matchCollection = event.type === 'entreno' ? this.db.entrenos_matches : this.db.matches;
+                // 2. Fetch all matches for all unique events
+                const americanaIds = allAmericanas.map(e => e.id);
+                const entrenoIds = allEntrenos.map(e => e.id);
 
-                    let categoryRaw = (event.category || 'open').toLowerCase();
-                    let categoryFinal = 'open';
+                const [americanaMatchesArr, entrenoMatchesArr] = await Promise.all([
+                    Promise.all(americanaIds.map(id => this.db.matches.getByAmericana(id))),
+                    Promise.all(entrenoIds.map(id => this.db.entrenos_matches.getByAmericana(id)))
+                ]);
 
-                    // Normalize categories
-                    if (categoryRaw === 'female' || categoryRaw === 'femenina') categoryFinal = 'female';
-                    else if (categoryRaw === 'male' || categoryRaw === 'masculina') categoryFinal = 'male';
-                    else if (categoryRaw === 'mixed' || categoryRaw === 'mixta') categoryFinal = 'mixed';
-                    else categoryFinal = 'open';
+                // Flatten match arrays
+                const allAmeMatches = americanaMatchesArr.flat().filter(m => m.status === 'finished');
+                const allEntMatches = entrenoMatchesArr.flat().filter(m => m.status === 'finished');
 
-                    console.log(`🏟️ [RankingController] Processing ${eventType}: "${event.name}" | Final Category: ${categoryFinal}`);
+                // === AI OPTIMIZATION: USE CENTRALIZED SERVICE (AUDIT FIX) ===
+                const ameStats = window.StandingsService.calculate(allAmeMatches, 'americana');
+                const entStats = window.StandingsService.calculate(allEntMatches, 'entreno');
 
-                    // Fetch matches for this event (using corrected service)
-                    const matches = await matchCollection.getByAmericana(event.id);
+                // 3. Merge Stats into Player Profile
+                const playersList = players.map(p => {
+                    const ame = ameStats.find(s => s.uid === p.id) || {};
+                    const ent = entStats.find(s => s.uid === p.id) || {};
 
-                    matches.forEach(m => {
-                        if (m.status !== 'finished') return;
+                    return {
+                        id: p.id,
+                        name: p.name,
+                        level: parseFloat(p.level || p.self_rate_level || 3.5),
+                        gender: p.gender || 'chico',
+                        photo_url: p.photo_url || null,
+                        stats: {
+                            americanas: {
+                                points: ame.leaguePoints || 0, // Using 3-1-0 points
+                                played: ame.played || 0,
+                                won: ame.won || 0,
+                                lost: ame.lost || 0,
+                                gamesWon: ame.points || 0,
+                                gamesLost: ame.gamesLost || 0,
+                                court1Count: ame.court1Count || 0
+                            },
+                            entrenos: {
+                                points: ent.leaguePoints || 0,
+                                played: ent.played || 0,
+                                won: ent.won || 0,
+                                lost: ent.lost || 0,
+                                gamesWon: ent.points || 0,
+                                gamesLost: ent.gamesLost || 0,
+                                court1Count: ent.court1Count || 0
+                            }
+                        }
+                    };
+                });
 
-                        const teamA = m.team_a_ids || [];
-                        const teamB = m.team_b_ids || [];
-                        const scoreA = parseInt(m.score_a || 0);
-                        const scoreB = parseInt(m.score_b || 0);
-
-                        // Helper to update player stats
-                        const updatePlayer = (playerId, win, tie, gamesW, gamesL, court) => {
-                            const p = playerStats[playerId];
-                            if (!p) return;
-
-                            const s = p.stats[eventType];
-                            s.played++;
-                            if (win) { s.won++; s.points += 3; }
-                            else if (tie) { s.points += 1; }
-                            else { s.lost++; }
-
-                            s.gamesWon += gamesW;
-                            s.gamesLost += gamesL;
-                            if (parseInt(court) === 1) s.court1Count++;
-
-                            // Category specific stats (Crucial for UI filters)
-                            if (!s.categories[categoryFinal]) s.categories[categoryFinal] = { points: 0, played: 0, won: 0, lost: 0, court1Count: 0 };
-                            const catUpdate = s.categories[categoryFinal];
-                            catUpdate.played++;
-                            if (win) { catUpdate.won++; catUpdate.points += 3; }
-                            else if (tie) { catUpdate.points += 1; }
-                            else { catUpdate.lost++; }
-                            if (parseInt(court) === 1) catUpdate.court1Count = (catUpdate.court1Count || 0) + 1;
-                        };
-
-                        const isTie = scoreA === scoreB;
-                        const aWin = scoreA > scoreB;
-
-                        teamA.forEach(id => updatePlayer(id, aWin, isTie, scoreA, scoreB, m.court));
-                        teamB.forEach(id => updatePlayer(id, !aWin, isTie, scoreB, scoreA, m.court));
-                    });
-                }
-
-                const playersList = Object.values(playerStats);
                 // Store global ranking for other modules
                 this.rankedPlayers = [...playersList].sort((a, b) => b.stats.americanas.points - a.stats.americanas.points);
 
-                console.log("✅ [RankingController] Silent calculation complete.");
+                console.log("✅ [RankingController] Calculation optimized using StandingsService.");
                 return playersList;
 
             } catch (error) {

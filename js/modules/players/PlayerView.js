@@ -1,239 +1,205 @@
 /**
  * PlayerView.js
  * Premium AI-Enhanced Profile View for SomosPadel
+ * Updated: 2024 Design System with Glassmorphism and Advanced UX
  */
 (function () {
     class PlayerView {
         render() {
             const container = document.getElementById('content-area');
             const user = window.Store.getState('currentUser');
-            const data = window.Store.getState('playerStats') || { stats: { matches: 0, won: 0, lost: 0, points: 0, winRate: 0 }, recentMatches: [] };
+            const data = window.Store.getState('playerStats') || {
+                stats: { matches: 0, won: 0, lost: 0, points: 0, winRate: 0, gamesWon: 0 },
+                recentMatches: []
+            };
 
             if (!container || !user) return;
 
             container.innerHTML = `
-                <div class="player-profile-wrapper fade-in" style="background: #f8faff; min-height: 100vh; padding-bottom: 120px; font-family: 'Outfit', sans-serif;">
+                <div class="player-profile-wrapper fade-in" style="background: #000; min-height: 100vh; padding-bottom: 120px; font-family: 'Outfit', sans-serif; color: white;">
                     
-                    <!-- Profile Header -->
-                    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 40px 24px 80px; color: white; border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-                        <div style="position: absolute; top: -20px; right: -20px; font-size: 8rem; opacity: 0.05; color: white;">👤</div>
+                    <!-- Profile Header: Dynamic & Aesthetic -->
+                    <div style="background: linear-gradient(180deg, #111 0%, #000 100%); padding: 60px 24px 40px; border-bottom: 1px solid #222; position: relative; overflow: hidden;">
+                        <!-- Animated background elements -->
+                        <div style="position: absolute; top: -100px; left: -100px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(204,255,0,0.05) 0%, transparent 70%);"></div>
+                        <div style="position: absolute; bottom: -50px; right: -50px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%);"></div>
                         
-                        <div style="display: flex; align-items: center; gap: 20px; position: relative; z-index: 2;">
-                            <div style="position: relative;">
-                                <div id="profile-avatar-display" style="width: 85px; height: 85px; border-radius: 25px; background: #3b82f6; border: 3px solid #CCFF00; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; overflow: hidden; box-shadow: 0 8px 20px rgba(204, 255, 0, 0.2);">
+                        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; z-index: 2;">
+                            <!-- Avatar with Neon Glow -->
+                            <div style="position: relative; margin-bottom: 20px;">
+                                <div id="profile-avatar-display" style="width: 110px; height: 110px; border-radius: 35px; background: #222; border: 2px solid #CCFF00; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 950; overflow: hidden; box-shadow: 0 0 30px rgba(204, 255, 0, 0.2);">
                                     ${user.photo_url ? `<img src="${user.photo_url}" style="width:100%; height:100%; object-fit:cover;">` : user.name.substring(0, 2).toUpperCase()}
                                 </div>
-                                <div onclick="window.PlayerView.showUpdatePhotoPrompt()" style="position: absolute; bottom: -5px; right: -5px; background: #CCFF00; color: black; width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; cursor: pointer; border: 3px solid #0f172a;">
+                                <div onclick="window.PlayerView.showUpdatePhotoPrompt()" style="position: absolute; bottom: -2px; right: -2px; background: #CCFF00; color: black; width: 34px; height: 34px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; border: 3px solid #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
                                     <i class="fas fa-camera"></i>
                                 </div>
                             </div>
                             
-                            <div>
-                                <h2 style="font-weight: 800; font-size: 1.6rem; margin: 0;">${user.name}</h2>
-                                <div style="display: flex; gap: 8px; align-items: center; margin-top: 5px;">
-                                    <span style="background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; color: #CCFF00;">NIVEL ${parseFloat(user.level || 3.5).toFixed(2)}</span>
-                                    <span style="color: rgba(255,255,255,0.6); font-size: 0.7rem; font-weight: 600;">SOCIO #${user.id.substring(0, 5).toUpperCase()}</span>
+                            <h2 style="font-weight: 950; font-size: 1.8rem; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">${user.name}</h2>
+                            <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                                <span style="background: #CCFF00; color: #000; padding: 4px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 950;">NIVEL ${parseFloat(user.level || 3.5).toFixed(2)}</span>
+                                <span style="background: rgba(255,255,255,0.05); color: #888; padding: 4px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid #333;">ID: ${user.id.substring(0, 5).toUpperCase()}</span>
+                            </div>
+                            
+                            ${user.role === 'admin_player' || user.role === 'admin' ? `
+                                <div style="margin-top: 15px; background: linear-gradient(90deg, #FFD700, #FFA500); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 950; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px;">
+                                    <i class="fas fa-crown"></i> EXECUTIVE ADMIN
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Level Progress Bar -->
-                        <div style="margin-top: 25px; position: relative; z-index: 2;">
-                            <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: rgba(255,255,255,0.5); font-weight: 700; margin-bottom: 8px; text-transform: uppercase;">
-                                <span>Progreso de Nivel</span>
-                                <span>Próximo: ${(parseFloat(user.level || 3.5) + 0.25).toFixed(2)}</span>
-                            </div>
-                            <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
-                                <div style="width: 65%; height: 100%; background: #CCFF00; box-shadow: 0 0 10px #CCFF00;"></div>
-                            </div>
+                            ` : ''}
                         </div>
                     </div>
 
-                    <!-- General Statistics Section -->
-                    <div style="padding: 30px 20px 0;">
-                        <h3 style="font-weight: 800; font-size: 1.1rem; color: #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                            <span style="color: #3b82f6;">🏆</span> ESTADÍSTICAS TEMPORADA
-                        </h3>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                            <!-- Games Stats -->
-                            <div style="background: white; padding: 20px; border-radius: 24px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); border: 1px solid #eee; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                                <div style="width: 40px; height: 40px; background: #eef2ff; color: #6366f1; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 1.2rem;">
-                                    <i class="fas fa-table-tennis"></i>
-                                </div>
-                                <div style="font-size: 1.5rem; font-weight: 900; color: #1e293b;">${data.stats.gamesWon}</div>
-                                <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-top: 4px;">Juegos Ganados</div>
-                            </div>
-
-                            <!-- Win Rate Stats -->
-                            <div style="background: white; padding: 20px; border-radius: 24px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); border: 1px solid #eee; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                                <div style="width: 40px; height: 40px; background: #ecfdf5; color: #10b981; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 1.2rem;">
-                                    <i class="fas fa-percentage"></i>
-                                </div>
-                                <div style="font-size: 1.5rem; font-weight: 900; color: #1e293b;">${data.stats.winRate}%</div>
-                                <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-top: 4px;">Eficacia (WR)</div>
-                            </div>
-
-                            <!-- Points Stats -->
-                            <div style="background: white; padding: 20px; border-radius: 24px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); border: 1px solid #eee; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                                <div style="width: 40px; height: 40px; background: #fffbeb; color: #f59e0b; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 1.2rem;">
-                                    <i class="fas fa-star"></i>
-                                </div>
-                                <div style="font-size: 1.5rem; font-weight: 900; color: #1e293b;">${data.stats.points}</div>
-                                <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-top: 4px;">Puntos Totales</div>
-                            </div>
-
-                            <!-- Played Stats -->
-                            <div style="background: white; padding: 20px; border-radius: 24px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); border: 1px solid #eee; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                                <div style="width: 40px; height: 40px; background: #fff1f2; color: #f43f5e; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 1.2rem;">
-                                    <i class="fas fa-calendar-alt"></i>
-                                </div>
-                                <div style="font-size: 1.5rem; font-weight: 900; color: #1e293b;">${data.stats.matches}</div>
-                                <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-top: 4px;">Partidos</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- AI Statistics & Match Summary -->
-                    ${data.aiInsights ? `
-                    <div style="padding: 30px 20px 0;">
-                        <h3 style="font-weight: 800; font-size: 1.1rem; color: #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                            <span style="color: #8b5cf6;">🤖</span> RESUMEN POR IA
-                        </h3>
-                        
-                        <div style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); padding: 25px; border-radius: 30px; color: white; position: relative; overflow: hidden; box-shadow: 0 15px 35px rgba(99, 102, 241, 0.2);">
-                            <div style="position: absolute; top: -10px; right: -10px; font-size: 5rem; opacity: 0.1;"><i class="fas fa-brain"></i></div>
-                            
-                            <div style="display: inline-block; background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 10px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.3);">
-                                ${data.aiInsights.badge}
-                            </div>
-                            
-                            <p style="font-size: 0.95rem; line-height: 1.5; font-weight: 600; margin: 0; position: relative; z-index: 2;">
-                                "${data.aiInsights.summary}"
-                            </p>
-                            
-                            <div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; position: relative; z-index: 2;">
-                                ${data.aiInsights.insights.map(ins => `
-                                    <div style="background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-                                        <span>${ins.icon}</span>
-                                        <span>${ins.text}</span>
+                    <div style="padding: 30px 20px;">
+                        <!-- PLAYER ANALYSIS: High-Tech Look -->
+                        ${data.aiInsights ? `
+                            <div style="margin-bottom: 40px; background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 25px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                                <div style="position: absolute; top: -10px; right: -10px; font-size: 6rem; opacity: 0.05; color: #CCFF00; pointer-events: none;"><i class="fas fa-user-shield"></i></div>
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="width: 32px; height: 32px; background: #CCFF00; color: #000; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;"><i class="fas fa-fingerprint"></i></div>
+                                        <span style="font-weight: 900; font-size: 0.85rem; letter-spacing: 1px; color: #CCFF00; text-transform: uppercase;">Análisis de Jugador Somospadel</span>
                                     </div>
-                                `).join('')}
+                                    <span style="font-size: 0.6rem; background: rgba(204,255,0,0.1); color: #CCFF00; padding: 3px 10px; border-radius: 20px; font-weight: 900; border: 1px solid rgba(204,255,0,0.2);">${data.aiInsights.badge || 'PRO'}</span>
+                                </div>
+                                <p style="font-size: 1.05rem; line-height: 1.6; font-weight: 600; color: #fff; margin: 0 0 20px; font-style: italic;">
+                                    "${data.aiInsights.summary}"
+                                </p>
+                                
+                                <!-- New Skills Radar Concept -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                                    <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); text-align: center;">
+                                        <div style="font-size: 0.6rem; color: #888; text-transform: uppercase; font-weight: 800; margin-bottom: 5px;">Potencial</div>
+                                        <div style="height: 4px; background: #222; border-radius: 2px; overflow: hidden; margin-top: 5px;">
+                                            <div style="width: ${Math.min(100, Math.round((user.level / 7) * 100)) || 50}%; height: 100%; background: #CCFF00; box-shadow: 0 0 10px #CCFF00;"></div>
+                                        </div>
+                                    </div>
+                                    <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); text-align: center;">
+                                        <div style="font-size: 0.6rem; color: #888; text-transform: uppercase; font-weight: 800; margin-bottom: 5px;">Confianza</div>
+                                        <div style="height: 4px; background: #222; border-radius: 2px; overflow: hidden; margin-top: 5px;">
+                                            <div style="width: ${data.stats.winRate || 50}%; height: 100%; background: #38bdf8; box-shadow: 0 0 10px #38bdf8;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    ${data.aiInsights.insights.map(ins => `
+                                        <div style="background: rgba(255,255,255,0.05); padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 800; display: flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.1);">
+                                            <span>${ins.icon}</span> <span>${ins.text}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <!-- Performance Stats: 2x2 Grid with Glow -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 40px;">
+                            <div style="background: linear-gradient(135deg, #111, #0a0a0a); padding: 22px; border-radius: 24px; border: 1px solid #222; text-align: left; position: relative; overflow: hidden;">
+                                <div style="color: #64748b; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Partidos Totales</div>
+                                <div style="font-size: 2.2rem; font-weight: 950; color: #fff;">${data.stats.matches}</div>
+                                <i class="fas fa-baseball-ball" style="position: absolute; right: -5px; bottom: -5px; font-size: 2.5rem; opacity: 0.05; color: #fff;"></i>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #111, #0a0a0a); padding: 22px; border-radius: 24px; border: 1px solid #222; text-align: left; position: relative; overflow: hidden;">
+                                <div style="color: #64748b; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Ratio Victoria</div>
+                                <div style="font-size: 2.2rem; font-weight: 950; color: #CCFF00;">${data.stats.winRate}%</div>
+                                <i class="fas fa-chart-pie" style="position: absolute; right: -5px; bottom: -5px; font-size: 2.5rem; opacity: 0.05; color: #CCFF00;"></i>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #111, #0a0a0a); padding: 22px; border-radius: 24px; border: 1px solid #222; text-align: left; position: relative; overflow: hidden;">
+                                <div style="color: #64748b; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Juegos Ganados</div>
+                                <div style="font-size: 2.2rem; font-weight: 950; color: #fff;">${data.stats.gamesWon}</div>
+                                <i class="fas fa-trophy" style="position: absolute; right: -5px; bottom: -5px; font-size: 2.5rem; opacity: 0.05; color: #fff;"></i>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #111, #0a0a0a); padding: 22px; border-radius: 24px; border: 1px solid #222; text-align: left; position: relative; overflow: hidden;">
+                                <div style="color: #64748b; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Puntos Acumulados</div>
+                                <div style="font-size: 2.2rem; font-weight: 950; color: #CCFF00;">${data.stats.points}</div>
+                                <i class="fas fa-star" style="position: absolute; right: -5px; bottom: -5px; font-size: 2.5rem; opacity: 0.05; color: #CCFF00;"></i>
                             </div>
                         </div>
-                    </div>
-                    ` : ''}
 
-                    <!-- Performance Trends -->
-                    <div style="padding: 30px 20px 0;">
-                        <h3 style="font-weight: 800; font-size: 1.1rem; color: #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                            <span style="color: #3b82f6;">📊</span> ÚLTIMOS PARTIDOS
-                        </h3>
-                        
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            ${data.recentMatches.length === 0 ? `
-                                <div style="background: white; border-radius: 20px; padding: 30px; text-align: center; border: 1px dashed #cbd5e1; color: #94a3b8;">
-                                    <i class="fas fa-ghost" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;"></i>
-                                    <p style="font-size: 0.85rem; font-weight: 600;">Aún no has disputado partidos oficiales</p>
-                                </div>
-                            ` : data.recentMatches.map(m => `
-                                <div style="background: white; padding: 15px 20px; border-radius: 20px; border: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                        <!-- Recent Matches Scroll -->
+                        <div style="margin-bottom: 40px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 5px;">
+                                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 950; letter-spacing: 1px; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 10px;"><i class="fas fa-bolt" style="color: #CCFF00;"></i> Historial Reciente</h3>
+                                <span style="font-size: 0.65rem; color: #666; font-weight: 900; background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 20px;">TOP 5</span>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                ${data.recentMatches.length === 0 ? `
+                                    <div style="border: 1px dashed #333; padding: 40px; border-radius: 24px; text-align: center; color: #555; background: rgba(255,255,255,0.01);">
+                                        <i class="fas fa-history" style="font-size: 1.8rem; margin-bottom: 12px; opacity: 0.3;"></i>
+                                        <p style="font-size: 0.85rem; font-weight: 800; margin: 0;">Aún no has disputado partidos oficiales</p>
+                                    </div>
+                                ` : data.recentMatches.slice(0, 5).map(m => {
+                const dateStr = (() => {
+                    if (!m.date) return '---';
+                    if (typeof m.date === 'string' && m.date.includes('/')) return m.date;
+                    try {
+                        const d = new Date(m.date);
+                        if (isNaN(d.getTime())) return '---';
+                        return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+                    } catch (e) { return '---'; }
+                })();
+
+                return `
+                                    <div style="background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%); padding: 18px 22px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; position: relative; overflow: hidden;">
+                                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: ${m.result === 'W' ? '#CCFF00' : (m.result === 'D' ? '#94a3b8' : '#ef4444')}; opacity: 0.8;"></div>
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: 900; font-size: 0.95rem; color: #fff; letter-spacing: -0.3px;">${m.eventName.toUpperCase()}</div>
+                                            <div style="color: #666; font-size: 0.72rem; font-weight: 800; margin-top: 5px; display: flex; align-items: center; gap: 8px;">
+                                                <span style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 6px;">${dateStr}</span>
+                                                <span style="color: #fff; font-weight: 950; font-size: 0.8rem;">${m.score}</span>
+                                            </div>
+                                        </div>
+                                        <div style="background: ${m.result === 'W' ? 'rgba(204,255,0,0.1)' : (m.result === 'D' ? 'rgba(148,163,184,0.1)' : 'rgba(239,68,68,0.1)')}; color: ${m.result === 'W' ? '#CCFF00' : (m.result === 'D' ? '#94a3b8' : '#ef4444')}; width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 950; font-size: 1.1rem; border: 1px solid ${m.result === 'W' ? 'rgba(204,255,0,0.2)' : 'rgba(239,68,68,0.2)'}; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                                            ${m.result}
+                                        </div>
+                                    </div>
+                                    `;
+            }).join('')}
+                            </div>
+                        </div>
+
+                        <!-- SOMOSPADEL RULES PRO -->
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="margin: 0 0 20px; font-size: 1rem; font-weight: 950; letter-spacing: 1px; color: #CCFF00; text-transform: uppercase; display: flex; align-items: center; gap: 10px;"><i class="fas fa-shield-alt"></i> Normativa Elite</h3>
+                            <div style="display: grid; gap: 12px;">
+                                <div style="background: #0a0a0a; padding: 20px; border-radius: 24px; border: 1px solid #1a1a1a; display: flex; align-items: flex-start; gap: 15px;">
+                                    <div style="width: 36px; height: 36px; background: rgba(255,215,0,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #FFD700; flex-shrink: 0;"><i class="fas fa-star"></i></div>
                                     <div>
-                                        <div style="font-weight: 800; font-size: 0.9rem; color: #1e293b;">${m.eventName}</div>
-                                        <div style="color: #94a3b8; font-size: 0.7rem; font-weight: 600; margin-top: 2px;">${new Date(m.date).toLocaleDateString()} · ${m.score}</div>
-                                    </div>
-                                    <div style="background: ${m.color}15; color: ${m.color}; width: 35px; height: 35px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.9rem; border: 1px solid ${m.color}30;">
-                                        ${m.result}
+                                        <div style="font-weight: 900; color: #fff; margin-bottom: 4px; font-size: 0.85rem;">Sistema de Puntuación MVP</div>
+                                        <p style="font-size: 0.72rem; color: #666; line-height: 1.6; margin: 0;">Cada juego ganado en pista equivale a 1 punto para tu ranking personal. Maximizas tu puntuación aunque pierdas el set.</p>
                                     </div>
                                 </div>
-                            `).join('')}
-                        </div>
-                    </div>
-
-                    <!-- NORMATIVA Y INFO (New Section) -->
-                    <div style="padding: 40px 20px 0;">
-                        <h3 style="font-weight: 800; font-size: 1.1rem; color: #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                            <span style="color: #007AFF;">⚖️</span> NORMATIVA Y REGLAS
-                        </h3>
-                        
-                        <div style="display: grid; gap: 15px;">
-                            <!-- Ranking -->
-                            <div style="background: white; padding: 20px; border-radius: 20px; border: 1px solid #eee; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                                <div style="font-weight: 800; margin-bottom: 10px; color: #1e293b; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fas fa-trophy" style="color: #FFD700;"></i> Sistema de Ranking
+                                <div style="background: #0a0a0a; padding: 20px; border-radius: 24px; border: 1px solid #1a1a1a; display: flex; align-items: flex-start; gap: 15px;">
+                                    <div style="width: 36px; height: 36px; background: rgba(59,130,246,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #3b82f6; flex-shrink: 0;"><i class="fas fa-microchip"></i></div>
+                                    <div>
+                                        <div style="font-weight: 900; color: #fff; margin-bottom: 4px; font-size: 0.85rem;">Algoritmo de Nivel Pro</div>
+                                        <p style="font-size: 0.72rem; color: #666; line-height: 1.6; margin: 0;">Tu nivel se ajusta por décimas basándose en el Win Rate y la dificultad de los rivales enfrentados en cada jornada.</p>
+                                    </div>
                                 </div>
-                                <p style="font-size: 0.75rem; color: #64748b; line-height: 1.5; margin: 0;">
-                                    Cada juego ganado en tus Americanas suma <b>1 punto</b> directo a tu perfil. El MVP se decide por la suma total de puntos tras 6 rondas.
-                                </p>
-                            </div>
-
-                            <!-- Levels -->
-                            <div style="background: white; padding: 20px; border-radius: 20px; border: 1px solid #eee; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                                <div style="font-weight: 800; margin-bottom: 10px; color: #1e293b; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fas fa-chart-line" style="color: #10b981;"></i> Evolución de Nivel
-                                </div>
-                                <p style="font-size: 0.75rem; color: #64748b; line-height: 1.5; margin: 0;">
-                                    Tu nivel sube o baja por <b>décimas</b> según ganes o pierdas partidos. El algoritmo tiene en cuenta el nivel de tus oponentes para un ajuste justo.
-                                </p>
-                            </div>
-
-                            <!-- Comportamiento -->
-                            <div style="background: white; padding: 20px; border-radius: 20px; border: 1px solid #eee; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                                <div style="font-weight: 800; margin-bottom: 10px; color: #1e293b; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fas fa-handshake" style="color: #3b82f6;"></i> Fair Play
-                                </div>
-                                <p style="font-size: 0.75rem; color: #64748b; line-height: 1.5; margin: 0;">
-                                    Somos una comunidad. Respeta a compañeros y rivales. Los resultados son gestionados por los <b>administradores</b> para garantizar la transparencia.
-                                </p>
-                            </div>
-
-                            <!-- TV Mode Guide -->
-                            <div style="background: linear-gradient(135deg, #000 0%, #1a1a1a 100%); color: #CCFF00; padding: 20px; border-radius: 20px; border: 1px solid #333; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                                <div style="font-weight: 800; margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fas fa-tv" style="animation: pulse 2s infinite;"></i> Novedad: Experiencia TV
-                                </div>
-                                <p style="font-size: 0.75rem; color: #ccc; line-height: 1.5; margin: 0;">
-                                    Podrás seguir todos los resultados y la clasificación en vivo desde el <b>PC de Entrenos y Americanas</b> de SomosPadel BCN.
-                                </p>
-                            </div>
-
-                            <!-- Chat Guide -->
-                            <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 20px; border-radius: 20px; border: 1px solid #334155; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                                <div style="font-weight: 800; margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fas fa-comments" style="color: #3b82f6;"></i> Novedad: Chat Táctico & SOS
-                                </div>
-                                <p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.5; margin: 0;">
-                                    Dentro de cada evento en vivo encontrarás un botón de <b>CHAT</b>. Úsalo para hablar con los rivales o pulsa <b>SOS</b> si te falta pareja a última hora.
-                                </p>
                             </div>
                         </div>
                     </div>
-
-                    <!-- General Settings -->
-                    <div style="padding: 30px 20px 0;">
-                        <h3 style="font-weight: 800; font-size: 1.1rem; color: #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                            <span style="color: #f59e0b;">⚙️</span> CONFIGURACIÓN
-                        </h3>
-                        
-                        <div style="background: white; border-radius: 24px; border: 1px solid #eee; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
-                            <div onclick="window.PlayerView.showUpdatePasswordPrompt()" style="display: flex; align-items: center; padding: 20px; border-bottom: 1px solid #f1f5f9; cursor: pointer;">
-                                <div style="width: 40px; height: 40px; background: #fff7ed; color: #f59e0b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
-                                    <i class="fas fa-key"></i>
+                </div>
+                                    <p style="font-size: 0.75rem; color: #888; line-height: 1.5; margin: 0;">Tu nivel se ajusta dinámicamente tras cada partido oficial para garantizar grupos equilibrados.</p>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- SETTINGS & AUTH -->
+                        <div style="background: #111; border-radius: 24px; border: 1px solid #222; overflow: hidden;">
+                            <div onclick="window.PlayerView.showUpdatePasswordPrompt()" style="display: flex; align-items: center; padding: 20px; border-bottom: 1px solid #222; cursor: pointer;">
+                                <div style="width: 44px; height: 44px; background: rgba(59,130,246,0.1); color: #3b82f6; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="fas fa-key"></i></div>
                                 <div style="flex: 1; margin-left: 15px;">
-                                    <div style="font-weight: 800; font-size: 0.9rem; color: #1e293b;">Cambiar Contraseña</div>
-                                    <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 500;">Protege tu acceso pro</div>
+                                    <div style="font-weight: 900; font-size: 0.95rem;">Contraseña Segura</div>
+                                    <div style="font-size: 0.7rem; color: #666; font-weight: 700;">ACTUALIZAR CREDENCIALES</div>
                                 </div>
-                                <i class="fas fa-chevron-right" style="color: #cbd5e1; font-size: 0.8rem;"></i>
+                                <i class="fas fa-chevron-right" style="color: #444; font-size: 0.8rem;"></i>
                             </div>
-
                             <div onclick="window.AuthService.logout()" style="display: flex; align-items: center; padding: 20px; cursor: pointer;">
-                                <div style="width: 40px; height: 40px; background: #fef2f2; color: #ef4444; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                </div>
+                                <div style="width: 44px; height: 44px; background: rgba(255,59,48,0.1); color: #FF3B30; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="fas fa-power-off"></i></div>
                                 <div style="flex: 1; margin-left: 15px;">
-                                    <div style="font-weight: 800; font-size: 0.9rem; color: #ef4444;">Cerrar Sesión</div>
-                                    <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 500;">Hasta pronto campeon!</div>
+                                    <div style="font-weight: 900; font-size: 0.95rem; color: #FF3B30;">Cerrar Sesión</div>
+                                    <div style="font-size: 0.7rem; color: #666; font-weight: 700;">SALIR DE LA APLICACIÓN</div>
                                 </div>
                             </div>
                         </div>
@@ -245,26 +211,15 @@
 
         async handlePhotoSelection(input) {
             if (!input.files || !input.files[0]) return;
-
             const file = input.files[0];
             try {
-                // Show loading state
                 const avatar = document.getElementById('profile-avatar-display');
-                if (avatar) avatar.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-                // 1. Convert to Base64 and Compress
+                if (avatar) avatar.innerHTML = '<i class="fas fa-spinner fa-spin" style="color:#CCFF00;"></i>';
                 const optimizedBase64 = await this.compressImage(file);
-
-                // 2. Update via Controller
                 const res = await window.PlayerController.updatePhoto(optimizedBase64);
-
-                if (res.success) {
-                    console.log("Photo updated successfully");
-                } else {
-                    alert("Error al subir la foto: " + res.error);
-                }
+                if (!res.success) alert("Error: " + res.error);
             } catch (error) {
-                console.error("Error processing photo:", error);
+                console.error("Photo Selection Error:", error);
                 alert("Error al procesar la imagen.");
             }
         }
@@ -276,30 +231,18 @@
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 400;
-                        const MAX_HEIGHT = 400;
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height *= MAX_WIDTH / width;
-                                width = MAX_WIDTH;
-                            }
-                        } else {
-                            if (height > MAX_HEIGHT) {
-                                width *= MAX_HEIGHT / height;
-                                height = MAX_HEIGHT;
-                            }
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
+                        const size = 400;
+                        canvas.width = size;
+                        canvas.height = size;
                         const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
 
-                        // Output quality 0.7 for good balance size/quality
-                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                        // Square crop
+                        const minDim = Math.min(img.width, img.height);
+                        const startX = (img.width - minDim) / 2;
+                        const startY = (img.height - minDim) / 2;
+                        ctx.drawImage(img, startX, startY, minDim, minDim, 0, 0, size, size);
+
+                        resolve(canvas.toDataURL('image/jpeg', 0.8));
                     };
                     img.src = e.target.result;
                 };
@@ -315,17 +258,12 @@
             const pass = prompt("Introduce tu nueva contraseña:");
             if (pass && pass.length >= 6) {
                 const res = await window.PlayerController.updatePassword(pass);
-                if (res.success) {
-                    alert("Contraseña actualizada correctamente 🔐");
-                } else {
-                    alert("Error: " + res.error);
-                }
-            } else if (pass) {
-                alert("La contraseña debe tener al menos 6 caracteres.");
-            }
+                if (res.success) alert("Contraseña actualizada correctamente 🔐");
+                else alert("Error: " + res.error);
+            } else if (pass) alert("Mínimo 6 caracteres.");
         }
     }
 
     window.PlayerView = new PlayerView();
-    console.log("🏆 Premium PlayerView Initialized");
+    console.log("🏆 Premium PlayerView v2 (Dark Mode Elite) Initialized");
 })();

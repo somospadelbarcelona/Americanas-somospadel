@@ -6,7 +6,17 @@ from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime, date
 import os
+from passlib.context import CryptContext
 from . import models, database
+
+# Password security context
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
 
 # Create tables automatically
 models.Base.metadata.create_all(bind=database.engine)
@@ -222,16 +232,19 @@ def startup_event():
         if admin:
             # Update credentials if exists
             admin.name = "Alex Coscolin"
-            admin.password = "JARABA"
+            # SECURITY: Auto-hash legacy plain text password if detected
+            if admin.password == "NOA21" or admin.password == "JARABA":
+                admin.password = get_password_hash("NOA21")
+            
             admin.role = "admin"
-            admin.status = "active" # Force active
-            print(f"🔄 Universal Admin UPDATED: {admin.name} / {admin_phone}")
+            admin.status = "active"
+            print(f"🔄 Universal Admin SECURED: {admin.name} / {admin_phone}")
         else:
-            # Create if not exists
+            # Create if not exists with hashed password
             new_admin = models.Player(
                 name="Alex Coscolin",
                 phone=admin_phone,
-                password="JARABA",
+                password=get_password_hash("NOA21"), 
                 role="admin",
                 level="PRO",
                 status="active",
@@ -242,7 +255,7 @@ def startup_event():
                 category_preference="mixed"
             )
             db.add(new_admin)
-            print(f"✅ Universal Admin CREATED: Alex Coscolin / {admin_phone}")
+            print(f"✅ Universal Admin CREATED & SECURED: Alex Coscolin / {admin_phone}")
         
         db.commit()
     except Exception as e:
@@ -264,7 +277,7 @@ def register(user: RegisterRequest, db: Session = Depends(get_db)):
     new_user = models.Player(
         name=user.name,
         phone=user.phone,
-        password=user.password, 
+        password=get_password_hash(user.password), 
         role=role,
         level=user.self_rate_level,
         self_rate_level=user.self_rate_level,
@@ -288,7 +301,7 @@ def login(creds: LoginRequest, db: Session = Depends(get_db)):
         print("User not found")
         raise HTTPException(status_code=400, detail="Usuario no encontrado")
     
-    if user.password != creds.password:
+    if not verify_password(creds.password, user.password):
         print("Password mismatch")
         raise HTTPException(status_code=400, detail="Contraseña incorrecta")
     

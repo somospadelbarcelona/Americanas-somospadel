@@ -1,5 +1,5 @@
 /**
- * TVView.js
+ * TVView.js (Optimized & Secured)
  * Specialized view for "Center Court" displays (Smart TVs).
  * Features: High contrast, large fonts, auto-rotation, no admin controls.
  */
@@ -13,12 +13,38 @@
             this.nextRoundMatches = [];
             this.currentSlide = 'matches'; // 'matches', 'standings', 'next'
             this.slideInterval = null;
+            this.clockInterval = null;
             this.unsubscribeMatches = null;
             this.unsubscribeEvent = null;
         }
 
+        /**
+         * System Cleanup: Prevents memory leaks and redundant timers (Audit Fix)
+         */
+        destroy() {
+            console.log("🧹 [TVView] Cleaning up system resources...");
+            if (this.slideInterval) clearInterval(this.slideInterval);
+            if (this.clockInterval) clearInterval(this.clockInterval);
+            if (this.unsubscribeMatches) this.unsubscribeMatches();
+            if (this.unsubscribeEvent) this.unsubscribeEvent();
+
+            this.slideInterval = null;
+            this.clockInterval = null;
+            this.unsubscribeMatches = null;
+            this.unsubscribeEvent = null;
+            this.eventId = null;
+            this.eventDoc = null;
+            this.matches = [];
+
+            // Restore global styles
+            document.body.style.overflow = '';
+            document.body.style.background = '';
+        }
+
         async load(eventId, type = 'americana') {
             console.log("📺 [TV Mode] Loading for:", eventId);
+            this.destroy(); // Clean up previous session if any
+
             this.eventId = eventId;
             this.type = type;
 
@@ -39,7 +65,7 @@
                     return;
                 }
             } catch (e) {
-                console.error(e);
+                console.error("TV mode load error:", e);
             }
 
             this.startListeners();
@@ -80,120 +106,21 @@
                 });
         }
 
-        formatName(nameStr) {
-            if (!nameStr) return 'JUGADOR';
-            // Clean simple string
-            let clean = nameStr.trim();
-            // If comma format "Surname, Name", flip it? No, usually "Name Surname"
-            // Take up to 2 words? 
-            const parts = clean.split(' ');
-            if (parts.length > 2) {
-                // Return "Name Surname" only (first 2 words)
-                // Exception: "De la Rosa" -> checking length of part 1?
-                // Simple heuristic: First word + Last word if long, or First + Second
-                return `${parts[0]} ${parts[1]}`;
-            }
-            return clean;
-        }
-
+        /**
+         * UI Optimization: Use centralized logic (Audit Fix)
+         */
         calculateStandings() {
-            const stats = {};
-
-            this.matches.forEach(m => {
-                if (m.status !== 'finished') return;
-
-                // --- ROBUST NAME PARSING ---
-                // We need to map team_ids to names correctly.
-                // Database might store names as Array OR String.
-
-                const processTeam = (ids, namesRaw, scoreSelf, scoreOther) => {
-                    if (!ids || !Array.isArray(ids)) return;
-
-                    let namesArray = [];
-                    if (Array.isArray(namesRaw)) {
-                        namesArray = namesRaw;
-                    } else if (typeof namesRaw === 'string') {
-                        // "Name 1 / Name 2"
-                        namesArray = namesRaw.split(' / ').map(s => s.trim());
-                    }
-
-                    const court = parseInt(m.court || 99);
-                    const roundNum = parseInt(m.round || 0);
-
-                    ids.forEach((uid, idx) => {
-                        // Fallback name if array mismatch
-                        let pName = namesArray[idx] || `Jugador ${idx + 1}`;
-                        // Sanitize single letter bug: ensure pName is string of length > 1 if possible
-                        if (pName.length <= 1 && namesArray.length === 1 && ids.length === 1) pName = namesRaw;
-
-                        if (!stats[uid]) {
-                            stats[uid] = {
-                                name: this.formatName(pName),
-                                played: 0,
-                                won: 0,
-                                points: 0,
-                                diff: 0,
-                                court1Count: 0,
-                                bestCourt: 99,
-                                lastMatchCourt: 99,
-                                lastMatchRound: 0
-                            };
-                        }
-
-                        stats[uid].played++;
-                        stats[uid].points += parseInt(scoreSelf || 0);
-                        stats[uid].diff += (parseInt(scoreSelf || 0) - parseInt(scoreOther || 0));
-                        if (parseInt(scoreSelf) > parseInt(scoreOther)) stats[uid].won++;
-
-                        // POZO METRICS
-                        if (court === 1) stats[uid].court1Count++;
-                        if (court < stats[uid].bestCourt) stats[uid].bestCourt = court;
-
-                        // Last Match Tracking
-                        if (roundNum >= stats[uid].lastMatchRound) {
-                            stats[uid].lastMatchRound = roundNum;
-                            stats[uid].lastMatchCourt = court;
-                        }
-                    });
-                };
-
-                processTeam(m.team_a_ids, m.team_a_names, m.score_a, m.score_b);
-                processTeam(m.team_b_ids, m.team_b_names, m.score_b, m.score_a);
-            });
-
-            this.standings = Object.values(stats).sort((a, b) => {
-                // --- ADVANCED POZO / CONTROL TOWER LOGIC ---
-                // 1. Wins
-                if (b.won !== a.won) return b.won - a.won;
-
-                // 2. Court 1 Count (King of the Court)
-                if (b.court1Count !== a.court1Count) return b.court1Count - a.court1Count;
-
-                // 3. Last Match Position (Lower court number is better)
-                if (a.lastMatchCourt !== b.lastMatchCourt) return a.lastMatchCourt - b.lastMatchCourt;
-
-                // 4. Points Diff
-                return b.diff - a.diff;
-            });
+            if (!window.StandingsService) return;
+            // Use StandingsService for consistent data across app
+            this.standings = window.StandingsService.calculate(this.matches, this.type);
         }
 
         filterNextRound() {
-            // Check if there are matches generated but NOT started (round > current max live round)
             const maxRound = this.matches.length > 0 ? Math.max(...this.matches.map(m => parseInt(m.round))) : 1;
-            // Find matches for maxRound + 1? Or just matches that are 'open'?
-            // Usually next round is generated as 'scheduled' or just exists.
-
-            // Logic: Find highest round. If all matches in highest round are finished, look for highest round again (it's same).
-            // Actually, we want to see if a NEW round exists that has NO scores yet.
             const nextRoundMatches = this.matches.filter(m => parseInt(m.round) === maxRound && m.status !== 'finished');
-
-            // If current round is fully finished, and no next round exists, we show nothing.
-            // If current round has live matches, we show them.
-            // If current round matches are all pending start (e.g. just generated), we call that "NEXT ROUND" mode.
 
             const isAllPending = nextRoundMatches.length > 0 && nextRoundMatches.every(m => !m.score_a && m.status !== 'finished');
             if (isAllPending) {
-                // This counts as "Next Round" preview
                 this.nextRoundMatches = nextRoundMatches.sort((a, b) => a.court - b.court);
             } else {
                 this.nextRoundMatches = [];
@@ -203,13 +130,10 @@
         startCycle() {
             if (this.slideInterval) clearInterval(this.slideInterval);
             this.slideInterval = setInterval(() => {
-                // LOGIC: Matches -> Standings -> (Next Round?) -> Repeat
                 if (this.currentSlide === 'matches') {
                     this.currentSlide = 'standings';
                 } else if (this.currentSlide === 'standings') {
                     if (this.nextRoundMatches.length > 0 && this.nextRoundMatches[0].round > 1) {
-                        // Only show "Next Round" screen if we actually have a pending next round
-                        // and it's not the first round (redundant with Matches view usually)
                         this.currentSlide = 'next';
                     } else {
                         this.currentSlide = 'matches';
@@ -231,46 +155,25 @@
 
         renderLoader() {
             document.body.innerHTML = `
-                <style>
-                    body { margin: 0; background: black; font-family: 'Outfit', sans-serif; color: white; }
-                    .tv-loader { width: 80px; height: 80px; border: 8px solid #333; border-top-color: #CCFF00; border-radius: 50%; animation: spin 1s linear infinite; }
-                    @keyframes spin { to { transform: rotate(360deg); } }
-                </style>
-                <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <div class="tv-loader"></div>
-                    <h2 style="margin-top: 30px; font-weight: 300; letter-spacing: 5px;">CARGANDO MODO TV...</h2>
+                <div style="height:100vh; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Outfit', sans-serif;">
+                    <img src="img/logo_somospadel.png" style="height:100px; margin-bottom:30px;">
+                    <div class="loader"></div>
+                    <p style="margin-top:20px; font-weight:700; letter-spacing:2px; color:#CCFF00;">CONECTANDO CON PISTA CENTRAL...</p>
                 </div>
             `;
         }
 
         render() {
-            if (!document.getElementById('tv-root')) {
-                // (Same Shell as before)
+            const root = document.getElementById('tv-root');
+            if (!root) {
                 document.body.innerHTML = `
-                    <div id="tv-root" style="height: 100vh; display: flex; flex-direction: column; background: #050505; overflow: hidden; position: relative;">
+                    <div id="tv-root" style="height: 100vh; display: flex; flex-direction: column; background: #050505; overflow: hidden; position: relative; font-family: 'Outfit', sans-serif;">
                         <!-- HEADER -->
                         <div style="height: 12vh; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 2px solid #222; background: #000;">
                             <div style="display: flex; align-items: center; gap: 30px;">
-                                <!-- BACK BUTTON -->
-                                <div onclick="window.Router.navigate('dashboard')" style="
-                                    background: #111;
-                                    color: #CCFF00;
-                                    border: 2px solid #CCFF00;
-                                    padding: 10px 20px;
-                                    border-radius: 12px;
-                                    cursor: pointer;
-                                    display: flex;
-                                    align-items: center;
-                                    gap: 10px;
-                                    font-weight: 950;
-                                    font-size: 1.2rem;
-                                    box-shadow: 0 0 15px rgba(204,255,0,0.3);
-                                    transition: all 0.2s;
-                                " onmouseover="this.style.transform='scale(1.05)'; this.style.background='#CCFF00'; this.style.color='#000';" onmouseout="this.style.transform='scale(1)'; this.style.background='#111'; this.style.color='#CCFF00';">
-                                    <i class="fas fa-arrow-left"></i>
-                                    VOLVER
+                                <div onclick="window.Router.navigate('dashboard')" style="background: #111; color: #CCFF00; border: 2px solid #CCFF00; padding: 10px 20px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 950; font-size: 1.2rem; box-shadow: 0 0 15px rgba(204,255,0,0.3);">
+                                    <i class="fas fa-arrow-left"></i> VOLVER
                                 </div>
-
                                 <img src="img/logo_somospadel.png" style="height: 8vh;">
                                 <div>
                                     <h1 style="margin: 0; font-size: 2.5rem; font-weight: 900; line-height: 1; text-transform: uppercase; color: white;">${this.eventDoc?.name || 'EVENTO'}</h1>
@@ -287,17 +190,30 @@
                             <!-- DYNAMIC CONTENT -->
                         </div>
 
-                        <!-- FOOTER TICKER -->
+                        <!-- FOOTER TICKER (Audit Fix: CSS instead of marquee) -->
+                        <style>
+                            @keyframes tickerScroll {
+                                0% { transform: translateX(10%); }
+                                100% { transform: translateX(-100%); }
+                            }
+                            .tv-ticker-container {
+                                display: flex;
+                                white-space: nowrap;
+                                animation: tickerScroll 40s linear infinite;
+                            }
+                        </style>
                         <div style="height: 7vh; background: #CCFF00; color: black; display: flex; align-items: center; overflow: hidden; font-weight: 950; font-size: 1.8rem; text-transform: uppercase; border-top: 4px solid black;">
                             <div style="padding: 0 40px; background: black; color: #CCFF00; height: 100%; display: flex; align-items: center; border-right: 4px solid black; position: relative; z-index: 10;">LIVE</div>
-                            <marquee scrollamount="10" style="padding-top:5px; flex: 1;">
-                                🎾 BIENVENIDOS A LA EXPERIENCIA SOMOSPADEL.EU • EL MEJOR PÁDEL DE BARCELONA EN VIVO • 🏆 SIGUE TU CLASIFICACIÓN EN TIEMPO REAL • 🔥 NIVEL ÉPICO EN CADA PISTA • 💬 CHAT TÁCTICO ACTIVADO: BUSCA PAREJA CON EL BOTÓN SOS • 📺 MODO TV ONLINE • ¡VAMOS SOMOS PADEL! • DISFRUTA DE NUESTRAS INSTALACIONES TOP • FAIR PLAY Y DIVERSIÓN SIEMPRE • 🚀 SOMOSPADEL.EU CONNECT
-                            </marquee>
+                            <div class="tv-ticker-container">
+                                <span style="padding-left: 50px;">🎾 BIENVENIDOS A SOMOSPADEL BCN • EL MEJOR PÁDEL DE BARCELONA • 🏆 SIGUE TU CLASIFICACIÓN EN TIEMPO REAL • 🔥 NIVEL ÉPICO EN CADA PISTA • 📺 PISTA CENTRAL EN DIRECTO • ¡VAMOS SOMOS PADEL! • DISFRUTA DE NUESTRAS INSTALACIONES TOP • FAIR PLAY Y DIVERSIÓN SIEMPRE • 🚀 REDES SOCIALES: @SOMOSPADELBCN</span>
+                            </div>
                         </div>
                     </div>
                 `;
 
-                setInterval(() => {
+                // Managed clock interval
+                if (this.clockInterval) clearInterval(this.clockInterval);
+                this.clockInterval = setInterval(() => {
                     const now = new Date();
                     const el = document.getElementById('tv-clock');
                     if (el) el.innerText = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -321,147 +237,80 @@
         }
 
         getMatchesHTML() {
-            const maxRound = this.matches.length > 0 ? Math.max(...this.matches.map(m => parseInt(m.round))) : 1;
-            const currentRoundMatches = this.matches.filter(m => parseInt(m.round) === maxRound).sort((a, b) => a.court - b.court);
+            const currentRound = this.matches.length > 0 ? Math.max(...this.matches.map(m => parseInt(m.round))) : 1;
+            const roundMatches = this.matches.filter(m => parseInt(m.round) === currentRound);
 
             return `
-                <div style="height: 100%; display: flex; flex-direction: column;">
-                    <h2 style="font-size: 2rem; color: white; margin: 0 0 30px 0; display: flex; align-items: center; gap: 15px;">
-                        <span style="background: #CCFF00; color: black; padding: 5px 15px; border-radius: 8px;">RONDA ${maxRound}</span>
-                        EN PISTA
+                <div class="fade-in">
+                    <h2 style="color:#CCFF00; font-size:3rem; font-weight:900; text-align:center; margin-bottom:30px;">
+                        RESULTADOS EN VIVO - RONDA ${currentRound}
                     </h2>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; height: 100%;">
-                        ${currentRoundMatches.map(m => {
-                const isFinished = m.status === 'finished';
-                const sA = parseInt(m.score_a || 0);
-                const sB = parseInt(m.score_b || 0);
-
-                // Names Parsing
-                const getCleanNames = (ids, namesRaw) => {
-                    if (!ids) return "JUGADOR";
-                    let namesArr = Array.isArray(namesRaw) ? namesRaw : (namesRaw || '').split(' / ');
-                    return ids.map((_, i) => this.formatName(namesArr[i] || `Jugador ${i + 1}`)).join(' / ');
-                };
-
-                const nA = getCleanNames(m.team_a_ids, m.team_a_names);
-                const nB = getCleanNames(m.team_b_ids, m.team_b_names);
-
-                return `
-                                <div style="background: #111; border: 2px solid ${isFinished ? '#333' : '#CCFF00'}; border-radius: 20px; padding: 0; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
-                                    <div style="background: ${isFinished ? '#333' : '#CCFF00'}; color: ${isFinished ? '#888' : 'black'}; padding: 10px 20px; font-weight: 900; font-size: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-                                        <span>PISTA ${m.court}</span>
-                                        ${isFinished ? '<span>✅ FINALIZADO</span>' : '<span style="animation: pulse 1s infinite alternate;">🔴 EN JUEGO</span>'}
-                                    </div>
-                                    <div style="flex: 1; display: flex; align-items: center; padding: 20px;">
-                                        <div style="flex: 1; text-align: center;">
-                                            <div style="font-size: 1.5rem; font-weight: 800; color: white; line-height: 1.2;">${nA}</div>
-                                        </div>
-                                        <div style="width: 140px; text-align: center; font-family: 'Monospace', monospace;">
-                                            ${isFinished ? `
-                                                <div style="font-size: 3.5rem; font-weight: 900; color: #CCFF00;">${sA}-${sB}</div>
-                                            ` : `<div style="font-size: 2rem; color: #666; font-weight: 900;">VS</div>`}
-                                        </div>
-                                        <div style="flex: 1; text-align: center;">
-                                            <div style="font-size: 1.5rem; font-weight: 800; color: white; line-height: 1.2;">${nB}</div>
-                                        </div>
-                                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:20px;">
+                        ${roundMatches.map(m => `
+                            <div style="background:rgba(255,255,255,0.05); padding:25px; border-radius:20px; border-left:10px solid #CCFF00; display:flex; align-items:center; justify-content:space-between;">
+                                <div style="font-size:2rem; font-weight:900; color:#666; width:60px;">P${m.court}</div>
+                                <div style="flex:1; text-align:right; font-size:1.8rem; font-weight:700; color:white;">${(m.team_a_names || []).join(' / ')}</div>
+                                <div style="background:#000; padding:10px 20px; border-radius:10px; margin:0 25px; font-size:2.5rem; font-weight:900; color:#CCFF00; min-width:120px; text-align:center;">
+                                    ${m.score_a || 0} - ${m.score_b || 0}
                                 </div>
-                            `;
-            }).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        getNextRoundHTML() {
-            // New "On Deck" View
-            const roundNum = this.nextRoundMatches[0].round;
-            return `
-                 <div style="height: 100%; display: flex; flex-direction: column;">
-                    <h2 style="font-size: 2rem; color: white; margin: 0 0 30px 0; display: flex; align-items: center; gap: 15px;">
-                        <span style="background: #0ea5e9; color: white; padding: 5px 15px; border-radius: 8px; box-shadow: 0 0 15px #0ea5e9;">PRÓXIMA RONDA ${roundNum}</span>
-                        PREPARADOS PARA ENTRAR
-                    </h2>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; height: 100%;">
-                        ${this.nextRoundMatches.map(m => {
-                const getCleanNames = (ids, namesRaw) => {
-                    if (!ids) return "JUGADOR";
-                    let namesArr = Array.isArray(namesRaw) ? namesRaw : (namesRaw || '').split(' / ');
-                    return ids.map((_, i) => this.formatName(namesArr[i] || `Jugador ${i + 1}`)).join(' / ');
-                };
-                const nA = getCleanNames(m.team_a_ids, m.team_a_names);
-                const nB = getCleanNames(m.team_b_ids, m.team_b_names);
-
-                return `
-                                <div style="background: #051626; border: 2px solid #0ea5e9; border-radius: 20px; padding: 0; display: flex; flex-direction: column; overflow: hidden; opacity: 0.9;">
-                                    <div style="background: #0ea5e9; color: white; padding: 10px 20px; font-weight: 900; font-size: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-                                        <span>PISTA ${m.court}</span>
-                                        <span>⏳ SIGUIENTE</span>
-                                    </div>
-                                    <div style="flex: 1; display: flex; align-items: center; padding: 20px;">
-                                        <div style="flex: 1; text-align: center;">
-                                            <div style="font-size: 1.5rem; font-weight: 800; color: white;">${nA}</div>
-                                        </div>
-                                        <div style="width: 80px; text-align: center; font-size: 1.5rem; color: #444;">VS</div>
-                                        <div style="flex: 1; text-align: center;">
-                                            <div style="font-size: 1.5rem; font-weight: 800; color: white;">${nB}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-            }).join('')}
+                                <div style="flex:1; text-align:left; font-size:1.8rem; font-weight:700; color:white;">${(m.team_b_names || []).join(' / ')}</div>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
             `;
         }
 
         getStandingsHTML() {
-            // Updated columns for POZO (Wins & Court 1)
-            const top = this.standings.slice(0, 10);
+            const top10 = this.standings.slice(0, 10);
             return `
-                <div style="height: 100%; display: flex; flex-direction: column;">
-                    <h2 style="font-size: 2rem; color: white; margin: 0 0 30px 0; display: flex; align-items: center; gap: 15px;">
-                        <i class="fas fa-trophy" style="color: #CCFF00;"></i> CLASIFICACIÓN ${this.type === 'entreno' ? 'POZO' : ''}
-                    </h2>
-                    
-                    <div style="background: #111; border-radius: 20px; border: 1px solid #333; overflow: hidden; flex: 1;">
-                        <table style="width: 100%; border-collapse: collapse; color: white;">
-                            <thead>
-                                <tr style="background: #222; text-transform: uppercase;">
-                                    <th style="padding: 15px 30px; text-align: left; font-size: 1.2rem;">#</th>
-                                    <th style="padding: 15px 30px; text-align: left; font-size: 1.2rem;">JUGADOR</th>
-                                    <th style="padding: 15px; text-align: center; font-size: 1.2rem; color: #CCFF00;">VICTORIAS</th>
-                                    ${this.type === 'entreno' ? '<th style="padding: 15px; text-align: center; font-size: 1.2rem;">PISTA 1</th>' : ''}
-                                    <th style="padding: 15px; text-align: center; font-size: 1.2rem;">DIF</th>
+                <div class="fade-in">
+                    <h2 style="color:#CCFF00; font-size:3rem; font-weight:900; text-align:center; margin-bottom:30px;">TOP 10 CLASIFICACIÓN</h2>
+                    <div style="background:rgba(255,255,255,0.03); border-radius:30px; overflow:hidden;">
+                        <table style="width:100%; border-collapse:collapse; font-size:1.8rem;">
+                            <tr style="background:#111; color:#666;">
+                                <th style="padding:20px; text-align:center;">#</th>
+                                <th style="padding:20px; text-align:left;">JUGADOR</th>
+                                <th style="padding:20px; text-align:center;">PJ</th>
+                                <th style="padding:20px; text-align:center;">V</th>
+                                <th style="padding:20px; text-align:center;">PTS</th>
+                            </tr>
+                            ${top10.map((p, i) => `
+                                <tr style="border-bottom:1px solid #222; background:${i < 3 ? 'rgba(204,255,0,0.05)' : 'transparent'};">
+                                    <td style="padding:20px; text-align:center; font-weight:900; color:${i === 0 ? '#CCFF00' : 'white'};">${i + 1}</td>
+                                    <td style="padding:20px; font-weight:900; color:white;">${p.name.toUpperCase()}</td>
+                                    <td style="padding:20px; text-align:center; color:#888;">${p.played}</td>
+                                    <td style="padding:20px; text-align:center; color:#888;">${p.won}</td>
+                                    <td style="padding:20px; text-align:center; font-weight:900; color:#CCFF00;">${p.points}</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                ${top.map((p, idx) => `
-                                    <tr style="border-bottom: 1px solid #333; font-size: 1.4rem; font-weight: 700; background: ${idx < 4 ? 'rgba(204,255,0,0.03)' : 'transparent'};">
-                                        <td style="padding: 15px 30px; color: ${idx === 0 ? '#CCFF00' : '#666'}; font-weight:900; font-size: 1.6rem;">${idx + 1}</td>
-                                        <td style="padding: 15px 30px;">
-                                            <div style="display:flex; align-items:center; gap:15px;">
-                                                ${idx === 0 ? '👑' : ''} ${p.name}
-                                            </div>
-                                        </td>
-                                        <td style="padding: 15px; text-align: center; font-weight: 900; color: #CCFF00; font-size: 1.6rem;">${p.won}</td>
-                                        ${this.type === 'entreno' ? `<td style="padding: 15px; text-align: center; color: #ddd;">${p.court1Count}</td>` : ''}
-                                        <td style="padding: 15px; text-align: center; color: #888;">${p.diff > 0 ? '+' + p.diff : p.diff}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
+                            `).join('')}
                         </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        getNextRoundHTML() {
+            return `
+                <div class="fade-in" style="text-align:center;">
+                    <h2 style="color:#CCFF00; font-size:3rem; font-weight:900; margin-bottom:10px;">PRÓXIMOS PARTIDOS</h2>
+                    <p style="color:#666; font-size:1.5rem; margin-bottom:40px;">Ronda de emparejamientos preparada</p>
+                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:20px;">
+                        ${this.nextRoundMatches.map(m => `
+                            <div style="background:rgba(255,255,255,0.05); padding:25px; border-radius:20px; border-left:10px solid #222; display:flex; align-items:center; justify-content:space-between;">
+                                <div style="font-size:2rem; font-weight:900; color:#444; width:60px;">P${m.court}</div>
+                                <div style="flex:1; text-align:right; font-size:1.8rem; font-weight:700; color:white;">${(m.team_a_names || []).join(' / ')}</div>
+                                <div style="margin:0 30px; font-size:2rem; font-weight:900; color:#666;">VS</div>
+                                <div style="flex:1; text-align:left; font-size:1.8rem; font-weight:700; color:white;">${(m.team_b_names || []).join(' / ')}</div>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
             `;
         }
     }
 
-    // Export
-    window.TVViewClass = TVView;
-    window.TVView = new TVView(); // Singleton
-    console.log("📺 TV View Script Loaded");
-
+    // Singleton instance
+    window.TVView = new TVView();
+    console.log("📺 TV View (Optimized) v2 Initialized");
 })();

@@ -161,7 +161,22 @@ function renderEntrenoCard(e) {
             <div style="display: flex; gap: 1.5rem; align-items: center; flex: 1;">
                 <div class="entreno-preview-img" style="width: 90px; height: 90px; border-radius: 16px; background: url('${e.image_url || 'img/logo_somospadel.png'}') center/cover; border: 2px solid rgba(204,255,0,0.2);"></div>
                 <div class="entreno-info-pro" style="flex: 1;">
-                    <div style="font-weight: 900; font-size: 1.5rem; color: #FFFFFF; margin-bottom: 0.5rem;">${e.name.toUpperCase()}</div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem;">
+                        <div style="font-weight: 900; font-size: 1.5rem; color: #FFFFFF;">${e.name.toUpperCase()}</div>
+                        <div style="
+                            background: ${e.pair_mode === 'rotating' ? 'rgba(34, 211, 238, 0.15)' : 'rgba(168, 85, 247, 0.15)'}; 
+                            color: ${e.pair_mode === 'rotating' ? '#22d3ee' : '#a855f7'}; 
+                            border: 1px solid ${e.pair_mode === 'rotating' ? '#22d3ee' : '#a855f7'}; 
+                            padding: 2px 8px; 
+                            border-radius: 6px; 
+                            font-size: 0.65rem; 
+                            font-weight: 900; 
+                            letter-spacing: 1px;
+                            text-transform: uppercase;
+                        ">
+                            ${e.pair_mode === 'rotating' ? '🌪️ TWISTER' : '🔒 PAREJA FIJA'}
+                        </div>
+                    </div>
                     <div style="display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; margin-top: 5px;">
                          <span>📅 <span style="color:white">${e.date}</span></span>
                          <span>🕒 <span style="color:white">${e.time || '10:00'}</span></span>
@@ -247,7 +262,7 @@ function renderCreateForm() {
                 </select>
             </div>
             <div class="form-group"><label>MODO</label>
-                 <select name="pair_mode" class="pro-input"><option value="fixed">🔒 PAREJA FIJA (Pozo)</option><option value="rotating">🔄 TWISTER (Rotativo)</option></select>
+                 <select name="pair_mode" class="pro-input"><option value="fixed">🔒 PAREJA FIJA</option><option value="rotating">🌪️ TWISTER</option></select>
             </div>
             <div class="form-group"><label>IMAGEN</label><select name="image_url" class="pro-input"></select></div> <!-- Populated via JS -->
             

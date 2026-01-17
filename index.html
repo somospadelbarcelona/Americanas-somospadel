@@ -43,6 +43,43 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes loginBallLife {
+            0% {
+                transform: translateY(0) scale(1) rotate(0deg);
+                filter: drop-shadow(0 0 15px rgba(204, 255, 0, 0.4));
+            }
+
+            15% {
+                transform: translateY(-40px) scale(0.9, 1.1) rotate(15deg);
+                filter: drop-shadow(0 0 35px rgba(204, 255, 0, 0.8));
+            }
+
+            30% {
+                transform: translateY(0) scale(1.2, 0.8) rotate(0deg);
+                filter: drop-shadow(0 0 15px rgba(204, 255, 0, 0.6));
+            }
+
+            45% {
+                transform: translateY(-20px) scale(0.95, 1.05) rotate(-10deg);
+                filter: drop-shadow(0 0 25px rgba(204, 255, 0, 0.7));
+            }
+
+            60% {
+                transform: translateY(0) scale(1.1, 0.9) rotate(0deg);
+                filter: drop-shadow(0 0 15px rgba(204, 255, 0, 0.5));
+            }
+
+            100% {
+                transform: translateY(0) scale(1) rotate(360deg);
+                filter: drop-shadow(0 0 15px rgba(204, 255, 0, 0.4));
+            }
+        }
+
+        .login-ball-animate {
+            animation: loginBallLife 3s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+        }
+    </style>
 </head>
 
 <body>
@@ -179,9 +216,8 @@
     <div id="auth-modal" class="modal-overlay auth-overlay-enterprise hidden">
         <div class="modal-content admin-login-card">
             <div style="text-align: center; margin-bottom: 2.5rem;">
-                <img src="img/logo_somospadel.png"
-                    style="height: 100px; margin-bottom: 1.5rem; filter: drop-shadow(0 0 15px var(--glow-neon));"
-                    alt="Somos Padel">
+                <img src="img/logo_somospadel.png" class="login-ball-animate"
+                    style="height: 100px; margin-bottom: 1.5rem;" alt="Somos Padel">
                 <h2
                     style="color: white !important; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0,0,0,0.5);">
                     ACCESO JUGADORES</h2>
@@ -192,39 +228,52 @@
 
             <!-- Login Form -->
             <form id="login-form" class="pro-form">
-                <div class="form-group">
+                <div class="form-group" style="margin-bottom: 2rem;">
                     <label
-                        style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.5rem; font-size:0.8rem;">TELÉFONO
+                        style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.8rem; font-size:0.8rem; font-weight:700;">TELÉFONO
                         DE ACCESO</label>
-                    <input type="text" name="phone" placeholder="Usuario o Teléfono" class="pro-input" required>
+                    <input type="text" name="phone" placeholder="Usuario o Teléfono" class="pro-input" required
+                        autocomplete="username"
+                        style="width:100%; height:55px; box-sizing: border-box; padding: 0 15px;">
                 </div>
-                <div class="form-group">
+
+                <div class="form-group" style="margin-bottom: 1rem;">
                     <label
-                        style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.5rem; font-size:0.8rem;">CLAVE
+                        style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.8rem; font-size:0.8rem; font-weight:700;">CLAVE
                         DE SEGURIDAD</label>
                     <div style="position: relative; width: 100%;">
                         <input type="password" name="password" id="login-password-input" placeholder="••••••"
                             class="pro-input" required autocomplete="current-password"
-                            style="width: 100%; box-sizing: border-box; padding-right: 40px;">
+                            style="width: 100%; height:55px; box-sizing: border-box; padding: 0 45px 0 15px;">
                         <i class="fas fa-eye"
                             onclick="const i = document.getElementById('login-password-input'); i.type = i.type === 'password' ? 'text' : 'password'; this.classList.toggle('fa-eye'); this.classList.toggle('fa-eye-slash');"
-                            style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #333; cursor: pointer; z-index: 10; font-size: 1.1rem;"></i>
+                            style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #333; cursor: pointer; z-index: 10; font-size: 1.2rem;"></i>
                     </div>
                 </div>
 
-                <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
-                    <input type="checkbox" id="remember-me" name="remember"
-                        style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--brand-neon);">
-                    <label for="remember-me"
-                        style="color: rgba(255,255,255,0.7); font-size: 0.85rem; cursor: pointer; margin: 0;">
-                        Mantener sesión abierta
-                    </label>
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 2rem; padding-left: 5px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="remember-me" name="remember"
+                            style="width: 20px; height: 20px; cursor: pointer; accent-color: #CCFF00;">
+                        <label for="remember-me"
+                            style="color: rgba(255,255,255,0.8); font-size: 0.9rem; cursor: pointer;">Mantener sesión
+                            abierta</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="show-password-opt"
+                            onchange="const i = document.getElementById('login-password-input'); i.type = this.checked ? 'text' : 'password';"
+                            style="width: 20px; height: 20px; cursor: pointer; accent-color: #CCFF00;">
+                        <label for="show-password-opt"
+                            style="color: rgba(255,255,255,0.8); font-size: 0.9rem; cursor: pointer;">Mostrar
+                            contraseña</label>
+                    </div>
                 </div>
 
-                <button type="submit" class="btn-primary-pro">ENTRAR A LA APP 🚀</button>
+                <button type="submit" class="btn-primary-pro"
+                    style="height:60px; font-size:1.1rem; letter-spacing:1px;">ENTRAR A LA APP 🚀</button>
 
-                <p class="auth-switch-text" style="color: rgba(255,255,255,0.5);">¿Eres nuevo? <a href="#"
-                        class="auth-switch-link" style="color: var(--brand-neon);"
+                <p class="auth-switch-text" style="color: rgba(255,255,255,0.5); margin-top:20px;">¿Eres nuevo? <a
+                        href="#" class="auth-switch-link" style="color: var(--brand-neon); font-weight:800;"
                         onclick="toggleAuthMode('register')">Crear cuenta pro</a></p>
             </form>
 
@@ -360,6 +409,7 @@
     <script src="js/core/SmartTicker.js"></script>
 
     <!-- Layer 3: Logic Business -->
+    <script src="js/modules/common/StandingsService.js"></script>
     <script src="js/modules/common/EventService.js"></script>
     <script src="js/modules/common/ParticipantService.js"></script>
     <script src="js/modules/logic/MatchMakingService.js?v=5011"></script>
@@ -372,6 +422,7 @@
 
     <!-- Layer 4: Views & controllers -->
     <!-- Dashboard Components (NEW) -->
+    <script src="js/modules/common/WeatherService.js"></script>
     <script src="js/modules/dashboard/HeroCard.js"></script>
     <script src="js/modules/dashboard/QuickStats.js"></script>
     <script src="js/modules/dashboard/ActionGrid.js"></script>
@@ -379,10 +430,14 @@
     <script src="js/modules/dashboard/DashboardController.js"></script>
     <script src="js/modules/players/PlayerView.js?v=301"></script>
     <script src="js/modules/players/PlayerController.js"></script>
+    <script src="js/modules/americanas/ControlTowerStandings.js"></script>
+    <script src="js/modules/americanas/ControlTowerStats.js"></script>
+    <script src="js/modules/americanas/ControlTowerReport.js"></script>
     <script src="js/modules/americanas/ControlTowerView.js?v=4038"></script>
     <script src="js/modules/americanas/TVView.js?v=2.0"></script>
     <script src="js/modules/chat/ChatService.js?v=1.0"></script>
     <script src="js/modules/chat/ChatView.js?v=1.0"></script>
+    <script src="js/modules/americanas/EntrenoLiveView.js"></script>
     <script src="js/modules/americanas/EventsController_V6.js?v=9.1"></script>
 
     <!-- UI Components -->

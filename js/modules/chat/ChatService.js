@@ -56,6 +56,19 @@
         }
 
         /**
+         * Delete a message (Admin only)
+         */
+        async deleteMessage(eventId, messageId) {
+            try {
+                await window.db.collection('chats').doc(eventId).collection('messages').doc(messageId).delete();
+                return { success: true };
+            } catch (e) {
+                console.error("❌ Delete Failed:", e);
+                return { success: false, error: e.message };
+            }
+        }
+
+        /**
          * Toggle SOS Status (Need Partner)
          * This updates the main chat document, not a message
          */

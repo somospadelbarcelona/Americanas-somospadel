@@ -231,17 +231,51 @@
                 // 2. Fetch Real Data for new Widgets (SILENT CALCULATION)
                 if (window.RankingController) window.RankingController.calculateSilently().catch(e => console.error("Ranking calc failed", e));
 
+                // 2.1 Fetch Real Weather
+                let weatherData = [];
+                try {
+                    if (window.WeatherService) {
+                        weatherData = await window.WeatherService.getDashboardWeather();
+                    }
+                } catch (e) { console.error("Weather fetch failed", e); }
+
                 // 3. Populate Rest of Dashboard
                 const proRoot = document.getElementById('pro-content-root');
                 if (proRoot) {
+                    // Prepare Weather HTML (Empty skeletons until data arrives)
+                    let weatherHtml = `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px;">
+                            ${this.renderWeatherCard('EL PRAT', '--', '...', { wind: '--', hum: '--', rain: '--' })}
+                            ${this.renderWeatherCard('CORNELLÀ', '--', '...', { wind: '--', hum: '--', rain: '--' })}
+                        </div>`;
+
+                    if (weatherData && weatherData.length > 0) {
+                        weatherHtml = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px;">`;
+                        weatherData.forEach(w => {
+                            weatherHtml += this.renderWeatherCard(
+                                w.name,
+                                `${w.temp}°C`,
+                                w.icon,
+                                {
+                                    wind: `${w.wind} km/h`,
+                                    hum: `${w.humidity}%`,
+                                    rain: `${w.rainProb}%`,
+                                    uv: w.uv,
+                                    pressure: w.pressure,
+                                    visibility: w.visibility,
+                                    intel: w.intelligence
+                                },
+                                w.isPropitious
+                            );
+                        });
+                        weatherHtml += `</div>`;
+                    }
+
                     proRoot.innerHTML = `
                         <div style="padding: 10px 15px 120px;">
                             
-                             <!-- A. DUAL WEATHER WIDGETS -->
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px;">
-                                ${this.renderWeatherCard('EL PRAT', '19°C', '☀️', { wind: '12 km/h', hum: '65%', rain: '0%' })}
-                                ${this.renderWeatherCard('CORNELLÀ', '18°C', '🌤️', { wind: '10 km/h', hum: '68%', rain: '5%' })}
-                            </div>
+                             <!-- A. DUAL WEATHER WIDGETS (PADEL INTELLIGENCE) -->
+                             ${weatherHtml}
 
                             <!-- B. MI AGENDA (PLAYER'S EVENTS) -->
                             <div class="section-header" style="padding: 0 5px; margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
@@ -263,42 +297,68 @@
             }
         }
 
-        renderWeatherCard(city, temp, icon, details = {}) {
+        renderWeatherCard(city, temp, icon, details = {}, isPropitious = true) {
+            const intel = details.intel || { score: 100, ballSpeed: '--', recommendation: 'Sincronizando meteorología...', gripStatus: '--' };
+            const statusLabel = isPropitious ? 'ÓPTIMO' : 'ADVERSO';
+            const statusColor = isPropitious ? '#00E36D' : '#FF2D55';
+            const statusBg = isPropitious ? 'rgba(0,227,109,0.1)' : 'rgba(255,45,85,0.1)';
+
             return `
                 <div style="
-                    background: rgba(10, 10, 20, 0.9);
+                    background: rgba(10, 10, 20, 0.95);
                     backdrop-filter: blur(20px);
-                    border: 1px solid rgba(255,255,255,0.05);
-                    border-radius: 24px;
-                    padding: 16px;
+                    border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 28px;
+                    padding: 18px;
                     display: flex;
                     flex-direction: column;
-                    gap: 12px;
-                    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+                    gap: 15px;
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.6);
                     position: relative;
                     overflow: hidden;
+                    transition: transform 0.3s;
                 ">
                     <!-- Glow effect -->
-                    <div style="position: absolute; top: -10%; right: -10%; width: 50%; height: 50%; background: radial-gradient(circle, rgba(0, 227, 109, 0.1) 0%, transparent 70%);"></div>
+                    <div style="position: absolute; top: -10%; right: -10%; width: 60%; height: 60%; background: radial-gradient(circle, ${statusColor}15 0%, transparent 70%);"></div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div style="font-size: 2.2rem; filter: drop-shadow(0 0 15px rgba(255,204,0,0.4));">${icon}</div>
-                        <div style="background: rgba(0,227,109,0.1); color: #00E36D; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; border: 1px solid rgba(0,227,109,0.1); letter-spacing: 0.5px;">ÓPTIMO</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 2.2rem; filter: drop-shadow(0 0 15px rgba(255,204,0,0.5));">${icon}</div>
+                        <div style="text-align: right;">
+                             <div style="background: ${statusBg}; color: ${statusColor}; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; border: 1px solid ${statusColor}20; letter-spacing: 0.5px; margin-bottom: 4px;">${statusLabel}</div>
+                             <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); font-weight: 800;">SCORE: ${intel.score}%</div>
+                        </div>
                     </div>
                     
                     <div>
-                        <div style="color: white; font-weight: 950; font-size: 1.6rem; line-height: 1;">${temp}</div>
-                        <div style="color: rgba(255,255,255,0.5); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">${city}</div>
+                        <div style="color: white; font-weight: 950; font-size: 1.8rem; line-height: 1; letter-spacing: -0.5px;">${temp}</div>
+                        <div style="color: rgba(255,255,255,0.5); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px;">${city}</div>
+                    </div>
+
+                    <!-- AI INSIGHTS AREA -->
+                    <div style="background: rgba(255,255,255,0.03); border-radius: 16px; padding: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.55rem; color: #888; font-weight: 800; text-transform: uppercase;">⚡ Velocidad Bola</span>
+                            <span style="font-size: 0.6rem; color: #CCFF00; font-weight: 950;">${intel.ballSpeed}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.55rem; color: #888; font-weight: 800; text-transform: uppercase;">👟 Agarre Pista</span>
+                            <span style="font-size: 0.6rem; color: #00c4ff; font-weight: 950;">${intel.gripStatus}</span>
+                        </div>
+                    </div>
+
+                    <!-- AI RECOMMENDATION -->
+                    <div style="font-size: 0.65rem; color: white; opacity: 0.8; font-weight: 700; font-style: italic; line-height: 1.3;">
+                         " ${intel.recommendation} "
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05);">
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <i class="fas fa-wind" style="font-size: 0.6rem; color: #00c4ff;"></i>
-                            <span style="font-size: 0.65rem; color: #888; font-weight: 700;">${details.wind || '8km/h'}</span>
+                            <span style="font-size: 0.65rem; color: #888; font-weight: 700;">${details.wind || '--'}</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 6px;">
-                            <i class="fas fa-tint" style="font-size: 0.6rem; color: #00c4ff;"></i>
-                            <span style="font-size: 0.65rem; color: #888; font-weight: 700;">${details.hum || '60%'}</span>
+                            <i class="fas fa-cloud-rain" style="font-size: 0.6rem; color: #00c4ff;"></i>
+                            <span style="font-size: 0.65rem; color: #888; font-weight: 700;">${details.rain || '0%'}</span>
                         </div>
                     </div>
                 </div>

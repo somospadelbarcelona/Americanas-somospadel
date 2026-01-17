@@ -480,7 +480,7 @@ async function seedInitialUsers() {
             name: "Alejandro Coscolín",
             phone: "649219350",
             data: {
-                password: "JARABA",
+                password: "5560e325f24fa78679bd0d8257060381fca964ed2ce6ab0d3c9664165295f6b0", // Hashed password (NOA21)
                 role: "admin_player",
                 membership: "somospadel_bcn",
                 status: "active",
@@ -508,10 +508,19 @@ async function seedInitialUsers() {
                 });
                 console.log(`✅ User created: ${user.name} / ${user.phone}`);
             } else {
-                // Keep name fixed to Alejandro Coscolín if it's the master phone
-                if (user.phone === "649219350" && existingUser.name !== "Alejandro Coscolín") {
-                    console.log(`🔧 Enforcing Master name to Alejandro Coscolín...`);
-                    await FirebaseDB.players.update(existingUser.id, { name: "Alejandro Coscolín", role: "admin_player" });
+                // Keep name fixed to Alejandro Coscolín and update password if it's the master phone
+                if (user.phone === "649219350") {
+                    const adminHash = "5560e325f24fa78679bd0d8257060381fca964ed2ce6ab0d3c9664165295f6b0";
+                    const currentPass = existingUser.password;
+
+                    if (existingUser.name !== "Alejandro Coscolín" || (currentPass !== "NOA21" && currentPass !== adminHash)) {
+                        console.log(`🔧 Enforcing Master credentials and hashed password...`);
+                        await FirebaseDB.players.update(existingUser.id, {
+                            name: "Alejandro Coscolín",
+                            role: "admin_player",
+                            password: adminHash
+                        });
+                    }
                 }
             }
         } catch (error) {

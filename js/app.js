@@ -110,6 +110,9 @@
             };
 
             try {
+                const currentUser = window.Store.getState('currentUser');
+                const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'admin_player');
+
                 // A. Render Side Menu (Hamburger) - STATIC
                 if (menuContainer) {
                     // NEW MENU STRUCTURE
@@ -157,12 +160,14 @@
                         </div>
 
                         <!-- 3. SYSTEMS -->
+                        ${isAdmin ? `
                         <div style="padding: 0 10px;">
                             <div class="drawer-item" onclick="window.location.href='admin.html'" style="opacity: 0.8;">
                                 <i class="fas fa-user-shield" style="color: #ccc;"></i>
                                 <span>PANEL ADMIN</span>
                             </div>
                         </div>
+                        ` : ''}
                     `;
                 }
 

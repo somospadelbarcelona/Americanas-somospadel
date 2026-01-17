@@ -14,10 +14,10 @@ La aplicación "Americanas SomosPadel" es una **PWA (Progressive Web App)** para
 
 | Categoría | Puntuación | Estado |
 |-----------|------------|--------|
-| Arquitectura | 7/10 | ⚠️ Mejorable |
+| Arquitectura | 5/10 | 🔴 Crítico |
 | Seguridad | 5/10 | 🔴 Crítico |
-| Rendimiento | 7/10 | ⚠️ Mejorable |
-| Mantenibilidad | 6/10 | ⚠️ Mejorable |
+| Rendimiento | 6/10 | ⚠️ Mejorable |
+| Mantenibilidad | 4/10 | 🔴 Crítico |
 | UX/UI | 8/10 | ✅ Bueno |
 | Funcionalidad | 9/10 | ✅ Excelente |
 
@@ -79,14 +79,36 @@ Existe un backend Python/FastAPI (`api/`) que parece no estar en uso activo. La 
 
 **Recomendación:** Eliminar el backend Python si no se usa, o documentar su propósito.
 
-#### 3. Archivos Versionados en Nombre
+#### 3. Archivos Versionados en Nombre (Technical Debt)
 **Severidad: Baja**
 
 ```
-EventsController_V6.js  # ¿Por qué V6?
+EventsController_V6.js  # Contiene logs que dicen V5
+ControlTowerView.js     # Contiene logs que dicen v4005
 ```
 
-**Recomendación:** Usar Git para versionado, no nombres de archivo.
+**Riesgo:** Confusión absoluta sobre qué versión se está ejecutando. Los comentarios internos no coinciden con los nombres de los archivos.
+
+**Recomendación:** Usar un sistema de building (Vite) para el versionado automático y eliminar los sufijos manuales.
+
+#### 4. "God Objects" (Objetos Todopoderosos)
+**Severidad: ALTA**
+
+Se han detectado archivos que rompen el principio de responsabilidad única (SRP):
+- `EventsController_V6.js` (2,592 líneas): Gestiona la lista de eventos, inscripciones, filtros Y contiene una clase entera embebida (`EntrenoLiveView`).
+- `ControlTowerView.js` (1,992 líneas): Gestiona la vista en vivo, cálculos de clasificación, historiales y ayuda.
+
+**Riesgo:** Casi imposible de testear y muy propenso a errores al modificar cualquier funcionalidad pequeña.
+
+#### 5. Lógica de Negocio Duplicada
+**Severidad: MEDIA**
+
+La lógica para calcular clasificaciones (`calculateStandings`) y renderizar tarjetas de partidos está triplicada en:
+1. `EventsController_V6.js` (dentro de `EntrenoLiveView`)
+2. `ControlTowerView.js`
+3. `MatchMakingService.js` (parcialmente)
+
+**Recomendación:** Centralizar el motor de cálculo en un `StandingsService.js` independiente.
 
 ---
 
@@ -215,35 +237,32 @@ La API no tiene protección contra ataques de fuerza bruta en login.
 
 ### ⚠️ Problemas Detectados
 
-#### 1. Listeners No Limpiados
-**Severidad: Media**
+#### 1. Fugas de Memoria (Listeners No Limpiados)
+**Severidad: Media-Alta**
 
+En `EventsController_V6.js`:
+- `startBackgroundService` abre listeners globales que nunca se cierran.
+- `setTab('results')` abre 4 listeners simultáneos cada vez que se entra en la pestaña de resultados. Aunque intenta limpiar los anteriores, si el usuario navega fuera del controlador o cierra el componente, los listeners podrían quedar huérfanos.
+
+**Solución:** Implementar un método `destroy()` o `cleanup()` que el Router llame al cambiar de vista.
+
+#### 2. Redundancia en Automatización
+El método `checkAutoStartEvents` se ejecuta de dos formas redundantes:
+1. Cada 30 segundos vía `setInterval`.
+2. Cada vez que Firebase detecta un cambio (`onSnapshot`).
+
+**Riesgo:** Ejecuciones innecesarias que pueden causar parpadeos en la UI o race conditions en escrituras a la base de datos si dos clientes intentan "auto-iniciar" el mismo evento a la vez.
+
+#### 3. Múltiples Queries Redundantes
+Se abren 4 listeners separados para obtener partidos de un jugador por ID:
 ```javascript
-// EventsController_V6.js:90-98
-this.unsubscribeEvents = window.db.collection('americanas')
-    .onSnapshot(snap => { ... });
-```
-
-Los listeners de Firestore se crean pero no siempre se limpian al cambiar de vista.
-
-**Solución:**
-```javascript
-// En el destructor o cambio de vista
-if (this.unsubscribeEvents) this.unsubscribeEvents();
-```
-
-#### 2. Múltiples Queries Redundantes
-```javascript
-// EventsController_V6.js:386-400
 this.unsubscribeMatchesA = window.db.collection('matches').where('team_a_ids', 'array-contains', uid)...
 this.unsubscribeMatchesB = window.db.collection('matches').where('team_b_ids', 'array-contains', uid)...
-this.unsubscribeEntrenosA = window.db.collection('entrenos_matches').where('team_a_ids', 'array-contains', uid)...
-this.unsubscribeEntrenosB = window.db.collection('entrenos_matches').where('team_b_ids', 'array-contains', uid)...
+// ... y lo mismo para entrenos_matches
 ```
+Esto genera 4 conexiones activas para una sola vista de resultados.
 
-4 listeners separados para obtener partidos de un jugador.
-
-**Solución:** Usar una Cloud Function o índice compuesto.
+**Solución:** Reestructurar los datos para que un solo query traiga los partidos relevantes (ej. un array único de participantes en el documento del partido).
 
 #### 3. Broadcast Excesivo en Timer
 ```javascript
@@ -266,6 +285,15 @@ this.timerInterval = setInterval(() => {
 ```
 
 **Solución:** Usar un bundler (Vite, Webpack) con hash automático.
+
+#### 5. Optimización de TV View
+**Severidad: Baja-Media**
+
+- **Tecnología Obsoleta:** Usa la etiqueta `<marquee>` para el ticker inferior. Esta etiqueta está obsoleta y puede causar saltos visuales (stuttering) en procesadores de Smart TV limitados.
+- **Duplicación de Lógica:** Vuelve a implementar todo el motor de `calculateStandings` internamente en lugar de usar un servicio compartido.
+- **Sin Cleanup de Ciclos:** El `setInterval` del reloj y el ciclo de slides (`startCycle`) no se detienen al salir de la vista, lo que consume recursos en segundo plano si el usuario vuelve al dashboard.
+
+**Recomendación:** Migrar el ticker a animaciones CSS `transform: translateX` y centralizar la lógica de puntos.
 
 ---
 

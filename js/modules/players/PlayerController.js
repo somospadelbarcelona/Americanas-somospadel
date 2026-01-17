@@ -51,9 +51,34 @@
             await this.fetchPlayerData(userId);
         }
 
+        _parseDate(date) {
+            if (!date || date === '---') return null;
+
+            // Handle Firestore Timestamps
+            if (date.toDate && typeof date.toDate === 'function') {
+                return date.toDate();
+            }
+
+            // Handle ISO strings or other date strings
+            if (typeof date === 'string') {
+                try {
+                    if (date.includes('/')) {
+                        const [d, m, y] = date.split('/');
+                        return new Date(`${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}T00:00:00`);
+                    }
+                    const d = new Date(date);
+                    return isNaN(d.getTime()) ? null : d;
+                } catch (e) { return null; }
+            }
+
+            // Handle number (timestamps) or already Date objects
+            const d = new Date(date);
+            return isNaN(d.getTime()) ? null : d;
+        }
+
         async fetchPlayerData(userId) {
             try {
-                // 1. Fetch player data and ALL personal matches (unifies matches & entrenos_matches)
+                // 1. Fetch player data and ALL personal matches
                 const [userDoc, personalMatches] = await Promise.all([
                     this.db.players.getById(userId),
                     this.db.matches.getByPlayer(userId)
@@ -94,9 +119,12 @@
                         else { stats.lost++; }
 
                         // Format match for history
+                        const matchDate = this._parseDate(m.date || m.createdAt || m.created_at);
+                        const dateStr = matchDate ? matchDate.toISOString() : '---';
+
                         matchesList.push({
                             id: m.id,
-                            date: m.date || '---',
+                            date: dateStr,
                             eventName: m.americana_name || m.event_name || (m.collection === 'entrenos_matches' ? 'Entreno' : 'Americana'),
                             score: `${sA} - ${sB}`,
                             result: iWon ? 'W' : (isTie ? 'D' : 'L'),
@@ -106,7 +134,11 @@
                 });
 
                 // Sort matches by date descending
-                matchesList.sort((a, b) => new Date(b.date) - new Date(a.date));
+                matchesList.sort((a, b) => {
+                    const dateA = this._parseDate(a.date) || new Date(0);
+                    const dateB = this._parseDate(b.date) || new Date(0);
+                    return dateB - dateA;
+                });
                 stats.winRate = stats.matches > 0 ? Math.round((stats.won / stats.matches) * 100) : 0;
 
                 this.state = {

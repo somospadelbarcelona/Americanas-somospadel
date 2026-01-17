@@ -116,6 +116,7 @@
                     uid: user.uid,
                     name: user.name || user.displayName || user.email || 'Jugador',
                     level: user.level || user.self_rate_level || '3.5',
+                    team_somospadel: user.team_somospadel || user.team || [],
                     gender: normalizedGender,
                     joinedAt: new Date().toISOString()
                 };

@@ -271,7 +271,7 @@ window.AdminViews.config = async function () {
     `;
 
     window.resetAllPasswords = async () => {
-        if (!confirm("⚠️ PELIGRO CRÍTICO\\n\\n¿Estás SEGURO de que quieres cambiar la contraseña de TODOS los usuarios a 'PADEL26'?\\n\\nEsta acción no se puede deshacer. Tu usuario Admin (JARABA) NO se verá afectado.")) return;
+        if (!confirm("⚠️ PELIGRO CRÍTICO\\n\\n¿Estás SEGURO de que quieres cambiar la contraseña de TODOS los usuarios a 'PADEL26'?\\n\\nEsta acción no se puede deshacer. Tu usuario Admin (NOA21) NO se verá afectado.")) return;
 
         const promptCheck = prompt("Para confirmar, escribe: RESETEAR");
         if (promptCheck !== "RESETEAR") {
@@ -297,7 +297,7 @@ window.AdminViews.config = async function () {
                 count++;
             }
 
-            alert(`✅ OPERACIÓN COMPLETADA\\n\\n - ${count} contraseñas cambiadas a PADEL26\\n - ${skipped} usuarios admin protegidos (JARABA)\\n\\nAhora todos pueden entrar con 'PADEL26'.`);
+            alert(`✅ OPERACIÓN COMPLETADA\\n\\n - ${count} contraseñas cambiadas a PADEL26\\n - ${skipped} usuarios admin protegidos (NOA21)\\n\\nAhora todos pueden entrar con 'PADEL26'.`);
             loadAdminView('config');
 
         } catch (e) {

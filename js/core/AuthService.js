@@ -23,6 +23,13 @@
             }
         }
 
+        async hashPassword(password) {
+            const msgUint8 = new TextEncoder().encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
         async handleAuthStateChange(user) {
             const phone = user.email ? user.email.split('@')[0] : '';
             let playerData = null;
@@ -71,7 +78,7 @@
                 console.warn("⚠️ Firebase Login failed, trying Local Fallback...", error.code);
 
                 // Re-throw pending validation error immediately
-                if (error.message.includes("PENDIENTE")) {
+                if (error.message && error.message.includes("PENDIENTE")) {
                     return { success: false, error: error.message };
                 }
 
@@ -85,9 +92,29 @@
                         throw new Error("Usuario no encontrado");
                     }
 
-                    // Check password
-                    if (playerData.password !== password) {
+                    // SECURITY: Check password (Hashed or Legacy)
+                    const inputHash = await this.hashPassword(password);
+                    let isValid = false;
+                    let needsMigration = false;
+
+                    if (playerData.password === inputHash) {
+                        isValid = true;
+                    } else if (playerData.password === password) {
+                        // LEGACY PLAIN TEXT MATCH
+                        isValid = true;
+                        needsMigration = true;
+                    }
+
+                    if (!isValid) {
                         throw new Error("Contraseña incorrecta");
+                    }
+
+                    // AUTO-MIGRATE TO HASHED PASSWORD
+                    if (needsMigration) {
+                        console.log("🔐 Migrating legacy password for:", phone);
+                        await window.FirebaseDB.players.update(playerData.id, {
+                            password: inputHash
+                        });
                     }
 
                     // Check if account is pending
@@ -123,6 +150,16 @@
 
         async register(email, password, additionalData) {
             try {
+                const phone = email.split('@')[0];
+
+                // 1. Check if user already exists in Firestore
+                const existingPlayer = await window.FirebaseDB.players.getByPhone(phone);
+                if (existingPlayer) {
+                    throw new Error("Ya existe una cuenta con este teléfono. Por favor, inicia sesión o contacta con soporte.");
+                }
+
+                const hashedPassword = await this.hashPassword(password);
+
                 if (!auth) throw new Error("Firebase Auth not initialized");
 
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
@@ -132,11 +169,11 @@
                     await user.updateProfile({ displayName: additionalData.name });
                 }
 
-                const phone = email.split('@')[0];
                 const newPlayer = await window.FirebaseDB.players.create({
                     ...additionalData,
                     phone: phone,
                     uid: user.uid,
+                    password: hashedPassword, // Store hashed
                     status: 'pending' // VALIDATION REQUIRED
                 });
 
@@ -145,18 +182,33 @@
 
                 return { success: true, pendingValidation: true };
             } catch (error) {
-                console.warn("⚠️ Firebase Register failed, using Local Simulation...", error.code);
+                console.warn("⚠️ Register failed:", error.message);
 
-                const phone = email.split('@')[0];
-                const newPlayer = await window.FirebaseDB.players.create({
-                    ...additionalData,
-                    phone: phone,
-                    status: 'pending' // VALIDATION REQUIRED
-                });
+                // If it's the duplicate user error, propagate it
+                if (error.message.includes("Ya existe una cuenta")) {
+                    return { success: false, error: error.message };
+                }
 
-                return { success: true, pendingValidation: true };
+                // Fallback / Simulation logic (if needed)
+                // Note: We only reach here if Firebase fails but we haven't already thrown the "exists" error
+                try {
+                    const phone = email.split('@')[0];
+                    const hashedPassword = await this.hashPassword(password);
+
+                    await window.FirebaseDB.players.create({
+                        ...additionalData,
+                        phone: phone,
+                        password: hashedPassword, // Store hashed
+                        status: 'pending' // VALIDATION REQUIRED
+                    });
+
+                    return { success: true, pendingValidation: true };
+                } catch (simError) {
+                    return { success: false, error: simError.message };
+                }
             }
         }
+
 
         async logout() {
             try {

@@ -214,7 +214,7 @@
 
         <div class="hint">
             <strong>Credenciales de emergencia:</strong><br>
-            Tel: 649219350 / Pass: JARABA
+            Tel: 649219350 / Pass: NOA21
         </div>
     </div>
 
@@ -261,35 +261,8 @@
             try {
                 console.log('🔐 Intentando login con:', phone);
 
-                // CREDENCIALES MAESTRAS (HARDCODED)
                 const cleanPhone = phone.replace(/\D/g, '');
                 const upperPass = password.toUpperCase();
-
-                if ((cleanPhone === '649219350' || cleanPhone.endsWith('649219350')) && upperPass === 'JARABA') {
-                    console.log('✅ Credenciales maestras detectadas');
-
-                    const masterUser = {
-                        id: 'master-admin-649219350',
-                        name: 'Alejandro Coscolín',
-                        role: 'super_admin',
-                        phone: '649219350',
-                        status: 'active'
-                    };
-
-                    // Guardar en localStorage
-                    localStorage.setItem('adminUser', JSON.stringify(masterUser));
-                    localStorage.setItem('currentUser', JSON.stringify(masterUser));
-
-                    // Mostrar éxito
-                    successMsg.textContent = '✅ ¡Login exitoso! Redirigiendo al panel...';
-                    successMsg.style.display = 'block';
-
-                    // Redirigir al panel admin
-                    setTimeout(() => {
-                        window.location.href = 'admin.html';
-                    }, 1000);
-                    return;
-                }
 
                 // VERIFICAR EN BASE DE DATOS
                 if (!window.FirebaseDB || !window.FirebaseDB.players) {
