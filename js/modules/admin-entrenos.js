@@ -45,6 +45,69 @@ window.AdminViews.entrenos_mgmt = async function () {
 
         setupCreateForm();
 
+        // Admin Automation Loop (runs every 30s)
+        if (window.adminAutoInterval) clearInterval(window.adminAutoInterval);
+
+        const runAutomation = () => {
+            console.log("🤖 [AdminBot] Checking for auto-start events...");
+            EventService.getAll(AppConstants.EVENT_TYPES.ENTRENO).then(evts => {
+                const now = new Date();
+                evts.forEach(evt => {
+                    // Parse Time: "10:00 - 11:30" or "10:00"
+                    let start, end;
+                    try {
+                        const parts = (evt.time || '10:00').split('-').map(s => s.trim());
+
+                        // Fix Date Pasring (Handle YYYY-MM-DD and DD/MM/YYYY)
+                        let dateIso = evt.date;
+                        if (evt.date && evt.date.includes('/')) {
+                            const [d, m, y] = evt.date.split('/');
+                            dateIso = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                        }
+
+                        start = new Date(`${dateIso}T${parts[0]}:00`);
+                        if (parts[1]) end = new Date(`${dateIso}T${parts[1]}:00`);
+                        else end = new Date(start.getTime() + 90 * 60000); // 90 mins default
+
+                        // Debug log to confirm parsing works now
+                        // console.log(`[BotDebug] ${evt.name} | Start: ${start.toLocaleString()} | Now: ${now.toLocaleString()}`);
+                    } catch (e) { console.error("Date Parse Error", e); return; }
+
+                    // 1. OPEN -> LIVE
+                    if (evt.status === 'open' && now >= start && now < end) {
+                        const players = evt.players || [];
+                        const isTwister = evt.name && evt.name.toUpperCase().includes('TWISTER');
+                        // Default courts: 4 (16 players) unless Twister (3 courts = 12 players)
+                        const reqPlayers = (parseInt(evt.courts) || (isTwister ? 3 : 4)) * 4;
+
+                        if (players.length >= reqPlayers) {
+                            console.log(`⚡ Admin Auto-Start: ${evt.name}`);
+                            EventService.updateEvent('entreno', evt.id, { status: 'live' })
+                                .then(() => {
+                                    if (window.AmericanaService) return window.AmericanaService.generateFirstRoundMatches(evt.id, 'entreno');
+                                })
+                                .then(() => loadAdminView('entrenos_mgmt')); // Refresh UI
+                        }
+                    }
+                    // 2. LIVE -> FINISHED
+                    else if (evt.status === 'live' && now >= end) {
+                        console.log(`🏁 Admin Auto-Finish: ${evt.name}`);
+                        EventService.updateEvent('entreno', evt.id, { status: 'finished' })
+                            .then(() => loadAdminView('entrenos_mgmt'));
+                    }
+                    // 3. SMART REVERT: LIVE -> OPEN (If time modified to future)
+                    else if (evt.status === 'live' && now < start) {
+                        console.log(`⏪ Smart Revert: ${evt.name} back to OPEN (Future Time)`);
+                        EventService.updateEvent('entreno', evt.id, { status: 'open' })
+                            .then(() => loadAdminView('entrenos_mgmt'));
+                    }
+                });
+            });
+        };
+
+        window.adminAutoInterval = setInterval(runAutomation, 30000);
+        runAutomation(); // Run once immediately
+
     } catch (e) {
         content.innerHTML = `<div class="error-box">Error loading entrenos: ${e.message}</div>`;
     }
@@ -63,22 +126,67 @@ function renderEntrenoCard(e) {
                 <div class="entreno-preview-img" style="width: 90px; height: 90px; border-radius: 16px; background: url('${e.image_url || 'img/logo_somospadel.png'}') center/cover; border: 2px solid rgba(204,255,0,0.2);"></div>
                 <div class="entreno-info-pro" style="flex: 1;">
                     <div style="font-weight: 900; font-size: 1.5rem; color: #FFFFFF; margin-bottom: 0.5rem;">${e.name.toUpperCase()}</div>
-                    <div style="display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap;">
+                    <div style="display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; margin-top: 5px;">
                          <span>📅 <span style="color:white">${e.date}</span></span>
                          <span>🕒 <span style="color:white">${e.time || '10:00'}</span></span>
                          <span>👥 <span style="color:var(--primary)">${e.players?.length || 0} Inscritos</span></span>
+                         <span style="border: 1px solid #444; padding: 0 6px; border-radius: 4px; font-size: 0.75rem; color: #aaa;">${priceStr}</span>
                     </div>
                 </div>
             </div>
-            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; max-width: 400px;">
-                <span class="pro-category-badge" style="border:1px solid #444; color:#aaa;">${priceStr}</span>
-                <span class="pro-category-badge" style="color:${statusColor}; border-color:${statusColor}; background:${statusColor}10;">${statusLabel}</span>
+            
+            <!-- RIGHT COLUMN: ACTIONS & STATUS STACK -->
+            <div style="display: flex; flex-direction: column; gap: 10px; align-items: stretch; min-width: 160px;">
                 
-                <button class="btn-outline-pro" style="color:#25D366; border-color:#25D366;" onclick='window.WhatsAppService.shareStartFromAdmin(${JSON.stringify(e).replace(/'/g, "&#39;")})'>
-                    <i class="fab fa-whatsapp"></i> WA
-                </button>
-                <button class="btn-outline-pro" onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})'>✏️ EDITAR</button>
-                <button class="btn-secondary" onclick="window.deleteEntreno('${e.id}')">🗑️</button>
+                <!-- TOP: STATUS CHANGER (Full Width) -->
+                <div style="position: relative; width: 100%;">
+                    <select onchange="window.updateEntrenoStatus('${e.id}', this.value)" 
+                            style="
+                                width: 100%;
+                                appearance: none; 
+                                background: ${statusColor}15; 
+                                color: ${statusColor}; 
+                                border: 1px solid ${statusColor}; 
+                                padding: 8px 10px; 
+                                border-radius: 8px; 
+                                font-weight: 800; 
+                                font-size: 0.75rem; 
+                                cursor: pointer; 
+                                text-align: center;
+                                outline: none;
+                                text-transform: uppercase;
+                                letter-spacing: 1px;
+                            ">
+                        <option value="open" ${e.status === 'open' ? 'selected' : ''}>🟢 ABIERTA</option>
+                        <option value="live" ${e.status === 'live' ? 'selected' : ''}>🔴 EN JUEGO</option>
+                        <option value="finished" ${e.status === 'finished' ? 'selected' : ''}>🏁 FINALIZADA</option>
+                    </select>
+                    <i class="fas fa-chevron-down" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 0.65rem; color: ${statusColor}; pointer-events: none;"></i>
+                </div>
+
+                <!-- BOTTOM: ACTION BUTTONS (Grid) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                    <button class="btn-outline-pro" 
+                            style="padding: 8px 0; font-size: 1rem; color:#25D366; border-color:#25D366; display:flex; justify-content:center;" 
+                            onclick='window.WhatsAppService.shareStartFromAdmin(${JSON.stringify(e).replace(/'/g, "&#39;")})'
+                            title="Enviar WA">
+                        <i class="fab fa-whatsapp"></i>
+                    </button>
+                    
+                    <button class="btn-outline-pro" 
+                            style="padding: 8px 0; font-size: 0.9rem; display:flex; justify-content:center;" 
+                            onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})'
+                            title="Editar">
+                        ✏️
+                    </button>
+                    
+                    <button class="btn-secondary" 
+                            style="padding: 8px 0; font-size: 0.9rem; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); display:flex; justify-content:center;" 
+                            onclick="window.deleteEntreno('${e.id}')"
+                            title="Eliminar">
+                        🗑️
+                    </button>
+                </div>
             </div>
         </div>`;
 }
@@ -168,6 +276,39 @@ function setupCreateForm() {
 
 // --- GLOBAL ACTIONS --- //
 
+window.updateEntrenoStatus = async (id, newStatus) => {
+    // Visual feedback immediately handled by select, but we might want to confirm
+    // if switching to finished or live
+
+    try {
+        await EventService.updateEvent('entreno', id, { status: newStatus });
+
+        // AUTO-START ROUND 1 CHECK
+        if (newStatus === 'live' && window.MatchMakingService) {
+            const r1 = await window.db.collection('entrenos_matches')
+                .where('americana_id', '==', id)
+                .where('round', '==', 1)
+                .limit(1).get();
+            if (r1.empty) {
+                try {
+                    await window.MatchMakingService.generateRound(id, 'entreno', 1);
+                    console.log("✅ Ronda 1 generada automáticamente.");
+                } catch (e) {
+                    console.error(e);
+                    alert("⚠️ Estado cambiado a EN JUEGO, pero falló la generación de R1: " + e.message);
+                }
+            }
+        }
+
+        // Refresh to update colors/UI
+        window.loadAdminView('entrenos_mgmt');
+
+    } catch (e) {
+        alert("Error cambiando estado: " + e.message);
+        window.loadAdminView('entrenos_mgmt'); // Revert
+    }
+};
+
 window.deleteEntreno = async (id) => {
     if (!confirm("Confirmar borrado?")) return;
     await EventService.deleteEvent('entreno', id);
@@ -230,6 +371,28 @@ window.openEditEntrenoModal = async (entreno) => {
             if (data.price_external) data.price_external = parseFloat(data.price_external);
 
             await EventService.updateEvent('entreno', id, data);
+
+            // --- AUTO-START LOGIC: GENERATE ROUND 1 ---
+            if (data.status === 'live') {
+                console.log("🚀 Entreno set to LIVE. Checking/Generating Round 1...");
+                if (window.MatchMakingService) {
+                    const r1 = await window.db.collection('entrenos_matches')
+                        .where('americana_id', '==', id)
+                        .where('round', '==', 1)
+                        .limit(1).get();
+
+                    if (r1.empty) {
+                        try {
+                            await window.MatchMakingService.generateRound(id, 'entreno', 1);
+                            alert("✅ Ronda 1 generada automáticamente. ¡A jugar!");
+                        } catch (genErr) {
+                            console.error("Auto-start error:", genErr);
+                            alert("⚠️ El evento está EN JUEGO, pero la Ronda 1 no se pudo generar: " + genErr.message);
+                        }
+                    }
+                }
+            }
+
             alert("✅ Entreno actualizado correctamente");
 
             // Reload View if needed (optional, or just close)

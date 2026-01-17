@@ -91,16 +91,22 @@
                     throw new Error("Ya estás inscrito en este evento.");
                 }
 
-                // GENDER CHECK
+                // GENDER CHECK - ENHANCED FOR ENTRENOS
                 const userGender = user.gender || 'M';
                 const cat = event.category || 'open';
 
+                // MASCULINO: Solo hombres
                 if (cat === 'male' && userGender !== 'M' && userGender !== 'chico') {
-                    throw new Error("Este evento es exclusivo para categoría MASCULINA.");
+                    throw new Error("Este entreno es exclusivo para HOMBRES (categoría MASCULINA).");
                 }
+
+                // FEMENINO: Solo mujeres
                 if (cat === 'female' && userGender !== 'F' && userGender !== 'chica') {
-                    throw new Error("Este evento es exclusivo para categoría FEMENINA.");
+                    throw new Error("Este entreno es exclusivo para MUJERES (categoría FEMENINA).");
                 }
+
+                // MIXTO: Hombres y mujeres permitidos (no hay restricción)
+                // 'open' y 'mixed' permiten ambos géneros
 
                 const normalizedGender = (userGender === 'M' || userGender === 'chico') ? 'chico' :
                     (userGender === 'F' || userGender === 'chica') ? 'chica' : '?';
@@ -291,10 +297,19 @@
         async generateNextRound(eventId, currentRound, type = 'entreno') {
             try {
                 if (!window.MatchMakingService) throw new Error("MatchMakingService not loaded");
+
+                // CHECK AND CLEANUP NEXT ROUND (Fix for Ghost Results)
+                const nextRound = currentRound + 1;
+
+                // Aggressively delete any partial/ghost matches for this round before regenerating
+                console.log(`🧹 [AmericanaService] Pruning R${nextRound} before generation to prevent ghost scores...`);
+                await this.deleteRound(eventId, nextRound, type);
+
                 console.log(`🤖 [AmericanaService] Delegating Next Round generation to MatchMakingService for ${type} ${eventId}`);
-                return await window.MatchMakingService.generateRound(eventId, type, currentRound + 1);
+                return await window.MatchMakingService.generateRound(eventId, type, nextRound);
             } catch (err) {
                 console.error("❌ Error generating next round:", err);
+                throw err; // RETHROW to let Controller handle it
             }
         }
     }

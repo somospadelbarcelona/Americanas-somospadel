@@ -7,14 +7,23 @@
 console.log("🚀 Admin JS Loading...");
 
 // --- GLOBAL HELPERS ---
-window.calculateMatchTime = (startTime, roundNum) => {
+/**
+ * Calcula la hora exacta de un partido basándose en:
+ * - startTime: hora de inicio del evento (ej: "10:00")
+ * - roundNum: número de ronda (1-6)
+ * - matchDuration: duración de cada partido en minutos (default: 20)
+ * 
+ * Cada ronda empieza cuando termina la anterior (20 min por defecto)
+ */
+window.calculateMatchTime = (startTime, roundNum, matchDuration = 20) => {
     if (!startTime) return "00:00";
     try {
         const [h, m] = startTime.split(':').map(Number);
         const date = new Date();
         date.setHours(h, m, 0, 0);
-        // Each round +20 mins
-        date.setMinutes(date.getMinutes() + (roundNum - 1) * 20);
+        // Ronda 1 = hora inicio, Ronda 2 = +20min, Ronda 3 = +40min, etc.
+        const totalMinutesOffset = (roundNum - 1) * matchDuration;
+        date.setMinutes(date.getMinutes() + totalMinutesOffset);
         return date.getHours().toString().padStart(2, '0') + ":" +
             date.getMinutes().toString().padStart(2, '0');
     } catch (e) { return startTime; }

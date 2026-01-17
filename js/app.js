@@ -3,12 +3,22 @@
  * Entry Point de la aplicación compatible con file://
  */
 (function () {
-    window.calculateMatchTime = (startTime, roundNum) => {
+    /**
+     * Calcula la hora exacta de un partido basándose en:
+     * - startTime: hora de inicio del evento (ej: "10:00")
+     * - roundNum: número de ronda (1-6)
+     * - matchDuration: duración de cada partido en minutos (default: 20)
+     * 
+     * Cada ronda empieza cuando termina la anterior (20 min por defecto)
+     */
+    window.calculateMatchTime = (startTime, roundNum, matchDuration = 20) => {
         if (!startTime) return "00:00";
         try {
             const [hours, minutes] = startTime.split(':').map(Number);
             const date = new Date();
-            date.setHours(hours, minutes + (roundNum - 1) * 20, 0, 0);
+            // Ronda 1 = hora inicio, Ronda 2 = +20min, Ronda 3 = +40min, etc.
+            const totalMinutesOffset = (roundNum - 1) * matchDuration;
+            date.setHours(hours, minutes + totalMinutesOffset, 0, 0);
             return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
         } catch (e) {
             console.error("Error calculating match time:", e);

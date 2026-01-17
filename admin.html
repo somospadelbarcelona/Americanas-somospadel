@@ -944,25 +944,37 @@
             <script src="js/modules/common/ParticipantService.js?v=2001"></script>
 
             <!-- LOGIC MODULES (Legacy Logic Wrapped) -->
-            <script src="js/fixed-pairs-logic.js?v=4005"></script>
-            <script src="js/rotating-pozo-logic.js?v=4005"></script>
-            <script src="js/modules/logic/MatchMakingService.js?v=4007"></script>
+
             <!-- SIMULATOR LOGIC -->
-            <script src="js/admin-simulator.js?v=2000"></script>
+            <!-- SIMULATOR LOGIC (Moved to end) -->
 
             <!-- LEGACY SERVICES (Keep for compatibility if needed during transition) -->
             <!-- AmericanaService duplicated above -->
 
+            <!-- Logic Services (CORE) -->
+            <script src="js/fixed-pairs-logic.js?v=5000"></script>
+            <script src="js/rotating-pozo-logic.js?v=5003"></script>
+            <script src="js/MatchMakingService.js?v=5003"></script>
+            <script>
+                if (!window.MatchMakingService) {
+                    console.error("❌ CRITICAL: MatchMakingService Failed to Load from ROOT!");
+                    alert("FATAL ERROR: MatchMakingService.js no se ha cargado.");
+                } else {
+                    console.log("✅ MatchMakingService Verified Loaded in Admin.html");
+                }
+            </script>
+
             <!-- Admin Modules (Lazy Loaded Logic) -->
+            <!-- Simulator (View) -->
+            <script src="js/admin-simulator.js?v=5000"></script>
+            <script src="js/modules/admin-simulator-view.js?v=5000"></script>
             <script src="js/modules/admin-pairs-ui.js?v=2000"></script>
-            <script src="js/modules/admin-results.js?v=4007"></script>
+            <script src="js/modules/admin-results.js?v=4009"></script>
             <script src="js/modules/admin-users.js?v=1100"></script>
             <script src="js/modules/admin-americanas.js?v=4007"></script>
             <script src="js/modules/common/WhatsAppService.js"></script>
             <script src="js/modules/admin-entrenos.js?v=4007"></script>
-            <script src="js/modules/admin-simulator-view.js?v=2000"></script>
-            <script src="js/modules/admin-menu-config.js?v=1100"></script>
-            <script src="js/modules/admin-fix-players.js?v=1000"></script>
+
 
             <!-- DIAGNOSTIC SCRIPT (Optional) -->
             <script>

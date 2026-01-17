@@ -2,10 +2,10 @@
  * MatchMakingService.js
  * Coordinador de lógica de emparejamientos.
  * Abstrae la complejidad de llamar a FixedPairsLogic o RotatingPozoLogic.
- * v5002 - Robust Rewrite
+ * v5003 - ROOT DEBUG
  */
 
-console.log("🎲 LOADING MATCHMAKING SERVICE v5002...");
+console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
 
 (function () {
     try {
@@ -18,12 +18,11 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5002...");
             async generateRound(eventId, eventType, roundNum) {
                 console.log(`🎲 MatchMakingService: Generating Round ${roundNum} for ${eventType} ${eventId}`);
 
-                if (roundNum > 6) {
-                    throw new Error("Límite de 6 rondas alcanzado. No se pueden generar más.");
-                }
-
                 // Ensure dependencies exist
-                if (typeof window.FirebaseDB === 'undefined') throw new Error("FirebaseDB not loaded");
+                if (typeof window.FirebaseDB === 'undefined') {
+                    console.error("❌ FirebaseDB MISSING in MatchMakingService!");
+                    throw new Error("FirebaseDB not loaded");
+                }
 
                 // Get AppConstants safely
                 const APP_CONSTANTS = window.AppConstants || { EVENT_TYPES: { AMERICANA: 'americana' }, PAIR_MODES: { FIXED: 'fixed' } };
@@ -34,7 +33,13 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5002...");
                 if (!event) throw new Error("Event not found");
 
                 // Determine Mode
-                const isFixedPairs = event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED;
+                let isFixedPairs = event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED;
+
+                // HEURISTIC: Force Fixed Pairs if name contains "FIJA" or "FIJO" (Case Insensitive)
+                if (!isFixedPairs && event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO'))) {
+                    console.log(`🔒 Heuristic: Detected "FIJA/FIJO" in name "${event.name}". Forcing FIXED PAIRS mode.`);
+                    isFixedPairs = true;
+                }
 
                 // --- SMART SCALING LOGIC ---
                 let effectiveCourts = event.max_courts || 4;
@@ -74,7 +79,10 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5002...");
 
                     const unfinished = prevRoundMatches.filter(m => m.status !== 'finished');
                     if (unfinished.length > 0) {
+                        console.warn(`⚠️ BLOCKED: R${roundNum - 1} has ${unfinished.length} unfinished matches.`);
                         throw new Error(`⚠️ Ronda ${roundNum - 1} tiene partidos sin finalizar. Termínalos antes.`);
+                    } else {
+                        console.log(`✅ Previous round R${roundNum - 1} is fully finished. Proceeding...`);
                     }
 
                     // UPDATE LOGIC
@@ -91,20 +99,27 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5002...");
                         // Rotating Logic
                         const players = event.players || [];
                         let movedPlayers;
+                        console.log(`🔄 Generating Rotating Round ${roundNum} for ${eventType}...`);
 
                         if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic not loaded");
 
                         if (eventType === 'entreno') {
                             // Entreno R2+: Use Standard Pozo Movement
+                            console.log("🏃‍♂️ Using Entreno Pozo Movement...");
                             movedPlayers = RotatingPozoLogic.updatePlayerCourts(players, prevRoundMatches, effectiveCourts, 'open');
                         } else {
                             // Americana/Pozo
+                            console.log("🎾 Using Americana Pozo Movement...");
                             movedPlayers = RotatingPozoLogic.updatePlayerCourts(players, prevRoundMatches, effectiveCourts, event.category);
                         }
                         await collection.update(eventId, { players: movedPlayers });
+                        console.log("✅ Player courts updated.");
 
                         const genCategory = eventType === 'entreno' ? 'entreno' : event.category;
-                        return this._createMatches(eventId, RotatingPozoLogic.generateRound(movedPlayers, roundNum, effectiveCourts, genCategory), eventType);
+                        const newMatches = RotatingPozoLogic.generateRound(movedPlayers, roundNum, effectiveCourts, genCategory);
+
+                        console.log(`✨ Generated ${newMatches.length} new matches.`);
+                        return this._createMatches(eventId, newMatches, eventType);
                     }
 
                 } else {
@@ -170,7 +185,9 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5002...");
                 const sortedList = [];
 
                 while (pool.length > 0) {
+                    // Pick the highest level player available
                     const p1 = pool.shift();
+
                     if (pool.length === 0) {
                         sortedList.push(p1);
                         break;
@@ -178,45 +195,65 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5002...");
 
                     // Find best partner
                     let bestPartnerIndex = -1;
-                    let bestScore = -Infinity;
 
                     const getTeam = (p) => {
-                        const t = p.team_somospadel || p.team || '';
+                        const t = p.team_somospadel || p.team || ''; // Handle various field names
                         return Array.isArray(t) ? t[0] : t;
                     };
 
                     const p1Team = getTeam(p1);
-                    const p1Level = parseFloat(p1.level || p1.self_rate_level || 0);
 
-                    for (let i = 0; i < pool.length; i++) {
-                        const p2 = pool[i];
-                        const p2Team = getTeam(p2);
-                        const p2Level = parseFloat(p2.level || p2.self_rate_level || 0);
+                    // Priority 1: SAME TEAM
+                    // Priority 2: Similar Level
 
-                        let score = 0;
-                        const diff = Math.abs(p1Level - p2Level);
-                        score -= (diff * 10);
+                    if (p1Team) {
+                        // Try to find a teammate
+                        bestPartnerIndex = pool.findIndex(p => {
+                            const p2Team = getTeam(p);
+                            return p2Team && p2Team === p1Team; // Exact match
+                        });
+                    }
 
-                        if (p1Team && p2Team && p1Team === p2Team) {
-                            if (diff <= 1.0) score += 100;
-                            else score += 5;
-                        }
-
-                        if (score > bestScore) {
-                            bestScore = score;
-                            bestPartnerIndex = i;
-                        }
+                    // If no teammate found (or p1 has no team), find closest level
+                    if (bestPartnerIndex === -1) {
+                        // Since pool is already sorted by level desc, the next player (index 0) 
+                        // is automatically the closest in level (or slightly lower).
+                        // We just take the next best player.
+                        bestPartnerIndex = 0;
                     }
 
                     if (bestPartnerIndex !== -1) {
                         const p2 = pool.splice(bestPartnerIndex, 1)[0];
+                        // Add Pair
                         sortedList.push(p1, p2);
+                        console.log(`🤝 Paired ${p1.name} (${p1.level}) w/ ${p2.name} (${p2.level}) - Team: ${p1Team === getTeam(p2) ? p1Team : 'Mixed'}`);
                     } else {
                         sortedList.push(pool.shift());
                     }
                 }
-                return sortedList;
+
+                // Final verify: Sort the PAIRS by their combined level to ensure Court 1 gets the best pairs
+                // sortedList is [P1a, P1b, P2a, P2b...]
+                // We want to group them 2 by 2, check average level, sort groups, flatten.
+
+                const pairs = [];
+                for (let i = 0; i < sortedList.length; i += 2) {
+                    if (i + 1 < sortedList.length) {
+                        pairs.push([sortedList[i], sortedList[i + 1]]);
+                    } else {
+                        pairs.push([sortedList[i]]); // Straggler
+                    }
+                }
+
+                pairs.sort((pairA, pairB) => {
+                    const levA = (parseFloat(pairA[0].level || 0) + parseFloat(pairA[1]?.level || 0)) / pairA.length;
+                    const levB = (parseFloat(pairB[0].level || 0) + parseFloat(pairB[1]?.level || 0)) / pairB.length;
+                    return levB - levA; // Descending
+                });
+
+                return pairs.flat();
             },
+
 
             /**
              * Helper to batch create matches
@@ -257,7 +294,7 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5002...");
              * Simulate a round (Random scores)
              */
             async simulateRound(eventId, roundNum, eventType = 'americana') {
-                console.warn("⚠️ [MatchMakingService] SIMULATION DISABLED BY ADMIN POLICY. No results generated.");
+                console.warn("⚠️ [MatchMakingService root] SIMULATION DISABLED BY ADMIN POLICY. No results generated.");
                 return;
             },
 
@@ -341,55 +378,6 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5002...");
 
                 console.log(`✅ Substitution complete. Updated ${updatesCount} matches in ${winningCollection}.`);
                 return updatesCount;
-            },
-
-            async purgeSubsequentRounds(eventId, roundNum, eventType) {
-                console.log(`🧹 Purging rounds after ${roundNum} for ${eventType} ${eventId}`);
-                const collectionName = eventType === 'entreno' ? 'entrenos_matches' : 'matches';
-
-                try {
-                    // Fetch ALL matches for this event (only uses americana_id index)
-                    const snap = await window.db.collection(collectionName)
-                        .where('americana_id', '==', eventId)
-                        .get();
-
-                    if (snap.empty) {
-                        console.log("No matches found for event");
-                        return 0;
-                    }
-
-                    // Filter in memory for rounds > roundNum
-                    const toDelete = [];
-                    snap.docs.forEach(doc => {
-                        const data = doc.data();
-                        const matchRound = parseInt(data.round) || 1;
-                        if (matchRound > roundNum) {
-                            toDelete.push(doc.ref);
-                        }
-                    });
-
-                    if (toDelete.length === 0) {
-                        console.log(`No rounds found after R${roundNum}`);
-                        return 0;
-                    }
-
-                    console.log(`Deleting ${toDelete.length} matches from rounds > ${roundNum}`);
-
-                    // Delete in batches (Firestore limit is 500 per batch)
-                    const batchSize = 500;
-                    for (let i = 0; i < toDelete.length; i += batchSize) {
-                        const batch = window.db.batch();
-                        const chunk = toDelete.slice(i, i + batchSize);
-                        chunk.forEach(ref => batch.delete(ref));
-                        await batch.commit();
-                    }
-
-                    console.log(`✅ Purged ${toDelete.length} matches successfully`);
-                    return toDelete.length;
-                } catch (error) {
-                    console.error("Error in purgeSubsequentRounds:", error);
-                    throw error;
-                }
             }
         };
 

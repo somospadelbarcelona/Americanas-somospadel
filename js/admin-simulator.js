@@ -114,7 +114,8 @@ const AdminSimulator = {
                     : (category === 'male' ? 'img/ball-masculina.png' : (category === 'female' ? 'img/ball-femenina.png' : 'img/ball-mixta.png')),
                 pair_mode: pairMode,
                 price_members: config.price_members || 12,
-                price_external: config.price_external || 14
+                price_external: config.price_external || 14,
+                is_simulation: true
             };
 
             const newAmericana = await FirebaseDB.americanas.create(americanaData);
@@ -232,7 +233,8 @@ const AdminSimulator = {
                 image_url: imageUrl,
                 pair_mode: pairMode,
                 price_members: config.price_members || 20,
-                price_external: config.price_external || 25
+                price_external: config.price_external || 25,
+                is_simulation: true
             };
 
             const newEntreno = await FirebaseDB.entrenos.create(entrenoData);

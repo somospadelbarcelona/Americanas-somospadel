@@ -45,6 +45,14 @@ const RotatingPozoLogic = {
                         if (pKey && playerMap[pKey]) {
                             playerMap[pKey].played = true;
                             playerMap[pKey].won = winners.includes(String(id));
+
+                            // TRACK LAST PARTNER (For Twister Logic)
+                            // If I am in Team A, my partner is the other guy in Team A.
+                            const myTeam = teamA.includes(String(id)) ? teamA : teamB;
+                            const partnerId = myTeam.find(pid => String(pid) !== String(id));
+                            if (partnerId) {
+                                playerMap[pKey].last_partner = partnerId;
+                            }
                         }
                     });
                 }
@@ -78,6 +86,28 @@ const RotatingPozoLogic = {
             allPlayers.forEach((p, i) => { p.current_court = Math.floor(i / 4) + 1; });
             return allPlayers;
         }
+    },
+
+    /**
+     * Logic for ENTRENO: Sort strictly by Level (Higher Level -> Lower Court Number)
+     */
+    updateEntrenoCourts(players, maxCourts) {
+        console.log("📈 Calculando Pistas ENTRENO (Por Nivel)...");
+
+        // 1. Sort by Level (Desc), then by ID
+        const sorted = [...players].sort((a, b) => {
+            const levelA = parseFloat(a.level || 0);
+            const levelB = parseFloat(b.level || 0);
+            return levelB - levelA || a.id.localeCompare(b.id);
+        });
+
+        // 2. Assign Courts based on sorted position
+        // Court 1: Index 0-3, Court 2: Index 4-7, etc.
+        sorted.forEach((p, i) => {
+            p.current_court = Math.floor(i / 4) + 1;
+        });
+
+        return sorted;
     },
 
     /**
@@ -117,33 +147,31 @@ const RotatingPozoLogic = {
                 const females = pInCourt.filter(p => p.gender === 'chica');
 
                 if (males.length >= 2 && females.length >= 2) {
-                    // Patrón de rotación para MIXTO (asegura que las parejas cambien):
-                    // Ronda 1: (M1+F1) vs (M2+F2)
-                    // Ronda 2: (M1+F2) vs (M2+F1)
-                    // Ronda 3: (M1+F1) vs (M2+F2) [repite ciclo]
-
                     const rotationPattern = roundNumber % 2;
-
                     if (rotationPattern === 1) {
-                        // Patrón 1: Parejas directas
                         teamA = [males[0], females[0]];
                         teamB = [males[1], females[1]];
                     } else {
-                        // Patrón 2: Parejas cruzadas
                         teamA = [males[0], females[1]];
                         teamB = [males[1], females[0]];
                     }
                 } else {
-                    // Fallback si la pista no está balanceada (no debería pasar en mixto bien configurado)
                     console.warn(`⚠️ Pista ${c} no tiene balance de género correcto para MIXTO`);
                     teamA = this._createRotatingPairs(pInCourt, roundNumber, 0);
                     teamB = this._createRotatingPairs(pInCourt, roundNumber, 1);
                 }
+            } else if (category === 'entreno') {
+                // LOGICA ESPECIFICA ENTRENO: Priorizar rivalidad de compañeros de equipo
+                const entrenoPairs = this._createEntrenoPairs(pInCourt);
+                teamA = entrenoPairs.teamA;
+                teamB = entrenoPairs.teamB;
             } else {
-                // MODO NORMAL / MASCULINO / FEMENINO / TODOS
-                // Aplicar patrón de rotación determinístico
-                teamA = this._createRotatingPairs(pInCourt, roundNumber, 0);
-                teamB = this._createRotatingPairs(pInCourt, roundNumber, 1);
+                // MODO TWISTER / NORMAL / AMERICANAS
+                // El usuario pide explícitamente "cambiar de pareja al cambiar de pista".
+                // Usamos _createSmartPairs para garantizar que NO se repitan parejas inmediatas.
+                const smartPairs = this._createSmartPairs(pInCourt);
+                teamA = smartPairs.teamA;
+                teamB = smartPairs.teamB;
             }
 
             matches.push({
@@ -164,59 +192,120 @@ const RotatingPozoLogic = {
 
     /**
      * Crea parejas rotativas usando un patrón determinístico
-     * Asegura que los jugadores cambien de pareja entre rondas
-     * 
-     * Patrón de rotación para 4 jugadores (P0, P1, P2, P3):
-     * Ronda 1: TeamA=(P0,P1) TeamB=(P2,P3)
-     * Ronda 2: TeamA=(P0,P2) TeamB=(P1,P3)
-     * Ronda 3: TeamA=(P0,P3) TeamB=(P1,P2)
-     * Ronda 4: TeamA=(P0,P1) TeamB=(P2,P3) [ciclo se repite]
-     * 
-     * @param {Array} players - 4 jugadores en la pista
-     * @param {Number} roundNumber - Número de ronda actual
-     * @param {Number} teamIndex - 0 para Team A, 1 para Team B
-     * @returns {Array} - Pareja de 2 jugadores
      */
     _createRotatingPairs(players, roundNumber, teamIndex) {
         if (players.length < 4) {
-            console.error('No hay suficientes jugadores para crear parejas');
             return players.slice(0, 2);
         }
 
-        // Ordenar jugadores por ID para tener un orden consistente
-        const sortedPlayers = [...players].sort((a, b) => {
-            if (a.id < b.id) return -1;
-            if (a.id > b.id) return 1;
-            return 0;
-        });
-
+        const sortedPlayers = [...players].sort((a, b) => a.id.localeCompare(b.id));
         const [P0, P1, P2, P3] = sortedPlayers;
 
-        // Patrón de rotación basado en el número de ronda
-        const rotationCycle = (roundNumber - 1) % 3; // 0, 1, 2
-
+        const rotationCycle = (roundNumber - 1) % 3;
         let teamA, teamB;
 
         switch (rotationCycle) {
             case 0:
-                // Ronda 1, 4, 7, ... : (P0+P1) vs (P2+P3)
                 teamA = [P0, P1];
                 teamB = [P2, P3];
                 break;
             case 1:
-                // Ronda 2, 5, 8, ... : (P0+P2) vs (P1+P3)
                 teamA = [P0, P2];
                 teamB = [P1, P3];
                 break;
             case 2:
-                // Ronda 3, 6, 9, ... : (P0+P3) vs (P1+P2)
                 teamA = [P0, P3];
                 teamB = [P1, P2];
                 break;
         }
 
         return teamIndex === 0 ? teamA : teamB;
+    },
+
+    /**
+     * Creates pairs for Entreno trying to maximize teammate HEAD-TO-HEAD rivalries.
+     * Logic: Find the combination where teammates play AGAINST each other.
+     */
+    _createEntrenoPairs(players) {
+        if (players.length < 4) return { teamA: players.slice(0, 2), teamB: players.slice(2, 4) };
+
+        const p = players;
+        // The 3 pairing options
+        const options = [
+            { teamA: [p[0], p[1]], teamB: [p[2], p[3]], id: 0 },
+            { teamA: [p[0], p[2]], teamB: [p[1], p[3]], id: 1 },
+            { teamA: [p[0], p[3]], teamB: [p[1], p[2]], id: 2 }
+        ];
+
+        // Evaluate each option
+        let bestOption = options[1]; // Default mix
+        let maxScore = -1;
+
+        options.forEach(opt => {
+            let score = 0;
+            // Check conflicts (Teammates playing against each other is GOOD +1)
+            const teamA1 = opt.teamA[0].team || opt.teamA[0].team_somospadel;
+            const teamA2 = opt.teamA[1].team || opt.teamA[1].team_somospadel;
+            const teamB1 = opt.teamB[0].team || opt.teamB[0].team_somospadel;
+            const teamB2 = opt.teamB[1].team || opt.teamB[1].team_somospadel;
+
+            const checkRival = (t1, t2) => (t1 && t2 && t1 === t2) ? 1 : 0;
+
+            // Rivalries: A1 vs B1, A1 vs B2, A2 vs B1, A2 vs B2
+            score += checkRival(teamA1, teamB1);
+            score += checkRival(teamA1, teamB2);
+            score += checkRival(teamA2, teamB1);
+            score += checkRival(teamA2, teamB2);
+
+            // Avoid same-team partners if possible (Teammates playing TOGETHER is BAD -1? Or just neutral? Maybe avoid.)
+            if (teamA1 && teamA2 && teamA1 === teamA2) score -= 2;
+            if (teamB1 && teamB2 && teamB1 === teamB2) score -= 2;
+
+            if (score > maxScore) {
+                maxScore = score;
+                bestOption = opt;
+            }
+        });
+
+        // Fallback: If no team logic applies (score 0), use SmartPairs to avoid repeats
+        if (maxScore === 0) {
+            return this._createSmartPairs(players);
+        }
+
+        console.log(`⚔️ Entreno Matchup Selected (Score ${maxScore}):`, bestOption);
+        return bestOption;
+    },
+
+    /**
+     * Create Smart Pairs ensuring NO repetition of last_partner
+     */
+    _createSmartPairs(players) {
+        if (players.length < 4) return { teamA: players.slice(0, 2), teamB: players.slice(2, 4) };
+
+        const p = players;
+        const options = [
+            { teamA: [p[0], p[1]], teamB: [p[2], p[3]] },
+            { teamA: [p[0], p[2]], teamB: [p[1], p[3]] },
+            { teamA: [p[0], p[3]], teamB: [p[1], p[2]] }
+        ];
+
+        // Filter out options where ANY pair existed previously
+        const validOptions = options.filter(opt => {
+            const pair1 = opt.teamA;
+            const pair2 = opt.teamB;
+            // Check Repeats
+            if (pair1[0].last_partner === pair1[1].id) return false;
+            if (pair2[0].last_partner === pair2[1].id) return false;
+            return true;
+        });
+
+        if (validOptions.length > 0) {
+            return validOptions[0];
+        } else {
+            return options[1]; // Default fallback
+        }
     }
+
 };
 
 if (typeof window !== 'undefined') {

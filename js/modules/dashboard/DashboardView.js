@@ -267,7 +267,10 @@
                 ">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                         <div style="color: var(--brand-neon); background: var(--brand-navy); padding: 4px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">${this.formatDateShort(am.date)}</div>
-                        <div style="background: rgba(6, 182, 212, 0.1); color: var(--brand-accent); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900;">CONFIRMADO</div>
+                        ${am.status === 'live' ?
+                    `<div style="background: rgba(255, 45, 85, 0.2); color: #FF2D55; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; animation: blink 1s infinite; border: 1px solid #FF2D55;">EN VIVO 🔴</div>` :
+                    `<div style="background: rgba(6, 182, 212, 0.1); color: var(--brand-accent); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900;">CONFIRMADO</div>`
+                }
                     </div>
                     <h4 style="margin: 0; color: var(--text-primary); font-size: 1.3rem; font-weight: 950; letter-spacing: -0.5px; line-height: 1.2;">${am.name}</h4>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
@@ -359,13 +362,25 @@
         async renderLiveWidget(context) {
             try {
                 const allEvents = window.AmericanaService ? await window.AmericanaService.getAllActiveEvents() : [];
-                const openEvents = allEvents.filter(a => ['open', 'upcoming', 'draft', 'scheduled'].includes(a.status));
+                // CRITICAL FIX: Include 'live' events so Admin can see them running
+                const openEvents = allEvents.filter(a => ['open', 'upcoming', 'draft', 'scheduled', 'live'].includes(a.status));
 
                 if (openEvents.length > 0) {
                     let html = '';
                     openEvents.forEach(am => {
-                        const statusColor = am.status === 'open' ? '#00E36D' : '#00c4ff';
-                        const statusLabel = am.status === 'open' ? 'ABIERTO' : 'PRÓXIMO';
+                        let statusColor = '#00c4ff';
+                        let statusLabel = 'PRÓXIMO';
+                        let isLive = false;
+
+                        if (am.status === 'open') {
+                            statusColor = '#00E36D';
+                            statusLabel = 'ABIERTO';
+                        } else if (am.status === 'live') {
+                            statusColor = '#FF2D55';
+                            statusLabel = 'EN JUEGO';
+                            isLive = true;
+                        }
+
                         const players = am.players || am.registeredPlayers || [];
                         const maxPlayers = (am.max_courts || 0) * 4;
                         const spotsLeft = Math.max(0, maxPlayers - players.length);
@@ -374,8 +389,8 @@
                         const typeLabel = am.type === 'entreno' ? 'ENTRENO' : 'AMERICANA';
 
                         /* 
-                                                    Registration Ticker Card 
-                                                 */
+                            Registration Ticker Card 
+                        */
                         let catColor = '#84cc16'; // Default (Green/Generic)
                         const lowerName = am.name.toLowerCase();
                         if (lowerName.includes('femenina') || lowerName.includes('chicas')) {
@@ -385,6 +400,9 @@
                         } else if (lowerName.includes('mixto') || lowerName.includes('mix')) {
                             catColor = '#8b5cf6'; // Violet
                         }
+
+                        // Override color if live
+                        if (isLive) catColor = '#FF2D55';
 
                         html += `
                             <div class="registration-ticker-card" 
@@ -408,11 +426,20 @@
                                 transition: all 0.3s ease;
                                 backdrop-filter: blur(5px);
                                 -webkit-backdrop-filter: blur(5px);
+                                ${isLive ? 'animation: pulse-border 2s infinite;' : ''}
                             "
                             >
                                 <!-- Header with Status -->
                                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <span style="font-size:0.5rem; font-weight:900; color:${statusColor}; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">${statusLabel}</span>
+                                    <span style="
+                                        font-size:0.5rem; 
+                                        font-weight:900; 
+                                        color:white; 
+                                        background:${statusColor}; 
+                                        padding:2px 6px; 
+                                        border-radius:4px;
+                                        ${isLive ? 'animation: blink 1s infinite;' : ''}
+                                    ">${statusLabel}</span>
                                     <span style="font-size:0.85rem; filter: drop-shadow(0 0 5px ${catColor});">${categoryIcon}</span>
                                 </div>
                                 

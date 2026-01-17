@@ -5,11 +5,11 @@
 
 (function () {
     const CONFIG = {
-        enableDevToolsDetection: true, // Detectar si abren F12
-        disableRightClick: true,       // Bloquear clic derecho
-        disableCopyPaste: true,        // Bloquear copiar/pegar
-        disableKeys: true,             // Bloquear F12, Ctrl+U, etc.
-        debuggerTrap: true             // Activar trampa de debugger infinito
+        enableDevToolsDetection: false, // DESHABILITADO PARA DEBUGGING
+        disableRightClick: false,       // DESHABILITADO PARA DEBUGGING
+        disableCopyPaste: false,        // DESHABILITADO PARA DEBUGGING
+        disableKeys: false,             // DESHABILITADO PARA DEBUGGING
+        debuggerTrap: false             // DESHABILITADO PARA DEBUGGING
     };
 
     // 1. DISABLE RIGHT CLICK

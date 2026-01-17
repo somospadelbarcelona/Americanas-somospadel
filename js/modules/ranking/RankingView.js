@@ -79,23 +79,6 @@
                         </div>
                         ` : ''}
 
-                        <!-- C. ACTIVIDAD RECIENTE -->
-                        <div style="
-                            background: white;
-                            border: 1px solid #e2e8f0;
-                            border-radius: 32px;
-                            padding: 24px;
-                            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-                            margin-bottom: 25px;
-                        ">
-                            <div style="font-size: 0.75rem; color: #1e293b; font-weight: 950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
-                                <i class="fas fa-rss" style="color: #84cc16;"></i> ACTIVIDAD RECIENTE
-                            </div>
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                ${this.renderRecentActivity()}
-                            </div>
-                        </div>
-
                         <!-- B. MI RENDIMIENTO -->
                         <div style="
                             background: white;

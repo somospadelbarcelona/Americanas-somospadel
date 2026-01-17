@@ -12,6 +12,7 @@
                 'events': () => { window.EventsController?.init(); window.EventsController?.setTab('events'); },
                 'profile': () => window.PlayerController?.init(),
                 'live': () => window.ControlTowerView?.handleLiveRoute(),
+                'live-entreno': () => window.EntrenoLiveView?.handleRoute(),
                 'ranking': () => window.RankingController?.init(),
                 'agenda': () => { window.EventsController?.init(); window.EventsController?.setTab('agenda'); },
                 'results': () => { window.EventsController?.init(); window.EventsController?.setTab('results'); },
@@ -64,7 +65,13 @@
 
             // 2. Top Header Tabs
             document.querySelectorAll('.header-tab').forEach(tab => {
-                const view = tab.getAttribute('onclick').match(/'([^']+)'/)[1];
+                const onclickAttr = tab.getAttribute('onclick');
+                if (!onclickAttr) return; // Skip tabs without onclick
+
+                const match = onclickAttr.match(/'([^']+)'/);
+                if (!match) return; // Skip if no match found
+
+                const view = match[1];
                 const isActive = view === route;
 
                 tab.style.fontWeight = isActive ? '900' : '700';

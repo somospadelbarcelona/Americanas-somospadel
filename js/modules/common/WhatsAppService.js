@@ -25,14 +25,17 @@ window.WhatsAppService = {
         const isFemale = type === 'female' || type === 'femenina';
         const isMixed = type === 'mixed' || type === 'mixto' || type === 'mixta';
 
-        // Emojis based on category
+        // Header Decoration
+        let headerTitle = 'ENTRENO';
         let headerEmoji = '🎾';
-        if (isMale) headerEmoji = '🎾🚹';
-        if (isFemale) headerEmoji = '🎾🚺';
-        if (isMixed) headerEmoji = '🎾🚻';
+
+        if (isMale) { headerEmoji = '🎾🚹'; headerTitle = 'ENTRENO MASCULINO'; }
+        else if (isFemale) { headerEmoji = '🎾🚺'; headerTitle = 'ENTRENO FEMENINO'; }
+        else if (isMixed) { headerEmoji = '🎾🚻'; headerTitle = 'ENTRENO MIXTO'; }
 
         const dateStr = this._formatDate(event.date);
         const timeStr = event.time || '10:00';
+        const endTimeStr = event.time_end ? ` - ${event.time_end}` : '';
         const location = event.location || 'Pista por asignar';
 
         // Calculate spots
@@ -40,70 +43,91 @@ window.WhatsAppService = {
         const maxPlayers = (event.max_courts || 4) * 4;
         const spotsLeft = Math.max(0, maxPlayers - players.length);
 
+        // EXTRA for Mixed: Gender Count
+        let mixedStats = '';
+        if (isMixed && richPlayers) {
+            const males = richPlayers.filter(p => {
+                const g = (p.gender || '').toLowerCase();
+                return g === 'male' || g === 'chico' || g === 'hombre' || g === 'masculino';
+            }).length;
+            const females = richPlayers.filter(p => {
+                const g = (p.gender || '').toLowerCase();
+                return g === 'female' || g === 'chica' || g === 'mujer' || g === 'femenino';
+            }).length;
+
+            if (males + females > 0) {
+                mixedStats = `⚖️ *Balance:* 🚹 ${males}  -  🚺 ${females}\n\n`;
+            }
+        }
+
         // Status Line
         let statusLine = '';
         if (spotsLeft === 0) statusLine = '🔴 *COMPLETO* (Apúntate a lista de espera)';
         else if (spotsLeft <= 4) statusLine = `⚠️ *¡ÚLTIMAS ${spotsLeft} PLAZAS!*`;
         else statusLine = `🟢 *${spotsLeft} PLAZAS LIBRES*`;
 
-        // Build Message
-        // Translate category
-        let catDisplay = (event.category || 'OPEN').toUpperCase();
-        if (catDisplay === 'MALE') catDisplay = 'MASCULINO';
-        if (catDisplay === 'FEMALE') catDisplay = 'FEMENINO';
-        if (catDisplay === 'MIXED') catDisplay = 'MIXTO';
+        // --- BUILD MESSAGE ---
+        let msg = `✨ ${headerEmoji} *${headerTitle}* ${headerEmoji} ✨\n`;
+        msg += `➖➖➖➖➖➖➖➖➖➖\n`;
+        msg += `📅 *Fecha:* ${dateStr}\n`;
+        msg += `⏰ *Hora:* ${timeStr}${endTimeStr}\n`;
+        msg += `📍 *Lugar:* ${location}\n`;
+        msg += `➖➖➖➖➖➖➖➖➖➖\n\n`;
 
-        let msg = `${headerEmoji} *ENTRENO ${catDisplay}*\n`;
-        msg += `📅 ${dateStr} - ${timeStr}\n`;
-        msg += `📍 ${location}\n\n`;
         msg += `${statusLine}\n\n`;
+        if (mixedStats) msg += mixedStats;
 
-        msg += `*JUGADORES INSCRITOS (${players.length}/${maxPlayers}):*\n`;
+        msg += `👥 *JUGADORES INSCRITOS (${players.length}/${maxPlayers}):*\n`;
 
         if (players.length === 0) {
             msg += `_Todavía nadie... ¡Sé el primero!_ 🚀\n`;
         } else {
-            // Use richPlayers if provided, otherwise fallback to basic event.players
             const displayList = richPlayers || players;
-
             displayList.forEach((p, index) => {
-                // Name
                 let pName = p.name ? p.name.trim() : 'Jugador';
 
-                // Extra Info
+                // Extra Info icons
                 const team = p.team_somospadel || p.team || ''; // Try to find team
                 const teamStr = Array.isArray(team) ? team[0] : team; // Take first team if multiple
                 const level = p.level || p.playtomic_level || '?.?';
 
-                // Time
-                let time = '';
-                if (p.joinedAt) {
-                    try {
-                        const d = new Date(p.joinedAt);
-                        const dd = String(d.getDate()).padStart(2, '0');
-                        const mm = String(d.getMonth() + 1).padStart(2, '0');
-                        const hh = String(d.getHours()).padStart(2, '0');
-                        const min = String(d.getMinutes()).padStart(2, '0');
-                        time = `${dd}/${mm} ${hh}:${min}`;
-                    } catch (e) { }
+                // Gender Icon for Mixed
+                let genderIcon = '';
+                if (isMixed && p.gender) {
+                    const g = (p.gender || '').toLowerCase();
+                    if (g === 'male' || g === 'chico' || g === 'hombre' || g === 'masculino') genderIcon = '🚹 ';
+                    else if (g === 'female' || g === 'chica' || g === 'mujer' || g === 'femenino') genderIcon = '🚺 ';
                 }
 
-                // Format: 1. Name (Team - Nivel X - Time)
-                // Filter out empty parts
-                const extras = [];
-                if (teamStr) extras.push(teamStr.toUpperCase());
-                if (level) extras.push(`N${level}`);
-                if (time) extras.push(time);
+                // Helpers for formatting
+                const parts = [];
+                // Team with Shield
+                if (teamStr) parts.push(`🛡️ ${teamStr.toUpperCase()}`);
+                // Level with Lightning
+                if (level) parts.push(`⚡ N${level}`);
 
-                const extraStr = extras.length > 0 ? ` (${extras.join(' - ')})` : '';
+                // Construct line
+                // 1️⃣ Name (Team - Level)
+                const numberIcon = this._getNumberEmoji(index + 1);
+                const extras = parts.length > 0 ? ` (${parts.join(' - ')})` : '';
 
-                msg += `${index + 1}. ${pName}${extraStr}\n`;
+                msg += `${numberIcon} ${genderIcon}${pName}${extras}\n`;
             });
         }
 
-        msg += `\n📲 *Inscríbete en la App:* https://somospadelbarcelona.github.io/Americanas-somospadel/#entrenos\n`;
+        msg += `\n👇 *INSCRÍBETE AQUÍ:*\n`;
+        msg += `🔗 https://somospadelbarcelona.github.io/Americanas-somospadel/#entrenos\n`;
 
         return msg;
+    },
+
+    // Helper for number emojis
+    _getNumberEmoji(num) {
+        const digitMap = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
+        // Special 10 emoji
+        if (num === 10) return '🔟';
+
+        return num.toString().split('').map(d => digitMap[parseInt(d)]).join('');
     },
 
     /**
@@ -114,7 +138,7 @@ window.WhatsAppService = {
         try {
             console.log("📤 Generating WhatsApp for:", event.name);
 
-            // Fetch rich data for players to show Team
+            // Fetch rich data for players to show Team & Gender
             let richPlayers = null;
             if (event.players && event.players.length > 0) {
                 try {
@@ -127,6 +151,7 @@ window.WhatsAppService = {
                             ...p,
                             team: user ? (user.team_somospadel || user.team || '') : '',
                             level: freshLevel,
+                            gender: user ? user.gender : null, // FETCH GENDER
                             // Ensure we preserve joinedAt from the event player object, not the user profile
                             joinedAt: p.joinedAt
                         };
