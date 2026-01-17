@@ -65,8 +65,8 @@
                         gender: p.gender || 'chico',
                         photo_url: p.photo_url || null,
                         stats: {
-                            americanas: { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, categories: {} },
-                            entrenos: { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, categories: {} }
+                            americanas: { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, categories: {} },
+                            entrenos: { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, categories: {} }
                         }
                     };
                 });
@@ -99,7 +99,7 @@
                         const scoreB = parseInt(m.score_b || 0);
 
                         // Helper to update player stats
-                        const updatePlayer = (playerId, win, tie, gamesW, gamesL) => {
+                        const updatePlayer = (playerId, win, tie, gamesW, gamesL, court) => {
                             const p = playerStats[playerId];
                             if (!p) return;
 
@@ -111,21 +111,23 @@
 
                             s.gamesWon += gamesW;
                             s.gamesLost += gamesL;
+                            if (parseInt(court) === 1) s.court1Count++;
 
                             // Category specific stats (Crucial for UI filters)
-                            if (!s.categories[categoryFinal]) s.categories[categoryFinal] = { points: 0, played: 0, won: 0, lost: 0 };
+                            if (!s.categories[categoryFinal]) s.categories[categoryFinal] = { points: 0, played: 0, won: 0, lost: 0, court1Count: 0 };
                             const catUpdate = s.categories[categoryFinal];
                             catUpdate.played++;
                             if (win) { catUpdate.won++; catUpdate.points += 3; }
                             else if (tie) { catUpdate.points += 1; }
                             else { catUpdate.lost++; }
+                            if (parseInt(court) === 1) catUpdate.court1Count = (catUpdate.court1Count || 0) + 1;
                         };
 
                         const isTie = scoreA === scoreB;
                         const aWin = scoreA > scoreB;
 
-                        teamA.forEach(id => updatePlayer(id, aWin, isTie, scoreA, scoreB));
-                        teamB.forEach(id => updatePlayer(id, !aWin, isTie, scoreB, scoreA));
+                        teamA.forEach(id => updatePlayer(id, aWin, isTie, scoreA, scoreB, m.court));
+                        teamB.forEach(id => updatePlayer(id, !aWin, isTie, scoreB, scoreA, m.court));
                     });
                 }
 

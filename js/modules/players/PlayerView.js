@@ -186,6 +186,26 @@
                                     Somos una comunidad. Respeta a compañeros y rivales. Los resultados son gestionados por los <b>administradores</b> para garantizar la transparencia.
                                 </p>
                             </div>
+
+                            <!-- TV Mode Guide -->
+                            <div style="background: linear-gradient(135deg, #000 0%, #1a1a1a 100%); color: #CCFF00; padding: 20px; border-radius: 20px; border: 1px solid #333; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                                <div style="font-weight: 800; margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-tv" style="animation: pulse 2s infinite;"></i> Novedad: Experiencia TV
+                                </div>
+                                <p style="font-size: 0.75rem; color: #ccc; line-height: 1.5; margin: 0;">
+                                    Podrás seguir todos los resultados y la clasificación en vivo desde el <b>PC de Entrenos y Americanas</b> de SomosPadel BCN.
+                                </p>
+                            </div>
+
+                            <!-- Chat Guide -->
+                            <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 20px; border-radius: 20px; border: 1px solid #334155; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                                <div style="font-weight: 800; margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-comments" style="color: #3b82f6;"></i> Novedad: Chat Táctico & SOS
+                                </div>
+                                <p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.5; margin: 0;">
+                                    Dentro de cada evento en vivo encontrarás un botón de <b>CHAT</b>. Úsalo para hablar con los rivales o pulsa <b>SOS</b> si te falta pareja a última hora.
+                                </p>
+                            </div>
                         </div>
                     </div>
 

@@ -604,7 +604,18 @@
             const amName = this.currentAmericanaDoc ? this.currentAmericanaDoc.name : "Americana Activa";
 
             return `
-                <div class="tour-header-context" style="background: linear-gradient(135deg, #CCFF00 0%, #00E36D 100%); padding: 35px 20px; text-align: center; border-bottom: 2px solid rgba(0,0,0,0.05);">
+                <div class="tour-header-context" style="background: linear-gradient(135deg, #CCFF00 0%, #00E36D 100%); padding: 35px 20px; text-align: center; border-bottom: 2px solid rgba(0,0,0,0.05); position: relative;">
+                    <!-- ACTION BUTTONS -->
+                    <div style="position:absolute; top:15px; right:15px; display:flex; gap:10px; z-index:10;">
+                         <div onclick="window.ChatView.init('${this.currentAmericanaDoc?.id}', '${amName}')" 
+                              style="background:black; color:white; padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.7rem; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+                             <i class="fas fa-comment-dots"></i> CHAT
+                         </div>
+                         <div onclick="window.openTVMode('${this.currentAmericanaDoc?.id}', '${this.currentAmericanaDoc?.isEntreno ? 'entreno' : 'americana'}')" 
+                              style="background:black; color:#CCFF00; padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.7rem; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+                             <i class="fas fa-tv"></i> TV
+                         </div>
+                    </div>
                     ${isPlayingHere ? `
                         <div style="background: rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.2); color: #000; display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 0.6rem; font-weight: 900; margin-bottom: 15px; letter-spacing: 1px; text-transform: uppercase;">
                            ESTÁS PARTICIPANDO ✅
@@ -861,11 +872,20 @@
 
                     [...namesA, ...namesB].forEach(name => {
                         if (!name) return;
-                        if (!stats[name]) stats[name] = { name, points: 0, wins: 0, matches: 0, court1Count: 0, bestCourt: 99 };
+                        if (!stats[name]) stats[name] = { name, points: 0, wins: 0, matches: 0, court1Count: 0, bestCourt: 99, lastMatchCourt: 99, lastMatchRound: 0 };
+
                         stats[name].matches++;
+                        const roundNum = parseInt(m.round || 0);
+
                         // Tracking for tie-breaker
                         if (court === 1) stats[name].court1Count++;
                         if (court < stats[name].bestCourt) stats[name].bestCourt = court;
+
+                        // Track position in LAST round played
+                        if (roundNum >= stats[name].lastMatchRound) {
+                            stats[name].lastMatchRound = roundNum;
+                            stats[name].lastMatchCourt = court;
+                        }
                     });
 
                     namesA.forEach(name => { if (name) { stats[name].points += sA; if (sA > sB) stats[name].wins++; } });
@@ -873,20 +893,32 @@
                 }
             });
 
-            const isEntreno = this.currentAmericanaDoc?.isEntreno;
             const ranking = Object.values(stats).sort((a, b) => {
-                // Primary: Points (Games in Americana, Match Wins in Entreno via p.points/wins consistency)
+                const isEntreno = this.currentAmericanaDoc?.isEntreno;
+
+                if (isEntreno) {
+                    // REGLAS DE DESEMPATE ENTRENO (POZO)
+
+                    // 1. Victorias (Wins) - Quien más gana, mejor.
+                    if (b.wins !== a.wins) return b.wins - a.wins;
+
+                    // 2. Veces en Pista 1 (Court 1 Count) - "Rey de la Pista"
+                    if (b.court1Count !== a.court1Count) return b.court1Count - a.court1Count;
+
+                    // 3. Posición Final (Last Match Court) - Quien acaba en pista más alta (numérico menor) es mejor
+                    // Ejemplo: Acabar en Pista 1 es mejor que en Pista 2
+                    if (a.lastMatchCourt !== b.lastMatchCourt) return a.lastMatchCourt - b.lastMatchCourt;
+
+                    // 4. Diferencia de Juegos / Puntos Totales
+                    return b.points - a.points;
+                }
+
+                // AMERICANA STANDARD (Games/Points is King)
+                // Primary: Points (Total Games Won)
                 const diff = b.points - a.points;
                 if (diff !== 0) return diff;
 
-                if (isEntreno) {
-                    // Tie-breaker 1: Most times in Court 1
-                    const c1Diff = b.court1Count - a.court1Count;
-                    if (c1Diff !== 0) return c1Diff;
-                    // Tie-breaker 2: Highest court reached (lower number is better)
-                    return a.bestCourt - b.bestCourt;
-                }
-
+                // Tie-breaker: Wins
                 return b.wins - a.wins;
             });
 
@@ -988,14 +1020,19 @@
                         const pairB = namesB.join(' / ');
                         const court = parseInt(m.court || 99);
 
-                        if (!players[pairA]) players[pairA] = { name: pairA, games: 0, wins: 0, matches: 0, losses: 0, pointsScored: 0, pointsAgainst: 0, court1Count: 0, bestCourt: 99 };
-                        if (!players[pairB]) players[pairB] = { name: pairB, games: 0, wins: 0, matches: 0, losses: 0, pointsScored: 0, pointsAgainst: 0, court1Count: 0, bestCourt: 99 };
+                        if (!players[pairA]) players[pairA] = { name: pairA, games: 0, wins: 0, matches: 0, losses: 0, pointsScored: 0, pointsAgainst: 0, court1Count: 0, bestCourt: 99, lastMatchCourt: 99, lastMatchRound: 0 };
+                        if (!players[pairB]) players[pairB] = { name: pairB, games: 0, wins: 0, matches: 0, losses: 0, pointsScored: 0, pointsAgainst: 0, court1Count: 0, bestCourt: 99, lastMatchCourt: 99, lastMatchRound: 0 };
 
                         players[pairA].matches++;
                         players[pairB].matches++;
+                        const roundNum = parseInt(m.round || 0);
+
                         if (court === 1) { players[pairA].court1Count++; players[pairB].court1Count++; }
                         if (court < players[pairA].bestCourt) players[pairA].bestCourt = court;
                         if (court < players[pairB].bestCourt) players[pairB].bestCourt = court;
+
+                        if (roundNum >= players[pairA].lastMatchRound) { players[pairA].lastMatchRound = roundNum; players[pairA].lastMatchCourt = court; }
+                        if (roundNum >= players[pairB].lastMatchRound) { players[pairB].lastMatchRound = roundNum; players[pairB].lastMatchCourt = court; }
 
                         if (winnerA) {
                             players[pairA].wins++;
@@ -1011,11 +1048,17 @@
                     } else {
                         // TWISTER: Count wins by INDIVIDUAL PLAYER
                         const court = parseInt(m.court || 99);
+                        const roundNum = parseInt(m.round || 0);
                         [...namesA, ...namesB].forEach(name => {
                             if (!name) return;
-                            if (!players[name]) players[name] = { name, games: 0, wins: 0, matches: 0, losses: 0, pointsScored: 0, pointsAgainst: 0, court1Count: 0, bestCourt: 99 };
+                            if (!players[name]) players[name] = { name, games: 0, wins: 0, matches: 0, losses: 0, pointsScored: 0, pointsAgainst: 0, court1Count: 0, bestCourt: 99, lastMatchCourt: 99, lastMatchRound: 0 };
                             if (court === 1) players[name].court1Count++;
                             if (court < players[name].bestCourt) players[name].bestCourt = court;
+                            // Track last match
+                            if (roundNum >= players[name].lastMatchRound) {
+                                players[name].lastMatchRound = roundNum;
+                                players[name].lastMatchCourt = court;
+                            }
                         });
 
                         namesA.forEach(n => {
@@ -1088,17 +1131,24 @@
             }
 
             const sortedPlayers = Object.values(players).sort((a, b) => {
-                const diff = b.games - a.games;
-                if (diff !== 0) return diff;
-
                 if (isEntreno) {
-                    // Tie-breaker 1: Court 1 count
-                    const c1 = b.court1Count - a.court1Count;
-                    if (c1 !== 0) return c1;
-                    // Tie-breaker 2: Best court reached
-                    return a.bestCourt - b.bestCourt;
+                    // REGLAS DE DESEMPATE ENTRENO (POZO)
+                    // 1. Victorias (Wins) - Quien más gana, mejor.
+                    if (b.wins !== a.wins) return b.wins - a.wins;
+
+                    // 2. Veces en Pista 1 (Court 1 Count) - "Rey de la Pista"
+                    if (b.court1Count !== a.court1Count) return b.court1Count - a.court1Count;
+
+                    // 3. Posición Final (Last Match Court) - Quien acaba en pista más alta (numérico menor) es mejor
+                    if (a.lastMatchCourt !== b.lastMatchCourt) return a.lastMatchCourt - b.lastMatchCourt;
+
+                    // 4. Juegos totales
+                    return b.games - a.games;
                 }
 
+                // Standard Americana Sort (Games > Wins)
+                const diff = b.games - a.games;
+                if (diff !== 0) return diff;
                 return b.wins - a.wins;
             });
             const top5 = sortedPlayers.slice(0, 5);

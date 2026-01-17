@@ -5,7 +5,7 @@
 (function () {
     class RankingView {
         constructor() {
-            this.currentView = 'americanas'; // americanas | entrenos
+            this.currentView = 'entrenos'; // americanas | entrenos
             this.currentCategory = 'todas'; // todas | male | female | mixed
             this.playersData = [];
         }
@@ -150,6 +150,8 @@
                         </div>
                     </div>
 
+
+
                     <!-- Main Navigation Tabs -->
                     <div style="margin-top: -15px; display: flex; justify-content: center; padding: 0 25px; position: relative; z-index: 10;">
                         <div style="background: white; padding: 6px; border-radius: 20px; display: flex; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; border: 1px solid #e2e8f0;">
@@ -206,9 +208,30 @@
             filtered.sort((a, b) => {
                 const sA = a.stats[this.currentView];
                 const sB = b.stats[this.currentView];
+
                 const pA = this.currentCategory === 'todas' ? sA.points : (sA.categories[this.currentCategory]?.points || 0);
                 const pB = this.currentCategory === 'todas' ? sB.points : (sB.categories[this.currentCategory]?.points || 0);
+
+                // 1. Points (Primary)
                 if (pB !== pA) return pB - pA;
+
+                // 2. Entrenos Tie-Breakers
+                if (this.currentView === 'entrenos') {
+                    const c1A = this.currentCategory === 'todas' ? sA.court1Count : (sA.categories[this.currentCategory]?.court1Count || 0);
+                    const c1B = this.currentCategory === 'todas' ? sB.court1Count : (sB.categories[this.currentCategory]?.court1Count || 0);
+
+                    // Court 1 Count (Who played most in T1?)
+                    if (c1B !== c1A) return c1B - c1A;
+
+                    // Note: "Last Match Court" is not easily available in Global Accumulated Stats without complex tracking
+                    // So we fallback to Level, or maybe Win Rate?
+                    // Let's use Win Rate as secondary tie breaker for global stats
+                    const wrA = (sA.played > 0) ? (sA.won / sA.played) : 0;
+                    const wrB = (sB.played > 0) ? (sB.won / sB.played) : 0;
+                    if (Math.abs(wrB - wrA) > 0.01) return wrB - wrA;
+                }
+
+                // 3. Fallback: Level
                 return b.level - a.level;
             });
 

@@ -50,12 +50,11 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                     const isFixedPairs = event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED;
 
                     // --- CRITICAL IDEMPOTENCY CHECK (DB Level) ---
-                    // Verifica si ya existen partidos para esta ronda para evitar duplicados si el usuario pulsa 2 veces
+                    // Verifica si ya existen partidos para esta ronda para evitar duplicados si el usuario pulsa 2// Idempotency check (DB level)
                     const checkColl = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
                     const existingSnap = await window.db.collection(checkColl)
                         .where('americana_id', '==', eventId)
                         .get();
-
                     const existingRoundMatches = [];
                     existingSnap.docs.forEach(doc => {
                         const d = doc.data();

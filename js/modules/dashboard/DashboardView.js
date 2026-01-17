@@ -42,8 +42,7 @@
                     min-height: 100vh;
                 ">
 
-                    
-                    <!-- LOGIC TO HIDE WEATHER IF EMPTY -->
+
                     <!-- 1. LIVE REGISTRATION WIDGET (FULL WIDTH SCROLLER) -->
                     <div id="registration-widget-root" style="
                         background: #0a0a14;
@@ -69,6 +68,65 @@
                             <div style="text-align: center; width: 100%; padding: 15px; color: rgba(255,255,255,0.4);">
                                 <i class="fas fa-spinner fa-spin" style="font-size: 1.2rem; color: #00E36D;"></i>
                                 <div style="margin-top: 8px; font-size: 0.75rem; font-weight: 700;">Buscando pistas...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- B.3 SOMOSPADEL.EU CONNECT (PREMIUM ENHANCED BANNER) -->
+                    <div id="noticias-banner-root" style="padding: 10px 15px 10px; animation: floatUp 0.85s ease-out forwards;">
+                        <div class="noticias-banner-premium" style="
+                            background: white; 
+                            border-radius: 24px; 
+                            padding: 24px; 
+                            color: #1e293b; 
+                            position: relative; 
+                            overflow: hidden; 
+                            box-shadow: 0 20px 40px rgba(0,0,0,0.06), 0 0 20px rgba(204,255,0,0.1);
+                            border: 1px solid #e2e8f0;
+                            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                        ">
+                            <!-- Premium Background Detail -->
+                            <div style="position: absolute; right: -20px; top: -20px; font-size: 7rem; color: #CCFF00; opacity: 0.1; transform: rotate(-15deg); filter: blur(1px);">
+                                <i class="fas fa-satellite-dish"></i>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; position: relative; z-index: 2;">
+                                <div style="
+                                    background: #CCFF00; 
+                                    color: #000; 
+                                    padding: 5px 12px; 
+                                    border-radius: 10px; 
+                                    font-size: 0.65rem; 
+                                    font-weight: 950; 
+                                    letter-spacing: 1.5px;
+                                    box-shadow: 0 0 15px rgba(204,255,0,0.5);
+                                    animation: neonPulse 2s infinite;
+                                ">NOTICIAS</div>
+                            </div>
+                            
+                            
+                            <p style="font-size: 0.85rem; color: #475569; line-height: 1.5; margin: 0 0 22px 0; font-weight: 600;">
+                                Ya puedes seguir los eventos en vivo en las <b style="color:#0f172a;">TV de SomosPadel BCN</b> y usar el nuevo <b style="color:#0ea5e9;">Chat Táctico</b> con botón SOS. ¡Toda la comunidad lo podrá ver!<br><br>
+                                Podrás seguir todos los resultados y la clasificación en vivo desde la tablet y/o PC de entrenos y americanas de SomosPadel BCN.
+                            </p>
+                            
+                            <div style="display: flex; gap: 10px; align-items: stretch; position: relative; z-index: 2;">
+                                <div style="flex: 1; display:flex; gap:8px;">
+                                     <div style="flex: 1; background: #1e293b; border: 1px solid #334155; padding: 12px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s; box-shadow: inset 0 0 10px rgba(204,255,0,0.1);" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#CCFF00'; this.style.background='#000';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='#334155'; this.style.background='#1e293b';">
+                                        <i class="fas fa-tv" style="color: #CCFF00; font-size: 1.3rem; filter: drop-shadow(0 0 10px rgba(204,255,0,0.8));"></i>
+                                        <span style="font-size: 0.55rem; font-weight: 950; color: white;">TV LIVE</span>
+                                    </div>
+                                    <div style="flex: 1; background: #1e293b; border: 1px solid #334155; padding: 12px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s; box-shadow: inset 0 0 10px rgba(14,165,233,0.1);" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#0ea5e9'; this.style.background='#000';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='#334155'; this.style.background='#1e293b';">
+                                        <i class="fas fa-comment-dots" style="color: #0ea5e9; font-size: 1.3rem; filter: drop-shadow(0 0 10px rgba(14,165,233,0.8));"></i>
+                                        <span style="font-size: 0.55rem; font-weight: 950; color: white;">CHAT SOS</span>
+                                    </div>
+                                </div>
+                                <div onclick="window.DashboardView.showChatInfo()" 
+                                     style="background: #0f172a; color: white; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 950; font-size: 0.8rem; cursor: pointer; padding: 0 18px; border: 2px solid #CCFF00; box-shadow: 0 5px 15px rgba(204,255,0,0.2); transition: all 0.3s;" 
+                                     onmouseover="this.style.transform='scale(1.05)'; this.style.background='#000';" onmouseout="this.style.transform='scale(1)'; this.style.background='#0f172a';">
+                                    <i class="fas fa-info-circle" style="color: #CCFF00;"></i>
+                                    <span>INFO</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -103,6 +161,9 @@
                         </div>
                     </div>
 
+
+
+
                     <!-- 1.5 ÚLTIMA HORA (AI FEED) -->
                     <div id="ai-activity-root" style="
                         background: rgba(30, 41, 59, 0.95);
@@ -133,7 +194,8 @@
                 <style>
                     @keyframes floatUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
                     @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-                    @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+                    @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+                    @keyframes neonPulse { 0%, 100% { box-shadow: 0 0 10px rgba(204,255,0,0.4), 0 0 20px rgba(204,255,0,0.2); transform: scale(1); } 50% { box-shadow: 0 0 25px rgba(204,255,0,0.8), 0 0 40px rgba(204,255,0,0.4); transform: scale(1.05); } }
                     .dashboard-v2-container ::-webkit-scrollbar { display: none; }
                 </style>
             `;
@@ -1040,6 +1102,81 @@
 
                 return '';
             } catch (e) { return ''; }
+        }
+        async showChatInfo() {
+            const modalId = 'chat-info-modal';
+            let modal = document.getElementById(modalId);
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = modalId;
+                modal.style.cssText = `
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+                    display: flex; align-items: center; justify-content: center;
+                    z-index: 9999999; opacity: 0; transition: opacity 0.3s ease;
+                `;
+                modal.onclick = () => {
+                    modal.style.opacity = '0';
+                    setTimeout(() => modal.remove(), 300);
+                };
+                document.body.appendChild(modal);
+            }
+
+            modal.innerHTML = `
+                <div style="
+                    background: white; border-radius: 32px; padding: 40px 30px;
+                    width: 90%; max-width: 450px; position: relative;
+                    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+                    text-align: center; border: 2px solid #CCFF00;
+                    animation: modalIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                " onclick="event.stopPropagation()">
+                    
+                    <h3 style="margin: 0 0 25px 0; color: #1e293b; font-weight: 950; font-size: 1.4rem; letter-spacing: -0.5px;">SOMOSPADEL.EU EXPERIENCE</h3>
+                    
+                    <!-- TV SECTION -->
+                    <div style="margin-bottom: 30px; text-align: left; background: #f8fafc; padding: 20px; border-radius: 20px; border: 1px solid #e2e8f0;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                            <div style="width: 40px; height: 40px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; color: #CCFF00; font-size: 1.2rem;">
+                                <i class="fas fa-tv"></i>
+                            </div>
+                            <span style="font-weight: 900; color: #1e293b; font-size: 1rem;">LIVE TV</span>
+                        </div>
+                        <p style="color: #64748b; font-size: 0.85rem; line-height: 1.5; margin: 0; font-weight: 500;">
+                            Podrás seguir todos los resultados y la clasificación en vivo desde el <b>PC de Entrenos y Americanas</b> de SomosPadel BCN.
+                        </p>
+                    </div>
+
+                    <!-- CHAT SECTION -->
+                    <div style="margin-bottom: 30px; text-align: left; background: #f8fafc; padding: 20px; border-radius: 20px; border: 1px solid #e2e8f0;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                            <div style="width: 40px; height: 40px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; color: #0ea5e9; font-size: 1.2rem;">
+                                <i class="fas fa-comment-dots"></i>
+                            </div>
+                            <span style="font-weight: 900; color: #1e293b; font-size: 1rem;">CHAT DEL EVENTO</span>
+                        </div>
+                        <p style="color: #64748b; font-size: 0.85rem; line-height: 1.5; margin: 0; font-weight: 500;">
+                            Dentro de cada evento en vivo encontrarás un botón de <b>CHAT</b>. Úsalo para hablar con los rivales o pulsa <b>SOS</b> si te falta pareja a última hora.
+                        </p>
+                    </div>
+
+                    <div style="background: #1e293b; color: #CCFF00; padding: 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 800; margin-bottom: 25px;">
+                        <i class="fas fa-info-circle"></i> Encontrarás ambos iconos en los entrenos en juego y finalizados.
+                    </div>
+
+                    <button style="
+                        width: 100%; background: #CCFF00; color: #000;
+                        border: none; padding: 18px; border-radius: 16px;
+                        font-weight: 950; font-size: 1rem; cursor: pointer;
+                        box-shadow: 0 10px 20px rgba(204,255,0,0.2);
+                        transition: all 0.2s;
+                    " onclick="this.closest('#chat-info-modal').click()">ENTENDIDO</button>
+                </div>
+                <style>
+                    @keyframes modalIn { from { opacity: 0; transform: scale(0.8) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+                </style>
+            `;
+
+            setTimeout(() => modal.style.opacity = '1', 10);
         }
     }
 

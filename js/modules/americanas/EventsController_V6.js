@@ -46,6 +46,15 @@
         }
     };
 
+    // Global handler for TV Mode
+    window.openTVMode = (id, type) => {
+        if (window.TVView) {
+            window.TVView.load(id, type);
+        } else {
+            console.error("❌ TVView not loaded");
+        }
+    };
+
     class EventsController {
         constructor() {
             this.state = {
