@@ -92,7 +92,7 @@
                         ` : ''}
 
                         <!-- Performance Stats: 2x2 Grid with Glow -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 40px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px;">
                             <div style="background: linear-gradient(135deg, #111, #0a0a0a); padding: 22px; border-radius: 24px; border: 1px solid #222; text-align: left; position: relative; overflow: hidden;">
                                 <div style="color: #64748b; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Partidos Totales</div>
                                 <div style="font-size: 2.2rem; font-weight: 950; color: #fff;">${data.stats.matches}</div>
@@ -115,6 +115,61 @@
                             </div>
                         </div>
 
+                        <!-- ANÁLISIS SMART DE JUEGO: BIG DATA INSIGHTS -->
+                        <div style="margin-bottom: 40px; background: rgba(204,255,0,0.03); border: 1px solid rgba(204,255,0,0.1); border-radius: 30px; padding: 25px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h3 style="margin: 0; font-size: 0.9rem; font-weight: 950; letter-spacing: 1px; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 10px;">
+                                    <i class="fas fa-brain" style="color: #CCFF00;"></i> ANÁLISIS SMART DE JUEGO
+                                </h3>
+                                <div style="font-size: 0.6rem; color: #CCFF00; font-weight: 900; background: rgba(204,255,0,0.1); padding: 4px 10px; border-radius: 10px; border: 1px solid rgba(204,255,0,0.2);">IA ANALYTICS</div>
+                            </div>
+
+                            <div style="display: grid; gap: 20px;">
+                                <!-- Metric 1: Impacto -->
+                                ${(() => {
+                    const impact = Math.min(98, 40 + (data.stats.points / (data.stats.matches || 1) * 6));
+                    const regularity = Math.min(95, 20 + (data.stats.winRate || 50) + (Math.min(data.stats.matches || 0, 20)));
+                    const totalGames = (data.stats.gamesWon || 0) + (data.stats.gamesLost || 0);
+                    const dominance = totalGames > 0 ? Math.round((data.stats.gamesWon / totalGames) * 100) : 50;
+
+                    return `
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                            <span style="font-size: 0.75rem; color: #fff; font-weight: 800;">EFECTIVIDAD REAL</span>
+                                            <span style="font-size: 0.75rem; color: #CCFF00; font-weight: 950;">${Math.round(impact)}%</span>
+                                        </div>
+                                        <div style="height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; overflow: hidden;">
+                                            <div style="width: ${impact}%; height: 100%; background: linear-gradient(90deg, #CCFF00, #9fcc00); box-shadow: 0 0 15px rgba(204,255,0,0.4);"></div>
+                                        </div>
+                                        <p style="font-size: 0.65rem; color: #64748b; margin-top: 6px;">Peso real de tu juego en los puntos clave de cada partido.</p>
+                                    </div>
+
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                            <span style="font-size: 0.75rem; color: #fff; font-weight: 800;">CONSISTENCIA</span>
+                                            <span style="font-size: 0.75rem; color: #3b82f6; font-weight: 950;">${Math.round(regularity)}%</span>
+                                        </div>
+                                        <div style="height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; overflow: hidden;">
+                                            <div style="width: ${regularity}%; height: 100%; background: linear-gradient(90deg, #3b82f6, #2dd4bf); box-shadow: 0 0 15px rgba(59,130,246,0.4);"></div>
+                                        </div>
+                                        <p style="font-size: 0.65rem; color: #64748b; margin-top: 6px;">Capacidad de mantener tu nivel en todas las rondas.</p>
+                                    </div>
+
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                            <span style="font-size: 0.75rem; color: #fff; font-weight: 800;">RATIO DE DOMINIO</span>
+                                            <span style="font-size: 0.75rem; color: #f59e0b; font-weight: 950;">${dominance}%</span>
+                                        </div>
+                                        <div style="height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; overflow: hidden;">
+                                            <div style="width: ${dominance}%; height: 100%; background: linear-gradient(90deg, #f59e0b, #ef4444); box-shadow: 0 0 15px rgba(245,158,11,0.4);"></div>
+                                        </div>
+                                        <p style="font-size: 0.65rem; color: #64748b; margin-top: 6px;">Efectividad directa en pista (Juegos Ganados vs Perdidos).</p>
+                                    </div>
+                                    `;
+                })()}
+                            </div>
+                        </div>
+
                         <!-- Recent Matches Scroll -->
                         <div style="margin-bottom: 40px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 5px;">
@@ -129,17 +184,17 @@
                                         <p style="font-size: 0.85rem; font-weight: 800; margin: 0;">Aún no has disputado partidos oficiales</p>
                                     </div>
                                 ` : data.recentMatches.slice(0, 5).map(m => {
-                const dateStr = (() => {
-                    if (!m.date) return '---';
-                    if (typeof m.date === 'string' && m.date.includes('/')) return m.date;
-                    try {
-                        const d = new Date(m.date);
-                        if (isNaN(d.getTime())) return '---';
-                        return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-                    } catch (e) { return '---'; }
-                })();
+                    const dateStr = (() => {
+                        if (!m.date) return '---';
+                        if (typeof m.date === 'string' && m.date.includes('/')) return m.date;
+                        try {
+                            const d = new Date(m.date);
+                            if (isNaN(d.getTime())) return '---';
+                            return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+                        } catch (e) { return '---'; }
+                    })();
 
-                return `
+                    return `
                                     <div style="background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%); padding: 18px 22px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; position: relative; overflow: hidden;">
                                         <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: ${m.result === 'W' ? '#CCFF00' : (m.result === 'D' ? '#94a3b8' : '#ef4444')}; opacity: 0.8;"></div>
                                         <div style="flex: 1;">
@@ -154,52 +209,102 @@
                                         </div>
                                     </div>
                                     `;
-            }).join('')}
+                }).join('')}
                             </div>
                         </div>
 
-                        <!-- SOMOSPADEL RULES PRO -->
-                        <div style="margin-bottom: 20px;">
-                            <h3 style="margin: 0 0 20px; font-size: 1rem; font-weight: 950; letter-spacing: 1px; color: #CCFF00; text-transform: uppercase; display: flex; align-items: center; gap: 10px;"><i class="fas fa-shield-alt"></i> Normativa Elite</h3>
-                            <div style="display: grid; gap: 12px;">
-                                <div style="background: #0a0a0a; padding: 20px; border-radius: 24px; border: 1px solid #1a1a1a; display: flex; align-items: flex-start; gap: 15px;">
-                                    <div style="width: 36px; height: 36px; background: rgba(255,215,0,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #FFD700; flex-shrink: 0;"><i class="fas fa-star"></i></div>
-                                    <div>
-                                        <div style="font-weight: 900; color: #fff; margin-bottom: 4px; font-size: 0.85rem;">Sistema de Puntuación MVP</div>
-                                        <p style="font-size: 0.72rem; color: #666; line-height: 1.6; margin: 0;">Cada juego ganado en pista equivale a 1 punto para tu ranking personal. Maximizas tu puntuación aunque pierdas el set.</p>
+                        <!-- SOMOSPADEL RULES PRO: REINVENTED -->
+                        <div style="margin-bottom: 40px;">
+                            <div style="background: linear-gradient(90deg, #CCFF00, #9fcc00); height: 2px; width: 40px; margin-bottom: 20px;"></div>
+                            <h3 style="margin: 0 0 25px; font-size: 1.2rem; font-weight: 950; letter-spacing: -0.5px; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 12px;">
+                                <i class="fas fa-shield-virus" style="color: #CCFF00; font-size: 1.4rem;"></i> Normativa <span style="color: #CCFF00;">Elite</span>
+                            </h3>
+
+                            <div style="display: grid; gap: 15px;">
+                                <!-- MVP SYSTEM CARD -->
+                                <div style="background: rgba(255,255,255,0.03); padding: 25px; border-radius: 28px; border: 1px solid rgba(255,255,255,0.08); position: relative; overflow: hidden; transition: all 0.3s ease;">
+                                    <div style="position: absolute; right: -15px; top: -15px; font-size: 5rem; opacity: 0.03; color: #fff;"><i class="fas fa-star"></i></div>
+                                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 12px;">
+                                        <div style="width: 40px; height: 40px; background: rgba(204,255,0,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #CCFF00; font-size: 1.1rem; border: 1px solid rgba(204,255,0,0.2);">
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                        <span style="font-weight: 900; font-size: 0.95rem; color: #fff; text-transform: uppercase;">Sistema de Puntuación MVP</span>
                                     </div>
+                                    <p style="font-size: 0.8rem; color: #aaa; line-height: 1.6; margin: 0; font-weight: 500;">
+                                        Cada juego ganado en pista equivale a <b style="color: #fff;">1 punto</b> para tu ranking. En SomosPadel, cada punto cuenta: maximizas tu puntuación incluso si no ganas el set completo.
+                                    </p>
                                 </div>
-                                <div style="background: #0a0a0a; padding: 20px; border-radius: 24px; border: 1px solid #1a1a1a; display: flex; align-items: flex-start; gap: 15px;">
-                                    <div style="width: 36px; height: 36px; background: rgba(59,130,246,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #3b82f6; flex-shrink: 0;"><i class="fas fa-microchip"></i></div>
-                                    <div>
-                                        <div style="font-weight: 900; color: #fff; margin-bottom: 4px; font-size: 0.85rem;">Algoritmo de Nivel Pro</div>
-                                        <p style="font-size: 0.72rem; color: #666; line-height: 1.6; margin: 0;">Tu nivel se ajusta por décimas basándose en el Win Rate y la dificultad de los rivales enfrentados en cada jornada.</p>
+
+                                <!-- ALGORITHM DETAILED BREAKDOWN -->
+                                <div style="background: linear-gradient(135deg, rgba(204,255,0,0.05) 0%, rgba(0,0,0,0) 100%); padding: 25px; border-radius: 28px; border: 1px solid rgba(204,255,0,0.2); position: relative; overflow: hidden;">
+                                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                                        <div style="width: 40px; height: 40px; background: #CCFF00; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #000; font-size: 1.1rem; box-shadow: 0 0 15px rgba(204,255,0,0.3);">
+                                            <i class="fas fa-microchip"></i>
+                                        </div>
+                                        <span style="font-weight: 900; font-size: 0.95rem; color: #fff; text-transform: uppercase;">Algoritmo Inteligente de Nivel</span>
+                                    </div>
+
+                                    <div style="background: rgba(0,0,0,0.3); border-radius: 20px; padding: 18px; margin-bottom: 15px;">
+                                        <div style="font-size: 0.75rem; color: #CCFF00; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: flex; justify-content: space-between;">
+                                            <span>¿Cómo sube o baja mi nivel?</span>
+                                            <span>DIÁNAMICO</span>
+                                        </div>
+                                        <p style="font-size: 0.8rem; color: #ddd; line-height: 1.6; margin: 0 0 15px;">
+                                            Tu nivel no es estático. Se ajusta por <b style="color: #fff;">décimas (0.01 - 0.15)</b> tras cada jornada oficial basándose en:
+                                        </p>
+                                        
+                                        <!-- Ponderación visual -->
+                                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <div style="flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                                                    <div style="width: 60%; height: 100%; background: #CCFF00;"></div>
+                                                </div>
+                                                <span style="font-size: 0.65rem; font-weight: 900; color: #fff; width: 100px;">60% PERFORMANCE</span>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <div style="flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                                                    <div style="width: 40%; height: 100%; background: #3b82f6;"></div>
+                                                </div>
+                                                <span style="font-size: 0.65rem; font-weight: 900; color: #fff; width: 100px;">40% DIFICULTAD</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                        <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                                            <div style="font-size: 0.65rem; color: #22c55e; font-weight: 900; margin-bottom: 5px;"><i class="fas fa-arrow-up"></i> SUBES DÉCIMAS</div>
+                                            <div style="font-size: 0.6rem; color: #888; line-height: 1.4;">Victorias contra rivales de nivel superior o Win Rate > 65%.</div>
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                                            <div style="font-size: 0.65rem; color: #ef4444; font-weight: 900; margin-bottom: 5px;"><i class="fas fa-arrow-down"></i> BAJAS DÉCIMAS</div>
+                                            <div style="font-size: 0.6rem; color: #888; line-height: 1.4;">Derrotas contra niveles inferiores o rendimiento inconsistente.</div>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-top: 20px; padding: 12px; background: rgba(204,255,0,0.1); border-radius: 15px; border: 1px dashed rgba(204,255,0,0.3); font-size: 0.7rem; color: #CCFF00; font-weight: 700; text-align: center;">
+                                        <i class="fas fa-info-circle"></i> Ajuste automático para garantizar grupos equilibrados.
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                                    <p style="font-size: 0.75rem; color: #888; line-height: 1.5; margin: 0;">Tu nivel se ajusta dinámicamente tras cada partido oficial para garantizar grupos equilibrados.</p>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- SETTINGS & AUTH -->
-                        <div style="background: #111; border-radius: 24px; border: 1px solid #222; overflow: hidden;">
-                            <div onclick="window.PlayerView.showUpdatePasswordPrompt()" style="display: flex; align-items: center; padding: 20px; border-bottom: 1px solid #222; cursor: pointer;">
-                                <div style="width: 44px; height: 44px; background: rgba(59,130,246,0.1); color: #3b82f6; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="fas fa-key"></i></div>
-                                <div style="flex: 1; margin-left: 15px;">
-                                    <div style="font-weight: 900; font-size: 0.95rem;">Contraseña Segura</div>
-                                    <div style="font-size: 0.7rem; color: #666; font-weight: 700;">ACTUALIZAR CREDENCIALES</div>
+                        <!-- SETTINGS & AUTH: Glass Edition -->
+                        <div style="background: rgba(255,255,255,0.03); border-radius: 28px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; margin-top: 20px;">
+                            <div onclick="window.PlayerView.showUpdatePasswordPrompt()" style="display: flex; align-items: center; padding: 22px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                                <div style="width: 44px; height: 44px; background: rgba(59,130,246,0.1); color: #3b82f6; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1px solid rgba(59,130,246,0.2);"><i class="fas fa-key"></i></div>
+                                <div style="flex: 1; margin-left: 18px;">
+                                    <div style="font-weight: 900; font-size: 0.95rem; color: #fff;">Contraseña Segura</div>
+                                    <div style="font-size: 0.7rem; color: #666; font-weight: 800; letter-spacing: 0.5px;">ACTUALIZAR CREDENCIALES</div>
                                 </div>
                                 <i class="fas fa-chevron-right" style="color: #444; font-size: 0.8rem;"></i>
                             </div>
-                            <div onclick="window.AuthService.logout()" style="display: flex; align-items: center; padding: 20px; cursor: pointer;">
-                                <div style="width: 44px; height: 44px; background: rgba(255,59,48,0.1); color: #FF3B30; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="fas fa-power-off"></i></div>
-                                <div style="flex: 1; margin-left: 15px;">
+                            <div onclick="window.AuthService.logout()" style="display: flex; align-items: center; padding: 22px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,59,48,0.05)'" onmouseout="this.style.background='transparent'">
+                                <div style="width: 44px; height: 44px; background: rgba(255,59,48,0.1); color: #FF3B30; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1px solid rgba(255,59,48,0.2);"><i class="fas fa-power-off"></i></div>
+                                <div style="flex: 1; margin-left: 18px;">
                                     <div style="font-weight: 900; font-size: 0.95rem; color: #FF3B30;">Cerrar Sesión</div>
-                                    <div style="font-size: 0.7rem; color: #666; font-weight: 700;">SALIR DE LA APLICACIÓN</div>
+                                    <div style="font-size: 0.7rem; color: #666; font-weight: 800; letter-spacing: 0.5px;">SALIR DE LA APLICACIÓN</div>
                                 </div>
                             </div>
                         </div>

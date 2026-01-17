@@ -171,7 +171,7 @@
                         <!-- HEADER -->
                         <div style="height: 12vh; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 2px solid #222; background: #000;">
                             <div style="display: flex; align-items: center; gap: 30px;">
-                                <div onclick="window.Router.navigate('dashboard')" style="background: #111; color: #CCFF00; border: 2px solid #CCFF00; padding: 10px 20px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 950; font-size: 1.2rem; box-shadow: 0 0 15px rgba(204,255,0,0.3);">
+                                <div onclick="window.location.href='index.html'" style="background: #111; color: #CCFF00; border: 2px solid #CCFF00; padding: 10px 20px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 950; font-size: 1.2rem; box-shadow: 0 0 15px rgba(204,255,0,0.3);">
                                     <i class="fas fa-arrow-left"></i> VOLVER
                                 </div>
                                 <img src="img/logo_somospadel.png" style="height: 8vh;">

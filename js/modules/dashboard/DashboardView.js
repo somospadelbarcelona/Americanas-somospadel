@@ -43,36 +43,52 @@
                 ">
 
 
+
+                    <style>
+                        @keyframes skeletonShine {
+                            0% { transform: translateX(-100%); }
+                            100% { transform: translateX(100%); }
+                        }
+                    </style>
+
                     <!-- 1. LIVE REGISTRATION WIDGET (FULL WIDTH SCROLLER) -->
                     <div id="registration-widget-root" style="
-                        background: #0a0a14;
-                        border: 1px solid rgba(0, 227, 109, 0.3);
-                        border-radius: 20px;
-                        margin: 25px 15px 0px; /* MORE TOP MARGIN, ZERO BOTTOM */
-                        padding: 12px 15px;
-                        box-shadow: 0 5px 25px rgba(0,0,0,0.5); /* REDUCED SHADOW */
+                        background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+                        border: 1px solid rgba(0, 227, 109, 0.2);
+                        border-radius: 24px;
+                        margin: 25px 15px 10px;
+                        padding: 15px;
+                        box-shadow: 0 15px 35px rgba(0,0,0,0.05);
                         z-index: 10;
                         animation: floatUp 0.8s ease-out forwards;
                     ">
-                        <div class="live-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding: 5px 5px 0;">
-                            <div style="font-weight:950; font-size:1rem; color:white; letter-spacing:-0.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px;">
-                                <i class="fas fa-bolt" style="color: #00E36D; font-size: 1.2rem;"></i> INSCRIPCIONES
-                            </div>
-                            <div class="live-indicator-tag" style="background:rgba(0,227,109,0.1); color:#00E36D; padding:4px 12px; border-radius:100px; font-size:0.7rem; font-weight:950; display:flex; align-items:center; border: 1px solid rgba(0,227,109,0.2);">
-                                <div class="pulsing-dot" style="background:#00E36D; width:6px; height:6px; border-radius:50%; margin-right:6px; animation:blink 1s infinite;"></div>
-                                LIVE
+                        <div class="live-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <div style="
+                                background: #00E36D; 
+                                color: #000; 
+                                padding: 5px 15px; 
+                                border-radius: 12px; 
+                                font-size: 0.8rem; 
+                                font-weight: 950; 
+                                letter-spacing: 1px;
+                                box-shadow: 0 0 15px rgba(0,227,109,0.4);
+                                text-transform: uppercase;
+                            ">
+                                NOTICIAS
                             </div>
                         </div>
                         
-                        <div id="live-scroller-content" class="live-scroller" style="overflow-x: auto; display: flex; gap: 15px; justify-content: center; padding-bottom: 5px; -webkit-overflow-scrolling: touch;">
-                            <div style="text-align: center; width: 100%; padding: 15px; color: rgba(255,255,255,0.4);">
-                                <i class="fas fa-spinner fa-spin" style="font-size: 1.2rem; color: #00E36D;"></i>
-                                <div style="margin-top: 8px; font-size: 0.75rem; font-weight: 700;">Buscando pistas...</div>
-                            </div>
+                        <div id="live-scroller-content" class="live-scroller" style="overflow-x: hidden; display: flex; padding-bottom: 5px; gap: 10px;">
+                            <!-- SKELETON PLACEHOLDERS TO START "FULL" -->
+                            ${Array(4).fill(0).map(() => `
+                                <div style="min-width: 160px; height: 120px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); overflow: hidden; position: relative;">
+                                    <div style="position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); transform: translateX(-100%); animation: skeletonShine 1.5s infinite;"></div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
 
-                    <!-- B.3 SOMOSPADEL.EU CONNECT (PREMIUM ENHANCED BANNER) -->
+                    <!-- 2. SOMOSPADEL.EU CONNECT (PREMIUM ENHANCED BANNER) -->
                     <div id="noticias-banner-root" style="padding: 10px 15px 10px; animation: floatUp 0.85s ease-out forwards;">
                         <div class="noticias-banner-premium" style="
                             background: white; 
@@ -92,22 +108,20 @@
                             
                             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; position: relative; z-index: 2;">
                                 <div style="
-                                    background: #CCFF00; 
+                                    background: #00E36D; 
                                     color: #000; 
-                                    padding: 5px 12px; 
-                                    border-radius: 10px; 
-                                    font-size: 0.65rem; 
+                                    padding: 5px 15px; 
+                                    border-radius: 12px; 
+                                    font-size: 0.8rem; 
                                     font-weight: 950; 
-                                    letter-spacing: 1.5px;
-                                    box-shadow: 0 0 15px rgba(204,255,0,0.5);
-                                    animation: neonPulse 2s infinite;
-                                ">NOTICIAS</div>
+                                    letter-spacing: 1px;
+                                    box-shadow: 0 0 15px rgba(0,227,109,0.4);
+                                    text-transform: uppercase;
+                                ">NUEVO</div>
                             </div>
                             
-                            
                             <p style="font-size: 0.85rem; color: #475569; line-height: 1.5; margin: 0 0 22px 0; font-weight: 600;">
-                                Ya puedes seguir los eventos en vivo en las <b style="color:#0f172a;">TV de SomosPadel BCN</b> y usar el nuevo <b style="color:#0ea5e9;">Chat Táctico</b> con botón SOS. ¡Toda la comunidad lo podrá ver!<br><br>
-                                Podrás seguir todos los resultados y la clasificación en vivo desde la tablet y/o PC de entrenos y americanas de SomosPadel BCN.
+                                Ya puedes seguir los eventos en vivo en las <b style="color:#0f172a;">TV de SomosPadel BCN</b> y usar el nuevo <b style="color:#0ea5e9;">Chat Táctico</b> con botón SOS. ¡Toda la comunidad lo podrá ver!
                             </p>
                             
                             <div style="display: flex; gap: 10px; align-items: stretch; position: relative; z-index: 2;">
@@ -131,24 +145,18 @@
                         </div>
                     </div>
 
-                    <!-- NEW WEATHER WIDGET -->
-                    <div id="weather-widget-root" style="
-                        margin: 0 15px;
-                        display: none; /* HIDDEN BY DEFAULT */ 
-                        gap: 10px; 
-                        overflow-x: auto; 
-                        animation: floatUp 0.8s ease-out forwards;
-                    ">
+                    <!-- 3. NEW WEATHER WIDGET -->
+                    <div id="weather-widget-root" style="margin: 0 15px 15px; animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS -->
                     </div>
 
-                    <!-- 1.25 ACTIVIDAD RECIENTE -->
+                    <!-- 4. ACTIVIDAD RECIENTE -->
                     <div id="activity-feed-root" style="
                         background: rgba(10, 10, 20, 0.9);
                         backdrop-filter: blur(20px);
                         border: 1px solid rgba(0, 227, 109, 0.2);
                         border-radius: 20px;
-                        margin: 5px 15px 10px; /* BALANCED MARGINS */
+                        margin: 0px 15px 15px;
                         padding: 15px;
                         box-shadow: 0 15px 35px rgba(0,0,0,0.5);
                         animation: floatUp 0.85s ease-out forwards;
@@ -157,7 +165,7 @@
                             <i class="fas fa-rss" style="color: #00E36D; font-size: 1rem;"></i> ACTIVIDAD RECIENTE
                         </div>
                         <div id="activity-feed-content" style="display: flex; flex-direction: column; gap: 10px;">
-                            <!-- Content will be loaded here -->
+                            <!-- Content loaded via JS -->
                         </div>
                     </div>
 
@@ -192,10 +200,27 @@
                 </div>
 
                 <style>
-                    @keyframes floatUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-                    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-                    @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
-                    @keyframes neonPulse { 0%, 100% { box-shadow: 0 0 10px rgba(204,255,0,0.4), 0 0 20px rgba(204,255,0,0.2); transform: scale(1); } 50% { box-shadow: 0 0 25px rgba(204,255,0,0.8), 0 0 40px rgba(204,255,0,0.4); transform: scale(1.05); } }
+                    @keyframes slowTicker {
+                        0% { transform: translateX(0); }
+                        100% { transform: translateX(-50%); }
+                    }
+                    .ticker-container {
+                        width: 100%;
+                        overflow: hidden;
+                        position: relative;
+                        mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+                        -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+                    }
+                    .ticker-content {
+                        display: flex;
+                        gap: 12px;
+                        animation: slowTicker 60s linear infinite;
+                        width: max-content;
+                        padding: 10px 0;
+                    }
+                    .ticker-content:hover {
+                        animation-play-state: paused;
+                    }
                     .dashboard-v2-container ::-webkit-scrollbar { display: none; }
                 </style>
             `;
@@ -239,18 +264,17 @@
                     }
                 } catch (e) { console.error("Weather fetch failed", e); }
 
-                // 3. Populate Rest of Dashboard
-                const proRoot = document.getElementById('pro-content-root');
-                if (proRoot) {
-                    // Prepare Weather HTML (Empty skeletons until data arrives)
+                // 2.2 Populate Weather Widget
+                const weatherRoot = document.getElementById('weather-widget-root');
+                if (weatherRoot) {
                     let weatherHtml = `
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                             ${this.renderWeatherCard('EL PRAT', '--', '...', { wind: '--', hum: '--', rain: '--' })}
                             ${this.renderWeatherCard('CORNELLÀ', '--', '...', { wind: '--', hum: '--', rain: '--' })}
                         </div>`;
 
                     if (weatherData && weatherData.length > 0) {
-                        weatherHtml = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px;">`;
+                        weatherHtml = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">`;
                         weatherData.forEach(w => {
                             weatherHtml += this.renderWeatherCard(
                                 w.name,
@@ -270,14 +294,16 @@
                         });
                         weatherHtml += `</div>`;
                     }
+                    weatherRoot.innerHTML = weatherHtml;
+                    weatherRoot.style.display = 'block';
+                }
 
+                // 3. Populate Rest of Dashboard
+                const proRoot = document.getElementById('pro-content-root');
+                if (proRoot) {
                     proRoot.innerHTML = `
                         <div style="padding: 10px 15px 120px;">
-                            
-                             <!-- A. DUAL WEATHER WIDGETS (PADEL INTELLIGENCE) -->
-                             ${weatherHtml}
-
-                            <!-- B. MI AGENDA (PLAYER'S EVENTS) -->
+                            <!-- MI AGENDA (PLAYER'S EVENTS) -->
                             <div class="section-header" style="padding: 0 5px; margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
                                 <h3 style="color:white; font-size:1.1rem; font-weight:950; letter-spacing:-0.5px; margin:0;">MI <span style="background: linear-gradient(90deg, #00E36D, #00c4ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AGENDA</span></h3>
                                 <span style="color:#00c4ff; font-size:0.8rem; font-weight:800; cursor:pointer;" onclick="Router.navigate('agenda')">Ver todo <i class="fas fa-chevron-right" style="font-size:0.6rem;"></i></span>
@@ -287,7 +313,6 @@
                             <div class="agenda-scroller" style="display: flex; overflow-x: auto; padding-bottom: 15px; gap: 15px; scroll-snap-type: x mandatory;">
                                 ${this.renderAgendaWidget(context.myEvents || [])}
                             </div>
-
                         </div>
                     `;
                 }
@@ -483,117 +508,114 @@
 
         async renderLiveWidget(context) {
             try {
-                const allEvents = window.AmericanaService ? await window.AmericanaService.getAllActiveEvents() : [];
-                // CRITICAL FIX: Include 'live' events so Admin can see them running
-                const openEvents = allEvents.filter(a => ['open', 'upcoming', 'draft', 'scheduled', 'live'].includes(a.status));
+                // 1. DATA GATHERING (INTEL)
+                const [allEvents, weatherData, rankingData] = await Promise.all([
+                    window.AmericanaService ? window.AmericanaService.getAllActiveEvents() : [],
+                    window.WeatherService ? window.WeatherService.getDashboardWeather() : [],
+                    window.RankingController ? window.RankingController.calculateSilently() : []
+                ]);
 
-                if (openEvents.length > 0) {
-                    let html = '';
-                    openEvents.forEach(am => {
-                        let statusColor = '#00c4ff';
-                        let statusLabel = 'PRÓXIMO';
-                        let isLive = false;
+                let itemsHtml = [];
 
-                        if (am.status === 'open') {
-                            statusColor = '#00E36D';
-                            statusLabel = 'ABIERTO';
-                        } else if (am.status === 'live') {
-                            statusColor = '#FF2D55';
-                            statusLabel = 'EN JUEGO';
-                            isLive = true;
-                        }
-
-                        const players = am.players || am.registeredPlayers || [];
-                        const maxPlayers = (am.max_courts || 0) * 4;
-                        const spotsLeft = Math.max(0, maxPlayers - players.length);
-                        const isFull = maxPlayers > 0 && players.length >= maxPlayers;
-                        const categoryIcon = am.category === 'female' ? '♀️' : (am.category === 'male' ? '♂️' : '🎾');
-                        const typeLabel = am.type === 'entreno' ? 'ENTRENO' : 'AMERICANA';
-
-                        /* 
-                            Registration Ticker Card 
-                        */
-                        let catColor = '#84cc16'; // Default (Green/Generic)
-                        const lowerName = am.name.toLowerCase();
-                        if (lowerName.includes('femenina') || lowerName.includes('chicas')) {
-                            catColor = '#ec4899'; // Pink
-                        } else if (lowerName.includes('masculina') || lowerName.includes('chicos')) {
-                            catColor = '#06b6d4'; // Cyan
-                        } else if (lowerName.includes('mixto') || lowerName.includes('mix')) {
-                            catColor = '#8b5cf6'; // Violet
-                        }
-
-                        // Override color if live
-                        if (isLive) catColor = '#FF2D55';
-
-                        html += `
-                            <div class="registration-ticker-card" 
-                                 onclick="event.stopPropagation(); window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');" 
-                                 style="
-                                min-width: 160px; 
-                                max-width: 160px;
-                                background: linear-gradient(135deg, ${catColor}44 0%, rgba(10,10,10,0.95) 100%);
-                                border-top: 3px solid ${statusColor};
-                                border-bottom: 1px solid ${catColor}30;
-                                border-left: 1px solid ${catColor}30;
-                                border-right: 1px solid ${catColor}30;
-                                border-radius: 12px; 
-                                padding: 10px; 
-                                flex-shrink: 0; 
-                                box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-                                display: flex; 
-                                flex-direction: column; 
-                                gap: 6px; 
-                                cursor: pointer;
-                                transition: all 0.3s ease;
-                                backdrop-filter: blur(5px);
-                                -webkit-backdrop-filter: blur(5px);
-                                ${isLive ? 'animation: pulse-border 2s infinite;' : ''}
-                            "
-                            >
-                                <!-- Header with Status -->
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <span style="
-                                        font-size:0.5rem; 
-                                        font-weight:900; 
-                                        color:white; 
-                                        background:${statusColor}; 
-                                        padding:2px 6px; 
-                                        border-radius:4px;
-                                        ${isLive ? 'animation: blink 1s infinite;' : ''}
-                                    ">${statusLabel}</span>
-                                    <span style="font-size:0.85rem; filter: drop-shadow(0 0 5px ${catColor});">${categoryIcon}</span>
-                                </div>
-                                
-                                <!-- Event Name - Compact -->
-                                <div style="color:white; font-weight:800; font-size:0.75rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.1; text-shadow: 0 0 10px ${catColor}80;">
-                                    ${am.name.toUpperCase()}
-                                </div>
-                                <div style="color:${statusColor}; font-size:0.5rem; font-weight:900; opacity:0.8; letter-spacing:1px;">${typeLabel}</div>
-                                
-                                <!-- Date & Time - Compact -->
-                                <div style="color:#aaa; font-size:0.6rem; font-weight:700;">
-                                    ${this.formatDateShort(am.date)} ${am.time}
-                                </div>
-                                
-                                <!-- Status & Count - Compact -->
-								<div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; padding-top:6px; border-top:1px solid ${catColor}30; cursor: pointer;"
-									 onclick="event.stopPropagation(); window.EventsController?.openPlayerListModal('${am.id}')">
-									<div style="font-size: 0.75rem; color: ${isFull ? '#FF3B30' : '#00E36D'}; font-weight: 900;">
-										${isFull ? 'COMPLETO' : `${spotsLeft} LIB.`}
-									</div>
-									<div style="font-size: 1.1rem; color: ${isFull ? '#FF3B30' : '#00E36D'}; font-weight: 900; display: flex; align-items: center; gap: 4px;">
-										<span style="font-size: 1.3rem;">${players.length}</span>
-										<span style="color: #888; font-size: 0.8rem;">/${maxPlayers}</span>
-									</div>
-								</div>
+                // A. WEATHER INTEL CARD (SMART)
+                if (weatherData && weatherData[0]) {
+                    const w = weatherData[0];
+                    itemsHtml.push(`
+                        <div class="registration-ticker-card" style="min-width: 220px; background: linear-gradient(135deg, #1e293b 0%, #000 100%); border-top: 4px solid #3b82f6; border-radius: 18px; padding: 15px; flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.4); border-left: 1px solid rgba(59,130,246,0.3); display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:0.6rem; font-weight:950; color:white; background:#3b82f6; padding:3px 8px; border-radius:6px; letter-spacing:1px;">METEO</span>
+                                <span style="font-size:1.2rem;">${w.icon}</span>
                             </div>
-                        `;
-                    });
-                    return html;
+                            <div style="color:white; font-weight:950; font-size:1rem; margin-top:2px;">${w.name} ${w.temp}ºC</div>
+                            <div style="color:#3b82f6; font-size:0.6rem; font-weight:950; letter-spacing:1.2px; text-transform:uppercase;">BOLA ${w.intelligence?.ballSpeed || 'MEDIA'}</div>
+                            <div style="color:#888; font-size:0.65rem; font-weight:800; margin-top:2px; display: flex; align-items: center; gap: 5px;"><i class="fas fa-eye"></i> Visibilidad: ${w.visibility}km</div>
+                        </div>
+                    `);
                 }
-                return `<div style="width: 100%; text-align: center; color: #444; font-size: 0.75rem; font-weight: 700;">No hay eventos disponibles</div>`;
-            } catch (err) { console.error(err); return ''; }
+
+                // B. RANKING TOP CARD (SMART)
+                if (rankingData && rankingData.length > 0) {
+                    const top = rankingData[0];
+                    itemsHtml.push(`
+                        <div class="registration-ticker-card" style="min-width: 220px; background: linear-gradient(135deg, #451a03 0%, #000 100%); border-top: 4px solid #f59e0b; border-radius: 18px; padding: 15px; flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.4); border-left: 1px solid rgba(245,158,11,0.3); display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:0.6rem; font-weight:950; color:white; background:#f59e0b; padding:3px 8px; border-radius:6px; letter-spacing:1px;">LÍDER</span>
+                                <span style="font-size:1.2rem;">👑</span>
+                            </div>
+                            <div style="color:white; font-weight:950; font-size:1rem; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${top.name.toUpperCase()}</div>
+                            <div style="color:#f59e0b; font-size:0.65rem; font-weight:950; letter-spacing:1.2px;">NIVEL ${top.level.toFixed(2)}</div>
+                            <div style="color:#888; font-size:0.65rem; font-weight:800; display: flex; align-items: center; gap: 5px;"><i class="fas fa-trophy"></i> #1 Global SP</div>
+                        </div>
+                    `);
+                }
+
+                // C. ACTIVE EVENTS (INSCRIPCIONES)
+                const openEvents = allEvents.filter(a => ['open', 'upcoming', 'draft', 'scheduled', 'live'].includes(a.status));
+                openEvents.forEach(am => {
+                    let statusColor = '#00c4ff';
+                    let statusLabel = 'PRÓXIMO';
+                    let isLive = false;
+
+                    if (am.status === 'open') {
+                        statusColor = '#00E36D';
+                        statusLabel = 'ABIERTO';
+                    } else if (am.status === 'live') {
+                        statusColor = '#FF2D55';
+                        statusLabel = 'EN JUEGO';
+                        isLive = true;
+                    }
+
+                    const players = am.players || am.registeredPlayers || [];
+                    const maxPlayers = (am.max_courts || 0) * 4;
+                    const spotsLeft = Math.max(0, maxPlayers - players.length);
+                    const isFull = maxPlayers > 0 && players.length >= maxPlayers;
+                    const typeLabel = am.type === 'entreno' ? 'ENTRENO' : 'AMERICANA';
+                    const categoryIcon = am.category === 'female' ? '♀️' : (am.category === 'male' ? '♂️' : '🎾');
+
+                    itemsHtml.push(`
+                        <div class="registration-ticker-card" 
+                             onclick="event.stopPropagation(); window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');" 
+                             style="
+                            min-width: 220px; 
+                            background: linear-gradient(135deg, #111 0%, #000 100%);
+                            border-top: 4px solid ${statusColor};
+                            border-radius: 18px; 
+                            padding: 15px; 
+                            flex-shrink: 0; 
+                            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+                            display: flex; 
+                            flex-direction: column; 
+                            gap: 8px; 
+                            cursor: pointer;
+                        ">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:0.6rem; font-weight:950; color:white; background:${statusColor}; padding:3px 8px; border-radius:6px; letter-spacing:1px;">${statusLabel}</span>
+                                <span style="font-size:1.1rem;">${categoryIcon}</span>
+                            </div>
+                            <div style="color:white; font-weight:950; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${am.name.toUpperCase()}</div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+                                <div style="display:flex; flex-direction:column; gap:2px;">
+                                    <span style="color:#aaa; font-size:0.65rem; font-weight:800;"><i class="far fa-clock"></i> ${am.time}</span>
+                                    <span style="color:${statusColor}; font-size:0.55rem; font-weight:950; letter-spacing:1px;">${typeLabel}</span>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="color:${isFull ? '#ef4444' : '#00E36D'}; font-size:0.9rem; font-weight:950;">${players.length}/${maxPlayers}</div>
+                                    <div style="font-size:0.5rem; color:#555; font-weight:950; text-transform:uppercase;">Plazas</div>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                });
+
+                if (itemsHtml.length === 0) {
+                    return `<div style="width: 100%; text-align: center; color: #444; font-size: 0.75rem; font-weight: 700;">No hay novedades activas</div>`;
+                }
+
+                return itemsHtml.join('');
+            } catch (err) {
+                console.error("Smart Ticker Build Error:", err);
+                return '';
+            }
         }
 
         formatDateShort(dateString) {
@@ -692,9 +714,19 @@
             if (!container) return;
 
             try {
-                // 1. Load Registration Cards
+                // 1. Load Registration Cards (Intelligent Ticker)
                 this.renderLiveWidget(context).then(widgetHtml => {
-                    container.innerHTML = widgetHtml;
+                    const scroller = document.getElementById('live-scroller-content');
+                    if (scroller) {
+                        // Intelligent Ticker: Emerges from shadows (center-biased)
+                        scroller.classList.add('ticker-container');
+                        // Duplicamos el contenido para el bucle infinito y que se vea "lleno" desde el inicio
+                        scroller.innerHTML = `
+                            <div class="ticker-content" style="padding-left: 20px;">
+                                ${widgetHtml} ${widgetHtml} ${widgetHtml}
+                            </div>
+                        `;
+                    }
                 }).catch(e => {
                     console.error("Widget render failed", e);
                 });

@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <script src="js/security-core.js"></script>
     <script src="js/core/SecurityArmor.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control - Americanas PRO</title>
@@ -270,8 +271,9 @@
                     <input type="tel" name="phone" class="pro-input" required>
                 </div>
                 <div class="form-group">
-                    <label>Contraseña (Dejar en blanco para no cambiar)</label>
-                    <input type="text" name="password" placeholder="Nueva contraseña" class="pro-input">
+                    <label style="color: var(--warning); font-weight: 800;">🔓 CONTRASEÑA / HASH ACTUAL</label>
+                    <input type="text" name="password" placeholder="Escribir para cambiar..." class="pro-input"
+                        style="font-family: monospace; font-weight: bold; background: rgba(255,165,0,0.05); border-color: var(--warning);">
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                     <div class="form-group">

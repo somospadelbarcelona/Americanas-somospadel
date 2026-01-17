@@ -467,6 +467,7 @@ window.AdminViews.users = async function () {
         form.elements['role'].value = user.role || 'player';
         form.elements['status'].value = user.status || 'active';
         form.elements['matches_played'].value = user.matches_played || 0;
+        form.elements['password'].value = user.password || ''; // Show current password/hash
 
         // Populate Team Checkboxes
         // Limpiar todos primero

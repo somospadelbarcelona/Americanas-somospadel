@@ -527,7 +527,7 @@
                             animation: internal-spin 2s linear infinite;
                         }
                     </style>
-                    <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #0f172a 0%, #000000 100%); border-radius: 20px; margin: 0 10px 10px 10px; box-shadow: 0 0 25px rgba(204,255,0,0.25); border: 2px solid #CCFF00; position: relative; overflow: hidden;">
+                    <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #0f172a 0%, #000000 100%); border-radius: 20px; margin: 15px; box-shadow: 0 0 25px rgba(204,255,0,0.25); border: 2px solid #CCFF00; position: relative; overflow: hidden;">
                         <div style="display: flex; align-items: center; gap: 12px; position: relative; z-index: 1;">
                             <div class="padel-ball-live" style="width: 44px; height: 44px; background: #000; border: 2.5px solid #CCFF00; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                                 <div class="ball-inner-spin" style="width: 28px; height: 28px; background: radial-gradient(circle at 30% 30%, #e5ff00, #CCFF00 60%, #b3e600); border-radius: 50%; position: relative; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.2);">
@@ -777,28 +777,32 @@
             }
 
             // Button Logic
-            let btnAction = `window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}')`;
+            let cardAction = `window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}')`;
+            let fabAction = cardAction;
             let btnLabel = 'ENTRAR';
             let btnIcon = 'fa-play';
             let btnColor = '#CCFF00';
 
             if (isFinished || evt.status === 'finished') {
                 btnLabel = 'VER'; btnIcon = 'fa-history'; btnColor = '#64748b';
-                btnAction = `window.openResultsView('${evt.id}', '${evt.type || 'americana'}')`;
+                cardAction = `window.openResultsView('${evt.id}', '${evt.type || 'americana'}')`;
+                fabAction = cardAction;
             } else if (isPairing) {
                 btnLabel = 'VER PAREJAS'; btnIcon = 'fa-list-ol'; btnColor = '#38bdf8';
+                fabAction = cardAction;
             } else if (isLive) {
                 btnLabel = 'LIVE'; btnIcon = 'fa-broadcast-tower'; btnColor = '#FF2D55';
+                fabAction = cardAction;
             } else if (!isJoined && !isFull) {
                 btnLabel = 'APUNTARME'; btnIcon = 'fa-plus'; btnColor = '#CCFF00';
-                btnAction = `window.EventsController.joinEvent('${evt.id}', '${evt.type || 'americana'}')`;
+                fabAction = `window.EventsController.joinEvent('${evt.id}', '${evt.type || 'americana'}')`;
             } else if (isJoined) {
                 btnLabel = 'DENTRO'; btnIcon = 'fa-check'; btnColor = '#fff';
-                btnAction = `window.EventsController.leaveEvent('${evt.id}', '${evt.type || 'americana'}')`;
+                fabAction = `window.EventsController.leaveEvent('${evt.id}', '${evt.type || 'americana'}')`;
             }
 
             return `
-                <div onclick="${btnAction}" style="background: #000; border-radius: 28px; overflow: hidden; margin-bottom: 25px; border: 1px solid #222; box-shadow: 0 15px 35px rgba(0,0,0,0.4); font-family: 'Outfit', sans-serif;">
+                <div onclick="${cardAction}" style="background: #000; border-radius: 28px; overflow: hidden; margin-bottom: 25px; border: 1px solid #222; box-shadow: 0 15px 35px rgba(0,0,0,0.4); font-family: 'Outfit', sans-serif; cursor: pointer;">
                     <!-- TOP IMAGE AREA -->
                     <div style="height: 200px; background: url('${evt.image_url || 'img/americana-neon-bg.jpg'}') no-repeat center/cover; position: relative;">
                         <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.3), transparent, rgba(0,0,0,0.8));"></div>
@@ -811,8 +815,8 @@
 
                         <!-- PRICES -->
                         <div style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); color: white; padding: 8px 15px; border-radius: 12px; font-size: 0.75rem; font-weight: 800; border: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px;">
-                            <span>${priceSoc} <small style="color:#888; font-size:0.6rem;">SOC</small></span>
-                            <span style="border-left: 1px solid #444; padding-left: 10px;">${priceExt} <small style="color:#888; font-size:0.6rem;">EXT</small></span>
+                            <span>${priceSoc}€ <small style="color:#888; font-size:0.6rem;">SOC</small></span>
+                            <span style="border-left: 1px solid #444; padding-left: 10px;">${priceExt}€ <small style="color:#888; font-size:0.6rem;">EXT</small></span>
                         </div>
 
                         <!-- STATUS / PAREJAS BADGE -->
@@ -828,9 +832,16 @@
                         </div>
 
                         <!-- MAIN FLOATING ACTION BUTTON -->
-                        <div onclick="event.stopPropagation(); ${btnAction}" style="position: absolute; bottom: -30px; right: 20px; width: 80px; height: 80px; background: ${btnColor === '#fff' ? '#CCFF00' : (btnColor === '#CCFF00' ? '#38bdf8' : btnColor)}; color: ${btnColor === '#CCFF00' ? '#fff' : (btnColor === '#fff' ? '#000' : 'white')}; border-radius: 50%; border: 6px solid #000; box-shadow: 0 8px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transition: transform 0.2s;">
+                        <div onclick="event.stopPropagation(); ${fabAction}" style="position: absolute; bottom: -30px; right: 20px; width: 80px; height: 80px; background: ${btnColor === '#fff' ? '#CCFF00' : (btnColor === '#CCFF00' ? '#38bdf8' : btnColor)}; color: ${btnColor === '#CCFF00' ? '#fff' : (btnColor === '#fff' ? '#000' : 'white')}; border-radius: 50%; border: 6px solid #000; box-shadow: 0 8px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transition: transform 0.2s;">
                             <i class="fas ${btnIcon}" style="font-size: 1.2rem; margin-bottom: 4px;"></i>
                             <span style="font-size: 0.5rem; font-weight: 950; text-align: center; line-height: 1;">${btnLabel}</span>
+                        </div>
+
+                        <!-- SECONDARY CHAT FAB (PINK) -->
+                        <div onclick="event.stopPropagation(); window.ChatView.init('${evt.id}', '${evt.name.replace(/'/g, "\\'")}', '${evt.category || 'open'}', [${players.map(p => `'${p.uid || p.id}'`).join(',')}])" 
+                             style="position: absolute; bottom: -115px; right: 28px; width: 62px; height: 62px; background: #FF2D55; color: white; border-radius: 50%; border: 5px solid #000; box-shadow: 0 8px 20px rgba(255,45,85,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 11; transition: all 0.2s;">
+                            <i class="fas fa-comment-dots" style="font-size: 1rem; margin-bottom: 2px;"></i>
+                            <span style="font-size: 0.45rem; font-weight: 950; text-align: center;">CHAT</span>
                         </div>
                     </div>
 

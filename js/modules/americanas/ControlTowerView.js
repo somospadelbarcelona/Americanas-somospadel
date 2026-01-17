@@ -363,29 +363,41 @@
             if (!user) return;
 
             try {
-                // 1. Fetch Americanas
-                const snap = await window.db.collection('americanas')
-                    .where('players', 'array-contains', user.uid)
+                const currentYear = new Date().getFullYear();
+                console.log(`📊 [Tower] Loading History for year: ${currentYear}`);
+
+                // 1. Fetch ALL Americanas where player is registered
+                let snap = await window.db.collection('americanas')
+                    .where('registeredPlayers', 'array-contains', user.uid)
                     .orderBy('date', 'desc')
                     .get();
-                this.userHistory = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                // 2. Fetch Matches to calculate real stats
-                const matchSnap = await window.db.collection('matches')
-                    .where('team_a_ids', 'array-contains', user.uid)
-                    .get();
-                const matchSnapB = await window.db.collection('matches')
-                    .where('team_b_ids', 'array-contains', user.uid)
-                    .get();
+                let allEvents = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                // Filter by Year (Annual)
+                this.userHistory = allEvents.filter(e => {
+                    const d = new Date(e.date);
+                    return d.getFullYear() === currentYear;
+                });
+
+                // 2. Fetch Matches to calculate real stats (Annual)
+                const [matchSnap, matchSnapB] = await Promise.all([
+                    window.db.collection('matches').where('team_a_ids', 'array-contains', user.uid).get(),
+                    window.db.collection('matches').where('team_b_ids', 'array-contains', user.uid).get()
+                ]);
 
                 this.userMatches = [
                     ...matchSnap.docs.map(d => d.data()),
                     ...matchSnapB.docs.map(d => d.data())
-                ];
+                ].filter(m => {
+                    const d = new Date(m.date);
+                    return d.getFullYear() === currentYear;
+                });
 
-                // Calculate real games
+                // Calculate real games and win rate
                 let g = 0;
                 let w = 0;
+                let l = 0;
                 this.userMatches.forEach(m => {
                     const isTeamA = m.team_a_ids?.includes(user.uid);
                     const sA = parseInt(m.score_a || 0);
@@ -394,29 +406,27 @@
                     if (isTeamA) {
                         g += sA;
                         if (sA > sB) w++;
+                        else if (sA < sB) l++;
                     } else {
                         g += sB;
                         if (sB > sA) w++;
+                        else if (sB < sA) l++;
                     }
                 });
 
                 this.userStats = {
                     games: g,
                     wins: w,
+                    losses: l,
                     events: this.userHistory.length
                 };
 
                 this.recalc();
             } catch (e) {
                 console.error("History fail:", e);
-                // Fallback attempt with registeredPlayers
-                try {
-                    const snap2 = await window.db.collection('americanas')
-                        .where('registeredPlayers', 'array-contains', user.uid)
-                        .get();
-                    this.userHistory = snap2.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    this.recalc();
-                } catch (e2) { }
+                // Basic fallback if indexing fails
+                this.userStats = { games: 0, wins: 0, losses: 0, events: 0 };
+                this.recalc();
             }
         }
 
@@ -548,9 +558,9 @@
             this.recalc();
         }
 
-        switchSection(section) {
+        async switchSection(section) {
             this.mainSection = section;
-            if (section === 'history') this.loadHistory();
+            if (section === 'history') await this.loadHistory();
             this.recalc();
         }
 
@@ -582,13 +592,28 @@
             // --------------------------
 
             container.innerHTML = `
-                <div class="tournament-layout fade-in" style="background: #F8F9FA;">
+                <div class="tournament-layout fade-in" style="background: #050505;">
                     
-                    <!-- NEW SUBMENU STRUCTURE (PREMIUM GLASS) -->
-                    <div style="background: rgba(255,255,255,0.9); backdrop-filter: blur(15px); padding: 12px; display: flex; justify-content: center; gap: 8px; border-bottom: 1px solid rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1002; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                        <button onclick="window.ControlTowerView.switchSection('playing')" style="flex:1; border:none; background: ${this.mainSection === 'playing' ? 'var(--playtomic-neon)' : 'rgba(0,0,0,0.05)'}; color: ${this.mainSection === 'playing' ? 'black' : '#666'}; padding: 12px 6px; border-radius: 8px; font-weight: 900; font-size: 0.6rem; transition: 0.3s; text-transform: uppercase; letter-spacing: 0.5px;">EN JUEGO</button>
-                        <button onclick="window.ControlTowerView.switchSection('history')" style="flex:1; border:none; background: ${this.mainSection === 'history' ? 'var(--playtomic-neon)' : 'rgba(0,0,0,0.05)'}; color: ${this.mainSection === 'history' ? 'black' : '#666'}; padding: 12px 6px; border-radius: 8px; font-weight: 900; font-size: 0.6rem; transition: 0.3s; text-transform: uppercase; letter-spacing: 0.5px;">MI PASADO</button>
-                        <button onclick="window.ControlTowerView.switchSection('help')" style="flex:1; border:none; background: ${this.mainSection === 'help' ? 'var(--playtomic-neon)' : 'rgba(0,0,0,0.05)'}; color: ${this.mainSection === 'help' ? 'black' : '#666'}; padding: 12px 6px; border-radius: 8px; font-weight: 900; font-size: 0.6rem; transition: 0.3s; text-transform: uppercase; letter-spacing: 0.5px;">INFO</button>
+                    <!-- PREMIUM DARK LED SUBMENU -->
+                    <style>
+                        @keyframes ledPulse {
+                            0% { box-shadow: 0 0 5px rgba(255,149,0,0.1), inset 0 0 5px rgba(255,149,0,0.05); }
+                            50% { box-shadow: 0 0 15px rgba(255,149,0,0.4), inset 0 0 8px rgba(255,149,0,0.2); }
+                            100% { box-shadow: 0 0 5px rgba(255,149,0,0.1), inset 0 0 5px rgba(255,149,0,0.05); }
+                        }
+                        .led-tab-active {
+                            animation: ledPulse 2.5s infinite ease-in-out;
+                            border: 1px solid #ff9500 !important;
+                            color: #ff9500 !important;
+                            background: rgba(255,149,0,0.05) !important;
+                            text-shadow: 0 0 8px rgba(255,149,0,0.3);
+                        }
+                    </style>
+
+                    <div style="background: #111; backdrop-filter: blur(20px); padding: 14px; display: flex; justify-content: center; gap: 12px; border-bottom: 2px solid #222; position: sticky; top: 0; z-index: 1002; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
+                        <button onclick="window.ControlTowerView.switchSection('playing')" class="${this.mainSection === 'playing' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #333; background: rgba(255,255,255,0.05); color: #fff; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);">EN JUEGO</button>
+                        <button onclick="window.ControlTowerView.switchSection('history')" class="${this.mainSection === 'history' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #333; background: rgba(255,255,255,0.05); color: #fff; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);">MI PASADO</button>
+                        <button onclick="window.ControlTowerView.switchSection('help')" class="${this.mainSection === 'help' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #333; background: rgba(255,255,255,0.05); color: #fff; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);">INFO</button>
                     </div>
 
                     ${this.renderMainArea(data, isPlayingHere)}
@@ -770,7 +795,7 @@
 
                     // Update Styles for Winner
                     if (match.isFinished) {
-                        const winStyle = "color: #111 !important; font-weight: 950 !important; border-bottom: 3px solid #CCFF00; padding-bottom: 2px; text-decoration: none; display: flex; align-items: center; gap: 10px;";
+                        const winStyle = "color: #111 !important; font-weight: 950 !important; border-bottom: 4px solid #CCFF00; padding-bottom: 2px; text-decoration: none; display: flex; align-items: center; gap: 10px; text-shadow: 0 0 10px rgba(204,255,0,0.2);";
                         const normStyle = "color: #111; font-weight: 800; padding: 6px 0; display: flex; align-items: center; gap: 10px;";
 
                         if (nameAEl) {
@@ -925,7 +950,7 @@
                     : "Seguido";
 
                 // --- 2. Styles ---
-                const winnerStyle = "color: #111 !important; font-weight: 950 !important; border-bottom: 3px solid #CCFF00; padding-bottom: 2px; text-decoration: none;";
+                const winnerStyle = "color: #111 !important; font-weight: 950 !important; border-bottom: 4px solid #CCFF00; padding-bottom: 2px; text-decoration: none; text-shadow: 0 0 8px rgba(204,255,0,0.15);";
                 const normalStyle = "color: #111; font-weight: 800; padding: 6px 0;";
                 const styleA = (match.isFinished && sA > sB) ? winnerStyle : normalStyle;
                 const styleB = (match.isFinished && sB > sA) ? winnerStyle : normalStyle;
@@ -1176,147 +1201,210 @@
         }
 
         renderHistoryContent() {
-            return `
-                    <h3 style="font-family:'Outfit'; font-weight: 950; color: #0f172a; margin: 0 0 20px 5px; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
-        <i class="fas fa-list-ul" style="color: #CCFF00; font-size: 1rem;"></i> CRONOLOGÍA HISTÓRICA
-    </h3>
+            const user = window.Store ? window.Store.getState('currentUser') : null;
+            const stats = this.userStats || { games: 0, wins: 0, events: 0 };
+            const winRate = stats.events > 0 ? Math.round((stats.wins / (stats.wins + (stats.losses || 0) || 1)) * 100) : 0;
 
-        <div style="display: grid; gap: 15px;">
-            ${this.userHistory.length === 0 ? `
-                            <div style="background: white; border-radius: 24px; padding: 60px 40px; text-align: center; border: 1px dashed #cbd5e1; color: #94a3b8;">
-                                <i class="fas fa-ghost" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.3;"></i>
-                                <p style="font-weight: 800; font-size: 1rem;">No tienes historial registrado</p>
-                                <p style="font-size: 0.8rem; opacity: 0.7;">Tus Americanas aparecerán aquí al finalizar.</p>
+            return `
+                <div class="fade-in" style="padding: 10px 5px 120px; font-family: 'Outfit', sans-serif;">
+                    
+                    <!-- CAREER DASHBOARD -->
+                    <div style="background: linear-gradient(135deg, #0f172a 0%, #000 100%); padding: 25px; border-radius: 30px; border: 1px solid rgba(204,255,0,0.2); margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: -20px; right: -20px; font-size: 8rem; opacity: 0.03; color: #CCFF00; transform: rotate(-15deg);"><i class="fas fa-chart-line"></i></div>
+                        
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                            <div style="width: 40px; height: 40px; background: #CCFF00; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #000; font-size: 1.2rem; box-shadow: 0 0 20px rgba(204,255,0,0.3);">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div>
+                                <h2 style="color: #fff; font-size: 1.1rem; font-weight: 950; margin: 0; text-transform: uppercase;">Resumen Anual ${new Date().getFullYear()}</h2>
+                                <p style="color: #64748b; font-size: 0.75rem; font-weight: 700; margin: 0;">DATA ANALYTICS • SOMOSPADEL</p>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                                <div style="font-size: 0.65rem; color: #888; font-weight: 900; text-transform: uppercase; margin-bottom: 5px;">Eventos Oficiales</div>
+                                <div style="font-size: 1.8rem; font-weight: 950; color: #fff;">${stats.events}</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                                <div style="font-size: 0.65rem; color: #888; font-weight: 900; text-transform: uppercase; margin-bottom: 5px;">Win Rate Global</div>
+                                <div style="font-size: 1.8rem; font-weight: 950; color: #CCFF00;">${winRate}%</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                                <div style="font-size: 0.65rem; color: #888; font-weight: 900; text-transform: uppercase; margin-bottom: 5px;">Juegos Totales</div>
+                                <div style="font-size: 1.8rem; font-weight: 950; color: #fff;">${stats.games}</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                                <div style="font-size: 0.65rem; color: #888; font-weight: 900; text-transform: uppercase; margin-bottom: 5px;">Hito Actual</div>
+                                <div style="font-size: 1rem; font-weight: 950; color: #3b82f6; margin-top: 5px; display: flex; align-items: center; gap: 5px;">
+                                    <i class="fas fa-medal"></i> ${stats.events > 5 ? 'VETERANO' : 'PROMESA'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RECENT TIMELINE -->
+                    <h3 style="font-family:'Outfit'; font-weight: 950; color: #fff; margin: 0 0 20px 5px; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; letter-spacing: 1px;">
+                        <i class="fas fa-history" style="color: #CCFF00;"></i> CRONOLOGÍA HISTÓRICA
+                    </h3>
+
+                    <div style="display: grid; gap: 15px;">
+                        ${this.userHistory.length === 0 ? `
+                            <div style="background: rgba(255,255,255,0.02); border-radius: 30px; padding: 60px 40px; text-align: center; border: 1px dashed rgba(255,255,255,0.1); color: #64748b;">
+                                <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.03); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                    <i class="fas fa-ghost" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                                </div>
+                                <p style="font-weight: 900; font-size: 1.1rem; color: #fff; margin-bottom: 5px;">Sin historial todavía</p>
+                                <p style="font-size: 0.85rem; opacity: 0.7;">Tus Americanas aparecerán aquí al finalizar. ¡Inscríbete en el inicio!</p>
+                                <button onclick="window.Router.navigate('americanas')" style="margin-top: 20px; background: #CCFF00; color: #000; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 900; font-size: 0.8rem; cursor: pointer; text-transform: uppercase;">Ver Eventos</button>
                             </div>
                         ` :
-                    this.userHistory.map(h => {
+                    this.userHistory.map((h, i) => {
                         const amDate = h.date ? new Date(h.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Fecha desconocida';
+                        const isWin = i === 0; // Simple highlight for latest
                         return `
                             <div class="history-item-card" 
                                  onclick="window.ControlTowerView.load('${h.id}'); window.ControlTowerView.switchSection('playing');"
                                  style="
-                                    background: white; 
+                                    background: rgba(255,255,255,0.03); 
                                     padding: 20px; 
-                                    border: 1px solid #e2e8f0; 
-                                    border-radius: 24px; 
-                                    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+                                    border: 1px solid rgba(255,255,255,0.05); 
+                                    border-radius: 26px; 
                                     display: flex;
                                     justify-content: space-between;
                                     align-items: center;
                                     cursor: pointer;
-                                    transition: all 0.2s;
+                                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                                    position: relative;
+                                    overflow: hidden;
                                  "
-                                 onmouseover="this.style.transform='translateX(5px)'; this.style.borderColor='#CCFF00';"
-                                 onmouseout="this.style.transform='none'; this.style.borderColor='#e2e8f0';"
+                                 onmouseover="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(204,255,0,0.3)'; this.style.transform='scale(1.02)';"
+                                 onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.05)'; this.style.transform='none';"
                             >
-                                <div>
-                                    <div style="font-weight: 950; font-size: 1rem; color: #0f172a; margin-bottom: 3px;">${h.name.toUpperCase()}</div>
-                                    <div style="display: flex; align-items: center; gap: 10px; font-size: 0.7rem; color: #64748b; font-weight: 700;">
-                                        <span><i class="far fa-calendar-alt"></i> ${amDate}</span>
-                                        <span style="opacity: 0.3;">|</span>
-                                        <span style="color: #CCFF00; background: #000; padding: 1px 6px; border-radius: 4px; font-size: 0.6rem;">${(h.category || 'PRO').toUpperCase()}</span>
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div style="width: 50px; height: 50px; background: rgba(255,255,255,0.03); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #CCFF00; border: 1px solid rgba(255,255,255,0.05);">
+                                        <i class="fas fa-trophy"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 950; font-size: 1rem; color: #fff; margin-bottom: 4px; text-transform: uppercase; letter-spacing: -0.5px;">${h.name}</div>
+                                        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.7rem; color: #64748b; font-weight: 800;">
+                                            <span style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 5px;"><i class="far fa-calendar-alt" style="margin-right: 4px;"></i> ${amDate}</span>
+                                            <span style="color: #CCFF00; border: 1px solid rgba(204,255,0,0.2); background: rgba(204,255,0,0.05); padding: 1px 10px; border-radius: 20px; font-size: 0.6rem;">${(h.category || 'PRO').toUpperCase()}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="text-align: right; margin-right: 10px;">
-                                        <div style="font-size: 0.5rem; color: #94a3b8; font-weight: 900; text-transform: uppercase;">Ver stats</div>
-                                        <i class="fas fa-chevron-right" style="color: #CCFF00; font-size: 0.8rem;"></i>
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div style="text-align: right;">
+                                        <div style="font-size: 0.55rem; color: #444; font-weight: 950; text-transform: uppercase;">Full Report</div>
+                                        <div style="color: #CCFF00; font-size: 0.9rem;"><i class="fas fa-chevron-right"></i></div>
                                     </div>
                                 </div>
                             </div>
                         `}).join('')}
-        </div>
-                </div >
-        `;
+                    </div>
+                </div>
+            `;
         }
 
         renderHelpContent() {
             return `
-        <div class="fade-in" style="padding: 25px; min-height: 80vh; background: #fff; padding-bottom: 120px; font-family: 'Inter', sans-serif;">
-                    <div style="margin-bottom: 24px; border-bottom: 2px solid #CCFF00; padding-bottom: 15px; display: inline-block;">
-                        <h2 style="font-family:'Outfit'; font-weight: 950; color: #111; font-size: 1.8rem; margin: 0; letter-spacing: -0.5px;">GUÍA DEL <span style="color: #0055ff;">JUGADOR</span></h2>
+                <div class="fade-in" style="padding: 25px; min-height: 80vh; background: #000; padding-bottom: 120px; font-family: 'Inter', sans-serif; color: white;">
+                    <div style="margin-bottom: 30px; border-bottom: 3px solid #CCFF00; padding-bottom: 15px; display: inline-block;">
+                        <h2 style="font-family:'Outfit'; font-weight: 950; color: #fff; font-size: 1.8rem; margin: 0; letter-spacing: -0.5px;">GUÍA <span style="color: #CCFF00;">SMART</span> JUGADOR</h2>
                     </div>
 
-                    <p style="color: #666; font-size: 0.95rem; font-weight: 500; margin-bottom: 30px; line-height: 1.6;">Bienvenido a la plataforma oficial de <b>SomosPadel Barcelona</b>. Aquí tienes todo lo necesario para dominar nuestra tecnología y competición.</p>
-
-                    <div style="display: grid; gap: 20px;">
+                    <div style="display: grid; gap: 25px;">
                         
-                        <!-- 1. FORMATOS -->
-                        <div style="background: #f8fafc; padding: 25px; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                            <div style="font-weight: 900; margin-bottom: 15px; color: #7c3aed; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
-                                <div style="width: 36px; height: 36px; background: rgba(124,58,237,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-sitemap" style="font-size: 1rem;"></i>
+                        <!-- 1. NIVEL Y RANKING ANUAL -->
+                        <div style="background: linear-gradient(135deg, rgba(204,255,0,0.1) 0%, rgba(0,0,0,0) 100%); padding: 25px; border-radius: 30px; border: 1px solid rgba(204,255,0,0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                            <div style="font-weight: 950; margin-bottom: 20px; color: #CCFF00; font-size: 1.2rem; display: flex; align-items: center; gap: 12px; text-transform: uppercase;">
+                                <div style="width: 40px; height: 40px; background: #CCFF00; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #000;">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                Nivel y Ranking Anual
+                            </div>
+                            
+                            <p style="font-size: 0.9rem; color: #aaa; line-height: 1.6; margin-bottom: 20px;">
+                                Tu nivel SomosPadel (0.0 - 7.0) es tu <b>huella competitiva</b>. El <b>Ranking Oficial</b> es el resultado de la <u>suma de todos tus partidos registrados anualmente</u>. A más actividad y victorias, mejor posición.
+                            </p>
+
+                            <div style="display: grid; gap: 15px;">
+                                <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                                    <div style="color: #22c55e; font-weight: 900; font-size: 0.75rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                        <i class="fas fa-plus-circle"></i> ¿CÓMO SUMAR?
+                                    </div>
+                                    <p style="margin: 0; font-size: 0.8rem; color: #888;">Gana partidos, participa en eventos y vence a parejas de nivel superior para subir décimas y escalar en el ranking.</p>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                                    <div style="color: #64748b; font-weight: 900; font-size: 0.75rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                        <i class="fas fa-calendar-check"></i> CICLO ANUAL
+                                    </div>
+                                    <p style="margin: 0; font-size: 0.8rem; color: #888;">El ranking se reinicia cada temporada, premiando la regularidad y el esfuerzo de todo el año.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. CHAT TÁCTICO (OPS ROOM) -->
+                        <div style="background: rgba(255,255,255,0.02); padding: 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-weight: 950; margin-bottom: 15px; color: #fff; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(59,130,246,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #3b82f6;">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                CHAT EVENTO
+                            </div>
+                            <div style="font-size: 0.9rem; color: #888; line-height: 1.7;">
+                                Canal de comunicación en tiempo real exclusivo de cada evento.
+                                <br><br>
+                                • <b>SOS:</b> grafía gigante y alto contraste para leer tu pista desde cualquier lugar , es un aviso para los demas compañeros/as por si quieren apuntarse y cubrir la posicion.
+                            </div>
+                        </div>
+
+                        <!-- 3. MODO TV (CENTER COURT) -->
+                        <div style="background: rgba(255,255,255,0.02); padding: 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-weight: 950; margin-bottom: 15px; color: #fff; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(239,68,68,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #ef4444;">
+                                    <i class="fas fa-tv"></i>
+                                </div>
+                                Modo TV
+                            </div>
+                            <div style="font-size: 0.9rem; color: #888; line-height: 1.7;">
+                                Diseñado para monitores , tablets  y Smart TVs. Accede desde cualquier evento activo. 
+                                <br><br>
+                                • <b>ROTACIÓN AUTO:</b> Pasa solo entre marcadores en vivo, clasificación y próximos cruces.
+                                <br>• <b>ALTA VISIBILIDAD:</b> Tipografía gigante y alto contraste para leer tu pista desde cualquier lugar 
+                            </div>
+                        </div>
+
+                        <!-- 4. FORMATOS -->
+                        <div style="background: rgba(255,255,255,0.02); padding: 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-weight: 950; margin-bottom: 15px; color: #fff; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(124,58,237,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #8b5cf6;">
+                                    <i class="fas fa-sitemap"></i>
                                 </div>
                                 Formatos de Competición
                             </div>
-                            <div style="font-size: 0.9rem; color: #475569; line-height: 1.7; font-weight: 500;">
-                                • <b style="color: #0ea5e9;">🌪️ TWISTER:</b> Formato rotativo. Cambias de pareja en cada una de las 6 rondas. Sumas tus juegos individuales para el ranking.
+                            <div style="font-size: 0.9rem; color: #888; line-height: 1.7;">
+                                • <b style="color: #0ea5e9;">🌪️ TWISTER:</b> Cambias de pareja en cada ronda. Sumas juegos individuales.
                                 <br><br>
-                                • <b style="color: #8b5cf6;">🔒 PAREJA FIJA:</b> Formato pozo. Juegas todo el evento con el mismo compañero. Subes de pista si ganas y bajas si pierdes.
+                                • <b style="color: #8b5cf6;">🔒 PAREJA FIJA (Pozo):</b> Juegas siempre con el mismo compañero. Ganas = Subes pista / Pierdes = Bajas pista.
                             </div>
                         </div>
 
-                        <!-- 2. RANKING -->
-                        <div style="background: #f8fafc; padding: 25px; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                            <div style="font-weight: 900; margin-bottom: 15px; color: #0055ff; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
-                                <div style="width: 36px; height: 36px; background: rgba(0,85,255,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-trophy" style="font-size: 1rem;"></i>
+                        <!-- 5. ANALYTICS (MÉTRICAS IA) -->
+                        <div style="background: rgba(255,255,255,0.02); padding: 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-weight: 950; margin-bottom: 15px; color: #fff; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(16,185,129,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #10b981;">
+                                    <i class="fas fa-robot"></i>
                                 </div>
-                                Sistema de Ranking (Puntos x Juego)
+                                Análisis de Rendimiento
                             </div>
-                            <div style="font-size: 0.9rem; color: #475569; line-height: 1.7; font-weight: 500;">
-                                En SomosPadel cada bola cuenta. Sumas <b style="color: #0f172a;">1 punto por cada juego ganado</b>. 
+                            <div style="font-size: 0.9rem; color: #888; line-height: 1.7;">
+                                Tras cada evento, nuestro sistema analiza tu juego basándose en:
                                 <br><br>
-                                Al final de las 6 rondas, el jugador con más juegos acumulados es nombrado <b>MVP</b>. Este sistema premia la regularidad y el esfuerzo en cada set.
-                            </div>
-                        </div>
-
-                        <!-- 3. SEDES Y CLIMA -->
-                        <div style="background: #f8fafc; padding: 25px; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                            <div style="font-weight: 900; margin-bottom: 15px; color: #10b981; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
-                                <div style="width: 36px; height: 36px; background: rgba(16,185,129,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-map-marker-alt" style="font-size: 1rem;"></i>
-                                </div>
-                                Sedes y Clima en Tiempo Real
-                            </div>
-                            <div style="font-size: 0.9rem; color: #475569; line-height: 1.7; font-weight: 500;">
-                                Mantente informado sobre las condiciones exactas en nuestras dos sedes de Barcelona. El sistema monitoriza:
-                                <br><br>
-                                • <b>Estado de Pista:</b> Humedad y temperatura real en cada club para preveer el rebote.
-                                <br>• <b>Velocidad de Bola:</b> Basada en la presión atmosférica local de la zona.
-                                <br>• <b>Alertas Meteo:</b> Información actualizada para que tu experiencia de juego sea perfecta en cualquier sede.
-                            </div>
-                        </div>
-
-                        <!-- 4. NIVELES -->
-                        <div style="background: #f8fafc; padding: 25px; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                            <div style="font-weight: 900; margin-bottom: 15px; color: #f59e0b; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
-                                <div style="width: 36px; height: 36px; background: rgba(245,158,11,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-chart-line" style="font-size: 1rem;"></i>
-                                </div>
-                                Niveles Dinámicos
-                            </div>
-                            <div style="font-size: 0.9rem; color: #475569; line-height: 1.7; font-weight: 500;">
-                                Tu nivel (0.0 a 7.0) evoluciona tras cada partido. El algoritmo recalcula tu progreso según:
-                                <br><br>
-                                • <b>Resultado:</b> Ganar sube tu nivel automáticamente.
-                                <br>• <b>Nivel Rival:</b> Ganar a jugadores superiores te otorga más décimas.
-                                <br>• <b>Regularidad:</b> Un historial sólido desbloquea eventos Élite.
-                            </div>
-                        </div>
-
-                        <!-- 5. CONTROL TOWER -->
-                        <div style="background: #f8fafc; padding: 25px; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                            <div style="font-weight: 900; margin-bottom: 15px; color: #ef4444; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
-                                <div style="width: 36px; height: 36px; background: rgba(239,68,68,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-broadcast-tower" style="font-size: 1rem;"></i>
-                                </div>
-                                Torre de Control (En Vivo)
-                            </div>
-                            <div style="font-size: 0.9rem; color: #475569; line-height: 1.7; font-weight: 500;">
-                                Durante el evento, consulta tu pista, compañeros y clasificación en tiempo real. 
-                                <br><br>
-                                Al finalizar, accede al <b>Informe Detallado</b> para analizar tus métricas avanzadas y ver el resumen de la jornada.
+                                • <b style="color: white;">EFECTIVIDAD:</b> Mide tu peso real en el marcador. ¿Cuántos de los puntos ganados han pasado por tu pala?
+                                <br>• <b style="color: white;">CONSISTENCIA:</b> Evalúa si mantienes el mismo nivel técnico en todas las rondas o si tienes picos y valles.
+                                <br>• <b style="color: white;">RESISTENCIA:</b> Analiza si tu rendimiento baja en los últimos partidos por cansancio o si mantienes el ritmo.
                             </div>
                         </div>
 
