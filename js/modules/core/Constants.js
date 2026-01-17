@@ -8,7 +8,8 @@ window.AppConstants = {
         OPEN: 'open',
         LIVE: 'live',
         FINISHED: 'finished',
-        ADJUSTING: 'adjusting' // Intermediate state for modifying pairs without triggering auto-logic
+        ADJUSTING: 'adjusting', // Intermediate state for modifying pairs without triggering auto-logic
+        PAIRING: 'pairing'
     },
 
     ROLES: {

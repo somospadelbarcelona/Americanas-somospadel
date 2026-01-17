@@ -265,56 +265,52 @@
                 const times = this.getEventTimes(evt.date, evt.time);
                 if (!times) return;
 
-                // 1. AUTO-START (OPEN -> LIVE)
-                if (evt.status === 'open') {
-                    if (now >= times.start && now < times.end) {
-                        const players = evt.players || evt.registeredPlayers || [];
-                        // ROBUST COURTS CHECK: 'max_courts' (americanas default) or 'courts' (entrenos typically)
-                        // SMART HEURISTIC: If name has "TWISTER", default is 3 courts (12 players). Else 4.
-                        const defaultCourts = evt.name && evt.name.toUpperCase().includes('TWISTER') ? 3 : 4;
-                        const maxCourts = parseInt(evt.max_courts || evt.courts || defaultCourts);
+                const players = evt.players || evt.registeredPlayers || [];
+                // ROBUST COURTS CHECK
+                const defaultCourts = evt.name && evt.name.toUpperCase().includes('TWISTER') ? 3 : 4;
+                const maxCourts = parseInt(evt.max_courts || evt.courts || defaultCourts);
+                const requiredPlayers = maxCourts * 4;
+                const isFull = players.length >= requiredPlayers;
 
-                        // REQUIRED PLAYERS: 4 * courts
-                        const requiredPlayers = maxCourts * 4;
-                        // Allow start if we have at least (Required - 1) ? No, strict for Americanas.
-                        // But maybe Entrenos allow odd numbers? Let's check "isFull" strictly for now.
-                        const isFull = players.length >= requiredPlayers;
+                // 1. OPEN -> PAIRING (4 HOURS BEFORE)
+                // "emparejamientas que 4horas que comience el entreno se pueda ver los emparejamientos"
+                if (evt.status === 'open' && isFull) {
+                    const diffMs = times.start - now;
+                    const diffHours = diffMs / (1000 * 60 * 60);
 
-                        if (isFull) {
-                            console.log(`⏰ [AutoAutomation] OPEN -> LIVE: ${evt.name}`);
-                            if (window.EventService && window.AmericanaService) {
-                                window.EventService.updateEvent(evt.type, evt.id, { status: 'live' })
-                                    .then(() => window.AmericanaService.generateFirstRoundMatches(evt.id, evt.type))
-                                    .then(() => console.log("✅ Event started automatically."))
-                                    .catch(e => console.error(e));
-                            } else {
-                                console.error("❌ [AutoAutomation] Services MISSING! Cannot start event.", { EventService: !!window.EventService, AmericanaService: !!window.AmericanaService });
-                            }
-                        } else {
-                            // Log ONLY if it's the specific event we are debugging (optional, or log all once)
-                            if (evt.id === 'debug_id_here' || true) { // logging all for now to catch it
-                                console.warn(`⏳ [AutoAutomation] SKIPPING START: ${evt.name} | Players: ${players.length}/${requiredPlayers} | Time: OK`);
-                            }
+                    // If we are within 4 hours (and positive, i.e., not started yet)
+                    if (diffHours <= 4 && diffHours > 0) {
+                        console.log(`⏰ [AutoAutomation] OPEN -> PAIRING: ${evt.name} (Starts in ${diffHours.toFixed(2)}h)`);
+                        if (window.EventService && window.AmericanaService) {
+                            window.EventService.updateEvent(evt.type, evt.id, { status: 'pairing' })
+                                .then(() => window.AmericanaService.generateFirstRoundMatches(evt.id, evt.type))
+                                .then(() => console.log("✅ Event moved to PAIRING and matches generated."))
+                                .catch(e => console.error(e));
                         }
-                    } else if (now < times.start) {
-                        // console.log("⏳ Too early for " + evt.name);
-                        if (evt.id === 'debug_id_here' || true) {
-                            console.log(`⏳ [AutoAutomation] SKIPPING START: ${evt.name} | Status: OPEN | Time: TOO EARLY (Starts: ${times.start.toLocaleTimeString()})`);
-                        }
-                    } else {
-                        // Time passed?
-                        // console.log("⌛ Time passed for " + evt.name);
-                        if (evt.id === 'debug_id_here' || true) {
-                            console.log(`⌛ [AutoAutomation] SKIPPING START: ${evt.name} | Status: OPEN | Time: PASSED (Ended: ${times.end.toLocaleTimeString()})`);
-                        }
-                    }
-                } else {
-                    if (evt.id === 'debug_id_here' || true) {
-                        console.log(`🚫 [AutoAutomation] SKIPPING START: ${evt.name} | Status: NOT OPEN (${evt.status})`);
                     }
                 }
 
-                // 2. AUTO-FINISH (LIVE -> FINISHED)
+                // 2. PAIRING -> LIVE (START TIME)
+                // Also handle OPEN -> LIVE if it missed the pairing window (e.g. just created or auto-booted late)
+                if (evt.status === 'open' || evt.status === 'pairing') {
+                    if (now >= times.start && now < times.end) {
+                        if (isFull) {
+                            console.log(`⏰ [AutoAutomation] ${evt.status.toUpperCase()} -> LIVE: ${evt.name}`);
+                            if (window.EventService && window.AmericanaService) {
+                                // If coming from pairing, matches might already exist, but generateFirstRoundMatches is idempotent or checks existence?
+                                // Usually safe to call, or we can check. Service usually handles it.
+                                window.EventService.updateEvent(evt.type, evt.id, { status: 'live' })
+                                    .then(() => window.AmericanaService.generateFirstRoundMatches(evt.id, evt.type)) // Ensure matches exist
+                                    .then(() => console.log("✅ Event started automatically."))
+                                    .catch(e => console.error(e));
+                            } else {
+                                console.error("❌ [AutoAutomation] Services MISSING! Cannot start event.");
+                            }
+                        }
+                    }
+                }
+
+                // 3. LIVE -> FINISHED
                 if (evt.status === 'live') {
                     if (now >= times.end) {
                         console.log(`🏁 [AutoAutomation] LIVE -> FINISHED: ${evt.name}`);
@@ -505,6 +501,90 @@
             console.log("✅ [EventsController_V5] Content rendered successfully");
         }
 
+        renderEntrenoGuideModal() {
+            const modalId = 'entreno-guide-modal';
+            if (document.getElementById(modalId)) return;
+
+            const modal = document.createElement('div');
+            modal.id = modalId;
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.85); z-index: 13000;
+                display: flex; align-items: center; justify-content: center;
+                backdrop-filter: blur(5px); animation: fadeIn 0.3s ease;
+                padding: 20px; box-sizing: border-box;
+            `;
+
+            modal.innerHTML = `
+                <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); width: 100%; max-width: 500px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+                    
+                    <!-- Header -->
+                    <div style="padding: 25px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                        <h2 style="margin:0; color: white; font-size: 1.4rem; font-weight: 800; font-family: 'Outfit', sans-serif;">
+                            <span style="color: #CCFF00;">INFO</span> ENTRENOS
+                        </h2>
+                        <button id="close-guide-btn" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <!-- Scrollable Content -->
+                    <div style="padding: 25px; overflow-y: auto; max-height: 70vh;">
+                        
+                        <!-- PAREJA FIJA -->
+                        <div style="margin-bottom: 30px;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                                <div style="width: 40px; height: 40px; background: rgba(56, 189, 248, 0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-lock" style="color: #38bdf8; font-size: 1.2rem;"></i>
+                                </div>
+                                <h3 style="margin:0; color: white; font-size: 1.1rem; font-weight: 700;">Pareja Fija</h3>
+                            </div>
+                            <ul style="margin: 0; padding-left: 20px; color: #94a3b8; font-size: 0.95rem; line-height: 1.6; list-style-type: disc;">
+                                <li style="margin-bottom: 8px;">Juegas con tu compañero asignado todo el torneo.</li>
+                                <li style="margin-bottom: 8px;">Si <strong>ganáis</strong>, subís de pista juntos.</li>
+                                <li style="margin-bottom: 8px;">Si <strong>perdéi</strong>s, bajáis de pista juntos.</li>
+                                <li>Ideal para consolidar tácticas de equipo.</li>
+                            </ul>
+                        </div>
+
+                        <!-- TWISTER -->
+                        <div style="margin-bottom: 10px;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                                <div style="width: 40px; height: 40px; background: rgba(236, 72, 153, 0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-random" style="color: #ec4899; font-size: 1.2rem;"></i>
+                                </div>
+                                <h3 style="margin:0; color: white; font-size: 1.1rem; font-weight: 700;">Twister (Individual)</h3>
+                            </div>
+                            <ul style="margin: 0; padding-left: 20px; color: #94a3b8; font-size: 0.95rem; line-height: 1.6; list-style-type: disc;">
+                                <li style="margin-bottom: 8px;">Te apuntas individualmente.</li>
+                                <li style="margin-bottom: 8px;">Si ganas, <strong>TÚ</strong> subes de pista y te cambias de pareja.</li>
+                                <li style="margin-bottom: 8px;">Si pierdes, <strong>TÚ</strong> bajas de pista y te cambias de pareja.</li>
+                                <li>Priorizamos que juegues contra tus compañeros de equipo habituales (Rivalidad).</li>
+                            </ul>
+                        </div>
+
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="padding: 20px 25px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05); text-align: center;">
+                        <button id="close-guide-action" style="background: #CCFF00; color: black; border: none; padding: 14px 40px; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; width: 100%; box-shadow: 0 4px 15px rgba(204, 255, 0, 0.2);">
+                            ¡ENTENDIDO!
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            const close = () => {
+                modal.style.opacity = '0';
+                setTimeout(() => modal.remove(), 300);
+            };
+
+            document.getElementById('close-guide-btn').onclick = close;
+            document.getElementById('close-guide-action').onclick = close;
+        }
+
         renderEventsList(onlyMine, onlyEntrenos = false, showBothTypes = false) {
             let events = this.getAllSortedEvents();
             const { month, category } = this.state.filters;
@@ -545,6 +625,9 @@
             const availableEvents = this.getAllSortedEvents().filter(e => e.status !== 'finished' && (e.status === 'live' || e.date >= todayStr));
             const filterBarHtml = !onlyMine ? this.renderFilterBar(availableEvents) : '';
 
+            // INFO GUIDE BUTTON (Only for Entrenos Tab)
+            const showGuideBtn = (this.state.activeTab === 'entrenos');
+
             return `
                 <div style="min-height: 80vh; padding-top: 5px;">
                     <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #0f172a 0%, #000000 100%); border-radius: 20px; margin: 0 10px 10px 10px; box-shadow: 0 0 25px rgba(204,255,0,0.25), 0 10px 40px rgba(0,0,0,0.6); border: 2px solid #CCFF00; position: relative; overflow: hidden; animation: pulse-border 3s infinite alternate;">
@@ -567,6 +650,30 @@
                     ${filterBarHtml}
                     <div style="padding-bottom: 120px; padding-left:10px; padding-right:10px;">
                         ${events.length === 0 ? `<div style="padding:100px 40px; text-align:center; color:#444;"><i class="fas fa-filter" style="font-size: 4rem; opacity: 0.1;"></i><h3 style="color:#666;">SIN RESULTADOS</h3></div>` : eventsHtml}
+                        
+                        ${showGuideBtn ? `
+                            <div style="margin-top: 25px; display: flex; justify-content: center; padding-bottom: 20px;">
+                                <button onclick="window.EventsController.renderEntrenoGuideModal()" style="
+                                    background: rgba(30, 41, 59, 0.8); 
+                                    backdrop-filter: blur(10px);
+                                    color: #cbd5e1; 
+                                    border: 1px solid rgba(255,255,255,0.1); 
+                                    padding: 12px 25px; 
+                                    border-radius: 30px; 
+                                    font-size: 0.8rem; 
+                                    font-weight: 700; 
+                                    cursor: pointer; 
+                                    display: flex; 
+                                    align-items: center; 
+                                    gap: 10px;
+                                    transition: all 0.2s ease;
+                                " onmouseover="this.style.background='rgba(51, 65, 85, 0.9)'; this.style.color='white';" onmouseout="this.style.background='rgba(30, 41, 59, 0.8)'; this.style.color='#cbd5e1';">
+                                    <i class="fas fa-info-circle" style="color: #CCFF00;"></i>
+                                    ¿CÓMO FUNCIONAN LOS FORMATOS?
+                                </button>
+                            </div>
+                        ` : ''}
+
                     </div>
                 </div>
             `;
@@ -929,9 +1036,24 @@
             // VISUAL FORCE: If it is 'open' but time has passed, show as live visually
             const isLive = evt.status === 'live' || (evt.status === 'open' && hasStarted);
 
-            // Finished only if explicitly set OR if past date AND not live (logic check: if isLive is true due to start time, it won't be finished unless explicit)
-            // But if it is significantly past (e.g. yesterday) and still open, we might consider it finished? 
-            // For now, keep simple:
+            // 4-Hour Pairings Window Logic
+            let isPairingWindow = false;
+            try {
+                if (evt.date && evt.time) {
+                    const eventDate = new Date(evt.date + 'T' + evt.time);
+                    const now = new Date();
+                    const diffMs = eventDate - now;
+                    const diffHours = diffMs / (1000 * 60 * 60);
+                    // Show pairings if within 4 hours and NOT live/finished
+                    if (diffHours <= 4 && diffHours > -2 && !isLive && evt.status !== 'finished' && evt.status !== 'live') {
+                        isPairingWindow = true;
+                    }
+                }
+            } catch (e) { console.error("Time calc error", e); }
+
+            // Explicit status override
+            if (evt.status === 'pairing') isPairingWindow = true;
+
             const isFinished = evt.status === 'finished' || (isPastDate && !isLive);
 
             // Waitlist logic
@@ -950,6 +1072,11 @@
                 btnContent = '<div style="display:flex; flex-direction:column; align-items:center; line-height:1; gap:2px;"><i class="fas fa-poll" style="font-size: 1rem;"></i><span style="font-size:0.45rem; font-weight:950; text-align:center;">VER<br>RESULTADOS</span></div>';
                 btnStyle = 'background: #CCFF00; color: #000; box-shadow: 0 4px 15px rgba(204, 255, 0, 0.4); width: 55px; height: 55px;';
                 btnAction = `window.openResultsView('${evt.id}', '${evt.type || 'americana'}');`;
+            } else if (isPairingWindow) {
+                // NEW PAIRING BUTTON
+                btnContent = '<div style="display:flex; flex-direction:column; align-items:center; line-height:1; gap:2px;"><i class="fas fa-list-ol" style="font-size: 1rem;"></i><span style="font-size:0.4rem; font-weight:950; text-align:center;">VER<br>PAREJAS</span></div>';
+                btnStyle = 'background: #0ea5e9; color: white; border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 0 20px rgba(14, 165, 233, 0.6); width: 55px; height: 55px; animation: pulse-neon-blue 2s infinite;';
+                btnAction = `window.openLiveEvent('${evt.id}', '${evt.type || 'americana'}');`;
             } else if (isLive) {
                 // ROBUST BUTTON: Standard shape, easier to click
                 btnContent = '<i class="fas fa-satellite-dish"></i> EN JUEGO';
@@ -1013,6 +1140,11 @@
                         50% { transform: scale(1.1); box-shadow: 0 0 35px rgba(204, 255, 0, 0.8); }
                         100% { transform: scale(1); box-shadow: 0 0 15px rgba(204, 255, 0, 0.5); }
                     }
+                    @keyframes pulse-neon-blue {
+                        0% { transform: scale(1); box-shadow: 0 0 15px rgba(14, 165, 233, 0.5); }
+                        50% { transform: scale(1.1); box-shadow: 0 0 35px rgba(14, 165, 233, 0.8); }
+                        100% { transform: scale(1); box-shadow: 0 0 15px rgba(14, 165, 233, 0.5); }
+                    }
                     @keyframes fadeOutHint {
                         0% { opacity: 0; transform: translateX(-10px); }
                         2% { opacity: 1; transform: translateX(0); }
@@ -1061,12 +1193,18 @@
                         <div style="position: absolute; inset:0; background: rgba(0,0,0,0.4); backdrop-filter: grayscale(1); display: flex; align-items: center; justify-content: center; z-index: 5;">
                             <div style="border: 2px solid white; color: white; padding: 6px 15px; font-weight: 900; letter-spacing: 2px; transform: rotate(-8deg); font-size: 1.1rem; background: rgba(0,0,0,0.5);">FINALIZADA</div>
                         </div>
-                        ` : ''}
+                        ` : (isPairingWindow ? `
+                        <div style="position: absolute; top: 50px; right: 12px; z-index: 15;">
+                             <div style="background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); color: #22D3EE; border: 1px solid #22D3EE; padding: 4px 10px; border-radius: 8px; font-weight: 950; font-size: 0.6rem; letter-spacing: 1px; box-shadow: 0 0 10px rgba(34, 211, 238, 0.3); display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-random"></i> EMPAREJAMIENTO
+                             </div>
+                        </div>
+                        ` : '')}
                     </div>
 
                     <!-- ACTION BUTTON -->
                     <div style="position: absolute; top: 125px; right: 20px; z-index: 20; display: flex; align-items: center;">
-                         ${(!isJoined && !isFinished && !isInWaitlist) ? `
+                         ${(!isJoined && !isFinished && !isInWaitlist && !isPairingWindow && !isLive) ? `
                             <div style="
                                 margin-right: 12px; 
                                 background: #CCFF00; 

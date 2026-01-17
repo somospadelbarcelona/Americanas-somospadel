@@ -667,9 +667,14 @@
 
             // IF EMPTY State needed
             if (matches.length === 0) {
-                // If we had content and now empty, full re-render is safer/easier
-                if (grid.querySelectorAll('.tour-match-card').length > 0) return false;
-                // If already empty, standard logic handles it
+                const existingCards = grid.querySelectorAll('.tour-match-card');
+                if (existingCards.length > 0) {
+                    console.log("🚀 [SmartUpdate] Detected empty match list. Forcing full re-render to clear UI.");
+                    return false; // Force full render to show "Generando..." or empty state
+                }
+                // If already empty, standard logic handles it (or we allow re-render to update message)
+                // Returning false is always safe for "Empty" state updates to ensure message is correct.
+                return false;
             }
 
             const validIds = new Set(matches.map(m => m.id));
@@ -1407,10 +1412,18 @@
                 const colorClass = `border-${(match.court % 4) + 1}`;
 
                 // --- WOW STATUS VISUALS ---
-                const isLive = this.currentAmericanaDoc?.status === 'live' && !match.isFinished;
-                const statusText = match.isFinished ?
-                    '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">FINALIZADO</span>' :
-                    (isLive ? '<span class="status-badge-live">⚡ EN JUEGO</span>' : '<span style="color:#BBB;">ESPERANDO</span>');
+                const evtStatus = this.currentAmericanaDoc?.status;
+                const isLive = evtStatus === 'live' && !match.isFinished;
+                const isPairing = evtStatus === 'pairing';
+
+                let statusText = '<span style="color:#BBB;">ESPERANDO</span>';
+                if (match.isFinished) {
+                    statusText = '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">FINALIZADO</span>';
+                } else if (isLive) {
+                    statusText = '<span class="status-badge-live">⚡ EN JUEGO</span>';
+                } else if (isPairing) {
+                    statusText = '<span style="background: #0ea5e9; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">PRÓXIMO</span>';
+                }
 
                 const sA = parseInt(match.score_a || 0);
                 const sB = parseInt(match.score_b || 0);

@@ -73,20 +73,56 @@ window.AdminViews.entrenos_mgmt = async function () {
                         // console.log(`[BotDebug] ${evt.name} | Start: ${start.toLocaleString()} | Now: ${now.toLocaleString()}`);
                     } catch (e) { console.error("Date Parse Error", e); return; }
 
-                    // 1. OPEN -> LIVE
-                    if (evt.status === 'open' && now >= start && now < end) {
+                    // 1. OPEN/PAIRING -> LIVE
+                    if ((evt.status === 'open' || evt.status === 'pairing') && now >= start && now < end) {
                         const players = evt.players || [];
                         const isTwister = evt.name && evt.name.toUpperCase().includes('TWISTER');
                         // Default courts: 4 (16 players) unless Twister (3 courts = 12 players)
                         const reqPlayers = (parseInt(evt.courts) || (isTwister ? 3 : 4)) * 4;
 
+                        // Allow start if >= 75% capacity filled or manual override needed? 
+                        // For auto-start we usually want full or near full. 
+                        // Keeping existing logic: >= reqPlayers (Full)
+                        // Or maybe we should relax it? The user said "sincronizado ... importante". 
+                        // Let's stick to existing condition but robustify the execution.
                         if (players.length >= reqPlayers) {
                             console.log(`⚡ Admin Auto-Start: ${evt.name}`);
+
                             EventService.updateEvent('entreno', evt.id, { status: 'live' })
-                                .then(() => {
-                                    if (window.AmericanaService) return window.AmericanaService.generateFirstRoundMatches(evt.id, 'entreno');
+                                .then(async () => {
+                                    // Robust Match Generation (using MatchMakingService)
+                                    if (window.MatchMakingService) {
+                                        try {
+                                            // Check R1 existence first
+                                            const r1 = await window.db.collection('entrenos_matches')
+                                                .where('americana_id', '==', evt.id)
+                                                .where('round', '==', 1)
+                                                .limit(1).get();
+
+                                            if (r1.empty) {
+                                                console.log(`🎲 Generating R1 for auto-started event ${evt.name}...`);
+                                                await window.MatchMakingService.generateRound(evt.id, 'entreno', 1);
+                                            } else {
+                                                console.log(`✅ Matches already exist for ${evt.name}, skipping generation.`);
+                                            }
+                                        } catch (err) {
+                                            console.error("❌ Auto-start match gen failed:", err);
+                                        }
+                                    }
                                 })
                                 .then(() => loadAdminView('entrenos_mgmt')); // Refresh UI
+                        }
+                    }
+                    // 1.5. OPEN -> PAIRING (4 hours before)
+                    else if (evt.status === 'open') {
+                        const diffMs = start - now;
+                        const diffHours = diffMs / (1000 * 60 * 60);
+
+                        // If within 4 hours (and not already started)
+                        if (diffHours <= 4 && diffHours > 0) {
+                            console.log(`🔀 Admin Auto-Pairing Mode: ${evt.name}`);
+                            EventService.updateEvent('entreno', evt.id, { status: 'pairing' })
+                                .then(() => loadAdminView('entrenos_mgmt'));
                         }
                     }
                     // 2. LIVE -> FINISHED
@@ -117,8 +153,8 @@ window.AdminViews.entrenos_mgmt = async function () {
 
 function renderEntrenoCard(e) {
     const priceStr = `${e.price_members || 20}€ / ${e.price_external || 25}€`;
-    const statusLabel = e.status === 'live' ? 'EN JUEGO' : e.status === 'finished' ? 'FINALIZADA' : 'ABIERTA';
-    const statusColor = e.status === 'live' ? '#FF2D55' : e.status === 'finished' ? '#888' : '#00E36D';
+    const statusLabel = e.status === 'live' ? 'EN JUEGO' : e.status === 'finished' ? 'FINALIZADA' : e.status === 'pairing' ? 'EMPAREJAMIENTO' : 'ABIERTA';
+    const statusColor = e.status === 'live' ? '#FF2D55' : e.status === 'finished' ? '#888' : e.status === 'pairing' ? '#22D3EE' : '#00E36D';
 
     return `
         <div class="glass-card-enterprise" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-left: 4px solid var(--primary); background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%);">
@@ -158,6 +194,7 @@ function renderEntrenoCard(e) {
                                 letter-spacing: 1px;
                             ">
                         <option value="open" ${e.status === 'open' ? 'selected' : ''}>🟢 ABIERTA</option>
+                        <option value="pairing" ${e.status === 'pairing' ? 'selected' : ''}>🔀 EMPAREJAMIENTO</option>
                         <option value="live" ${e.status === 'live' ? 'selected' : ''}>🔴 EN JUEGO</option>
                         <option value="finished" ${e.status === 'finished' ? 'selected' : ''}>🏁 FINALIZADA</option>
                     </select>

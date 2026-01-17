@@ -770,4 +770,18 @@ function renderFullStatsView(container, matches) {
     `;
 }
 
+// --- NAVIGATION HANDLER ---
+window.locationSelectEvent = function (id) {
+    console.log("🔄 Changing Event to:", id);
+    if (!id) return;
+    window.selectedEventId = id;
+
+    // Attempt to preserve the current "Filter Context" (Americana vs Entreno)
+    // based on the current active event's type.
+    const currentType = window.AdminController.activeEvent ? window.AdminController.activeEvent.type : null;
+
+    // Reload the view
+    window.loadResultsView(currentType);
+};
+
 console.log("🏆 Admin-Results Optimized Loaded");

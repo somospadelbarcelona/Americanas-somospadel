@@ -2,14 +2,16 @@
  * MatchMakingService.js
  * Coordinador de lógica de emparejamientos.
  * Abstrae la complejidad de llamar a FixedPairsLogic o RotatingPozoLogic.
- * v5002 - Robust Rewrite
+ * v5003 - Robust Rewrite + Mutex Locks
  */
 
-console.log("🎲 LOADING MATCHMAKING SERVICE v5002...");
+console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
 
 (function () {
     try {
         const MatchMakingService = {
+
+            _locks: new Set(),
 
             /**
              * Generar partidos para una ronda específica.
@@ -33,123 +35,134 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5002...");
 
                 if (!event) throw new Error("Event not found");
 
-                // Determine Mode
-                const isFixedPairs = event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED;
+                // --- MUTEX LOCK (Prevent Double-Click Race Conditions) ---
+                const lockKey = `${eventId}_R${roundNum}`;
 
-                // --- SMART SCALING LOGIC ---
-                let effectiveCourts = event.max_courts || 4;
-                let courtsUpdated = false;
-
-                if (isFixedPairs) {
-                    const pairsCount = (event.fixed_pairs || []).length;
-                    const needed = Math.floor(pairsCount / 2);
-                    if (needed > effectiveCourts) {
-                        effectiveCourts = needed;
-                        courtsUpdated = true;
-                    }
-                } else {
-                    const playersCount = (event.players || []).length;
-                    const needed = Math.floor(playersCount / 4);
-                    if (needed > effectiveCourts) {
-                        effectiveCourts = needed;
-                        courtsUpdated = true;
-                    }
+                if (this._locks.has(lockKey)) {
+                    console.warn(`🔒 [MatchMaking] Race condition prevented. Generation for ${lockKey} already in progress.`);
+                    throw new Error("⏳ La ronda se está generando, por favor espera un momento...");
                 }
 
-                if (courtsUpdated) {
-                    console.log(`🤖 AI Scaling: Upgrading to ${effectiveCourts} courts.`);
-                    await collection.update(eventId, { max_courts: effectiveCourts });
-                    event.max_courts = effectiveCourts; // Update local ref
-                }
+                this._locks.add(lockKey);
 
-                // --- GENERATION LOGIC ---
+                try {
+                    // Determine Mode
+                    const isFixedPairs = event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED;
 
-                // Check Previous Round (if not R1)
-                if (roundNum > 1) {
-                    // FIX: Use correct collection to fetch previous matches
-                    const matchesCollection = (eventType === 'entreno') ? FirebaseDB.entrenos_matches : FirebaseDB.matches;
-                    const matches = await matchesCollection.getByAmericana(eventId);
+                    // --- CRITICAL IDEMPOTENCY CHECK (DB Level) ---
+                    // Verifica si ya existen partidos para esta ronda para evitar duplicados si el usuario pulsa 2 veces
+                    const checkColl = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                    const existingSnap = await window.db.collection(checkColl)
+                        .where('americana_id', '==', eventId)
+                        .get();
 
-                    const prevRoundMatches = matches.filter(m => parseInt(m.round) === (roundNum - 1));
-
-                    const unfinished = prevRoundMatches.filter(m => m.status !== 'finished');
-                    if (unfinished.length > 0) {
-                        throw new Error(`⚠️ Ronda ${roundNum - 1} tiene partidos sin finalizar. Termínalos antes.`);
-                    }
-
-                    // UPDATE LOGIC
-                    if (isFixedPairs) {
-                        // Update Rankings then Generate
-                        const pairs = event.fixed_pairs || [];
-                        if (!window.FixedPairsLogic) throw new Error("FixedPairsLogic not loaded");
-
-                        const updatedPairs = FixedPairsLogic.updatePozoRankings(pairs, prevRoundMatches, effectiveCourts);
-                        await collection.update(eventId, { fixed_pairs: updatedPairs });
-
-                        return this._createMatches(eventId, FixedPairsLogic.generatePozoRound(updatedPairs, roundNum, effectiveCourts), eventType);
-                    } else {
-                        // Rotating Logic
-                        const players = event.players || [];
-                        let movedPlayers;
-
-                        if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic not loaded");
-
-                        if (eventType === 'entreno') {
-                            // Entreno R2+: Use Standard Pozo Movement
-                            movedPlayers = RotatingPozoLogic.updatePlayerCourts(players, prevRoundMatches, effectiveCourts, 'open');
-                        } else {
-                            // Americana/Pozo
-                            movedPlayers = RotatingPozoLogic.updatePlayerCourts(players, prevRoundMatches, effectiveCourts, event.category);
+                    const existingRoundMatches = [];
+                    existingSnap.docs.forEach(doc => {
+                        const d = doc.data();
+                        if (parseInt(d.round) === roundNum) {
+                            existingRoundMatches.push({ id: doc.id, ...d });
                         }
-                        await collection.update(eventId, { players: movedPlayers });
+                    });
 
-                        const genCategory = eventType === 'entreno' ? 'entreno' : event.category;
-                        return this._createMatches(eventId, RotatingPozoLogic.generateRound(movedPlayers, roundNum, effectiveCourts, genCategory), eventType);
+                    if (existingRoundMatches.length > 0) {
+                        console.warn(`🛑 BLOQUEO DE DUPLICADOS: Ya existen ${existingRoundMatches.length} partidos en Ronda ${roundNum}. Se devuelven los existentes.`);
+                        return existingRoundMatches;
                     }
 
-                } else {
-                    // Round 1 Generation
+                    // --- SMART SCALING LOGIC ---
+                    let effectiveCourts = event.max_courts || 4;
+                    let courtsUpdated = false;
+
                     if (isFixedPairs) {
-                        if (!window.FixedPairsLogic) throw new Error("FixedPairsLogic not loaded");
+                        const pairsCount = (event.fixed_pairs || []).length;
+                        const needed = Math.floor(pairsCount / 2);
+                        if (needed > effectiveCourts) {
+                            effectiveCourts = needed;
+                            courtsUpdated = true;
+                        }
+                    } else {
+                        const playersCount = (event.players || []).length;
+                        const needed = Math.floor(playersCount / 4);
+                        if (needed > effectiveCourts) {
+                            effectiveCourts = needed;
+                            courtsUpdated = true;
+                        }
+                    }
 
-                        let pairs = event.fixed_pairs || [];
+                    if (courtsUpdated) {
+                        console.log(`🤖 AI Scaling: Upgrading to ${effectiveCourts} courts.`);
+                        await collection.update(eventId, { max_courts: effectiveCourts });
+                        event.max_courts = effectiveCourts;
+                    }
 
-                        if (pairs.length === 0) {
-                            console.log("🔒 No manual pairs found. Generating automatic fixed pairs...");
-                            let players = event.players || [];
+                    // --- GENERATION LOGIC ---
+
+                    // Check Previous Round (if not R1)
+                    if (roundNum > 1) {
+                        const matchesCollection = (eventType === 'entreno') ? FirebaseDB.entrenos_matches : FirebaseDB.matches;
+                        const matches = await matchesCollection.getByAmericana(eventId);
+
+                        const prevRoundMatches = matches.filter(m => parseInt(m.round) === (roundNum - 1));
+
+                        const unfinished = prevRoundMatches.filter(m => m.status !== 'finished');
+                        if (unfinished.length > 0) {
+                            throw new Error(`⚠️ Ronda ${roundNum - 1} tiene partidos sin finalizar. Termínalos antes.`);
+                        }
+
+                        if (isFixedPairs) {
+                            const pairs = event.fixed_pairs || [];
+                            if (!window.FixedPairsLogic) throw new Error("FixedPairsLogic not loaded");
+                            const updatedPairs = FixedPairsLogic.updatePozoRankings(pairs, prevRoundMatches, effectiveCourts);
+                            await collection.update(eventId, { fixed_pairs: updatedPairs });
+                            return await this._createMatches(eventId, FixedPairsLogic.generatePozoRound(updatedPairs, roundNum, effectiveCourts), eventType);
+                        } else {
+                            const players = event.players || [];
+                            let movedPlayers;
+                            if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic not loaded");
 
                             if (eventType === 'entreno') {
-                                players = this._sortPlayersForEntreno(players);
+                                movedPlayers = RotatingPozoLogic.updatePlayerCourts(players, prevRoundMatches, effectiveCourts, 'open');
+                            } else {
+                                movedPlayers = RotatingPozoLogic.updatePlayerCourts(players, prevRoundMatches, effectiveCourts, event.category);
                             }
-
-                            // Ensure they have initial courts
-                            const playersWithCourts = players.map((p, i) => ({
-                                ...p,
-                                current_court: p.current_court || (Math.floor(i / 4) + 1)
-                            }));
-
-                            pairs = FixedPairsLogic.createFixedPairs(playersWithCourts, event.category, eventType === 'entreno');
-                            await collection.update(eventId, { fixed_pairs: pairs });
-                        } else {
-                            console.log(`🔒 Using ${pairs.length} existing fixed pairs.`);
+                            await collection.update(eventId, { players: movedPlayers });
+                            const genCategory = eventType === 'entreno' ? 'entreno' : event.category;
+                            return await this._createMatches(eventId, RotatingPozoLogic.generateRound(movedPlayers, roundNum, effectiveCourts, genCategory), eventType);
                         }
 
-                        return this._createMatches(eventId, FixedPairsLogic.generatePozoRound(pairs, 1, effectiveCourts), eventType);
                     } else {
-                        // Initial Rotating Round
-                        if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic not loaded");
+                        // Round 1 Generation
+                        if (isFixedPairs) {
+                            if (!window.FixedPairsLogic) throw new Error("FixedPairsLogic not loaded");
+                            let pairs = event.fixed_pairs || [];
 
-                        let players = event.players || [];
+                            if (pairs.length === 0) {
+                                console.log("🔒 No manual pairs found. Generating automatic fixed pairs...");
+                                let players = event.players || [];
+                                if (eventType === 'entreno') players = this._sortPlayersForEntreno(players);
 
-                        if (eventType === 'entreno') {
-                            players = this._sortPlayersForEntreno(players);
+                                const playersWithCourts = players.map((p, i) => ({
+                                    ...p,
+                                    current_court: p.current_court || (Math.floor(i / 4) + 1)
+                                }));
+
+                                pairs = FixedPairsLogic.createFixedPairs(playersWithCourts, event.category, eventType === 'entreno');
+                                await collection.update(eventId, { fixed_pairs: pairs });
+                            }
+                            return await this._createMatches(eventId, FixedPairsLogic.generatePozoRound(pairs, 1, effectiveCourts), eventType);
+                        } else {
+                            if (!window.RotatingPozoLogic) throw new Error("RotatingPozoLogic not loaded");
+                            let players = event.players || [];
+                            if (eventType === 'entreno') players = this._sortPlayersForEntreno(players);
+
+                            players.forEach((p, i) => p.current_court = Math.floor(i / 4) + 1);
+                            await collection.update(eventId, { players });
+
+                            return await this._createMatches(eventId, RotatingPozoLogic.generateRound(players, 1, effectiveCourts, event.category), eventType);
                         }
-
-                        players.forEach((p, i) => p.current_court = Math.floor(i / 4) + 1);
-                        await collection.update(eventId, { players });
-
-                        return this._createMatches(eventId, RotatingPozoLogic.generateRound(players, 1, effectiveCourts, event.category), eventType);
                     }
+                } finally {
+                    this._locks.delete(lockKey);
                 }
             },
 
