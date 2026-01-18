@@ -1,0 +1,22 @@
+{
+    "name": "APP Somospadel BCN para americanas",
+    "short_name": "Somospadel BCN",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#CCFF00",
+    "description": "Resultados a tiempo real de nuestra comunidad",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "img/logo_somospadel.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "img/logo_somospadel.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

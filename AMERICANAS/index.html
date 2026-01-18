@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <script src="js/core/SecurityArmor.js"></script>
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>APP Somospadel BCN para americanas</title>
+
+    <!-- PWA / Mobile Capable -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Somospadel BCN">
+    <meta name="theme-color" content="#CCFF00">
+    <meta name="description" content="Resultados a tiempo real de nuestra comunidad">
+
+    <!-- Open Graph (SEO & Social Sharing) -->
+    <meta property="og:title" content="APP Somospadel BCN para americanas">
+    <meta property="og:description" content="Resultados a tiempo real de nuestra comunidad">
+    <meta property="og:image" content="img/logo_somospadel.png">
+
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="img/logo_somospadel.png">
+
+    <!-- Mobile Optimization -->
+    <meta name="HandheldFriendly" content="true">
+    <meta name="format-detection" content="telephone=no">
+
+    <!-- iOS Icons & Splash Hints -->
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/33/33736.png">
+    <link rel="apple-touch-startup-image" href="https://cdn-icons-png.flaticon.com/512/33/33736.png">
+
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="css/theme-playtomic.css?v=700">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <!-- App Shell Playtomic (Mobile First) -->
+    <div id="app-shell" class="flex-col hidden">
+
+        <!-- GLOBAL FIXED HEADER (Ticker + Command Bar) -->
+        <div class="dashboard-fixed-header">
+            <!-- TOP TICKER (Running Text) -->
+            <div class="ticker-container" onclick="window.Router && window.Router.navigate('americanas')"
+                style="cursor: pointer;">
+                <div class="ticker-track" id="ticker-track">
+                    <div class="ticker-item"><span>🔴 EN JUEGO:</span> Pista 1 (Tie-Break)</div>
+                    <div class="ticker-item"><span>🏆 TORNEO:</span> Final "Rey de la Pista" 20:00h</div>
+                    <div class="ticker-item"><span>🚀 RANKING:</span> ¡Alejandro ha subido a 4.2!</div>
+                    <div class="ticker-item"><span>🔥 CLUB:</span> 120 Jugadores en pista ahora</div>
+                </div>
+            </div>
+
+            <!-- COMMAND BAR -->
+            <div class="cmd-bar">
+                <!-- LEFT HAMBURGER TRIGGER -->
+                <div class="header-burger-btn"
+                    onclick="document.getElementById('side-drawer-container').classList.add('open'); document.getElementById('side-drawer-menu').classList.add('open');">
+                    <i class="fas fa-bars"></i>
+                </div>
+
+                <div class="cmd-brand">
+                    <img src="img/logo_somospadel.png" alt="Somos Padel" class="brand-logo-img">
+                    <div style="line-height:1; display:flex; flex-direction:column; justify-content:center;">
+                        <span style="font-size:1.1rem; letter-spacing:-0.5px;">SOMOS<span
+                                style="color:var(--brand-neon)">PADEL</span></span>
+                        <span
+                            style="font-size:0.6rem; color:#888; letter-spacing:2px; font-weight:600;">AMERICANAS</span>
+                    </div>
+                </div>
+
+                <div class="cmd-avatar-container" style="display: flex; align-items: center; gap: 10px;">
+                    <div style="text-align:right; display:flex; flex-direction:column;"
+                        onclick="window.Router && window.Router.navigate('profile')">
+                        <span style="font-size:0.6rem; color:#bbb; font-weight:700;">HOLA,</span>
+                        <span style="font-size:0.9rem; font-weight:700; color:white;" id="header-user-name">ALEX</span>
+                    </div>
+                    <div class="cmd-avatar" id="header-user-avatar"
+                        onclick="window.Router && window.Router.navigate('profile')">
+                        AL
+                    </div>
+                    <!-- Logout Icon Header -->
+                    <div onclick="window.AuthController && window.AuthController.handleLogout()"
+                        style="color: rgba(255,255,255,0.4); padding: 5px; cursor: pointer; font-size: 1.1rem; margin-left: 5px;">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NAVIGATION TABS (The "3 Pestañas") -->
+            <div class="header-tabs"
+                style="display:flex; justify-content:space-around; align-items:center; height:48px; background:#CCFF00; border-bottom:1px solid rgba(0,0,0,0.1); box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <div class="header-tab active" onclick="window.Router && window.Router.navigate('dashboard')"
+                    style="flex:1; text-align:center; font-weight:900; font-size:0.8rem; color:#000; cursor:pointer; letter-spacing:1px; height:100%; display:flex; align-items:center; justify-content:center; border-bottom:3px solid #FF9800; transition: all 0.2s;">
+                    INICIO
+                </div>
+                <div class="header-tab" onclick="window.Router && window.Router.navigate('entrenos')"
+                    style="flex:1; text-align:center; font-weight:700; font-size:0.8rem; color:rgba(0,0,0,0.5); cursor:pointer; letter-spacing:1px; height:100%; display:flex; align-items:center; justify-content:center; transition: all 0.2s;">
+                    EVENTOS
+                </div>
+                <div class="header-tab" onclick="window.Router && window.Router.navigate('ranking')"
+                    style="flex:1; text-align:center; font-weight:700; font-size:0.8rem; color:rgba(0,0,0,0.5); cursor:pointer; letter-spacing:1px; height:100%; display:flex; align-items:center; justify-content:center; transition: all 0.2s;">
+                    RANKING
+                </div>
+                <div class="header-tab" onclick="window.Router && window.Router.navigate('profile')"
+                    style="flex:1; text-align:center; font-weight:700; font-size:0.8rem; color:rgba(0,0,0,0.5); cursor:pointer; letter-spacing:1px; height:100%; display:flex; align-items:center; justify-content:center; transition: all 0.2s;">
+                    MI PERFIL
+                </div>
+            </div>
+        </div>
+
+        <!-- GLOBAL SIDE DRAWER -->
+        <div id="side-drawer-container" class="side-drawer-overlay"
+            onclick="this.classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');">
+        </div>
+        <div id="side-drawer-menu" class="side-drawer">
+            <div class="drawer-header">
+                <div style="font-weight:800; color:white; font-size:1.2rem;">MENÚ</div>
+                <i class="fas fa-times" style="color:white; font-size:1.4rem;"
+                    onclick="document.getElementById('side-drawer-container').classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');"></i>
+            </div>
+            <!-- Dynamic Menu Section -->
+            <div id="dynamic-menu-items">
+                <div style="padding: 20px; text-align: center; color: #888;">
+                    <span class="loader-mini"></span> Cargando menú...
+                </div>
+            </div>
+
+            <!-- New Logout Drawer Item -->
+            <div class="drawer-item"
+                style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20px; color: #ff4d4d;"
+                onclick="window.AuthController && window.AuthController.handleLogout()">
+                <i class="fas fa-power-off"></i> <span>Cerrar Sesión</span>
+            </div>
+        </div>
+
+        <!-- Main Content Area (Scrollable) -->
+        <!-- Added pt-130 class logic conceptually via CSS .full-width-mobile applied to children or logic -->
+        <main id="content-area" style="min-height: 100vh; padding-top: 158px;">
+            <!-- Loading Skeleton -->
+            <div class="dashboard-v2-container" style="padding-top: 40px; text-align: center;">
+                <div class="loader"></div>
+            </div>
+        </main>
+
+        <!-- Navigation Dock (Floating Glass) -->
+        <div class="nav-dock-container">
+
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Force Login Modal on Load -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Show login modal immediately
+            const currentUser = window.Store ? window.Store.getState('currentUser') : null;
+            if (!currentUser) {
+                const authModal = document.getElementById('auth-modal');
+                const appShell = document.getElementById('app-shell');
+                if (authModal) authModal.classList.remove('hidden');
+                if (appShell) appShell.classList.add('hidden');
+                console.log('🔐 Showing login modal - No user detected');
+            }
+        });
+    </script>
+
+    <div id="auth-modal" class="modal-overlay auth-overlay-enterprise hidden">
+        <div class="modal-content admin-login-card">
+            <div style="text-align: center; margin-bottom: 2.5rem;">
+                <img src="img/logo_somospadel.png"
+                    style="height: 100px; margin-bottom: 1.5rem; filter: drop-shadow(0 0 15px var(--glow-neon));"
+                    alt="Somos Padel">
+                <h2
+                    style="color: white !important; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0,0,0,0.5);">
+                    ACCESO JUGADORES</h2>
+                <div
+                    style="color: var(--brand-neon); font-size: 0.7rem; font-weight: 800; letter-spacing: 3px; margin-top: 5px;">
+                    SOMOS PÁDEL BARCELONA</div>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="pro-form">
+                <div class="form-group">
+                    <label
+                        style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.5rem; font-size:0.8rem;">TELÉFONO
+                        DE ACCESO</label>
+                    <input type="text" name="phone" placeholder="Usuario o Teléfono" class="pro-input" required>
+                </div>
+                <div class="form-group">
+                    <label
+                        style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.5rem; font-size:0.8rem;">CLAVE
+                        DE SEGURIDAD</label>
+                    <input type="password" name="password" placeholder="••••••" class="pro-input" required
+                        autocomplete="current-password">
+                </div>
+
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
+                    <input type="checkbox" id="remember-me" name="remember"
+                        style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--brand-neon);">
+                    <label for="remember-me"
+                        style="color: rgba(255,255,255,0.7); font-size: 0.85rem; cursor: pointer; margin: 0;">
+                        Mantener sesión abierta
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-primary-pro">ENTRAR A LA APP 🚀</button>
+
+                <p class="auth-switch-text" style="color: rgba(255,255,255,0.5);">¿Eres nuevo? <a href="#"
+                        class="auth-switch-link" style="color: var(--brand-neon);"
+                        onclick="toggleAuthMode('register')">Crear cuenta pro</a></p>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="pro-form hidden">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label
+                            style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.5rem; font-size:0.8rem;">NOMBRE</label>
+                        <input type="text" name="name" placeholder="Tu Nombre" class="pro-input" required>
+                    </div>
+                    <div>
+                        <label
+                            style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.5rem; font-size:0.8rem;">TELÉFONO</label>
+                        <input type="text" name="phone" placeholder="600..." class="pro-input" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                        style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.5rem; font-size:0.8rem;">CONTRASEÑA</label>
+                    <input type="password" name="password" placeholder="Mín. 6 caracteres" class="pro-input" required>
+                </div>
+
+                <style>
+                    .glass-card {
+                        background: rgba(255, 255, 255, 0.95);
+                        backdrop-filter: blur(10px);
+                        border-radius: 20px;
+                        border: 1px solid rgba(0, 0, 0, 0.05);
+                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+                    }
+
+                    /* --- WOW EFFECTS (LIVE MATCHES) --- */
+                    @keyframes neonPulse {
+                        0% {
+                            box-shadow: 0 0 5px rgba(204, 255, 0, 0.2), 0 0 10px rgba(204, 255, 0, 0.1);
+                            border-color: rgba(204, 255, 0, 0.5);
+                        }
+
+                        50% {
+                            box-shadow: 0 0 20px rgba(204, 255, 0, 0.6), 0 0 30px rgba(204, 255, 0, 0.4);
+                            border-color: #CCFF00;
+                        }
+
+                        100% {
+                            box-shadow: 0 0 5px rgba(204, 255, 0, 0.2), 0 0 10px rgba(204, 255, 0, 0.1);
+                            border-color: rgba(204, 255, 0, 0.5);
+                        }
+                    }
+
+                    .match-card-live {
+                        animation: neonPulse 2s infinite ease-in-out;
+                        background: radial-gradient(circle at center, rgba(204, 255, 0, 0.03) 0%, rgba(255, 255, 255, 1) 100%) !important;
+                        transform: scale(1.02);
+                        z-index: 10;
+                        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+                    }
+
+                    .status-badge-live {
+                        background: #CCFF00;
+                        color: black !important;
+                        box-shadow: 0 0 10px #ccff00;
+                        padding: 4px 12px !important;
+                        border-radius: 12px;
+                        /* Fixed radius */
+                        font-size: 0.6rem !important;
+                        font-weight: 900 !important;
+                        text-transform: uppercase;
+                        animation: blink 1s infinite alternate;
+                    }
+
+                    @keyframes blink {
+                        from {
+                            opacity: 1;
+                        }
+
+                        to {
+                            opacity: 0.7;
+                        }
+                    }
+                </style>
+                <div
+                    style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                    <label
+                        style="color: var(--brand-neon); margin-bottom: 0.8rem; font-size: 0.7rem; font-weight: 800; display: block;">🎾
+                        PERFIL DE JUGADOR</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label style="color: rgba(255,255,255,0.7); font-size:0.7rem;">GÉNERO</label>
+                            <select name="gender" class="pro-input" required style="padding: 0.8rem;">
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="color: rgba(255,255,255,0.7); font-size:0.7rem;">LADO</label>
+                            <select name="play_preference" class="pro-input" style="padding: 0.8rem;">
+                                <option value="indifferent" selected>Indiferente</option>
+                                <option value="drive">Drive</option>
+                                <option value="reves">Revés</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <label style="color: rgba(255,255,255,0.7); font-size:0.7rem;">NIVEL INICIAL (0-7)</label>
+                        <input type="number" name="self_rate_level" step="0.1" min="0" max="7" value="3.5"
+                            class="pro-input" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary-pro">UNIRME AHORA</button>
+                <p class="auth-switch-text" style="color: rgba(255,255,255,0.5);">¿Ya tienes cuenta? <a href="#"
+                        class="auth-switch-link" style="color: var(--brand-neon);"
+                        onclick="toggleAuthMode('login')">Iniciar sesión</a></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts Architecture -->
+    <!-- Layer 1: Config & Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-init.js"></script>
+
+    <!-- Layer 2: Core Services -->
+    <script src="js/core/StateManager.js"></script>
+    <script src="js/core/DatabaseService.js"></script>
+    <script src="js/core/AuthService.js"></script>
+    <script src="js/core/Router.js?v=5.6"></script>
+    <script src="js/core/SmartTicker.js"></script>
+
+    <!-- Layer 3: Logic Business -->
+    <script src="js/modules/common/EventService.js"></script>
+    <script src="js/modules/common/ParticipantService.js"></script>
+    <script src="js/modules/logic/MatchMakingService.js?v=5004"></script>
+    <script src="js/modules/americanas/AmericanaLogic.js"></script>
+    <script src="js/modules/americanas/AmericanaService.js?v=1010"></script>
+    <script src="js/modules/common/WhatsAppService.js"></script>
+    <script src="js/fixed-pairs-logic.js"></script>
+    <script src="js/rotating-pozo-logic.js"></script>
+    <script src="js/modules/auth/AuthController.js"></script>
+
+    <!-- Layer 4: Views & controllers -->
+    <!-- Dashboard Components (NEW) -->
+    <script src="js/modules/dashboard/HeroCard.js"></script>
+    <script src="js/modules/dashboard/QuickStats.js"></script>
+    <script src="js/modules/dashboard/ActionGrid.js"></script>
+    <script src="js/modules/dashboard/DashboardView.js?v=1004"></script>
+    <script src="js/modules/dashboard/DashboardController.js"></script>
+    <script src="js/modules/players/PlayerView.js?v=301"></script>
+    <script src="js/modules/players/PlayerController.js"></script>
+    <script src="js/modules/americanas/ControlTowerView.js?v=4031"></script>
+    <script src="js/modules/americanas/EventsController_V5.js?v=6.0"></script>
+
+    <!-- UI Components -->
+    <script src="js/modules/ui/PlayerAutocomplete.js"></script>
+
+    <!-- Ranking Module -->
+    <script src="js/modules/ranking/RankingView.js"></script>
+    <script src="js/modules/ranking/RankingController.js"></script>
+
+    <!-- Stats Module -->
+    <script src="js/modules/stats/StatsView.js"></script>
+    <script src="js/modules/stats/StatsController.js"></script>
+
+    <!-- Agenda Module -->
+    <script src="js/modules/agenda/AgendaView.js"></script>
+    <script src="js/modules/agenda/AgendaController.js"></script>
+
+    <!-- Entry Point -->
+    <script src="js/app.js?v=2026"></script>
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Usar ruta relativa para compatibilidad con GH Pages / Subcarpetas
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registrado:', registration.scope);
+                        // Forzar update si hay cambios
+                        registration.update();
+                    })
+                    .catch(error => {
+                        console.log('❌ Error al registrar Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+
+</html>
