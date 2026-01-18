@@ -212,6 +212,7 @@ function renderEntrenoCard(e) {
                         <option value="pairing" ${e.status === 'pairing' ? 'selected' : ''}>🔀 EMPAREJAMIENTO</option>
                         <option value="live" ${e.status === 'live' ? 'selected' : ''}>🔴 EN JUEGO</option>
                         <option value="finished" ${e.status === 'finished' ? 'selected' : ''}>🏁 FINALIZADA</option>
+                        <option value="cancelled" ${e.status === 'cancelled' ? 'selected' : ''}>⛔ ANULADO</option>
                     </select>
                     <i class="fas fa-chevron-down" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 0.65rem; color: ${statusColor}; pointer-events: none;"></i>
                 </div>
@@ -358,10 +359,10 @@ function setupCreateForm() {
 // --- GLOBAL ACTIONS --- //
 
 window.updateEntrenoStatus = async (id, newStatus) => {
-    // Visual feedback immediately handled by select, but we might want to confirm
-    // if switching to finished or live
-
     try {
+        const evt = await EventService.getById('entreno', id);
+        if (!evt) throw new Error("Evento no encontrado");
+
         await EventService.updateEvent('entreno', id, { status: newStatus });
 
         // AUTO-START ROUND 1 CHECK
@@ -381,12 +382,60 @@ window.updateEntrenoStatus = async (id, newStatus) => {
             }
         }
 
-        // Refresh to update colors/UI
+        // --- BROADCAST NOTIFICATION (AUTOMATIC FOR ALL STATUS CHANGES) ---
+        if (window.NotificationService) {
+            const statusMap = {
+                'cancelled': { title: "⛔ EVENTO ANULADO", body: `⚠️ ATENCIÓN: El evento ${evt.name} ha sido ANULADO.`, url: 'finished' },
+                'live': { title: "🎾 ¡EN JUEGO!", body: `El evento ${evt.name} ya ha comenzado. ¡Sigue los resultados en vivo!`, url: 'live' },
+                'pairing': { title: "🔀 EMPAREJAMIENTOS", body: `Ya puedes ver las parejas y pistas para ${evt.name}.`, url: 'live' },
+                'finished': { title: "🏁 FINALIZADO", body: `El evento ${evt.name} ha terminado. Consulta los resultados.`, url: 'finished' },
+                'open': { title: "🟢 INSCRIPCIONES ABIERTAS", body: `¡Atención! el evento ${evt.name} vuelve a estar ABIERTO. ¡Apúntate ya!`, url: 'live' }
+            };
+
+            const config = statusMap[newStatus];
+            if (config) {
+                console.log("🔔 Broadcast automático para estado:", newStatus);
+                await window.broadcastCommunityNotification(config.title, config.body, {
+                    url: config.url,
+                    eventId: id,
+                    push: true
+                });
+            }
+        }
+
         window.loadAdminView('entrenos_mgmt');
 
     } catch (e) {
         alert("Error cambiando estado: " + e.message);
-        window.loadAdminView('entrenos_mgmt'); // Revert
+        window.loadAdminView('entrenos_mgmt');
+    }
+};
+
+// Helper for broadcasting to top 50 active users
+window.broadcastCommunityNotification = async (title, body, payload = {}) => {
+    if (!window.NotificationService || !window.db) return;
+    try {
+        // Aumentamos el límite a 500 para cubrir a "toda la comunidad" activa
+        let usersSnap;
+        try {
+            usersSnap = await window.db.collection('players')
+                .orderBy('lastLogin', 'desc')
+                .limit(500)
+                .get();
+        } catch (e) {
+            console.warn("⚠️ Fallo ordenando por lastLogin (posible falta de índice). Intentando backup simple...");
+            usersSnap = await window.db.collection('players').limit(500).get();
+        }
+
+        if (!usersSnap.empty) {
+            const promises = usersSnap.docs.map(doc =>
+                window.NotificationService.sendNotificationToUser(doc.id, title, body, payload)
+            );
+            await Promise.all(promises);
+            console.log(`📣 Broadcast completado a ${promises.length} usuarios.`);
+        }
+    } catch (err) {
+        console.warn("Broadcast failed:", err);
     }
 };
 
@@ -453,6 +502,27 @@ window.openEditEntrenoModal = async (entreno) => {
 
             await EventService.updateEvent('entreno', id, data);
 
+            // --- BROADCAST AUTOMATICO AL EDITAR ---
+            if (window.NotificationService && data.status) {
+                const statusMap = {
+                    'cancelled': { title: "⛔ EVENTO ANULADO", body: `⚠️ ATENCIÓN: El evento ${data.name} ha sido ANULADO.`, url: 'finished' },
+                    'live': { title: "🎾 ¡EN JUEGO!", body: `${data.name} ya ha comenzado.`, url: 'live' },
+                    'pairing': { title: "🔀 EMPAREJAMIENTOS", body: `Parejas disponibles para ${data.name}.`, url: 'live' },
+                    'finished': { title: "🏁 FINALIZADO", body: `Consulta resultados de ${data.name}.`, url: 'finished' },
+                    'open': { title: "🟢 INSCRIPCIONES ABIERTAS", body: `¡Atención! El evento ${data.name} vuelve a estar ABIERTO.`, url: 'live' }
+                };
+
+                const config = statusMap[data.status];
+                if (config) {
+                    console.log("🔔 Broadcast desde Modal para:", data.status);
+                    await window.broadcastCommunityNotification(config.title, config.body, {
+                        url: config.url,
+                        eventId: id,
+                        push: true
+                    });
+                }
+            }
+
             // --- AUTO-START LOGIC: GENERATE ROUND 1 ---
             if (data.status === 'live') {
                 console.log("🚀 Entreno set to LIVE. Checking/Generating Round 1...");
@@ -478,27 +548,39 @@ window.openEditEntrenoModal = async (entreno) => {
 
             // --- NOTIFICATION: EVENT UPDATE (ENROLLED ONLY) ---
             // Only if important changes (Date, Time, Status)
-            if (window.NotificationService && (data.status === 'live' || data.date || data.time)) {
+            if (window.NotificationService && (data.status === 'live' || data.status === 'cancelled' || data.date || data.time)) {
                 try {
                     // Fetch fresh event data to get players
                     const updatedEvt = await EventService.getById('entreno', id);
                     if (updatedEvt && updatedEvt.players && updatedEvt.players.length > 0) {
                         const isLive = data.status === 'live';
-                        const title = isLive ? "¡ENTRENO EN JUEGO!" : "Actualización de Entreno";
-                        const msg = isLive
-                            ? `${updatedEvt.name} ha comenzado. ¡Consulta tus partidos!`
-                            : `Hubo cambios en ${updatedEvt.name}. Revisa los detalles.`;
+                        const isCancelled = data.status === 'cancelled';
 
-                        updatedEvt.players.forEach(p => {
-                            const pid = p.uid || p.id;
-                            window.NotificationService.sendNotificationToUser(
-                                pid,
-                                title,
-                                msg,
-                                { url: 'live', eventId: id }
-                            ).catch(e => { });
-                        });
-                        console.log(`🔔 Notified ${updatedEvt.players.length} players of update.`);
+                        let title = "Actualización de Entreno";
+                        let msg = `Hubo cambios en ${updatedEvt.name}. Revisa los detalles.`;
+
+                        if (isLive) {
+                            title = "¡ENTRENO EN JUEGO!";
+                            msg = `${updatedEvt.name} ha comenzado. ¡Consulta tus partidos!`;
+                        } else if (isCancelled) {
+                            title = "⛔ EVENTO CANCELADO";
+                            msg = `El evento ${updatedEvt.name} ha sido ANULADO. Consultar detalles.`;
+                        }
+
+                        if (isCancelled && !confirm(`¿Enviar alerta de CANCELACIÓN a ${updatedEvt.players.length} jugadores?`)) {
+                            // User cancelled the notification part
+                        } else {
+                            updatedEvt.players.forEach(p => {
+                                const pid = p.uid || p.id;
+                                window.NotificationService.sendNotificationToUser(
+                                    pid,
+                                    title,
+                                    msg,
+                                    { url: isCancelled ? 'finished' : 'live', eventId: id }
+                                ).catch(e => { });
+                            });
+                            console.log(`🔔 Notified ${updatedEvt.players.length} players of update.`);
+                        }
                     }
                 } catch (e) { console.warn("Update notif failed", e); }
             }

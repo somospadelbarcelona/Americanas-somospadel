@@ -53,6 +53,13 @@
         }
 
         handleAuthorized() {
+            const user = window.Store.getState('currentUser');
+            if (user && user.uid && window.db) {
+                window.db.collection('players').doc(user.uid).update({
+                    lastLogin: new Date().toISOString()
+                }).catch(e => console.warn("⏳ [App] Error actualizando lastLogin:", e));
+            }
+
             const authModal = document.getElementById('auth-modal');
             if (authModal) authModal.classList.add('hidden');
 

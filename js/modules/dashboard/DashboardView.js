@@ -43,19 +43,53 @@
                     padding-top: 10px; /* Space for Header */
                 ">
 
-                    <!-- HEADER WITH NOTIFICATIONS -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
-                        <h1 style="margin: 0; font-size: 1.5rem; font-weight: 900; letter-spacing: -1px; color: #0f172a;">
-                            SOMOS<span style="color: #84cc16;">PADEL</span>
-                        </h1>
-                        <div style="position: relative; cursor: pointer;" onclick="window.NotificationUi.toggle()">
-                            <i id="notif-bell-icon" class="far fa-bell" style="font-size: 1.4rem; color: #0f172a; transition: transform 0.2s;"></i>
+                    <!-- HEADER WITH NFL STYLE TICKER -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; gap: 12px;">
+                        <!-- NFL TICKER CONTAINER -->
+                        <div id="header-ticker-container" style="
+                            flex: 1; 
+                            overflow: hidden; 
+                            background: #0f172a; 
+                            border: 1px solid #334155;
+                            border-left: 3px solid #84cc16; /* NFL/Sports Accent */
+                            border-radius: 4px;
+                            height: 34px; /* SMALLER HEIGHT */
+                            display: flex;
+                            align-items: center;
+                            position: relative;
+                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                        ">
+                             <!-- Ticker Content -->
+                             <div id="header-ticker-text" style="
+                                display: flex; 
+                                align-items: center; 
+                                width: 100%;
+                                padding: 0 10px;
+                                white-space: nowrap;
+                                overflow: hidden;
+                             ">
+                                <span style="font-size:0.7rem; color: #64748b; font-weight: 700; letter-spacing: 0.5px;">ESPERANDO LIVE...</span>
+                            </div>
+                        </div>
+                        
+                        <!-- WOW BELL -->
+                        <div style="position: relative; cursor: pointer; flex-shrink: 0;" onclick="window.NotificationUi.toggle()">
+                            <div style="
+                                background: linear-gradient(135deg, #facc15 0%, #ca8a04 100%);
+                                -webkit-background-clip: text;
+                                -webkit-text-fill-color: transparent;
+                                filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.4));
+                                transition: transform 0.2s;
+                            ">
+                                <i id="notif-bell-icon" class="fas fa-bell" style="font-size: 1.5rem;"></i>
+                            </div>
+                            
                             <div id="notif-badge" style="
-                                position: absolute; top: -5px; right: -5px; 
-                                background: #ef4444; color: white; border: 2px solid white;
-                                font-size: 0.6rem; font-weight: 950; min-width: 16px; height: 16px;
+                                position: absolute; top: -3px; right: -3px; 
+                                background: #ef4444; color: white; border: 2px solid #0f172a;
+                                font-size: 0.55rem; font-weight: 900; min-width: 16px; height: 16px;
                                 border-radius: 50%; display: none; align-items: center; justify-content: center;
-                                padding: 2px;
+                                padding: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.5);
                             ">0</div>
                         </div>
                     </div>
@@ -82,35 +116,34 @@
                     <!-- 1. LIVE REGISTRATION WIDGET (FULL WIDTH SCROLLER) -->
                     <div id="registration-widget-root" style="
                         background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
-                        border: 1px solid rgba(0, 227, 109, 0.2);
-                        border-radius: 24px;
-                        margin: 10px 15px 10px;
-                        padding: 15px;
-                        box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+                        border-radius: 28px;
+                        margin: 10px 8px;
+                        padding: 15px 4px 10px; /* Padding reducido al mínimo para que las tarjetas toquen el borde */
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
                         z-index: 10;
                         animation: floatUp 0.8s ease-out forwards;
                     ">
-                        <div class="live-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <div class="live-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding: 0 14px;">
                             <div style="
                                 background: #00E36D; 
                                 color: #000; 
-                                padding: 5px 15px; 
-                                border-radius: 12px; 
-                                font-size: 0.8rem; 
+                                padding: 5px 14px; 
+                                border-radius: 10px; 
+                                font-size: 0.7rem; 
                                 font-weight: 950; 
                                 letter-spacing: 1px;
-                                box-shadow: 0 0 15px rgba(0,227,109,0.4);
+                                box-shadow: 0 4px 10px rgba(0,227,109,0.3);
                                 text-transform: uppercase;
                             ">
                                 NOTICIAS
                             </div>
                         </div>
                         
-                        <div id="live-scroller-content" class="live-scroller" style="overflow-x: hidden; display: flex; padding-bottom: 5px; gap: 10px;">
+                        <div id="live-scroller-content" class="live-scroller" style="overflow-x: auto; display: flex; padding: 5px 8px 15px; gap: 14px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
                             <!-- SKELETON PLACEHOLDERS TO START "FULL" -->
                             ${Array(4).fill(0).map(() => `
-                                <div style="min-width: 160px; height: 120px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); overflow: hidden; position: relative;">
-                                    <div style="position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); transform: translateX(-100%); animation: skeletonShine 1.5s infinite;"></div>
+                                <div style="min-width: 265px; height: 140px; background: rgba(0,0,0,0.03); border-radius: 18px; border: 1px solid rgba(0,0,0,0.05); overflow: hidden; position: relative; flex-shrink: 0; scroll-snap-align: center;">
+                                    <div style="position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); transform: translateX(-100%); animation: skeletonShine 1.5s infinite;"></div>
                                 </div>
                             `).join('')}
                         </div>
@@ -348,6 +381,71 @@
             } catch (err) {
                 console.error("Dashboard Render Error:", err);
             }
+
+            // 4. INIT HEADER TICKER SYNC
+            this.initHeaderTickerSync();
+        }
+
+        initHeaderTickerSync() {
+            // 1. Definir la lógica de renderizado del ticker
+            const updateTicker = (data) => {
+                const tickerContainer = document.getElementById('header-ticker-text');
+                if (!tickerContainer) return;
+
+                const latest = (data.items && data.items.length > 0) ? data.items[0] : null;
+                let innerHTML = '';
+
+                if (latest) {
+                    if (tickerContainer.dataset.lastNotifId === latest.id) return;
+                    tickerContainer.dataset.lastNotifId = latest.id;
+
+                    innerHTML = `
+                        <div style="display: flex; align-items: center; animation: marquee 12s linear infinite; padding-left: 10px;">
+                            <span style="background: #ef4444; color: white; font-size: 0.6rem; font-weight: 900; padding: 2px 5px; border-radius: 3px; margin-right: 8px; flex-shrink: 0; box-shadow: 0 0 10px rgba(239,68,68,0.5);">LIVE</span>
+                            <span style="font-weight: 800; color: #fff; font-size: 0.75rem; margin-right: 5px; text-transform: uppercase;">${latest.title}:</span> 
+                            <span style="color: #cbd5e1; font-weight: 600; font-size: 0.7rem; margin-right: 40px; text-transform: uppercase;">${latest.body}</span>
+                            <span style="font-weight: 800; color: #fff; font-size: 0.75rem; margin-right: 5px; text-transform: uppercase;">${latest.title}:</span> 
+                            <span style="color: #cbd5e1; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">${latest.body}</span>
+                        </div>
+                        <style>@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }</style>
+                    `;
+                } else {
+                    if (tickerContainer.dataset.lastNotifId === 'empty') return;
+                    tickerContainer.dataset.lastNotifId = 'empty';
+                    innerHTML = `
+                         <div style="display: flex; align-items: center; animation: marquee 15s linear infinite;">
+                            <span style="color: #84cc16; font-size: 0.8rem; margin-right: 6px;">📢</span>
+                            <span style="color: #94a3b8; font-weight: 700; font-size: 0.65rem; text-transform: uppercase; margin-right: 40px;">Tu historial de avisos aparecerá aquí en tiempo real.</span>
+                            <span style="color: #84cc16; font-size: 0.8rem; margin-right: 6px;">📢</span>
+                            <span style="color: #94a3b8; font-weight: 700; font-size: 0.65rem; text-transform: uppercase;">Tu historial de avisos aparecerá aquí en tiempo real.</span>
+                        </div>
+                        <style>@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }</style>
+                    `;
+                }
+                tickerContainer.innerHTML = innerHTML;
+            };
+
+            // 2. Lógica de sincronización robusta
+            if (window.NotificationService) {
+                const refresh = () => {
+                    console.log("📺 [Ticker] Sincronizando noticias...");
+                    updateTicker({
+                        items: window.NotificationService.notifications,
+                        count: window.NotificationService.unreadCount
+                    });
+                };
+
+                // Suscripción única global
+                if (!window._tickerSubscribed) {
+                    window.NotificationService.onUpdate(() => {
+                        if (window.Router?.currentRoute === 'dashboard') refresh();
+                    });
+                    window._tickerSubscribed = true;
+                }
+
+                // Forzar actualización inmediata tras render de vista
+                setTimeout(refresh, 200);
+            }
         }
 
         renderWeatherCard(city, temp, icon, details = {}, isPropitious = true) {
@@ -549,7 +647,7 @@
                 if (weatherData && weatherData[0]) {
                     const w = weatherData[0];
                     itemsHtml.push(`
-                        <div class="registration-ticker-card" style="min-width: 220px; background: linear-gradient(135deg, #1e293b 0%, #000 100%); border-top: 4px solid #3b82f6; border-radius: 18px; padding: 15px; flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.4); border-left: 1px solid rgba(59,130,246,0.3); display: flex; flex-direction: column; gap: 8px;">
+                        <div class="registration-ticker-card" style="min-width: 280px; min-height: 150px; scroll-snap-align: center; background: linear-gradient(135deg, #1e293b 0%, #000 100%); border-top: 5px solid #3b82f6; border-radius: 24px; padding: 20px; flex-shrink: 0; box-shadow: 0 15px 30px rgba(0,0,0,0.4); border-left: 1px solid rgba(59,130,246,0.3); display: flex; flex-direction: column; gap: 10px;">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <span style="font-size:0.6rem; font-weight:950; color:white; background:#3b82f6; padding:3px 8px; border-radius:6px; letter-spacing:1px;">METEO</span>
                                 <span style="font-size:1.2rem;">${w.icon}</span>
@@ -565,7 +663,7 @@
                 if (rankingData && rankingData.length > 0) {
                     const top = rankingData[0];
                     itemsHtml.push(`
-                        <div class="registration-ticker-card" style="min-width: 220px; background: linear-gradient(135deg, #451a03 0%, #000 100%); border-top: 4px solid #f59e0b; border-radius: 18px; padding: 15px; flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.4); border-left: 1px solid rgba(245,158,11,0.3); display: flex; flex-direction: column; gap: 8px;">
+                        <div class="registration-ticker-card" style="min-width: 280px; min-height: 150px; scroll-snap-align: center; background: linear-gradient(135deg, #451a03 0%, #000 100%); border-top: 5px solid #f59e0b; border-radius: 24px; padding: 20px; flex-shrink: 0; box-shadow: 0 15px 30px rgba(0,0,0,0.4); border-left: 1px solid rgba(245,158,11,0.3); display: flex; flex-direction: column; gap: 10px;">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <span style="font-size:0.6rem; font-weight:950; color:white; background:#f59e0b; padding:3px 8px; border-radius:6px; letter-spacing:1px;">LÍDER</span>
                                 <span style="font-size:1.2rem;">👑</span>
@@ -604,16 +702,18 @@
                         <div class="registration-ticker-card" 
                              onclick="event.stopPropagation(); window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');" 
                              style="
-                            min-width: 220px; 
+                            min-width: 280px; 
+                            min-height: 150px;
+                            scroll-snap-align: center;
                             background: linear-gradient(135deg, #111 0%, #000 100%);
-                            border-top: 4px solid ${statusColor};
-                            border-radius: 18px; 
-                            padding: 15px; 
+                            border-top: 5px solid ${statusColor};
+                            border-radius: 24px; 
+                            padding: 20px; 
                             flex-shrink: 0; 
-                            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+                            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
                             display: flex; 
                             flex-direction: column; 
-                            gap: 8px; 
+                            gap: 12px; 
                             cursor: pointer;
                         ">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -747,7 +847,7 @@
                     const scroller = document.getElementById('live-scroller-content');
                     if (scroller) {
                         // Intelligent Ticker: Emerges from shadows (center-biased)
-                        scroller.classList.add('ticker-container');
+                        // scroller.classList.add('ticker-container'); // REMOVED to remove blur effect per user request
                         // Duplicamos el contenido para el bucle infinito y que se vea "lleno" desde el inicio
                         scroller.innerHTML = `
                             <div class="ticker-content" style="padding-left: 20px;">

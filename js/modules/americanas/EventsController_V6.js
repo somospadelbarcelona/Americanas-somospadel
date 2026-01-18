@@ -319,55 +319,72 @@
 
             if (tabName === 'results' && this.state.currentUser) {
                 if (this.state.resultsInitialized) {
+                    // Already initialized and listening. Just render.
                     await this.render();
-                    return;
-                }
+                } else {
+                    this.state.loadingResults = true;
+                    this.state.resultsInitialized = true;
+                    await this.render();
 
-                this.state.loadingResults = true;
-                this.state.resultsInitialized = true;
-                await this.render();
+                    if (window.currentUser) {
+                        this.state.currentUser = window.currentUser;
+                    }
+                    const uid = this.state.currentUser ? this.state.currentUser.uid : null;
+                    if (!uid) return;
 
-                const uid = this.state.currentUser.uid;
-                const updatePersonalMatches = () => {
-                    const all = [
-                        ...(this.state.rawMatchesA || []),
-                        ...(this.state.rawMatchesB || []),
-                        ...(this.state.rawEntrenosA || []),
-                        ...(this.state.rawEntrenosB || [])
-                    ].filter(m => m.status === 'finished');
+                    const updatePersonalMatches = () => {
+                        const all = [
+                            ...(this.state.rawMatchesA || []),
+                            ...(this.state.rawMatchesB || []),
+                            ...(this.state.rawEntrenosA || []),
+                            ...(this.state.rawEntrenosB || [])
+                        ].filter(m => m.status === 'finished');
 
-                    const unique = [];
-                    const seen = new Set();
-                    all.forEach(m => {
-                        if (!seen.has(m.id)) {
-                            seen.add(m.id);
-                            unique.push(m);
-                        }
+                        const unique = [];
+                        const seen = new Set();
+                        all.forEach(m => {
+                            if (!seen.has(m.id)) {
+                                seen.add(m.id);
+                                unique.push(m);
+                            }
+                        });
+
+                        this.state.personalMatches = unique.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                        this.state.loadingResults = false;
+                        this.render();
+                    };
+
+                    this.unsubscribeMatchesA = window.db.collection('matches').where('team_a_ids', 'array-contains', uid).onSnapshot(snap => {
+                        this.state.rawMatchesA = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        updatePersonalMatches();
                     });
-
-                    this.state.personalMatches = unique.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                    this.state.loadingResults = false;
-                    this.render();
-                };
-
-                this.unsubscribeMatchesA = window.db.collection('matches').where('team_a_ids', 'array-contains', uid).onSnapshot(snap => {
-                    this.state.rawMatchesA = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    updatePersonalMatches();
-                });
-                this.unsubscribeMatchesB = window.db.collection('matches').where('team_b_ids', 'array-contains', uid).onSnapshot(snap => {
-                    this.state.rawMatchesB = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    updatePersonalMatches();
-                });
-                this.unsubscribeEntrenosA = window.db.collection('entrenos_matches').where('team_a_ids', 'array-contains', uid).onSnapshot(snap => {
-                    this.state.rawEntrenosA = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    updatePersonalMatches();
-                });
-                this.unsubscribeEntrenosB = window.db.collection('entrenos_matches').where('team_b_ids', 'array-contains', uid).onSnapshot(snap => {
-                    this.state.rawEntrenosB = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    updatePersonalMatches();
-                });
+                    this.unsubscribeMatchesB = window.db.collection('matches').where('team_b_ids', 'array-contains', uid).onSnapshot(snap => {
+                        this.state.rawMatchesB = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        updatePersonalMatches();
+                    });
+                    this.unsubscribeEntrenosA = window.db.collection('entrenos_matches').where('team_a_ids', 'array-contains', uid).onSnapshot(snap => {
+                        this.state.rawEntrenosA = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        updatePersonalMatches();
+                    });
+                    this.unsubscribeEntrenosB = window.db.collection('entrenos_matches').where('team_b_ids', 'array-contains', uid).onSnapshot(snap => {
+                        this.state.rawEntrenosB = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        updatePersonalMatches();
+                    });
+                }
             } else {
                 await this.render();
+            }
+        }
+
+
+        async loadEvents() {
+            // Background service manages real-time updates now.
+            // We just ensure we have data or show loader if empty.
+            if (this.state.entrenos.length === 0 && this.state.americanas.length === 0) {
+                this.showLoader();
+            } else {
+                this.state.loading = false;
+                this.render();
             }
         }
 
@@ -380,7 +397,7 @@
                 { id: 'events', label: 'AMERICANAS', icon: 'fa-trophy' },
                 { id: 'agenda', label: 'AGENDA', icon: 'fa-circle' },
                 { id: 'help', label: 'INFO', icon: 'fa-info-circle' },
-                { id: 'finished', label: 'FINALIZADAS', icon: 'fa-history' }
+                { id: 'finished', label: 'FINALIZADOS', icon: 'fa-history' }
             ];
 
             const navHtml = `
@@ -482,7 +499,10 @@
             if (!onlyMine) {
                 events = events.filter(e => {
                     const isCorrectType = showBothTypes ? true : (onlyEntrenos ? e.type === 'entreno' : e.type === 'americana');
-                    if (e.status === 'finished') return false;
+
+                    // Si el evento está finalizado o anulado, no va en esta pestaña
+                    if (e.status === 'finished' || e.status === 'cancelled') return false;
+
                     if (e.status === 'live') return isCorrectType;
                     return e.normDate >= todayStr && isCorrectType;
                 });
@@ -629,7 +649,7 @@
         renderFinishedView() {
             const todayStr = this.getTodayStr();
             const { month, category } = this.state.filters;
-            let finishedEvents = this.getAllSortedEvents().filter(e => e.status === 'finished' || e.date < todayStr);
+            let finishedEvents = this.getAllSortedEvents().filter(e => e.status === 'finished' || e.status === 'cancelled' || e.date < todayStr);
             if (month !== 'all') finishedEvents = finishedEvents.filter(e => e.date.startsWith(month));
             if (category !== 'all') finishedEvents = finishedEvents.filter(e => e.category === category);
 
@@ -723,6 +743,7 @@
             const hasStarted = this.hasEventStarted(evt.date, evt.time);
             const isLive = evt.status === 'live' || (evt.status === 'open' && hasStarted);
             const isPairing = evt.status === 'pairing';
+            const isCancelled = evt.status === 'cancelled';
 
             // Date Parsing
             const dateObj = this._parseDate(evt.date);
@@ -783,7 +804,11 @@
             let btnIcon = 'fa-play';
             let btnColor = '#CCFF00';
 
-            if (isFinished || evt.status === 'finished') {
+            if (isCancelled) {
+                btnLabel = 'ANULADO'; btnIcon = 'fa-ban'; btnColor = '#ef4444'; // Red
+                cardAction = "alert('⛔ Este evento ha sido cancelado por la organización.')";
+                fabAction = cardAction;
+            } else if (isFinished || evt.status === 'finished') {
                 btnLabel = 'VER'; btnIcon = 'fa-history'; btnColor = '#64748b';
                 cardAction = `window.openResultsView('${evt.id}', '${evt.type || 'americana'}')`;
                 fabAction = cardAction;
@@ -820,7 +845,15 @@
                         </div>
 
                         <!-- STATUS / PAREJAS BADGE -->
-                        ${isPairing ? `
+                        ${isCancelled ? `
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20,20,20,0.85); backdrop-filter: grayscale(100%); z-index: 5; display: flex; align-items: center; justify-content: center;">
+                            <div style="border: 4px solid #ef4444; color: #ef4444; padding: 10px 30px; border-radius: 12px; font-size: 2rem; font-weight: 900; transform: rotate(-15deg); text-transform: uppercase; letter-spacing: 5px; box-shadow: 0 0 30px rgba(239,68,68,0.3);">
+                                ANULADO
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        ${isPairing && !isCancelled ? `
                         <div style="position: absolute; top: 60px; right: 15px; background: rgba(0,183,255,0.2); border: 1px solid #00B7FF; color: #00B7FF; padding: 6px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(5px);">
                             <i class="fas fa-random"></i> EMPAREJAMIENTO
                         </div>
@@ -832,15 +865,15 @@
                         </div>
 
                         <!-- MAIN FLOATING ACTION BUTTON -->
-                        <div onclick="event.stopPropagation(); ${fabAction}" style="position: absolute; bottom: -30px; right: 20px; width: 80px; height: 80px; background: ${btnColor === '#fff' ? '#CCFF00' : (btnColor === '#CCFF00' ? '#38bdf8' : btnColor)}; color: ${btnColor === '#CCFF00' ? '#fff' : (btnColor === '#fff' ? '#000' : 'white')}; border-radius: 50%; border: 6px solid #000; box-shadow: 0 8px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transition: transform 0.2s;">
-                            <i class="fas ${btnIcon}" style="font-size: 1.2rem; margin-bottom: 4px;"></i>
+                        <div onclick="event.stopPropagation(); ${fabAction}" style="position: absolute; top: 65px; right: 15px; width: 70px; height: 70px; background: ${btnColor === '#fff' ? '#CCFF00' : (btnColor === '#CCFF00' ? '#38bdf8' : btnColor)}; color: ${btnColor === '#CCFF00' ? '#fff' : (btnColor === '#fff' ? '#000' : 'white')}; border-radius: 50%; border: 4px solid #000; box-shadow: 0 5px 20px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transition: transform 0.2s;">
+                            <i class="fas ${btnIcon}" style="font-size: 1.1rem; margin-bottom: 3px;"></i>
                             <span style="font-size: 0.5rem; font-weight: 950; text-align: center; line-height: 1;">${btnLabel}</span>
                         </div>
 
                         <!-- SECONDARY CHAT FAB (PINK) -->
                         <div onclick="event.stopPropagation(); window.ChatView.init('${evt.id}', '${evt.name.replace(/'/g, "\\'")}', '${evt.category || 'open'}', [${players.map(p => `'${p.uid || p.id}'`).join(',')}])" 
-                             style="position: absolute; bottom: -115px; right: 28px; width: 62px; height: 62px; background: #FF2D55; color: white; border-radius: 50%; border: 5px solid #000; box-shadow: 0 8px 20px rgba(255,45,85,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 11; transition: all 0.2s;">
-                            <i class="fas fa-comment-dots" style="font-size: 1rem; margin-bottom: 2px;"></i>
+                             style="position: absolute; top: 145px; right: 22px; width: 56px; height: 56px; background: #FF2D55; color: white; border-radius: 50%; border: 3px solid #000; box-shadow: 0 5px 15px rgba(255,45,85,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 11; transition: all 0.2s;">
+                            <i class="fas fa-comment-dots" style="font-size: 0.9rem; margin-bottom: 2px;"></i>
                             <span style="font-size: 0.45rem; font-weight: 950; text-align: center;">CHAT</span>
                         </div>
                     </div>
@@ -869,7 +902,22 @@
                         </div>
 
                         <div style="display: flex; align-items: center; gap: 12px; color: #666; font-size: 0.9rem; font-weight: 700; padding-top: 15px; border-top: 1px solid #222;">
-                            <i class="fas fa-map-marker-alt" style="color: #FF3B30;"></i> Sede: ${evt.sede || evt.location || 'Barcelona Pádel el Prat'}
+                            <div style="flex:1;">
+                                <i class="fas fa-map-marker-alt" style="color: #FF3B30;"></i> Sede: ${evt.sede || evt.location || 'Barcelona Pádel el Prat'}
+                            </div>
+                            <div style="
+                                background: ${isLive ? '#FF2D55' : (isCancelled ? '#ef4444' : (isPairing ? '#38bdf8' : (isFinished ? '#64748b' : '#84cc16')))};
+                                color: ${isLive || isCancelled || isPairing || isFinished ? '#fff' : '#000'};
+                                padding: 4px 10px;
+                                border-radius: 6px;
+                                font-size: 0.7rem;
+                                font-weight: 800;
+                                text-transform: uppercase;
+                                letter-spacing: 0.5px;
+                                box-shadow: 0 0 10px ${isLive ? 'rgba(255,45,85,0.4)' : 'transparent'};
+                            ">
+                                ${isLive ? '🔴 EN JUEGO' : (isCancelled ? '⛔ ANULADO' : (isPairing ? '🔀 EMPAREJAMIENTO' : (isFinished ? '🏁 FINALIZADA' : '🟢 ABIERTA')))}
+                            </div>
                         </div>
                     </div>
                     

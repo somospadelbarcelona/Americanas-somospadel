@@ -17,16 +17,35 @@ class NotificationService {
     }
 
     init() {
-        // Escuchar autenticación para iniciar listener
+        // 1. Escuchar autenticación real de Firebase
         window.auth.onAuthStateChanged(user => {
             if (user) {
+                console.log("🔔 [NotificationService] Firebase Auth session detected");
                 this.subscribeToFirestore(user.uid);
-                // Intentar recuperar token silenciosamente si ya se dio permiso
                 this.checkPermissionStatus();
             } else {
-                this.unsubscribeFirestore();
+                // Si no hay sesión Firebase, comprobamos si hay sesión Local en el Store
+                const localUser = window.Store ? window.Store.getState('currentUser') : null;
+                if (localUser && localUser.uid) {
+                    console.log("🔔 [NotificationService] Local session detected:", localUser.name);
+                    this.subscribeToFirestore(localUser.uid);
+                } else {
+                    this.unsubscribeFirestore();
+                }
             }
         });
+
+        // 2. Escuchar cambios en el Store por si la sesión local se inicia después
+        if (window.Store) {
+            window.Store.subscribe('currentUser', (user) => {
+                if (user && user.uid && !this.unsubscribe) {
+                    console.log("🔔 [NotificationService] Session started/changed in Store");
+                    this.subscribeToFirestore(user.uid);
+                } else if (!user) {
+                    this.unsubscribeFirestore();
+                }
+            });
+        }
     }
 
     /**
@@ -65,6 +84,25 @@ class NotificationService {
                 this.unreadCount = items.filter(n => !n.read).length;
 
                 console.log(`🔔 [NotificationService] Updated: ${this.unreadCount} unread`);
+
+                // NEW: Visual feedback for local/dev environment
+                if (snapshot.docChanges().length > 0) {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const data = change.doc.data();
+                            if (!data.read) {
+                                console.log("📣 NEW NOTIFICATION RECEIVED:", data.title, data.body);
+                                this.showNativeNotification(data.title, data.body, data.data);
+
+                                // Opcional: Feedback visual discreto si no hay permisos push
+                                if (Notification.permission !== 'granted') {
+                                    this.showInAppToast(data.title, data.body);
+                                }
+                            }
+                        }
+                    });
+                }
+
                 this.notifySubscribers();
             }, error => {
                 console.error("🔔 [NotificationService] Listener Error:", error);
@@ -177,31 +215,92 @@ class NotificationService {
 
     /**
      * Envía una notificación a un usuario (Admin triggered)
-     * Esto escribe en su DB (triggering Internal) y opcionalmente
-     * el backend (o cloud function) enviaría el Push.
-     * Como no tenemos backend activo 24/7, confiaremos en:
-     * 1. In-App inmediato si está abierto.
-     * 2. Si implementamos el trigger en cliente admin, enviamos fetch a FCM API (requiere key server side... riesgo).
-     * 
-     * ESTRATEGIA CLIENT-SIDE ONLY (GRATIS & SEGURA):
-     * Solo escribimos en DB. El Service Worker NO detecta DB changes.
-     * Para Push real sin backend, el cliente Admin debe llamar a FCM API directamente (con riesgo de exponer Key de Servidor o usando Legacy Server Key restringida).
-     * 
-     * Por ahora: Implementación SOLIDA de In-App. 
-     * Para Push: Solo funcionará si añadimos un Cloud Function basico (Gratis en Spark con limites) o 
-     * si el cliente Admin hace la llamada POST a fcm.googleapis.com (Riesgoso poner key aqui).
-     * 
-     * DECISION: Implementar escritura en DB para In-App.
+     * Soporta: 
+     * - Posicional: (uid, title, body, metadata)
+     * - Objeto: (uid, { title, body, icon, data, ... })
      */
-    async sendNotificationToUser(targetUserId, title, body, metadata = {}) {
-        await window.db.collection('players').doc(targetUserId).collection('notifications').add({
-            title,
-            body,
-            read: false,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            data: metadata,
-            icon: 'bell'
-        });
+    async sendNotificationToUser(targetUserId, titleOrConfig, body, metadata = {}) {
+        let finalTitle = titleOrConfig;
+        let finalBody = body;
+        let finalData = metadata;
+        let finalIcon = 'bell';
+
+        // Detectar si el segundo argumento es un objeto de configuración
+        if (typeof titleOrConfig === 'object' && titleOrConfig !== null) {
+            finalTitle = titleOrConfig.title;
+            finalBody = titleOrConfig.body;
+            finalData = titleOrConfig.data || titleOrConfig.metadata || {};
+            finalIcon = titleOrConfig.icon || 'bell';
+        }
+
+        try {
+            await window.db.collection('players').doc(targetUserId).collection('notifications').add({
+                title: finalTitle,
+                body: finalBody,
+                read: false,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                data: finalData,
+                icon: finalIcon
+            });
+
+            // Si el usuario destino es el actual, forzamos un toast visual (In-App Feedback)
+            const currentUser = window.Store ? window.Store.getState('currentUser') : null;
+            if (currentUser && currentUser.uid === targetUserId) {
+                this.showInAppToast(finalTitle, finalBody);
+            }
+        } catch (e) {
+            console.error("Error sending notification to user", targetUserId, e);
+        }
+    }
+
+    /**
+     * Muestra una notificación nativa del navegador si hay permiso.
+     * Útil cuando el usuario tiene la app abierta.
+     */
+    showNativeNotification(title, body, data = {}) {
+        if (Notification.permission === 'granted') {
+            const options = {
+                body: body,
+                icon: 'img/logo_somospadel.png',
+                badge: 'img/logo_somospadel.png',
+                data: data,
+                vibrate: [200, 100, 200],
+                tag: 'somospadel-notification'
+            };
+
+            // Si el SW está listo, usamos el registro del SW para mostrarla
+            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.ready.then(registration => {
+                    registration.showNotification(title, options);
+                });
+            } else {
+                // Fallback a notificación estándar
+                new Notification(title, options);
+            }
+        }
+    }
+
+    /**
+     * Muestra un aviso visual dentro de la app (útil si el navegador bloquea push en local)
+     */
+    showInAppToast(title, body) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+            background: #CCFF00; color: black; padding: 15px 25px; border-radius: 40px;
+            font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 0.9rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 999999;
+            display: flex; align-items: center; gap: 15px; border: 2px solid black;
+            animation: slideUp 0.5s ease-out;
+        `;
+        toast.innerHTML = `<i class="fas fa-bell"></i> <div><div style="font-size:0.7rem; opacity:0.7;">NOTIFICACIÓN</div>${title}</div>`;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.5s';
+            setTimeout(() => toast.remove(), 500);
+        }, 5000);
     }
 }
 

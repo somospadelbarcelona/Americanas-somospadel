@@ -75,7 +75,8 @@ class NotificationUi {
             <div id="push-permission-box" style="display:none; padding: 15px; background: rgba(132, 204, 22, 0.1); border-bottom: 1px solid rgba(132, 204, 22, 0.2);">
                 <div style="color: #84cc16; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px;">🔔 NO TE PIERDAS NADA</div>
                 <div style="color: #cbd5e1; font-size: 0.75rem; margin-bottom: 10px; line-height: 1.3;">Activa las notificaciones Push para saber cuándo empiezan tus partidos.</div>
-                <button onclick="window.NotificationService.requestPushPermission(); this.parentElement.style.display='none';" style="width: 100%; background: #84cc16; color: #000; border: none; padding: 8px; border-radius: 8px; font-weight: 800; cursor: pointer;">ACTIVAR PUSH</button>
+                <button onclick="window.NotificationUi.dismissPushPrompt(true)" style="width: 100%; background: #84cc16; color: #000; border: none; padding: 8px; border-radius: 8px; font-weight: 800; cursor: pointer;">ACTIVAR PUSH</button>
+                <div onclick="window.NotificationUi.dismissPushPrompt(false)" style="text-align:center; color:#64748b; font-size:0.6rem; margin-top:8px; cursor:pointer; text-decoration:underline;">Quizás más tarde</div>
             </div>
 
             <!-- LIST -->
@@ -83,13 +84,6 @@ class NotificationUi {
                 <div style="padding: 40px 20px; text-align: center; color: #64748b;">
                     <i class="fas fa-spinner fa-spin"></i> Cargando...
                 </div>
-            </div>
-            
-             <!-- FOOTER TEST -->
-            <div style="padding: 10px; border-top: 1px solid #1e293b; text-align: center;">
-                <button onclick="window.NotificationUi.simulateTest()" style="background:none; border:none; color: #475569; font-size: 0.7rem; cursor: pointer; text-decoration: underline;">
-                    🛠️ Simular Notificación de Prueba
-                </button>
             </div>
         `;
 
@@ -102,8 +96,9 @@ class NotificationUi {
             drawer.style.right = '0';
         }, 10);
 
-        // Check Permissions status for banner
-        if (Notification.permission === 'default' && window.messaging) {
+        // Check Permissions status for banner (only if not dismissed this session or permanently)
+        const isDismissed = localStorage.getItem('pushPromptDismissed');
+        if (Notification.permission === 'default' && window.messaging && !isDismissed) {
             document.getElementById('push-permission-box').style.display = 'block';
         }
 
@@ -207,39 +202,15 @@ class NotificationUi {
         if (interval > 1) return Math.floor(interval) + " min";
         return "Ahora";
     }
-
-    simulateTest() {
-        if (!window.NotificationService) return;
-
-        // Simular recepción de notificación
-        const testItem = {
-            id: 'test-' + Date.now(),
-            title: 'Prueba de Sistema 🔔',
-            body: '¡Enhorabuena! El sistema de notificaciones está activo y escuchando.',
-            read: false,
-            timestamp: new Date(),
-            icon: 'bell'
-        };
-
-        // Esto es solo visual si no está conectado a DB,
-        // pero idealmente escribimos en DB si queremos testear todo el loop.
-        // Como el usuario quiere probar "ya", hacemos un optimistic UI local
-        // O escribimos en DB si Service está disponible.
-
-        if (window.auth && window.auth.currentUser) {
-            window.NotificationService.sendNotificationToUser(
-                window.auth.currentUser.uid,
-                testItem.title,
-                testItem.body
-            ).then(() => alert("✅ Notificación enviada (Loop E2E)"))
-                .catch(e => alert("Error enviando: " + e.message));
-        } else {
-            // Fallback Local
-            window.NotificationService.notifications.unshift(testItem);
-            window.NotificationService.unreadCount++;
-            window.NotificationService.notifySubscribers();
+    dismissPushPrompt(accepted) {
+        if (accepted && window.NotificationService) {
+            window.NotificationService.requestPushPermission();
         }
+        localStorage.setItem('pushPromptDismissed', 'true');
+        const box = document.getElementById('push-permission-box');
+        if (box) box.style.display = 'none';
     }
 }
 
 window.NotificationUi = new NotificationUi();
+
