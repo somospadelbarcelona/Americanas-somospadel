@@ -9,10 +9,20 @@
 
             const isEntreno = eventDoc?.isEntreno;
             const ranking = window.StandingsService.calculate(matches, isEntreno ? 'entreno' : 'americana');
+            window.ControlTowerStandings.lastRankingData = ranking;
 
             return `
                 <div class="standings-container fade-in" style="padding: 24px; background: white; min-height: 80vh; padding-bottom: 100px;">
                     <div style="background: #fff; border: 1px solid #eeeff2; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+                        <div style="padding: 15px; display:flex; justify-content:space-between; align-items:center;">
+                            <button onclick="window.ControlTowerView.switchTab('results')" style="background: #111; border: 1px solid #111; color: white; padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                                <i class="fas fa-arrow-left"></i> VOLVER
+                            </button>
+                            <button onclick="window.ShareModal.open('ranking', window.ControlTowerStandings.lastRankingData, window.ControlTowerView?.currentAmericanaDoc)" 
+                                    style="background: linear-gradient(135deg, #CCFF00 0%, #B8E600 100%); color: black; border: none; padding: 6px 14px; border-radius: 10px; font-size: 0.7rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(204,255,0,0.3);">
+                                <i class="fas fa-camera"></i> COMPARTIR
+                            </button>
+                        </div>
                         <div style="padding: 18px; background: #fafafa; font-size: 0.65rem; font-weight: 800; color: #999; display: flex; border-bottom: 1px solid #f0f0f0; letter-spacing: 1px;">
                             <div style="width: 45px;">POS</div>
                             <div style="flex: 1;">JUGADOR</div>

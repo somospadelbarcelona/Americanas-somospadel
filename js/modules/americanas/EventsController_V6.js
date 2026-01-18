@@ -303,6 +303,15 @@
                     console.log(`🏁 [AutoAutomation] LIVE -> FINISHED: ${evt.name}`);
                     if (window.EventService) {
                         window.EventService.updateEvent(evt.type, evt.id, { status: 'finished' })
+                            .then(() => {
+                                // 🤖 TRIGGER CAPTAIN ANALYSIS FOR ENTRENOS
+                                if (evt.type === 'entreno' && window.CaptainView) {
+                                    console.log(`🤖 [Captain] Auto-launching post-event analysis for: ${evt.name}`);
+                                    setTimeout(() => {
+                                        window.CaptainView.open(evt);
+                                    }, 2000); // Small delay to ensure data is synced
+                                }
+                            })
                             .catch(e => console.error(e));
                     }
                 }

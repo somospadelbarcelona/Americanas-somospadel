@@ -920,6 +920,16 @@
                         50% { transform: scale(1.1); box-shadow: 0 0 35px rgba(204, 255, 0, 0.8); }
                         100% { transform: scale(1); box-shadow: 0 0 15px rgba(204, 255, 0, 0.5); }
                     }
+                    @keyframes fadeOutHint {
+                        0% { opacity: 0; transform: translateX(-10px); }
+                        2% { opacity: 1; transform: translateX(0); }
+                        90% { opacity: 1; transform: translateX(0); }
+                        100% { opacity: 0; transform: translateX(5px); }
+                    }
+                    @keyframes hueRotate {
+                        from { filter: hue-rotate(0deg); }
+                        to { filter: hue-rotate(360deg); }
+                    }
                 </style>
                 <div class="card-hybrid-c" onclick="window.ControlTowerView.prepareLoad('${evt.id}'); window.Router.navigate('live');" 
                      style="
@@ -962,7 +972,27 @@
                     </div>
 
                     <!-- ACTION BUTTON -->
-                    <div style="position: absolute; top: 125px; right: 20px; z-index: 20;">
+                    <div style="position: absolute; top: 125px; right: 20px; z-index: 20; display: flex; align-items: center;">
+                         ${(!isJoined && !isFinished && !isInWaitlist) ? `
+                            <div style="
+                                margin-right: 12px; 
+                                background: #CCFF00; 
+                                color: black; 
+                                font-size: 0.6rem; 
+                                font-weight: 900; 
+                                padding: 4px 8px; 
+                                border-radius: 6px; 
+                                white-space: nowrap; 
+                                position: relative; 
+                                animation: fadeOutHint 30s forwards, hueRotate 3s linear infinite; 
+                                box-shadow: 0 0 15px rgba(204,255,0,0.4);
+                                pointer-events: none;
+                                letter-spacing: 0.5px;
+                            ">
+                                ¡APÚNTATE!
+                                <div style="position: absolute; right: -4px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-left: 4px solid #CCFF00;"></div>
+                            </div>
+                        ` : ''}
                         <button onclick="${btnAction}" ${btnDisabled ? 'disabled' : ''}
                                 style="width: 55px; height: 55px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; ${btnStyle}">
                             ${btnContent}

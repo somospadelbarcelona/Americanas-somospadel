@@ -72,6 +72,23 @@
                             </div>
                         </div>
                         
+                        <!-- CAPTAIN ROBOT ICON -->
+                        <div style="position: relative; cursor: pointer; flex-shrink: 0;" onclick="window.CaptainView.open()">
+                            <div style="
+                                filter: drop-shadow(0 0 8px rgba(204, 255, 0, 0.4));
+                                transition: transform 0.2s;
+                                display: flex; align-items: center; justify-content: center;
+                                width: 34px; height: 34px;
+                                background: #222;
+                                border-radius: 50%;
+                                border: 1px solid #CCFF00;
+                            "
+                            onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 0 15px rgba(204,255,0,0.6)';" 
+                            onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">
+                                <i class="fas fa-robot" style="font-size: 1rem; color: #fff;"></i>
+                            </div>
+                        </div>
+
                         <!-- WOW BELL -->
                         <div style="position: relative; cursor: pointer; flex-shrink: 0;" onclick="window.NotificationUi.toggle()">
                             <div style="
@@ -196,15 +213,26 @@
                                         <span style="font-size: 0.55rem; font-weight: 950; color: white;">CHAT SOS</span>
                                     </div>
                                 </div>
-                                <div onclick="window.DashboardView.showChatInfo()" 
-                                     style="background: #0f172a; color: white; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 950; font-size: 0.8rem; cursor: pointer; padding: 0 18px; border: 2px solid #CCFF00; box-shadow: 0 5px 15px rgba(204,255,0,0.2); transition: all 0.3s;" 
-                                     onmouseover="this.style.transform='scale(1.05)'; this.style.background='#000';" onmouseout="this.style.transform='scale(1)'; this.style.background='#0f172a';">
-                                    <i class="fas fa-info-circle" style="color: #CCFF00;"></i>
-                                    <span>INFO</span>
+                                <!-- CAPTAIN & INFO BUTTONS -->
+                                <div style="display: flex; gap: 10px;">
+                                    <div onclick="window.CaptainView.open()" 
+                                         style="background: black; color: white; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 950; font-size: 0.8rem; cursor: pointer; padding: 0 16px; border: 2px solid #CCFF00; box-shadow: 0 5px 15px rgba(204,255,0,0.3); transition: all 0.3s;" 
+                                         onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 20px rgba(204,255,0,0.6)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 5px 15px rgba(204,255,0,0.3)';">
+                                        <i class="fas fa-robot" style="color: #CCFF00; font-size: 0.9rem;"></i>
+                                        <span>CAPITÁN VIRTUAL</span>
+                                    </div>
+
+                                    <div onclick="window.DashboardView.showChatInfo()" 
+                                         style="background: #0f172a; color: white; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 950; font-size: 0.8rem; cursor: pointer; padding: 0 16px; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s;" 
+                                         onmouseover="this.style.transform='scale(1.05)'; this.style.background='#1e293b';" onmouseout="this.style.transform='scale(1)'; this.style.background='#0f172a';">
+                                        <i class="fas fa-info-circle" style="color: white; opacity: 0.7;"></i>
+                                        <span>INFO</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
 
                     <!-- 3. NEW WEATHER WIDGET -->
                     <div id="weather-widget-root" style="margin: 1px 15px 4px !important; animation: floatUp 0.8s ease-out forwards;">
@@ -312,6 +340,8 @@
                 const regWidget = document.getElementById('registration-widget-root');
                 const aiActivity = document.getElementById('ai-activity-root');
                 if (regWidget) regWidget.style.display = 'block';
+                if (aiActivity) aiActivity.style.display = 'block';
+
                 if (aiActivity) aiActivity.style.display = 'block';
 
                 // 2. Fetch Real Data for new Widgets (SILENT CALCULATION)
@@ -467,6 +497,7 @@
                 setTimeout(refresh, 200);
             }
         }
+
 
         renderWeatherCard(city, temp, icon, details = {}, isPropitious = true) {
             const intel = details.intel || { score: 100, ballSpeed: '--', recommendation: 'Sincronizando meteorología...', gripStatus: '--' };

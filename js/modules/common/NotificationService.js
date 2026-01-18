@@ -161,9 +161,30 @@ class NotificationService {
                 }
 
                 this.notifySubscribers();
+                this.updateAppBadge(); // NEW: Actualizar badge del icono de la app
             }, error => {
                 console.error("🔔 [NotificationService] Listener Error:", error);
             });
+    }
+
+    /**
+     * Actualiza el badge (contador) en el icono de la app instalada (PWA)
+     * Funciona en Android, iOS (PWA 16.4+) y Desktop
+     */
+    async updateAppBadge() {
+        if ('setAppBadge' in navigator) {
+            try {
+                if (this.unreadCount > 0) {
+                    await navigator.setAppBadge(this.unreadCount);
+                    console.log(`🔢 [NotificationService] App Badge set to: ${this.unreadCount}`);
+                } else {
+                    await navigator.clearAppBadge();
+                    console.log("VX [NotificationService] App Badge cleared");
+                }
+            } catch (e) {
+                console.warn("⚠️ [NotificationService] Error setting app badge:", e);
+            }
+        }
     }
 
     /**

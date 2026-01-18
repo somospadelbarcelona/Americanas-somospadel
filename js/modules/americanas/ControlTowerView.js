@@ -981,46 +981,71 @@
 
                 let actionArea = '';
 
-                if (canEdit) {
-                    // UNIFIED SCORING INTERFACE (Numeric Steppers for ALL events)
-                    // Previously Entrenos had binary buttons, now using Steppers as requested.
-                    const stepperUI = `
-                        <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; padding:10px; border-radius:12px;">
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', -1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:white; font-weight:900;">-</button>
-                                    <span id="score-a-val-${match.id}" style="font-size:1.2rem; font-weight:900; width:30px; text-align:center;">${sA}</span>
-                                    <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', 1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:#fff; color:#25D366; font-weight:900;">+</button>
-                                </div>
-                                <div style="font-weight:900; color:#ddd; font-size:1.2rem;">-</div>
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', -1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:white; font-weight:900;">-</button>
-                                    <span id="score-b-val-${match.id}" style="font-size:1.2rem; font-weight:900; width:30px; text-align:center;">${sB}</span>
-                                    <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', 1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:#fff; color:#25D366; font-weight:900;">+</button>
-                                </div>
-                            </div>
-                            <button onclick="window.ControlTowerView.finishMatch('${match.id}')" style="width:100%; padding:12px; background: #CCFF00; color:black; font-weight:900; border:none; border-radius:10px; box-shadow: 0 4px 10px rgba(204,255,0,0.3);">
-                                ✅ CONFIRMAR RESULTADO
+                if (match.isFinished) {
+                    // Show SHARE button for everyone if finished
+                    let editBtnHTML = '';
+                    if (canEdit) {
+                        editBtnHTML = `
+                            <button onclick="document.getElementById('edit-actions-${match.id}').style.display='flex'; this.style.display='none'" 
+                                    style="background: transparent; border: 1px solid #333; color: #666; padding: 8px 16px; border-radius: 12px; font-size: 0.75rem; cursor: pointer; font-weight: 700;">
+                                ✏️ CORREGIR
                             </button>
+                            <div id="edit-actions-${match.id}" style="display: none; margin-top: 10px; width: 100%;">
+                                    <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; padding:10px; border-radius:12px;">
+                                            <div style="display:flex; align-items:center; gap:8px;">
+                                                <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', -1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:white; font-weight:900;">-</button>
+                                                <span id="score-a-val-${match.id}" style="font-size:1.2rem; font-weight:900; width:30px; text-align:center;">${sA}</span>
+                                                <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', 1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:#fff; color:#25D366; font-weight:900;">+</button>
+                                            </div>
+                                            <div style="font-weight:900; color:#ddd; font-size:1.2rem;">-</div>
+                                            <div style="display:flex; align-items:center; gap:8px;">
+                                                <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', -1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:white; font-weight:900;">-</button>
+                                                <span id="score-b-val-${match.id}" style="font-size:1.2rem; font-weight:900; width:30px; text-align:center;">${sB}</span>
+                                                <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', 1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:#fff; color:#25D366; font-weight:900;">+</button>
+                                            </div>
+                                        </div>
+                                        <button onclick="window.ControlTowerView.finishMatch('${match.id}')" style="width:100%; padding:12px; background: #CCFF00; color:black; font-weight:900; border:none; border-radius:10px; box-shadow: 0 4px 10px rgba(204,255,0,0.3);">
+                                            ✅ CONFIRMAR RESULTADO
+                                        </button>
+                                    </div>
+                            </div>
+                        `;
+                    }
+
+                    actionArea = `
+                        <div style="margin-top: 10px; text-align: center; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                            <button onclick="window.ShareModal.open(${JSON.stringify(match).replace(/"/g, '&quot;')}, window.ControlTowerView.currentAmericanaDoc)" 
+                                    style="background: linear-gradient(135deg, #CCFF00 0%, #B8E600 100%); color: black; border: none; padding: 8px 16px; border-radius: 12px; font-size: 0.75rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(204,255,0,0.3);">
+                                <i class="fas fa-camera"></i> COMPARTIR
+                            </button>
+                            ${editBtnHTML}
                         </div>
                     `;
 
-                    if (match.isFinished) {
-                        actionArea = `
-                            <div style="margin-top: 10px; text-align: center;">
-                                <div style="font-size:0.8rem; color:#888; margin-bottom:5px;">Resultado confirmado</div>
-                                <button onclick="document.getElementById('edit-actions-${match.id}').style.display='flex'; this.style.display='none'" 
-                                        style="background: transparent; border: 1px solid #ddd; color: #666; padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; cursor: pointer;">
-                                    ✏️ CORREGIR / EDITAR
-                                </button>
-                                <div id="edit-actions-${match.id}" style="display: none; margin-top: 10px;">
-                                    ${stepperUI}
+                } else if (canEdit) {
+                    // LIVE MATCH EDITING
+                    actionArea = `
+                        <div style="margin-top:15px; padding-top:15px; border-top:1px dashed #eee;">
+                            <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; padding:10px; border-radius:12px;">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', -1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:white; font-weight:900;">-</button>
+                                        <span id="score-a-val-${match.id}" style="font-size:1.2rem; font-weight:900; width:30px; text-align:center;">${sA}</span>
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', 1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:#fff; color:#25D366; font-weight:900;">+</button>
+                                    </div>
+                                    <div style="font-weight:900; color:#ddd; font-size:1.2rem;">-</div>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', -1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:white; font-weight:900;">-</button>
+                                        <span id="score-b-val-${match.id}" style="font-size:1.2rem; font-weight:900; width:30px; text-align:center;">${sB}</span>
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', 1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:#fff; color:#25D366; font-weight:900;">+</button>
+                                    </div>
                                 </div>
+                                <button onclick="window.ControlTowerView.finishMatch('${match.id}')" style="width:100%; padding:12px; background: #CCFF00; color:black; font-weight:900; border:none; border-radius:10px; box-shadow: 0 4px 10px rgba(204,255,0,0.3);">
+                                    ✅ CONFIRMAR RESULTADO
+                                </button>
                             </div>
-                        `;
-                    } else {
-                        actionArea = `<div style="margin-top:15px; padding-top:15px; border-top:1px dashed #eee;">${stepperUI}</div>`;
-                    }
+                        </div>`;
                 }
 
                 return `
@@ -1112,6 +1137,15 @@
                     status: 'finished'
                 });
                 console.log("Match finished:", matchId);
+
+                // 📈 UPDATE PLAYER LEVELS
+                if (window.LevelService) {
+                    const match = this.allMatches.find(m => m.id === matchId);
+                    if (match) {
+                        const updatedMatch = { ...match, status: 'finished' };
+                        window.LevelService.processMatchResult(updatedMatch, isEntreno ? 'entreno' : 'americana');
+                    }
+                }
             } catch (e) {
                 console.error("Finish match failed:", e);
             }
@@ -1126,12 +1160,23 @@
             const collection = isEntreno ? 'entrenos_matches' : 'matches';
 
             try {
-                await window.db.collection(collection).doc(matchId).update({
+                const updateData = {
                     score_a: winnerTeam === 'A' ? 1 : 0,
                     score_b: winnerTeam === 'B' ? 1 : 0,
                     status: 'finished'
-                });
+                };
+
+                await window.db.collection(collection).doc(matchId).update(updateData);
                 console.log(`✅ Match Result Saved.`);
+
+                // 📈 UPDATE PLAYER LEVELS
+                if (window.LevelService) {
+                    const match = this.allMatches.find(m => m.id === matchId);
+                    if (match) {
+                        const updatedMatch = { ...match, ...updateData };
+                        window.LevelService.processMatchResult(updatedMatch, isEntreno ? 'entreno' : 'americana');
+                    }
+                }
             } catch (e) {
                 console.error("Error setting match winner:", e);
                 alert("Error al guardar resultado.");

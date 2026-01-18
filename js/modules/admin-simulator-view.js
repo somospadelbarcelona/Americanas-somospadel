@@ -61,6 +61,13 @@ window.AdminViews.simulator_empty = function () {
             <button class="btn-primary-pro" style="padding: 1rem 3rem; font-size: 1.1rem;" onclick="AdminSimulator.runEmptyCycle()">
                 🚀 GENERAR AMERICANA (LISTA PARA JUGAR)
             </button>
+
+            <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,0,0,0.2);">
+                <p style="color: #ef4444; font-size: 0.8rem; margin-bottom: 1rem; font-weight: 800;">ZONA DE PELIGRO</p>
+                <button class="btn-primary-pro" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 0.6rem 2rem; font-size: 0.85rem;" onclick="AdminSimulator.cleanupSimulatedData()">
+                    🗑️ BORRAR TODAS LAS SIMULACIONES
+                </button>
+            </div>
         </div>
     `;
 };
@@ -119,6 +126,13 @@ window.AdminViews.entrenos_simulator = function () {
             <button class="btn-primary-pro" style="padding: 1rem 3rem; font-size: 1.1rem;" onclick="AdminSimulator.runTrainingCycle()">
                 🚀 GENERAR ENTRENO DE PRUEBA
             </button>
+
+            <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,0,0,0.2);">
+                <p style="color: #ef4444; font-size: 0.8rem; margin-bottom: 1rem; font-weight: 800;">ZONA DE PELIGRO</p>
+                <button class="btn-primary-pro" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 0.6rem 2rem; font-size: 0.85rem;" onclick="AdminSimulator.cleanupSimulatedData()">
+                    🗑️ BORRAR TODAS LAS SIMULACIONES
+                </button>
+            </div>
         </div>
     `;
 };

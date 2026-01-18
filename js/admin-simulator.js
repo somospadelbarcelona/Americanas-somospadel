@@ -296,6 +296,56 @@ const AdminSimulator = {
         }
     },
 
+    /**
+     * Limpiar todos los datos generados por el simulador
+     */
+    async cleanupSimulatedData() {
+        console.log("🧹 Iniciando limpieza de datos simulados...");
+        let totalEvents = 0;
+        let totalMatches = 0;
+
+        try {
+            // 1. Limpiar Americanas
+            const americanas = await FirebaseDB.americanas.getAll();
+            const simAmericanas = americanas.filter(a => a.is_simulation === true);
+
+            for (const a of simAmericanas) {
+                const matches = await FirebaseDB.matches.getByAmericana(a.id);
+                for (const m of matches) {
+                    await FirebaseDB.matches.delete(m.id);
+                    totalMatches++;
+                }
+                await FirebaseDB.americanas.delete(a.id);
+                totalEvents++;
+                console.log(`- Borrada Americana: ${a.name}`);
+            }
+
+            // 2. Limpiar Entrenos
+            const entrenos = await FirebaseDB.entrenos.getAll();
+            const simEntrenos = entrenos.filter(e => e.is_simulation === true);
+
+            for (const e of simEntrenos) {
+                const matches = await FirebaseDB.entrenos_matches.getByAmericana(e.id);
+                for (const m of matches) {
+                    await FirebaseDB.entrenos_matches.delete(m.id);
+                    totalMatches++;
+                }
+                await FirebaseDB.entrenos.delete(e.id);
+                totalEvents++;
+                console.log(`- Borrado Entreno: ${e.name}`);
+            }
+
+            console.log(`✅ Limpieza completada. Borrados ${totalEvents} eventos y ${totalMatches} partidos.`);
+            alert(`✅ ¡Limpieza completada!\nSe han borrado ${totalEvents} eventos simulados y ${totalMatches} partidos.`);
+
+            // Recargar vista si estamos en admin
+            if (window.loadAdminView) window.loadAdminView('dashboard');
+
+        } catch (error) {
+            console.error("❌ Error en la limpieza:", error);
+            alert("❌ Error al limpiar datos: " + error.message);
+        }
+    }
 };
 
 window.AdminSimulator = AdminSimulator;
