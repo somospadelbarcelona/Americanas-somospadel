@@ -12,6 +12,9 @@ class NotificationService {
         this.notifications = [];
         this.unreadCount = 0;
         this.callbacks = []; // Suscriptores UI (Dashboard, etc)
+        this.chatNotifications = []; // Notificaciones de chat temporales (en memoria)
+        this.chatUnsubscribes = new Map(); // Usar Map para trackear por EventID
+        this.serviceStartTime = Date.now();
         this.token = null;
         this.init();
     }
@@ -41,8 +44,10 @@ class NotificationService {
                 if (user && user.uid && !this.unsubscribe) {
                     console.log("🔔 [NotificationService] Session started/changed in Store");
                     this.subscribeToFirestore(user.uid);
+                    this.initChatObserver(); // Iniciar observación de chats
                 } else if (!user) {
                     this.unsubscribeFirestore();
+                    this.stopChatObserver();
                 }
             });
         }
@@ -59,9 +64,30 @@ class NotificationService {
     notifySubscribers() {
         const data = {
             count: this.unreadCount,
-            items: this.notifications
+            items: this.getMergedNotifications()
         };
         this.callbacks.forEach(cb => cb(data));
+    }
+
+    /**
+     * Fusiona las notificaciones de Firestore con los mensajes de chat recientes
+     */
+    getMergedNotifications() {
+        const combined = [...this.notifications, ...this.chatNotifications];
+        return combined.sort((a, b) => {
+            const timeA = this._getTimestampValue(a.timestamp);
+            const timeB = this._getTimestampValue(b.timestamp);
+            return timeB - timeA;
+        }).slice(0, 50);
+    }
+
+    _getTimestampValue(ts) {
+        if (!ts) return Date.now(); // Fallback a 'ahora' para evitar que mensajes nuevos se vayan al final
+        if (ts.toMillis) return ts.toMillis();
+        if (ts instanceof Date) return ts.getTime();
+        if (typeof ts === 'string') return new Date(ts).getTime();
+        if (typeof ts === 'number') return ts;
+        return Date.now();
     }
 
     /**
@@ -85,6 +111,9 @@ class NotificationService {
 
                 console.log(`🔔 [NotificationService] Updated: ${this.unreadCount} unread`);
 
+                // NEW: Iniciar observación de chats al cargar notificaciones
+                this.initChatObserver();
+
                 // NEW: Visual feedback for local/dev environment
                 if (snapshot.docChanges().length > 0) {
                     snapshot.docChanges().forEach(change => {
@@ -107,6 +136,77 @@ class NotificationService {
             }, error => {
                 console.error("🔔 [NotificationService] Listener Error:", error);
             });
+    }
+
+    /**
+     * Observa los chats de eventos activos para mostrar mensajes en tiempo real
+     */
+    async initChatObserver() {
+        // NOTA: No limpiamos agresivamente para no interrumpir listeners activos
+        // Solo añadiremos los eventos que no tengan listener
+
+        try {
+            if (!window.AmericanaService) return;
+            const events = await window.AmericanaService.getAllActiveEvents();
+            if (!events || events.length === 0) return;
+
+            // Filtrar solo eventos nuevos para no duplicar listeners
+            const newEvents = events.filter(evt => !this.chatUnsubscribes.has(evt.id));
+            if (newEvents.length === 0) return;
+
+            console.log(`💬 [NotificationService] Adding ${newEvents.length} new chat observers`);
+
+            newEvents.forEach(evt => {
+                const unsub = window.db.collection('chats').doc(evt.id).collection('messages')
+                    .orderBy('timestamp', 'desc')
+                    .limit(5)
+                    .onSnapshot(snap => {
+                        let hasNew = false;
+                        snap.docChanges().forEach(change => {
+                            if (change.type === 'added') {
+                                const msg = change.doc.data();
+                                const msgTime = msg.timestamp ? (msg.timestamp.toMillis ? msg.timestamp.toMillis() : msg.timestamp) : Date.now();
+
+                                // Solo procesar si es un mensaje enviado tras arrancar el servicio (margen 10s)
+                                if (msgTime > this.serviceStartTime - 10000) {
+                                    // Evitar duplicados
+                                    if (!this.chatNotifications.find(n => n.id === change.doc.id)) {
+                                        console.log("💬 [Chat Observer] New message detected:", msg.text);
+                                        this.chatNotifications.push({
+                                            id: change.doc.id,
+                                            title: `💬 ${msg.senderName || 'Chat'}:`,
+                                            body: msg.text,
+                                            timestamp: msg.timestamp || new Date(),
+                                            read: true, // Marcar como leída para no inflar el contador del badge
+                                            icon: 'comment-dots',
+                                            isChat: true,
+                                            data: { url: 'live', eventId: evt.id }
+                                        });
+                                        hasNew = true;
+                                    }
+                                }
+                            }
+                        });
+
+                        if (hasNew) {
+                            // Limitar cache local de chats
+                            if (this.chatNotifications.length > 20) {
+                                this.chatNotifications = this.chatNotifications.slice(-20);
+                            }
+                            this.notifySubscribers();
+                        }
+                    });
+                this.chatUnsubscribes.set(evt.id, unsub);
+            });
+        } catch (e) {
+            console.warn("💬 [NotificationService] Chat observation failed:", e);
+        }
+    }
+
+    stopChatObserver() {
+        this.chatUnsubscribes.forEach(unsub => unsub());
+        this.chatUnsubscribes.clear();
+        this.chatNotifications = [];
     }
 
     unsubscribeFirestore() {

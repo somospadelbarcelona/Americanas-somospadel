@@ -399,12 +399,17 @@
                     if (tickerContainer.dataset.lastNotifId === latest.id) return;
                     tickerContainer.dataset.lastNotifId = latest.id;
 
+                    const badgeLabel = latest.isChat ? 'CHAT' : 'LIVE';
+                    const badgeBg = latest.isChat ? '#0ea5e9' : '#ef4444';
+                    const badgeShadow = latest.isChat ? 'rgba(14,165,233,0.5)' : 'rgba(239,68,68,0.5)';
+
                     innerHTML = `
                         <div style="display: flex; align-items: center; animation: marquee 12s linear infinite; padding-left: 10px;">
-                            <span style="background: #ef4444; color: white; font-size: 0.6rem; font-weight: 900; padding: 2px 5px; border-radius: 3px; margin-right: 8px; flex-shrink: 0; box-shadow: 0 0 10px rgba(239,68,68,0.5);">LIVE</span>
-                            <span style="font-weight: 800; color: #fff; font-size: 0.75rem; margin-right: 5px; text-transform: uppercase;">${latest.title}:</span> 
+                            <span style="background: ${badgeBg}; color: white; font-size: 0.6rem; font-weight: 900; padding: 2px 5px; border-radius: 3px; margin-right: 8px; flex-shrink: 0; box-shadow: 0 0 10px ${badgeShadow};">${badgeLabel}</span>
+                            <span style="font-weight: 800; color: #fff; font-size: 0.75rem; margin-right: 5px; text-transform: uppercase;">${latest.title}</span> 
                             <span style="color: #cbd5e1; font-weight: 600; font-size: 0.7rem; margin-right: 40px; text-transform: uppercase;">${latest.body}</span>
-                            <span style="font-weight: 800; color: #fff; font-size: 0.75rem; margin-right: 5px; text-transform: uppercase;">${latest.title}:</span> 
+                            <span style="background: ${badgeBg}; color: white; font-size: 0.6rem; font-weight: 900; padding: 2px 5px; border-radius: 3px; margin-right: 8px; flex-shrink: 0; box-shadow: 0 0 10px ${badgeShadow};">${badgeLabel}</span>
+                            <span style="font-weight: 800; color: #fff; font-size: 0.75rem; margin-right: 5px; text-transform: uppercase;">${latest.title}</span> 
                             <span style="color: #cbd5e1; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">${latest.body}</span>
                         </div>
                         <style>@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }</style>
