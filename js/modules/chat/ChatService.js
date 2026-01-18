@@ -98,12 +98,18 @@
                 const isAdmin = (user.role === 'admin' || user.role === 'admin_player');
                 let messageType = isAdmin ? 'admin' : 'standard';
 
+                // Broadcast Detection (Admin Only via !! prefix)
+                if (isAdmin && text && text.startsWith('!!')) {
+                    messageType = 'broadcast';
+                    text = text.substring(2).trim();
+                }
+
                 if (media) {
                     messageType = media.type === 'audio' ? 'audio' : 'media';
                 }
 
                 await window.db.collection('chats').doc(eventId).collection('messages').add({
-                    text: text,
+                    text: String(text || ''),
                     attachment: media ? media.data : null, // Base64
                     attachmentType: media ? media.type : null,
                     senderId: user.id || user.uid,

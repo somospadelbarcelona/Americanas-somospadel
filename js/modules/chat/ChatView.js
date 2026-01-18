@@ -31,7 +31,7 @@
 
                 // 1. Access Check: Must be Joined OR part of the Community
                 if (!isJoined && !isCommunity) {
-                    alert(`🚫 ACCESO RESTRINGIDO: Este chat es exclusivo para jugadores inscritos o miembros de la comunidad SOMOSPADEL.`);
+                    this.showAccessDenied("Este chat es exclusivo para jugadores inscritos o miembros activos de la comunidad SOMOSPADEL.");
                     return;
                 }
 
@@ -50,7 +50,7 @@
 
                 if (!allowed) {
                     const catName = eventCat === 'male' ? 'MASCULINA' : 'FEMENINA';
-                    alert(`🚫 ACCESO DENEGADO: Tu perfil no coincide con la categoría ${catName} de este entreno.`);
+                    this.showAccessDenied(`Tu perfil no coincide con la categoría ${catName} de este entreno.`);
                     return;
                 }
             }
@@ -303,13 +303,127 @@
         }
 
         async destroy() {
-            if (confirm("¿Salir de la sala de chat?")) {
-                await window.ChatService.closeRoom(this.eventId);
+            const confirmed = await this.showCustomConfirm("¿DESCONECTAR DEL CANAL TÁCTICO?", "Cerrarás la sesión de comunicaciones en tiempo real para este evento.");
+            if (confirmed) {
+                if (this.eventId) await window.ChatService.closeRoom(this.eventId);
                 const el = document.getElementById('ops-room-drawer');
-                if (el) el.remove();
-                document.body.style.overflow = '';
-                this.isVisible = false;
+                if (el) {
+                    el.classList.remove('expanded');
+                    setTimeout(() => {
+                        el.remove();
+                        document.body.style.overflow = '';
+                        this.isVisible = false;
+                    }, 400);
+                } else {
+                    document.body.style.overflow = '';
+                    this.isVisible = false;
+                }
             }
+        }
+
+        showAccessDenied(reason) {
+            const existing = document.getElementById('ops-access-denied');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'ops-access-denied';
+            overlay.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: radial-gradient(circle at center, #1e0505 0%, #050000 100%);
+                z-index: 40000; display: flex; align-items: center; justify-content: center;
+                backdrop-filter: blur(10px); color: white; font-family: 'Inter', sans-serif;
+            `;
+
+            let timeLeft = 10;
+
+            overlay.innerHTML = `
+                <div style="text-align: center; max-width: 320px; padding: 30px; border-radius: 30px; background: rgba(255,255,255,0.03); border: 1px solid rgba(239,68,68,0.2); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); animation: access-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                    <div style="width: 80px; height: 80px; background: rgba(239,68,68,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; border: 2px solid #ef4444; animation: pulse-error 2s infinite;">
+                        <i class="fas fa-shield-alt" style="font-size: 2.5rem; color: #ef4444;"></i>
+                    </div>
+                    
+                    <h2 style="font-weight: 900; letter-spacing: -1px; margin-bottom: 10px; color: #ef4444;">ACCESO DENEGADO</h2>
+                    <p style="font-size: 0.9rem; color: #94a3b8; line-height: 1.5; margin-bottom: 25px;">${reason}</p>
+                    
+                    <div id="access-timer" style="font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 20px; letter-spacing: 1px; text-transform: uppercase;">
+                        Redirección automática en <span style="color:white; font-size:1rem;" id="countdown-num">10</span>s
+                    </div>
+
+                    <button onclick="window.ChatView.abortAndReturn()" style="width: 100%; background: #ef4444; color: white; border: none; padding: 15px; border-radius: 15px; font-weight: 900; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(239,68,68,0.2);">
+                        <i class="fas fa-arrow-left"></i> VOLVER ATRÁS
+                    </button>
+                    
+                    <style>
+                        @keyframes access-pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+                        @keyframes pulse-error { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); } 70% { box-shadow: 0 0 0 15px rgba(239,68,68,0); } 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } }
+                    </style>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+            document.body.style.overflow = 'hidden';
+
+            const timerIdx = setInterval(() => {
+                timeLeft--;
+                const numEl = document.getElementById('countdown-num');
+                if (numEl) numEl.innerText = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerIdx);
+                    this.abortAndReturn();
+                }
+            }, 1000);
+
+            // Store interval to clear if manual button pressed
+            this.accessTimer = timerIdx;
+        }
+
+        abortAndReturn() {
+            if (this.accessTimer) clearInterval(this.accessTimer);
+            const overlay = document.getElementById('ops-access-denied');
+            if (overlay) overlay.remove();
+
+            document.body.style.overflow = '';
+
+            // Retroceder al inicio (dashboard)
+            if (window.Router) {
+                window.Router.navigate('dashboard');
+            } else {
+                window.location.reload();
+            }
+        }
+
+        showCustomConfirm(title, message) {
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(0,0,0,0.85); z-index: 41000;
+                    display: flex; align-items: center; justify-content: center;
+                    backdrop-filter: blur(5px); animation: fadeIn 0.3s;
+                `;
+
+                overlay.innerHTML = `
+                    <div style="background: #0f172a; width: 90%; max-width: 320px; border-radius: 25px; border: 1px solid #1e293b; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
+                        <div style="padding: 25px; text-align: center;">
+                            <div style="width: 50px; height: 50px; background: rgba(204,255,0,0.1); border-radius: 15px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: #CCFF00; font-size: 1.5rem;">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </div>
+                            <h3 style="margin: 0 0 10px; color: white; font-weight: 900; font-size: 1.1rem; letter-spacing: -0.5px;">${title}</h3>
+                            <p style="margin: 0; color: #64748b; font-size: 0.85rem; line-height: 1.4;">${message}</p>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #1e293b;">
+                            <button id="confirm-cancel" style="padding: 15px; background: transparent; border: none; color: #94a3b8; font-weight: 700; cursor: pointer; border-right: 1px solid #1e293b;">CANCELAR</button>
+                            <button id="confirm-ok" style="padding: 15px; background: #CCFF00; border: none; color: black; font-weight: 900; cursor: pointer;">CONFIRMAR</button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(overlay);
+
+                overlay.querySelector('#confirm-cancel').onclick = () => { overlay.remove(); resolve(false); };
+                overlay.querySelector('#confirm-ok').onclick = () => { overlay.remove(); resolve(true); };
+            });
         }
 
         startListeners() {
@@ -546,121 +660,150 @@
             }
 
             container.innerHTML = messages.map(msg => {
-                const isMe = msg.senderId === myId;
-                const isAdminMsg = msg.type === 'admin';
+                try {
+                    const isMe = msg.senderId === myId;
+                    const isAdminMsg = msg.type === 'admin';
 
-                let bgColor = '#ffffff';
-                let textColor = '#000000';
-                let borderColor = 'transparent';
+                    let bgColor = '#ffffff';
+                    let textColor = '#000000';
+                    let borderColor = 'transparent';
 
-                // PRIORITY: Admin style (even if it's me)
-                if (isAdminMsg) {
-                    bgColor = '#ffffff';
-                    textColor = '#065f46'; // Admin Dark Green
-                    borderColor = '#065f46';
-                } else if (isMe) {
-                    bgColor = '#ffffff';
-                    textColor = '#000000';
-                } else {
-                    bgColor = this.getUserColor(msg.senderId);
-                    textColor = '#000000';
-                }
+                    // PRIORITY: Admin style (even if it's me)
+                    if (isAdminMsg) {
+                        bgColor = '#ffffff';
+                        textColor = '#065f46'; // Admin Dark Green
+                        borderColor = '#065f46';
+                    } else if (isMe) {
+                        bgColor = '#ffffff';
+                        textColor = '#000000';
+                    } else {
+                        bgColor = this.getUserColor(msg.senderId);
+                        textColor = '#000000';
+                    }
 
-                // --- LOGICA DE EQUIPOS MEJORADA ---
-                const player = this.allPlayers.find(p => p.id === msg.senderId || p.uid === msg.senderId);
-                let teamsList = [];
+                    // --- LOGICA DE EQUIPOS MEJORADA ---
+                    const player = this.allPlayers.find(p => p.id === msg.senderId || p.uid === msg.senderId);
+                    let teamsList = [];
 
-                if (player) {
-                    // 0. COLUMNA 'EQUIPOS' DE LA BD (Prioridad solicitada)
-                    // Buscamos tanto en mayúsculas como minúsculas por si acaso
-                    const dbEquipos = player.EQUIPOS || player.equipos || player.Equipos;
+                    if (player) {
+                        // 0. COLUMNA 'EQUIPOS' DE LA BD (Prioridad solicitada)
+                        const dbEquipos = player.EQUIPOS || player.equipos || player.Equipos;
 
-                    if (dbEquipos) {
-                        if (Array.isArray(dbEquipos)) {
-                            teamsList.push(...dbEquipos);
-                        } else if (typeof dbEquipos === 'string') {
-                            // Soporte para listas separadas por coma
-                            if (dbEquipos.includes(',')) {
-                                dbEquipos.split(',').map(t => t.trim()).forEach(t => teamsList.push(t));
-                            } else {
-                                teamsList.push(dbEquipos);
+                        if (dbEquipos) {
+                            if (Array.isArray(dbEquipos)) {
+                                teamsList.push(...dbEquipos);
+                            } else if (typeof dbEquipos === 'string') {
+                                if (dbEquipos.includes(',')) {
+                                    dbEquipos.split(',').map(t => t.trim()).forEach(t => teamsList.push(t));
+                                } else {
+                                    teamsList.push(dbEquipos);
+                                }
                             }
                         }
-                    }
 
-                    // 1. Equipos de Competición Legacy (Merge inteligente)
-                    if (Array.isArray(player.team_somospadel) && player.team_somospadel.length > 0) {
-                        player.team_somospadel.forEach(t => {
-                            if (!teamsList.includes(t)) teamsList.push(t);
-                        });
-                    }
-                    // Fallback a campos simples solo si la lista sigue vacía
-                    else if (teamsList.length === 0) {
-                        if (player.team) teamsList.push(player.team);
-                        else if (player.team_name) teamsList.push(player.team_name);
-                    }
+                        // 1. Equipos de Competición Legacy
+                        if (Array.isArray(player.team_somospadel) && player.team_somospadel.length > 0) {
+                            player.team_somospadel.forEach(t => {
+                                if (!teamsList.includes(t)) teamsList.push(t);
+                            });
+                        }
+                        else if (teamsList.length === 0) {
+                            if (player.team) teamsList.push(player.team);
+                            else if (player.team_name) teamsList.push(player.team_name);
+                        }
 
-                    // 2. Membresía de Comunidad (Adicional siempre)
-                    if (player.membership === 'somospadel_bcn' || player.role === 'player_somospadel') {
-                        // Solo añadir si no está ya presente (normalizando)
-                        const hasSomosPadel = teamsList.some((t) => typeof t === 'string' && (t.toUpperCase() === 'SOMOSPADEL' || t.toUpperCase() === 'SOMOSPADEL_BCN'));
-                        if (!hasSomosPadel) {
-                            teamsList.push('SOMOSPADEL');
+                        // 2. Membresía de Comunidad
+                        if (player.membership === 'somospadel_bcn' || player.role === 'player_somospadel') {
+                            const hasSomosPadel = teamsList.some((t) => typeof t === 'string' && (t.toUpperCase() === 'SOMOSPADEL' || t.toUpperCase() === 'SOMOSPADEL_BCN'));
+                            if (!hasSomosPadel) {
+                                teamsList.push('SOMOSPADEL');
+                            }
+                        }
+
+                        teamsList = [...new Set(teamsList)].filter(t => t && String(t).trim() !== '');
+
+                    } else {
+                        let rawTeam = msg.senderTeam;
+                        if (rawTeam) {
+                            if (rawTeam.includes('SOMOSPADEL_BCN')) teamsList.push('SOMOSPADEL');
+                            else teamsList.push(rawTeam);
                         }
                     }
 
-                    // Limpieza final de duplicados y vacíos
-                    teamsList = [...new Set(teamsList)].filter(t => t && t.trim() !== '');
+                    let bubbleHtml = `<div class="msg-bubble" style="background: ${bgColor}; color: ${textColor}; border: 1.5px solid ${borderColor}; ${isMe ? 'border-bottom-right-radius: 4px;' : 'border-bottom-left-radius: 4px;'}">`;
 
-                } else {
-                    // Fallback al mensaje si el jugador no está en cache (raro pero posible)
-                    // Intentamos limpiar si viene con formato JSON o string sucio
-                    let rawTeam = msg.senderTeam;
-                    if (rawTeam) {
-                        if (rawTeam.includes('SOMOSPADEL_BCN')) teamsList.push('SOMOSPADEL');
-                        else teamsList.push(rawTeam);
+                    const teamBadges = this.getTeamBadgesHtml(teamsList);
+                    const deleteAction = isSuperAdmin ? `<i class="fas fa-trash-alt" style="margin-left:auto; color:#ef4444; opacity:0.6; cursor:pointer;" onclick="event.stopPropagation(); window.ChatView.deleteMessage('${msg.id}')"></i>` : '';
+
+                    bubbleHtml += `
+                        <div style="font-size: 0.72rem; font-weight: 950; margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid rgba(0,0,0,0.06); padding-bottom: 4px;">
+                            <span onclick="event.stopPropagation(); window.ChatView.showPlayerDetails('${msg.senderId}')" style="cursor: pointer; border-bottom: 1px dotted rgba(0,0,0,0.3); padding-bottom:1px;" title="Ver perfil completo">
+                                ${(msg.senderName || 'JUGADOR').toUpperCase()}
+                            </span>
+                            ${teamBadges}
+                            ${deleteAction}
+                        </div>
+                    `;
+
+                    if (msg.attachment) {
+                        if (msg.attachmentType === 'audio') {
+                            bubbleHtml += `<audio controls src="${msg.attachment}" style="max-width:200px; height:30px; margin:5px 0; filter: contrast(1.1) brightness(0.9);"></audio>`;
+                        } else {
+                            bubbleHtml += `<img src="${msg.attachment}" style="max-width:100%; border-radius:8px; margin:5px 0;">`;
+                        }
                     }
-                }
 
-                let bubbleHtml = `<div class="msg-bubble" style="background: ${bgColor}; color: ${textColor}; border: 1.5px solid ${borderColor}; ${isMe ? 'border-bottom-right-radius: 4px;' : 'border-bottom-left-radius: 4px;'}">`;
-
-                // HEADER: Full Name + Team Badges + Delete Action (Admin Only)
-                // Para el chat inline, mostramos todos pero pequeños.
-                const teamBadges = this.getTeamBadgesHtml(teamsList);
-                const deleteAction = isSuperAdmin ? `<i class="fas fa-trash-alt" style="margin-left:auto; color:#ef4444; opacity:0.6; cursor:pointer;" onclick="event.stopPropagation(); window.ChatView.deleteMessage('${msg.id}')"></i>` : '';
-
-                // CLICK EN EL NOMBRE -> LLAMA A SHOWPLAYERDETAILS CON EL ID
-                bubbleHtml += `
-                    <div style="font-size: 0.72rem; font-weight: 950; margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid rgba(0,0,0,0.06); padding-bottom: 4px;">
-                        <span onclick="event.stopPropagation(); window.ChatView.showPlayerDetails('${msg.senderId}')" style="cursor: pointer; border-bottom: 1px dotted rgba(0,0,0,0.3); padding-bottom:1px;" title="Ver perfil completo">
-                            ${(msg.senderName || 'JUGADOR').toUpperCase()}
-                        </span>
-                        ${teamBadges}
-                        ${deleteAction}
-                    </div>
-                `;
-
-                if (msg.attachment) {
-                    if (msg.attachmentType === 'audio') {
-                        bubbleHtml += `<audio controls src="${msg.attachment}" style="max-width:200px; height:30px; margin:5px 0; filter: contrast(1.1) brightness(0.9);"></audio>`;
+                    // BROADCAST STYLE ENHANCEMENT
+                    if (msg.type === 'broadcast') {
+                        bubbleHtml = `
+                            <div class="msg-bubble broadcast-alert" style="background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); color: white; border: 2px solid #fee2e2; border-radius: 15px; width: 100%; box-shadow: 0 0 20px rgba(239,68,68,0.4); animation: broadcast-pulse 2s infinite; box-sizing: border-box;">
+                                <div style="font-size: 0.6rem; font-weight: 950; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; opacity: 0.9; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-broadcast-tower"></i> COMUNICADO OFICIAL ORGANIZACIÓN
+                                </div>
+                                <div style="font-weight: 800; font-size: 1rem; line-height: 1.4;">${this.formatMentions(msg.text)}</div>
+                                <style>
+                                    @keyframes broadcast-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+                                </style>
+                            </div>
+                        `;
                     } else {
-                        bubbleHtml += `<img src="${msg.attachment}" style="max-width:100%; border-radius:8px; margin:5px 0;">`;
+                        bubbleHtml += `<div style="font-weight: 600; font-size: 0.95rem; line-height: 1.4;">${this.formatMentions(msg.text)}</div></div>`;
                     }
-                }
-                bubbleHtml += `<div style="font-weight: 600; font-size: 0.95rem; line-height: 1.4;">${this.formatMentions(msg.text)}</div></div>`;
 
-                return `
-                    <div class="msg-wrap ${isMe ? 'self' : 'other'}">
-                        ${bubbleHtml}
-                    </div>`;
+                    return `
+                        <div class="msg-wrap ${isMe ? 'self' : 'other'}" style="width: ${msg.type === 'broadcast' ? '100%' : 'auto'}; max-width: ${msg.type === 'broadcast' ? '100%' : '85%'}">
+                            ${bubbleHtml}
+                        </div>`;
+                } catch (e) {
+                    console.error("Error rendering message:", msg, e);
+                    return '';
+                }
             }).join('');
             container.scrollTop = container.scrollHeight;
         }
 
         formatMentions(text) {
-            if (!text) return '';
+            if (!text || typeof text !== 'string' || !text.includes('@')) return text || '';
             let formatted = text;
-            this.allPlayers.forEach(p => { const t = `@${p.name.split(' ')[0]}`; formatted = formatted.split(t).join(`<b style="color:#CCFF00">${t.toUpperCase()}</b>`); });
+            try {
+                // Solo iteramos sobre los jugadores que tengan nombre definido para evitar crashes
+                this.allPlayers.forEach(p => {
+                    const name = p.name || p.displayName;
+                    if (!name) return;
+
+                    const firstName = name.split(' ')[0];
+                    if (!firstName) return;
+
+                    const tag = `@${firstName}`;
+                    // Búsqueda insensible a mayúsculas para las menciones
+                    if (formatted.toUpperCase().includes(tag.toUpperCase())) {
+                        const regex = new RegExp(tag, 'gi');
+                        formatted = formatted.replace(regex, `<b style="color:#CCFF00">${tag.toUpperCase()}</b>`);
+                    }
+                });
+            } catch (e) {
+                console.warn("Error processing mentions:", e);
+            }
             return formatted;
         }
 

@@ -80,25 +80,33 @@ class NotificationService {
      * Fusiona las notificaciones de Firestore con los mensajes de chat recientes
      */
     getMergedNotifications() {
-        const combined = [...this.notifications, ...this.chatNotifications];
+        try {
+            const combined = [...this.notifications, ...this.chatNotifications];
 
-        // Ordenar por tiempo (descendente)
-        const sorted = combined.sort((a, b) => {
-            const timeA = this._getTimestampValue(a.timestamp);
-            const timeB = this._getTimestampValue(b.timestamp);
-            return timeB - timeA;
-        });
+            // Ordenar por tiempo (descendente)
+            const sorted = combined.sort((a, b) => {
+                const timeA = this._getTimestampValue(a.timestamp);
+                const timeB = this._getTimestampValue(b.timestamp);
+                return timeB - timeA;
+            });
 
-        // Deduplicar por contenido (Título + Cuerpo) para evitar spam en la ticketera
-        const seen = new Set();
-        const deduplicated = sorted.filter(item => {
-            const signature = `${item.title}|${item.body}`.toLowerCase().trim();
-            if (seen.has(signature)) return false;
-            seen.add(signature);
-            return true;
-        });
+            // Deduplicar por contenido (Título + Cuerpo) para evitar spam en la ticketera
+            const seen = new Set();
+            const deduplicated = sorted.filter(item => {
+                if (!item) return false;
+                const title = String(item.title || '');
+                const body = String(item.body || '');
+                const signature = `${title}|${body}`.toLowerCase().trim();
+                if (seen.has(signature)) return false;
+                seen.add(signature);
+                return true;
+            });
 
-        return deduplicated.slice(0, 50);
+            return deduplicated.slice(0, 50);
+        } catch (e) {
+            console.error("❌ [NotificationService] Merging failed:", e);
+            return this.notifications.slice(0, 20);
+        }
     }
 
     _getTimestampValue(ts) {
@@ -207,8 +215,8 @@ class NotificationService {
                                 console.log(`💬 [Chat Debug] Msg from ${msg.senderName}: "${msg.text?.substring(0, 15)}..." Time: ${msgTime} vs Service: ${this.serviceStartTime}`);
 
                                 // Relajamos el filtro: aceptamos cualquier mensaje recibido DESDE que se inició el servicio
-                                // con un margen de 1 minuto por discrepancias de reloj.
-                                if (msgTime > this.serviceStartTime - 60000) {
+                                // con un margen de 5 minutos por discrepancias de reloj.
+                                if (msgTime > this.serviceStartTime - 300000) {
                                     // Evitar duplicados con ID robusto
                                     const chatNotifId = `chat_${evt.id}_${change.doc.id}`;
                                     if (!this.chatNotifications.find(n => n.id === chatNotifId)) {

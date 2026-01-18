@@ -40,7 +40,7 @@
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
                     background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.08) 0%, transparent 70%);
                     min-height: 100vh;
-                    padding-top: 10px; /* Space for Header */
+                    padding-top: 4px !important; /* Reducido de 10px */
                 ">
 
                     <!-- HEADER WITH NFL STYLE TICKER -->
@@ -117,13 +117,13 @@
                     <div id="registration-widget-root" style="
                         background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
                         border-radius: 28px;
-                        margin: 10px 8px;
-                        padding: 15px 4px 10px; /* Padding reducido al mínimo para que las tarjetas toquen el borde */
+                        margin: 4px 8px 1px !important; 
+                        padding: 8px 4px 0px !important; 
                         box-shadow: 0 10px 30px rgba(0,0,0,0.04);
                         z-index: 10;
                         animation: floatUp 0.8s ease-out forwards;
                     ">
-                        <div class="live-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding: 0 14px;">
+                        <div class="live-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px !important; padding: 0 14px;">
                             <div style="
                                 background: #00E36D; 
                                 color: #000; 
@@ -139,7 +139,7 @@
                             </div>
                         </div>
                         
-                        <div id="live-scroller-content" class="live-scroller" style="overflow-x: auto; display: flex; padding: 5px 8px 15px; gap: 14px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
+                        <div id="live-scroller-content" class="live-scroller" style="overflow-x: auto; display: flex; padding: 5px 8px 10px; gap: 8px !important; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
                             <!-- SKELETON PLACEHOLDERS TO START "FULL" -->
                             ${Array(4).fill(0).map(() => `
                                 <div style="min-width: 265px; height: 140px; background: rgba(0,0,0,0.03); border-radius: 18px; border: 1px solid rgba(0,0,0,0.05); overflow: hidden; position: relative; flex-shrink: 0; scroll-snap-align: center;">
@@ -150,11 +150,11 @@
                     </div>
 
                     <!-- 2. SOMOSPADEL.EU CONNECT (PREMIUM ENHANCED BANNER) -->
-                    <div id="noticias-banner-root" style="padding: 10px 15px 10px; animation: floatUp 0.85s ease-out forwards;">
+                    <div id="noticias-banner-root" style="padding: 1px 15px !important; animation: floatUp 0.85s ease-out forwards;">
                         <div class="noticias-banner-premium" style="
                             background: white; 
                             border-radius: 24px; 
-                            padding: 24px; 
+                            padding: 16px !important; /* Reducido de 24px */
                             color: #1e293b; 
                             position: relative; 
                             overflow: hidden; 
@@ -207,7 +207,7 @@
                     </div>
 
                     <!-- 3. NEW WEATHER WIDGET -->
-                    <div id="weather-widget-root" style="margin: 0 15px 15px; animation: floatUp 0.8s ease-out forwards;">
+                    <div id="weather-widget-root" style="margin: 1px 15px 4px !important; animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS -->
                     </div>
 
@@ -217,8 +217,8 @@
                         backdrop-filter: blur(20px);
                         border: 1px solid rgba(0, 227, 109, 0.2);
                         border-radius: 20px;
-                        margin: 0px 15px 15px;
-                        padding: 15px;
+                        margin: 1px 15px 4px !important;
+                        padding: 12px !important; /* Reducido de 15px */
                         box-shadow: 0 15px 35px rgba(0,0,0,0.5);
                         animation: floatUp 0.85s ease-out forwards;
                     ">
@@ -239,8 +239,8 @@
                         backdrop-filter: blur(20px);
                         border: 1px solid rgba(255, 255, 255, 0.1);
                         border-radius: 28px;
-                        margin: 0 15px 25px; /* Removed top margin */
-                        padding: 15px;
+                        margin: 1px 15px 8px !important;
+                        padding: 12px !important;
                         box-shadow: 0 20px 40px rgba(0,0,0,0.5);
                         animation: floatUp 0.9s ease-out forwards;
                     ">
@@ -682,17 +682,46 @@
                 // B. RANKING TOP CARD (SMART)
                 if (rankingData && rankingData.length > 0) {
                     const top = rankingData[0];
-                    itemsHtml.push(`
-                        <div class="registration-ticker-card" style="min-width: 280px; min-height: 150px; scroll-snap-align: center; background: linear-gradient(135deg, #451a03 0%, #000 100%); border-top: 5px solid #f59e0b; border-radius: 24px; padding: 20px; flex-shrink: 0; box-shadow: 0 15px 30px rgba(0,0,0,0.4); border-left: 1px solid rgba(245,158,11,0.3); display: flex; flex-direction: column; gap: 10px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:0.6rem; font-weight:950; color:white; background:#f59e0b; padding:3px 8px; border-radius:6px; letter-spacing:1px;">LÍDER</span>
-                                <span style="font-size:1.2rem;">👑</span>
+                    const second = rankingData[1];
+                    const pts1 = (top.stats.americanas.points || 0) + (top.stats.entrenos.points || 0);
+
+                    // Check if joint leaders (Same points, wins, and court1 count)
+                    const isJoint = second && pts1 > 0 &&
+                        pts1 === ((second.stats.americanas.points || 0) + (second.stats.entrenos.points || 0)) &&
+                        ((top.stats.americanas.won || 0) + (top.stats.entrenos.won || 0)) === ((second.stats.americanas.won || 0) + (second.stats.entrenos.won || 0)) &&
+                        ((top.stats.americanas.court1Count || 0) + (top.stats.entrenos.court1Count || 0)) === ((second.stats.americanas.court1Count || 0) + (second.stats.entrenos.court1Count || 0));
+
+                    if (isJoint) {
+                        itemsHtml.push(`
+                            <div class="registration-ticker-card" style="min-width: 300px; min-height: 150px; scroll-snap-align: center; background: linear-gradient(135deg, #1e1b4b 0%, #000 100%); border-top: 5px solid #CCFF00; border-radius: 24px; padding: 20px; flex-shrink: 0; box-shadow: 0 15px 30px rgba(0,0,0,0.4); border-left: 1px solid rgba(204,255,0,0.3); display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-size:0.6rem; font-weight:950; color:black; background:#CCFF00; padding:3px 8px; border-radius:6px; letter-spacing:1px;">CO-LÍDERES GLOBALES</span>
+                                    <div style="display:flex; gap:-5px;">
+                                        <span style="font-size:1.1rem; z-index:2;">👑</span>
+                                        <span style="font-size:1.1rem; margin-left:-8px; opacity:0.8;">👑</span>
+                                    </div>
+                                </div>
+                                <div style="display:flex; flex-direction:column; gap:2px; margin-top:5px;">
+                                    <div style="color:white; font-weight:950; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">1. ${top.name.toUpperCase()}</div>
+                                    <div style="color:white; font-weight:950; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">2. ${second.name.toUpperCase()}</div>
+                                </div>
+                                <div style="color:#CCFF00; font-size:0.65rem; font-weight:950; letter-spacing:1px; margin-top:4px;">PUNTOS: ${pts1} • EMPATE TÉCNICO</div>
+                                <div style="color:#888; font-size:0.6rem; font-weight:800; display: flex; align-items: center; gap: 5px;"><i class="fas fa-trophy"></i> MVPS COMUNIDAD SOMOSPADEL</div>
                             </div>
-                            <div style="color:white; font-weight:950; font-size:1rem; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${top.name.toUpperCase()}</div>
-                            <div style="color:#f59e0b; font-size:0.65rem; font-weight:950; letter-spacing:1.2px;">NIVEL ${top.level.toFixed(2)}</div>
-                            <div style="color:#888; font-size:0.65rem; font-weight:800; display: flex; align-items: center; gap: 5px;"><i class="fas fa-trophy"></i> #1 Global SP</div>
-                        </div>
-                    `);
+                        `);
+                    } else {
+                        itemsHtml.push(`
+                            <div class="registration-ticker-card" style="min-width: 280px; min-height: 150px; scroll-snap-align: center; background: linear-gradient(135deg, #451a03 0%, #000 100%); border-top: 5px solid #f59e0b; border-radius: 24px; padding: 20px; flex-shrink: 0; box-shadow: 0 15px 30px rgba(0,0,0,0.4); border-left: 1px solid rgba(245,158,11,0.3); display: flex; flex-direction: column; gap: 10px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-size:0.6rem; font-weight:950; color:white; background:#f59e0b; padding:3px 8px; border-radius:6px; letter-spacing:1px;">LÍDER GLOBAL</span>
+                                    <span style="font-size:1.2rem;">👑</span>
+                                </div>
+                                <div style="color:white; font-weight:950; font-size:1rem; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${top.name.toUpperCase()}</div>
+                                <div style="color:#f59e0b; font-size:0.65rem; font-weight:950; letter-spacing:1.2px;">PUNTOS: ${pts1} • LVL ${top.level.toFixed(2)}</div>
+                                <div style="color:#888; font-size:0.65rem; font-weight:800; display: flex; align-items: center; gap: 5px;"><i class="fas fa-trophy"></i> MVP COMUNIDAD SOMOSPADEL</div>
+                            </div>
+                        `);
+                    }
                 }
 
                 // C. ACTIVE EVENTS (INSCRIPCIONES)

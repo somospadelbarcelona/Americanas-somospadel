@@ -116,17 +116,40 @@
                                 lost: ent.lost || 0,
                                 gamesWon: ent.points || 0,
                                 gamesLost: ent.gamesLost || 0,
-                                court1Count: ent.court1Count || 0
+                                court1Count: ent.court1Count || 0,
+                                lastMatchCourt: ent.lastMatchCourt || 99
                             }
                         }
                     };
                 });
 
                 // Store global ranking for other modules
-                this.rankedPlayers = [...playersList].sort((a, b) => b.stats.americanas.points - a.stats.americanas.points);
+                // UNIFIED TIE-BREAKING LOGIC (Consistent with Pozo/Entrenos rules)
+                this.rankedPlayers = [...playersList].sort((a, b) => {
+                    const ptsA = (a.stats.americanas.points || 0) + (a.stats.entrenos.points || 0);
+                    const ptsB = (b.stats.americanas.points || 0) + (b.stats.entrenos.points || 0);
+                    if (ptsB !== ptsA) return ptsB - ptsA;
 
-                console.log("✅ [RankingController] Calculation optimized using StandingsService.");
-                return playersList;
+                    const winsA = (a.stats.americanas.won || 0) + (a.stats.entrenos.won || 0);
+                    const winsB = (b.stats.americanas.won || 0) + (b.stats.entrenos.won || 0);
+                    if (winsB !== winsA) return winsB - winsA;
+
+                    const c1A = (a.stats.americanas.court1Count || 0) + (a.stats.entrenos.court1Count || 0);
+                    const c1B = (b.stats.americanas.court1Count || 0) + (b.stats.entrenos.court1Count || 0);
+                    if (c1B !== c1A) return c1B - c1A;
+
+                    // Last match position (Final Court) - Lower is better
+                    const lastCourtA = a.stats.entrenos.lastMatchCourt || 99;
+                    const lastCourtB = b.stats.entrenos.lastMatchCourt || 99;
+                    if (lastCourtA !== lastCourtB) return lastCourtA - lastCourtB;
+
+                    const gamesA = (a.stats.americanas.gamesWon || 0) + (a.stats.entrenos.gamesWon || 0);
+                    const gamesB = (b.stats.americanas.gamesWon || 0) + (b.stats.entrenos.gamesWon || 0);
+                    return gamesB - gamesA;
+                });
+
+                console.log("✅ [RankingController] Sorted with POZO Tie-Breaking. Top:", this.rankedPlayers[0]?.name);
+                return this.rankedPlayers;
 
             } catch (error) {
                 console.error("❌ [RankingController] Error loading ranking:", error);
