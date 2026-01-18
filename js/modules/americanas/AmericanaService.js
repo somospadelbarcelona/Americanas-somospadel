@@ -144,7 +144,39 @@
                     }
                 }
 
-                // --- NOTIFICATIONS (DISABLED BY REQUEST) ---
+                // --- NOTIFICATIONS ---
+                if (window.NotificationService) {
+                    const evtName = event.name || type.toUpperCase();
+                    const evtLink = { url: 'live', eventId: americanaId };
+
+                    // 1. Notify the user who joined
+                    window.NotificationService.sendNotificationToUser(
+                        user.uid,
+                        "Inscripción Confirmada",
+                        `Te has apuntado a ${evtName}. ¡A darlo todo!`,
+                        evtLink
+                    );
+
+                    // 2. Notify other players (Peer-to-Peer)
+                    // We iterate EXISTING players (before push) to notify them.
+                    // Wait, 'players' array already has the new player pushed in line 124.
+                    // So we filter out the current user.
+                    const others = players.filter(p => (p.uid || p.id) !== user.uid);
+
+                    // Limit broadcast to avoid timeout/spam issues
+                    if (others.length < 50) {
+                        others.forEach(p => {
+                            const pid = p.uid || p.id;
+                            window.NotificationService.sendNotificationToUser(
+                                pid,
+                                "Nuevo Jugador",
+                                `${user.name} se ha unido a ${evtName}`,
+                                evtLink
+                            ).catch(e => console.warn("Failed to notify peer", pid));
+                        });
+                    }
+                }
+
                 // this.notifyAdminOfRegistration(event, user);
 
                 return { success: true };
@@ -211,6 +243,38 @@
                 }
 
                 await service.update(americanaId, updates);
+
+                // --- NOTIFICATIONS ---
+                if (window.NotificationService) {
+                    const evtName = event.name || type.toUpperCase();
+
+                    // 1. Notify the user who left
+                    window.NotificationService.sendNotificationToUser(
+                        userId,
+                        "Inscripción Cancelada",
+                        `Te has dado de baja de ${evtName}.`,
+                        { url: 'americanas' }
+                    );
+
+                    // 2. Notify others (Remaining players)
+                    if (newPlayers.length < 50) {
+                        // Find user name if possible (we only have ID here)
+                        // It's acceptable to just say "Un jugador se ha dado de baja" or try to find name from 'currentPlayers' before filter.
+                        const leaver = currentPlayers.find(p => (p.uid || p.id) === userId);
+                        const leaverName = leaver ? (leaver.name || 'Un jugador') : 'Un jugador';
+
+                        newPlayers.forEach(p => {
+                            const pid = p.uid || p.id;
+                            window.NotificationService.sendNotificationToUser(
+                                pid,
+                                "Baja en Evento",
+                                `${leaverName} ha salido de ${evtName}. Queda una plaza libre.`,
+                                { url: 'live', eventId: americanaId }
+                            ).catch(e => console.warn("Failed to notify peer", pid));
+                        });
+                    }
+                }
+
                 return { success: true };
             } catch (err) {
                 console.error(`Error in removePlayer (${type}):`, err);

@@ -40,14 +40,42 @@
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
                     background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.08) 0%, transparent 70%);
                     min-height: 100vh;
+                    padding-top: 10px; /* Space for Header */
                 ">
 
-
+                    <!-- HEADER WITH NOTIFICATIONS -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
+                        <h1 style="margin: 0; font-size: 1.5rem; font-weight: 900; letter-spacing: -1px; color: #0f172a;">
+                            SOMOS<span style="color: #84cc16;">PADEL</span>
+                        </h1>
+                        <div style="position: relative; cursor: pointer;" onclick="window.NotificationUi.toggle()">
+                            <i id="notif-bell-icon" class="far fa-bell" style="font-size: 1.4rem; color: #0f172a; transition: transform 0.2s;"></i>
+                            <div id="notif-badge" style="
+                                position: absolute; top: -5px; right: -5px; 
+                                background: #ef4444; color: white; border: 2px solid white;
+                                font-size: 0.6rem; font-weight: 950; min-width: 16px; height: 16px;
+                                border-radius: 50%; display: none; align-items: center; justify-content: center;
+                                padding: 2px;
+                            ">0</div>
+                        </div>
+                    </div>
 
                     <style>
                         @keyframes skeletonShine {
                             0% { transform: translateX(-100%); }
                             100% { transform: translateX(100%); }
+                        }
+                        @keyframes shakeBell {
+                            0% { transform: rotate(0deg); }
+                            10% { transform: rotate(15deg); }
+                            20% { transform: rotate(-15deg); }
+                            30% { transform: rotate(10deg); }
+                            50% { transform: rotate(0deg); }
+                            100% { transform: rotate(0deg); }
+                        }
+                        .shake-animation {
+                            animation: shakeBell 2s infinite cubic-bezier(.36,.07,.19,.97) both;
+                            color: #84cc16 !important;
                         }
                     </style>
 
@@ -56,7 +84,7 @@
                         background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
                         border: 1px solid rgba(0, 227, 109, 0.2);
                         border-radius: 24px;
-                        margin: 25px 15px 10px;
+                        margin: 10px 15px 10px;
                         padding: 15px;
                         box-shadow: 0 15px 35px rgba(0,0,0,0.05);
                         z-index: 10;

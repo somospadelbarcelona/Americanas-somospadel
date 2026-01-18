@@ -42,6 +42,18 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
         window.db = db;
         window.auth = auth;
 
+        // Initialize Messaging
+        let messaging;
+        try {
+            if (firebase.messaging.isSupported()) {
+                messaging = firebase.messaging();
+                window.messaging = messaging;
+                console.log("📨 Firebase Messaging Initialized");
+            } else {
+                console.log("📴 Firebase Messaging not supported in this browser");
+            }
+        } catch (e) { console.warn("Messaging init error", e); }
+
         // Enable offline persistence
         db.enablePersistence()
             .catch((err) => {

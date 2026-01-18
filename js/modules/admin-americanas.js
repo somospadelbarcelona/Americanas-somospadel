@@ -149,8 +149,30 @@ function setupCreateAmericanaForm() {
         e.preventDefault();
         const data = Object.fromEntries(new FormData(form).entries());
         try {
-            await EventService.createEvent('americana', data);
-            alert("✅ Americana creada");
+            const newEventId = await EventService.createEvent('americana', data);
+
+            // --- NOTIFICATION: NEW AMERICANA ---
+            if (window.NotificationService && window.db) {
+                try {
+                    const usersSnap = await window.db.collection('players')
+                        .orderBy('lastLogin', 'desc')
+                        .limit(50)
+                        .get();
+
+                    if (!usersSnap.empty) {
+                        usersSnap.docs.forEach(doc => {
+                            window.NotificationService.sendNotificationToUser(
+                                doc.id,
+                                "Nueva Americana Disponible",
+                                `Torneo: ${data.name} en ${data.location}. ¡Plazas limitadas!`,
+                                { url: 'live', eventId: newEventId }
+                            ).catch(e => { });
+                        });
+                    }
+                } catch (e) { console.warn("Notif broadcast error", e); }
+            }
+
+            alert("✅ Americana creada y notificada");
             window.loadAdminView('americanas_mgmt');
         } catch (err) { alert(err.message); }
     };
@@ -213,6 +235,25 @@ window.openEditAmericanaModal = async (e) => {
 
             await EventService.updateEvent('americana', id, data);
             alert("✅ Americana actualizada");
+
+            // --- NOTIFICATION: UPDATE (ENROLLED) ---
+            if (window.NotificationService && (data.status === 'live' || data.date || data.time)) {
+                try {
+                    const updatedEvt = await EventService.getById('americana', id);
+                    if (updatedEvt && updatedEvt.players && updatedEvt.players.length > 0) {
+                        const isLive = data.status === 'live';
+                        const title = isLive ? "¡AMERICANA EN JUEGO!" : "Actualización de Torneo";
+                        const msg = isLive
+                            ? `${updatedEvt.name} ha comenzado. ¡Suerte!`
+                            : `Cambios en ${updatedEvt.name}. Revisa la hora/sede.`;
+
+                        updatedEvt.players.forEach(p => {
+                            const pid = p.uid || p.id;
+                            window.NotificationService.sendNotificationToUser(pid, title, msg, { url: 'live', eventId: id }).catch(e => { });
+                        });
+                    }
+                } catch (e) { console.warn("Update notif error", e); }
+            }
 
             window.loadAdminView('americanas_mgmt');
             window.closeAmericanaModal();

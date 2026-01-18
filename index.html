@@ -218,7 +218,7 @@
         <div class="modal-content admin-login-card">
             <div style="text-align: center; margin-bottom: 2.5rem;">
                 <img src="img/logo_somospadel.png" class="login-ball-animate"
-                    style="height: 100px; margin-bottom: 1.5rem;" alt="Somos Padel">
+                    style="height: 100px; margin-bottom: 1.5rem; margin-top: 30px;" alt="Somos Padel">
                 <h2
                     style="color: white !important; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0,0,0,0.5);">
                     ACCESO JUGADORES</h2>
@@ -253,13 +253,7 @@
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 2rem; padding-left: 5px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <input type="checkbox" id="remember-me" name="remember"
-                            style="width: 20px; height: 20px; cursor: pointer; accent-color: #CCFF00;">
-                        <label for="remember-me"
-                            style="color: rgba(255,255,255,0.8); font-size: 0.9rem; cursor: pointer;">Mantener sesión
-                            abierta</label>
-                    </div>
+                    <!-- Removed 'Mantener sesión' as requested -->
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <input type="checkbox" id="show-password-opt"
                             onchange="const i = document.getElementById('login-password-input'); i.type = this.checked ? 'text' : 'password';"
@@ -396,9 +390,11 @@
 
     <!-- Scripts Architecture -->
     <!-- Layer 1: Config & Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/firebase-init.js"></script>
 
@@ -413,6 +409,10 @@
     <script src="js/modules/common/StandingsService.js"></script>
     <script src="js/modules/common/EventService.js"></script>
     <script src="js/modules/common/ParticipantService.js"></script>
+
+    <!-- NOTIFICATIONS -->
+    <script src="js/modules/common/NotificationService.js"></script>
+    <script src="js/modules/ui/NotificationUi.js"></script>
     <script src="js/modules/logic/MatchMakingService.js?v=5011"></script>
     <script src="js/modules/americanas/AmericanaLogic.js"></script>
     <script src="js/modules/americanas/AmericanaService.js?v=1013"></script>

@@ -1,5 +1,6 @@
 {
     "name": "APP Somospadel BCN para americanas",
+    "gcm_sender_id": "103953800507",
     "short_name": "Somospadel BCN",
     "start_url": "./index.html",
     "display": "standalone",

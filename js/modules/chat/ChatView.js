@@ -57,6 +57,7 @@
 
             this.eventId = eventId;
             this.eventName = eventName;
+            this.participantIds = participantIds || [];
 
             await this.loadTagData();
             this.render();
@@ -671,6 +672,34 @@
             input.value = '';
             this.clearPreview();
             await window.ChatService.sendMessage(this.eventId, text, media);
+
+            // NOTIFICATIONS TRIGGER (Peer-to-Peer)
+            try {
+                if (window.NotificationService && this.participantIds && this.participantIds.length > 0) {
+                    const currentUser = window.Store.getState('currentUser');
+                    const myId = currentUser?.uid || currentUser?.id;
+                    const senderName = currentUser?.name || 'Compañero';
+
+                    // Filter: Not self, and max limit to avoid spamming 800 people if logic fails
+                    const targets = this.participantIds.filter(id => id !== myId);
+
+                    // Limit to reasonable number to prevent browser hang on huge lists (though usually < 40)
+                    if (targets.length < 50) {
+                        const notifBody = text || (media ? '📷 Foto enviada' : 'Nuevo mensaje');
+                        const truncatedBody = notifBody.length > 30 ? notifBody.substring(0, 30) + '...' : notifBody;
+
+                        // Send to others
+                        targets.forEach(targetId => {
+                            window.NotificationService.sendNotificationToUser(
+                                targetId,
+                                `Nuevo mensaje en ${this.eventName}`,
+                                `${senderName}: ${truncatedBody}`,
+                                { url: 'live', eventId: this.eventId }
+                            ).catch(e => console.warn("Failed to notify peer", targetId));
+                        });
+                    }
+                }
+            } catch (e) { console.error("Notification trigger error", e); }
         }
 
         async deleteMessage(messageId) {

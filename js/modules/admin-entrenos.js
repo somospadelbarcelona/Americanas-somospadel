@@ -318,8 +318,37 @@ function setupCreateForm() {
         const fd = new FormData(form);
         const data = Object.fromEntries(fd.entries());
         try {
-            await EventService.createEvent('entreno', data);
-            alert("✅ Entreno creado");
+            const newEventId = await EventService.createEvent('entreno', data);
+
+            // --- NOTIFICATION: NEW ENTRENO (BROADCAST TO ACTIVE USERS) ---
+            if (window.NotificationService && window.db) {
+                try {
+                    // Send to top 50 active users to avoid client-side overload
+                    // We assume 'players' collection is cached or cheap enough
+                    const usersSnap = await window.db.collection('players')
+                        .orderBy('lastLogin', 'desc') // Requires index? If fails, fallback to simple limit
+                        .limit(50)
+                        .get();
+
+                    if (!usersSnap.empty) {
+                        const notifPromises = usersSnap.docs.map(doc => {
+                            return window.NotificationService.sendNotificationToUser(
+                                doc.id,
+                                "Nuevo Entreno Disponible",
+                                `Se ha publicado: ${data.name} en ${data.location}. ¡Apúntate!`,
+                                { url: 'live', eventId: newEventId }
+                            );
+                        });
+                        console.log(`🔔 Notifying ${notifPromises.length} active users about new entreno...`);
+                    }
+                } catch (notifErr) {
+                    console.warn("Notification broadcast failed (check indexes?):", notifErr);
+                    // Fallback: Notify at least the admin/me for verification
+                    // window.NotificationService.sendNotificationToUser(window.currentUser.uid, ...)
+                }
+            }
+
+            alert("✅ Entreno creado y notificado");
             window.loadAdminView('entrenos_mgmt');
         } catch (err) { alert(err.message); }
     };
@@ -446,6 +475,33 @@ window.openEditEntrenoModal = async (entreno) => {
             }
 
             alert("✅ Entreno actualizado correctamente");
+
+            // --- NOTIFICATION: EVENT UPDATE (ENROLLED ONLY) ---
+            // Only if important changes (Date, Time, Status)
+            if (window.NotificationService && (data.status === 'live' || data.date || data.time)) {
+                try {
+                    // Fetch fresh event data to get players
+                    const updatedEvt = await EventService.getById('entreno', id);
+                    if (updatedEvt && updatedEvt.players && updatedEvt.players.length > 0) {
+                        const isLive = data.status === 'live';
+                        const title = isLive ? "¡ENTRENO EN JUEGO!" : "Actualización de Entreno";
+                        const msg = isLive
+                            ? `${updatedEvt.name} ha comenzado. ¡Consulta tus partidos!`
+                            : `Hubo cambios en ${updatedEvt.name}. Revisa los detalles.`;
+
+                        updatedEvt.players.forEach(p => {
+                            const pid = p.uid || p.id;
+                            window.NotificationService.sendNotificationToUser(
+                                pid,
+                                title,
+                                msg,
+                                { url: 'live', eventId: id }
+                            ).catch(e => { });
+                        });
+                        console.log(`🔔 Notified ${updatedEvt.players.length} players of update.`);
+                    }
+                } catch (e) { console.warn("Update notif failed", e); }
+            }
 
             // Reload View if needed (optional, or just close)
             // Ideally we refresh the list behind

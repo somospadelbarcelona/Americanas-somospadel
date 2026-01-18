@@ -1,5 +1,36 @@
 // Service Worker para PWA - Somospadel BCN
-const CACHE_NAME = 'somospadel-v4-wow-upgrade';
+importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
+importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
+
+// Inicializar Firebase en el SW (usando la misma config que en la app, pero hardcodeada aquí o importada)
+// Nota: Para simplificar, hardcodeamos la config básica requerida para messaging.
+// La misma que en firebase-config.js
+try {
+    firebase.initializeApp({
+        apiKey: "AIzaSyBCy8nN4wKL2Cqvxp_mkmYpsA923N1g5iE",
+        projectId: "americ-7473a",
+        messagingSenderId: "103953800507",
+        appId: "1:103953800507:web:c6722fb485123512270966"
+    });
+
+    const messaging = firebase.messaging();
+
+    messaging.onBackgroundMessage((payload) => {
+        console.log('[SW] Received background message ', payload);
+
+        const notificationTitle = payload.notification.title;
+        const notificationOptions = {
+            body: payload.notification.body,
+            icon: '/img/logo_somospadel.png',
+            badge: '/img/logo_somospadel.png',
+            data: payload.data
+        };
+
+        self.registration.showNotification(notificationTitle, notificationOptions);
+    });
+} catch (e) { console.error("[SW] Firebase init error", e); }
+
+const CACHE_NAME = 'somospadel-v5-notifications';
 const urlsToCache = [
     './',
     './index.html',
