@@ -65,7 +65,9 @@ class NotificationUi {
             <!-- HEADER -->
             <div style="padding: 20px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; background: #1e293b;">
                 <h3 style="margin: 0; color: white; font-size: 1.1rem; font-weight: 800; letter-spacing: -0.5px;">NOTIFICACIONES</h3>
-                <div style="display: flex; gap: 15px;">
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    ${(window.Store?.getState('currentUser')?.role?.includes('admin')) ?
+                `<i class="fas fa-trash-alt" onclick="window.NotificationUi.confirmGlobalClear()" style="color: #ef4444; cursor: pointer; font-size: 1rem; margin-right: 5px;" title="BORRAR TODO (COMUNIDAD)"></i>` : ''}
                     <i class="fas fa-check-double" onclick="window.NotificationUi.markAllRead()" style="color: #94a3b8; cursor: pointer; font-size: 1rem;" title="Marcar todo como leído"></i>
                     <i class="fas fa-times" onclick="window.NotificationUi.close()" style="color: white; cursor: pointer; font-size: 1.2rem;"></i>
                 </div>
@@ -104,8 +106,7 @@ class NotificationUi {
 
         // Render content
         if (window.NotificationService) {
-            this.renderList(window.NotificationService.notifications);
-            // Marcar badges como vistos visualmente (opcional, o esperar interacción)
+            this.renderList(window.NotificationService.getMergedNotifications());
         }
     }
 
@@ -124,13 +125,46 @@ class NotificationUi {
         if (window.NotificationService) window.NotificationService.markAllAsRead();
     }
 
-    handleItemClick(id, actionUrl) {
+    handleItemClick(id, actionUrl, eventId) {
         if (window.NotificationService) window.NotificationService.markAsRead(id);
 
-        // Navegar si hay URL
-        if (actionUrl) {
-            // TODO: Implementar navegación interna
-            console.log("Navigating to:", actionUrl);
+        if (eventId) {
+            this.close();
+            console.log(`🚀 [NotificationUi] Opening event ${eventId} (Type: entreno)`);
+
+            // Usamos el controlador unificado para asegurar que se carguen los datos
+            if (window.openResultsView) {
+                window.openResultsView(eventId, 'entreno');
+            } else if (window.Router) {
+                window.Router.navigate('live', { eventId: eventId });
+            }
+        }
+    }
+
+    handleDeleteOne(id, event) {
+        console.log("🛑 [NotificationUi] Manual Delete Click for:", id);
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        if (window.NotificationService) {
+            window.NotificationService.deleteNotification(id);
+        } else {
+            console.error("❌ NotificationService not available for delete");
+        }
+    }
+
+    async confirmGlobalClear() {
+        if (!confirm("⚠️ ¿ESTÁS SEGURO? Esto borrará las notificaciones de TODOS los usuarios de la comunidad. No se puede deshacer.")) return;
+
+        try {
+            if (window.NotificationService) {
+                await window.NotificationService.clearAllCommunityNotifications();
+                alert("✅ Notificaciones de la comunidad borradas.");
+                this.close();
+            }
+        } catch (e) {
+            alert("Error al borrar: " + e.message);
         }
     }
 
@@ -149,8 +183,11 @@ class NotificationUi {
             return;
         }
 
+        const currentUser = window.Store?.getState('currentUser');
+        const isAdmin = currentUser?.role?.includes('admin');
+
         container.innerHTML = items.map(item => `
-            <div onclick="window.NotificationUi.handleItemClick('${item.id}', '${item.data?.url || ''}')" 
+            <div onclick="window.NotificationUi.handleItemClick('${item.id}', '${item.data?.url || ''}', '${item.data?.eventId || ''}')" 
                 style="
                     padding: 15px 20px; 
                     border-bottom: 1px solid #1e293b; 
@@ -159,7 +196,17 @@ class NotificationUi {
                     transition: background 0.2s;
                     position: relative;
             ">
-                ${!item.read ? '<div style="position: absolute; top: 15px; right: 15px; width: 8px; height: 8px; background: #84cc16; border-radius: 50%;"></div>' : ''}
+                <div style="position: absolute; top: 15px; right: 15px; display: flex; align-items: center; gap: 10px;">
+                    ${!item.read ? '<div style="width: 8px; height: 8px; background: #84cc16; border-radius: 50%;"></div>' : ''}
+                    ${isAdmin ? `
+                        <i class="fas fa-trash-alt" 
+                           onclick="window.NotificationUi.handleDeleteOne('${item.id}', event)" 
+                           style="color: #475569; font-size: 0.8rem; cursor: pointer; padding: 5px; transition: color 0.2s; z-index: 10;"
+                           onmouseover="this.style.color='#ef4444'"
+                           onmouseout="this.style.color='#475569'">
+                        </i>
+                    ` : ''}
+                </div>
                 
                 <div style="display: flex; gap: 15px; align-items: start;">
                     <div style="

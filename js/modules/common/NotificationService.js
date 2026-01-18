@@ -23,16 +23,19 @@ class NotificationService {
         // 1. Escuchar autenticación real de Firebase
         window.auth.onAuthStateChanged(user => {
             if (user) {
-                console.log("🔔 [NotificationService] Firebase Auth session detected");
+                console.log("🔔 [NotificationService] Firebase Auth session detected:", user.uid);
+                this.currentUserUid = user.uid;
                 this.subscribeToFirestore(user.uid);
                 this.checkPermissionStatus();
             } else {
                 // Si no hay sesión Firebase, comprobamos si hay sesión Local en el Store
                 const localUser = window.Store ? window.Store.getState('currentUser') : null;
                 if (localUser && localUser.uid) {
-                    console.log("🔔 [NotificationService] Local session detected:", localUser.name);
+                    console.log("🔔 [NotificationService] Local session detected:", localUser.uid);
+                    this.currentUserUid = localUser.uid;
                     this.subscribeToFirestore(localUser.uid);
                 } else {
+                    this.currentUserUid = null;
                     this.unsubscribeFirestore();
                 }
             }
@@ -41,11 +44,15 @@ class NotificationService {
         // 2. Escuchar cambios en el Store por si la sesión local se inicia después
         if (window.Store) {
             window.Store.subscribe('currentUser', (user) => {
-                if (user && user.uid && !this.unsubscribe) {
-                    console.log("🔔 [NotificationService] Session started/changed in Store");
-                    this.subscribeToFirestore(user.uid);
+                if (user && user.uid) {
+                    this.currentUserUid = user.uid;
+                    if (!this.unsubscribe) {
+                        console.log("🔔 [NotificationService] Session started/changed in Store");
+                        this.subscribeToFirestore(user.uid);
+                    }
                     this.initChatObserver(); // Iniciar observación de chats
                 } else if (!user) {
+                    this.currentUserUid = null;
                     this.unsubscribeFirestore();
                     this.stopChatObserver();
                 }
@@ -74,11 +81,24 @@ class NotificationService {
      */
     getMergedNotifications() {
         const combined = [...this.notifications, ...this.chatNotifications];
-        return combined.sort((a, b) => {
+
+        // Ordenar por tiempo (descendente)
+        const sorted = combined.sort((a, b) => {
             const timeA = this._getTimestampValue(a.timestamp);
             const timeB = this._getTimestampValue(b.timestamp);
             return timeB - timeA;
-        }).slice(0, 50);
+        });
+
+        // Deduplicar por contenido (Título + Cuerpo) para evitar spam en la ticketera
+        const seen = new Set();
+        const deduplicated = sorted.filter(item => {
+            const signature = `${item.title}|${item.body}`.toLowerCase().trim();
+            if (seen.has(signature)) return false;
+            seen.add(signature);
+            return true;
+        });
+
+        return deduplicated.slice(0, 50);
     }
 
     _getTimestampValue(ts) {
@@ -147,14 +167,30 @@ class NotificationService {
 
         try {
             if (!window.AmericanaService) return;
-            const events = await window.AmericanaService.getAllActiveEvents();
-            if (!events || events.length === 0) return;
+
+            // Reintentar si no hay eventos activos (puede ser que se estén cargando)
+            let events = await window.AmericanaService.getAllActiveEvents();
+            if (!events || events.length === 0) {
+                console.log("💬 [NotificationService] No initial events found, retrying in 2s...");
+                await new Promise(r => setTimeout(r, 2000));
+                events = await window.AmericanaService.getAllActiveEvents();
+            }
+
+            if (!events || events.length === 0) {
+                console.warn("💬 [NotificationService] No direct active events found to monitor chats.");
+                return;
+            }
+
+            console.log(`💬 [NotificationService] Total events to monitor: ${events.length}. Current active observers: ${this.chatUnsubscribes.size}`);
 
             // Filtrar solo eventos nuevos para no duplicar listeners
             const newEvents = events.filter(evt => !this.chatUnsubscribes.has(evt.id));
-            if (newEvents.length === 0) return;
+            if (newEvents.length === 0) {
+                console.log("💬 [NotificationService] No new events detected for chat monitoring.");
+                return;
+            }
 
-            console.log(`💬 [NotificationService] Adding ${newEvents.length} new chat observers`);
+            console.log(`💬 [NotificationService] SUBSCRIBING to ${newEvents.length} NEW chats:`, newEvents.map(e => e.name));
 
             newEvents.forEach(evt => {
                 const unsub = window.db.collection('chats').doc(evt.id).collection('messages')
@@ -165,16 +201,21 @@ class NotificationService {
                         snap.docChanges().forEach(change => {
                             if (change.type === 'added') {
                                 const msg = change.doc.data();
+                                // IMPORTANTE: El timestamp de servidor puede venir null en el primer cambio local
                                 const msgTime = msg.timestamp ? (msg.timestamp.toMillis ? msg.timestamp.toMillis() : msg.timestamp) : Date.now();
 
-                                // Solo procesar si es un mensaje enviado tras arrancar el servicio (margen 10s)
-                                if (msgTime > this.serviceStartTime - 10000) {
-                                    // Evitar duplicados
-                                    if (!this.chatNotifications.find(n => n.id === change.doc.id)) {
+                                console.log(`💬 [Chat Debug] Msg from ${msg.senderName}: "${msg.text?.substring(0, 15)}..." Time: ${msgTime} vs Service: ${this.serviceStartTime}`);
+
+                                // Relajamos el filtro: aceptamos cualquier mensaje recibido DESDE que se inició el servicio
+                                // con un margen de 1 minuto por discrepancias de reloj.
+                                if (msgTime > this.serviceStartTime - 60000) {
+                                    // Evitar duplicados con ID robusto
+                                    const chatNotifId = `chat_${evt.id}_${change.doc.id}`;
+                                    if (!this.chatNotifications.find(n => n.id === chatNotifId)) {
                                         console.log("💬 [Chat Observer] New message detected:", msg.text);
                                         this.chatNotifications.push({
-                                            id: change.doc.id,
-                                            title: `💬 ${msg.senderName || 'Chat'}:`,
+                                            id: chatNotifId,
+                                            title: `💬 ${msg.senderName || 'Chat'} [${evt.name || 'Evento'}]:`,
                                             body: msg.text,
                                             timestamp: msg.timestamp || new Date(),
                                             read: true, // Marcar como leída para no inflar el contador del badge
@@ -189,6 +230,7 @@ class NotificationService {
                         });
 
                         if (hasNew) {
+                            console.log("💬 [NotificationService] New chat messages loaded, notifying subscribers");
                             // Limitar cache local de chats
                             if (this.chatNotifications.length > 20) {
                                 this.chatNotifications = this.chatNotifications.slice(-20);
@@ -198,6 +240,9 @@ class NotificationService {
                     });
                 this.chatUnsubscribes.set(evt.id, unsub);
             });
+
+            // Forzar actualización inicial por si ya había mensajes
+            this.notifySubscribers();
         } catch (e) {
             console.warn("💬 [NotificationService] Chat observation failed:", e);
         }
@@ -298,6 +343,38 @@ class NotificationService {
         }
     }
 
+    async deleteNotification(notificationId) {
+        console.log("🗑️ [NotificationService] Deleting notification:", notificationId);
+
+        // Soporte para borrar chats (solo local)
+        if (notificationId.startsWith('chat_')) {
+            this.chatNotifications = this.chatNotifications.filter(n => n.id !== notificationId);
+            this.notifySubscribers();
+            return;
+        }
+
+        const uid = this.currentUserUid || window.auth.currentUser?.uid || window.Store?.getState('currentUser')?.uid;
+        if (!uid) {
+            console.error("❌ [NotificationService] Cannot delete: No user UID found");
+            return;
+        }
+
+        try {
+            console.log(`📡 [NotificationService] Deleting from: players/${uid}/notifications/${notificationId}`);
+            await window.db.collection('players').doc(uid)
+                .collection('notifications').doc(notificationId)
+                .delete();
+            console.log("✅ [NotificationService] Firestore delete success");
+
+            // Optimistic update
+            this.notifications = this.notifications.filter(n => n.id !== notificationId);
+            this.unreadCount = this.notifications.filter(n => !n.read).length;
+            this.notifySubscribers();
+        } catch (e) {
+            console.error("Error deleting notification:", e);
+        }
+    }
+
     async markAllAsRead() {
         const user = window.auth.currentUser;
         if (!user) return;
@@ -350,6 +427,44 @@ class NotificationService {
             }
         } catch (e) {
             console.error("Error sending notification to user", targetUserId, e);
+        }
+    }
+
+    /**
+     * MÉTODO DE SUPERADMIN: Borra TODAS las notificaciones de la comunidad entera.
+     * Útil para limpiar el historial global de ruidos antiguos.
+     */
+    async clearAllCommunityNotifications() {
+        const currentUser = window.auth.currentUser || (window.Store ? window.Store.getState('currentUser') : null);
+        if (!currentUser || currentUser.role !== 'admin') {
+            throw new Error("Acceso denegado: Se requieren permisos de Super Admin.");
+        }
+
+        try {
+            console.log("🧹 [NotificationService] Inicianodo limpieza global...");
+            const playersSnap = await window.db.collection('players').get();
+
+            const promises = playersSnap.docs.map(async (playerDoc) => {
+                const notifsSnap = await playerDoc.ref.collection('notifications').get();
+                if (notifsSnap.empty) return;
+
+                const batch = window.db.batch();
+                notifsSnap.docs.forEach(nDoc => batch.delete(nDoc.ref));
+                return batch.commit();
+            });
+
+            await Promise.all(promises);
+            console.log("✅ [NotificationService] Comunidad limpia.");
+
+            // Refrescar UI localmente
+            this.notifications = [];
+            this.unreadCount = 0;
+            this.notifySubscribers();
+
+            return true;
+        } catch (e) {
+            console.error("Error en limpieza global:", e);
+            throw e;
         }
     }
 

@@ -392,27 +392,42 @@
                 const tickerContainer = document.getElementById('header-ticker-text');
                 if (!tickerContainer) return;
 
-                const latest = (data.items && data.items.length > 0) ? data.items[0] : null;
+                const items = (data.items && data.items.length > 0) ? data.items.slice(0, 5) : [];
                 let innerHTML = '';
 
-                if (latest) {
-                    if (tickerContainer.dataset.lastNotifId === latest.id) return;
-                    tickerContainer.dataset.lastNotifId = latest.id;
+                if (items.length > 0) {
+                    // Evitar re-render si el ID del primer item no ha cambiado (reducción de parpadeo)
+                    if (tickerContainer.dataset.lastNotifId === items[0].id) return;
+                    tickerContainer.dataset.lastNotifId = items[0].id;
 
-                    const badgeLabel = latest.isChat ? 'CHAT' : 'LIVE';
-                    const badgeBg = latest.isChat ? '#0ea5e9' : '#ef4444';
-                    const badgeShadow = latest.isChat ? 'rgba(14,165,233,0.5)' : 'rgba(239,68,68,0.5)';
+                    const generateContent = (list) => {
+                        return list.map(item => {
+                            const badgeLabel = item.isChat ? 'CHAT' : 'LIVE';
+                            const badgeBg = item.isChat ? '#0ea5e9' : '#ef4444';
+                            const badgeShadow = item.isChat ? 'rgba(14,165,233,0.5)' : 'rgba(239,68,68,0.5)';
+                            return `
+                                <div style="display: flex; align-items: center; margin-right: 60px; white-space: nowrap;">
+                                    <span style="background: ${badgeBg}; color: white; font-size: 0.6rem; font-weight: 950; padding: 2px 6px; border-radius: 4px; margin-right: 10px; flex-shrink: 0; box-shadow: 0 0 15px ${badgeShadow};">${badgeLabel}</span>
+                                    <span style="font-weight: 900; color: #fff; font-size: 0.75rem; margin-right: 6px; text-transform: uppercase;">${item.title}</span> 
+                                    <span style="color: #cbd5e1; font-weight: 600; font-size: 0.75rem; text-transform: uppercase;">${item.body}</span>
+                                </div>
+                            `;
+                        }).join('');
+                    };
+
+                    const scrollingContent = generateContent(items);
 
                     innerHTML = `
-                        <div style="display: flex; align-items: center; animation: marquee 12s linear infinite; padding-left: 10px;">
-                            <span style="background: ${badgeBg}; color: white; font-size: 0.6rem; font-weight: 900; padding: 2px 5px; border-radius: 3px; margin-right: 8px; flex-shrink: 0; box-shadow: 0 0 10px ${badgeShadow};">${badgeLabel}</span>
-                            <span style="font-weight: 800; color: #fff; font-size: 0.75rem; margin-right: 5px; text-transform: uppercase;">${latest.title}</span> 
-                            <span style="color: #cbd5e1; font-weight: 600; font-size: 0.7rem; margin-right: 40px; text-transform: uppercase;">${latest.body}</span>
-                            <span style="background: ${badgeBg}; color: white; font-size: 0.6rem; font-weight: 900; padding: 2px 5px; border-radius: 3px; margin-right: 8px; flex-shrink: 0; box-shadow: 0 0 10px ${badgeShadow};">${badgeLabel}</span>
-                            <span style="font-weight: 800; color: #fff; font-size: 0.75rem; margin-right: 5px; text-transform: uppercase;">${latest.title}</span> 
-                            <span style="color: #cbd5e1; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">${latest.body}</span>
+                        <div style="display: flex; align-items: center; animation: marquee 25s linear infinite; padding-left: 10px;">
+                            ${scrollingContent}
+                            ${scrollingContent} <!-- Duplicamos para loop perfecto -->
                         </div>
-                        <style>@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }</style>
+                        <style>
+                            @keyframes marquee { 
+                                0% { transform: translateX(0); } 
+                                100% { transform: translateX(-50%); } 
+                            }
+                        </style>
                     `;
                 } else {
                     if (tickerContainer.dataset.lastNotifId === 'empty') return;
@@ -424,7 +439,6 @@
                             <span style="color: #84cc16; font-size: 0.8rem; margin-right: 6px;">📢</span>
                             <span style="color: #94a3b8; font-weight: 700; font-size: 0.65rem; text-transform: uppercase;">Tu historial de avisos aparecerá aquí en tiempo real.</span>
                         </div>
-                        <style>@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }</style>
                     `;
                 }
                 tickerContainer.innerHTML = innerHTML;
@@ -433,11 +447,12 @@
             // 2. Lógica de sincronización robusta
             if (window.NotificationService) {
                 const refresh = () => {
-                    console.log("📺 [Ticker] Sincronizando noticias...");
-                    updateTicker({
-                        items: window.NotificationService.notifications,
+                    console.log("📺 [Ticker] Sincronizando noticias (Chat + Apps)...");
+                    const data = {
+                        items: window.NotificationService.getMergedNotifications(),
                         count: window.NotificationService.unreadCount
-                    });
+                    };
+                    updateTicker(data);
                 };
 
                 // Suscripción única global

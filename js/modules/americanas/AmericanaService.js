@@ -59,10 +59,9 @@
                     ...ents.map(e => ({ ...e, type: 'entreno' }))
                 ];
 
-                const todayStr = new Date().toISOString().split('T')[0];
-
+                // Filtramos por estado, no por fecha, para asegurar que eventos en curso sigan monitorizados
                 return all
-                    .filter(e => e.status !== 'finished' && e.date >= todayStr)
+                    .filter(e => e.status !== 'finished')
                     .sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
             } catch (error) {
                 console.error("Error fetching all active events:", error);
