@@ -52,11 +52,18 @@ window.AdminAuth = {
 
         if (isAdmin) {
             console.log("💎 Active Session:", this.user.name);
-            if (modal) modal.style.display = 'none';
-            if (window.loadAdminView) setTimeout(() => window.loadAdminView('users'), 100);
+            if (modal) {
+                modal.style.display = 'none';
+                modal.classList.add('hidden');
+            }
             this.updateProfileUI();
+
+            // Wait for everything to be settled
+            setTimeout(() => {
+                if (window.loadAdminView) window.loadAdminView('users');
+            }, 500);
         } else {
-            console.log("🔒 Waiting for PIN...");
+            console.log("🔒 No active session. Waiting for PIN...");
             if (localStorage.getItem('admin_remember_pin')) {
                 await this.login(localStorage.getItem('admin_remember_pin'), true);
             }

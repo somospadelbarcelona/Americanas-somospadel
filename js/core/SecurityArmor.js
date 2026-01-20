@@ -7,7 +7,7 @@
     const CONFIG = {
         enableDevToolsDetection: true,
         disableRightClick: true,
-        disableCopyPaste: false,
+        disableCopyPaste: true,
         disableKeys: true,
         debuggerTrap: true
     };
@@ -88,8 +88,10 @@
 
             // Si tardamos mucho entre start y end, es que estaba pausado (DevTools abierto)
             if (end - start > 100) {
-                document.body.innerHTML = '<div style="background:black; color:red; height:100vh; display:flex; align-items:center; justify-content:center; font-family:monospace; font-size:2rem; text-align:center;"><h1>⚠️ ACCESO DENEGADO<br><span style="font-size:1rem; color:white;">Sistema de Seguridad Activado. Cierre las herramientas de desarrollo.</span></h1></div>';
-                window.location.reload(); // Bucle de recarga molesto
+                // DESACTIVADO PORQUE DA FALSOS POSITIVOS
+                // document.body.innerHTML = '<div style="background:black; color:red; height:100vh; display:flex; align-items:center; justify-content:center; font-family:monospace; font-size:2rem; text-align:center;"><h1>⚠️ ACCESO DENEGADO<br><span style="font-size:1rem; color:white;">Sistema de Seguridad Activado. Cierre las herramientas de desarrollo.</span></h1></div>';
+                // window.location.reload(); // Bucle de recarga molesto
+                console.warn("Debugger trap triggered, but blocking is disabled.");
             }
         }, 1000);
     }

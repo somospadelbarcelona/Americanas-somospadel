@@ -15,7 +15,7 @@
     'use strict';
 
     const CONFIG = {
-        enableDebuggerTrap: true, // Poner en true para producción
+        enableDebuggerTrap: true, // Activado para producción
         enableConsoleClear: true,
         blockRightClick: true,
         blockShortcuts: true,
@@ -139,8 +139,10 @@
 
         if (widthThreshold || heightThreshold) {
             // Acción defensiva si se detecta DevTools
-            document.body.innerHTML = '<div style="background:black;color:red;height:100vh;display:flex;justify-content:center;align-items:center;font-family:monospace;font-size:2rem;text-align:center;"><h1>ACCESO DENEGADO<br>SISTEMA DE SEGURIDAD ACTIVADO</h1></div>';
-            debuggerTrap(); // Activar trampa hardcore
+            // DESACTIVADO PORQUE DA FALSOS POSITIVOS EN ALGUNOS NAVEGADORES
+            // document.body.innerHTML = '<div style="background:black;color:red;height:100vh;display:flex;justify-content:center;align-items:center;font-family:monospace;font-size:2rem;text-align:center;"><h1>ACCESO DENEGADO<br>SISTEMA DE SEGURIDAD ACTIVADO</h1></div>';
+            // debuggerTrap(); // Activar trampa hardcore
+            console.warn("DevTools detection triggered, but blocking is disabled to prevent false positives.");
         }
     };
 

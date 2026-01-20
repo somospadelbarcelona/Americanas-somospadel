@@ -569,9 +569,9 @@ h4 {
 /* --- FORMS --- */
 input,
 select {
-    background: white;
-    border: 1px solid var(--border-color);
-    color: var(--text);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
     border-radius: var(--radius-sm);
     padding: 0.8rem 1rem;
     font-size: 0.95rem;
@@ -597,7 +597,7 @@ label {
     margin-bottom: 0.5rem;
     font-weight: 600;
     font-size: 0.85rem;
-    color: var(--text);
+    color: #ffffff;
 }
 
 /* --- TABLES --- */
@@ -938,9 +938,6 @@ tr:hover td {
     background-position: right 0.8rem center;
     background-size: 0.8rem;
     padding-right: 2rem !important;
-}
-
-letter-spacing: 1px;
 }
 
 .pro-avatar {

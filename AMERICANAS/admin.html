@@ -68,6 +68,139 @@
             }
         });
     </script>
+    <style>
+        /* --- 💎 FORCE WHITE TEXT IN ADMIN INTERFACE --- */
+        :root {
+            --text: #ffffff !important;
+            --text-muted: #bbbbbb !important;
+        }
+
+        .app-shell,
+        .modal-content,
+        .workspace-area,
+        .glass-card-enterprise,
+        .pro-form,
+        .compact-admin-form,
+        .planning-area {
+            color: #ffffff !important;
+        }
+
+        /* Labels priority fix */
+        label,
+        .pro-form label,
+        .modal-content label,
+        .compact-admin-form label {
+            color: #ffffff !important;
+            opacity: 1 !important;
+            font-weight: 800 !important;
+            font-size: 0.75rem !important;
+            margin-bottom: 6px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+        }
+
+        /* Inputs & Selects priority fix */
+        .pro-input,
+        select.pro-input,
+        .pro-input-micro,
+        input,
+        select,
+        textarea {
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.07) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            height: 42px !important;
+            padding: 8px 15px !important;
+            font-size: 0.95rem !important;
+            border-radius: 10px !important;
+            width: 100% !important;
+        }
+
+        /* Select Arrow White */
+        select {
+            appearance: none !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 12px center !important;
+            background-size: 18px !important;
+            padding-right: 40px !important;
+        }
+
+        /* Dropdown options (Legible) */
+        option {
+            color: #000000 !important;
+            background: #ffffff !important;
+        }
+
+        /* Headings */
+        h1,
+        h2,
+        h3,
+        h4,
+        .top-title,
+        #page-title {
+            color: #ffffff !important;
+        }
+
+        /* Button Exception */
+        .btn-primary-pro,
+        .btn-primary-pro *,
+        .btn-glow,
+        .btn-glow *,
+        .btn-primary,
+        .btn-primary * {
+            color: #000000 !important;
+        }
+
+        /* --- 🚀 MASSIVE WHITE TEXT REINFORCEMENT --- */
+        .modal-content div:not(.btn-primary-pro):not(.btn-glow):not(.btn-primary),
+        .modal-content span,
+        .modal-content p,
+        .modal-content td,
+        .modal-content th,
+        .modal-content strong,
+        .workspace-area div,
+        .workspace-area span,
+        .workspace-area p,
+        .workspace-area td,
+        .workspace-area th,
+        .glass-card-enterprise div,
+        .glass-card-enterprise span,
+        .player-row,
+        .player-row * {
+            color: #ffffff !important;
+        }
+
+        /* Keep select options black for readability in the dropdown */
+        option {
+            color: #000000 !important;
+            background: #ffffff !important;
+        }
+
+        .btn-micro {
+            padding: 5px 10px !important;
+            font-size: 0.65rem !important;
+            font-weight: 800 !important;
+            border-radius: 6px !important;
+            cursor: pointer !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            text-transform: uppercase !important;
+            line-height: normal !important;
+            width: auto !important;
+            display: inline-block !important;
+            margin: 2px !important;
+            transition: all 0.2s !important;
+            color: #fff !important;
+        }
+
+        .btn-micro:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            transform: translateY(-1px) !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -417,35 +550,6 @@
                     onclick="document.getElementById('admin-entreno-modal').classList.add('hidden')">&times;</button>
             </div>
             <form id="edit-entreno-form" class="pro-form">
-                <style>
-                    /* COMPACT MODE FOR THIS FORM */
-                    #edit-entreno-form .form-group {
-                        margin-bottom: 8px !important;
-                    }
-
-                    #edit-entreno-form label {
-                        font-size: 0.65rem !important;
-                        margin-bottom: 2px !important;
-                        letter-spacing: 0.5px;
-                    }
-
-                    #edit-entreno-form .pro-input {
-                        padding: 6px 10px !important;
-                        font-size: 0.85rem !important;
-                        height: 36px !important;
-                        min-height: 0 !important;
-                    }
-
-                    #edit-entreno-form select.pro-input {
-                        padding-right: 25px !important;
-                        /* Adjust for arrow */
-                    }
-
-                    #edit-entreno-form .btn-micro {
-                        padding: 4px 8px !important;
-                        font-size: 0.7rem !important;
-                    }
-                </style>
                 <input type="hidden" name="id">
                 <div class="form-group">
                     <label>NOMBRE DEL ENTRENO</label>
@@ -567,19 +671,21 @@
 
                     <!-- Quick Select Local Images -->
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                        <!-- PRAT -->
                         <button type="button" class="btn-micro"
                             onclick="selectEntrenoImage('img/entreno masculino prat.jpg')"
-                            style="background: #25d366; color: black;">Prat Masculino</button>
+                            style="background: #25d366; color: black;">Prat Masc</button>
                         <button type="button" class="btn-micro"
                             onclick="selectEntrenoImage('img/entreno femenino prat.jpg')"
-                            style="background: #ff69b4; color: black;">Prat Femenino</button>
+                            style="background: #ff69b4; color: black;">Prat Fem</button>
                         <button type="button" class="btn-micro"
                             onclick="selectEntrenoImage('img/entreno mixto prat.jpg')"
                             style="background: #ccff00; color: black;">Prat Mixto</button>
                         <button type="button" class="btn-micro"
                             onclick="selectEntrenoImage('img/entreno todo prat.jpg')"
-                            style="background: #ffffff; color: black;">Prat Todos</button>
+                            style="background: #ffffff; color: black;">Prat Todo</button>
 
+                        <!-- DELFOS -->
                         <button type="button" class="btn-micro"
                             onclick="selectEntrenoImage('img/entreno masculino delfos.jpg')"
                             style="background: #25d366; color: black;">Delfos Masc</button>
@@ -591,14 +697,20 @@
                             style="background: #ccff00; color: black;">Delfos Mixto</button>
                         <button type="button" class="btn-micro"
                             onclick="selectEntrenoImage('img/entreno todo delfos.jpg')"
-                            style="background: #ffffff; color: black;">Delfos Todos</button>
+                            style="background: #ffffff; color: black;">Delfos Todo</button>
+
+                        <!-- AMERICANA -->
+                        <button type="button" class="btn-micro"
+                            onclick="selectEntrenoImage('img/americana masculina.jpg')"
+                            style="background: #25d366; color: black;">Amer. Masc</button>
+                        <button type="button" class="btn-micro"
+                            onclick="selectEntrenoImage('img/americana femeninas.jpg')"
+                            style="background: #ff69b4; color: black;">Amer. Fem</button>
+                        <button type="button" class="btn-micro" onclick="selectEntrenoImage('img/americana mixta.jpg')"
+                            style="background: #ccff00; color: black;">Amer. Mixta</button>
 
                         <button type="button" class="btn-micro"
-                            onclick="selectEntrenoImage('img/ball-mixta.png')">Pelota AM</button>
-                        <button type="button" class="btn-micro"
-                            onclick="selectEntrenoImage('img/logo_somospadel.png')">Logo</button>
-                        <button type="button" class="btn-micro"
-                            onclick="selectEntrenoImage('img/americana-pro.png')">Neon</button>
+                            onclick="selectEntrenoImage('img/ball-mixta.png')">Pelota</button>
                     </div>
 
                     <div style="margin-top: 10px; text-align: center;">
@@ -793,20 +905,24 @@
 
                     <!-- Quick Select Local Images -->
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                        <!-- AMERICANA -->
                         <button type="button" class="btn-micro" onclick="selectImage('img/americana masculina.jpg')"
-                            style="background: #25d366; color: black;">Prat Masculino</button>
+                            style="background: #25d366; color: black;">Masc</button>
                         <button type="button" class="btn-micro" onclick="selectImage('img/americana femeninas.jpg')"
-                            style="background: #ff69b4; color: black;">Prat Femenino</button>
+                            style="background: #ff69b4; color: black;">Fem</button>
                         <button type="button" class="btn-micro" onclick="selectImage('img/americana mixta.jpg')"
-                            style="background: #ccff00; color: black;">Prat Mixta</button>
-                        <button type="button" class="btn-micro" onclick="selectImage('img/americana mixta.jpg')"
-                            style="background: #ffffff; color: black;">Prat Todos</button>
-                        <button type="button" class="btn-micro" onclick="selectImage('img/ball-mixta.png')">Pelota
-                            AM</button>
+                            style="background: #ccff00; color: black;">Mixta</button>
+
+                        <!-- PRAT -->
+                        <button type="button" class="btn-micro" onclick="selectImage('img/entreno todo prat.jpg')"
+                            style="background: #ffffff; color: black;">Prat</button>
+
+                        <!-- DELFOS -->
+                        <button type="button" class="btn-micro" onclick="selectImage('img/entreno todo delfos.jpg')"
+                            style="background: #ffffff; color: black;">Delfos</button>
+
                         <button type="button" class="btn-micro"
-                            onclick="selectImage('img/logo_somospadel.png')">Logo</button>
-                        <button type="button" class="btn-micro"
-                            onclick="selectImage('img/americana-pro.png')">Neon</button>
+                            onclick="selectImage('img/ball-mixta.png')">Pelota</button>
                     </div>
 
                     <div style="margin-top: 10px; text-align: center;">
@@ -1505,8 +1621,6 @@
                     font-weight: 600;
                     border-radius: 8px !important;
                 }
-                }
-                }
             </style>
 
             <!-- CONSOLA DE EMERGENCIA INTEGRADA -->
@@ -1606,6 +1720,41 @@
                             addToConsole('Puedes ejecutar comandos JavaScript aquí', 'log');
                         }, 1000);
                     });
+                    // Helpers for Image and Icon Selectors
+                    window.selectEntrenoImage = function (url) {
+                        const input = document.getElementById('edit-entreno-img-input');
+                        const preview = document.getElementById('edit-entreno-img-preview');
+                        if (input) {
+                            input.value = url;
+                            if (preview) {
+                                preview.src = url;
+                                preview.style.display = 'block';
+                            }
+                        }
+                    };
+
+                    window.selectImage = function (url) {
+                        const input = document.getElementById('edit-img-input');
+                        const preview = document.getElementById('edit-americana-img-preview');
+                        if (input) {
+                            input.value = url;
+                            if (preview) {
+                                preview.src = url;
+                                preview.style.display = 'block';
+                            }
+                        }
+                    };
+
+                    window.selectMenuIcon = function (iconClass) {
+                        const input = document.getElementById('menu-icon-input');
+                        const preview = document.getElementById('icon-preview-box');
+                        if (input) {
+                            input.value = iconClass;
+                            if (preview) {
+                                preview.innerHTML = `<i class="${iconClass}"></i>`;
+                            }
+                        }
+                    };
                 })();
             </script>
 </body>

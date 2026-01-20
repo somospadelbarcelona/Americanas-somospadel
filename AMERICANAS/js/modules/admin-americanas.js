@@ -99,7 +99,7 @@ function renderAmericanaCard(e) {
 
 function renderCreateAmericanaForm() {
     return `
-        <form id="create-americana-form" class="pro-form">
+        <form id="create-americana-form" class="pro-form compact-admin-form">
             <div class="form-group"><label>NOMBRE</label><input type="text" name="name" class="pro-input" required placeholder="AMERICANA..."></div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                 <div class="form-group"><label>FECHA</label><input type="date" name="date" class="pro-input" required></div>
@@ -108,9 +108,26 @@ function renderCreateAmericanaForm() {
             <div class="form-group"><label>SEDE</label><select name="location" class="pro-input"><option value="Barcelona Pádel el Prat">El Prat</option><option value="Delfos Cornellá">Delfos</option></select></div>
             <div class="form-group"><label>CATEGORÍA</label><select name="category" class="pro-input"><option value="open">TODOS</option><option value="male">MASCULINA</option><option value="female">FEMENINA</option><option value="mixed">MIXTA</option></select></div>
             <div class="form-group"><label>MODO</label><select name="pair_mode" class="pro-input"><option value="rotating">🔄 TWISTER</option><option value="fixed">🔒 POZO (Parejas Fijas)</option></select></div>
-            <div class="form-group"><label>IMAGEN</label><select name="image_url" class="pro-input"></select></div>
+            <div class="form-group">
+                <label>IMAGEN (URL)</label>
+                <input type="text" name="image_url" id="create-americana-img-input" class="pro-input" placeholder="img/..." value="img/americana masculina.jpg" oninput="document.getElementById('create-americana-img-preview').src=this.value; document.getElementById('create-americana-img-preview').style.display='block';">
+            </div>
 
-            <button type="submit" class="btn-primary-pro" style="width:100%; margin-top:1rem;">🚀 LANZAR</button>
+            <!-- Preview -->
+            <div style="margin-bottom: 15px; text-align: center;">
+                <img id="create-americana-img-preview" src="img/americana masculina.jpg" style="max-height: 80px; border-radius: 8px; border: 1px solid var(--primary); display: block;" onerror="this.style.display='none'">
+            </div>
+
+            <!-- Quick Select Buttons -->
+            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 15px;">
+                <button type="button" class="btn-micro" onclick="window.selectCreateAmericanaImage('img/americana masculina.jpg')" style="background: #25d366; color: black;">Masc</button>
+                <button type="button" class="btn-micro" onclick="window.selectCreateAmericanaImage('img/americana femeninas.jpg')" style="background: #ff69b4; color: black;">Fem</button>
+                <button type="button" class="btn-micro" onclick="window.selectCreateAmericanaImage('img/americana mixta.jpg')" style="background: #ccff00; color: black;">Mixta</button>
+                <button type="button" class="btn-micro" onclick="window.selectCreateAmericanaImage('img/entreno todo prat.jpg')" style="background: #ffffff; color: black;">Prat</button>
+                <button type="button" class="btn-micro" onclick="window.selectCreateAmericanaImage('img/entreno todo delfos.jpg')" style="background: #ffffff; color: black;">Delfos</button>
+            </div>
+
+            <button type="submit" class="btn-primary-pro" style="width:100%; margin-top:1rem; height: 44px; font-weight: 800;">🚀 LANZAR</button>
         </form>
     `;
 }
@@ -125,20 +142,24 @@ function setupCreateAmericanaForm() {
     const name = form.querySelector('[name=name]');
 
     const sync = () => {
-        // ... (Similiar sync logic to entrenos but for Americana images)
         const cVal = cat.value;
         const lVal = loc.value;
-
-        // Auto-Image Logic
-        if (lVal === 'Barcelona Pádel el Prat') {
-            img.innerHTML = Object.values(AppConstants.IMAGES.AMERICANA).map(u => `<option value="${u}">${u.split('/').pop()}</option>`).join('') + Object.values(AppConstants.IMAGES.BALLS).map(u => `<option value="${u}">${u.split('/').pop()}</option>`).join('');
-        } else {
-            img.innerHTML = `<option value="img/delfos.png">Delfos</option>`;
-        }
 
         // Auto-Name
         if (!name.value || name.value.startsWith('AMERICANA')) {
             name.value = `AMERICANA ${cVal.toUpperCase()}`;
+        }
+    };
+
+    window.selectCreateAmericanaImage = (url) => {
+        const input = document.getElementById('create-americana-img-input');
+        const preview = document.getElementById('create-americana-img-preview');
+        if (input) {
+            input.value = url;
+            if (preview) {
+                preview.src = url;
+                preview.style.display = 'block';
+            }
         }
     };
     cat.onchange = sync;

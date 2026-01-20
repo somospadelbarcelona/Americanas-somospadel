@@ -54,7 +54,8 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
             }
         } catch (e) { console.warn("Messaging init error", e); }
 
-        // Enable offline persistence
+        /* 
+        // Enable offline persistence (Disabled temporarily to diagnose hangs)
         db.enablePersistence()
             .catch((err) => {
                 if (err.code == 'failed-precondition') {
@@ -63,8 +64,9 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
                     console.warn("⚠️ The current browser doesn't support persistence.");
                 }
             });
-
         console.log("📦 Firestore persistence enabled");
+        */
+        console.log("📦 Firestore persistence disabled for safety");
     } catch (error) {
         console.error("❌ Firebase initialization error:", error);
         alert("🔴 FIREBASE ERROR: " + error.message);
@@ -86,7 +88,10 @@ const FirebaseDB = {
     // Players Collection
     players: {
         async getAll() {
+            console.log("🔥 FirebaseDB.players.getAll() called");
+            if (!db) throw new Error("Firebase DB not initialized yet");
             const snapshot = await db.collection('players').get();
+            console.log("✅ FirebaseDB.players.getAll() success, docs:", snapshot.docs.length);
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         },
 
@@ -546,4 +551,4 @@ seedInitialUsers().then(() => {
     console.log("🚀 Firebase ready & Seeded!");
 });
 
-console.log("🔥 Firebase Init Module Loaded");
+console.log("🔥 Firebase Init Module Fully Loaded & Executed");

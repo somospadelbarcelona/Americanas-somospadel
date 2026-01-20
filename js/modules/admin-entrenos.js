@@ -246,28 +246,57 @@ function renderEntrenoCard(e) {
 
 function renderCreateForm() {
     return `
-        <form id="create-entreno-form" class="pro-form">
-            <div class="form-group"><label>NOMBRE</label><input type="text" name="name" class="pro-input" required placeholder="ENTRENO..."></div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <div class="form-group"><label>FECHA</label><input type="date" name="date" class="pro-input" required></div>
-                <div class="form-group"><label>HORA</label><input type="time" name="time" value="10:00" class="pro-input" required></div>
+        <form id="create-entreno-form" class="pro-form compact-admin-form">
+            <div class="form-group">
+                <label><i class="fas fa-signature"></i> NOMBRE DEL ENTRENO</label>
+                <input type="text" name="name" class="pro-input" required placeholder="ENTRENO...">
             </div>
-            <div class="form-group"><label>CATEGORÍA</label>
-                <select name="category" class="pro-input">
-                    <option value="open">TODOS</option><option value="male">MASCULINA</option><option value="female">FEMENINA</option><option value="mixed">MIXTA</option>
-                </select>
-            </div>
-            <div class="form-group"><label>SEDE</label>
-                <select name="location" class="pro-input">
-                    <option value="Barcelona Pádel el Prat">El Prat</option><option value="Delfos Cornellá">Delfos</option>
-                </select>
-            </div>
-            <div class="form-group"><label>MODO</label>
-                 <select name="pair_mode" class="pro-input"><option value="fixed">🔒 PAREJA FIJA</option><option value="rotating">🌪️ TWISTER</option></select>
-            </div>
-            <div class="form-group"><label>IMAGEN</label><select name="image_url" class="pro-input"></select></div> <!-- Populated via JS -->
             
-            <button type="submit" class="btn-primary-pro" style="width:100%; margin-top:1rem;">🚀 LANZAR</button>
+            <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:12px;">
+                <div class="form-group">
+                    <label><i class="fas fa-calendar"></i> FECHA</label>
+                    <input type="date" name="date" class="pro-input" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-clock"></i> HORA</label>
+                    <input type="time" name="time" value="10:00" class="pro-input" required>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div class="form-group">
+                    <label><i class="fas fa-tags"></i> CATEGORÍA</label>
+                    <select name="category" class="pro-input">
+                        <option value="open">TODOS</option>
+                        <option value="male">MASCULINA</option>
+                        <option value="female">FEMENINA</option>
+                        <option value="mixed">MIXTA</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-map-marker-alt"></i> SEDE</label>
+                    <select name="location" class="pro-input">
+                        <option value="Barcelona Pádel el Prat">El Prat</option>
+                        <option value="Delfos Cornellá">Delfos</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:12px;">
+                <div class="form-group">
+                    <label><i class="fas fa-users"></i> MODO</label>
+                    <select name="pair_mode" class="pro-input">
+                         <option value="fixed">🔒 PAREJA FIJA</option>
+                         <option value="rotating">🌪️ TWISTER</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-image"></i> IMAGEN</label>
+                    <select name="image_url" class="pro-input"></select>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-primary-pro" style="width:100%; margin-top:1.5rem; height: 50px; font-weight: 900; letter-spacing: 1px;">LANZAR ENTRENO 🚀</button>
         </form>
     `;
 }
