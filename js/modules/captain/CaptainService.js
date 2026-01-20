@@ -109,8 +109,10 @@
             const insights = [];
             const name = user.name ? user.name.split(' ')[0].toUpperCase() : 'JUGADOR';
 
-            // 1. FILTRADO ULTRA-ESTRICTO: ÚNICAMENTE partidos donde el usuario entró a pista
-            const searchName = user.name.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            // 1. FILTRADO ULTRA-RESILIENTE
+            const normalize = (s) => (s || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+            const searchNames = normalize(user.name).split(' ').filter(t => t.length > 2);
+            const userUID = user.uid;
 
             const eventMatches = allMatches.filter(m => {
                 const isCorrectEvent = m.event_id === eventDoc.id || m.americana_id === eventDoc.id;
@@ -118,18 +120,18 @@
 
                 const teamA_IDs = m.team_a_ids || [];
                 const teamB_IDs = m.team_b_ids || [];
+                const playersList = m.players || [];
 
-                const checkInTeam = (names) => {
-                    if (!names) return false;
-                    const combined = (Array.isArray(names) ? names.join(' ') : String(names)).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                    const tokens = user.name.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(' ').filter(t => t.length > 2);
-                    return tokens.every(t => combined.includes(t));
+                if (teamA_IDs.includes(userUID) || teamB_IDs.includes(userUID) || playersList.includes(userUID)) return true;
+
+                // Si no hay UID, buscar por nombres
+                const checkNames = (input) => {
+                    const combined = (Array.isArray(input) ? input.join(' ') : String(input || ""));
+                    const normalizedInput = normalize(combined);
+                    return searchNames.some(t => normalizedInput.includes(t));
                 };
 
-                const inA = teamA_IDs.includes(user.uid) || checkInTeam(m.team_a_names);
-                const inB = teamB_IDs.includes(user.uid) || checkInTeam(m.team_b_names);
-
-                return (inA || inB);
+                return checkNames(m.team_a_names) || checkNames(m.team_b_names);
             });
 
             if (eventMatches.length === 0) {
@@ -137,37 +139,34 @@
                     type: 'event_summary',
                     level: 'info',
                     icon: '🎾',
-                    title: `EVENTO FINALIZADO`,
-                    message: `¡Hola ${name}! He analizado el evento pero no he encontrado partidos donde participaras directamente.`
+                    title: `INFORME VACÍO`,
+                    message: `¡Hola ${name}! No he encontrado registros tuyos en este evento. Si jugaste, es posible que tu nombre no coincida exactamente.`
                 }];
             }
 
-            // 2. FILTRADO DE UNICIDAD POR RONDA
-            const matchesByRound = {};
+            // 2. FILTRADO DE UNICIDAD (Evitar duplicados si hay re-scaneo)
+            const uniqueMatches = [];
+            const seenRounds = new Set();
+
+            // Ordenar por fecha o ronda para consistencia
+            eventMatches.sort((a, b) => (a.round || 0) - (b.round || 0));
+
             eventMatches.forEach(m => {
-                const r = m.round || Math.random(); // Si no hay ronda, tratar como único o azar
-                if (!matchesByRound[r]) {
-                    matchesByRound[r] = m;
-                } else {
-                    // Prioridad a partidos con UID real
-                    const hasUID = (m.team_a_ids || []).includes(user.uid) || (m.team_b_ids || []).includes(user.uid);
-                    if (hasUID) matchesByRound[r] = m;
+                const roundKey = m.round || Math.random();
+                // Permitimos múltiples partidos por ronda si son legítimos (ej: tie-breaks o formatos raros)
+                // Pero si son idénticos en equipos, los filtramos
+                const matchHash = `${m.round}-${JSON.stringify(m.team_a_names)}-${JSON.stringify(m.team_b_names)}`;
+                if (!seenRounds.has(matchHash)) {
+                    uniqueMatches.push(m);
+                    seenRounds.add(matchHash);
                 }
             });
 
-            let uniqueMatches = Object.values(matchesByRound).sort((a, b) => (a.round || 0) - (b.round || 0));
-
-            // Límite de seguridad: Nadie juega 24 partidos en un entreno. 
-            // Si el sistema detecta locuras, limitamos a las 6 u 8 rondas estándar.
-            if (uniqueMatches.length > 9) {
-                uniqueMatches = uniqueMatches.slice(0, 8);
-            }
-
-            // 1. RESUMEN DEL EVENTO
+            // 3. CÁLCULO DE ESTADÍSTICAS
             let wins = 0;
             let totalPoints = 0;
             let totalPointsAgainst = 0;
-            const partners = new Set();
+            const partnerStats = {};
             const roundsArr = new Set();
 
             uniqueMatches.forEach(m => {
@@ -179,14 +178,17 @@
 
                 const teamA = m.team_a_ids || [];
                 const namesA = m.team_a_names || [];
-                const name = user.name || "";
-                const isTeamA = teamA.includes(user.uid) || (Array.isArray(namesA) ? namesA.some(n => n && n.includes(name)) : (typeof namesA === 'string' && namesA.includes(name)));
+                const isTeamA = teamA.includes(userUID) || (Array.isArray(namesA) ? namesA.some(n => normalize(n).includes(searchNames[0])) : normalize(namesA).includes(searchNames[0]));
 
                 totalPoints += isTeamA ? sA : sB;
                 totalPointsAgainst += isTeamA ? sB : sA;
 
                 const partner = this._getPartner(user, m);
-                if (partner) partners.add(partner);
+                if (partner) {
+                    if (!partnerStats[partner]) partnerStats[partner] = { played: 0, won: 0 };
+                    partnerStats[partner].played++;
+                    if (won) partnerStats[partner].won++;
+                }
                 if (m.round) roundsArr.add(m.round);
             });
 
@@ -196,31 +198,21 @@
             const avgPointsAgainst = matchCount > 0 ? (totalPointsAgainst / matchCount).toFixed(1) : "0.0";
 
             // Determinar nivel de rendimiento
-            let performanceIcon = '📊';
-            let performanceTitle = 'RENDIMIENTO SÓLIDO';
-            let performanceLevel = 'info';
-            let performanceMessage = `Has jugado <b>${matchCount} partidos</b> en ${roundsArr.size} rondas.`;
+            let performanceIcon = '📊', performanceTitle = 'RENDIMIENTO SÓLIDO', performanceLevel = 'info';
+            let performanceMessage = `Has completado <b>${matchCount} partidos</b>.`;
 
-            if (winRate >= 75) {
-                performanceIcon = '🏆';
-                performanceTitle = '¡ACTUACIÓN ESTELAR!';
-                performanceLevel = 'success';
-                performanceMessage = `<b>${wins}/${matchCount} victorias</b> (${winRate}%). Dominaste la pista hoy, ${name}.`;
-            } else if (winRate >= 50) {
-                performanceIcon = '💪';
-                performanceTitle = 'RENDIMIENTO COMPETITIVO';
-                performanceLevel = 'info';
-                performanceMessage = `<b>${wins}/${matchCount} victorias</b> (${winRate}%). Balance positivo, sigue así.`;
-            } else if (winRate >= 25) {
-                performanceIcon = '⚡';
-                performanceTitle = 'DÍA DE APRENDIZAJE';
-                performanceLevel = 'warning';
-                performanceMessage = `<b>${wins}/${matchCount} victorias</b> (${winRate}%). Todos tenemos días difíciles. Analiza y vuelve más fuerte.`;
+            if (winRate >= 80) {
+                performanceIcon = '💥'; performanceTitle = '¡MODO DIOS!'; performanceLevel = 'success';
+                performanceMessage = `<b>${wins}/${matchCount} victorias</b>. Has arrasado en la pista, ${name}. Nivel profesional.`;
+            } else if (winRate >= 60) {
+                performanceIcon = '🏆'; performanceTitle = 'ELITE PLAYER'; performanceLevel = 'success';
+                performanceMessage = `<b>${wins}/${matchCount} victorias</b>. Una actuación contundente y muy inteligente.`;
+            } else if (winRate >= 40) {
+                performanceIcon = '💪'; performanceTitle = 'GUERRERO'; performanceLevel = 'info';
+                performanceMessage = `<b>${wins}/${matchCount} victorias</b>. Has dado la cara en cada punto. Buen trabajo.`;
             } else {
-                performanceIcon = '🎯';
-                performanceTitle = 'DESAFÍO ACEPTADO';
-                performanceLevel = 'warning';
-                performanceMessage = `<b>${wins}/${matchCount} victorias</b> (${winRate}%). Hoy fue duro, pero cada derrota es una lección.`;
+                performanceIcon = '🎯'; performanceTitle = 'RECALIBRANDO'; performanceLevel = 'warning';
+                performanceMessage = `<b>${wins}/${matchCount} victorias</b>. Un día difícil para tus estadísticas, pero excelente para aprender.`;
             }
 
             insights.push({
@@ -231,88 +223,39 @@
                 message: `
                     ${performanceMessage}
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
-                        <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:8px; text-align:center;">
+                        <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:12px; text-align:center; border: 1px solid rgba(74, 222, 128, 0.2);">
                             <div style="font-size:1.1rem; font-weight:900; color:#4ade80;">${avgPointsFor}</div>
-                            <div style="font-size:0.55rem; color:#888;">PUNTOS A FAVOR</div>
+                            <div style="font-size:0.55rem; color:#888; font-weight:800;">PTS FAVOR</div>
                         </div>
-                        <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:8px; text-align:center;">
+                        <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:12px; text-align:center; border: 1px solid rgba(248, 113, 113, 0.2);">
                             <div style="font-size:1.1rem; font-weight:900; color:#f87171;">${avgPointsAgainst}</div>
-                            <div style="font-size:0.55rem; color:#888;">PUNTOS EN CONTRA</div>
+                            <div style="font-size:0.55rem; color:#888; font-weight:800;">PTS CONTRA</div>
                         </div>
                     </div>
                 `
             });
 
-            // 2. MEJOR PAREJA DEL DÍA
-            const partnerStats = {};
-            eventMatches.forEach(m => {
-                const partner = this._getPartner(user, m);
-                if (partner) {
-                    if (!partnerStats[partner]) partnerStats[partner] = { played: 0, won: 0 };
-                    partnerStats[partner].played++;
-                    if (this._didUserWin(user, m)) partnerStats[partner].won++;
-                }
-            });
-
-            let bestPartner = null;
-            let bestPartnerRate = 0;
+            // 4. MEJOR SOCIO
+            let bestPartner = null, bestRate = -1;
             Object.keys(partnerStats).forEach(p => {
                 const rate = partnerStats[p].won / partnerStats[p].played;
-                if (rate > bestPartnerRate || (rate === bestPartnerRate && partnerStats[p].played > (partnerStats[bestPartner]?.played || 0))) {
-                    bestPartnerRate = rate;
-                    bestPartner = p;
+                if (rate > bestRate || (rate === bestRate && partnerStats[p].played > (partnerStats[bestPartner]?.played || 0))) {
+                    bestRate = rate; bestPartner = p;
                 }
             });
 
-            if (bestPartner && partnerStats[bestPartner].played >= 2) {
-                const record = `${partnerStats[bestPartner].won}-${partnerStats[bestPartner].played - partnerStats[bestPartner].won}`;
+            if (bestPartner && (partnerStats[bestPartner].played >= 2 || (matchCount <= 4 && partnerStats[bestPartner].played >= 1))) {
                 insights.push({
                     type: 'best_partner',
-                    level: 'info',
+                    level: 'success',
                     icon: '🤝',
-                    title: 'MEJOR PAREJA HOY',
-                    message: `Con <b>${bestPartner}</b> hicisteis un gran equipo.<br>Récord: <span style="color:#CCFF00; font-weight:800;">${record}</span> (${Math.round(bestPartnerRate * 100)}%).`
+                    title: 'QUÍMICA LETAL',
+                    message: `Tu conexión con <b>${bestPartner}</b> ha sido la clave hoy. Ganasteis el ${Math.round(bestRate * 100)}% de vuestros juegos.`
                 });
             }
 
-            // 3. EVOLUCIÓN ENTRE RONDAS (si hay múltiples rondas)
-            if (rounds.size >= 3) {
-                const roundPerformance = {};
-                eventMatches.forEach(m => {
-                    const round = m.round || 1;
-                    if (!roundPerformance[round]) roundPerformance[round] = { wins: 0, total: 0 };
-                    roundPerformance[round].total++;
-                    if (this._didUserWin(user, m)) roundPerformance[round].wins++;
-                });
-
-                const sortedRounds = Object.keys(roundPerformance).sort((a, b) => parseInt(a) - parseInt(b));
-                const firstHalf = sortedRounds.slice(0, Math.ceil(sortedRounds.length / 2));
-                const secondHalf = sortedRounds.slice(Math.ceil(sortedRounds.length / 2));
-
-                const firstHalfWinRate = firstHalf.reduce((sum, r) => sum + roundPerformance[r].wins, 0) / firstHalf.reduce((sum, r) => sum + roundPerformance[r].total, 0);
-                const secondHalfWinRate = secondHalf.reduce((sum, r) => sum + roundPerformance[r].wins, 0) / secondHalf.reduce((sum, r) => sum + roundPerformance[r].total, 0);
-
-                if (secondHalfWinRate > firstHalfWinRate + 0.2) {
-                    insights.push({
-                        type: 'evolution',
-                        level: 'success',
-                        icon: '📈',
-                        title: 'CURVA ASCENDENTE',
-                        message: `Mejoraste notablemente en la segunda mitad del entreno. <b>Excelente capacidad de adaptación.</b>`
-                    });
-                } else if (firstHalfWinRate > secondHalfWinRate + 0.2) {
-                    insights.push({
-                        type: 'evolution',
-                        level: 'warning',
-                        icon: '📉',
-                        title: 'BAJÓN DE ENERGÍA',
-                        message: `Empezaste fuerte pero bajaste el ritmo. Trabaja la resistencia física y mental.`
-                    });
-                }
-            }
-
-            // 4. RECOMENDACIÓN PERSONALIZADA
-            const recommendation = this._getEventRecommendation(winRate, avgPointsFor, avgPointsAgainst, eventMatches.length);
+            // 5. RECOMENDACIÓN TÁCTICA
+            const recommendation = this._getEventRecommendation(winRate, avgPointsFor, avgPointsAgainst, matchCount);
             if (recommendation) insights.push(recommendation);
 
             return insights;

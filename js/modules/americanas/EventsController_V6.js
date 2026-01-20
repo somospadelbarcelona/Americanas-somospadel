@@ -838,7 +838,7 @@
             return `
                 <div onclick="${cardAction}" style="background: #000; border-radius: 28px; overflow: hidden; margin-bottom: 25px; border: 1px solid #222; box-shadow: 0 15px 35px rgba(0,0,0,0.4); font-family: 'Outfit', sans-serif; cursor: pointer;">
                     <!-- TOP IMAGE AREA -->
-                    <div style="height: 200px; background: url('${evt.image_url || 'img/americana-neon-bg.jpg'}') no-repeat center/cover; position: relative;">
+                    <div style="height: 200px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative;">
                         <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.3), transparent, rgba(0,0,0,0.8));"></div>
                         
                         <!-- DATE BADGE -->

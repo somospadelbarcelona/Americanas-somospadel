@@ -6,17 +6,38 @@ window.AdminViews.users = async function () {
     const titleEl = document.getElementById('page-title');
 
     if (titleEl) titleEl.textContent = 'BBDD JUGADORES';
-    content.innerHTML = '<div class="loader"></div>';
+    content.innerHTML = `
+        <div class="loading-container">
+            <div class="loader"></div>
+            <p>Conectando con la base de datos de jugadores...</p>
+        </div>`;
 
     // FETCH REAL DATA
-    // Aseguramos que cargamos TODOS, sin paginación si es posible
-    const users = await FirebaseDB.players.getAll();
+    let users = [];
+    try {
+        console.log("🔍 Fetching players from Firebase...");
+        // Add a timeout of 15s for the fetch to be safe
+        users = await Promise.race([
+            FirebaseDB.players.getAll(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("La base de datos Firebase no responde (Timeout 15s)")), 15000))
+        ]);
 
-    console.log("👥 Usuarios cargados en Admin:", users.length);
-
-    // Cache initialization
-    window.allUsersCache = users;
-    window.filteredUsers = [...users];
+        console.log("👥 Usuarios cargados en Admin:", users.length);
+        window.allUsersCache = users;
+        window.filteredUsers = [...users];
+    } catch (err) {
+        console.error("❌ Error fetching players:", err);
+        content.innerHTML = `
+            <div class="loading-container" style="color:var(--danger);">
+                <i class="fas fa-exclamation-triangle" style="font-size: 3rem;"></i>
+                <p>Error al cargar jugadores: ${err.message}</p>
+                <div style="display:flex; gap: 10px;">
+                    <button class="btn-primary-pro" onclick="window.loadAdminView('users')">REINTENTAR</button>
+                    <button class="btn-outline-pro" onclick="localStorage.clear(); sessionStorage.clear(); location.reload();">LIMPIAR CACHÉ Y RECARGAR</button>
+                </div>
+            </div>`;
+        return;
+    }
 
     // Setup Render Function
     window.renderUserRows = (data) => {

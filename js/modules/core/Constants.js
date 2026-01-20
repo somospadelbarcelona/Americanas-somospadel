@@ -61,10 +61,10 @@ window.AppConstants = {
             open: 'img/entreno todo delfos.jpg'
         },
         AMERICANA: {
-            male: 'img/americana masculina.jpg',
-            female: 'img/americana femeninas.jpg',
-            mixed: 'img/americana mixta.jpg',
-            open: 'img/americana mixta.jpg'
+            male: 'img/americana%20masculina.jpg',
+            female: 'img/americana%20femeninas.jpg',
+            mixed: 'img/americana%20mixta.jpg',
+            open: 'img/americana%20mixta.jpg'
         },
         BALLS: {
             male: 'img/ball-masculina.png',
