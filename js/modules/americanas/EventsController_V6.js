@@ -128,7 +128,12 @@
 
             // 2. Automation Loop (Check every 30s)
             if (this.autoStartInterval) clearInterval(this.autoStartInterval);
-            this.autoStartInterval = setInterval(() => this.checkAutoStartEvents(), 30000);
+            this.autoStartInterval = setInterval(() => {
+                this.checkAutoStartEvents();
+                if (window.AmericanaService?.processWaitlistTimeouts) {
+                    window.AmericanaService.processWaitlistTimeouts();
+                }
+            }, 30000);
         }
 
         init() {
@@ -754,6 +759,12 @@
             const isPairing = evt.status === 'pairing';
             const isCancelled = evt.status === 'cancelled';
 
+            // Waitlist Logic
+            const waitlist = evt.waitlist || [];
+            const isWaitlistPending = evt.waitlist_pending_user && (evt.waitlist_pending_user.uid === uid);
+            const isInWaitlist = waitlist.some(p => p.uid === uid);
+            const waitlistPos = waitlist.findIndex(p => p.uid === uid) + 1;
+
             // Date Parsing
             const dateObj = this._parseDate(evt.date);
             const dayNum = dateObj ? dateObj.start.getDate() : '--';
@@ -806,6 +817,17 @@
                 timeLabel = `${pad(times.start.getHours())}:${pad(times.start.getMinutes())} - ${pad(times.end.getHours())}:${pad(times.end.getMinutes())}`;
             }
 
+            // Gender logical check
+            const userGender = user ? (user.gender || '').toLowerCase() : '';
+            const isChico = userGender === 'm' || userGender === 'chico';
+            const isChica = userGender === 'f' || userGender === 'chica';
+            const cat = (evt.category || 'open').toLowerCase();
+            let isGenderMismatch = false;
+            let mismatchCase = ''; // 'male', 'female', 'none'
+            if (cat === 'male' && !isChico) { isGenderMismatch = true; mismatchCase = 'male'; }
+            if (cat === 'female' && !isChica) { isGenderMismatch = true; mismatchCase = 'female'; }
+            if (cat === 'mixed' && !isChico && !isChica) { isGenderMismatch = true; mismatchCase = 'none'; }
+
             // Button Logic
             let cardAction = `window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}')`;
             let fabAction = cardAction;
@@ -827,6 +849,23 @@
             } else if (isLive) {
                 btnLabel = 'LIVE'; btnIcon = 'fa-broadcast-tower'; btnColor = '#FF2D55';
                 fabAction = cardAction;
+            } else if (isWaitlistPending) {
+                btnLabel = '¡NUEVA PLAZA! CONFIRMAR'; btnIcon = 'fa-star'; btnColor = '#CCFF00';
+                fabAction = `window.EventsController.confirmWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
+            } else if (isGenderMismatch && !isJoined) {
+                if (mismatchCase === 'male') { btnLabel = 'SOLO CHICOS'; btnIcon = 'fa-lock'; }
+                else if (mismatchCase === 'female') { btnLabel = 'SOLO CHICAS'; btnIcon = 'fa-lock'; }
+                else { btnLabel = 'GENERO?'; btnIcon = 'fa-user-cog'; }
+
+                btnColor = '#4b5563';
+                const msg = mismatchCase === 'none' ? 'Debes definir tu género en el perfil para apuntarte a un evento Mixto.' : `Este evento es exclusivo para ${mismatchCase === 'male' ? 'HOMBRES' : 'MUJERES'}.`;
+                fabAction = `alert('⚠️ ${msg}')`;
+            } else if (isInWaitlist) {
+                btnLabel = `ESPERA (Pos ${waitlistPos})`; btnIcon = 'fa-hourglass-half'; btnColor = '#94a3b8';
+                fabAction = `window.EventsController.leaveWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
+            } else if (isFull && !isJoined) {
+                btnLabel = 'LISTA ESPERA'; btnIcon = 'fa-clock'; btnColor = '#eab308';
+                fabAction = `window.EventsController.joinWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
             } else if (!isJoined && !isFull) {
                 btnLabel = 'APUNTARME'; btnIcon = 'fa-plus'; btnColor = '#CCFF00';
                 fabAction = `window.EventsController.joinEvent('${evt.id}', '${evt.type || 'americana'}')`;
@@ -907,8 +946,16 @@
                             <div onclick="event.stopPropagation(); window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')" style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
                                 <i class="fas fa-users" style="color: ${isFull ? '#FF3B30' : '#84cc16'}; font-size: 1.3rem;"></i>
                                 <span style="font-weight: 800; color: ${isFull ? '#FF3B30' : '#fff'}; text-decoration: underline; text-underline-offset: 4px;">${playerCount} / ${maxPlayers} Plazas</span>
+                                ${waitlist.length > 0 ? `<small style="color:#eab308; margin-left:5px;">(+${waitlist.length} en espera)</small>` : ''}
                             </div>
                         </div>
+
+                        ${isWaitlistPending ? `
+                        <div style="background: rgba(204,255,0,0.1); border: 1px dashed #CCFF00; padding: 12px; border-radius: 12px; margin-bottom: 20px; text-align: center; animation: pulse-soft 2s infinite;">
+                            <div style="color: #CCFF00; font-weight: 900; font-size: 0.85rem;">🕒 ¡TIENES UNA PLAZA LIBRE!</div>
+                            <div style="color: #ccc; font-size: 0.75rem; margin-top: 4px;">Confirma en menos de 10 min o pasará al siguiente.</div>
+                        </div>
+                        ` : ''}
 
                         <div style="display: flex; align-items: center; gap: 12px; color: #666; font-size: 0.9rem; font-weight: 700; padding-top: 15px; border-top: 1px solid #222;">
                             <div style="flex:1;">
@@ -938,12 +985,12 @@
             `;
         }
 
-        async openLiveEvent(id, type = 'americana') {
+        async openLiveEvent(id, type = 'americana', action = null) {
             if (!window.ControlTowerView && window.ControlTowerViewClass) {
                 window.ControlTowerView = new window.ControlTowerViewClass();
             }
             if (window.ControlTowerView) {
-                window.ControlTowerView.prepareLoad(id, type);
+                window.ControlTowerView.prepareLoad(id, type, action);
                 window.Router.navigate('live');
             } else {
                 alert("Cargando módulo de control...");
@@ -967,10 +1014,35 @@
         }
 
         async leaveEvent(id, type = 'americana') {
-            if (this.state.currentUser && await this.waitForService() && confirm("¿Baja?")) {
+            if (!this.state.currentUser) { alert("Inicia sesión."); return; }
+            if (await this.waitForService() && confirm("¿Darse de baja?")) {
                 const res = await window.AmericanaService.removePlayer(id, this.state.currentUser.uid, type);
-                alert(res.success ? "Baja OK" : "Error: " + res.error);
+                alert(res.success ? "Baja tramitada" : "Error: " + res.error);
             }
+        }
+
+        async joinWaitlist(id, type = 'americana') {
+            if (!this.state.currentUser) { alert("Inicia sesión."); return; }
+            if (confirm("Evento lleno. ¿Entrar en lista de espera? Te avisaremos si queda una plaza libre.")) {
+                const res = await window.AmericanaService.addToWaitlist(id, this.state.currentUser, type);
+                alert(res.success ? "En lista de espera ✅" : "Error: " + res.error);
+            }
+        }
+
+        async confirmWaitlist(id, type = 'americana') {
+            if (!this.state.currentUser) { alert("Inicia sesión."); return; }
+            if (confirm("¿Confirmar tu plaza ahora?")) {
+                const res = await window.AmericanaService.confirmWaitlist(id, this.state.currentUser.uid, type);
+                alert(res.success ? "¡Bienvenido al evento! 🎾" : "Error: " + res.error);
+            }
+        }
+
+        async leaveWaitlist(id, type = 'americana') {
+            const service = window.AmericanaService._getCollectionService(type);
+            const event = await service.getById(id);
+            const newWaitlist = (event.waitlist || []).filter(p => p.uid !== this.state.currentUser.uid);
+            await service.update(id, { waitlist: newWaitlist });
+            alert("Has salido de la lista de espera.");
         }
 
         async showInscritosModal(id, type) {

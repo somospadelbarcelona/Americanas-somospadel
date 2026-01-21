@@ -13,7 +13,13 @@
                 recentMatches: []
             };
 
-            if (!container || !user) return;
+            if (!container) return;
+            if (!user) {
+                container.innerHTML = `<div style="padding:100px; text-align:center; color:white;">
+                    <i class="fas fa-spinner fa-spin"></i><br>Cargando sesión...
+                </div>`;
+                return;
+            }
 
             container.innerHTML = `
                 <div class="player-profile-wrapper fade-in" style="background: #000; min-height: 100vh; padding-bottom: 120px; font-family: 'Outfit', sans-serif; color: white;">
@@ -38,7 +44,7 @@
                             <h2 style="font-weight: 950; font-size: 1.8rem; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">${user.name}</h2>
                             <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
                                 <span style="background: #CCFF00; color: #000; padding: 4px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 950;">NIVEL ${parseFloat(user.level || 3.5).toFixed(2)}</span>
-                                <span style="background: rgba(255,255,255,0.05); color: #888; padding: 4px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid #333;">ID: ${user.id.substring(0, 5).toUpperCase()}</span>
+                                <span style="background: rgba(255,255,255,0.05); color: #888; padding: 4px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid #333;">ID: ${(user.id || user.uid || 'PRO').substring(0, 5).toUpperCase()}</span>
                             </div>
                             
                             ${user.role === 'admin_player' || user.role === 'admin' ? `
@@ -64,23 +70,6 @@
                                 <p style="font-size: 1.05rem; line-height: 1.6; font-weight: 600; color: #fff; margin: 0 0 20px; font-style: italic;">
                                     "${data.aiInsights.summary}"
                                 </p>
-                                
-                                <!-- New Skills Radar Concept -->
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-                                    <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); text-align: center;">
-                                        <div style="font-size: 0.6rem; color: #888; text-transform: uppercase; font-weight: 800; margin-bottom: 5px;">Potencial</div>
-                                        <div style="height: 4px; background: #222; border-radius: 2px; overflow: hidden; margin-top: 5px;">
-                                            <div style="width: ${Math.min(100, Math.round((user.level / 7) * 100)) || 50}%; height: 100%; background: #CCFF00; box-shadow: 0 0 10px #CCFF00;"></div>
-                                        </div>
-                                    </div>
-                                    <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); text-align: center;">
-                                        <div style="font-size: 0.6rem; color: #888; text-transform: uppercase; font-weight: 800; margin-bottom: 5px;">Confianza</div>
-                                        <div style="height: 4px; background: #222; border-radius: 2px; overflow: hidden; margin-top: 5px;">
-                                            <div style="width: ${data.stats.winRate || 50}%; height: 100%; background: #38bdf8; box-shadow: 0 0 10px #38bdf8;"></div>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                                     ${data.aiInsights.insights.map(ins => `
                                         <div style="background: rgba(255,255,255,0.05); padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 800; display: flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.1);">
@@ -91,7 +80,29 @@
                             </div>
                         ` : ''}
 
-                        <!-- Performance Stats: 2x2 Grid with Glow -->
+                        <!-- PROGRESS & COMMUNITY ANALYSIS -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px;">
+                            <div style="background: rgba(255,255,255,0.03); padding: 18px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); text-align: center;">
+                                <div style="font-size: 0.65rem; color: #888; text-transform: uppercase; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.5px;">Vs Media Comunidad</div>
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                                    <div style="font-size: 1.4rem; font-weight: 950; color: #CCFF00;">${parseFloat(user.level || 3.5).toFixed(2)}</div>
+                                    <div style="width: 1px; height: 15px; background: rgba(255,255,255,0.1);"></div>
+                                    <div style="font-size: 1.1rem; font-weight: 700; color: #666;">${parseFloat(data.communityAvg || 3.5).toFixed(2)}</div>
+                                </div>
+                                <div style="font-size: 0.6rem; color: ${parseFloat(user.level || 3.5) >= parseFloat(data.communityAvg || 3.5) ? '#CCFF00' : '#888'}; margin-top: 8px; font-weight: 900; letter-spacing: 0.5px;">
+                                    ${parseFloat(user.level || 3.5) >= parseFloat(data.communityAvg || 3.5) ? 'NIVEL TOP 🔥' : 'SIGUE SUMANDO 💪'}
+                                </div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); padding: 18px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); text-align: center;">
+                                <div style="font-size: 0.65rem; color: #888; text-transform: uppercase; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.5px;">Nivel de Confianza</div>
+                                <div style="height: 5px; background: #222; border-radius: 2px; overflow: hidden; margin: 12px 0 8px;">
+                                    <div style="width: ${data.stats.winRate || 50}%; height: 100%; background: #38bdf8; box-shadow: 0 0 10px #38bdf8;"></div>
+                                </div>
+                                <div style="font-size: 1rem; color: #38bdf8; font-weight: 950;">${data.stats.winRate || 0}% <span style="font-size: 0.6rem; opacity: 0.6;">WR</span></div>
+                            </div>
+                        </div>
+
+                         <!-- Performance Stats: 2x2 Grid with Glow -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px;">
                             <div style="background: linear-gradient(135deg, #111, #0a0a0a); padding: 22px; border-radius: 24px; border: 1px solid #222; text-align: left; position: relative; overflow: hidden;">
                                 <div style="color: #64748b; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Partidos Totales</div>
@@ -103,15 +114,41 @@
                                 <div style="font-size: 2.2rem; font-weight: 950; color: #CCFF00;">${data.stats.winRate}%</div>
                                 <i class="fas fa-chart-pie" style="position: absolute; right: -5px; bottom: -5px; font-size: 2.5rem; opacity: 0.05; color: #CCFF00;"></i>
                             </div>
-                            <div style="background: linear-gradient(135deg, #111, #0a0a0a); padding: 22px; border-radius: 24px; border: 1px solid #222; text-align: left; position: relative; overflow: hidden;">
-                                <div style="color: #64748b; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Juegos Ganados</div>
-                                <div style="font-size: 2.2rem; font-weight: 950; color: #fff;">${data.stats.gamesWon}</div>
-                                <i class="fas fa-trophy" style="position: absolute; right: -5px; bottom: -5px; font-size: 2.5rem; opacity: 0.05; color: #fff;"></i>
+                        </div>
+
+                        <!-- BADGES SECTION: NEW -->
+                        <div style="margin-bottom: 40px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h3 style="margin: 0; font-size: 1rem; font-weight: 950; letter-spacing: 1px; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 10px;">
+                                    <i class="fas fa-medal" style="color: #CCFF00;"></i> MIS LOGROS
+                                </h3>
+                                <div style="font-size: 0.6rem; color: #888; font-weight: 800;">${(data.badges || []).length} DESBLOQUEADOS</div>
                             </div>
-                            <div style="background: linear-gradient(135deg, #111, #0a0a0a); padding: 22px; border-radius: 24px; border: 1px solid #222; text-align: left; position: relative; overflow: hidden;">
-                                <div style="color: #64748b; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Puntos Acumulados</div>
-                                <div style="font-size: 2.2rem; font-weight: 950; color: #CCFF00;">${data.stats.points}</div>
-                                <i class="fas fa-star" style="position: absolute; right: -5px; bottom: -5px; font-size: 2.5rem; opacity: 0.05; color: #CCFF00;"></i>
+                            <div style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none;">
+                                ${(data.badges && data.badges.length > 0) ? data.badges.map(b => `
+                                    <div style="min-width: 140px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 22px; padding: 20px; text-align: center; border-bottom: 3px solid ${b.color};">
+                                        <div style="font-size: 2rem; margin-bottom: 10px;">${b.icon}</div>
+                                        <div style="font-weight: 950; font-size: 0.75rem; color: #fff; text-transform: uppercase; margin-bottom: 4px;">${b.title}</div>
+                                        <div style="font-size: 0.6rem; color: #666; font-weight: 700;">${b.desc}</div>
+                                    </div>
+                                `).join('') : `
+                                    <div style="width: 100%; border: 1px dashed #333; padding: 20px; border-radius: 22px; text-align: center; color: #555; font-size: 0.75rem; font-weight: 800;">
+                                        Sigue jugando para desbloquear insignias
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+
+                        <!-- LEVEL EVOLUTION GRAPH: NEW -->
+                        <div style="margin-bottom: 40px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 30px; padding: 25px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h3 style="margin: 0; font-size: 0.9rem; font-weight: 950; letter-spacing: 1px; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 10px;">
+                                    <i class="fas fa-chart-line" style="color: #CCFF00;"></i> EVOLUCIÓN DE NIVEL
+                                </h3>
+                                <div style="font-size: 0.6rem; color: #888; font-weight: 800;">ÚLTIMAS 10 JORNADAS</div>
+                            </div>
+                            <div style="height: 180px; width: 100%; position: relative;">
+                                <canvas id="levelEvolutionChart"></canvas>
                             </div>
                         </div>
 
@@ -210,6 +247,40 @@
                                     </div>
                                     `;
                 }).join('')}
+                            </div>
+                        </div>
+
+                        <!-- HEAD TO HEAD SECTION: NEW -->
+                        <div style="margin-bottom: 40px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 5px;">
+                                <h3 style="margin: 0; font-size: 1rem; font-weight: 950; letter-spacing: 1px; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 10px;">
+                                    <i class="fas fa-handshake" style="color: #CCFF00;"></i> CARA A CARA (H2H)
+                                </h3>
+                                <span style="font-size: 0.65rem; color: #666; font-weight: 900;">TOP RIVALES</span>
+                            </div>
+                            
+                            <div style="display: grid; gap: 10px;">
+                                ${(data.h2h && data.h2h.length > 0) ? data.h2h.map(rival => `
+                                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;">
+                                        <div style="display: flex; align-items: center; gap: 12px;">
+                                            <div style="width: 35px; height: 35px; background: #222; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.8rem; border: 1px solid #333;">
+                                                ${rival.name.substring(0, 1)}
+                                            </div>
+                                            <div>
+                                                <div style="font-weight: 900; font-size: 0.85rem; color: #fff;">Vs ${rival.name}</div>
+                                                <div style="font-size: 0.65rem; color: #666; font-weight: 800;">${rival.matches} PARTIDOS DISPUTADOS</div>
+                                            </div>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div style="font-size: 0.9rem; font-weight: 950; color: #CCFF00;">${rival.wins}W - ${rival.matches - rival.wins}L</div>
+                                            <div style="font-size: 0.6rem; color: #444; font-weight: 800;">DOMINANCIA: ${Math.round((rival.wins / rival.matches) * 100)}%</div>
+                                        </div>
+                                    </div>
+                                `).join('') : `
+                                    <div style="border: 1px dashed #333; padding: 30px; border-radius: 20px; text-align: center; color: #555; background: rgba(255,255,255,0.01);">
+                                        <p style="font-size: 0.75rem; font-weight: 800; margin: 0;">Juega contra otros para ver tu H2H</p>
+                                    </div>
+                                `}
                             </div>
                         </div>
 
@@ -312,6 +383,79 @@
                 </div>
                 <input type="file" id="profile-photo-input" accept="image/*" style="display: none;" onchange="window.PlayerView.handlePhotoSelection(this)">
             `;
+
+            // 🔥 INITIALIZE CHART AFTER RENDER
+            this.initLevelChart(data.levelHistory || []);
+        }
+
+        initLevelChart(history) {
+            // Use setTimeout to ensure DOM is ready
+            setTimeout(() => {
+                const canvas = document.getElementById('levelEvolutionChart');
+                if (!canvas || !window.Chart) return;
+
+                // Prepare data: last 10 points
+                const dataPoints = history.slice(-10);
+                const levels = dataPoints.map(h => h.level);
+                const labels = dataPoints.map((h, i) => `J${i + 1}`);
+
+                // Simple adaptive Y axis
+                const minLevel = levels.length > 0 ? Math.max(0, Math.min(...levels) - 0.2) : 3.0;
+                const maxLevel = levels.length > 0 ? Math.min(7.5, Math.max(...levels) + 0.2) : 4.0;
+
+                new Chart(canvas, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Nivel',
+                            data: levels,
+                            borderColor: '#CCFF00',
+                            backgroundColor: 'rgba(204, 255, 0, 0.1)',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#CCFF00',
+                            pointBorderColor: '#000',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#111',
+                                titleColor: '#888',
+                                bodyColor: '#fff',
+                                padding: 10,
+                                displayColors: false,
+                                callbacks: {
+                                    label: (context) => ` Nivel: ${context.parsed.y.toFixed(2)}`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#666', font: { size: 10 } }
+                            },
+                            y: {
+                                min: minLevel,
+                                max: maxLevel,
+                                grid: { color: 'rgba(255,255,255,0.05)' },
+                                ticks: {
+                                    color: '#666',
+                                    font: { size: 10 },
+                                    callback: (value) => value.toFixed(1)
+                                }
+                            }
+                        }
+                    }
+                });
+            }, 50);
         }
 
         async handlePhotoSelection(input) {

@@ -50,19 +50,28 @@
             this.recalc();
         }
 
-        prepareLoad(id, type = null) {
-            console.log("🚀 [ControlTowerView] Preparing to load:", id, "Type:", type);
+        prepareLoad(id, type = null, action = null) {
+            console.log("🚀 [ControlTowerView] Preparing to load:", id, "Type:", type, "Action:", action);
             this.pendingId = id;
             this.pendingType = type;
+            this.pendingAction = action;
             // Force load immediately to ensure navigation works even if route "flash" happens
             if (id) this.load(id, type);
         }
 
-        handleLiveRoute() {
+        async handleLiveRoute() {
             if (this.pendingId) {
-                this.load(this.pendingId, this.pendingType);
+                await this.load(this.pendingId, this.pendingType);
+
+                if (this.pendingAction === 'confirm_waitlist') {
+                    if (window.EventsController) {
+                        await window.EventsController.confirmWaitlist(this.pendingId, this.pendingType);
+                    }
+                }
+
                 this.pendingId = null;
                 this.pendingType = null;
+                this.pendingAction = null;
             } else {
                 this.loadLatest();
             }
@@ -248,6 +257,27 @@
                         console.warn("⚠️ Event Trigger (Live or Full) - No matches found. Attempting auto-generation...");
                         if (window.AmericanaService) {
                             window.AmericanaService.generateFirstRoundMatches(eventId, isEntreno ? 'entreno' : 'americana');
+                        }
+                    }
+
+                    // --- DETECT NEW DRAW FOR ANIMATION (Mobile/Tower) ---
+                    if (this.allMatches.length > 0 && window.ShuffleAnimator) {
+                        const maxRound = Math.max(...this.allMatches.map(m => parseInt(m.round)));
+                        const isNewRoundDetected = !this._lastAnimatedRound || maxRound > this._lastAnimatedRound;
+
+                        // Only animate if we are in the playing section and results tab
+                        const isMainArea = this.mainSection === 'playing' && this.activeTab === 'results';
+                        const currentMatches = this.allMatches.filter(m => parseInt(m.round) === maxRound);
+                        const isPending = currentMatches.every(m => !m.score_a && m.status !== 'finished');
+
+                        if (isNewRoundDetected && isPending && isMainArea) {
+                            this._lastAnimatedRound = maxRound;
+                            window.ShuffleAnimator.animate({
+                                round: maxRound,
+                                players: this.currentAmericanaDoc?.players || [],
+                                courts: this.currentAmericanaDoc?.max_courts || 4,
+                                matches: currentMatches
+                            });
                         }
                     }
 
@@ -646,13 +676,17 @@
             return `
                 <div class="tour-header-context" style="background: linear-gradient(135deg, #CCFF00 0%, #00E36D 100%); padding: 35px 20px; text-align: center; border-bottom: 2px solid rgba(0,0,0,0.05); position: relative;">
                     <!-- ACTION BUTTONS -->
-                    <div style="position:absolute; top:15px; right:15px; display:flex; gap:10px; z-index:10;">
+                    <div style="position:absolute; top:15px; right:15px; display:flex; gap:10px; z-index:10; flex-wrap: wrap; justify-content: flex-end;">
+                         <div onclick="window.ControlTowerView.replayShuffleAnimation()" 
+                               style="background:black; color:#CCFF00; padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.7rem; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2); border: 1px solid #CCFF00;">
+                             <i class="fas fa-random"></i> SORTEO
+                         </div>
                          <div onclick="window.ChatView.init('${this.currentAmericanaDoc?.id}', '${amName}')" 
-                              style="background:black; color:white; padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.7rem; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+                               style="background:black; color:white; padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.7rem; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
                              <i class="fas fa-comment-dots"></i> CHAT
                          </div>
                          <div onclick="window.openTVMode('${this.currentAmericanaDoc?.id}', '${this.currentAmericanaDoc?.isEntreno ? 'entreno' : 'americana'}')" 
-                              style="background:black; color:#CCFF00; padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.7rem; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+                               style="background:black; color:#CCFF00; padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.7rem; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
                              <i class="fas fa-tv"></i> TV
                          </div>
                     </div>
@@ -884,6 +918,17 @@
                    ${tabs}
                 </div>
                 <div class="tour-grid-container" style="padding: 16px; display: grid; gap: 16px; padding-bottom: 100px;">
+                    <!-- REPLAY DRAWS BUTTON (NEW) -->
+                    ${roundData.matches.length > 0 ? `
+                    <div style="display:flex; justify-content:center; margin-bottom: 5px;">
+                        <button onclick="window.ControlTowerView.replayShuffleAnimation()" 
+                                style="background: rgba(204,255,0,0.1); border: 1px solid rgba(204,255,0,0.3); color: #CCFF00; padding: 8px 20px; border-radius: 50px; font-weight: 950; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s;"
+                                onmouseover="this.style.background='rgba(204,255,0,0.2)'" onmouseout="this.style.background='rgba(204,255,0,0.1)'">
+                            <i class="fas fa-random"></i> VER SORTEO ANIMADO
+                        </button>
+                    </div>
+                    ` : ''}
+
                     ${roundData.matches.length ? '' : `<div style="color:#999; width:100%; text-align:center; padding:80px; font-weight:700; line-height:1.5;">${emptyMessage}</div>`}
                     ${roundData.matches.map(match => this.renderTournamentCard(match)).join('')}
                     ${nextRoundUI}
@@ -1456,6 +1501,25 @@
                     </div>
                 </div>
             `;
+        }
+
+        async replayShuffleAnimation() {
+            if (!window.ShuffleAnimator) return;
+
+            const currentRound = this.selectedRound || 1;
+            const currentMatches = this.allMatches.filter(m => parseInt(m.round) === currentRound);
+
+            if (currentMatches.length === 0) {
+                alert("No hay emparejamientos en esta ronda para sortear.");
+                return;
+            }
+
+            window.ShuffleAnimator.animate({
+                round: currentRound,
+                players: this.currentAmericanaDoc?.players || [],
+                courts: this.currentAmericanaDoc?.max_courts || 4,
+                matches: currentMatches
+            });
         }
     } // End of ControlTowerView class
 

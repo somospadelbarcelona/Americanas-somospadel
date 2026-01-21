@@ -81,6 +81,23 @@
         .login-ball-animate {
             animation: loginBallLife 3s cubic-bezier(0.45, 0, 0.55, 1) infinite;
         }
+
+        @keyframes pulse-soft {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.02);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 
@@ -401,6 +418,7 @@
 
     <!-- Layer 2: Core Services -->
     <script src="js/core/StateManager.js"></script>
+    <script src="js/core/CacheService.js"></script>
     <script src="js/core/DatabaseService.js"></script>
     <script src="js/core/AuthService.js"></script>
     <script src="js/core/Router.js?v=5.7"></script>
@@ -411,6 +429,7 @@
     <script src="js/modules/common/EventService.js"></script>
     <script src="js/modules/common/ParticipantService.js"></script>
     <script src="js/modules/common/LevelService.js"></script>
+    <script src="js/modules/common/ShuffleAnimator.js"></script>
 
     <!-- NOTIFICATIONS -->
     <script src="js/modules/common/NotificationService.js?v=1.1"></script>
@@ -431,8 +450,8 @@
     <script src="js/modules/dashboard/ActionGrid.js"></script>
     <script src="js/modules/dashboard/DashboardView.js?v=1009"></script>
     <script src="js/modules/dashboard/DashboardController.js"></script>
-    <script src="js/modules/players/PlayerView.js?v=301"></script>
-    <script src="js/modules/players/PlayerController.js"></script>
+    <script src="js/modules/players/PlayerView.js?v=400"></script>
+    <script src="js/modules/players/PlayerController.js?v=400"></script>
     <script src="js/modules/americanas/ControlTowerStandings.js"></script>
     <script src="js/modules/americanas/ControlTowerStats.js"></script>
     <script src="js/modules/americanas/ControlTowerReport.js"></script>

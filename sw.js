@@ -30,74 +30,63 @@ try {
     });
 } catch (e) { console.error("[SW] Firebase init error", e); }
 
-const CACHE_NAME = 'somospadel-v5-notifications';
-const urlsToCache = [
+const CACHE_NAME = 'somospadel-pro-v6';
+const STATIC_RESOURCES = [
     './',
     './index.html',
-    './admin.html',
-    './css/style.css',
-    './js/app.js',
-    './js/core/SecurityArmor.js',
-    './img/logo_somospadel.png'
+    './manifest.json',
+    './css/theme-playtomic.css?v=701',
+    './js/app.js?v=2026',
+    './img/logo_somospadel.png',
+    'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&display=swap',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'
 ];
 
-// Instalación del Service Worker
+// Install: Cache Shell
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing Service Worker...');
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('[SW] Caching app shell');
-                return cache.addAll(urlsToCache);
-            })
-            .catch((error) => {
-                console.error('[SW] Error caching:', error);
-            })
+        caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_RESOURCES))
     );
     self.skipWaiting();
 });
 
-// Activación del Service Worker
+// Activate: Cleanup
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating Service Worker...');
     event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log('[SW] Deleting old cache:', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
+        caches.keys().then(keys => Promise.all(
+            keys.map(key => { if (key !== CACHE_NAME) return caches.delete(key); })
+        ))
     );
     return self.clients.claim();
 });
 
-// Estrategia: Network First, fallback to Cache
+// Fetch Strategy: Stale-While-Revalidate for Static, Network-First for others
 self.addEventListener('fetch', (event) => {
+    const url = new URL(event.request.url);
+
+    // Skip Firebase calls and cross-origin analytics
+    if (url.origin.includes('firestore.googleapis.com') || url.origin.includes('firebasestorage')) {
+        return;
+    }
+
+    // Static Assets: Stale-While-Revalidate
+    if (STATIC_RESOURCES.some(res => event.request.url.includes(res)) || event.request.destination === 'image') {
+        event.respondWith(
+            caches.match(event.request).then(cachedResponse => {
+                const fetchPromise = fetch(event.request).then(networkResponse => {
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResponse.clone()));
+                    return networkResponse;
+                });
+                return cachedResponse || fetchPromise;
+            })
+        );
+        return;
+    }
+
+    // Others (Data): Network First
     event.respondWith(
         fetch(event.request)
-            .then((response) => {
-                // Si la respuesta es válida, clona y guarda en caché
-                if (response && response.status === 200) {
-                    const responseToCache = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
-                    });
-                }
-                return response;
-            })
-            .catch(() => {
-                // Si falla la red, intenta obtener de caché
-                return caches.match(event.request).then((response) => {
-                    if (response) {
-                        return response;
-                    }
-                    // Si no está en caché, devuelve página offline
-                    return caches.match('/index.html');
-                });
-            })
+            .catch(() => caches.match(event.request))
+            .then(res => res || caches.match('./index.html'))
     );
 });

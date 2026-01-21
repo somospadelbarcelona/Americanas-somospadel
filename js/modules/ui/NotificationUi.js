@@ -125,18 +125,19 @@ class NotificationUi {
         if (window.NotificationService) window.NotificationService.markAllAsRead();
     }
 
-    handleItemClick(id, actionUrl, eventId) {
+    handleItemClick(id, actionUrl, eventId, action) {
         if (window.NotificationService) window.NotificationService.markAsRead(id);
 
         if (eventId) {
             this.close();
-            console.log(`🚀 [NotificationUi] Opening event ${eventId} (Type: entreno)`);
+            console.log(`🚀 [NotificationUi] Opening event ${eventId} with action: ${action}`);
 
-            // Usamos el controlador unificado para asegurar que se carguen los datos
-            if (window.openResultsView) {
-                window.openResultsView(eventId, 'entreno');
+            if (window.EventsController && window.EventsController.openLiveEvent) {
+                window.EventsController.openLiveEvent(eventId, 'americana', action);
+            } else if (window.openLiveEvent) {
+                window.openLiveEvent(eventId, 'americana', action);
             } else if (window.Router) {
-                window.Router.navigate('live', { eventId: eventId });
+                window.Router.navigate('live', { eventId, action });
             }
         }
     }
@@ -187,7 +188,7 @@ class NotificationUi {
         const isAdmin = currentUser?.role?.includes('admin');
 
         container.innerHTML = items.map(item => `
-            <div onclick="window.NotificationUi.handleItemClick('${item.id}', '${item.data?.url || ''}', '${item.data?.eventId || ''}')" 
+            <div onclick="window.NotificationUi.handleItemClick('${item.id}', '${item.data?.url || ''}', '${item.data?.eventId || ''}', '${item.data?.action || ''}')" 
                 style="
                     padding: 15px 20px; 
                     border-bottom: 1px solid #1e293b; 

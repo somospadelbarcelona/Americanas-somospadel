@@ -47,9 +47,17 @@ window.AdminViews.americanas_mgmt = async function () {
                             
                             <!-- List -->
                             <div class="planning-area">
-                                <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                                    <h3 style="margin:0; letter-spacing: 2px; font-size: 0.85rem; color: var(--text-muted); font-weight: 800;">TORNEOS EN EL RADAR</h3>
-                                    <span style="font-size:0.7rem; color:#666;">Actualización en tiempo real 🟢</span>
+                                <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 20px;">
+                                    <div style="flex:1;">
+                                        <h3 style="margin:0; letter-spacing: 2px; font-size: 0.85rem; color: var(--text-muted); font-weight: 800;">TORNEOS EN EL RADAR</h3>
+                                    </div>
+                                    <div style="display:flex; gap:10px; align-items:center;">
+                                        <div class="search-pro-box" style="position:relative;">
+                                            <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.3); font-size:0.8rem;"></i>
+                                            <input type="text" id="americana-search-input" placeholder="Buscar americana..." 
+                                                style="padding-left:35px; height:38px; font-size:0.8rem; width:220px; border-radius:10px; background:rgba(255,255,255,0.03);">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div id="americanas-list-container" class="americana-scroll-list">
                                     <div class="loader"></div>
@@ -57,6 +65,19 @@ window.AdminViews.americanas_mgmt = async function () {
                             </div>
                         </div>`;
                     setupCreateAmericanaForm();
+
+                    // Setup Search Logic
+                    const searchInput = document.getElementById('americana-search-input');
+                    if (searchInput) {
+                        searchInput.oninput = (e) => {
+                            const val = e.target.value.toLowerCase();
+                            const cards = document.querySelectorAll('#americanas-list-container .glass-card-enterprise');
+                            cards.forEach(card => {
+                                const text = card.innerText.toLowerCase();
+                                card.style.display = text.includes(val) ? 'flex' : 'none';
+                            });
+                        };
+                    }
                 }
 
                 // Update List Content
@@ -77,26 +98,76 @@ window.AdminViews.americanas_mgmt = async function () {
 };
 
 function renderAmericanaCard(e) {
+    const playersCount = e.players?.length || 0;
+    const maxPlayers = (parseInt(e.max_courts) || 6) * 4;
+
     const statusLabel = e.status === 'live' ? 'EN JUEGO' : e.status === 'finished' ? 'FINALIZADA' : 'ABIERTA';
     const statusColor = e.status === 'live' ? '#FF2D55' : e.status === 'finished' ? '#888' : '#00E36D';
 
     return `
-        <div class="glass-card-enterprise" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-left: 4px solid var(--primary); background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%);">
-            <div style="display: flex; gap: 1.5rem; align-items: center; flex: 1;">
-                <div class="americana-preview-img" style="width: 90px; height: 90px; border-radius: 16px; background: url('${(e.image_url || '').replace(/ /g, '%20')}') center/cover; border: 2px solid rgba(204,255,0,0.2);"></div>
+        <div class="glass-card-enterprise" style="margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: center; padding: 1.2rem; border-left: 4px solid ${statusColor}; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%);">
+            <div style="display: flex; gap: 1.2rem; align-items: center; flex: 1;">
+                <div class="americana-preview-img" style="width: 70px; height: 70px; border-radius: 12px; background: url('${(e.image_url || '').replace(/ /g, '%20')}') center/cover; border: 1px solid rgba(255,255,255,0.1); position:relative;">
+                    <div style="position:absolute; bottom:-5px; right:-5px; background:${statusColor}; width:12px; height:12px; border-radius:50%; border:2px solid #1a1c23;"></div>
+                </div>
                 <div class="americana-info-pro" style="flex: 1;">
-                    <div style="font-weight: 900; font-size: 1.5rem; color: #FFFFFF; margin-bottom: 0.5rem;">${e.name.toUpperCase()}</div>
-                    <div style="display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap;">
-                         <span>📅 ${e.date}</span>
-                         <span>🕒 ${e.time || '18:30'}</span>
-                         <span>👥 ${e.players?.length || 0} Inscritos</span>
+                    <div style="font-weight: 950; font-size: 1.2rem; color: #FFFFFF; margin-bottom: 0.3rem;">${e.name.toUpperCase()}</div>
+                    <div style="display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap;">
+                         <span>📅 <span style="color:#eee">${e.date}</span></span>
+                         <span>🕒 <span style="color:#eee">${e.time || '18:30'}</span></span>
+                         <span onclick='window.openEditAmericanaModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' style="cursor:pointer;" title="Gestionar participantes">👥 <span style="color:var(--primary); font-weight:800;">${playersCount}</span><span style="opacity:0.5">/${maxPlayers}</span></span>
                     </div>
                 </div>
             </div>
-            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; max-width: 400px;">
-                <span class="pro-category-badge" style="color:${statusColor}; border-color:${statusColor}; background:${statusColor}10;">${statusLabel}</span>
-                <button class="btn-outline-pro" onclick='window.openEditAmericanaModal(${JSON.stringify(e).replace(/'/g, "&#39;")})'>✏️ EDITAR</button>
-                <button class="btn-secondary" onclick="window.deleteAmericana('${e.id}')">🗑️</button>
+            
+             <!-- RIGHT ACTIONS AREA -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                
+                <!-- Status Selector (Dropdown) -->
+                <div style="position: relative; min-width: 140px;">
+                    <select onchange="window.updateAmericanaStatus('${e.id}', this.value)" 
+                            style="
+                                width: 100%;
+                                appearance: none; 
+                                background: ${statusColor}15; 
+                                color: #FFFFFF; 
+                                border: 1px solid ${statusColor}; 
+                                padding: 8px 10px; 
+                                border-radius: 8px; 
+                                font-weight: 800; 
+                                font-size: 0.7rem; 
+                                cursor: pointer; 
+                                text-align: center;
+                                outline: none;
+                                text-transform: uppercase;
+                                letter-spacing: 1px;
+                            ">
+                        <option value="open" ${e.status === 'open' ? 'selected' : ''}>🟢 ABIERTA</option>
+                        <option value="pairing" ${e.status === 'pairing' ? 'selected' : ''}>🔀 EMPAREJAMIENTO</option>
+                        <option value="live" ${e.status === 'live' ? 'selected' : ''}>🎾 EN JUEGO</option>
+                        <option value="finished" ${e.status === 'finished' ? 'selected' : ''}>🏁 FINALIZADA</option>
+                        <option value="cancelled" ${e.status === 'cancelled' ? 'selected' : ''}>⛔ ANULADO</option>
+                    </select>
+                    <i class="fas fa-chevron-down" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; color: #FFFFFF; pointer-events: none;"></i>
+                </div>
+
+                <!-- Action Menu -->
+                <div style="display: flex; gap: 6px;">
+                    <button class="btn-micro" 
+                            style="background:rgba(37, 211, 102, 0.1); color:#25D366;" 
+                            onclick='window.WhatsAppService.shareStartFromAdmin(${JSON.stringify(e).replace(/'/g, "&#39;")})'
+                            title="Enviar WhatsApp">
+                        <i class="fab fa-whatsapp"></i>
+                    </button>
+                    <button class="btn-micro" style="background:rgba(255,255,255,0.05);" onclick='window.duplicateAmericana(${JSON.stringify(e).replace(/'/g, "&#39;")})' title="Duplicar">📋</button>
+                    <button class="btn-micro" style="background:rgba(255,255,255,0.05);" onclick='window.openEditAmericanaModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' title="Editar">✏️</button>
+                    <button class="btn-micro" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;" onclick="window.deleteAmericana('${e.id}')" title="Eliminar">🗑️</button>
+                </div>
+
+                <!-- Price/Badge -->
+                <div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; font-size:0.75rem; font-weight:900; color:var(--primary); min-width:60px; text-align:center; border: 1px solid rgba(255,255,255,0.05);">
+                    ${e.price_members || 20}€
+                </div>
             </div>
         </div>`;
 }
@@ -243,6 +314,59 @@ window.deleteAmericana = async (id) => {
     if (!confirm("Confirmar borrado?")) return;
     await EventService.deleteEvent('americana', id);
     window.loadAdminView('americanas_mgmt');
+};
+
+window.duplicateAmericana = async (e) => {
+    if (!confirm(`¿Duplicar "${e.name}"? Se creará una copia en estado ABIERTO.`)) return;
+    const copy = { ...e };
+    delete copy.id;
+    copy.status = 'open';
+    copy.players = [];
+    copy.waitlist = [];
+    copy.fixed_pairs = [];
+
+    try {
+        if (copy.date) {
+            const current = new Date(copy.date);
+            current.setDate(current.getDate() + 7);
+            const y = current.getFullYear();
+            const m = String(current.getMonth() + 1).padStart(2, '0');
+            const d = String(current.getDate()).padStart(2, '0');
+            copy.date = `${y}-${m}-${d}`;
+        }
+        await EventService.createEvent('americana', copy);
+        if (window.NotificationService) NotificationService.showToast("Americana duplicada para la próxima semana", "success");
+        window.loadAdminView('americanas_mgmt');
+    } catch (err) { alert(err.message); }
+};
+
+window.updateAmericanaStatus = async (id, newStatus) => {
+    try {
+        const evt = await EventService.getById('americana', id);
+        if (!evt) throw new Error("Evento no encontrado");
+
+        await EventService.updateEvent('americana', id, { status: newStatus });
+
+        // Broadcast notification
+        if (window.NotificationService) {
+            const statusMap = {
+                'pairing': { title: "🔀 AMERICANA: EMPAREJAMIENTOS", body: `¡Ya puedes ver los grupos de ${evt.name}!`, url: 'control-tower' },
+                'live': { title: "🎾 ¡AMERICANA EN JUEGO!", body: `El torneo ${evt.name} ha comenzado.`, url: 'live' },
+                'finished': { title: "🏁 AMERICANA FINALIZADA", body: `El torneo ${evt.name} ha terminado. Mira los resultados.`, url: 'finished' }
+            };
+            const config = statusMap[newStatus];
+            if (config) {
+                await window.broadcastCommunityNotification(config.title, config.body, {
+                    url: config.url,
+                    eventId: id,
+                    push: true
+                });
+            }
+        }
+        // View will auto-reload via snapshot listener
+    } catch (e) {
+        alert("Error cambiando estado: " + e.message);
+    }
 };
 
 window.openEditAmericanaModal = async (e) => {

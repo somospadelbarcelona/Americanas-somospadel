@@ -53,13 +53,95 @@
         :root {
             --text: #ffffff !important;
             --text-muted: #bbbbbb !important;
+            color-scheme: dark;
+            /* Indica al navegador que la página es oscura */
         }
 
-        .app-shell,
-        .modal-content,
-        .workspace-area,
-        .glass-card-enterprise,
-        .planning-area {
+        /* Fuerza a que TODO lo que no sea una excepción sea blanco */
+        html,
+        body,
+        div,
+        span,
+        applet,
+        object,
+        iframe,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p,
+        blockquote,
+        pre,
+        a,
+        abbr,
+        acronym,
+        address,
+        big,
+        cite,
+        code,
+        del,
+        dfn,
+        em,
+        img,
+        ins,
+        kbd,
+        q,
+        s,
+        samp,
+        small,
+        strike,
+        strong,
+        sub,
+        sup,
+        tt,
+        var,
+        b,
+        u,
+        i,
+        center,
+        dl,
+        dt,
+        dd,
+        ol,
+        ul,
+        li,
+        fieldset,
+        form,
+        label,
+        legend,
+        table,
+        caption,
+        tbody,
+        tfoot,
+        thead,
+        tr,
+        th,
+        td,
+        article,
+        aside,
+        canvas,
+        details,
+        embed,
+        figure,
+        figcaption,
+        footer,
+        header,
+        hgroup,
+        menu,
+        nav,
+        output,
+        ruby,
+        section,
+        summary,
+        time,
+        mark,
+        audio,
+        video,
+        input,
+        select,
+        textarea {
             color: #ffffff !important;
         }
 
@@ -163,8 +245,19 @@
         .glass-card-enterprise div,
         .glass-card-enterprise span,
         .player-row,
-        .player-row * {
+        .player-row *,
+        input,
+        select,
+        textarea,
+        .pro-input,
+        .pro-input * {
             color: #ffffff !important;
+        }
+
+        /* Special fix for placeholders to be visible but muted */
+        input::placeholder,
+        textarea::placeholder {
+            color: rgba(255, 255, 255, 0.5) !important;
         }
 
         /* Keep select options black for readability in the dropdown */
@@ -194,21 +287,36 @@
             transform: translateY(-1px) !important;
         }
 
-        .form-row-compact {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+        /* --- 🚨 ULTIMATE WHITE TEXT OVERRIDE 🚨 --- */
+        input,
+        select,
+        textarea,
+        .pro-input,
+        .pro-input-micro,
+        input[type="text"],
+        input[type="date"],
+        input[type="time"],
+        input[type="number"],
+        input[type="tel"],
+        select option {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            /* Para navegadores basados en Webkit/Chrome */
         }
 
-        .compact-admin-form .form-group {
-            margin-bottom: 15px !important;
+        /* Asegurar que el texto que el usuario escribe sea blanco */
+        input:focus,
+        select:focus,
+        textarea:focus {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
         }
 
-        @media (max-width: 600px) {
-            .form-row-compact {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
+        /* Mantener las opciones del desplegable legibles (Fondo blanco, texto negro al abrir) */
+        select option {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
         }
     </style>
 
@@ -579,8 +687,9 @@
                         <label><i class="fas fa-info-circle"></i> ESTADO</label>
                         <select name="status" class="pro-input">
                             <option value="open">ABIERTA</option>
-                            <option value="live">EN JUEGO</option>
-                            <option value="finished">FINALIZADA</option>
+                            <option value="pairing">🔀 EMPAREJAMIENTO</option>
+                            <option value="live">🎾 EN JUEGO</option>
+                            <option value="finished">🏁 FINALIZADA</option>
                             <option value="cancelled">⛔ ANULADO</option>
                         </select>
                     </div>
@@ -775,8 +884,10 @@
                         <label><i class="fas fa-info-circle"></i> ESTADO</label>
                         <select name="status" class="pro-input">
                             <option value="open">ABIERTA</option>
-                            <option value="live">EN JUEGO</option>
-                            <option value="finished">FINALIZADA</option>
+                            <option value="pairing">🔀 EMPAREJAMIENTO</option>
+                            <option value="live">🎾 EN JUEGO</option>
+                            <option value="finished">🏁 FINALIZADA</option>
+                            <option value="cancelled">⛔ ANULADO</option>
                         </select>
                     </div>
                 </div>

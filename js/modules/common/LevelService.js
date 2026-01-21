@@ -122,6 +122,17 @@
                             last_level_change: Math.round(delta * 1000) / 1000,
                             last_level_update: new Date().toISOString()
                         });
+
+                        // 📈 SAVE TO HISTORY FOR CHARTING
+                        const historyRef = window.db.collection('level_history').doc();
+                        transaction.set(historyRef, {
+                            userId: userId,
+                            level: newLevel,
+                            delta: Math.round(delta * 1000) / 1000,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            date: new Date().toISOString()
+                        });
+
                         console.log(`👤 [LevelService] ${data.name}: ${currentLevel} -> ${newLevel} (${delta.toFixed(3)})`);
 
                         // Update local store if this is the current user

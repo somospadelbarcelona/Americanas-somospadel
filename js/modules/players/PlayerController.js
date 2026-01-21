@@ -7,8 +7,10 @@
         constructor() {
             this.db = window.FirebaseDB;
             this.state = {
-                stats: { matches: 0, won: 0, lost: 0, points: 0, winRate: 0 },
-                recentMatches: []
+                stats: { matches: 0, won: 0, lost: 0, points: 0, winRate: 0, gamesWon: 0, gamesLost: 0 },
+                recentMatches: [],
+                levelHistory: [],
+                communityAvg: 3.5
             };
         }
 
@@ -141,19 +143,123 @@
                 });
                 stats.winRate = stats.matches > 0 ? Math.round((stats.won / stats.matches) * 100) : 0;
 
+                // 3. Level History (Wrapped in try/catch to avoid non-indexed query crash)
+                let levelHistory = [];
+                try {
+                    const historySnap = await window.db.collection('level_history')
+                        .where('userId', '==', userId)
+                        .orderBy('date', 'desc')
+                        .limit(10)
+                        .get();
+
+                    levelHistory = historySnap.docs.map(doc => ({
+                        level: doc.data().level,
+                        date: doc.data().date
+                    })).reverse();
+                } catch (e) {
+                    console.warn("[PlayerController] History index missing or query failed:", e);
+                }
+
+                // 4. Community Insights & Name Mapping
+                let communityAvg = 3.5;
+                const nameMap = {};
+                try {
+                    const allPlayersSnap = await window.db.collection('players').get();
+                    let totalLevel = 0;
+                    allPlayersSnap.docs.forEach(doc => {
+                        const pdata = doc.data();
+                        totalLevel += parseFloat(pdata.level || 3.5);
+                        nameMap[doc.id] = pdata.name || 'Jugador';
+                    });
+                    communityAvg = parseFloat((totalLevel / (allPlayersSnap.docs.length || 1)).toFixed(2));
+                } catch (e) { console.warn("[PlayerController] Error calculating community avg:", e); }
+
+                // If empty history, seed with current level
+                if (levelHistory.length === 0 && userDoc) {
+                    const currentLvl = parseFloat(userDoc.level || 3.5);
+                    levelHistory = [{ level: currentLvl, date: new Date().toISOString() }];
+                }
+
                 this.state = {
                     stats,
                     recentMatches: matchesList.slice(0, 5),
+                    levelHistory: levelHistory,
+                    communityAvg: communityAvg,
                     fullData: userDoc,
-                    aiInsights: this.generateAIInsights(matchesList, stats)
+                    aiInsights: this.generateAIInsights(matchesList, stats),
+                    badges: this.calculateBadges(matchesList, stats),
+                    h2h: this.calculateTopRivals(matchesList, userId, nameMap)
                 };
 
                 window.Store.setState('playerStats', this.state);
+                console.log("[PlayerController] Data updated, rendering view...");
                 if (window.PlayerView) window.PlayerView.render();
 
             } catch (error) {
-                console.error("Error fetching player profile data:", error);
+                console.error("Critical Error in fetchPlayerData:", error);
+                // Try to render even with partial data to avoid black screen
+                if (window.PlayerView) window.PlayerView.render();
             }
+        }
+
+        calculateBadges(matches, stats) {
+            const badges = [];
+
+            // 1. Rey de la Pista (5 victorias seguidas)
+            let currentStreak = 0;
+            let maxStreak = 0;
+            [...matches].reverse().forEach(m => {
+                if (m.result === 'W') {
+                    currentStreak++;
+                    if (currentStreak > maxStreak) maxStreak = currentStreak;
+                } else {
+                    currentStreak = 0;
+                }
+            });
+            if (maxStreak >= 5) badges.push({ id: 'king', title: 'Rey de la Pista', icon: '👑', desc: '5+ Victorias consecutivas', color: '#FFD700' });
+
+            // 2. Madrugador (Inscrito en 3 entrenos de mañana - < 12:00)
+            // Nota: Esta lógica asume que el nombre del evento o un campo 'time' indica la hora.
+            // Por ahora usaremos una simulación basada en el volumen de partidos si no hay hora exacta.
+            if (stats.matches >= 10) badges.push({ id: 'early', title: 'Madrugador', icon: '☀️', desc: 'Fiel a los entrenos matinales', color: '#FF9800' });
+
+            // 3. Muro de Berlín (Menos juegos recibidos - Promedio < 3 por partido en las últimas 5)
+            if (matches.length >= 5) {
+                const recent = matches.slice(0, 5);
+                const avgLost = recent.reduce((acc, m) => {
+                    const games = m.score ? parseInt(m.score.split('-')[1]) : 0;
+                    return acc + games;
+                }, 0) / 5;
+                if (avgLost <= 3) badges.push({ id: 'wall', title: 'Muro de Berlín', icon: '🧱', desc: 'Defensa impenetrable', color: '#94a3b8' });
+            }
+
+            // 4. Veterano (20+ partidos)
+            if (stats.matches >= 20) badges.push({ id: 'veteran', title: 'Leyenda SP', icon: '🎖️', desc: 'Más de 20 batallas oficiales', color: '#CCFF00' });
+
+            return badges;
+        }
+
+        calculateTopRivals(matches, userId, nameMap = {}) {
+            const rivals = {};
+            matches.forEach(m => {
+                // Determine rivals (players in the OTHER team)
+                const isTeamA = m.team_a_ids && m.team_a_ids.includes(userId);
+                const opponentIds = isTeamA ? m.team_b_ids : m.team_a_ids;
+                const result = m.result; // 'W', 'L', 'D'
+
+                if (opponentIds) {
+                    opponentIds.forEach(rid => {
+                        if (!rivals[rid]) rivals[rid] = { id: rid, name: nameMap[rid] || 'Jugador', matches: 0, wins: 0 };
+                        rivals[rid].matches++;
+                        if (result === 'W') rivals[rid].wins++;
+                    });
+                }
+            });
+
+            // Convert to array and sort by matches played
+            return Object.values(rivals)
+                .sort((a, b) => b.matches - a.matches)
+                .slice(0, 3); // Top 3 Rivals
         }
 
         generateAIInsights(matches, stats) {

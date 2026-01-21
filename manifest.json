@@ -1,23 +1,52 @@
 {
-    "name": "APP Somospadel BCN para americanas",
-    "gcm_sender_id": "103953800507",
-    "short_name": "Somospadel BCN",
+    "name": "SomosPadel PRO - Americanas & Torneos",
+    "short_name": "SomosPadel",
+    "description": "La plataforma definitiva para gestionar tus torneos de pádel, niveles y americanas en tiempo real.",
     "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#000000",
     "theme_color": "#CCFF00",
-    "description": "Resultados a tiempo real de nuestra comunidad",
-    "orientation": "portrait-primary",
+    "orientation": "portrait",
+    "scope": "./",
+    "categories": [
+        "sports",
+        "social"
+    ],
     "icons": [
         {
             "src": "img/logo_somospadel.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         },
         {
             "src": "img/logo_somospadel.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         }
-    ]
+    ],
+    "shortcuts": [
+        {
+            "name": "Mis Próximos Eventos",
+            "url": "./index.html#americanas",
+            "icons": [
+                {
+                    "src": "img/logo_somospadel.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Ver Ranking",
+            "url": "./index.html#ranking",
+            "icons": [
+                {
+                    "src": "img/logo_somospadel.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ],
+    "prefer_related_applications": false
 }

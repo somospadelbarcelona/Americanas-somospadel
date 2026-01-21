@@ -16,6 +16,8 @@
             this.clockInterval = null;
             this.unsubscribeMatches = null;
             this.unsubscribeEvent = null;
+            this.upcomingEvents = [];
+            this.tickerInterval = null;
         }
 
         /**
@@ -25,6 +27,7 @@
             console.log("🧹 [TVView] Cleaning up system resources...");
             if (this.slideInterval) clearInterval(this.slideInterval);
             if (this.clockInterval) clearInterval(this.clockInterval);
+            if (this.tickerInterval) clearInterval(this.tickerInterval);
             if (this.unsubscribeMatches) this.unsubscribeMatches();
             if (this.unsubscribeEvent) this.unsubscribeEvent();
 
@@ -36,7 +39,16 @@
             this.eventDoc = null;
             this.matches = [];
 
-            // Restore global styles
+            // Restore global UI
+            const overlay = document.getElementById('tv-mode-overlay');
+            if (overlay) overlay.remove();
+
+            const appShell = document.getElementById('app-shell');
+            if (appShell) {
+                appShell.classList.remove('hidden');
+                appShell.style.display = ''; // Ensure it shows if it was display:none
+            }
+
             document.body.style.overflow = '';
             document.body.style.background = '';
         }
@@ -50,6 +62,10 @@
 
             this.renderLoader();
 
+            // Hide app shell to avoid background content interaction
+            const appShell = document.getElementById('app-shell');
+            if (appShell) appShell.classList.add('hidden');
+
             // Load Initial Event Data
             try {
                 let doc = await window.db.collection('americanas').doc(eventId).get();
@@ -61,7 +77,8 @@
                 if (doc.exists) {
                     this.eventDoc = { id: doc.id, ...doc.data() };
                 } else {
-                    document.body.innerHTML = '<h1 style="color:white; text-align:center; padding-top:20%;">EVENTO NO ENCONTRADO</h1>';
+                    const overlay = document.getElementById('tv-mode-overlay');
+                    if (overlay) overlay.innerHTML = '<h1 style="color:white; text-align:center; padding-top:20%;">EVENTO NO ENCONTRADO</h1>';
                     return;
                 }
             } catch (e) {
@@ -69,6 +86,8 @@
             }
 
             this.startListeners();
+            this.fetchUpcomingEvents();
+            this.tickerInterval = setInterval(() => this.fetchUpcomingEvents(), 1000 * 60 * 15); // Refresh every 15 min
             this.startCycle();
 
             document.body.style.overflow = 'hidden';
@@ -102,8 +121,40 @@
 
                     this.calculateStandings();
                     this.filterNextRound();
+
+                    // --- DETECT NEW DRAW FOR ANIMATION ---
+                    if (this.matches.length > 0 && window.ShuffleAnimator) {
+                        const maxRound = Math.max(...this.matches.map(m => parseInt(m.round)));
+                        const isNewRoundDetected = !this._lastAnimatedRound || maxRound > this._lastAnimatedRound;
+
+                        // Only animate if matches are PENDING (not finished)
+                        const currentMatches = this.matches.filter(m => parseInt(m.round) === maxRound);
+                        const isPending = currentMatches.every(m => !m.score_a && m.status !== 'finished');
+
+                        if (isNewRoundDetected && isPending) {
+                            this._lastAnimatedRound = maxRound;
+                            window.ShuffleAnimator.animate({
+                                round: maxRound,
+                                players: this.eventDoc?.players || [],
+                                courts: this.eventDoc?.max_courts || 4,
+                                matches: currentMatches
+                            });
+                        }
+                    }
+
                     this.render();
                 });
+        }
+
+        async fetchUpcomingEvents() {
+            try {
+                if (window.AmericanaService) {
+                    const upcoming = await window.AmericanaService.getActiveAmericanas();
+                    this.upcomingEvents = upcoming.filter(e => e.id !== this.eventId).slice(0, 5);
+                }
+            } catch (e) {
+                console.warn("Error fetching upcoming events for ticker:", e);
+            }
         }
 
         /**
@@ -154,7 +205,15 @@
         }
 
         renderLoader() {
-            document.body.innerHTML = `
+            let overlay = document.getElementById('tv-mode-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'tv-mode-overlay';
+                overlay.style.cssText = 'position:fixed; inset:0; z-index:999999; background:#000; overflow:hidden;';
+                document.body.appendChild(overlay);
+            }
+
+            overlay.innerHTML = `
                 <div style="height:100vh; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Outfit', sans-serif;">
                     <img src="img/logo_somospadel.png" style="height:100px; margin-bottom:30px;">
                     <div class="loader"></div>
@@ -164,14 +223,17 @@
         }
 
         render() {
+            let overlay = document.getElementById('tv-mode-overlay');
+            if (!overlay) return; // Should not happen if load was called
+
             const root = document.getElementById('tv-root');
             if (!root) {
-                document.body.innerHTML = `
+                overlay.innerHTML = `
                     <div id="tv-root" style="height: 100vh; display: flex; flex-direction: column; background: #050505; overflow: hidden; position: relative; font-family: 'Outfit', sans-serif;">
                         <!-- HEADER -->
                         <div style="height: 12vh; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 2px solid #222; background: #000;">
                             <div style="display: flex; align-items: center; gap: 30px;">
-                                <div onclick="window.location.href='index.html'" style="background: #111; color: #CCFF00; border: 2px solid #CCFF00; padding: 10px 20px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 950; font-size: 1.2rem; box-shadow: 0 0 15px rgba(204,255,0,0.3);">
+                                <div onclick="window.TVView.destroy()" style="background: #111; color: #CCFF00; border: 2px solid #CCFF00; padding: 10px 20px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 950; font-size: 1.2rem; box-shadow: 0 0 15px rgba(204,255,0,0.3);">
                                     <i class="fas fa-arrow-left"></i> VOLVER
                                 </div>
                                 <img src="img/logo_somospadel.png" style="height: 8vh;">
@@ -204,8 +266,8 @@
                         </style>
                         <div style="height: 7vh; background: #CCFF00; color: black; display: flex; align-items: center; overflow: hidden; font-weight: 950; font-size: 1.8rem; text-transform: uppercase; border-top: 4px solid black;">
                             <div style="padding: 0 40px; background: black; color: #CCFF00; height: 100%; display: flex; align-items: center; border-right: 4px solid black; position: relative; z-index: 10;">LIVE</div>
-                            <div class="tv-ticker-container">
-                                <span style="padding-left: 50px;">🎾 BIENVENIDOS A SOMOSPADEL BCN • EL MEJOR PÁDEL DE BARCELONA • 🏆 SIGUE TU CLASIFICACIÓN EN TIEMPO REAL • 🔥 NIVEL ÉPICO EN CADA PISTA • 📺 PISTA CENTRAL EN DIRECTO • ¡VAMOS SOMOS PADEL! • DISFRUTA DE NUESTRAS INSTALACIONES TOP • FAIR PLAY Y DIVERSIÓN SIEMPRE • 🚀 REDES SOCIALES: @SOMOSPADELBCN</span>
+                            <div id="tv-ticker-content" class="tv-ticker-container">
+                                <!-- Dynamic Ticker -->
                             </div>
                         </div>
                     </div>
@@ -221,6 +283,35 @@
             }
 
             this.renderContent();
+            this.updateTicker();
+        }
+
+        updateTicker() {
+            const tickerEl = document.getElementById('tv-ticker-content');
+            if (!tickerEl) return;
+
+            // 1. Current Matches Results
+            const currentRound = this.matches.length > 0 ? Math.max(...this.matches.map(m => parseInt(m.round))) : 1;
+            const roundMatches = this.matches.filter(m => parseInt(m.round) === currentRound);
+            const resultsText = roundMatches.map(m =>
+                `<span style="color:black;">PISTA ${m.court}:</span> <span style="color:black; background:white; padding:0 10px; border-radius:5px; margin:0 10px;">${m.score_a || 0} - ${m.score_b || 0}</span>`
+            ).join(' • ');
+
+            // 2. Upcoming Events
+            const nextEventsText = this.upcomingEvents.map(e =>
+                `📅 PRÓXIMO EVENTO: <span style="font-weight:900;">${e.name.toUpperCase()}</span> (${e.date.split('-').reverse().join('/')} ${e.time})`
+            ).join(' • ');
+
+            // 3. Marketing Messages
+            const marketing = "🎾 BIENVENIDOS A SOMOSPADEL BCN • EL MEJOR PÁDEL DE BARCELONA • 🏆 SIGUE TU CLASIFICACIÓN EN TIEMPO REAL • 🔥 NIVEL ÉPICO EN CADA PISTA";
+
+            const fullTicker = `
+                <span style="padding-left: 50px;">
+                    ${resultsText} • ${nextEventsText} • ${marketing}
+                </span>
+            `;
+
+            tickerEl.innerHTML = fullTicker + fullTicker; // Double for seamless loop if needed, though CSS animation handle it
         }
 
         renderContent() {

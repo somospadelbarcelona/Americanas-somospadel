@@ -32,16 +32,40 @@ window.AdminViews.entrenos_mgmt = async function () {
                 </div>
                 
                 <!-- List Column -->
-                <div class="planning-area">
-                    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                        <h3 style="margin:0; letter-spacing: 2px; font-size: 0.85rem; color: var(--text-muted); font-weight: 800;">EVENTOS EN EL RADAR</h3>
-                        <button class="btn-outline-pro" onclick="loadAdminView('entrenos_mgmt')" style="padding: 0.6rem 1.2rem; font-size: 0.75rem;">REFRESCAR SISTEMA</button>
+                <div class="planning-area" id="entrenos-planning-area">
+                    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 20px;">
+                        <div style="flex:1;">
+                            <h3 style="margin:0; letter-spacing: 2px; font-size: 0.85rem; color: var(--text-muted); font-weight: 800;">EVENTOS EN EL RADAR</h3>
+                        </div>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <div class="search-pro-box" style="position:relative;">
+                                <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.3); font-size:0.8rem;"></i>
+                                <input type="text" id="entreno-search-input" placeholder="Buscar entreno..." 
+                                    style="padding-left:35px; height:38px; font-size:0.8rem; width:220px; border-radius:10px; background:rgba(255,255,255,0.03);">
+                            </div>
+                            <button class="btn-outline-pro" onclick="loadAdminView('entrenos_mgmt')" style="padding: 0 1.2rem; height:38px; font-size: 0.75rem; border-radius:10px;">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="entreno-scroll-list">
+                    <div class="entreno-scroll-list" id="entrenos-list-container">
                         ${listHtml.length ? listHtml : '<div class="glass-card-enterprise" style="text-align:center; padding: 4rem; color: var(--text-muted);">No hay entrenos operativos.</div>'}
                     </div>
                 </div>
             </div>`;
+
+        // Setup Search Logic
+        const searchInput = document.getElementById('entreno-search-input');
+        if (searchInput) {
+            searchInput.oninput = (e) => {
+                const val = e.target.value.toLowerCase();
+                const cards = document.querySelectorAll('#entrenos-list-container .glass-card-enterprise');
+                cards.forEach(card => {
+                    const text = card.innerText.toLowerCase();
+                    card.style.display = text.includes(val) ? 'flex' : 'none';
+                });
+            };
+        }
 
         setupCreateForm();
 
@@ -152,56 +176,57 @@ window.AdminViews.entrenos_mgmt = async function () {
 // --- HELPER RENDERING FUNCTIONS --- //
 
 function renderEntrenoCard(e) {
-    const priceStr = `${e.price_members || 20}€ / ${e.price_external || 25}€`;
+    const playersCount = e.players?.length || 0;
+    const maxPlayers = (parseInt(e.max_courts) || 4) * 4;
+
     const statusLabel = e.status === 'live' ? 'EN JUEGO' : e.status === 'finished' ? 'FINALIZADA' : e.status === 'pairing' ? 'EMPAREJAMIENTO' : 'ABIERTA';
     const statusColor = e.status === 'live' ? '#FF2D55' : e.status === 'finished' ? '#888' : e.status === 'pairing' ? '#22D3EE' : '#00E36D';
 
     return `
-        <div class="glass-card-enterprise" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-left: 4px solid var(--primary); background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%);">
-            <div style="display: flex; gap: 1.5rem; align-items: center; flex: 1;">
-                <div class="entreno-preview-img" style="width: 90px; height: 90px; border-radius: 16px; background: url('${e.image_url || 'img/logo_somospadel.png'}') center/cover; border: 2px solid rgba(204,255,0,0.2);"></div>
+        <div class="glass-card-enterprise" style="margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: center; padding: 1.2rem; border-left: 4px solid ${statusColor}; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%);">
+            <div style="display: flex; gap: 1.2rem; align-items: center; flex: 1;">
+                <div class="entreno-preview-img" style="width: 70px; height: 70px; border-radius: 12px; background: url('${e.image_url || 'img/logo_somospadel.png'}') center/cover; border: 1px solid rgba(255,255,255,0.1); position:relative;">
+                    <div style="position:absolute; bottom:-5px; right:-5px; background:${statusColor}; width:12px; height:12px; border-radius:50%; border:2px solid #1a1c23;"></div>
+                </div>
                 <div class="entreno-info-pro" style="flex: 1;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem;">
-                        <div style="font-weight: 900; font-size: 1.5rem; color: #FFFFFF;">${e.name.toUpperCase()}</div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.3rem;">
+                        <div style="font-weight: 950; font-size: 1.2rem; color: #FFFFFF;">${e.name.toUpperCase()}</div>
                         <div style="
-                            background: ${e.pair_mode === 'rotating' ? 'rgba(34, 211, 238, 0.15)' : 'rgba(168, 85, 247, 0.15)'}; 
+                            background: ${e.pair_mode === 'rotating' ? 'rgba(34, 211, 238, 0.1)' : 'rgba(168, 85, 247, 0.1)'}; 
                             color: ${e.pair_mode === 'rotating' ? '#22d3ee' : '#a855f7'}; 
-                            border: 1px solid ${e.pair_mode === 'rotating' ? '#22d3ee' : '#a855f7'}; 
-                            padding: 2px 8px; 
-                            border-radius: 6px; 
-                            font-size: 0.65rem; 
-                            font-weight: 900; 
-                            letter-spacing: 1px;
+                            padding: 2px 6px; 
+                            border-radius: 4px; 
+                            font-size: 0.6rem; 
+                            font-weight: 800; 
                             text-transform: uppercase;
                         ">
-                            ${e.pair_mode === 'rotating' ? '🌪️ TWISTER' : '🔒 PAREJA FIJA'}
+                            ${e.pair_mode === 'rotating' ? '🌪️ TWISTER' : '🔒 FIJA'}
                         </div>
                     </div>
-                    <div style="display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; margin-top: 5px;">
-                         <span>📅 <span style="color:white">${e.date}</span></span>
-                         <span>🕒 <span style="color:white">${e.time || '10:00'}</span></span>
-                         <span>👥 <span style="color:var(--primary)">${e.players?.length || 0} Inscritos</span></span>
-                         <span style="border: 1px solid #444; padding: 0 6px; border-radius: 4px; font-size: 0.75rem; color: #aaa;">${priceStr}</span>
+                    <div style="display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap;">
+                         <span>📅 <span style="color:#eee">${e.date}</span></span>
+                         <span>🕒 <span style="color:#eee">${e.time || '10:00'}</span></span>
+                         <span onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' style="cursor:pointer;" title="Gestionar participantes">👥 <span style="color:var(--primary); font-weight:800;">${playersCount}</span><span style="opacity:0.5">/${maxPlayers}</span></span>
                     </div>
                 </div>
             </div>
             
-            <!-- RIGHT COLUMN: ACTIONS & STATUS STACK -->
-            <div style="display: flex; flex-direction: column; gap: 10px; align-items: stretch; min-width: 160px;">
+            <!-- RIGHT ACTIONS AREA -->
+            <div style="display: flex; align-items: center; gap: 12px;">
                 
-                <!-- TOP: STATUS CHANGER (Full Width) -->
-                <div style="position: relative; width: 100%;">
+                <!-- Status Selector (Dropdown) -->
+                <div style="position: relative; min-width: 140px;">
                     <select onchange="window.updateEntrenoStatus('${e.id}', this.value)" 
                             style="
                                 width: 100%;
                                 appearance: none; 
                                 background: ${statusColor}15; 
-                                color: ${statusColor}; 
+                                color: #FFFFFF; 
                                 border: 1px solid ${statusColor}; 
                                 padding: 8px 10px; 
                                 border-radius: 8px; 
                                 font-weight: 800; 
-                                font-size: 0.75rem; 
+                                font-size: 0.7rem; 
                                 cursor: pointer; 
                                 text-align: center;
                                 outline: none;
@@ -210,35 +235,23 @@ function renderEntrenoCard(e) {
                             ">
                         <option value="open" ${e.status === 'open' ? 'selected' : ''}>🟢 ABIERTA</option>
                         <option value="pairing" ${e.status === 'pairing' ? 'selected' : ''}>🔀 EMPAREJAMIENTO</option>
-                        <option value="live" ${e.status === 'live' ? 'selected' : ''}>🔴 EN JUEGO</option>
+                        <option value="live" ${e.status === 'live' ? 'selected' : ''}>🎾 EN JUEGO</option>
                         <option value="finished" ${e.status === 'finished' ? 'selected' : ''}>🏁 FINALIZADA</option>
                         <option value="cancelled" ${e.status === 'cancelled' ? 'selected' : ''}>⛔ ANULADO</option>
                     </select>
-                    <i class="fas fa-chevron-down" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 0.65rem; color: ${statusColor}; pointer-events: none;"></i>
+                    <i class="fas fa-chevron-down" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; color: #FFFFFF; pointer-events: none;"></i>
                 </div>
 
-                <!-- BOTTOM: ACTION BUTTONS (Grid) -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-                    <button class="btn-outline-pro" 
-                            style="padding: 8px 0; font-size: 1rem; color:#25D366; border-color:#25D366; display:flex; justify-content:center;" 
-                            onclick='window.WhatsAppService.shareStartFromAdmin(${JSON.stringify(e).replace(/'/g, "&#39;")})'
-                            title="Enviar WA">
-                        <i class="fab fa-whatsapp"></i>
-                    </button>
-                    
-                    <button class="btn-outline-pro" 
-                            style="padding: 8px 0; font-size: 0.9rem; display:flex; justify-content:center;" 
-                            onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})'
-                            title="Editar">
-                        ✏️
-                    </button>
-                    
-                    <button class="btn-secondary" 
-                            style="padding: 8px 0; font-size: 0.9rem; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); display:flex; justify-content:center;" 
-                            onclick="window.deleteEntreno('${e.id}')"
-                            title="Eliminar">
-                        🗑️
-                    </button>
+                <!-- Action Menu -->
+                <div style="display: flex; gap: 6px;">
+                    <button class="btn-micro" style="background:rgba(255,255,255,0.05);" onclick='window.duplicateEntreno(${JSON.stringify(e).replace(/'/g, "&#39;")})' title="Duplicar">📋</button>
+                    <button class="btn-micro" style="background:rgba(255,255,255,0.05);" onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' title="Editar">✏️</button>
+                    <button class="btn-micro" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;" onclick="window.deleteEntreno('${e.id}')" title="Eliminar">🗑️</button>
+                </div>
+
+                <!-- Price Badge -->
+                <div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; font-size:0.75rem; font-weight:900; color:var(--primary); min-width:60px; text-align:center; border: 1px solid rgba(255,255,255,0.05);">
+                    ${e.price_members || 20}€
                 </div>
             </div>
         </div>`;
@@ -386,6 +399,36 @@ function setupCreateForm() {
 
 
 // --- GLOBAL ACTIONS --- //
+
+window.duplicateEntreno = async (e) => {
+    if (!confirm(`¿Duplicar "${e.name}"? Se creará una copia en estado ABIERTO.`)) return;
+
+    // Create copy without ID and reset status/players
+    const copy = { ...e };
+    delete copy.id;
+    copy.status = 'open';
+    copy.players = [];
+    copy.waitlist = [];
+    copy.fixed_pairs = [];
+
+    // Suggest next week date
+    try {
+        if (copy.date) {
+            const current = new Date(copy.date);
+            current.setDate(current.getDate() + 7);
+            const y = current.getFullYear();
+            const m = String(current.getMonth() + 1).padStart(2, '0');
+            const d = String(current.getDate()).padStart(2, '0');
+            copy.date = `${y}-${m}-${d}`;
+        }
+    } catch (err) { console.warn("Date suggest failed", err); }
+
+    try {
+        await EventService.createEvent('entreno', copy);
+        if (window.NotificationService) NotificationService.showToast("Entreno duplicado para la próxima semana", "success");
+        window.loadAdminView('entrenos_mgmt');
+    } catch (err) { alert(err.message); }
+};
 
 window.updateEntrenoStatus = async (id, newStatus) => {
     try {
