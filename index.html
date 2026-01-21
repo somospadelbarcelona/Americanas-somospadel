@@ -45,6 +45,22 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script>
+        // GLOBAL EMERGENCY SHARE DISPATCHER
+        window.shareVictory = function (matchId, delta) {
+            console.log('🚀 [DirectShare] Calling for match:', matchId);
+            if (window.ShareModal && typeof window.ShareModal.open === 'function') {
+                const match = window._matchRegistry ? window._matchRegistry[matchId] : null;
+                if (!match) {
+                    alert("Datos cargando... pulsa otra vez.");
+                    return;
+                }
+                window.ShareModal.open(match, delta);
+            } else {
+                alert("El sistema de imágenes se está cargando. Espera 1 segundo...");
+            }
+        };
+    </script>
     <style>
         @keyframes loginBallLife {
             0% {
@@ -430,7 +446,6 @@
     <script src="js/modules/common/ParticipantService.js"></script>
     <script src="js/modules/common/LevelService.js"></script>
     <script src="js/modules/common/ShuffleAnimator.js"></script>
-
     <!-- NOTIFICATIONS -->
     <script src="js/modules/common/NotificationService.js?v=1.1"></script>
     <script src="js/modules/ui/NotificationUi.js"></script>
@@ -462,7 +477,7 @@
     <script src="js/modules/americanas/EntrenoLiveView.js"></script>
     <script src="js/modules/americanas/EventsController_V6.js?v=9.1"></script>
     <script src="js/modules/social/SocialShareService.js"></script>
-    <script src="js/modules/social/ShareModal.js"></script>
+    <script src="js/modules/social/ShareModal.js?v=2.1"></script>
 
     <!-- CAPTAIN SOMOSPADEL (AI COACH) -->
     <script src="js/modules/captain/CaptainService.js"></script>

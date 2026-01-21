@@ -118,7 +118,7 @@
 
             try {
                 const currentUser = window.Store.getState('currentUser');
-                const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'admin_player');
+                const isAdmin = currentUser && ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain'].includes((currentUser.role || '').toLowerCase());
 
                 // A. Render Side Menu (Hamburger) - STATIC
                 if (menuContainer) {

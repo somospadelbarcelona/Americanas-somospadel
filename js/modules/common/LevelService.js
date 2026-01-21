@@ -90,10 +90,39 @@
                     processTeam(teamA, scoreA, scoreB, avgLevelA, avgLevelB),
                     processTeam(teamB, scoreB, scoreA, avgLevelB, avgLevelA)
                 ]);
-                console.log(`✅ [LevelService] Smart Pro adjustment applied.`);
+
+                // 💾 SAVE DELTAS TO MATCH DOCUMENT (For Share Cards)
+                const deltaA = (await this._calculateDelta(scoreA, scoreB, avgLevelA, avgLevelB));
+                const deltaB = (await this._calculateDelta(scoreB, scoreA, avgLevelB, avgLevelA));
+
+                const matchRef = window.db.collection(type === 'entreno' ? 'entrenos_matches' : 'matches').doc(match.id);
+                await matchRef.update({
+                    delta_a: deltaA,
+                    delta_b: deltaB,
+                    processed_at: new Date().toISOString()
+                });
+
+                console.log(`✅ [LevelService] Smart Pro adjustment applied & saved to match.`);
             } catch (error) {
                 console.error("❌ [LevelService] Error in advanced calculation:", error);
             }
+        }
+
+        /**
+         * Helper for local calculation without side effects
+         */
+        async _calculateDelta(myScore, rivalScore, myTeamAvg, rivalTeamAvg) {
+            const didWin = myScore > rivalScore;
+            const totalGames = myScore + rivalScore;
+            let perfDelta = didWin ? 0.012 : -0.012;
+            if (totalGames > 0) perfDelta += ((myScore / totalGames) - 0.5) * 0.01;
+
+            let diffDelta = 0;
+            const levelDiff = rivalTeamAvg - myTeamAvg;
+            if (didWin) diffDelta = levelDiff > 0 ? (levelDiff * 0.02) : 0.004;
+            else diffDelta = levelDiff < 0 ? (levelDiff * 0.02) : -0.004;
+
+            return Math.round((perfDelta + diffDelta) * 1000) / 1000;
         }
 
         /**

@@ -1,9 +1,21 @@
 /**
  * ControlTowerView.js
  * The dedicated view for managing the live Americana.
- * Replicates the "Official Tournament" screen with Playtomic premium aesthetics.
  */
 (function () {
+    // --- GLOBAL DISPATCHER FOR SHARE BUTTONS ---
+    window.shareVictory = function (matchId, delta) {
+        console.log('🎯 [GlobalShare] Triggered for:', matchId, delta);
+        const match = window._matchRegistry ? window._matchRegistry[matchId] : null;
+        if (match && window.ShareModal) {
+            window.ShareModal.open(match, delta);
+        } else if (!match) {
+            alert("Pulsa de nuevo para cargar los datos.");
+        } else {
+            alert("Cargando sistema de imágenes... espera un segundo.");
+        }
+    };
+
     class ControlTowerView {
         constructor() {
             this.mainSection = 'playing'; // 'playing', 'history', 'help'
@@ -1026,8 +1038,22 @@
 
                 let actionArea = '';
 
+                let shareBtnHTML = '';
+
                 if (match.isFinished) {
-                    // Show SHARE button for everyone if finished
+                    const userDelta = match.team_a_ids?.includes(user?.uid) ? (match.delta_a || 0) : (match.delta_b || 0);
+
+                    // REGISTRO OBLIGATORIO: Guardamos los datos para que el modal los encuentre
+                    if (!window._matchRegistry) window._matchRegistry = {};
+                    window._matchRegistry[match.id] = match;
+
+                    shareBtnHTML = `
+                        <button onclick="shareVictory('${match.id}', ${userDelta})"
+                                style="background: linear-gradient(135deg, #CCFF00 0%, #00E36D 100%); color: black; border: none; padding: 12px 20px; border-radius: 12px; font-size: 0.8rem; cursor: pointer; font-weight: 900; box-shadow: 0 4px 15px rgba(204,255,0,0.3); display: flex; align-items: center; gap: 8px; margin-top: 10px; width: 100%; justify-content: center; text-transform: uppercase;">
+                            <i class="fab fa-instagram"></i> COMPARTIR VICTORIA
+                        </button>
+                    `;
+
                     let editBtnHTML = '';
                     if (canEdit) {
                         editBtnHTML = `
@@ -1060,10 +1086,6 @@
 
                     actionArea = `
                         <div style="margin-top: 10px; text-align: center; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                            <button onclick="window.ShareModal.open(${JSON.stringify(match).replace(/"/g, '&quot;')}, window.ControlTowerView.currentAmericanaDoc)" 
-                                    style="background: linear-gradient(135deg, #CCFF00 0%, #B8E600 100%); color: black; border: none; padding: 8px 16px; border-radius: 12px; font-size: 0.75rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(204,255,0,0.3);">
-                                <i class="fas fa-camera"></i> COMPARTIR
-                            </button>
                             ${editBtnHTML}
                         </div>
                     `;
@@ -1143,6 +1165,7 @@
                             </div>
                             
                             ${actionArea}
+                            ${match.isFinished ? shareBtnHTML : ''}
                         </div>
                     </div>
                 `;

@@ -15,10 +15,10 @@
     'use strict';
 
     const CONFIG = {
-        enableDebuggerTrap: true, // Activado para producción
-        enableConsoleClear: true,
+        enableDebuggerTrap: false, // DESACTIVADO PARA DEBUGGING
+        enableConsoleClear: false, // DESACTIVADO PARA DEBUGGING
         blockRightClick: true,
-        blockShortcuts: true,
+        blockShortcuts: false, // PERMITIR F12
         blockSelection: true
     };
 

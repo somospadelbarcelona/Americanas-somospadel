@@ -444,7 +444,7 @@
             } else {
                 switch (this.state.activeTab) {
                     case 'events': contentHtml = this.renderEventsList(false, false); break;
-                    case 'entrenos': contentHtml = this.renderEventsList(false, false, true); break;
+                    case 'entrenos': contentHtml = this.renderEventsList(false, true); break;
                     case 'agenda': contentHtml = this.renderAgendaView(); break;
                     case 'results': contentHtml = await this.renderResultsView(); break;
                     case 'finished': contentHtml = this.renderFinishedView(); break;
