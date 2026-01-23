@@ -244,6 +244,12 @@ function renderEntrenoCard(e) {
 
                 <!-- Action Menu -->
                 <div style="display: flex; gap: 6px;">
+                    <button class="btn-micro" 
+                            style="background:rgba(37, 211, 102, 0.1); color:#25D366;" 
+                            onclick='window.WhatsAppService.shareStartFromAdmin(${JSON.stringify(e).replace(/'/g, "&#39;")})'
+                            title="Enviar WhatsApp">
+                        <i class="fab fa-whatsapp"></i>
+                    </button>
                     <button class="btn-micro" style="background:rgba(255,255,255,0.05);" onclick='window.duplicateEntreno(${JSON.stringify(e).replace(/'/g, "&#39;")})' title="Duplicar">📋</button>
                     <button class="btn-micro" style="background:rgba(255,255,255,0.05);" onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' title="Editar">✏️</button>
                     <button class="btn-micro" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;" onclick="window.deleteEntreno('${e.id}')" title="Eliminar">🗑️</button>
@@ -816,4 +822,16 @@ window.loadWaitlistUI = async (id) => {
     const div = document.getElementById('waitlist-entreno');
     const list = await ParticipantService.getWaitlist(id, 'entreno');
     if (div) div.innerHTML = list.map((p, i) => `<div>${i + 1}. ${p.name}</div>`).join('') || 'Vacía';
+};
+
+window.selectEntrenoImage = (url) => {
+    const input = document.getElementById('edit-entreno-img-input');
+    const preview = document.getElementById('edit-entreno-img-preview');
+    if (input) {
+        input.value = url;
+        if (preview) {
+            preview.src = url;
+            preview.style.display = 'block';
+        }
+    }
 };
