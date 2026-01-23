@@ -144,6 +144,7 @@ function renderResultsFrame(container, activeEvent, allEvents) {
                     <button class="btn-primary-pro" onclick="window.Actions.generateRound()" style="background: #3498db; color:white;">⚡ GENERAR RONDA</button>
                     <button class="btn-primary-pro" onclick="window.Actions.simulateRound()" style="background: #e67e22; color:white;">🎲 SIMULACIÓN</button>
                     <button class="btn-primary-pro" onclick="window.Actions.finishEvent()" style="background: #27ae60; color:white;">🏁 FINALIZAR</button>
+                    <button class="btn-primary-pro" onclick="window.Actions.recalculateLevels()" style="background: #9b59b6; color:white;">⚖️ RECALCULAR NIVELES</button>
                     <button class="btn-primary-pro" onclick="window.Actions.resetEvent()" style="background: #e74c3c; color:white;">🗑️ REINICIAR</button>
                 </div>
             </div>
@@ -588,7 +589,19 @@ window.Actions = {
 
         try {
             await collection.update(matchId, { status: newStatus });
-            alert("✅ Estado actualizado en DB.");
+
+            // --- NEW: AJUSTE DE NIVEL AUTOMÁTICO ---
+            if (isFinish && window.LevelAdjustmentService) {
+                const updatedMatch = window.AdminController.matchesBuffer.find(m => m.id === matchId);
+                if (updatedMatch) {
+                    // Nos aseguramos de pasar los datos más recientes (con el marcador actual)
+                    LevelAdjustmentService.processMatchResults(updatedMatch).catch(e => {
+                        console.error("Error ajustando nivel:", e);
+                    });
+                }
+            }
+
+            console.log("✅ Estado actualizado en DB.");
         } catch (e) {
             alert("❌ Error DB: " + e.message);
         }
@@ -620,6 +633,14 @@ window.Actions = {
                     }
                 }
             }, 500);
+        }
+    },
+
+    async recalculateLevels() {
+        if (window.LevelAdjustmentService) {
+            await LevelAdjustmentService.recalculateAllLevels();
+        } else {
+            alert("Error: LevelAdjustmentService no disponible.");
         }
     },
 

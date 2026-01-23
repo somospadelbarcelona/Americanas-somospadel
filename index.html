@@ -7,7 +7,7 @@
     <script src="js/core/SecurityArmor.js"></script>
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>APP Somospadel BCN para americanas</title>
+    <title>App Somospadel BCN</title>
 
     <!-- PWA / Mobile Capable -->
     <link rel="manifest" href="./manifest.json">
@@ -19,7 +19,7 @@
     <meta name="description" content="Resultados a tiempo real de nuestra comunidad">
 
     <!-- Open Graph (SEO & Social Sharing) -->
-    <meta property="og:title" content="APP Somospadel BCN para americanas">
+    <meta property="og:title" content="App Somospadel BCN">
     <meta property="og:description" content="Resultados a tiempo real de nuestra comunidad">
     <meta property="og:image" content="img/logo_somospadel.png">
 
@@ -46,20 +46,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script>
-        // GLOBAL EMERGENCY SHARE DISPATCHER
-        window.shareVictory = function (matchId, delta) {
-            console.log('🚀 [DirectShare] Calling for match:', matchId);
-            if (window.ShareModal && typeof window.ShareModal.open === 'function') {
-                const match = window._matchRegistry ? window._matchRegistry[matchId] : null;
-                if (!match) {
-                    alert("Datos cargando... pulsa otra vez.");
-                    return;
-                }
-                window.ShareModal.open(match, delta);
-            } else {
-                alert("El sistema de imágenes se está cargando. Espera 1 segundo...");
-            }
-        };
+        // registry initialization
+        window._matchRegistry = window._matchRegistry || {};
     </script>
     <style>
         @keyframes loginBallLife {
@@ -114,6 +102,62 @@
                 opacity: 1;
             }
         }
+
+        /* --- HEADER NAVIGATION TABS (NEON LED DESIGN) --- */
+        .header-tabs {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 48px;
+            background: #CCFF00 !important;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1001;
+            width: 100%;
+        }
+
+        .header-tab {
+            flex: 1;
+            text-align: center;
+            font-weight: 800;
+            font-size: 0.75rem;
+            color: rgba(0, 0, 0, 0.6);
+            cursor: pointer;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            position: relative;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .header-tab::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 4px;
+            background: #FF5500;
+            /* NEON ORANGE */
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateX(-50%);
+            border-radius: 4px 4px 0 0;
+        }
+
+        .header-tab.active {
+            font-weight: 900;
+            color: #000;
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .header-tab.active::after {
+            width: 80%;
+            box-shadow: 0 0 15px #FF5500, 0 0 30px rgba(255, 85, 0, 0.6);
+        }
     </style>
 </head>
 
@@ -135,59 +179,65 @@
             </div>
 
             <!-- COMMAND BAR -->
-            <div class="cmd-bar">
+            <div class="cmd-bar"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; height: 60px; box-sizing: border-box;">
                 <!-- LEFT HAMBURGER TRIGGER -->
-                <div class="header-burger-btn"
+                <div class="header-burger-btn" style="flex-shrink: 0;"
                     onclick="document.getElementById('side-drawer-container').classList.add('open'); document.getElementById('side-drawer-menu').classList.add('open');">
                     <i class="fas fa-bars"></i>
                 </div>
 
-                <div class="cmd-brand">
-                    <img src="img/logo_somospadel.png" alt="Somos Padel" class="brand-logo-img">
-                    <div style="line-height:1; display:flex; flex-direction:column; justify-content:center;">
-                        <span style="font-size:1.1rem; letter-spacing:-0.5px;">SOMOS<span
-                                style="color:var(--brand-neon)">PADEL</span></span>
-                        <span
-                            style="font-size:0.6rem; color:#888; letter-spacing:2px; font-weight:600;">AMERICANAS</span>
+                <div class="cmd-brand"
+                    style="display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center; overflow: hidden;">
+                    <img src="img/logo_somospadel.png" alt="Somos Padel"
+                        style="height: 35px; width: auto; flex-shrink: 0; filter: none !important;">
+                    <div
+                        style="line-height:1.1; display:flex; flex-direction:column; justify-content:center; white-space: nowrap;">
+                        <span style="font-size:0.95rem; font-weight: 900; letter-spacing:-0.5px; color: white;">APP
+                            SOMOSPADEL<span style="color:var(--brand-neon)"> BCN</span></span>
+                        <span style="font-size:0.55rem; color:#888; letter-spacing:1px; font-weight:700;">COMPITE Y
+                            DISFRUTA</span>
                     </div>
                 </div>
 
-                <div class="cmd-avatar-container" style="display: flex; align-items: center; gap: 10px;">
-                    <div style="text-align:right; display:flex; flex-direction:column;"
+                <div class="cmd-avatar-container" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                    <div style="text-align:right; display:flex; flex-direction:column; line-height: 1;"
                         onclick="window.Router && window.Router.navigate('profile')">
-                        <span style="font-size:0.6rem; color:#bbb; font-weight:700;">HOLA,</span>
-                        <span style="font-size:0.9rem; font-weight:700; color:white;" id="header-user-name">ALEX</span>
+                        <span style="font-size:0.5rem; color:#bbb; font-weight:700;">HOLA,</span>
+                        <span
+                            style="font-size:0.75rem; font-weight:800; color:white; max-width: 60px; overflow: hidden; text-overflow: ellipsis;"
+                            id="header-user-name">ALEX</span>
                     </div>
                     <div class="cmd-avatar" id="header-user-avatar"
+                        style="width: 32px; height: 32px; font-size: 0.8rem;"
                         onclick="window.Router && window.Router.navigate('profile')">
                         AL
                     </div>
-                    <!-- Logout Icon Header -->
                     <div onclick="window.AuthController && window.AuthController.handleLogout()"
-                        style="color: rgba(255,255,255,0.4); padding: 5px; cursor: pointer; font-size: 1.1rem; margin-left: 5px;">
+                        style="color: rgba(255,255,255,0.4); padding: 5px; cursor: pointer; font-size: 1rem;">
                         <i class="fas fa-sign-out-alt"></i>
                     </div>
                 </div>
             </div>
 
-            <!-- NAVIGATION TABS (The "3 Pestañas") -->
+            <!-- NAVIGATION TABS -->
             <div class="header-tabs"
-                style="display:flex; justify-content:space-around; align-items:center; height:48px; background:#CCFF00; border-bottom:1px solid rgba(0,0,0,0.1); box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                style="display:flex; justify-content:space-around; align-items:center; height:46px; background:#CCFF00; border-bottom:1px solid rgba(0,0,0,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.1); position:relative; z-index:100; width:100%;">
                 <div class="header-tab active" onclick="window.Router && window.Router.navigate('dashboard')"
-                    style="flex:1; text-align:center; font-weight:900; font-size:0.8rem; color:#000; cursor:pointer; letter-spacing:1px; height:100%; display:flex; align-items:center; justify-content:center; border-bottom:3px solid #FF9800; transition: all 0.2s;">
+                    style="flex:1; text-align:center; font-weight:900; font-size:0.75rem; color:#000; cursor:pointer; height:100%; display:flex; align-items:center; justify-content:center; position:relative;">
                     INICIO
                 </div>
                 <div class="header-tab" onclick="window.Router && window.Router.navigate('entrenos')"
-                    style="flex:1; text-align:center; font-weight:700; font-size:0.8rem; color:rgba(0,0,0,0.5); cursor:pointer; letter-spacing:1px; height:100%; display:flex; align-items:center; justify-content:center; transition: all 0.2s;">
+                    style="flex:1; text-align:center; font-weight:700; font-size:0.75rem; color:rgba(0,0,0,0.5); cursor:pointer; height:100%; display:flex; align-items:center; justify-content:center; position:relative;">
                     EVENTOS
                 </div>
                 <div class="header-tab" onclick="window.Router && window.Router.navigate('ranking')"
-                    style="flex:1; text-align:center; font-weight:700; font-size:0.8rem; color:rgba(0,0,0,0.5); cursor:pointer; letter-spacing:1px; height:100%; display:flex; align-items:center; justify-content:center; transition: all 0.2s;">
+                    style="flex:1; text-align:center; font-weight:700; font-size:0.75rem; color:rgba(0,0,0,0.5); cursor:pointer; height:100%; display:flex; align-items:center; justify-content:center; position:relative;">
                     RANKING
                 </div>
                 <div class="header-tab" onclick="window.Router && window.Router.navigate('profile')"
-                    style="flex:1; text-align:center; font-weight:700; font-size:0.8rem; color:rgba(0,0,0,0.5); cursor:pointer; letter-spacing:1px; height:100%; display:flex; align-items:center; justify-content:center; transition: all 0.2s;">
-                    MI PERFIL
+                    style="flex:1; text-align:center; font-weight:700; font-size:0.75rem; color:rgba(0,0,0,0.5); cursor:pointer; height:100%; display:flex; align-items:center; justify-content:center; position:relative;">
+                    PERFIL
                 </div>
             </div>
         </div>
@@ -196,7 +246,7 @@
         <div id="side-drawer-container" class="side-drawer-overlay"
             onclick="this.classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');">
         </div>
-        <div id="side-drawer-menu" class="side-drawer">
+        <div id="side-drawer-menu" class="side-drawer" style="z-index: 20000;">
             <div class="drawer-header">
                 <div style="font-weight:800; color:white; font-size:1.2rem;">MENÚ</div>
                 <i class="fas fa-times" style="color:white; font-size:1.4rem;"
@@ -219,7 +269,7 @@
 
         <!-- Main Content Area (Scrollable) -->
         <!-- Added pt-130 class logic conceptually via CSS .full-width-mobile applied to children or logic -->
-        <main id="content-area" style="min-height: 100vh; padding-top: 158px;">
+        <main id="content-area" style="min-height: 100vh; padding-top: 148px;">
             <!-- Loading Skeleton -->
             <div class="dashboard-v2-container" style="padding-top: 40px; text-align: center;">
                 <div class="loader"></div>
@@ -258,7 +308,7 @@
                     ACCESO JUGADORES</h2>
                 <div
                     style="color: var(--brand-neon); font-size: 0.7rem; font-weight: 800; letter-spacing: 3px; margin-top: 5px;">
-                    SOMOS PÁDEL BARCELONA</div>
+                    APP SOMOSPADEL BCN</div>
             </div>
 
             <!-- Login Form -->
@@ -452,9 +502,10 @@
     <script src="js/modules/logic/MatchMakingService.js?v=5011"></script>
     <script src="js/modules/americanas/AmericanaLogic.js"></script>
     <script src="js/modules/americanas/AmericanaService.js?v=1013"></script>
-    <script src="js/modules/common/WhatsAppService.js"></script>
+    <script src="js/modules/common/WhatsAppService.js?v=7.0" charset="UTF-8"></script>
     <script src="js/fixed-pairs-logic.js"></script>
     <script src="js/rotating-pozo-logic.js"></script>
+    <script src="js/modules/logic/LevelAdjustmentService.js"></script>
     <script src="js/modules/auth/AuthController.js"></script>
 
     <!-- Layer 4: Views & controllers -->
@@ -476,8 +527,8 @@
     <script src="js/modules/chat/ChatView.js?v=1.1"></script>
     <script src="js/modules/americanas/EntrenoLiveView.js"></script>
     <script src="js/modules/americanas/EventsController_V6.js?v=9.1"></script>
-    <script src="js/modules/social/SocialShareService.js"></script>
-    <script src="js/modules/social/ShareModal.js?v=2.1"></script>
+    <script src="js/modules/social/SocialShareService.js?v=3.0"></script>
+    <script src="js/modules/social/ShareModal.js?v=3.0"></script>
 
     <!-- CAPTAIN SOMOSPADEL (AI COACH) -->
     <script src="js/modules/captain/CaptainService.js"></script>

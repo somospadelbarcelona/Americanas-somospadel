@@ -1,6 +1,6 @@
 {
-    "name": "SomosPadel PRO - Americanas & Torneos",
-    "short_name": "SomosPadel",
+    "name": "App Somospadel BCN",
+    "short_name": "Somospadel",
     "description": "La plataforma definitiva para gestionar tus torneos de pádel, niveles y americanas en tiempo real.",
     "start_url": "./index.html",
     "display": "standalone",

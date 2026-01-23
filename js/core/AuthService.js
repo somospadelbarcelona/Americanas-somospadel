@@ -4,6 +4,7 @@
  */
 (function () {
     const auth = window.firebase ? firebase.auth() : null;
+    const db = window.firebase ? firebase.firestore() : null;
 
     class AuthService {
         constructor() {
@@ -152,16 +153,17 @@
             try {
                 const phone = email.split('@')[0];
 
-                // 1. Check if user already exists in Firestore
-                const existingPlayer = await window.FirebaseDB.players.getByPhone(phone);
-                if (existingPlayer) {
+                // 1. Mandatory check for existing user in Firestore
+                const snapshot = await db.collection('players').where('phone', '==', phone).get();
+                if (!snapshot.empty) {
                     throw new Error("Ya existe una cuenta con este teléfono. Por favor, inicia sesión o contacta con soporte.");
                 }
 
                 const hashedPassword = await this.hashPassword(password);
 
-                if (!auth) throw new Error("Firebase Auth not initialized");
+                if (!auth) throw new Error("Firebase Auth no inicializado");
 
+                // 2. Create in Firebase Auth
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
@@ -169,7 +171,8 @@
                     await user.updateProfile({ displayName: additionalData.name });
                 }
 
-                const newPlayer = await window.FirebaseDB.players.create({
+                // 3. Create in Firestore
+                await window.FirebaseDB.players.create({
                     ...additionalData,
                     phone: phone,
                     uid: user.uid,
@@ -184,28 +187,12 @@
             } catch (error) {
                 console.warn("⚠️ Register failed:", error.message);
 
-                // If it's the duplicate user error, propagate it
-                if (error.message.includes("Ya existe una cuenta")) {
-                    return { success: false, error: error.message };
+                // Propagate clear errors to UI
+                if (error.code === 'auth/email-already-in-use') {
+                    return { success: false, error: "Este teléfono ya está registrado en el sistema de autenticación." };
                 }
 
-                // Fallback / Simulation logic (if needed)
-                // Note: We only reach here if Firebase fails but we haven't already thrown the "exists" error
-                try {
-                    const phone = email.split('@')[0];
-                    const hashedPassword = await this.hashPassword(password);
-
-                    await window.FirebaseDB.players.create({
-                        ...additionalData,
-                        phone: phone,
-                        password: hashedPassword, // Store hashed
-                        status: 'pending' // VALIDATION REQUIRED
-                    });
-
-                    return { success: true, pendingValidation: true };
-                } catch (simError) {
-                    return { success: false, error: simError.message };
-                }
+                return { success: false, error: error.message || "Error desconocido en el registro" };
             }
         }
 

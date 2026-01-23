@@ -7,6 +7,22 @@ class SocialShareService {
         this.hiddenContainerId = 'social-share-hidden-container';
     }
 
+    async shareMatchResults(match, userDelta = 0) {
+        if (!match) return;
+        console.log("📸 [SocialShare] Intentando abrir Pro Match Card...", { matchId: match.id, hasModal: !!window.ShareModal });
+
+        if (window.ShareModal) {
+            window.ShareModal.open(match, userDelta);
+        } else {
+            console.warn("⚠️ ShareModal no disponible. Usando respaldo nativo.");
+            const sA = parseInt(match.score_a || 0);
+            const sB = parseInt(match.score_b || 0);
+            const text = `🏆 SomosPadel: [${sA}] - [${sB}]\n📈 Evolución: ${userDelta}\n¡A tope! 🔥`;
+            if (navigator.share) navigator.share({ title: 'Resultado', text: text });
+            else window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+        }
+    }
+
     /**
      * Generates a 1080x1920 (9:16) image of the match result.
      * @param {Object} match - The match data object.
@@ -315,6 +331,29 @@ class SocialShareService {
         `;
     }
 }
+
+// SINGLE SOURCE OF TRUTH FOR SHARING
+window.shareVictory = function (matchId, delta) {
+    console.log("🎯 [GlobalShare] Triggered for matchID:", matchId);
+
+    if (!window._matchRegistry) {
+        console.warn("⚠️ Registry missing, initializing...");
+        window._matchRegistry = {};
+    }
+
+    const match = window._matchRegistry[matchId];
+
+    if (match && window.SocialShareService) {
+        window.SocialShareService.shareMatchResults(match, delta);
+    } else {
+        console.error("❌ Share Error: Match or Service not found", {
+            matchId,
+            hasMatch: !!match,
+            hasService: !!window.SocialShareService
+        });
+        alert("Sincronizando datos... pulsa de nuevo en 1 segundo.");
+    }
+};
 
 // Singleton Export
 window.SocialShareService = new SocialShareService();

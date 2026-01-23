@@ -298,39 +298,51 @@ class NotificationService {
      */
     async requestPushPermission() {
         if (!window.messaging) {
-            console.warn("📴 Messaging not supported or blocked");
+            console.warn("📴 Messaging not supported/blocked. Revisa si usas HTTPS y un navegador moderno.");
+            return false;
+        }
+
+        // DETECCIÓN ESPECÍFICA PARA IPHONE (iOS)
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+        if (isIOS && !isStandalone) {
+            alert("⚠️ NOTIFICACIONES EN IPHONE:\n\nPara recibir avisos en tu iPhone, debes añadir esta App a tu pantalla de inicio:\n1. Pulsa el botón 'Compartir' (cuadrado con flecha)\n2. Selecciona 'Añadir a pantalla de inicio'");
             return false;
         }
 
         try {
+            console.log("🔔 Solicitando permiso de notificaciones...");
             const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-                if (permission === 'granted') {
-                    console.log("✅ Notification permission granted.");
 
-                    // Intentamos obtener el token usando la configuración por defecto de Firebase
-                    // Esto funciona si el firebaseConfig tiene el senderId correcto
-                    try {
-                        const currentToken = await window.messaging.getToken();
-                        if (currentToken) {
-                            this.token = currentToken;
-                            console.log("🔑 FCM Token:", currentToken);
-                            await this.saveTokenToProfile(currentToken);
-                            return true;
-                        } else {
-                            console.log('No Instance ID token available. Request permission to generate one.');
-                        }
-                    } catch (tokenError) {
-                        console.warn("FCM Token Error (probablemente falta VAPID key publica si es web push standard):", tokenError);
-                        // Si falla, no bloqueamos la app, solo no hay push.
+            if (permission === 'granted') {
+                console.log("✅ Permiso concedido. Obteniendo Token FCM...");
+
+                // IMPORTANTE: Para Web Push (especialmente iOS) la VAPID Key es obligatoria
+                const VAPID_KEY = "BD-Ue7u-m6m999_placeholder_pon_tu_clave_aqui";
+
+                try {
+                    const currentToken = await window.messaging.getToken({
+                        vapidKey: VAPID_KEY.includes('placeholder') ? undefined : VAPID_KEY
+                    });
+
+                    if (currentToken) {
+                        this.token = currentToken;
+                        console.log("🔑 FCM Token Generado:", currentToken);
+                        await this.saveTokenToProfile(currentToken);
+                        return true;
+                    } else {
+                        console.warn("⚠️ No se pudo generar el token (Token vacío).");
                     }
-                    console.log('No Instance ID token available. Request permission to generate one.');
+                } catch (tokenError) {
+                    console.error("🚨 Error grave obteniendo Token FCM. Posible VAPID incorrecto o Service Worker no registrado:", tokenError);
                 }
             } else {
-                console.log("🚫 Permission denied");
+                console.log("🚫 Permiso denegado por el usuario.");
+                alert("Has denegado las notificaciones. No recibirás avisos de nuevos partidos.");
             }
         } catch (e) {
-            console.error("🚨 Error getting permission/token", e);
+            console.error("🚨 Error en el flujo de permisos:", e);
         }
         return false;
     }

@@ -1,5 +1,5 @@
 /**
- * Router.js - Enterprise Grade Routing System
+ * Router.js - Enterprise Grade Routing System v2.0
  * Manages view transitions, deep linking, and navigation states.
  */
 (function () {
@@ -8,15 +8,15 @@
             this.currentRoute = 'dashboard';
             this.routes = {
                 'dashboard': () => this.renderDashboard(),
-                'americanas': () => { window.EventsController?.init(); window.EventsController?.setTab('events'); },
-                'events': () => { window.EventsController?.init(); window.EventsController?.setTab('events'); },
+                'americanas': () => this.handleControllerTab('EventsController', 'events'),
+                'events': () => this.handleControllerTab('EventsController', 'events'),
                 'profile': () => window.PlayerController?.init(),
                 'live': () => window.ControlTowerView?.handleLiveRoute(),
                 'live-entreno': () => window.EntrenoLiveView?.handleRoute(),
                 'ranking': () => window.RankingController?.init(),
-                'agenda': () => { window.EventsController?.init(); window.EventsController?.setTab('agenda'); },
-                'results': () => { window.EventsController?.init(); window.EventsController?.setTab('results'); },
-                'entrenos': () => { window.EventsController?.init(); window.EventsController?.setTab('entrenos'); }
+                'agenda': () => this.handleControllerTab('EventsController', 'agenda'),
+                'results': () => this.handleControllerTab('EventsController', 'results'),
+                'entrenos': () => this.handleControllerTab('EventsController', 'entrenos')
             };
 
             // Handle browser navigation
@@ -25,25 +25,30 @@
                     this.navigate(event.state.route, true);
                 }
             };
+
+            this.init();
+        }
+
+        init() {
+            this.initGlobalExceptionHandler();
+            console.log("🛣️ Enterprise Router System v2.0 Initialized");
+        }
+
+        handleControllerTab(controllerName, tabName) {
+            const controller = window[controllerName];
+            if (controller) {
+                if (typeof controller.init === 'function') controller.init();
+                if (typeof controller.setTab === 'function') controller.setTab(tabName);
+            }
         }
 
         navigate(route, isBack = false) {
-            console.log(`[Router] Navigating to: ${route}`);
+            if (this.currentRoute === route && !isBack) return;
 
-            // === AI OPTIMIZATION: SYSTEM CLEANUP (AUDIT FIX) ===
-            // Before moving to a new view, we MUST clean up listeners from the previous one
-            // to prevent memory leaks and redundant firebase calls.
-            if (this.currentRoute === 'events' || this.currentRoute === 'americanas' || this.currentRoute === 'results' || this.currentRoute === 'agenda' || this.currentRoute === 'entrenos') {
-                if (window.EventsController && typeof window.EventsController.destroy === 'function') {
-                    window.EventsController.destroy();
-                }
-            }
-            if (this.currentRoute === 'live' && window.ControlTowerView && typeof window.ControlTowerView.destroy === 'function') {
-                window.ControlTowerView.destroy();
-            }
-            if (this.currentRoute === 'tv' && window.TVView && typeof window.TVView.destroy === 'function') {
-                window.TVView.destroy();
-            }
+            console.log(`[Router] Transitioning: ${this.currentRoute} -> ${route}`);
+
+            // === MEMORY & RESOURCE CLEANUP ===
+            this.cleanupPreviousRoute();
 
             this.currentRoute = route;
 
@@ -53,7 +58,12 @@
             // Execute View Logic
             const viewAction = this.routes[route];
             if (viewAction) {
-                viewAction();
+                try {
+                    viewAction();
+                } catch (error) {
+                    console.error(`[Router] Error executing route ${route}:`, error);
+                    this.renderError(route, error);
+                }
             } else {
                 this.renderPlaceholder(route);
             }
@@ -64,49 +74,74 @@
             }
 
             // Global scroll to top on nav
-            window.scrollTo(0, 0);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        cleanupPreviousRoute() {
+            const controllersToCleanup = [
+                { name: 'EventsController', routes: ['events', 'americanas', 'results', 'agenda', 'entrenos'] },
+                { name: 'ControlTowerView', routes: ['live'] },
+                { name: 'TVView', routes: ['tv'] }
+            ];
+
+            controllersToCleanup.forEach(ctrl => {
+                if (ctrl.routes.includes(this.currentRoute)) {
+                    const instance = window[ctrl.name];
+                    if (instance && typeof instance.destroy === 'function') {
+                        console.log(`[Router] Cleaning up ${ctrl.name}`);
+                        instance.destroy();
+                    }
+                }
+            });
         }
 
         updateNavUI(route) {
             // 1. Bottom Nav Dock
             document.querySelectorAll('.p-nav-item').forEach(btn => {
-                const isTarget = btn.dataset.view === route;
-                btn.classList.toggle('active', isTarget);
+                const isActive = btn.dataset.view === route;
+                btn.classList.toggle('active', isActive);
 
-                // Haptic feedback simulation
-                if (isTarget && window.navigator.vibrate) {
+                if (isActive && window.navigator.vibrate) {
                     window.navigator.vibrate(10);
                 }
             });
 
-            // 2. Top Header Tabs
+            // 2. Top Header Tabs (Smart selection)
             document.querySelectorAll('.header-tab').forEach(tab => {
-                const onclickAttr = tab.getAttribute('onclick');
-                if (!onclickAttr) return; // Skip tabs without onclick
-
+                const onclickAttr = tab.getAttribute('onclick') || '';
                 const match = onclickAttr.match(/'([^']+)'/);
-                if (!match) return; // Skip if no match found
-
-                const view = match[1];
+                const view = match ? match[1] : null;
                 const isActive = view === route;
 
-                tab.style.fontWeight = isActive ? '900' : '700';
-                tab.style.color = isActive ? '#000' : 'rgba(0,0,0,0.5)';
-                tab.style.borderBottom = isActive ? '3px solid #FF9800' : 'none';
                 tab.classList.toggle('active', isActive);
+
+                // Styles are now handled via CSS classes to keep JS clean
+                // .header-tab.active { font-weight: 900; color: #000; border-bottom: 3px solid #FF9800; }
             });
         }
 
         renderDashboard() {
-            console.log("🛠️ [Router] renderDashboard called");
             if (window.DashboardView && window.Store) {
                 const data = window.Store.getState('dashboardData');
-                console.log("🛠️ [Router] Data from store:", data);
                 window.DashboardView.render(data || { activeCourts: 0 });
             } else {
-                console.warn("⚠️ [Router] DashboardView or Store missing! retrying in 100ms...");
+                // Retry with exponential backoff or simple timeout
                 setTimeout(() => this.renderDashboard(), 100);
             }
+        }
+
+        renderError(route, error) {
+            const content = document.getElementById('content-area');
+            if (!content) return;
+            content.innerHTML = `
+                <div class="error-view fade-in">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h2>Error en la Ruta</h2>
+                    <p>No pudimos cargar <strong>${route}</strong>.</p>
+                    <pre>${error.message}</pre>
+                    <button onclick="Router.navigate('dashboard')" class="btn-primary-pro">VOLVER AL PANEL</button>
+                </div>
+            `;
         }
 
         renderPlaceholder(name) {
@@ -114,32 +149,28 @@
             if (!content) return;
 
             content.innerHTML = `
-                <div class="fade-in" style='padding:60px 24px; text-align:center;'>
-                    <div style="width: 80px; height: 80px; background: rgba(0,0,0,0.03); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-                        <i class="fas fa-tools" style="font-size:2rem; color:#ccc;"></i>
+                <div class="placeholder-view fade-in">
+                    <div class="icon-circle">
+                        <i class="fas fa-rocket"></i>
                     </div>
-                    <h2 style="font-weight: 800; font-family: 'Outfit';">Sección en Optimización</h2>
-                    <p style="color: #666; font-size: 0.95rem; line-height: 1.5; margin-top: 10px;">
-                        Nuestra IA está preparando la vista de <strong>${name}</strong> para ofrecerte la mejor experiencia.
-                    </p>
-                    <button onclick="Router.navigate('dashboard')" class="btn-primary-pro" style="margin-top:30px; width: 100%; max-width: 250px;">
-                        VOLVER AL INICIO
-                    </button>
+                    <h2>Sección en Desarrollo</h2>
+                    <p>Estamos optimizando <strong>${name}</strong>.</p>
+                    <button onclick="Router.navigate('dashboard')" class="btn-primary-pro">VOLVER AL INICIO</button>
                 </div>
             `;
         }
 
-        // Global Error Handler Integration
         initGlobalExceptionHandler() {
-            window.onerror = (message, source, lineno, colno, error) => {
-                console.error("[Global Error]", { message, source, lineno });
-                // Future: Send to Firebase for Big Data analysis
-                return false;
-            };
+            window.addEventListener('error', (event) => {
+                console.error("[CIBER-AUDIT] Captured potential runtime threat or bug:", event.error);
+                // In production, we would log this to a secure server.
+            });
+
+            window.addEventListener('unhandledrejection', (event) => {
+                console.warn("[CIBER-AUDIT] Unhandled Promise Rejection:", event.reason);
+            });
         }
     }
 
     window.Router = new Router();
-    window.Router.initGlobalExceptionHandler();
-    console.log("🛣️ Enterprise Router System Initialized");
 })();

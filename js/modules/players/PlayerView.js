@@ -47,7 +47,7 @@
                                 <span style="background: rgba(255,255,255,0.05); color: #888; padding: 4px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid #333;">ID: ${(user.id || user.uid || 'PRO').substring(0, 5).toUpperCase()}</span>
                             </div>
                             
-                            ${user.role === 'admin_player' || user.role === 'admin' ? `
+                            ${user.role === 'admin_player' || user.role === 'admin' || user.role === 'super_admin' ? `
                                 <div style="margin-top: 15px; background: linear-gradient(90deg, #FFD700, #FFA500); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 950; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px;">
                                     <i class="fas fa-crown"></i> EXECUTIVE ADMIN
                                 </div>
@@ -302,7 +302,7 @@
                                         <span style="font-weight: 900; font-size: 0.95rem; color: #fff; text-transform: uppercase;">Sistema de Puntuación MVP</span>
                                     </div>
                                     <p style="font-size: 0.8rem; color: #aaa; line-height: 1.6; margin: 0; font-weight: 500;">
-                                        Cada juego ganado en pista equivale a <b style="color: #fff;">1 punto</b> para tu ranking. En SomosPadel, cada punto cuenta: maximizas tu puntuación incluso si no ganas el set completo.
+                                        Cada victoria en el circuito equivale a <b style="color: #fff;">3 puntos</b> y cada empate a <b style="color: #fff;">1 punto</b> para tu ranking. En SomosPadel, cada batalla cuenta para escalar posiciones.
                                     </p>
                                 </div>
 
@@ -321,7 +321,7 @@
                                             <span>DIÁNAMICO</span>
                                         </div>
                                         <p style="font-size: 0.8rem; color: #ddd; line-height: 1.6; margin: 0 0 15px;">
-                                            Tu nivel no es estático. Se ajusta por <b style="color: #fff;">décimas (0.01 - 0.15)</b> tras cada jornada oficial basándose en:
+                                            Tu nivel no es estático. Se ajusta por <b style="color: #fff;">milésimas (0.005 - 0.010)</b> tras cada jornada oficial basándose en:
                                         </p>
                                         
                                         <!-- Ponderación visual -->

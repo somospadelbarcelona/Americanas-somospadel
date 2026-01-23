@@ -31,9 +31,9 @@
             overlay.innerHTML = `
                 <div id="shuffle-header" style="text-align: center; margin-bottom: 40px; z-index: 10; animation: slideDown 0.8s cubic-bezier(0.2, 1, 0.3, 1); flex-shrink: 0;">
                     <div style="background: linear-gradient(90deg, #CCFF00, #00E36D); color: black; padding: 12px 40px; border-radius: 50px; font-weight: 950; font-size: 1.1rem; display: inline-block; box-shadow: 0 0 40px rgba(204,255,0,0.4); margin-bottom: 25px; letter-spacing: 2px; text-transform: uppercase;">
-                        MÉTODO SOMOSPADEL PRO
+                        DISFRUTA Y COMPITE
                     </div>
-                    <h1 style="font-size: 4.5rem; font-weight: 950; margin: 0; text-transform: uppercase; letter-spacing: -3px; color: #fff; line-height: 0.9;">GENERANDO <span style="color: #CCFF00;">RONDA ${data.round}</span></h1>
+                    <h1 style="font-size: 1.7rem; font-weight: 950; margin: 0; text-transform: uppercase; letter-spacing: -1px; color: #fff; line-height: 0.9;">GENERANDO <span style="color: #CCFF00;">RONDA ${data.round}</span></h1>
                     <p style="color: rgba(255,255,255,0.4); font-size: 1.2rem; font-weight: 700; letter-spacing: 4px; margin-top: 15px;">CALCULANDO BALANCE PERFECTO...</p>
                 </div>
 

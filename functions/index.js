@@ -69,3 +69,54 @@ exports.secureRecalcLevel = functions.https.onCall(async (data, context) => {
         return { success: true, deltaA, deltaB };
     });
 });
+
+/**
+ * Send Real Push Notification via FCM
+ * Triggered when a new document is added to a player's notification subcollection
+ */
+exports.sendPushNotification = functions.firestore
+    .document('players/{userId}/notifications/{notificationId}')
+    .onCreate(async (snapshot, context) => {
+        const { userId } = context.params;
+        const notification = snapshot.data();
+
+        // 1. Get User's FCM Token
+        const userDoc = await db.collection('players').doc(userId).get();
+        const userData = userDoc.data();
+        const fcmToken = userData ? userData.fcm_token : null;
+
+        if (!fcmToken) {
+            console.log(`✉️ No FCM token found for user ${userId}, skipping push.`);
+            return null;
+        }
+
+        // 2. Build the Message payload
+        const message = {
+            notification: {
+                title: notification.title || 'Somospadel BCN',
+                body: notification.body || 'Tienes una nueva notificación'
+            },
+            data: {
+                ...notification.data,
+                click_action: 'FLUTTER_NOTIFICATION_CLICK', // For mobile compatibility if needed
+                url: notification.data ? notification.data.url : 'dashboard'
+            },
+            token: fcmToken
+        };
+
+        // 3. Send via FCM
+        try {
+            const response = await admin.messaging().send(message);
+            console.log(`🚀 Push sent successfully to ${userId}:`, response);
+            return response;
+        } catch (error) {
+            console.error(`❌ Error sending push to ${userId}:`, error);
+
+            // Optional: If token is invalid/expired, remove it
+            if (error.code === 'messaging/registration-token-not-registered') {
+                console.log(`🗑️ Removing expired token for ${userId}`);
+                await db.collection('players').doc(userId).update({ fcm_token: admin.firestore.FieldValue.delete() });
+            }
+            return null;
+        }
+    });

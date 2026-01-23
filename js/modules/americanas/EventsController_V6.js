@@ -415,7 +415,7 @@
             ];
 
             const navHtml = `
-                <div class="events-submenu-container" style="background: #232a32; padding: 10px 4px; border-bottom: 2px solid #CCFF00; margin-bottom: 0px; display: flex; justify-content: space-around; box-shadow: 0 8px 32px rgba(0,0,0,0.5); position: sticky; top: 158px; z-index: 12000; backdrop-filter: blur(10px);">
+                <div class="events-submenu-container" style="background: #232a32; padding: 10px 4px; border-bottom: 2px solid #CCFF00; margin-bottom: 0px; display: flex; justify-content: space-around; box-shadow: 0 8px 32px rgba(0,0,0,0.5); position: sticky; top: 148px; z-index: 12000; backdrop-filter: blur(10px);">
                     ${tabs.map(tab => {
                 const isActive = this.state.activeTab === tab.id;
                 const isPadelBall = tab.id === 'agenda';
@@ -571,7 +571,7 @@
                                 </div>
                             </div>
                             <div>
-                                <h2 style="font-size: 1.15rem; font-weight: 950; margin: 0; color: white;">Eventos <span style="color: #CCFF00;">Somospadel BCN</span></h2>
+                                <h2 style="font-size: 1.15rem; font-weight: 950; margin: 0; color: white;">Eventos <span style="color: #CCFF00;">App Somospadel BCN</span></h2>
                                 <p style="color: rgba(204,255,0,0.9); font-size: 0.65rem; font-weight: 850; text-transform: uppercase;">¡Apúntate en tiempo real!</p>
                             </div>
                         </div>

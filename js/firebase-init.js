@@ -498,50 +498,91 @@ async function seedInitialUsers() {
             phone: "649219350",
             data: {
                 password: "5560e325f24fa78679bd0d8257060381fca964ed2ce6ab0d3c9664165295f6b0", // Hashed password (NOA21)
-                role: "admin_player",
-                membership: "somospadel_bcn",
                 status: "active",
-                level: 7.0,
-                self_rate_level: 7.0,
-                play_preference: "indifferent",
-                category_preference: "mixed",
-                matches_played: 1,
-                win_rate: 0
+                role: "super_admin",
+                level: 3.0,
+                self_rate_level: 3.0
             }
         }
     ];
 
-    console.log("🌱 Checking initial users data...");
+    console.log("🌱 Checking and Cleaning Users data...");
 
     for (const user of usersToSeed) {
         try {
-            const existingUser = await FirebaseDB.players.getByPhone(user.phone);
-            if (!existingUser) {
-                console.log(`✨ Creating user: ${user.name}...`);
+            // FIND ALL INSTANCES OF THIS PHONE (DUPLICATE PROTECTION)
+            const snapshot = await db.collection('players').where('phone', '==', user.phone).get();
+
+            if (snapshot.empty) {
+                console.log(`✨ Creating master user: ${user.name}...`);
                 await FirebaseDB.players.create({
                     name: user.name,
                     phone: user.phone,
                     ...user.data
                 });
-                console.log(`✅ User created: ${user.name} / ${user.phone}`);
-            } else {
-                // Keep name fixed to Alejandro Coscolín and update password if it's the master phone
-                if (user.phone === "649219350") {
-                    const adminHash = "5560e325f24fa78679bd0d8257060381fca964ed2ce6ab0d3c9664165295f6b0";
-                    const currentPass = existingUser.password;
+            } else if (snapshot.docs.length >= 1) {
+                // MERGE & CLEANUP DUPLICATES
+                console.log(`🧹 Found ${snapshot.docs.length} instances for ${user.phone}. Cleaning up...`);
 
-                    if (existingUser.name !== "Alejandro Coscolín" || (currentPass !== "NOA21" && currentPass !== adminHash)) {
-                        console.log(`🔧 Enforcing Master credentials and hashed password...`);
-                        await FirebaseDB.players.update(existingUser.id, {
-                            name: "Alejandro Coscolín",
-                            role: "admin_player",
-                            password: adminHash
-                        });
+                let masterDoc = snapshot.docs[0];
+                let maxMatches = 0;
+                let maxLevel = 7.0;
+
+                // Identify best attributes from all duplicates
+                snapshot.docs.forEach(doc => {
+                    const d = doc.data();
+                    if ((d.matches_played || 0) > maxMatches) maxMatches = d.matches_played;
+                    if ((d.level || 0) > maxLevel) maxLevel = d.level;
+                    // If one is already super_admin, prefer that as master doc if possible
+                    if (d.role === 'super_admin') masterDoc = doc;
+                });
+
+                // Update the Master Document
+                console.log(`🔧 Enforcing Master credentials on doc: ${masterDoc.id}`);
+                const updatePayload = {
+                    name: "Alejandro Coscolín",
+                    role: "super_admin",
+                    phone: user.phone,
+                    status: "active",
+                    password: user.data.password
+                };
+
+                // Si el nivel está en 4.2 o no existe, lo ponemos a 3.0 una última vez
+                const currentLevel = masterDoc.data().level;
+                if (!currentLevel || currentLevel === 4.2) {
+                    updatePayload.level = 3.0;
+                    updatePayload.self_rate_level = 3.0;
+                }
+
+                // Solo añadir matches_played si es mayor al actual durante la limpieza
+                if (maxMatches > (masterDoc.data().matches_played || 0)) {
+                    updatePayload.matches_played = maxMatches;
+                }
+
+                await db.collection('players').doc(masterDoc.id).update(updatePayload);
+
+                // --- NEW: INICIALIZAR HISTORIAL DE NIVEL (Para visualización) ---
+                try {
+                    const historySnap = await db.collection('level_history').where('userId', '==', masterDoc.id).limit(1).get();
+                    if (historySnap.empty && window.LevelAdjustmentService) {
+                        console.log("🧪 Seeding Level History for Alejandro (6 matches simulation)...");
+                        await LevelAdjustmentService.simulateHistoryForUser(masterDoc.id, 3.0, 6);
+                    }
+                } catch (e) {
+                    console.error("Error seeding level history:", e);
+                }
+
+                // Delete all other duplicates
+                for (const doc of snapshot.docs) {
+                    if (doc.id !== masterDoc.id) {
+                        console.log(`🗑️ Deleting duplicate doc: ${doc.id}`);
+                        await doc.ref.delete();
                     }
                 }
+                console.log(`✅ Cleanup complete for ${user.phone}. Only 1 Super Admin account remains.`);
             }
         } catch (error) {
-            console.error(`❌ Error seeding user ${user.name}:`, error);
+            console.error(`❌ Error seeding/cleaning user ${user.name}:`, error);
         }
     }
 }

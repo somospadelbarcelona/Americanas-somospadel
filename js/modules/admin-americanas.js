@@ -23,42 +23,80 @@ window.AdminViews.americanas_mgmt = async function () {
     try {
         // Real-time Listener
         window.AdminViews.americanasUnsub = window.db.collection('americanas')
-            .onSnapshot(snapshot => {
+            .onSnapshot(async snapshot => {
                 const events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 const sorted = events.sort((a, b) => new Date(b.date) - new Date(a.date));
-                const listHtml = sorted.map(e => renderAmericanaCard(e)).join('');
 
-                // Only update list area if form is already rendered?
-                // Actually, this functions renders the WHOLE view including form.
-                // If we re-render everything, we lose Form state if user is typing.
-                // Better approach: Render detailed structure ONCE, then update LIST.
+                // 📅 Get available months for filter list
+                const availableMonths = [...new Set(sorted.map(e => {
+                    if (!e.date) return null;
+                    if (e.date.includes('-')) return e.date.substring(0, 7); // YYYY-MM
+                    if (e.date.includes('/')) {
+                        const p = e.date.split('/');
+                        return `${p[2]}-${p[1].padStart(2, '0')}`;
+                    }
+                    return null;
+                }))].filter(Boolean).sort((a, b) => b.localeCompare(a));
+
+                const monthNames = { '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril', '05': 'Mayo', '06': 'Junio', '07': 'Julio', '08': 'Agosto', '09': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre' };
+                const monthOptions = availableMonths.map(m => {
+                    const [y, mm] = m.split('-');
+                    return `<option value="${m}">${monthNames[mm]?.toUpperCase() || 'MES'} ${y}</option>`;
+                }).join('');
+
+                const listHtml = sorted.map(e => renderAmericanaCard(e)).join('');
 
                 // Initial Render (Structure)
                 if (!document.getElementById('americanas-list-container')) {
                     content.innerHTML = `
                         <div class="dashboard-grid-enterprise" style="grid-template-columns: 400px 1fr; gap: 2.5rem;">
                             <!-- Create Form -->
-                            <div class="glass-card-enterprise" style="background: var(--grad-dark); height: fit-content; padding: 2rem;">
-                                <h3 style="margin-bottom: 2rem; color: var(--primary); display: flex; align-items: center; gap: 10px;">
-                                    <span style="font-size: 1.5rem;">✨</span> CONFIGURAR AMERICANA
+                            <div class="glass-card-enterprise" style="background: var(--grad-dark); height: fit-content; padding: 2rem; position: sticky; top: 20px;">
+                                <h3 style="margin-bottom: 2rem; color: var(--primary); display: flex; align-items: center; gap: 10px; font-weight: 950; letter-spacing: 1px;">
+                                    <span style="font-size: 1.5rem;">✨</span> CONFIGURAR AMERICANAS
                                 </h3>
                                 ${renderCreateAmericanaForm()}
                             </div>
                             
                             <!-- List -->
-                            <div class="planning-area">
+                            <div class="planning-area" id="americanas-planning-area">
                                 <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 20px;">
                                     <div style="flex:1;">
                                         <h3 style="margin:0; letter-spacing: 2px; font-size: 0.85rem; color: var(--text-muted); font-weight: 800;">TORNEOS EN EL RADAR</h3>
                                     </div>
-                                    <div style="display:flex; gap:10px; align-items:center;">
-                                        <div class="search-pro-box" style="position:relative;">
-                                            <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.3); font-size:0.8rem;"></i>
-                                            <input type="text" id="americana-search-input" placeholder="Buscar americana..." 
-                                                style="padding-left:35px; height:38px; font-size:0.8rem; width:220px; border-radius:10px; background:rgba(255,255,255,0.03);">
-                                        </div>
-                                    </div>
                                 </div>
+
+                                <!-- 🔍 ADVANCED FILTERS BAR -->
+                                <div class="filter-bar-pro" style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 2rem; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); align-items: center;">
+                                    <div style="position:relative;">
+                                        <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.3); font-size:0.8rem;"></i>
+                                        <input type="text" id="americana-search-input" placeholder="Buscar por nombre..." 
+                                            style="padding-left:35px; height:40px; font-size:0.8rem; width:100%; border-radius:10px; background:rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                                    </div>
+                                    <select id="filter-month" style="height:40px; border-radius:10px; background:#1a1c23; color:white; border:1px solid rgba(255,255,255,0.1); font-size:0.75rem; font-weight:700; padding:0 10px; cursor:pointer;">
+                                        <option value="all">TODOS LOS MESES</option>
+                                        ${monthOptions}
+                                    </select>
+                                    <select id="filter-status" style="height:40px; border-radius:10px; background:#1a1c23; color:white; border:1px solid rgba(255,255,255,0.1); font-size:0.75rem; font-weight:700; padding:0 10px; cursor:pointer;">
+                                        <option value="all">TODOS LOS ESTADOS</option>
+                                        <option value="open">🟢 ABIERTA</option>
+                                        <option value="pairing">🔀 EMPAREJAMIENTO</option>
+                                        <option value="live">🎾 EN JUEGO</option>
+                                        <option value="finished">🏁 FINALIZADA</option>
+                                        <option value="cancelled">⛔ ANULADO</option>
+                                    </select>
+                                    <select id="filter-category" style="height:40px; border-radius:10px; background:#1a1c23; color:white; border:1px solid rgba(255,255,255,0.1); font-size:0.75rem; font-weight:700; padding:0 10px; cursor:pointer;">
+                                        <option value="all">TODAS LAS CATEGORÍAS</option>
+                                        <option value="male">MASCULINA</option>
+                                        <option value="female">FEMENINA</option>
+                                        <option value="mixed">MIXTA</option>
+                                        <option value="open">OPEN</option>
+                                    </select>
+                                    <button class="btn-outline-pro" onclick="loadAdminView('americanas_mgmt')" style="padding: 0 1rem; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center;">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+
                                 <div id="americanas-list-container" class="americana-scroll-list">
                                     <div class="loader"></div>
                                 </div>
@@ -68,16 +106,36 @@ window.AdminViews.americanas_mgmt = async function () {
 
                     // Setup Search Logic
                     const searchInput = document.getElementById('americana-search-input');
-                    if (searchInput) {
-                        searchInput.oninput = (e) => {
-                            const val = e.target.value.toLowerCase();
-                            const cards = document.querySelectorAll('#americanas-list-container .glass-card-enterprise');
-                            cards.forEach(card => {
-                                const text = card.innerText.toLowerCase();
-                                card.style.display = text.includes(val) ? 'flex' : 'none';
-                            });
-                        };
-                    }
+                    const monthSelect = document.getElementById('filter-month');
+                    const statusSelect = document.getElementById('filter-status');
+                    const catSelect = document.getElementById('filter-category');
+
+                    const applyFilters = () => {
+                        const query = searchInput?.value.toLowerCase() || '';
+                        const month = monthSelect?.value || 'all';
+                        const status = statusSelect?.value || 'all';
+                        const cat = catSelect?.value || 'all';
+
+                        const cards = document.querySelectorAll('#americanas-list-container > .americana-card-item');
+                        cards.forEach(card => {
+                            const cMonth = card.getAttribute('data-month');
+                            const cStatus = card.getAttribute('data-status');
+                            const cCat = card.getAttribute('data-category');
+                            const cText = card.innerText.toLowerCase();
+
+                            const matchesSearch = !query || cText.includes(query);
+                            const matchesMonth = month === 'all' || cMonth === month;
+                            const matchesStatus = status === 'all' || cStatus === status;
+                            const matchesCat = cat === 'all' || cCat === cat;
+
+                            card.style.display = (matchesSearch && matchesMonth && matchesStatus && matchesCat) ? 'flex' : 'none';
+                        });
+                    };
+
+                    if (searchInput) searchInput.oninput = applyFilters;
+                    if (monthSelect) monthSelect.onchange = applyFilters;
+                    if (statusSelect) statusSelect.onchange = applyFilters;
+                    if (catSelect) catSelect.onchange = applyFilters;
                 }
 
                 // Update List Content
@@ -101,11 +159,24 @@ function renderAmericanaCard(e) {
     const playersCount = e.players?.length || 0;
     const maxPlayers = (parseInt(e.max_courts) || 6) * 4;
 
-    const statusLabel = e.status === 'live' ? 'EN JUEGO' : e.status === 'finished' ? 'FINALIZADA' : 'ABIERTA';
-    const statusColor = e.status === 'live' ? '#FF2D55' : e.status === 'finished' ? '#888' : '#00E36D';
+    const isCancelled = e.status === 'cancelled';
+    const statusLabel = e.status === 'live' ? 'EN JUEGO' : e.status === 'finished' ? 'FINALIZADA' : e.status === 'pairing' ? 'EMPAREJAMIENTO' : (isCancelled ? 'ANULADO' : 'ABIERTA');
+    const statusColor = e.status === 'live' ? '#FF2D55' : e.status === 'finished' ? '#888' : e.status === 'pairing' ? '#22D3EE' : (isCancelled ? '#F43F5E' : '#00E36D');
+
+    // Generate Month Key for Filtering (Standardized YYYY-MM)
+    let eMonth = '';
+    if (e.date && e.date.includes('-')) eMonth = e.date.substring(0, 7);
+    else if (e.date && e.date.includes('/')) {
+        const p = e.date.split('/');
+        eMonth = `${p[2]}-${p[1].padStart(2, '0')}`;
+    }
 
     return `
-        <div class="glass-card-enterprise" style="margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: center; padding: 1.2rem; border-left: 4px solid ${statusColor}; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%);">
+        <div class="glass-card-enterprise americana-card-item" 
+             data-month="${eMonth}" 
+             data-status="${e.status || 'open'}" 
+             data-category="${e.category || 'open'}"
+             style="margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: center; padding: 1.2rem; border-left: 4px solid ${statusColor}; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%);">
             <div style="display: flex; gap: 1.2rem; align-items: center; flex: 1;">
                 <div class="americana-preview-img" style="width: 70px; height: 70px; border-radius: 12px; background: url('${(e.image_url || '').replace(/ /g, '%20')}') center/cover; border: 1px solid rgba(255,255,255,0.1); position:relative;">
                     <div style="position:absolute; bottom:-5px; right:-5px; background:${statusColor}; width:12px; height:12px; border-radius:50%; border:2px solid #1a1c23;"></div>

@@ -92,7 +92,7 @@
                             
                             <!-- LOGO & EVOL -->
                             <div style="text-align: center; width: 100%;">
-                                 <div style="color: #CCFF00; font-size: 1.2rem; font-weight: 900; letter-spacing: 4px; margin-bottom: 25px;">SOMOSPADEL</div>
+                                 <div style="color: #CCFF00; font-size: 1.2rem; font-weight: 900; letter-spacing: 4px; margin-bottom: 25px;">APP SOMOSPADEL BCN</div>
                                  <div style="background: rgba(255,255,255,0.05); border: 1.5px solid ${deltaColor}; padding: 15px 25px; border-radius: 50px; display: inline-flex; flex-direction: column; align-items: center;">
                                      <span style="color: rgba(255,255,255,0.5); font-size: 0.6rem; font-weight: 950; letter-spacing: 2px; text-transform: uppercase;">LEVEL EVOLUTION</span>
                                      <span style="color: ${deltaColor}; font-size: 2.5rem; font-weight: 950; letter-spacing: -1px;">${deltaDisplay}</span>
@@ -118,13 +118,25 @@
                         </div>
                     </div>
 
-                    <!-- FOOTER ACTIONS -->
-                    <div style="width: 100%; display: flex; flex-direction: column; gap: 12px; margin-top: 25px;">
-                        <button id="download-card-btn" style="width: 100%; background: #CCFF00; color: #000; border: none; padding: 20px; border-radius: 16px; font-weight: 950; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 30px rgba(204,255,0,0.3); text-transform: uppercase;">
-                            <i class="fas fa-download"></i> DESCARGAR IMAGEN
+                    <!-- FOOTER ACTIONS (State of the Art) -->
+                    <div style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 30px;">
+                        
+                        <button id="whatsapp-share-btn" style="grid-column: 1 / -1; width: 100%; background: #25D366; color: #fff; border: none; padding: 22px; border-radius: 20px; font-weight: 950; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 15px 35px rgba(37,211,102,0.3); text-transform: uppercase; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='none'">
+                            <i class="fab fa-whatsapp" style="font-size: 1.5rem;"></i> COMPARTIR WHATSAPP
                         </button>
-                        <button id="close-share-btn" style="width: 100%; background: rgba(255,255,255,0.05); color: #888; border: none; padding: 15px; border-radius: 14px; font-weight: 800; font-size: 0.9rem; cursor: pointer;">
-                            VOLVER
+
+                        <button id="download-card-btn" style="background: #CCFF00; color: #000; border: none; padding: 18px; border-radius: 18px; font-weight: 950; font-size: 0.8rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 30px rgba(204,255,0,0.3); text-transform: uppercase;">
+                            <i class="fas fa-camera" style="font-size: 1.2rem;"></i>
+                            <span>GUARDAR FOTO</span>
+                        </button>
+                        
+                        <button id="native-share-btn" style="background: #3b82f6; color: #fff; border: none; padding: 18px; border-radius: 18px; font-weight: 950; font-size: 0.8rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 30px rgba(59,130,246,0.3); text-transform: uppercase;">
+                            <i class="fas fa-share-alt" style="font-size: 1.2rem;"></i>
+                            <span>MÁS OPCIONES</span>
+                        </button>
+
+                        <button id="close-share-btn" style="grid-column: 1 / -1; width: 100%; background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 14px; font-weight: 800; font-size: 0.8rem; cursor: pointer; margin-top: 10px;">
+                            CERRAR PANEL
                         </button>
                     </div>
                 </div>
@@ -135,11 +147,29 @@
 
             // WhatsApp Share Logic
             const waBtn = document.getElementById('whatsapp-share-btn');
-            waBtn.onclick = () => {
-                const text = `🎾 ¡PARTIDAZO EN SOMOSPADEL! \n\n🔥 ${teamA} [${scoreA}] - [${scoreB}] ${teamB}\n\nEvolución: ${deltaDisplay}\n¡Sigue dándole caña!`;
-                const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-                window.open(url, '_blank');
-            };
+            if (waBtn) {
+                waBtn.onclick = () => {
+                    const text = `🏆 ¡VAMOOOS! He ganado mi partido en SomosPadel\n\n🎾 ${teamA} [${scoreA}] vs [${scoreB}] ${teamB}\n📈 Evolución: ${deltaDisplay}\n¡Sigue a tope! 🔥`;
+                    const encodedText = encodeURIComponent(text);
+                    const url = `https://api.whatsapp.com/send?text=${encodedText}`;
+                    window.open(url, '_blank') || (window.location.href = url);
+                };
+            }
+
+            // Native Share Logic (The one from screenshot)
+            const nativeBtn = document.getElementById('native-share-btn');
+            if (nativeBtn) {
+                nativeBtn.onclick = async () => {
+                    const text = `SomosPadel Result: ${teamA} ${scoreA}-${scoreB} ${teamB}`;
+                    if (navigator.share) {
+                        try {
+                            await navigator.share({ title: 'Resultado SomosPadel', text: text });
+                        } catch (e) { console.warn("Native share error", e); }
+                    } else {
+                        alert("Función no disponible en este navegador. Usa WhatsApp o Descargar.");
+                    }
+                };
+            }
 
             // Capture Logic
             const downloadBtn = document.getElementById('download-card-btn');
@@ -230,5 +260,5 @@
     };
 
     // Alias for emergency button
-    window.shareVictory = window.openProMatchCard;
+
 })();

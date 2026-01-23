@@ -4,18 +4,7 @@
  */
 (function () {
     // --- GLOBAL DISPATCHER FOR SHARE BUTTONS ---
-    window.shareVictory = function (matchId, delta) {
-        console.log('🎯 [GlobalShare] Triggered for:', matchId, delta);
-        const match = window._matchRegistry ? window._matchRegistry[matchId] : null;
-        if (match && window.ShareModal) {
-            window.ShareModal.open(match, delta);
-        } else if (!match) {
-            alert("Pulsa de nuevo para cargar los datos.");
-        } else {
-            alert("Cargando sistema de imágenes... espera un segundo.");
-        }
-    };
-
+    window._matchRegistry = window._matchRegistry || {};
     class ControlTowerView {
         constructor() {
             this.mainSection = 'playing'; // 'playing', 'history', 'help'

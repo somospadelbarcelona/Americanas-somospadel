@@ -8,9 +8,11 @@ importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js')
 try {
     firebase.initializeApp({
         apiKey: "AIzaSyBCy8nN4wKL2Cqvxp_mkmYpsA923N1g5iE",
-        projectId: "americ-7473a",
-        messagingSenderId: "103953800507",
-        appId: "1:103953800507:web:c6722fb485123512270966"
+        authDomain: "americanas-somospadel.firebaseapp.com",
+        projectId: "americanas-somospadel",
+        storageBucket: "americanas-somospadel.firebasestorage.app",
+        messagingSenderId: "638578709472",
+        appId: "1:638578709472:web:bf99bbb7688a947b4bd185"
     });
 
     const messaging = firebase.messaging();
@@ -30,7 +32,7 @@ try {
     });
 } catch (e) { console.error("[SW] Firebase init error", e); }
 
-const CACHE_NAME = 'somospadel-pro-v6';
+const CACHE_NAME = 'somospadel-pro-v25';
 const STATIC_RESOURCES = [
     './',
     './index.html',

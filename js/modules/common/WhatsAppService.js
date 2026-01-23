@@ -1,189 +1,178 @@
 /**
- * WhatsAppService.js
- * Service to generate professional WhatsApp messages for events.
- * Handles formatting, emojis, and deep linking.
+ * WhatsAppService.js - VERSION 7.0
+ * 🛡️ ULTRA-ROBUST EMOJI ENCODING USING ASCII-ONLY SOURCE CODE.
+ * Customized layout and empty slot handling.
  */
 
 window.WhatsAppService = {
 
     /**
-     * Generates a formatted message for an event
-     * @param {object} event 
-     * @returns {string} Formatted textual message
+     * Emojis as explicit Char Codes (Surrogate pairs)
      */
+    E: {
+        SPARKLE: String.fromCharCode(10024),                      // ✨ (U+2728)
+        TENNIS: String.fromCharCode(55356, 57278),                // 🎾 (U+1F3BE)
+        MALE: String.fromCharCode(55357, 57017),                  // 🚹 (U+1F6B9)
+        FEMALE: String.fromCharCode(55357, 57018),                // 🚺 (U+1F6BA)
+        MIXED: String.fromCharCode(55357, 57019),                 // 🚻 (U+1F6BB)
+        CALENDAR: String.fromCharCode(55357, 56517),               // 📅 (U+1F4C5)
+        TIMER: String.fromCharCode(9201, 65039),                  // ⏱️ (U+23F1)
+        DRUM: String.fromCharCode(55358, 56641),                  // 🥁 (U+1F941)
+        WATER: String.fromCharCode(55357, 56486),                 // 💦 (U+1F4A6)
+        GIFT: String.fromCharCode(55356, 57217),                  // 🎁 (U+1F381)
+        PIN: String.fromCharCode(55357, 56525),                   // 📍 (U+1F4CC)
+        MONEY: String.fromCharCode(55357, 56496),                  // 💰 (U+1F4B0)
+        RED: String.fromCharCode(55357, 56628),                    // 🔴 (U+1F534)
+        STAR: String.fromCharCode(11088, 65039),                   // ⭐ (U+2B50)
+        BOLT: String.fromCharCode(9889),                          // ⚡ (U+26A1)
+        LINK: String.fromCharCode(55357, 56599),                  // 🔗 (U+1F517)
+        DOWN: String.fromCharCode(55357, 56391),                  // 👇 (U+1F447)
+        BALANCE: String.fromCharCode(9878, 65039),                 // ⚖️ (U+2696)
+        EURO: String.fromCharCode(8364),                           // € (U+20AC)
+        TROPHY: String.fromCharCode(55356, 57286)                  // 🏆 (U+1F3C6)
+    },
+
     /**
      * Generates a formatted message for an event
-     * @param {object} event 
-     * @param {Array} richPlayers - Optional list of players with full details (team, etc)
-     * @returns {string} Formatted textual message
      */
     generateMessage(event, richPlayers = null) {
         if (!event) return '';
+        const E = this.E;
 
         const type = (event.category || 'open').toLowerCase();
         const isMale = type === 'male' || type === 'masculina';
         const isFemale = type === 'female' || type === 'femenina';
         const isMixed = type === 'mixed' || type === 'mixto' || type === 'mixta';
+        const isAmericana = (event.name || '').toUpperCase().includes('AMERICANA') || event.type === 'americana';
 
-        // Header Decoration
+        // Header
         let headerTitle = 'ENTRENO';
-        let headerEmoji = '🎾';
+        let headerEmoji = E.TENNIS;
+        if (isMale) { headerEmoji = E.TENNIS + E.MALE; headerTitle = 'ENTRENO MASCULINO'; }
+        else if (isFemale) { headerEmoji = E.TENNIS + E.FEMALE; headerTitle = 'ENTRENO FEMENINO'; }
+        else if (isMixed) { headerEmoji = E.TENNIS + E.MIXED; headerTitle = 'ENTRENO MIXTO'; }
 
-        if (isMale) { headerEmoji = '🎾🚹'; headerTitle = 'ENTRENO MASCULINO'; }
-        else if (isFemale) { headerEmoji = '🎾🚺'; headerTitle = 'ENTRENO FEMENINO'; }
-        else if (isMixed) { headerEmoji = '🎾🚻'; headerTitle = 'ENTRENO MIXTO'; }
+        if (isAmericana) headerTitle = headerTitle.replace('ENTRENO', 'AMERICANA');
 
         const dateStr = this._formatDate(event.date);
         const timeStr = event.time || '10:00';
-        const endTimeStr = event.time_end ? ` - ${event.time_end}` : '';
-        const location = event.location || 'Pista por asignar';
+        const endTimeStr = event.time_end ? " a " + event.time_end : '';
+        const location = event.location || 'Barcelona Padel el Prat';
 
-        // Calculate spots
         const players = event.players || [];
-        const maxPlayers = (event.max_courts || 4) * 4;
+        const maxPlayers = (parseInt(event.max_courts) || 4) * 4;
         const spotsLeft = Math.max(0, maxPlayers - players.length);
 
-        // EXTRA for Mixed: Gender Count
-        let mixedStats = '';
+        const pMember = event.price_members || 20;
+        const pExt = event.price_external || 25;
+
+        // Build Message
+        let msg = E.SPARKLE + " " + headerEmoji + " *APP SOMOSPADEL BCN* " + headerEmoji + " " + E.SPARKLE + "\n";
+        msg += "--------------------------\n";
+        msg += E.CALENDAR + " *Fecha:* " + dateStr + "\n";
+        msg += E.TIMER + " *Hora:* " + timeStr + endTimeStr + "\n";
+        msg += E.TROPHY + " *Formato:* " + headerTitle + "\n";
+        msg += E.DRUM + " *Tipo:* " + (event.pair_mode === 'rotating' ? 'Individual / Twister' : 'Pareja Fija') + "\n";
+        msg += E.WATER + " agua para cada jugador\n";
+
+        if (isAmericana) {
+            msg += E.GIFT + " bravas + 2 refrescos para los ganadores\n";
+        }
+
+        msg += E.PIN + " *Lugar:* " + location + "\n";
+        msg += E.TENNIS + " Pelotas nuevas\n";
+        msg += E.MONEY + " " + pMember + E.EURO + " jugadores - " + pExt + E.EURO + " externos\n";
+        msg += "--------------------------\n\n";
+
+        if (spotsLeft === 0) msg += E.RED + " *COMPLETO*\n\n";
+        else msg += E.STAR + " *" + spotsLeft + " PLAZAS LIBRES*\n\n";
+
         if (isMixed && richPlayers) {
-            const males = richPlayers.filter(p => {
-                const g = (p.gender || '').toLowerCase();
-                return g === 'male' || g === 'chico' || g === 'hombre' || g === 'masculino';
-            }).length;
-            const females = richPlayers.filter(p => {
-                const g = (p.gender || '').toLowerCase();
-                return g === 'female' || g === 'chica' || g === 'mujer' || g === 'femenino';
-            }).length;
-
-            if (males + females > 0) {
-                mixedStats = `⚖️ *Balance:* 🚹 ${males}  -  🚺 ${females}\n\n`;
-            }
+            const m = richPlayers.filter(p => ['male', 'chico', 'hombre', 'masculino'].includes((p.gender || '').toLowerCase())).length;
+            const f = richPlayers.filter(p => ['female', 'chica', 'mujer', 'femenino'].includes((p.gender || '').toLowerCase())).length;
+            if (m + f > 0) msg += E.BALANCE + " *Balance:* " + E.MALE + " " + m + " - " + E.FEMALE + " " + f + "\n\n";
         }
 
-        // Status Line
-        let statusLine = '';
-        if (spotsLeft === 0) statusLine = '🔴 *COMPLETO* (Apúntate a lista de espera)';
-        else if (spotsLeft <= 4) statusLine = `⚠️ *¡ÚLTIMAS ${spotsLeft} PLAZAS!*`;
-        else statusLine = `🟢 *${spotsLeft} PLAZAS LIBRES*`;
+        msg += "*Jugadores*\n\n";
 
-        // --- BUILD MESSAGE ---
-        let msg = `✨ ${headerEmoji} *${headerTitle}* ${headerEmoji} ✨\n`;
-        msg += `➖➖➖➖➖➖➖➖➖➖\n`;
-        msg += `📅 *Fecha:* ${dateStr}\n`;
-        msg += `⏰ *Hora:* ${timeStr}${endTimeStr}\n`;
-        msg += `📍 *Lugar:* ${location}\n`;
-        msg += `➖➖➖➖➖➖➖➖➖➖\n\n`;
+        const displayList = richPlayers || players;
+        displayList.forEach((p, index) => {
+            let pName = p.name ? p.name.trim() : 'Jugador';
+            let gIcon = '';
+            const g = (p.gender || '').toLowerCase();
+            if (['male', 'chico', 'hombre', 'masculino'].includes(g)) gIcon = E.MALE + " ";
+            else if (['female', 'chica', 'mujer', 'femenino'].includes(g)) gIcon = E.FEMALE + " ";
 
-        msg += `${statusLine}\n\n`;
-        if (mixedStats) msg += mixedStats;
+            const lvl = p.level || p.playtomic_level || '?.?';
+            const lvlStr = (lvl && lvl !== '?.?') ? " (" + E.BOLT + "N" + lvl + ")" : "";
+            msg += (index + 1) + ". " + gIcon + pName + lvlStr + "\n";
+        });
 
-        msg += `👥 *JUGADORES INSCRITOS (${players.length}/${maxPlayers}):*\n`;
-
-        if (players.length === 0) {
-            msg += `_Todavía nadie... ¡Sé el primero!_ 🚀\n`;
-        } else {
-            const displayList = richPlayers || players;
-            displayList.forEach((p, index) => {
-                let pName = p.name ? p.name.trim() : 'Jugador';
-
-                // Extra Info icons
-                const team = p.team_somospadel || p.team || ''; // Try to find team
-                const teamStr = Array.isArray(team) ? team[0] : team; // Take first team if multiple
-                const level = p.level || p.playtomic_level || '?.?';
-
-                // Gender Icon for Mixed
-                let genderIcon = '';
-                if (isMixed && p.gender) {
-                    const g = (p.gender || '').toLowerCase();
-                    if (g === 'male' || g === 'chico' || g === 'hombre' || g === 'masculino') genderIcon = '🚹 ';
-                    else if (g === 'female' || g === 'chica' || g === 'mujer' || g === 'femenino') genderIcon = '🚺 ';
-                }
-
-                // Helpers for formatting
-                const parts = [];
-                // Team with Shield
-                if (teamStr) parts.push(`🛡️ ${teamStr.toUpperCase()}`);
-                // Level with Lightning
-                if (level) parts.push(`⚡ N${level}`);
-
-                // Construct line
-                // 1️⃣ Name (Team - Level)
-                const numberIcon = this._getNumberEmoji(index + 1);
-                const extras = parts.length > 0 ? ` (${parts.join(' - ')})` : '';
-
-                msg += `${numberIcon} ${genderIcon}${pName}${extras}\n`;
-            });
+        // Numerical vacancies instead of just balls
+        for (let i = players.length; i < maxPlayers; i++) {
+            msg += (i + 1) + ". " + E.TENNIS + " \n";
         }
 
-        msg += `\n👇 *INSCRÍBETE AQUÍ:*\n`;
-        msg += `🔗 https://somospadelbarcelona.github.io/Americanas-somospadel/#entrenos\n`;
+        msg += "\n" + E.DOWN + " *INSCRIBETE AQUI:* \n";
+        msg += E.LINK + " https://somospadelbarcelona.github.io/Americanas-somospadel/#entrenos\n";
 
         return msg;
     },
 
-    // Helper for number emojis
-    _getNumberEmoji(num) {
-        const digitMap = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
-        // Special 10 emoji
-        if (num === 10) return '🔟';
-
-        return num.toString().split('').map(d => digitMap[parseInt(d)]).join('');
-    },
-
     /**
      * Opens WhatsApp with the pre-filled message
-     * @param {object} event 
      */
     async shareStartFromAdmin(event) {
         try {
-            console.log("📤 Generating WhatsApp for:", event.name);
-
-            // Fetch rich data for players to show Team & Gender
+            console.log("📤 WhatsApp Share Start (V7.0)");
             let richPlayers = null;
             if (event.players && event.players.length > 0) {
                 try {
                     const allUsers = await window.FirebaseDB.players.getAll();
                     richPlayers = event.players.map(p => {
                         const user = allUsers.find(u => (u.id === p.id) || (u.uid === p.id));
-                        // Prefer fresh user level, fallback to event stored level
-                        const freshLevel = user ? (user.level || user.self_rate_level || p.level) : p.level;
-                        return {
-                            ...p,
-                            team: user ? (user.team_somospadel || user.team || '') : '',
-                            level: freshLevel,
-                            gender: user ? user.gender : null, // FETCH GENDER
-                            // Ensure we preserve joinedAt from the event player object, not the user profile
-                            joinedAt: p.joinedAt
-                        };
+                        return { ...p, level: user ? (user.level || user.self_rate_level || p.level) : p.level, gender: user ? user.gender : null };
                     });
-                } catch (err) {
-                    console.warn("Could not fetch rich player data, using basic data", err);
-                }
+                } catch (err) { console.warn(err); }
             }
 
             const text = this.generateMessage(event, richPlayers);
             const encodedText = encodeURIComponent(text);
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || isIOS;
 
-            // Use api.whatsapp.com for ensuring it works on Desktop and Mobile universally
-            const url = `https://api.whatsapp.com/send?text=${encodedText}`;
+            if (isMobile && navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Evento Somospadel',
+                        text: text
+                    });
+                    return;
+                } catch (e) { console.warn("Native share failed", e); }
+            }
 
-            window.open(url, '_blank');
+            const url = "https://api.whatsapp.com/send?text=" + encodedText;
+
+            if (isIOS) {
+                window.location.href = url;
+            } else {
+                window.open(url, '_blank');
+            }
         } catch (e) {
-            console.error("Error sharing to WhatsApp:", e);
-            alert("Error al generar enlace de WhatsApp");
+            console.error("WhatsApp Error:", e);
+            alert("Error al compartir en WhatsApp");
         }
     },
 
-    /**
-     * Helper to format simple string date YYYY-MM-DD to DD/MM
-     */
     _formatDate(dateString) {
         if (!dateString) return '';
         try {
-            const [y, m, d] = dateString.split('-');
-            return `${d}/${m}`;
+            const date = new Date(dateString + 'T12:00:00');
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            let f = new Intl.DateTimeFormat('es-ES', options).format(date);
+            return f.charAt(0).toUpperCase() + f.slice(1);
         } catch (e) { return dateString; }
     }
 };
 
-console.log("💬 WhatsAppService Loaded");
+console.log("💬 WhatsAppService V7.0 Loaded");
