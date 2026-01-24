@@ -35,18 +35,31 @@
             const phone = user.email ? user.email.split('@')[0] : '';
             let playerData = null;
             try {
+                // UNIFICATION MAGIC: Find the REAL player profile by phone
                 playerData = await window.FirebaseDB.players.getByPhone(phone);
             } catch (e) {
                 console.error("Error fetching player data on auth state change", e);
             }
 
+            // Create base user object
             const finalUser = {
-                id: user.uid,
+                id: user.uid, // Default to Auth UID
                 uid: user.uid,
                 email: user.email,
                 displayName: user.displayName,
-                ...playerData
+                ...playerData // Overwrite with DB data (name, role, level, etc.)
             };
+
+            // ID MERGING STRATEGY
+            // If the DB document ID is different from Auth UID, we need to track BOTH.
+            finalUser.mergedIds = [user.uid];
+            if (playerData && playerData.id && playerData.id !== user.uid) {
+                console.log(`🔗 Identity Merge: Auth(${user.uid}) + Player(${playerData.id})`);
+                finalUser.mergedIds.push(playerData.id);
+                // Vital: Make the primary ID the Player ID for data consistency if it exists
+                finalUser.id = playerData.id;
+            }
+
             window.Store.setState('currentUser', finalUser);
         }
 

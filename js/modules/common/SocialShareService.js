@@ -46,10 +46,10 @@ class SocialShareService {
             // 3. Convert to Canvas
             const canvas = await html2canvas(container, {
                 useCORS: true,
-                scale: 1,
+                scale: 2, // Higher quality
                 backgroundColor: null,
                 logging: false,
-                allowTaint: true // Allowed because we use Data URI now
+                allowTaint: false // DO NOT TAINT, otherwise toDataURL fails
             });
 
             document.body.removeChild(container);
@@ -88,6 +88,77 @@ class SocialShareService {
             background: #000; color: white;
             padding: 40px;
         `;
+
+        if (type === 'player_card') {
+            const level = parseFloat(data.level || 3.5).toFixed(2);
+
+            // Skill derivation from real data or fallback
+            const s = data.skills || { atk: 65, def: 65, tec: 65, fis: 65 };
+
+            return `
+                <div style="${commonStyle} background: radial-gradient(circle at 50% 30%, #1a1a1a 0%, #000 100%); align-items:center; justify-content:center; position:relative; overflow:hidden;">
+                    <!-- Aesthetic Background elements -->
+                    <div style="position:absolute; top:10%; left:-10%; width:120%; height:80%; background: linear-gradient(135deg, rgba(204,255,0,0.08) 0%, transparent 100%); transform: rotate(-5deg); filter: blur(50px);"></div>
+                    <div style="position:absolute; bottom:0; width:100%; height:150px; background:linear-gradient(to top, #CCFF0022 0%, transparent 100%);"></div>
+
+                    <!-- CARD FRAME -->
+                    <div style="width: 850px; height: 1250px; background: #0a0a0a; border: 8px solid #CCFF00; border-radius: 60px; box-shadow: 0 40px 100px rgba(0,0,0,0.8); position:relative; display:flex; flex-direction:column; align-items:center; padding: 50px; z-index: 5;">
+                        
+                        <!-- Header: Logo -->
+                        <img src="${this._getLogoSvg()}" style="height:110px; margin-bottom: 30px;">
+                        
+                        <!-- Player Photo -->
+                        <div style="width: 380px; height: 380px; border-radius: 50%; border: 12px solid #CCFF00; padding: 12px; background: #000; box-shadow: 0 0 50px rgba(204,255,0,0.25); margin-bottom: 30px; overflow:hidden;">
+                            <img src="${data.photoURL || 'img/logo_somospadel.png'}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
+                        </div>
+
+                        <!-- Name & Role -->
+                        <div style="text-align:center; margin-bottom: 30px;">
+                            <h1 style="font-size: 4.8rem; font-weight: 950; margin: 0; text-transform: uppercase; color:#fff; letter-spacing:-2px;">${data.name || 'JUGADOR'}</h1>
+                            <div style="background: #CCFF00; color: #000; display: inline-block; padding: 8px 35px; border-radius: 18px; font-weight: 950; font-size: 1.4rem; margin-top: 10px; text-transform: uppercase; letter-spacing: 2px;">
+                                ${(data.role || 'PLAYER').replace('_', ' ')}
+                            </div>
+                        </div>
+
+                        <!-- Main Stats -->
+                        <div style="display:flex; gap: 40px; margin-bottom: 40px; align-items: center;">
+                             <div style="text-align:center;">
+                                <div style="font-size: 7.5rem; font-weight: 950; color: #CCFF00; line-height:1;">${level}</div>
+                                <div style="font-size: 1.4rem; font-weight: 900; color: #555; text-transform: uppercase; letter-spacing: 4px;">NIVEL GLOBAL</div>
+                             </div>
+                        </div>
+
+                        <!-- Skill Attributes (FIFA Style Bars) -->
+                        <div style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 35px; padding: 0 40px; flex: 1;">
+                             ${[
+                    { l: 'ATK', v: s.atk, c: '#ef4444' },
+                    { l: 'DEF', v: s.def, c: '#3b82f6' },
+                    { l: 'TEC', v: s.tec, c: '#CCFF00' },
+                    { l: 'FIS', v: s.fis, c: '#f59e0b' }
+                ].map(item => `
+                                <div style="display:flex; align-items:center; gap: 20px;">
+                                    <div style="font-size: 2.2rem; font-weight: 950; color: #fff; width: 80px;">${item.l}</div>
+                                    <div style="flex:1; height: 30px; background: rgba(255,255,255,0.08); border-radius: 15px; overflow:hidden;">
+                                        <div style="width: ${item.v}%; height: 100%; background: ${item.c}; box-shadow: 0 0 15px ${item.c}44;"></div>
+                                    </div>
+                                    <div style="font-size: 2.2rem; font-weight: 950; color: ${item.c}; width: 70px; text-align:right;">${item.v}</div>
+                                </div>
+                             `).join('')}
+                        </div>
+
+                        <!-- Footer: SP QR / App Link (Moved up slightly to avoid overlap) -->
+                        <div style="margin-top: 30px; text-align:center; width:100%; opacity: 0.5;">
+                             <div style="font-size: 1.5rem; font-weight: 900; color: #666; letter-spacing: 8px; text-transform: uppercase;">APP SOMOSPADEL BARCELONA</div>
+                        </div>
+                    </div>
+
+                    <!-- Instagram Handle -->
+                    <div style="position:absolute; bottom:40px; font-size: 2.2rem; font-weight: 950; color:rgba(255,255,255,0.4); display:flex; align-items:center; gap:15px;">
+                        <i class="fab fa-instagram"></i> @somospadelbarcelona_
+                    </div>
+                </div>
+            `;
+        }
 
         if (type === 'cyberpunk') {
             return `

@@ -285,6 +285,10 @@ const FirebaseDB = {
 
     // Matches Collection
     matches: {
+        async getAll() {
+            const snapshot = await db.collection('matches').get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        },
         async getByAmericana(americanaId) {
             const snapshot = await db.collection('matches')
                 .where('americana_id', '==', americanaId)
@@ -296,31 +300,126 @@ const FirebaseDB = {
 
         async getByPlayer(playerId) {
             const collections = ['matches', 'entrenos_matches'];
+            // Queries exhaustivas (Moderna + Legacy)
+            // Nota: Firestore limita el nº de queries paralelas, pero esto es necesario para consistencia total sin reindexar todo.
             const fetchPromises = collections.flatMap(coll => [
+                // Modern Arrays
                 db.collection(coll).where('team_a_ids', 'array-contains', playerId).get(),
-                db.collection(coll).where('team_b_ids', 'array-contains', playerId).get()
+                db.collection(coll).where('team_b_ids', 'array-contains', playerId).get(),
+                // Legacy Fields (Direct ID Match)
+                db.collection(coll).where('player1', '==', playerId).get(),
+                db.collection(coll).where('player2', '==', playerId).get(),
+                db.collection(coll).where('player3', '==', playerId).get(),
+                db.collection(coll).where('player4', '==', playerId).get(),
+                // Ultra Legacy (Players Array)
+                db.collection(coll).where('players', 'array-contains', playerId).get()
             ]);
 
             const snapshots = await Promise.all(fetchPromises);
-            const matches = [];
+            const matchesMap = new Map(); // Use Map to deduplicate by ID efficiently
 
             snapshots.forEach((snap, index) => {
-                const collectionName = collections[Math.floor(index / 2)];
+                // Determine collection based on index stride (7 queries per collection)
+                const collectionName = collections[Math.floor(index / 7)];
                 snap.docs.forEach(doc => {
-                    matches.push({
-                        id: doc.id,
-                        collection: collectionName,
-                        ...doc.data()
-                    });
+                    if (!matchesMap.has(doc.id)) {
+                        matchesMap.set(doc.id, {
+                            id: doc.id,
+                            collection: collectionName,
+                            ...doc.data()
+                        });
+                    }
                 });
             });
 
-            // Sort by creation time DESC
-            return matches.sort((a, b) => {
-                const dateA = a.timestamp || a.createdAt || 0;
-                const dateB = b.timestamp || b.createdAt || 0;
-                return new Date(dateB) - new Date(dateA);
+            // FALLBACK 2: Búsqueda dentro de documentos de 'entrenos' (Si los resultados están embebidos)
+            if (matchesMap.size === 0) {
+                console.log("⚠️ [Matches] Trying EMBEDDED SEARCH in 'entrenos' collection...");
+                const entrenosSnap = await db.collection('entrenos').orderBy('date', 'desc').limit(20).get();
+
+                entrenosSnap.docs.forEach(doc => {
+                    const evt = doc.data();
+                    // STRICT CHECK: Skip cancelled events
+                    if (evt.status === 'cancelled' || evt.cancelled === true) return;
+
+                    // Check common fields where matches might be hidden
+                    const embeddedMatches = evt.matches || evt.results || evt.games || [];
+
+                    if (Array.isArray(embeddedMatches)) {
+                        embeddedMatches.forEach((em, idx) => {
+                            // Skip if match itself is marked cancelled
+                            if (em.status === 'cancelled') return;
+
+                            // Check if user is in this embedded match
+                            const strM = JSON.stringify(em).toLowerCase();
+                            const targetId = String(playerId).toLowerCase();
+
+                            if (strM.includes(targetId)) {
+                                // Construct a virtual match ID
+                                const virtualId = `${doc.id}_m_${idx}`;
+                                if (!matchesMap.has(virtualId)) {
+                                    matchesMap.set(virtualId, {
+                                        id: virtualId,
+                                        collection: 'entrenos_embedded',
+                                        americana_name: evt.name, // Parent event name
+                                        date: evt.date, // Parent event date
+                                        status: evt.status, // Link parent status
+                                        ...em
+                                    });
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Convert Map to Array and Sort by Date Descending
+            // Descarga los últimos 200 partidos y busca manualmente (por si hay problemas de índices/tipos)
+            if (matchesMap.size === 0) {
+                console.log("⚠️ [Matches] Standard query empty. Trying EXHAUSTIVE SEARCH (Last 200)...");
+                const blindFetch = collections.flatMap(coll =>
+                    db.collection(coll).orderBy('created_at', 'desc').limit(200).get()
+                );
+
+                const blindSnaps = await Promise.all(blindFetch);
+
+                blindSnaps.forEach((snap, index) => {
+                    const collectionName = collections[Math.floor(index)]; // Simple 1-to-1 mapping here since blindFetch is 1 per coll
+                    if (!collectionName) return;
+
+                    snap.docs.forEach(doc => {
+                        const m = doc.data();
+
+                        // STRICT CHECK: Skip cancelled matches
+                        if (m.status === 'cancelled' || m.cancelled === true) return;
+
+                        const docId = doc.id;
+                        if (matchesMap.has(docId)) return;
+
+                        // Check EVERY field for the ID
+                        const strData = JSON.stringify(m).toLowerCase();
+                        const targetId = String(playerId).toLowerCase();
+
+                        // ID check inside stringified data (Brute force but finds nested objects)
+                        // Also check Name if possible? (Simpler to let PlayerController handle name)
+                        // Just check ID here carefully
+                        if (strData.includes(targetId)) {
+                            matchesMap.set(docId, { id: docId, collection: collectionName, ...m });
+                        }
+                    });
+                });
+            }
+
+            // Convert Map to Array and Sort by Date Descending
+            const results = Array.from(matchesMap.values()).sort((a, b) => {
+                const getVal = (d) => d.date || d.createdAt || d.timestamp || 0;
+                const dateA = new Date(getVal(a));
+                const dateB = new Date(getVal(b));
+                return dateB - dateA;
             });
+
+            console.log(`✅ [Matches] Total found for ${playerId}: ${results.length}`);
+            return results;
         },
 
         async create(data) {
@@ -432,6 +531,19 @@ const FirebaseDB = {
 
     // Entrenos Matches
     entrenos_matches: {
+        async getAll() {
+            const snapshot = await db.collection('entrenos_matches').get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        },
+        async getByPlayer(playerId) {
+            const [snapshotA, snapshotB] = await Promise.all([
+                db.collection('entrenos_matches').where('team_a_ids', 'array-contains', playerId).get(),
+                db.collection('entrenos_matches').where('team_b_ids', 'array-contains', playerId).get()
+            ]);
+            const matchesA = snapshotA.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const matchesB = snapshotB.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            return [...matchesA, ...matchesB];
+        },
         async getByAmericana(entrenoId) {
             const snapshot = await db.collection('entrenos_matches').where('americana_id', '==', entrenoId).get();
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => (a.round || 0) - (b.round || 0));

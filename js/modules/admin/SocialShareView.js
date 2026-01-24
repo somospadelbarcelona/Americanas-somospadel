@@ -54,13 +54,13 @@ class SocialShareView {
         document.body.insertAdjacentHTML('beforeend', modalHtml);
     }
 
-    open(data) {
+    open(data, template = 'cyberpunk') {
         this.currentData = data;
         const modal = document.getElementById('social-share-modal');
         if (modal) {
             modal.classList.remove('hidden');
             modal.style.display = 'flex';
-            this.selectTemplate('cyberpunk'); // Default
+            this.selectTemplate(template); // Specific template if provided
         }
     }
 

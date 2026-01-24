@@ -550,17 +550,22 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label style="color: var(--warning); font-weight: 800;"><i class="fas fa-lock"></i> CONTRASEÑA /
-                        HASH ACTUAL</label>
-                    <input type="text" name="password" placeholder="Escribir para cambiar..." class="pro-input"
-                        style="font-family: monospace; font-weight: bold; background: rgba(255,165,0,0.05); border-color: var(--warning);">
+                <div class="form-group" style="position: relative;">
+                    <label style="color: var(--primary); font-weight: 800;"><i class="fas fa-lock"></i> CONTRASEÑA
+                        (PLAIN TEXT / HASH)</label>
+                    <div style="position: relative;">
+                        <input type="password" name="password" id="admin-user-pwd-input"
+                            placeholder="Escribir p. cambiar..." class="pro-input">
+                        <i class="fas fa-eye" id="toggle-admin-user-pwd"
+                            onclick="const i = document.getElementById('admin-user-pwd-input'); i.type = i.type === 'password' ? 'text' : 'password'; this.classList.toggle('fa-eye'); this.classList.toggle('fa-eye-slash');"
+                            style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #888; z-index: 10;"></i>
+                    </div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                     <div class="form-group">
                         <label><i class="fas fa-chart-line"></i> NIVEL</label>
-                        <input type="number" step="0.1" name="level" class="pro-input" required>
+                        <input type="text" name="level" class="pro-input" placeholder="Ej: 3,5" required>
                     </div>
                     <div class="form-group">
                         <label><i class="fas fa-venus-mars"></i> GÉNERO</label>

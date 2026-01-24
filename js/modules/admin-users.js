@@ -525,7 +525,15 @@ window.AdminViews.users = async function () {
         form.elements['role'].value = user.role || 'player';
         form.elements['status'].value = user.status || 'active';
         form.elements['matches_played'].value = user.matches_played || 0;
-        form.elements['password'].value = user.password || ''; // Show current password/hash
+        form.elements['matches_played'].value = user.matches_played || 0;
+
+        const pwdInput = document.getElementById('admin-user-pwd-input');
+        if (pwdInput) {
+            pwdInput.value = user.password || '';
+            pwdInput.type = 'password'; // Reset to hidden
+            const toggle = document.getElementById('toggle-admin-user-pwd');
+            if (toggle) { toggle.classList.remove('fa-eye-slash'); toggle.classList.add('fa-eye'); }
+        }
 
         // Populate Team Checkboxes
         // Limpiar todos primero
@@ -600,7 +608,12 @@ window.AdminViews.users = async function () {
             const dummyUser = { gender: gender }; // Mock user for helper
             const autoLevel = window._calculateLevelFromTeams(dummyUser, selectedTeams);
 
-            let submittedLevel = parseFloat(formData.get('level'));
+            let rawLevel = formData.get('level') || '3.5';
+            if (typeof rawLevel === 'string') rawLevel = rawLevel.replace(',', '.');
+            let submittedLevel = parseFloat(rawLevel);
+
+            if (isNaN(submittedLevel)) submittedLevel = 3.5;
+
             // If teams enforce a level, use it? Or only if > current?
             // "quiero que lo detecte automaticamente y lo cambie"
             // Usually, if a team decides level, we should set it.
