@@ -295,29 +295,28 @@
                 if (authModal) authModal.classList.remove('hidden');
                 if (appShell) appShell.classList.add('hidden');
                 console.log('🔐 Showing login modal - No user detected');
-            }
-        });
+            });
     </script>
 
     <div id="auth-modal" class="modal-overlay auth-overlay-enterprise hidden">
         <div class="modal-content admin-login-card"
-            style="padding: 20px 25px !important; margin: 10px; max-height: 90vh; overflow-y: auto;">
-            <div style="text-align: center; margin-bottom: 1.5rem;">
+            style="padding: 15px 20px !important; margin: 10px; max-height: 95vh; overflow-y: auto;">
+            <div style="text-align: center; margin-bottom: 0.8rem;">
                 <img src="img/logo_somospadel.png" class="login-ball-animate"
-                    style="height: 100px; margin-bottom: 1.5rem; margin-top: 30px;" alt="Somos Padel">
+                    style="height: 70px; margin-bottom: 0.5rem; margin-top: 10px;" alt="Somos Padel">
                 <h2
-                    style="color: white !important; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0,0,0,0.5);">
+                    style="color: white !important; font-weight: 900; letter-spacing: 1px; font-size: 1.2rem; margin: 0; text-shadow: 0 0 10px rgba(0,0,0,0.5);">
                     ACCESO JUGADORES</h2>
                 <div
-                    style="color: var(--brand-neon); font-size: 0.7rem; font-weight: 800; letter-spacing: 3px; margin-top: 5px;">
+                    style="color: var(--brand-neon); font-size: 0.6rem; font-weight: 800; letter-spacing: 2px; margin-top: 2px;">
                     APP SOMOSPADEL BCN</div>
             </div>
 
             <!-- Login Form -->
             <form id="login-form" class="pro-form">
-                <div class="form-group" style="margin-bottom: 1.2rem;">
+                <div class="form-group" style="margin-bottom: 0.8rem;">
                     <label
-                        style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.5rem; font-size:0.8rem; font-weight:700;">TELÉFONO
+                        style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.3rem; font-size:0.7rem; font-weight:700;">TELÉFONO
                         DE ACCESO</label>
                     <input type="text" name="phone" placeholder="Usuario o Teléfono" class="pro-input" required
                         autocomplete="username"
