@@ -31,19 +31,62 @@
                         <div style="position: absolute; bottom: -50px; right: -50px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%);"></div>
                         
                         <div style="display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; z-index: 2;">
-                            <!-- Avatar with Neon Glow -->
+                            <!-- Avatar with Reliability Ring -->
                             <div style="position: relative; margin-bottom: 20px;">
-                                <div id="profile-avatar-display" style="width: 110px; height: 110px; border-radius: 35px; background: #222; border: 2px solid #CCFF00; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 950; overflow: hidden; box-shadow: 0 0 30px rgba(204, 255, 0, 0.2);">
-                                    ${user.photo_url ? `<img src="${user.photo_url}" style="width:100%; height:100%; object-fit:cover;">` : user.name.substring(0, 2).toUpperCase()}
-                                </div>
-                                <div onclick="window.PlayerView.showUpdatePhotoPrompt()" style="position: absolute; bottom: -2px; right: -2px; background: #CCFF00; color: black; width: 34px; height: 34px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; border: 3px solid #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                                ${(() => {
+                    // Map status to color
+                    const relMap = {
+                        'GREEN': { color: '#22c55e', glow: 'rgba(34, 197, 94, 0.6)', label: 'FIABLE' },
+                        'YELLOW': { color: '#eab308', glow: 'rgba(234, 179, 8, 0.6)', label: 'DUDOSO' },
+                        'ORANGE': { color: '#f97316', glow: 'rgba(249, 115, 22, 0.6)', label: 'INACTIVO' },
+                        'RED': { color: '#ef4444', glow: 'rgba(239, 68, 68, 0.6)', label: 'PROVISIONAL' }
+                    };
+                    const status = data.reliability || 'RED';
+                    const style = relMap[status] || relMap['RED'];
+
+                    return `
+                                        <div id="profile-avatar-display" style="
+                                            width: 110px; height: 110px; border-radius: 35px; background: #222; 
+                                            border: 3px solid ${style.color};
+                                            display: flex; align-items: center; justify-content: center; 
+                                            font-size: 2.5rem; font-weight: 950; overflow: hidden; 
+                                            box-shadow: 0 0 25px ${style.glow}, inset 0 0 10px ${style.glow};
+                                            animation: pulseRing 3s infinite ease-in-out;
+                                        ">
+                                            ${user.photo_url ? `<img src="${user.photo_url}" style="width:100%; height:100%; object-fit:cover;">` : user.name.substring(0, 2).toUpperCase()}
+                                        </div>
+                                        
+                                        <!-- Reliability Badge (Traffic Light) -->
+                                        <div style="
+                                            position: absolute; top: -5px; right: -5px; 
+                                            background: ${style.color}; color: #000; 
+                                            padding: 4px 8px; border-radius: 12px; 
+                                            font-size: 0.6rem; font-weight: 900; 
+                                            border: 2px solid #111; 
+                                            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+                                            text-transform: uppercase;
+                                        ">
+                                            ${style.label}
+                                        </div>
+                                    `;
+                })()}
+                                
+                                <div onclick="window.PlayerView.showUpdatePhotoPrompt()" style="position: absolute; bottom: -2px; right: -2px; background: #fff; color: black; width: 34px; height: 34px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; border: 3px solid #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 5;">
                                     <i class="fas fa-camera"></i>
                                 </div>
                             </div>
                             
+                            <style>
+                                @keyframes pulseRing {
+                                    0% { box-shadow: 0 0 15px var(--glow-color); }
+                                    50% { box-shadow: 0 0 25px var(--glow-color), 0 0 40px var(--glow-color); }
+                                    100% { box-shadow: 0 0 15px var(--glow-color); }
+                                }
+                            </style>
+
                             <h2 style="font-weight: 950; font-size: 1.8rem; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">${user.name}</h2>
                             <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
-                                <span style="background: #CCFF00; color: #000; padding: 4px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 950;">NIVEL ${parseFloat(user.level || 3.5).toFixed(2)}</span>
+                                <span style="background: rgba(255,255,255,0.1); color: #fff; padding: 4px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 950; border: 1px solid rgba(255,255,255,0.2);">NIVEL ${parseFloat(user.level || 3.5).toFixed(2)}</span>
                                 <span style="background: rgba(255,255,255,0.05); color: #888; padding: 4px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid #333;">ID: ${(user.id || user.uid || 'PRO').substring(0, 5).toUpperCase()}</span>
                             </div>
                             

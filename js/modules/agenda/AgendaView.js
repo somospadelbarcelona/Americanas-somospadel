@@ -15,6 +15,9 @@
                         <div style="position: absolute; top: -20px; right: -20px; width: 120px; height: 120px; background: var(--playtomic-neon); opacity: 0.1; border-radius: 50%; filter: blur(40px);"></div>
                         <h1 style="font-family: 'Outfit'; font-weight: 900; font-size: 2.2rem; margin: 0; letter-spacing: -1px; line-height: 1;">Mi <span style="color: var(--playtomic-neon);">Agenda</span></h1>
                         <p style="color: #aaa; font-size: 0.9rem; margin-top: 10px; font-weight: 500;">Gestiona tus reservas y próximos retos.</p>
+                        
+                        <!-- NEW: LEVEL RELIABILITY BADGE -->
+                        <div id="user-reliability-badge" style="margin-top: 20px;"></div>
                     </div>
 
                     <!-- My Reserved Events -->

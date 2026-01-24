@@ -180,12 +180,39 @@
                     levelHistory = [{ level: currentLvl, date: new Date().toISOString() }];
                 }
 
+                // 5. Reliability Calculation (Semáforo de Nivel)
+                let reliabilityStatus = 'RED'; // Default: Provisional
+                const today = new Date();
+                const lastMatch = matchesList.length > 0 ? this._parseDate(matchesList[0].date) : null;
+
+                if (stats.matches >= 5) {
+                    if (lastMatch) {
+                        const diffTime = Math.abs(today - lastMatch);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                        if (diffDays <= 15) {
+                            reliabilityStatus = 'GREEN'; // Fiable (Activo reciente + experiencia)
+                        } else if (diffDays <= 30) {
+                            reliabilityStatus = 'YELLOW'; // Oxidado? (Inactivo 2-4 semanas)
+                        } else {
+                            reliabilityStatus = 'ORANGE'; // Inactivo (> 1 mes)
+                        }
+                    } else {
+                        reliabilityStatus = 'RED'; // No hay fecha válida, error o muy antiguo
+                    }
+                } else if (stats.matches >= 1) {
+                    reliabilityStatus = 'YELLOW'; // Pocos partidos (1-4), nivel no consolidado
+                } else {
+                    reliabilityStatus = 'RED'; // Sin partidos (Nivel teórico)
+                }
+
                 this.state = {
                     stats,
                     recentMatches: matchesList.slice(0, 5),
                     levelHistory: levelHistory,
                     communityAvg: communityAvg,
                     fullData: userDoc,
+                    reliability: reliabilityStatus, // Expose reliability
                     aiInsights: this.generateAIInsights(matchesList, stats),
                     badges: this.calculateBadges(matchesList, stats),
                     h2h: this.calculateTopRivals(matchesList, userId, nameMap)

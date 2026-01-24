@@ -590,14 +590,27 @@ window.Actions = {
         try {
             await collection.update(matchId, { status: newStatus });
 
-            // --- NEW: AJUSTE DE NIVEL AUTOMÁTICO ---
-            if (isFinish && window.LevelAdjustmentService) {
+            // --- NEW: AJUSTE DE NIVEL AUTOMÁTICO Y FIABILIDAD ---
+            if (isFinish) {
                 const updatedMatch = window.AdminController.matchesBuffer.find(m => m.id === matchId);
                 if (updatedMatch) {
-                    // Nos aseguramos de pasar los datos más recientes (con el marcador actual)
-                    LevelAdjustmentService.processMatchResults(updatedMatch).catch(e => {
-                        console.error("Error ajustando nivel:", e);
-                    });
+                    // 1. Ajuste de nivel (Pro Smart)
+                    if (window.LevelAdjustmentService) {
+                        LevelAdjustmentService.processMatchResults(updatedMatch).catch(e => {
+                            console.error("Error ajustando nivel:", e);
+                        });
+                    }
+
+                    // 2. Actualizar fecha de actividad (Semáforo)
+                    if (window.LevelReliabilityService) {
+                        const playerIds = [
+                            ...(updatedMatch.team_a_ids || []),
+                            ...(updatedMatch.team_b_ids || [])
+                        ];
+                        window.LevelReliabilityService.updateLastMatchDate(playerIds).catch(e => {
+                            console.error("Error actualizando fiabilidad:", e);
+                        });
+                    }
                 }
             }
 
@@ -703,6 +716,13 @@ window.Actions = {
         } catch (e) {
             console.error(e);
             alert("Error al reiniciar: " + e.message);
+        }
+    },
+    async runRescue1101() {
+        if (window.LevelReliabilityService) {
+            await window.LevelReliabilityService.runRescue1101();
+        } else {
+            alert("Error: LevelReliabilityService no disponible.");
         }
     }
 };

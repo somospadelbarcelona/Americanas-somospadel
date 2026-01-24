@@ -112,7 +112,23 @@ window.AdminViews.users = async function () {
                     </div>
                 </td>
                 <td>
-                    <span class="pro-category-badge" style="background: var(--surface-hover);">${u.level || u.self_rate_level || '3.5'}</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="pro-category-badge" style="background: var(--surface-hover);">${u.level || u.self_rate_level || '3.5'}</span>
+                        ${(() => {
+                    if (window.LevelReliabilityService) {
+                        const rel = window.LevelReliabilityService.getReliability(u);
+                        // console.log(`[UI] Reliability for ${u.name}:`, rel);
+                        return `
+                                    <i class="fas ${rel.icon}" 
+                                       style="color: ${rel.color} !important; font-size: 0.8rem; cursor: help;" 
+                                       title="${rel.label}${rel.daysInactive !== Infinity ? ` (hace ${rel.daysInactive} días)` : ''}"></i>
+                                `;
+                    } else {
+                        console.error("[CRITICAL] LevelReliabilityService NOT FOUND in window. Still rendering without semaphore.");
+                    }
+                    return '';
+                })()}
+                    </div>
                 </td>
                 <td>
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -163,6 +179,9 @@ window.AdminViews.users = async function () {
                     <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05);" onclick="batchUpdateTeamLevels()">
                         ⚠️ SYNC NIVELES EQ
                     </button>
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #3b82f6; color: #3b82f6; background: rgba(59, 130, 246, 0.05);" onclick="window.Actions.runRescue1101()">
+                        🚑 RESCATAR PARTIDOS
+                    </button>
                     <!-- NEW RECALC STATS BUTTON -->
                     <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #eab308; color: #eab308; background: rgba(234, 179, 8, 0.05); margin-left: auto;" onclick="recalculateMatchesPlayed()">
                         🔄 REPARAR STATS
@@ -172,7 +191,7 @@ window.AdminViews.users = async function () {
                     <button class="btn-primary-pro" style="padding: 0.5rem 1.5rem;" onclick="openCreateUserModal()">+ REGISTRAR</button>
                 </div>
             </div>
-            <div class="filters-row" style="padding: 1rem 2rem; background: rgba(255,255,255,0.02); display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 1fr; gap: 1rem; border-bottom: var(--border-pro);">
+            <div class="filters-row" style="padding: 1rem 2rem; background: rgba(255,255,255,0.02); display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 1fr 1fr; gap: 1rem; border-bottom: var(--border-pro);">
                 <input type="text" id="filter-name" placeholder="Filtrar nombre..." class="pro-input-micro" onkeyup="multiFilterUsers()">
                 <input type="text" id="filter-phone" placeholder="Filtrar teléfono..." class="pro-input-micro" onkeyup="multiFilterUsers()">
                 <input type="text" id="filter-level" placeholder="Nivel..." class="pro-input-micro" onkeyup="multiFilterUsers()">
@@ -197,6 +216,13 @@ window.AdminViews.users = async function () {
                     <option value="4º Mixto B">4º Mixto B</option>
                     <option value="3º Mixto">3º Mixto</option>
                     <option value="2º Femenino">2º Femenino</option>
+                </select>
+                <select id="filter-reliability" class="pro-input-micro" onchange="multiFilterUsers()">
+                    <option value="">Semáforo (Todos)</option>
+                    <option value="green">🟢 Fiable (Verde)</option>
+                    <option value="yellow">🟡 Dudoso (Amarillo)</option>
+                    <option value="red">🔴 Oxidado (Rojo)</option>
+                    <option value="gray">⚪ Sin datos (Gris)</option>
                 </select>
                 <button class="btn-micro" onclick="resetFilters()" style="background: rgba(255,255,255,0.1);">Limpiar</button>
             </div>
@@ -366,6 +392,7 @@ window.AdminViews.users = async function () {
         const fGender = document.getElementById('filter-gender').value;
         const fStatus = document.getElementById('filter-status').value;
         const fTeam = document.getElementById('filter-team').value;
+        const fRel = document.getElementById('filter-reliability').value;
 
         window.filteredUsers = window.allUsersCache.filter(u => {
             const matchesGlobal = !search ||
@@ -379,7 +406,16 @@ window.AdminViews.users = async function () {
             const matchesStatus = !fStatus || u.status === fStatus;
             const matchesTeam = !fTeam || (Array.isArray(u.team_somospadel) ? u.team_somospadel.includes(fTeam) : u.team_somospadel === fTeam);
 
-            return matchesGlobal && matchesName && matchesPhone && matchesLevel && matchesGender && matchesStatus && matchesTeam;
+            let matchesRel = true;
+            if (fRel && window.LevelReliabilityService) {
+                const rel = window.LevelReliabilityService.getReliability(u);
+                if (fRel === 'green') matchesRel = (rel.color === '#00ff64');
+                else if (fRel === 'yellow') matchesRel = (rel.color === '#FFD700');
+                else if (fRel === 'red') matchesRel = (rel.color === '#FF5555');
+                else if (fRel === 'gray') matchesRel = (rel.color === '#888');
+            }
+
+            return matchesGlobal && matchesName && matchesPhone && matchesLevel && matchesGender && matchesStatus && matchesTeam && matchesRel;
         });
 
         window.renderUserRows(window.filteredUsers);
@@ -397,6 +433,7 @@ window.AdminViews.users = async function () {
         document.getElementById('filter-gender').value = "";
         document.getElementById('filter-status').value = "";
         document.getElementById('filter-team').value = "";
+        document.getElementById('filter-reliability').value = "";
         window.multiFilterUsers();
     };
 

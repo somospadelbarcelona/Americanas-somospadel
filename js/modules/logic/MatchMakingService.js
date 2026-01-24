@@ -166,16 +166,38 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
             },
 
             /**
+             * Helper: Calculate Effective Level based on Reliability (Semáforo)
+             * Penalties: Red (Oxidado) -> -0.25 | Yellow (Dudoso) -> -0.1
+             */
+            _getEffectiveLevel(player) {
+                let baseLevel = parseFloat(player.level || player.self_rate_level || 0);
+
+                // Si existe el servicio de fiabilidad, aplicamos penalización
+                if (window.LevelReliabilityService) {
+                    const rel = window.LevelReliabilityService.getReliability(player);
+                    // Check by color or label since thresholds are internal there
+                    if (rel.color === '#FF5555') { // Red / Oxidado
+                        console.log(`📉 [MatchMaking] Penalizando a ${player.name} (Oxidado) -0.25`);
+                        baseLevel -= 0.25;
+                    } else if (rel.color === '#FFD700') { // Yellow / Dudoso
+                        console.log(`📉 [MatchMaking] Penalizando a ${player.name} (Dudoso) -0.10`);
+                        baseLevel -= 0.10;
+                    }
+                }
+                return baseLevel;
+            },
+
+            /**
              * Helper: Sort players by Level (Desc) AND Pre-Pair by Team
              * for "Entreno" seeding.
              */
             _sortPlayersForEntreno(players) {
-                console.log("📊 Sorting players with Smart Pairing (Level + Team) for Entreno...");
+                console.log("📊 Sorting players with Smart Pairing (Effective Level + Team) for Entreno...");
 
-                // 1. Initial Sort by Level Descending
+                // 1. Initial Sort by EFFECTIVE Level Descending
                 let pool = [...players].sort((a, b) => {
-                    const lA = parseFloat(a.level || a.self_rate_level || 0);
-                    const lB = parseFloat(b.level || b.self_rate_level || 0);
+                    const lA = this._getEffectiveLevel(a);
+                    const lB = this._getEffectiveLevel(b);
                     return lB - lA;
                 });
 
@@ -198,20 +220,21 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                     };
 
                     const p1Team = getTeam(p1);
-                    const p1Level = parseFloat(p1.level || p1.self_rate_level || 0);
+                    const p1Level = this._getEffectiveLevel(p1);
 
                     for (let i = 0; i < pool.length; i++) {
                         const p2 = pool[i];
                         const p2Team = getTeam(p2);
-                        const p2Level = parseFloat(p2.level || p2.self_rate_level || 0);
+                        const p2Level = this._getEffectiveLevel(p2);
 
                         let score = 0;
                         const diff = Math.abs(p1Level - p2Level);
                         score -= (diff * 10);
 
                         if (p1Team && p2Team && p1Team === p2Team) {
-                            if (diff <= 1.0) score += 100;
-                            else score += 5;
+                            // PRIORIDAD EQUIPO: Ampliamos margen a 1.5 para asegurar que compañeros jueguen juntos
+                            if (diff <= 1.5) score += 150; // Bonus masivo
+                            else score += 20; // Bonus pequeño si hay mucha diferencia
                         }
 
                         if (score > bestScore) {

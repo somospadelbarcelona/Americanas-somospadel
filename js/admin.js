@@ -136,6 +136,10 @@ window.loadAdminView = async function (viewName) {
         else if (viewName === 'americanas_mgmt' && window.AdminViews.americanas_mgmt) {
             await window.AdminViews.americanas_mgmt();
         }
+        else if (viewName === 'autopilot') {
+            if (window.AutopilotView) window.AutopilotView.render();
+            else console.error("AutopilotView not loaded");
+        }
         else if (viewName === 'entrenos_mgmt' && window.AdminViews.entrenos_mgmt) {
             await window.AdminViews.entrenos_mgmt();
         }

@@ -1538,5 +1538,47 @@
     // Export class to global scope for fallback instantiation
     window.ControlTowerViewClass = ControlTowerView;
     window.ControlTowerView = new ControlTowerView();
+    // --- GLOBAL ACTIONS ---
+    window.shareVictory = async (matchId, userDelta) => {
+        // 1. Get match data
+        const match = window._matchRegistry ? window._matchRegistry[matchId] : null;
+        if (!match) return alert("Error: Datos del partido no encontrados.");
+
+        // 2. Format Data for Social View
+        const getTeamName = (namesArr, teamStr) => {
+            if (teamStr && typeof teamStr === 'string' && teamStr.length > 0) return teamStr;
+            if (Array.isArray(namesArr)) return namesArr.join(' / ');
+            return String(namesArr || '');
+        };
+
+        const teamA = getTeamName(match.team_a_names, match.teamA);
+        const teamB = getTeamName(match.team_b_names, match.teamB);
+
+        const sA = parseInt(match.score_a || 0);
+        const sB = parseInt(match.score_b || 0);
+
+        // Split names (Simple heuristic for demo)
+        const splitNames = (str) => {
+            const p = str.split(' / ');
+            return { p1: p[0] || '', p2: p[1] || '' };
+        };
+
+        const tA = splitNames(teamA);
+        const tB = splitNames(teamB);
+
+        const socialData = {
+            score: `${sA}-${sB}`,
+            player1: tA.p1,
+            partner1: tA.p2,
+            player2: tB.p1,
+            partner2: tB.p2,
+            location: 'SomosPadel BCN',
+            date: new Date().toLocaleDateString()
+        };
+
+        // 3. Open Creator Mode
+        window.SocialShareView.open(socialData);
+    };
+
     console.log("🗼 ControlTowerView (Pro) v4005 Initialized");
 })();

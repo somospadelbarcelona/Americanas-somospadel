@@ -322,6 +322,16 @@ function renderEntrenoCard(e) {
 
                 <!-- Action Menu -->
                 <div style="display: flex; gap: 6px;">
+                    <!-- [NEW] Batseñal Button (Only for Open/Live events) -->
+                    ${(e.status === 'open' || e.status === 'live') ? `
+                    <button class="btn-micro" 
+                            style="background:rgba(255, 215, 0, 0.15); color:#FFD700; border:1px solid rgba(255, 215, 0, 0.3);" 
+                            onclick='window.SmartAlertsService.openUI(${JSON.stringify(e).replace(/'/g, "&#39;")})'
+                            title="Lanzar Batseñal (Buscar Sustitutos)">
+                        <i class="fas fa-bullhorn"></i>
+                    </button>
+                    ` : ''}
+
                     <button class="btn-micro" 
                             style="background:rgba(37, 211, 102, 0.1); color:#25D366;" 
                             onclick='window.WhatsAppService.shareStartFromAdmin(${JSON.stringify(e).replace(/'/g, "&#39;")})'
@@ -835,8 +845,15 @@ window.loadEntrenoParticipantsUI = async (id) => {
         );
     }
 
-    // Render List
-    list.innerHTML = finalPlayers.map((p, i) => {
+    // Render List with Batseñal
+    list.innerHTML = `
+        <div style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.75rem; color:#888;">${finalPlayers.length} Inscritos</span>
+            <button onclick="window.launchBatSignalEntreno('${id}')" class="btn-micro" style="background:rgba(255, 215, 0, 0.1); color:#ffd700; border:1px solid rgba(255, 215, 0, 0.3);">
+                🦇 Batseñal
+            </button>
+        </div>
+    ` + finalPlayers.map((p, i) => {
         const playerId = p.id || p.uid || p.player_id || '';
         if (!playerId) {
             console.warn('Player without ID:', p);
@@ -849,14 +866,68 @@ window.loadEntrenoParticipantsUI = async (id) => {
         }
         return `
             <div class="player-row" style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="display:flex; flex-direction:column;">
-                    <span style="font-weight:700;">${p.name || 'JUGADOR'}</span>
-                    <span style="font-size:0.65rem; color:#888;">${p.joinedAt ? new Date(p.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}</span>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    ${(() => {
+                if (window.LevelReliabilityService) {
+                    const rel = window.LevelReliabilityService.getReliability(p);
+                    return `<i class="fas ${rel.icon}" style="color: ${rel.color} !important; font-size: 0.75rem;" title="${rel.label}"></i>`;
+                }
+                return '';
+            })()}
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:700;">${p.name || 'JUGADOR'}</span>
+                        <span style="font-size:0.65rem; color:#888;">${p.joinedAt ? new Date(p.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}</span>
+                    </div>
                 </div>
                 <button onclick="window.removeEntrenoPlayer('${id}', '${playerId}')" class="btn-delete-micro">🗑️</button>
             </div>
         `;
     }).join('');
+};
+
+window.launchBatSignalEntreno = async (eventId) => {
+    if (!window.SmartAlertsService) return alert("⚠️ Servicio Smart Alerts no disponible");
+
+    // 1. Get Event
+    const event = await EventService.getById('entreno', eventId);
+    if (!event) return;
+
+    // 2. Find Candidates
+    const btn = document.activeElement;
+    const oldText = btn.innerHTML;
+    btn.innerHTML = '🦇 Buscando...';
+    btn.disabled = true;
+
+    try {
+        const candidates = await window.SmartAlertsService.findSubstitutes(event);
+
+        if (candidates.length === 0) {
+            alert("🦇 No se encontraron candidatos adecuados (filtro nivel/género).");
+            btn.innerHTML = oldText;
+            btn.disabled = false;
+            return;
+        }
+
+        const confirmMsg = `🦇 BATSEÑAL (Entreno)\n\nHemos detectado ${candidates.length} jugadores ideales:\n` +
+            candidates.slice(0, 5).map(u => `- ${u.name} (${u.level})`).join('\n') +
+            (candidates.length > 5 ? `\n...y ${candidates.length - 5} más.` : '') +
+            `\n\n¿Enviar alerta prioritaria a estos ${candidates.length} usuarios?`;
+
+        if (confirm(confirmMsg)) {
+            const res = await window.SmartAlertsService.sendBatSignal(candidates, event);
+            if (res.success) {
+                alert(`🚀 Alertas enviadas a ${res.count} usuarios.`);
+            } else {
+                alert("❌ Error enviando alertas.");
+            }
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error en Batseñal: " + e.message);
+    } finally {
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+    }
 };
 
 window.removeEntrenoPlayer = async (eid, uid) => {
@@ -901,6 +972,7 @@ window.loadWaitlistUI = async (id) => {
     const list = await ParticipantService.getWaitlist(id, 'entreno');
     if (div) div.innerHTML = list.map((p, i) => `<div>${i + 1}. ${p.name}</div>`).join('') || 'Vacía';
 };
+
 
 window.selectEntrenoImage = (url) => {
     const input = document.getElementById('edit-entreno-img-input');

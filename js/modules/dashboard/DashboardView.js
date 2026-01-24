@@ -230,6 +230,23 @@
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- TECH PORTFOLIO LINK (NEW) -->
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #e2e8f0;">
+                                <div onclick="window.open('presentation.html', '_blank')" 
+                                     style="background: linear-gradient(90deg, #1e293b, #0f172a); color: white; border-radius: 12px; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="background: rgba(255,255,255,0.1); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-microchip" style="color: #CCFF00;"></i>
+                                        </div>
+                                        <div style="display: flex; flex-direction: column;">
+                                            <span style="font-weight: 800; font-size: 0.8rem;">NUESTRA TECNOLOGÍA</span>
+                                            <span style="font-size: 0.7rem; color: #94a3b8;">Descubre cómo funciona la app</span>
+                                        </div>
+                                    </div>
+                                    <i class="fas fa-chevron-right" style="color: #94a3b8; font-size: 0.8rem;"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

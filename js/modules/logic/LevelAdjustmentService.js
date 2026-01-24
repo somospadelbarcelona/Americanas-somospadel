@@ -7,59 +7,86 @@
 (function () {
     const LevelAdjustmentService = {
 
-        // Configuración de sensibilidad
+        // Configuración de sensibilidad (AUMENTADA v2)
         CONFIG: {
-            BASE_GAIN: 0.005,    // Ganancia base por victoria (milésimas)
-            MAX_ADJUST: 0.010,   // Ajuste máximo por partido (sólo 1 centésima máx)
-            MIN_ADJUST: 0.005,   // Ajuste mínimo
-            LEVEL_K_FACTOR: 0.005 // Sensibilidad reducida al diferencial de nivel
+            BASE_GAIN: 0.010,    // (Antes 0.005) Ganancia estándar
+            MAX_ADJUST: 0.025,   // (Antes 0.010) Máximo por partido
+            MIN_ADJUST: 0.005,   // Mínimo
+            LEVEL_K_FACTOR: 0.01 // (Antes 0.005) Más sensible a ganar a gente mejor
         },
 
         /**
          * Ajusta el nivel de todos los participantes de un partido al finalizarlo
-         * @param {Object} match - Los datos del partido finalizado
          */
         async processMatchResults(match) {
             console.log(`⚖️ LevelAdjustmentService: Procesando partido ${match.id}`);
 
             const sA = parseInt(match.score_a || 0);
             const sB = parseInt(match.score_b || 0);
-            const teamA_ids = match.team_a_ids || [];
-            const teamB_ids = match.team_b_ids || [];
 
-            if (sA === sB) return; // Empate no varía nivel por ahora (o mínima variación)
+            // 0. Robust ID Extraction
+            let teamA_ids = match.team_a_ids || [];
+            let teamB_ids = match.team_b_ids || [];
 
-            // 1. Obtener niveles actuales de todos
+            if (teamA_ids.length === 0 && match.player1) {
+                // Fallback Legacy
+                teamA_ids = [match.player1.id || match.player1, match.player2.id || match.player2].filter(x => x);
+                teamB_ids = [match.player3.id || match.player3, match.player4.id || match.player4].filter(x => x);
+            }
+
+            if (teamA_ids.length === 0 && teamB_ids.length === 0) {
+                console.warn("⚠️ No se encontraron IDs de jugadores para ajustar nivel.");
+                return;
+            }
+
+            if (sA === sB) return; // Empates
+
+            // 1. Obtener niveles actuales
             const allIds = [...teamA_ids, ...teamB_ids];
             const playersData = await this._getPlayersData(allIds);
 
-            const avgLevelA = this._calculateAvg(teamA_ids.map(id => playersData[id]?.level || 3.5));
-            const avgLevelB = this._calculateAvg(teamB_ids.map(id => playersData[id]?.level || 3.5));
+            const getLvl = (id) => playersData[id]?.level || playersData[id]?.self_rate_level || 3.5;
 
-            // 2. Calcular ajustes para cada equipo
+            const avgLevelA = this._calculateAvg(teamA_ids.map(id => getLvl(id)));
+            const avgLevelB = this._calculateAvg(teamB_ids.map(id => getLvl(id)));
+
+            // 2. Calcular ajustes
             const diffGames = Math.abs(sA - sB);
             const wonA = sA > sB;
 
-            // Ajuste para Equipo A
             const adjustA = this._calculateDelta(wonA, avgLevelA, avgLevelB, diffGames);
-            // Ajuste para Equipo B
             const adjustB = this._calculateDelta(!wonA, avgLevelB, avgLevelA, diffGames);
 
-            console.log(`📈 Deltas: Equipo A (${adjustA >= 0 ? '+' : ''}${adjustA.toFixed(3)}), Equipo B (${adjustB >= 0 ? '+' : ''}${adjustB.toFixed(3)})`);
+            console.log(`📈 Deltas: A(${adjustA > 0 ? '+' : ''}${adjustA.toFixed(3)}) | B(${adjustB > 0 ? '+' : ''}${adjustB.toFixed(3)})`);
 
-            // 3. Aplicar cambios en DB
+            // 3. Aplicar DB
             const batch = window.db.batch();
             const now = new Date().toISOString();
 
+            // Store names for toast
+            let namesA = [], namesB = [];
+
             for (const id of teamA_ids) {
+                if (playersData[id]) namesA.push(playersData[id].name);
                 await this._applyAdjustment(id, playersData[id], adjustA, now, batch, match.id);
             }
             for (const id of teamB_ids) {
+                if (playersData[id]) namesB.push(playersData[id].name);
                 await this._applyAdjustment(id, playersData[id], adjustB, now, batch, match.id);
             }
 
             await batch.commit();
-            console.log("✅ Ajustes de nivel aplicados correctamente.");
+            console.log("✅ Niveles actualizados.");
+
+            // 4. Feedback Visual
+            if (window.NotificationService) {
+                const winnerNames = wonA ? namesA : namesB;
+                const deltaWin = wonA ? adjustA : adjustB;
+                window.NotificationService.showToast(`🏆 Niveles actualizados: Ganadores +${deltaWin.toFixed(3)}`, 'success');
+            } else {
+                // Fallback alert (console only to avoid annoying popups)
+                // console.log(`Alert: Niveles actualizados`);
+            }
         },
 
         _calculateDelta(isWinner, myAvg, oppAvg, diffGames) {
