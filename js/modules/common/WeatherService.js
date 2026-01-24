@@ -58,7 +58,10 @@ const WeatherService = {
                 wind: current.wind_speed_10m || 0,
                 rain: rainProb,
                 uv: uvIndex,
-                isDay: current.is_day !== undefined ? current.is_day : 1
+                rain: rainProb,
+                uv: uvIndex,
+                isDay: current.is_day !== undefined ? current.is_day : 1,
+                weatherCode: current.weather_code // Passed for logic
             });
 
             return {
@@ -104,14 +107,40 @@ const WeatherService = {
         if (speedValue > 25) speed = 'RÁPIDA';
         if (speedValue < 12) speed = 'LENTA';
 
-        // 3. CONTEXTUAL RECOMMENDATIONS (NO IA)
-        let rec = 'Condiciones excelentes para jugar';
-        if (data.rain > 20) rec = 'Probabilidad de lluvia: Pistas indoor recomendadas';
-        else if (data.humidity > 85) rec = 'Alta humedad: Pelota pesada y pista resbaladiza';
-        else if (data.wind > 25) rec = 'Mucho viento: Controla los globos';
-        else if (data.uv > 7 && data.isDay) rec = 'Sol intenso: Protégete y bebe agua';
-        else if (data.temp < 12) rec = 'Ambiente fresco: Calienta bien las articulaciones';
-        else if (data.isDay && data.temp > 20) rec = 'Día espectacular para el pádel';
+        // 3. CONTEXTUAL RECOMMENDATIONS (SMART AI LOGIC)
+        let rec = 'Condiciones de juego estándar.';
+        const isRainingNow = data.weatherCode >= 51; // Códigos de lluvia
+
+        // Prioridad 1: Lluvia Activa (Lo que se ve)
+        if (isRainingNow) {
+            if (data.rain > 70) rec = '⚠️ Lluvia intensa: Pista impracticable. Busca indoor.';
+            else rec = '🌧️ Pista mojada: La bola pesará mucho y resbalará.';
+        }
+        // Prioridad 2: Viento (Molesta mucho)
+        else if (data.wind > 28) {
+            rec = '💨 Vendaval: Juega por abajo y evita los globos.';
+        }
+        // Prioridad 3: Calor Extremo
+        else if (data.temp > 30) {
+            rec = '🔥 Calor sofocante: La bola vuela mucho. ¡Hidrátate!';
+        }
+        // Prioridad 4: Riesgo de Lluvia (Futuro) pero NO llueve ahora
+        else if (data.rain > 30 && !isRainingNow) {
+            rec = 'cloud-sun-rain Riesgo de lluvia: El cielo amenaza, pero se puede jugar.';
+        }
+        // Prioridad 5: Frío
+        else if (data.temp < 10) {
+            rec = '❄️ Frío: La bola apenas rebota. Usa más fuerza y flexiona.';
+        }
+        // Prioridad 6: Humedad (Cristales)
+        else if (data.humidity > 85) {
+            rec = '💧 Humedad alta: Cuidado con los cristales, la bola cae al tocar.';
+        }
+        // Prioridad 7: Condiciones Ideales
+        else {
+            if (data.isDay) rec = '☀️ Día perfecto: Condiciones ideales para sacarla x3.';
+            else rec = '🌙 Noche despejada: Visibilidad perfecta y temperatura agradable.';
+        }
 
         return {
             score: score,
@@ -127,17 +156,17 @@ const WeatherService = {
      */
     getWeatherCondition(code) {
         const codes = {
-            0: 'Despejado',
+            0: 'Cielo Despejado',
             1: 'Mayormente Despejado',
             2: 'Parcialmente Nublado',
             3: 'Nublado',
-            45: 'Niebla', 48: 'Niebla',
-            51: 'Llovizna', 53: 'Llovizna', 55: 'Llovizna',
-            61: 'Lluvia', 63: 'Lluvia Fuerte', 65: 'Lluvia Intensa',
-            80: 'Chubascos', 81: 'Chubascos', 82: 'Chubascos Fuertes',
-            95: 'Tormenta', 96: 'Tormenta', 99: 'Tormenta Severa'
+            45: 'Niebla', 48: 'Niebla con Escarcha',
+            51: 'Llovizna Ligera', 53: 'Llovizna Moderada', 55: 'Llovizna Densa',
+            61: 'Lluvia Débil', 63: 'Lluvia Moderada', 65: 'Lluvia Fuerte',
+            80: 'Chubascos Aislados', 81: 'Chubascos', 82: 'Chubascos Violentos',
+            95: 'Tormenta Eléctrica', 96: 'Tormenta con Granizo', 99: 'Tormenta Severa'
         };
-        return codes[code] || 'Variable';
+        return codes[code] || 'Condiciones Variables';
     },
 
     /**

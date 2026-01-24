@@ -152,7 +152,8 @@ class NotificationService {
                                 this.showNativeNotification(data.title, data.body, data.data);
 
                                 // Opcional: Feedback visual discreto si no hay permisos push
-                                if (Notification.permission !== 'granted') {
+                                const notificationSupported = 'Notification' in window;
+                                if (!notificationSupported || Notification.permission !== 'granted') {
                                     this.showInAppToast(data.title, data.body);
                                 }
                             }
@@ -313,6 +314,12 @@ class NotificationService {
 
         try {
             console.log("🔔 Solicitando permiso de notificaciones...");
+
+            if (!('Notification' in window)) {
+                console.warn("⚠️ API de Notificaciones no soportada en este entorno.");
+                return false;
+            }
+
             const permission = await Notification.requestPermission();
 
             if (permission === 'granted') {
@@ -348,6 +355,8 @@ class NotificationService {
     }
 
     async checkPermissionStatus() {
+        if (!('Notification' in window)) return;
+
         if (Notification.permission === 'granted' && window.messaging) {
             const token = await window.messaging.getToken();
             if (token) this.saveTokenToProfile(token);
@@ -514,6 +523,8 @@ class NotificationService {
      * Útil cuando el usuario tiene la app abierta.
      */
     showNativeNotification(title, body, data = {}) {
+        if (!('Notification' in window)) return;
+
         if (Notification.permission === 'granted') {
             const options = {
                 body: body,

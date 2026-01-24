@@ -385,6 +385,72 @@
                         });
                         weatherHtml += `</div>`;
                     }
+
+                    // Usamos RainViewer como visualizador profesional de datos (incluye fuentes de AEMET/Meteocat)
+                    // Configuración: Modo Oscuro, Sin predicción (solo real), Zoom 10, Opacidad alta, Capa suavizada
+                    weatherHtml += `
+                        <style>
+                            @keyframes weatherFloat {
+                                0% { transform: translateY(0px) rotate(0deg); filter: drop-shadow(0 0 15px rgba(255,255,255,0.1)); }
+                                50% { transform: translateY(-8px) rotate(3deg); filter: drop-shadow(0 0 25px rgba(255,255,255,0.3)); }
+                                100% { transform: translateY(0px) rotate(0deg); filter: drop-shadow(0 0 15px rgba(255,255,255,0.1)); }
+                            }
+                            @keyframes livePulse {
+                                0% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0.7); transform: scale(1); opacity: 1; }
+                                70% { box-shadow: 0 0 0 8px rgba(0, 227, 109, 0); transform: scale(1.2); opacity: 0.8; }
+                                100% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0); transform: scale(1); opacity: 1; }
+                            }
+                            @keyframes borderFlow {
+                                0% { border-color: rgba(255,255,255,0.1); }
+                                50% { border-color: rgba(255,255,255,0.25); }
+                                100% { border-color: rgba(255,255,255,0.1); }
+                            }
+                            @keyframes cardShine {
+                                0% { background-position: 0% 50%; }
+                                50% { background-position: 100% 50%; }
+                                100% { background-position: 0% 50%; }
+                            }
+                        </style>
+                        <div style="margin-top: 20px; position: relative; border-radius: 32px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.6); background: #0f172a; animation: borderFlow 4s infinite;">
+                            <div style="
+                                background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
+                                padding: 16px 24px;
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                border-bottom: 1px solid rgba(255,255,255,0.05);
+                            ">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div style="background: rgba(59, 130, 246, 0.2); padding: 8px; border-radius: 12px; color: #3b82f6;">
+                                        <i class="fas fa-satellite-dish" style="font-size: 1rem;"></i>
+                                    </div>
+                                    <div style="display:flex; flex-direction:column;">
+                                        <span style="font-size:0.9rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR EN VIVO</span>
+                                        <span style="font-size:0.65rem; color:#94a3b8; font-weight:700; text-transform:uppercase;">PRECIPITACIÓN EN TIEMPO REAL</span>
+                                    </div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span style="width:10px; height:10px; background:#00E36D; border-radius:50%; animation: livePulse 2s infinite;"></span>
+                                    <span style="font-size:0.65rem; color: #00E36D; font-weight: 900; letter-spacing:1px; text-shadow: 0 0 10px rgba(0,227,109,0.5);">LIVE</span>
+                                </div>
+                            </div>
+                            
+                            <div style="width: 100%; height: 380px; position: relative;">
+                                <!-- Windy.com Embed: Radar Overlay, Clean Interface, Centered on El Prat -->
+                                <iframe 
+                                    width="100%" 
+                                    height="100%" 
+                                    src="https://embed.windy.com/embed2.html?lat=41.320&lon=2.040&detailLat=41.327&detailLon=2.094&width=650&height=450&zoom=10&level=surface&overlay=radar&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1" 
+                                    frameborder="0"
+                                    style="filter: contrast(1.2) brightness(0.9);">
+                                </iframe>
+                                
+                                <!-- Capa de interacción superior para evitar capturas de scroll accidentales en móviles, pero permitiendo ver -->
+                                <div style="pointer-events:none; position:absolute; inset:0; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);"></div>
+                            </div>
+                        </div>
+                    `;
+
                     weatherRoot.innerHTML = weatherHtml;
                     weatherRoot.style.display = 'block';
                 }
@@ -503,64 +569,132 @@
             const intel = details.intel || { score: 100, ballSpeed: '--', recommendation: 'Sincronizando meteorología...', gripStatus: '--' };
             const statusLabel = isPropitious ? 'ÓPTIMO' : 'ADVERSO';
             const statusColor = isPropitious ? '#00E36D' : '#FF2D55';
-            const statusBg = isPropitious ? 'rgba(0,227,109,0.1)' : 'rgba(255,45,85,0.1)';
+            const rainProb = parseInt(details.rain) || 0;
+            const isRaining = rainProb > 30;
+
+            // 1. DYNAMIC BACKGROUND & EFFECTS
+            let cardBg = 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)';
+            let weatherOverlay = '';
+
+            if (isRaining) {
+                // Stormy / Rainy Vibe
+                cardBg = 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)';
+                weatherOverlay = `
+                    <div style="position: absolute; inset: 0; pointer-events: none; opacity: 0.4;">
+                        <div style="
+                            position: absolute; inset: -100% 0 0 0;
+                            background-image: linear-gradient(to bottom, rgba(59,130,246,0) 0%, rgba(59,130,246,0.4) 50%, rgba(59,130,246,0) 100%);
+                            background-size: 2px 50px;
+                            animation: rainFall 0.6s linear infinite;
+                        "></div>
+                        <div style="
+                            position: absolute; inset: -100% 0 0 0;
+                            background-image: linear-gradient(to bottom, rgba(59,130,246,0) 0%, rgba(59,130,246,0.3) 50%, rgba(59,130,246,0) 100%);
+                            background-size: 1px 30px;
+                            animation: rainFall 0.4s linear infinite;
+                            margin-left: 20px;
+                        "></div>
+                    </div>
+                `;
+            } else if (isPropitious) {
+                // Sunny / Nice Vibe
+                cardBg = 'linear-gradient(135deg, #3f6212 0%, #022c22 100%)';
+                weatherOverlay = `
+                    <div style="
+                        position: absolute; top: -60px; right: -60px; width: 250px; height: 250px;
+                        background: radial-gradient(circle, rgba(253, 224, 71, 0.15) 0%, transparent 70%);
+                        filter: blur(20px);
+                        animation: sunPulse 6s ease-in-out infinite;
+                        pointer-events: none;
+                    "></div>
+                `;
+            } else {
+                // Neutral / Cold Vibe
+                cardBg = 'linear-gradient(135deg, #334155 0%, #0f172a 100%)';
+            }
 
             return `
+                <style>
+                    @keyframes rainFall { 0% { transform: translateY(0); } 100% { transform: translateY(100%); } }
+                    @keyframes sunPulse { 0%,100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 0.8; } }
+                    @keyframes textSlideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                </style>
                 <div style="
-                    background: rgba(10, 10, 20, 0.95);
-                    backdrop-filter: blur(20px);
-                    border: 1px solid rgba(255,255,255,0.08);
-                    border-radius: 28px;
-                    padding: 18px;
+                    background: ${cardBg};
+                    background-size: 200% 200%;
+                    animation: cardShine 10s ease infinite;
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 32px;
+                    padding: 24px 20px;
                     display: flex;
                     flex-direction: column;
-                    gap: 15px;
-                    box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+                    gap: 12px;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
                     position: relative;
                     overflow: hidden;
-                    transition: transform 0.3s;
+                    min-height: 280px;
                 ">
-                    <!-- Glow effect -->
-                    <div style="position: absolute; top: -10%; right: -10%; width: 60%; height: 60%; background: radial-gradient(circle, ${statusColor}15 0%, transparent 70%);"></div>
+                    ${weatherOverlay}
 
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="font-size: 2.2rem; filter: drop-shadow(0 0 15px rgba(255,204,0,0.5));">${icon}</div>
+                    <!-- ICON + STATUS -->
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 2;">
+                        <div style="font-size: 3.5rem; line-height: 1; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3)); animation: weatherFloat 5s ease-in-out infinite;">${icon}</div>
                         <div style="text-align: right;">
-                             <div style="background: ${statusBg}; color: ${statusColor}; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; border: 1px solid ${statusColor}20; letter-spacing: 0.5px; margin-bottom: 4px;">${statusLabel}</div>
-                             <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); font-weight: 800;">SCORE: ${intel.score}%</div>
+                             <div style="
+                                background: rgba(0,0,0,0.3); color: ${statusColor}; 
+                                padding: 6px 14px; border-radius: 12px; 
+                                font-size: 0.65rem; font-weight: 950; 
+                                border: 1px solid ${statusColor}40; margin-bottom: 6px;
+                                box-shadow: 0 0 15px ${statusColor}20;
+                                backdrop-filter: blur(4px);
+                             ">${statusLabel}</div>
+                             <div style="font-size: 0.6rem; color: white; opacity: 0.6; font-weight: 800; letter-spacing: 1px;">SCORE ${intel.score}%</div>
                         </div>
                     </div>
                     
-                    <div>
-                        <div style="color: white; font-weight: 950; font-size: 1.8rem; line-height: 1; letter-spacing: -0.5px;">${temp}</div>
-                        <div style="color: rgba(255,255,255,0.5); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px;">${city}</div>
+                    <!-- MAIN TEMP -->
+                    <div style="position: relative; z-index: 2; margin-top: 10px; animation: textSlideIn 0.5s ease-out;">
+                        <div style="color: white; font-weight: 950; font-size: 2.8rem; line-height: 0.9; letter-spacing: -2px; text-shadow: 0 5px 10px rgba(0,0,0,0.5);">${temp}</div>
+                        <div style="color: rgba(255,255,255,0.7); font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px;">${city}</div>
                     </div>
 
-                    <!-- AI INSIGHTS AREA -->
-                    <div style="background: rgba(255,255,255,0.03); border-radius: 16px; padding: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 8px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 0.55rem; color: #888; font-weight: 800; text-transform: uppercase;">⚡ Velocidad Bola</span>
-                            <span style="font-size: 0.6rem; color: #CCFF00; font-weight: 950;">${intel.ballSpeed}</span>
+                    <!-- AI PILLS -->
+                    <div style="
+                        margin-top: 15px; 
+                        background: rgba(255, 255, 255, 0.05); 
+                        border-radius: 20px; 
+                        padding: 15px; 
+                        border: 1px solid rgba(255,255,255,0.05); 
+                        display: flex; flex-direction: column; gap: 10px;
+                        position: relative; z-index: 2;
+                        backdrop-filter: blur(5px);
+                        animation: textSlideIn 0.7s ease-out;
+                    ">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-bolt" style="color:#fbbf24;"></i> VELOCIDAD BOLA</span>
+                            <span style="font-size: 0.7rem; color: #fbbf24; font-weight: 950; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);">${intel.ballSpeed}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 0.55rem; color: #888; font-weight: 800; text-transform: uppercase;">👟 Agarre Pista</span>
-                            <span style="font-size: 0.6rem; color: #00c4ff; font-weight: 950;">${intel.gripStatus}</span>
+                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-shoe-prints" style="color:#00c4ff;"></i> AGARRE PISTA</span>
+                            <span style="font-size: 0.7rem; color: #00c4ff; font-weight: 950; text-shadow: 0 0 10px rgba(0, 196, 255, 0.3);">${intel.gripStatus}</span>
                         </div>
                     </div>
 
-                    <!-- AI RECOMMENDATION -->
-                    <div style="font-size: 0.65rem; color: white; opacity: 0.8; font-weight: 700; font-style: italic; line-height: 1.3;">
-                         " ${intel.recommendation} "
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05);">
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <i class="fas fa-wind" style="font-size: 0.6rem; color: #00c4ff;"></i>
-                            <span style="font-size: 0.65rem; color: #888; font-weight: 700;">${details.wind || '--'}</span>
+                    <!-- RECOMMENDATION & FOOTER -->
+                    <div style="margin-top: 10px; position: relative; z-index: 2; animation: textSlideIn 0.9s ease-out;">
+                        <div style="font-size: 0.7rem; color: white; opacity: 0.9; font-weight: 600; font-style: italic; line-height: 1.4; min-height: 2.8em;">
+                             " ${intel.recommendation} "
                         </div>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <i class="fas fa-cloud-rain" style="font-size: 0.6rem; color: #00c4ff;"></i>
-                            <span style="font-size: 0.65rem; color: #888; font-weight: 700;">${details.rain || '0%'}</span>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-wind" style="font-size: 0.8rem; color: rgba(255,255,255,0.5);"></i>
+                                <span style="font-size: 0.75rem; color: white; font-weight: 800;">${details.wind || '--'}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
+                                <i class="fas fa-cloud-rain" style="font-size: 0.8rem; color: rgba(255,255,255,0.5);"></i>
+                                <span style="font-size: 0.75rem; color: white; font-weight: 800;">${details.rain || '0%'}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -698,14 +832,33 @@
                 if (weatherData && weatherData[0]) {
                     const w = weatherData[0];
                     itemsHtml.push(`
-                        <div class="registration-ticker-card" style="min-width: 280px; min-height: 150px; scroll-snap-align: center; background: linear-gradient(135deg, #1e293b 0%, #000 100%); border-top: 5px solid #3b82f6; border-radius: 24px; padding: 20px; flex-shrink: 0; box-shadow: 0 15px 30px rgba(0,0,0,0.4); border-left: 1px solid rgba(59,130,246,0.3); display: flex; flex-direction: column; gap: 10px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:0.6rem; font-weight:950; color:white; background:#3b82f6; padding:3px 8px; border-radius:6px; letter-spacing:1px;">METEO</span>
-                                <span style="font-size:1.2rem;">${w.icon}</span>
+                        <div class="registration-ticker-card" style="
+                            min-width: 260px; height: 160px; scroll-snap-align: center; 
+                            background: linear-gradient(120deg, #0f172a, #1e293b, #334155, #0f172a); 
+                            background-size: 400% 400%;
+                            animation: cardShine 15s ease infinite;
+                            border-radius: 24px; padding: 16px; flex-shrink: 0; 
+                            box-shadow: 0 10px 25px rgba(0,0,0,0.3); 
+                            position: relative; overflow: hidden;
+                            border: 1px solid rgba(255,255,255,0.05);
+                        ">
+                            <!-- Background Decoration -->
+                            <div style="position: absolute; right: -20px; bottom: -20px; font-size: 6rem; opacity: 0.1; filter: blur(2px); animation: weatherFloat 6s ease-in-out infinite;">
+                                ${w.icon}
                             </div>
-                            <div style="color:white; font-weight:950; font-size:1rem; margin-top:2px;">${w.name} ${w.temp}ºC</div>
-                            <div style="color:#3b82f6; font-size:0.6rem; font-weight:950; letter-spacing:1.2px; text-transform:uppercase;">BOLA ${w.intelligence?.ballSpeed || 'MEDIA'}</div>
-                            <div style="color:#888; font-size:0.65rem; font-weight:800; margin-top:2px; display: flex; align-items: center; gap: 5px;"><i class="fas fa-eye"></i> Visibilidad: ${w.visibility}km</div>
+                            
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 2;">
+                                <span style="font-size:0.6rem; font-weight:950; color:white; background:rgba(59, 130, 246, 0.8); padding:4px 10px; border-radius:8px; letter-spacing:0.5px; box-shadow: 0 4px 10px rgba(59,130,246,0.3);">METEO NOW</span>
+                                <span style="font-size:1.8rem; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); animation: weatherFloat 4s ease-in-out infinite;">${w.icon}</span>
+                            </div>
+                            
+                            <div style="position: absolute; bottom: 16px; left: 16px; z-index: 2;">
+                                <div style="color:white; font-weight:950; font-size:1.6rem; line-height: 1; margin-bottom: 2px;">${w.temp}ºC</div>
+                                <div style="color:rgba(255,255,255,0.6); font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">${w.name}</div>
+                                <div style="color:#3b82f6; font-size:0.65rem; font-weight:950; letter-spacing:1px; margin-top:6px; text-transform:uppercase;">
+                                    BOLA ${w.intelligence?.ballSpeed || 'MEDIA'}
+                                </div>
+                            </div>
                         </div>
                     `);
                 }
@@ -724,7 +877,20 @@
 
                     if (isJoint) {
                         itemsHtml.push(`
-                            <div class="registration-ticker-card" style="min-width: 300px; min-height: 150px; scroll-snap-align: center; background: linear-gradient(135deg, #1e1b4b 0%, #000 100%); border-top: 5px solid #CCFF00; border-radius: 24px; padding: 20px; flex-shrink: 0; box-shadow: 0 15px 30px rgba(0,0,0,0.4); border-left: 1px solid rgba(204,255,0,0.3); display: flex; flex-direction: column; gap: 8px;">
+                            <div class="registration-ticker-card" style="
+                                min-width: 300px; height: 160px; scroll-snap-align: center; 
+                                background: linear-gradient(120deg, #020617, #1e1b4b, #312e81, #000); 
+                                background-size: 300% 300%;
+                                animation: cardShine 8s ease infinite;
+                                border-top: 1px solid rgba(204,255,0,0.3); 
+                                border-radius: 24px; padding: 20px; flex-shrink: 0; 
+                                box-shadow: 0 15px 30px rgba(0,0,0,0.4); 
+                                display: flex; flex-direction: column; gap: 8px;
+                                position: relative; overflow: hidden;
+                            ">
+                                <!-- Efecto de neón interno -->
+                                <div style="position: absolute; top:0; left:0; width:100%; height:4px; background: #CCFF00; box-shadow: 0 0 15px #CCFF00;"></div>
+                                
                                 <div style="display:flex; justify-content:space-between; align-items:center;">
                                     <span style="font-size:0.6rem; font-weight:950; color:black; background:#CCFF00; padding:3px 8px; border-radius:6px; letter-spacing:1px;">CO-LÍDERES GLOBALES</span>
                                     <div style="display:flex; gap:-5px;">
@@ -742,7 +908,20 @@
                         `);
                     } else {
                         itemsHtml.push(`
-                            <div class="registration-ticker-card" style="min-width: 280px; min-height: 150px; scroll-snap-align: center; background: linear-gradient(135deg, #451a03 0%, #000 100%); border-top: 5px solid #f59e0b; border-radius: 24px; padding: 20px; flex-shrink: 0; box-shadow: 0 15px 30px rgba(0,0,0,0.4); border-left: 1px solid rgba(245,158,11,0.3); display: flex; flex-direction: column; gap: 10px;">
+                            <div class="registration-ticker-card" style="
+                                min-width: 280px; height: 160px; scroll-snap-align: center; 
+                                background: linear-gradient(120deg, #2a1202, #451a03, #78350f, #000); 
+                                background-size: 300% 300%;
+                                animation: cardShine 10s ease infinite;
+                                border-top: 1px solid rgba(245,158,11,0.3); 
+                                border-radius: 24px; padding: 20px; flex-shrink: 0; 
+                                box-shadow: 0 15px 30px rgba(0,0,0,0.4); 
+                                display: flex; flex-direction: column; gap: 10px;
+                                position: relative; overflow: hidden;
+                            ">
+                                <!-- Efecto de neón interno -->
+                                <div style="position: absolute; top:0; left:0; width:100%; height:4px; background: #f59e0b; box-shadow: 0 0 15px #f59e0b;"></div>
+
                                 <div style="display:flex; justify-content:space-between; align-items:center;">
                                     <span style="font-size:0.6rem; font-weight:950; color:white; background:#f59e0b; padding:3px 8px; border-radius:6px; letter-spacing:1px;">LÍDER GLOBAL</span>
                                     <span style="font-size:1.2rem;">👑</span>
@@ -778,41 +957,104 @@
                     const typeLabel = am.type === 'entreno' ? 'ENTRENO' : 'AMERICANA';
                     const categoryIcon = am.category === 'female' ? '♀️' : (am.category === 'male' ? '♂️' : '🎾');
 
+                    // DYNAMIC CARD THEMING
+                    let cardBackground = 'linear-gradient(135deg, #18181b 0%, #000 100%)'; // Default Dark
+                    let accentColor = statusColor;
+
+                    // Colores por Categoría / Tipo
+                    if (am.category === 'female') {
+                        // Fucsia / Purple Vibes
+                        cardBackground = 'linear-gradient(135deg, #be185d 0%, #831843 100%)';
+                        accentColor = '#fbcfe8';
+                    } else if (am.category === 'male') {
+                        // Blue / Cyan Vibes
+                        cardBackground = 'linear-gradient(135deg, #0369a1 0%, #0c4a6e 100%)';
+                        accentColor = '#bae6fd';
+                    } else if (am.category === 'mixed' || am.category === 'mixto') {
+                        // Lime / Green Vibes (Brand)
+                        cardBackground = 'linear-gradient(135deg, #4d7c0f 0%, #1a2e05 100%)';
+                        accentColor = '#d9f99d';
+                    } else {
+                        // Generic / Open - Orange/Slate
+                        cardBackground = 'linear-gradient(135deg, #b45309 0%, #78350f 100%)';
+                    }
+
+                    // Override for LIVE events
+                    if (isLive) {
+                        cardBackground = 'linear-gradient(135deg, #9f1239 0%, #881337 100%)'; // Red pulse
+                    }
+
                     itemsHtml.push(`
                         <div class="registration-ticker-card" 
                              onclick="event.stopPropagation(); window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');" 
                              style="
-                            min-width: 280px; 
-                            min-height: 150px;
+                            min-width: 260px; 
+                            height: 160px;
                             scroll-snap-align: center;
-                            background: linear-gradient(135deg, #111 0%, #000 100%);
-                            border-top: 5px solid ${statusColor};
+                            background: ${cardBackground};
+                            background-size: 200% 200%;
+                            animation: cardShine 8s ease infinite;
                             border-radius: 24px; 
-                            padding: 20px; 
+                            padding: 16px; 
                             flex-shrink: 0; 
-                            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
-                            display: flex; 
-                            flex-direction: column; 
-                            gap: 12px; 
+                            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+                            position: relative; 
+                            overflow: hidden;
                             cursor: pointer;
+                            border: 1px solid rgba(255,255,255,0.1);
+                            transition: transform 0.2s;
                         ">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:0.6rem; font-weight:950; color:white; background:${statusColor}; padding:3px 8px; border-radius:6px; letter-spacing:1px;">${statusLabel}</span>
-                                <span style="font-size:1.1rem;">${categoryIcon}</span>
+                            <!-- Background Decoration (Watermark) -->
+                            <div style="
+                                position: absolute; 
+                                top: 50%; left: 50%; 
+                                transform: translate(-50%, -50%) rotate(-10deg); 
+                                font-size: 8rem; 
+                                opacity: 0.03; 
+                                pointer-events: none; 
+                                filter: blur(1px);
+                                z-index: 1;
+                            ">
+                                ${categoryIcon}
                             </div>
-                            <div style="color:white; font-weight:950; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${am.name.toUpperCase()}</div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
-                                <div style="display:flex; flex-direction:column; gap:2px;">
-                                    <span style="color:#aaa; font-size:0.65rem; font-weight:800;"><i class="far fa-clock"></i> ${am.time}</span>
-                                    <span style="color:${statusColor}; font-size:0.55rem; font-weight:950; letter-spacing:1px;">${typeLabel}</span>
-                                </div>
-                                <div style="text-align:right;">
-                                    <div style="color:${isFull ? '#ef4444' : '#00E36D'}; font-size:0.9rem; font-weight:950;">${players.length}/${maxPlayers}</div>
-                                    <div style="font-size:0.5rem; color:#555; font-weight:950; text-transform:uppercase;">Plazas</div>
+                            
+                            <!-- Header Status -->
+                            <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3;">
+                                <span style="font-size:0.6rem; font-weight:950; color:black; background:white; padding:4px 10px; border-radius:8px; letter-spacing:0.5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                    ${statusLabel}
+                                    ${isLive ? '<i class="fas fa-circle" style="color:#FF2D55; font-size:0.4rem; margin-left:4px; animation:blink 1s infinite;"></i>' : ''}
+                                </span>
+                                <div style="display:flex; align-items:center; gap:4px; background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:12px; border: 1px solid rgba(255,255,255,0.1);">
+                                    <i class="fas fa-users" style="color:rgba(255,255,255,0.9); font-size:0.6rem;"></i>
+                                    <span style="font-size:0.7rem; font-weight:800; color:white;">${players.length}</span>
+                                    <span style="font-size:0.6rem; color:rgba(255,255,255,0.6); font-weight:600;">/${maxPlayers}</span>
                                 </div>
                             </div>
+
+                            <!-- Main Content -->
+                            <div style="position: absolute; bottom: 16px; left: 16px; right: 16px; z-index: 2;">
+                                <div style="color:white; font-weight:950; font-size:1.1rem; line-height: 1.1; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-transform: uppercase;">
+                                    ${am.name}
+                                </div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div style="display:flex; align-items:center; gap:4px;">
+                                        <i class="far fa-clock" style="color:rgba(255,255,255,0.9); font-size:0.75rem;"></i>
+                                        <span style="color:rgba(255,255,255,0.9); font-size:0.8rem; font-weight:700;">${am.time}h</span>
+                                    </div>
+                                    <div style="width:1px; height:10px; background:rgba(255,255,255,0.4);"></div>
+                                    <div style="color:${accentColor}; font-size:0.7rem; font-weight:950; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.3); padding: 2px 6px; border-radius:4px;">${typeLabel}</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Progress Bar if open -->
+                            ${!isLive && !isFull ? `
+                                <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 5px; background: rgba(0,0,0,0.3);">
+                                    <div style="width: ${(players.length / maxPlayers) * 100}%; height: 100%; background: white; border-radius: 0 4px 0 0;"></div>
+                                </div>
+                            ` : ''}
                         </div>
                     `);
+
                 });
 
                 if (itemsHtml.length === 0) {
@@ -975,13 +1217,19 @@
                             100% { background-position: 0% 50%; }
                         }
                         @keyframes pulseGlow {
-                            0% { opacity: 0.5; transform: scaleY(0.95); }
-                            50% { opacity: 1; transform: scaleY(1); }
-                            100% { opacity: 0.5; transform: scaleY(0.95); }
+                            0% { opacity: 0.5; transform: scale(0.95); }
+                            50% { opacity: 1; transform: scale(1.1); filter: brightness(1.2); }
+                            100% { opacity: 0.5; transform: scale(0.95); }
                         }
-                        .activity-item-hover:hover {
-                            background: rgba(255,255,255,0.06) !important;
-                            transform: translateX(5px);
+                        @keyframes slideInUp {
+                            from { opacity: 0; transform: translateY(20px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+                        .activity-item-hover {
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        }
+                        .activity-item-hover:active {
+                            transform: scale(0.98);
                         }
                     `;
                     document.head.appendChild(style);
@@ -991,33 +1239,40 @@
 
                 // 1. Obtener datos de múltiples fuentes en paralelo
                 const [registrations, urgentAlerts, rankingChanges] = await Promise.all([
-                    this.getRecentRegistrations(60),
+                    this.getRecentRegistrations(120), // Last 2 hours
                     this.getUrgentAlerts(),
                     this.getRankingChanges()
                 ]);
 
                 // 2. Convertir inscripciones a formato de actividad
                 registrations.forEach(reg => {
-                    // Determinar color según categoría (Nombre del evento)
-                    let catColor = '#84cc16'; // Default Green (Lime)
-                    let catColorSec = '#bef264';
+                    // Configuración de colores según solicitud del usuario:
+                    // Femenino: Rosa | Mixto: Amarillo | Masculino: Verde | Todo/Otros: Azul
+
+                    let catColor = '#00C4FF'; // Default / Todo: Azul
+                    let catColorSec = '#7dd3fc';
 
                     const lowerName = reg.eventName.toLowerCase();
-                    if (lowerName.includes('femenina') || lowerName.includes('chicas')) {
-                        catColor = '#ec4899'; // Pink-500
-                        catColorSec = '#f472b6'; // Pink-400
-                    } else if (lowerName.includes('masculina') || lowerName.includes('chicos')) {
-                        catColor = '#06b6d4'; // Cyan-500
-                        catColorSec = '#22d3ee'; // Cyan-400
-                    } else if (lowerName.includes('mixto') || lowerName.includes('mix')) {
-                        catColor = '#8b5cf6'; // Violet-500
-                        catColorSec = '#a78bfa'; // Violet-400
+
+                    if (lowerName.includes('femenin') || lowerName.includes('chicas') || lowerName.includes('female')) {
+                        // Femenino: Rosa (#FF2D55)
+                        catColor = '#FF2D55';
+                        catColorSec = '#ff5c8d';
+                    } else if (lowerName.includes('mixt') || lowerName.includes('mix')) {
+                        // Mixto: Amarillo (#FFD700)
+                        catColor = '#FFD700';
+                        catColorSec = '#fde047';
+                    } else if (lowerName.includes('masculin') || lowerName.includes('chicos') || lowerName.includes('male')) {
+                        // Masculino: Verde (#00E36D)
+                        catColor = '#00E36D';
+                        catColorSec = '#86efac';
                     }
+                    // El resto (Entrenos sin genero específico, Open, etc) se queda en AZUL por defecto.
 
                     activities.push({
                         type: 'registration',
                         icon: '🎾',
-                        title: `${reg.playerName} se unió a ${reg.eventName}`,
+                        title: `<span style="color:white;">${reg.playerName}</span> se unió a <span style="color:${catColorSec}; text-transform:uppercase;">${reg.eventName}</span>`,
                         time: this.formatRelativeTime(reg.timestamp),
                         color: catColor,
                         secondaryColor: catColorSec,
@@ -1030,7 +1285,7 @@
                 urgentAlerts.forEach(alert => {
                     activities.push({
                         type: 'urgent',
-                        icon: '⚠️',
+                        icon: '🚨',
                         title: alert.title,
                         time: 'ahora',
                         color: '#ef4444',
@@ -1080,20 +1335,19 @@
                     <div class="activity-item-hover" style="
                         position: relative;
                         display: flex;
-                        align-items: start;
-                        gap: 12px;
+                        align-items: center;
+                        gap: 14px;
                         padding: 12px 14px;
-                        background: linear-gradient(90deg, ${activity.color}55 0%, rgba(0,0,0,0.4) 100%);
-                        backdrop-filter: blur(10px);
-                        -webkit-backdrop-filter: blur(10px);
-                        border-radius: 12px;
-                        margin-bottom: 8px;
+                        /* Fondo tintado con el color de la categoría en lugar de negro puro */
+                        background: linear-gradient(135deg, ${activity.color}25 0%, rgba(20,20,30,0.8) 100%);
+                        border-radius: 16px;
+                        margin-bottom: 10px;
+                        /* Borde sutil del mismo color para integración */
                         border: 1px solid ${activity.color}30;
                         overflow: hidden;
-                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        animation: slideIn 0.5s ease-out backwards;
-                        animation-delay: ${index * 0.1}s;
-                        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                        animation: slideInUp 0.6s ease-out backwards;
+                        animation-delay: ${index * 0.15}s;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
                     ">
                         <!-- Living Color Bar -->
                         <div style="
@@ -1101,40 +1355,40 @@
                             left: 0;
                             top: 0;
                             bottom: 0;
-                            width: 4px;
+                            width: 6px;
                             background: linear-gradient(180deg, ${activity.color}, ${activity.secondaryColor}, ${activity.color});
                             background-size: 100% 200%;
                             animation: gradientFlow 3s infinite linear;
-                            box-shadow: 0 0 10px ${activity.color}60;
+                            box-shadow: 0 0 15px ${activity.color}60;
                         "></div>
 
                         <!-- Icon Container with Glow -->
                         <div style="
-                            font-size: 1.2rem;
+                            font-size: 1.4rem;
                             position: relative;
                             z-index: 2;
-                            text-shadow: 0 0 15px ${activity.color}80;
-                            animation: pulseGlow 2s infinite ease-in-out;
+                            text-shadow: 0 0 20px ${activity.color}80;
+                            animation: pulseGlow 3s infinite ease-in-out;
+                            padding-left: 8px;
                         ">${activity.icon}</div>
 
                         <div style="flex: 1; z-index: 2;">
                             <div style="
-                                font-size: 0.8rem; 
+                                font-size: 0.85rem; 
                                 font-weight: 700; 
-                                color: white; 
+                                color: rgba(255,255,255,0.9); 
                                 line-height: 1.3;
-                                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
                             ">
                                 ${activity.title}
                             </div>
                             <div style="
                                 font-size: 0.65rem; 
-                                color: rgba(255,255,255,0.6); 
+                                color: rgba(255,255,255,0.5); 
                                 margin-top: 4px; 
                                 font-weight: 600;
                                 display: flex;
                                 align-items: center;
-                                gap: 4px;
+                                gap: 6px;
                             ">
                                 <span style="
                                     display: inline-block;
@@ -1142,7 +1396,8 @@
                                     height: 6px;
                                     border-radius: 50%;
                                     background: ${activity.color};
-                                    box-shadow: 0 0 5px ${activity.color};
+                                    box-shadow: 0 0 8px ${activity.color};
+                                    animation: pulseGlow 1.5s infinite;
                                 "></span>
                                 ${activity.time}
                             </div>
