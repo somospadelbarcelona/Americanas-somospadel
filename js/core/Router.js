@@ -16,7 +16,8 @@
                 'ranking': () => window.RankingController?.init(),
                 'agenda': () => this.handleControllerTab('EventsController', 'agenda'),
                 'results': () => this.handleControllerTab('EventsController', 'results'),
-                'entrenos': () => this.handleControllerTab('EventsController', 'entrenos')
+                'entrenos': () => this.handleControllerTab('EventsController', 'entrenos'),
+                'records': () => window.RecordsController?.init()
             };
 
             // Handle browser navigation

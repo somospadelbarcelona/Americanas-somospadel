@@ -236,6 +236,11 @@
                     style="flex:1; text-align:center; font-weight:700; font-size:0.75rem; color:rgba(0,0,0,0.5); cursor:pointer; height:100%; display:flex; align-items:center; justify-content:center; position:relative;">
                     RANKING
                 </div>
+                <!-- HALL OF FAME TAB -->
+                <div class="header-tab" onclick="window.Router && window.Router.navigate('records')"
+                    style="flex:1; text-align:center; font-weight:700; font-size:0.75rem; color:rgba(0,0,0,0.5); cursor:pointer; height:100%; display:flex; align-items:center; justify-content:center; position:relative;">
+                    RÉCORDS
+                </div>
                 <div class="header-tab" onclick="window.Router && window.Router.navigate('profile')"
                     style="flex:1; text-align:center; font-weight:700; font-size:0.75rem; color:rgba(0,0,0,0.5); cursor:pointer; height:100%; display:flex; align-items:center; justify-content:center; position:relative;">
                     PERFIL
@@ -555,6 +560,10 @@
     <!-- Ranking Module -->
     <script src="js/modules/ranking/RankingView.js"></script>
     <script src="js/modules/ranking/RankingController.js"></script>
+
+    <!-- Hall of Fame (Records) Module -->
+    <script src="js/modules/records/RecordsView.js"></script>
+    <script src="js/modules/records/RecordsController.js"></script>
 
     <!-- Stats Module -->
     <script src="js/modules/stats/StatsView.js"></script>

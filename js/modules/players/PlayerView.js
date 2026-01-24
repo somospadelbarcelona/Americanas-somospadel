@@ -167,8 +167,35 @@
                                         <p style="font-size: 0.75rem; color: #888; margin: 0; line-height: 1.4;">Fondo competitivo. Sube por <b>experiencia</b> y partidos oficiales jugados.</p>
                                     </div>
                                 </div>
+                                <div style="display: flex; gap: 15px; align-items: flex-start;">
+                                    <div style="width: 35px; height: 35px; background: rgba(239,68,68,0.1); color: #ef4444; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 900; font-size: 0.7rem;"><i class="fas fa-skull"></i></div>
+                                    <div>
+                                        <div style="font-size: 0.85rem; font-weight: 800; color: #fff; margin-bottom: 2px;">NÉMESIS</div>
+                                        <p style="font-size: 0.75rem; color: #888; margin: 0; line-height: 1.4;">Tu "bestia negra". El jugador contra el que tienes peor balance de victorias/derrotas histórico.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
+                        <!-- RIVALRY SECTION: NEMESIS ALERT -->
+                        ${data.h2h?.nemesis && data.h2h.nemesis.losses > 0 ? `
+                        <div style="margin-bottom: 30px; border: 1px solid #ef4444; background: linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(0,0,0,0) 100%); border-radius: 24px; padding: 20px; position: relative; overflow: hidden;">
+                            <div style="position: absolute; right: -20px; top: -20px; font-size: 5rem; color: #ef4444; opacity: 0.1;"><i class="fas fa-skull"></i></div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2;">
+                                <div>
+                                    <div style="color: #ef4444; font-size: 0.7rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">TU NÉMESIS 💀</div>
+                                    <div style="font-size: 0.65rem; color: #aaa; margin-bottom: 5px; font-style: italic;">Rival con mayor % de victorias sobre ti</div>
+                                    <div style="font-size: 1.4rem; font-weight: 950; color: white;">${data.h2h.nemesis.name || 'Rival Desconocido'}</div>
+                                    <div style="font-size: 0.8rem; color: #aaa; margin-top: 5px;">
+                                        Record H2H: <b style="color:#ef4444">${data.h2h.nemesis.losses} Derrotas</b> / <b style="color:#22c55e">${data.h2h.nemesis.wins} Victorias</b>
+                                    </div>
+                                </div>
+                                <button onclick="window.open('https://wa.me/${data.h2h.nemesis.phone || ''}?text=Hola ${data.h2h.nemesis.name}, la app dice que eres mi Némesis (${data.h2h.nemesis.losses} derrotas). Te desafío oficialmente para el próximo entreno. ⚔️', '_blank')" style="background: #ef4444; color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 900; font-size: 0.7rem; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <i class="fas fa-glove-boxing"></i> DESAFIAR
+                                </button>
+                            </div>
+                        </div>
+                        ` : ''}
 
                         <!-- STATS GRID -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px;">
