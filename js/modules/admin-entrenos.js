@@ -41,7 +41,14 @@ window.AdminViews.entrenos_mgmt = async function () {
 
         // 🏗️ Build Main Layout
         content.innerHTML = `
-            <div style="display: grid; grid-template-columns: 350px 1fr; gap: 20px; height: calc(100vh - 140px);">
+            <div class="admin-entrenos-layout" style="display: flex; flex-wrap: wrap; gap: 20px; height: auto; min-height: calc(100vh - 140px);">
+                <style>
+                    .admin-entrenos-layout > div { flex: 1; min-width: 350px; }
+                    @media (max-width: 768px) {
+                        .admin-entrenos-layout { flex-direction: column; }
+                        .admin-entrenos-layout > div { min-width: 100%; height: auto !important; }
+                    }
+                </style>
                 
                 <!-- 1. CREATE FORM COLUMN -->
                 <div class="glass-card-enterprise" style="overflow-y: auto; height: 100%;">
@@ -53,60 +60,82 @@ window.AdminViews.entrenos_mgmt = async function () {
                             <input type="text" name="name" class="pro-input" placeholder="Ej: Entreno Mañanero" required style="font-weight:700;">
                         </div>
 
-                        <div class="form-row-compact">
+                        <div class="form-row-compact" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                             <div class="form-group">
                                 <label>FECHA</label>
                                 <input type="date" name="date" class="pro-input" required>
                             </div>
                             <div class="form-group">
-                                <label>HORA</label>
-                                <input type="time" name="time" class="pro-input" value="10:00" required>
+                                <label>INICIO</label>
+                                <input type="time" name="time" class="pro-input" value="17:00" required>
+                            </div>
+                            <div class="form-group">
+                                <label>FIN (2H)</label>
+                                <input type="time" name="time_end" class="pro-input" value="19:00" required>
                             </div>
                         </div>
 
-                        <div class="form-row-compact">
+                        <div class="form-row-compact" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px;">
                             <div class="form-group">
                                 <label>CATEGORÍA</label>
                                 <select name="category" class="pro-input">
-                                    <option value="open">TODOS / OPEN</option>
+                                    <option value="mixed">MIXTO</option>
                                     <option value="male">MASCULINO</option>
                                     <option value="female">FEMENINO</option>
-                                    <option value="mixed">MIXTO</option>
+                                    <option value="open">OPEN / TODOS</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label>SEDE</label>
                                 <select name="location" class="pro-input">
-                                    <option value="Barcelona Pádel el Prat">EL PRAT</option>
-                                    <option value="Delfos Cornellá">DELFOS</option>
+                                    <option value="Barcelona Pádel el Prat">Barcelona Pádel el Prat</option>
+                                    <option value="Delfos Cornellá">Delfos Cornellá</option>
                                 </select>
                             </div>
                         </div>
 
-                        <div class="form-row-compact">
+                        <div class="form-row-compact" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                             <div class="form-group">
                                 <label>PISTAS</label>
                                 <input type="number" name="max_courts" class="pro-input" value="4" min="1">
                             </div>
-                             <div class="form-group">
-                                <label>MODO</label>
-                                <select name="pair_mode" class="pro-input">
-                                    <option value="fixed">PAREJA FIJA</option>
-                                    <option value="rotating">TWISTER (Individual)</option>
-                                </select>
+                            <div class="form-group">
+                                <label>PRECIO SOC.</label>
+                                <input type="number" name="price_members" class="pro-input" value="10" step="0.5">
+                            </div>
+                            <div class="form-group">
+                                <label>PRECIO EXT.</label>
+                                <input type="number" name="price_external" class="pro-input" value="13" step="0.5">
                             </div>
                         </div>
 
                         <div class="form-group">
+                            <label>TIPO DE ENTRENO</label>
+                            <select name="pair_mode" class="pro-input">
+                                <option value="fixed">🔒 PAREJA FIJA</option>
+                                <option value="rotating">🌪️ TWISTER (Individual)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="position: relative;">
                             <label>IMAGEN (URL)</label>
-                            <input type="text" name="image_url" class="pro-input" placeholder="Automático..." style="font-size: 0.8rem;">
-                            <!-- Image preset buttons could go here if needed -->
+                            <div style="display: flex; gap: 10px; align-items: flex-start;">
+                                <div id="create-img-preview" style="width: 60px; height: 60px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-image" style="opacity: 0.2;"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <input type="text" name="image_url" id="create-img-input" class="pro-input" placeholder="Automático..." style="font-size: 0.8rem;">
+                                    <div id="create-img-presets" style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px;">
+                                        <!-- Inyectado vía JS -->
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <input type="hidden" name="status" value="open">
                         
                         <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                            <button type="submit" class="btn-primary-pro" style="width: 100%; justify-content: center; font-weight: 800;">
+                            <button type="submit" class="btn-primary-pro" style="width: 100%; justify-content: center; font-weight: 800; height: 50px;">
                                 CREAR ENTRENO 🚀
                             </button>
                         </div>
@@ -308,54 +337,118 @@ function setupCreateForm() {
     const form = document.getElementById('create-entreno-form');
     if (!form) return;
 
-    // Auto-Sync Logic (Images & Names)
+    // Auto-Sync Logic (Images & Names & Duration)
     const cat = form.querySelector('[name=category]');
     const loc = form.querySelector('[name=location]');
     const img = form.querySelector('[name=image_url]');
-    const name = form.querySelector('[name=name]');
-    const date = form.querySelector('[name=date]');
+    const nameInput = form.querySelector('[name=name]');
+    const time = form.querySelector('[name=time]');
+    const timeEnd = form.querySelector('[name=time_end]');
+    const presetContainer = document.getElementById('create-img-presets');
+    const imgPreview = document.getElementById('create-img-preview');
+    let nameManuallyEdited = false;
 
-    // Pre-fill date with today
-    if (date && !date.value) {
-        date.valueAsDate = new Date();
+    if (nameInput) {
+        nameInput.oninput = () => { nameManuallyEdited = !!nameInput.value; };
     }
 
     const sync = () => {
         const cVal = cat.value;
         const lVal = loc.value;
 
-        // Smart Default Image
+        // 1. Smart Default Image
         const autoImg = EventService.getAutoImage(lVal, cVal, 'entreno');
-        if (img && !img.value) img.value = autoImg; // Only set if empty
+        if (img) {
+            img.value = autoImg;
+            if (imgPreview) imgPreview.innerHTML = `<img src="${autoImg}" style="width:100%; height:100%; object-fit:cover;">`;
+        }
 
-        // Name Sync (Optional, only if user hasn't typed a custom name)
-        // if (!name.value || name.value.startsWith('ENTRENO')) {
-        //     name.value = `ENTRENO ${ cVal.toUpperCase() } `;
-        // }
+        // 2. Smart Default Name (Only if NOT manually edited or empty)
+        if (nameInput && !nameManuallyEdited) {
+            const labels = {
+                'male': 'ENTRENO MASCULINO',
+                'female': 'ENTRENO FEMENINO',
+                'mixed': 'ENTRENO MIXTO',
+                'open': 'ENTRENO OPEN'
+            };
+            nameInput.value = labels[cVal] || 'ENTRENO';
+        }
+
+        // 3. Update Presets Buttons
+        if (presetContainer) {
+            const isPrat = lVal.includes('Prat');
+            const clubKey = isPrat ? 'PRAT' : 'DELFOS';
+            const images = AppConstants.IMAGES[clubKey] || {};
+            const prefix = isPrat ? 'Prat' : 'Delfos';
+
+            presetContainer.innerHTML = Object.entries(images).map(([k, url]) => `
+                <button type="button" class="btn-micro" 
+                    onclick="document.getElementById('create-img-input').value='${url}'; document.getElementById('create-img-preview').innerHTML='<img src=${url} style=\'width:100%;height:100%;object-fit:cover;\'>'"
+                    style="background: rgba(255,255,255,0.05); color: #fff; padding: 4px 8px; font-size: 0.55rem; border: 1px solid rgba(255,255,255,0.1); border-radius:6px;">
+                    ${prefix.substring(0, 1)}.${k.toUpperCase()}
+                </button>
+            `).join('');
+        }
+    };
+
+    // Observer for manual image input
+    if (img) {
+        img.onchange = () => {
+            if (imgPreview) imgPreview.innerHTML = `<img src="${img.value}" style="width:100%; height:100%; object-fit:cover;">`;
+        };
+    }
+
+    const updateEndTime = () => {
+        if (!time.value) return;
+        const [h, m] = time.value.split(':').map(Number);
+        let endH = (h + 2) % 24;
+        const formattedEnd = `${endH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        if (timeEnd) timeEnd.value = formattedEnd;
     };
 
     if (cat) cat.onchange = sync;
     if (loc) loc.onchange = sync;
+    if (time) time.onchange = updateEndTime;
+
+    // Initial sync
+    sync();
+    updateEndTime();
 
     form.onsubmit = async (e) => {
         e.preventDefault();
+        const btn = form.querySelector('button[type=submit]');
+        const originalBtnText = btn.innerHTML;
+
         const fd = new FormData(form);
         const data = Object.fromEntries(fd.entries());
 
         try {
-            // Validations
-            if (!data.name) throw new Error("El nombre es obligatorio");
-            if (!data.date) throw new Error("La fecha es obligatoria");
+            // 1. Validations
+            if (!data.name || data.name === 'ENTRENO') throw new Error("Define un nombre descriptivo para el entreno.");
+            if (!data.date) throw new Error("La fecha es obligatoria.");
+            if (parseInt(data.max_courts) < 1) throw new Error("El número de pistas debe ser al menos 1.");
 
+            btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> CREANDO...`;
+            btn.disabled = true;
+
+            // 2. Creation
             const newEventId = await EventService.createEvent('entreno', data);
 
-            // Notify
-            if (window.NotificationService) NotificationService.showToast("Entreno Creado Correctamente", "success");
+            // 3. UI Feedback
+            if (window.NotificationService) {
+                window.NotificationService.showInAppToast("✨ ÉXITO TOTAL", "Entreno publicado en el Dashboard.");
+            }
 
-            // Reload
+            // 4. Reset & Reload
+            form.reset();
+            nameManuallyEdited = false;
             window.loadAdminView('entrenos_mgmt');
 
-        } catch (err) { alert("Error al crear: " + err.message); }
+        } catch (err) {
+            alert("⚠️ " + err.message);
+            btn.innerHTML = originalBtnText;
+            btn.disabled = false;
+        }
     };
 }
 

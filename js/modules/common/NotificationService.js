@@ -569,6 +569,11 @@ class NotificationService {
             setTimeout(() => toast.remove(), 500);
         }, 5000);
     }
+
+    // Alias de compatibilidad
+    showToast(title, message) {
+        this.showInAppToast(title, message);
+    }
 }
 
 // Inicializar y exportar
