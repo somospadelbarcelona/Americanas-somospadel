@@ -472,13 +472,13 @@ window.Actions = {
 
         // Confirmation?
         // RESTRICTION: Specific Status Check
-        if (evt.status !== 'live') {
+        if (evt.status !== 'live' && evt.status !== 'pairing') {
             if (evt.status === 'open') {
-                alert("⛔ EL EVENTO ESTÁ 'ABIERTO'\n\nPara empezar a generar partidos, debes ponerlo 'EN JUEGO' desde la gestión de eventos.");
+                alert("⛔ EL EVENTO ESTÁ 'ABIERTO'\n\nPara empezar a generar partidos, cambia el estado a 'EN JUEGO' o 'EMPAREJAMIENTO'.");
             } else if (evt.status === 'finished') {
-                alert("⛔ EL EVENTO ESTÁ 'FINALIZADO'\n\nYa no se pueden generar más rondas. Si es un error, vuelve a ponerlo 'EN JUEGO' o 'ABIERTO'.");
+                alert("⛔ EL EVENTO ESTÁ 'FINALIZADO'\n\nYa no se pueden generar más rondas.");
             } else {
-                alert(`⛔ Estado actual: ${evt.status.toUpperCase()}\n\nEl evento debe estar 'EN JUEGO' para generar rondas.`);
+                alert(`⛔ Estado actual: ${evt.status.toUpperCase()}\n\nEl evento debe estar 'EN JUEGO' o 'EMPAREJAMIENTO' para generar rondas.`);
             }
             return;
         }
@@ -677,47 +677,144 @@ window.Actions = {
     },
 
     async resetEvent() {
-        if (!confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsta acción es irreversible:\n1. Borrará TODOS los partidos y resultados.\n2. Reiniciará el evento a estado 'Abierto'.\n3. Tendrás que generar los cruces de nuevo.\n\n¿Continuar?")) return;
+        if (!confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsta acción es irreversible:\n1. Borrará TODOS los partidos y resultados.\n2. Reiniciará el evento a estado 'Live'.\n3. Generará automáticamente la Ronda 1.\n\n¿Continuar?")) return;
 
         const evt = window.AdminController.activeEvent;
+        if (!evt || !evt.id) {
+            alert("❌ Error: No hay evento activo");
+            return;
+        }
+
         const loader = document.getElementById('matches-grid');
         if (loader) loader.innerHTML = '<div class="loader"></div>';
 
         try {
+            console.log(`🔄 Reiniciando evento: ${evt.name} (${evt.id})`);
+
             // 1. Delete all matches for this event (Search in BOTH collections)
             const collections = ['matches', 'entrenos_matches'];
             let totalDeleted = 0;
 
             for (const collName of collections) {
-                const snap = await window.db.collection(collName).where('americana_id', '==', evt.id).get();
-                if (!snap.empty) {
-                    const batch = window.db.batch();
-                    snap.docs.forEach(doc => {
-                        batch.delete(doc.ref);
-                        totalDeleted++;
-                    });
-                    await batch.commit();
+                try {
+                    const snap = await window.db.collection(collName).where('americana_id', '==', evt.id).get();
+                    if (!snap.empty) {
+                        const batch = window.db.batch();
+                        snap.docs.forEach(doc => {
+                            batch.delete(doc.ref);
+                            totalDeleted++;
+                        });
+                        await batch.commit();
+                        console.log(`✅ Deleted ${snap.size} matches from ${collName}`);
+                    }
+                } catch (err) {
+                    console.warn(`⚠️ Error deleting from ${collName}:`, err);
                 }
             }
 
             console.log(`🔥 Purged ${totalDeleted} matches across all collections.`);
 
             // 2. Reset Event Status to LIVE (Immediate Restart)
-            // User requested "volver a generar solo automaticamente"
-            await EventService.updateEvent(evt.type, evt.id, { status: 'live' });
+            console.log("📝 Updating event status to 'live'...");
+
+            // Clean update payload - remove any undefined fields
+            const updatePayload = {
+                status: 'live'
+            };
+
+            // Use EventService if available, otherwise direct DB update
+            if (window.EventService && window.EventService.updateEvent) {
+                await EventService.updateEvent(evt.type, evt.id, updatePayload);
+            } else {
+                // Fallback to direct DB update
+                const collectionName = evt.type === 'entreno' ? 'entrenos' : 'americanas';
+                await window.db.collection(collectionName).doc(evt.id).update(updatePayload);
+            }
+
+            console.log("✅ Event status updated to 'live'");
 
             // 3. Auto-Generate Round 1
             console.log("🚀 Auto-generating Round 1 after reset...");
+
+            if (!window.MatchMakingService) {
+                throw new Error("MatchMakingService no está disponible");
+            }
+
             await MatchMakingService.generateRound(evt.id, evt.type, 1);
+            console.log("✅ Round 1 generated successfully");
 
             alert("✅ Evento reiniciado y Ronda 1 generada automáticamente.");
-            window.loadResultsView(evt.type);
+
+            // Reload view
+            if (window.loadResultsView) {
+                window.loadResultsView(evt.type);
+            } else {
+                location.reload();
+            }
 
         } catch (e) {
-            console.error(e);
-            alert("Error al reiniciar: " + e.message);
+            console.error("❌ Error al reiniciar evento:", e);
+            alert(`❌ Error al reiniciar: ${e.message}\n\nRevisa la consola para más detalles.`);
+
+            // Restore UI
+            if (loader) {
+                loader.innerHTML = '<div style="padding:2rem; text-align:center; color:#ff4444;">Error al reiniciar. Recarga la página.</div>';
+            }
         }
     },
+
+    async finishEvent() {
+        const evt = window.AdminController.activeEvent;
+        if (!evt || !evt.id) {
+            alert("❌ Error: No hay evento activo");
+            return;
+        }
+
+        // Check if all matches are finished
+        const allMatches = window.AdminController.matchesBuffer || [];
+        const unfinished = allMatches.filter(m => m.status !== 'finished');
+
+        if (unfinished.length > 0) {
+            if (!confirm(`⚠️ ATENCIÓN\n\nAún hay ${unfinished.length} partidos sin finalizar.\n\n¿Deseas finalizar el evento de todas formas?`)) {
+                return;
+            }
+        }
+
+        if (!confirm(`🏁 ¿Finalizar el evento "${evt.name}"?\n\nEsto marcará el evento como terminado y no se podrán generar más rondas.`)) {
+            return;
+        }
+
+        try {
+            console.log(`🏁 Finalizando evento: ${evt.name}`);
+
+            // Update event status to finished
+            const updatePayload = {
+                status: 'finished',
+                finishedAt: new Date().toISOString()
+            };
+
+            if (window.EventService && window.EventService.updateEvent) {
+                await EventService.updateEvent(evt.type, evt.id, updatePayload);
+            } else {
+                const collectionName = evt.type === 'entreno' ? 'entrenos' : 'americanas';
+                await window.db.collection(collectionName).doc(evt.id).update(updatePayload);
+            }
+
+            alert("✅ Evento finalizado correctamente");
+
+            // Reload view
+            if (window.loadResultsView) {
+                window.loadResultsView(evt.type);
+            } else {
+                location.reload();
+            }
+
+        } catch (e) {
+            console.error("❌ Error al finalizar evento:", e);
+            alert(`❌ Error: ${e.message}`);
+        }
+    },
+
     async runRescue1101() {
         if (window.LevelReliabilityService) {
             await window.LevelReliabilityService.runRescue1101();

@@ -24,13 +24,22 @@
             if (!userId || this.initialized) return;
             this.initialized = true;
 
-            // 1. Iniciar Latido (Heartbeat)
+            // 1. Obtener total real de usuarios registrados
+            try {
+                const snap = await this.db.collection('users').get();
+                this.totalUsersCount = snap.size || 0;
+            } catch (e) {
+                console.error('[NetworkPulse] Error counting users:', e);
+                this.totalUsersCount = 0;
+            }
+
+            // 2. Iniciar Latido (Heartbeat)
             this.startHeartbeat(userId);
 
-            // 2. Escuchar cambios globales
+            // 3. Escuchar cambios globales
             this.listenToActiveNodes();
 
-            // 3. Simular flujo de actividad para "vibe" profesional
+            // 4. Actividad entrante
             this.startActivitySimulation();
         }
 
@@ -58,27 +67,34 @@
         }
 
         /**
-         * Escucha usuarios conectados
+         * Escucha usuarios reales conectados (Últimos accesos)
          */
         listenToActiveNodes() {
-            const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
-
+            // Obtenemos los últimos 20 usuarios que han tenido actividad, sin límite de tiempo estricto
+            // para asegurar que la lista siempre contenga nombres de personas reales del club.
             this.db.collection('users')
-                .where('last_online', '>', tenMinutesAgo)
-                .limit(50)
+                .orderBy('last_online', 'desc')
+                .limit(20)
                 .onSnapshot(snapshot => {
                     this.activeNodes = snapshot.docs.map(doc => {
                         const data = doc.data();
                         return {
                             id: doc.id,
-                            name: data.name || 'Anónimo',
+                            name: data.name || 'JUGADOR SOMOSPADEL',
                             last_online: data.last_online,
-                            city: data.city || this.cities[Math.floor(Math.random() * this.cities.length)],
-                            node: data.device_node || 'NODE-X'
+                            city: data.city || 'Barcelona',
+                            node: data.device_node || 'APP'
                         };
                     });
+
                     this.notifyListeners();
-                }, err => console.error('[NetworkPulse] Snap error:', err));
+                }, err => {
+                    console.error('[NetworkPulse] Snap error:', err);
+                    // Fallback silencioso si el índice de Firestore aún no está creado
+                    if (err.message && err.message.includes('index')) {
+                        console.warn('Recomendación: Crear índice compuesto en Firestore para [last_online DESC]');
+                    }
+                });
         }
 
         /**

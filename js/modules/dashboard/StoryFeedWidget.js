@@ -9,16 +9,14 @@
     class StoryFeedWidget {
         constructor() {
             this.containerId = 'story-feed-root';
+            // Reducimos a las 6 más importantes para que quepan perfectas y centradas sin cortarse
             this.stories = [
                 { id: 'ranking', label: 'RANKING', icon: 'fa-trophy', color: '#fb7185' },
                 { id: 'clinica', label: 'ESCUELA', icon: 'fa-graduation-cap', color: '#f472b6' },
                 { id: 'live', label: 'ACTIVOS', icon: 'fa-users', color: '#00E36D' },
                 { id: 'weather', label: 'VELOCIDAD', icon: 'fa-bolt', color: '#fbbf24' },
                 { id: 'matches', label: 'EVENTOS', icon: 'fa-star', color: '#ca8a04' },
-                { id: 'growth', label: 'INSIGHT', icon: 'fa-chart-line', color: '#0ea5e9' },
-                { id: 'security', label: 'SEGURIDAD', icon: 'fa-shield-alt', color: '#8b5cf6' },
-                { id: 'partners', label: 'PARTNERS', icon: 'fa-handshake', color: '#34d399' },
-                { id: 'shop', label: 'TIENDA', icon: 'fa-shopping-bag', color: '#6366f1' }
+                { id: 'growth', label: 'INSIGHT', icon: 'fa-chart-line', color: '#0ea5e9' }
             ];
         }
 
@@ -43,13 +41,12 @@
                 }
                 .story-h-scroll {
                     display: flex;
-                    justify-content: center; /* CENTRADO */
+                    justify-content: center;
                     gap: 16px;
                     padding: 10px 5px;
                     overflow-x: auto;
                     scrollbar-width: none;
                     -ms-overflow-style: none;
-                    scroll-snap-type: x mandatory;
                 }
                 .story-h-scroll::-webkit-scrollbar { display: none; }
                 
@@ -58,20 +55,16 @@
                     flex-direction: column;
                     align-items: center;
                     gap: 8px;
-                    min-width: 78px;
                     cursor: pointer;
-                    scroll-snap-align: center;
                     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                 }
                 .story-v3-item:hover { transform: scale(1.05); }
-                .story-v3-item:active { transform: scale(0.92); }
 
-                /* Circle & Ring Design (ULTRA COMPACT) */
                 .story-v3-outer {
-                    width: 40px;
-                    height: 40px;
+                    width: 48px;
+                    height: 48px;
                     border-radius: 50%;
-                    padding: 1.5px;
+                    padding: 2.5px;
                     background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
                     position: relative;
                 }
@@ -84,23 +77,19 @@
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    border: 1px solid #000;
+                    border: 1.5px solid #000;
                     overflow: hidden;
-                    transition: all 0.3s;
                 }
                 
-                /* Labels - Ultra Small */
                 .story-v3-label {
-                    font-size: 0.5rem;
+                    font-size: 0.55rem;
                     font-weight: 800;
                     color: #1e293b;
                     letter-spacing: 0.1px;
                     text-transform: uppercase;
                     white-space: nowrap;
-                    margin-top: 1px;
                 }
 
-                /* MODAL SYSTEM */
                 .story-v3-modal {
                     position: fixed;
                     inset: 0;
@@ -152,44 +141,51 @@
             container.innerHTML = `
                 <div class="story-feed-v3-wrapper" style="position: relative; padding: 2px 0;">
                     <div style="padding: 10px 15px; background: transparent;">
-                    <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
-                        <!-- STORY ITEMS SCROLLER (FLEX GROW) -->
-                        <div style="flex: 1; display: flex; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; gap: 16px; padding: 5px 0; mask-image: linear-gradient(to right, black 85%, transparent 100%); -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%;">
+                        <!-- STORY ITEMS SCROLLER (CENTERED) -->
+                        <div style="display: flex; justify-content: center; gap: 14px; padding: 5px 0;">
                             ${this.stories.map(story => `
-                                <div class="story-v3-item" style="min-width: 50px; flex-shrink: 0;" onclick="window.StoryFeedWidget.showStory('${story.id}')">
-                                    <div class="story-v3-outer" style="width: 48px; height: 48px;">
-                                        <div class="story-v3-inner" style="width: 42px; height: 42px;">
-                                            <i class="fas ${story.icon}" style="color: ${story.color}; font-size: 0.9rem;"></i>
+                                <div class="story-v3-item" style="min-width: 48px; flex-shrink: 0;" onclick="window.StoryFeedWidget.showStory('${story.id}')">
+                                    <div class="story-v3-outer">
+                                        <div class="story-v3-inner">
+                                            <i class="fas ${story.icon}" style="color: ${story.color}; font-size: 0.95rem;"></i>
                                         </div>
                                     </div>
-                                    <span class="story-v3-label" style="font-size: 0.55rem; margin-top: 6px;">${story.label}</span>
+                                    <span class="story-v3-label">${story.label}</span>
                                 </div>
                             `).join('')}
                         </div>
 
-                        <!-- BROADCAST HUB (FIXED WIDTH) -->
+                        <!-- INSTAGRAM STYLE LIVE HUB -->
                         <div style="
-                            width: 48px; 
-                            height: 48px; 
-                            background: rgba(0,227,109,0.1); 
-                            border-radius: 14px; 
-                            border: 1.5px solid #00E36D; 
+                            width: 50px; 
+                            height: 50px; 
+                            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); 
+                            border-radius: 18px; 
                             display: flex; 
                             flex-direction: column; 
                             align-items: center; 
                             justify-content: center; 
-                            gap: 1px;
                             flex-shrink: 0;
-                            box-shadow: 0 4px 15px rgba(0,227,109,0.15);
+                            box-shadow: 0 4px 15px rgba(188,24,136,0.3);
                             position: relative;
                             cursor: pointer;
-                            margin-bottom: 12px; /* Alineado con labels */
-                        " onclick="window.StoryFeedWidget.showStory(window.StoryFeedWidget.stories[0].id)">
-                            <i class="fas fa-broadcast-tower" style="font-size: 1rem; color: #1e293b;"></i>
-                            <div style="display: flex; align-items: center; gap: 2px;">
-                                <span style="width: 3px; height: 3px; background: #008f45; border-radius: 50%; animation: livePulse 2s infinite;"></span>
-                                <span style="font-size: 0.45rem; color: #1e293b; font-weight: 1000; letter-spacing: 0.1px;">LIVE</span>
-                            </div>
+                            margin-bottom: 15px;
+                            border: 2px solid #000;
+                        " onclick="window.StoryFeedWidget.showStory('live')">
+                            <i class="fas fa-video" style="font-size: 1.1rem; color: #fff; filter: drop-shadow(0 0 5px rgba(255,255,255,0.3));"></i>
+                            <div style="
+                                position: absolute;
+                                bottom: -5px;
+                                background: #ed4956;
+                                color: #fff;
+                                font-size: 0.45rem;
+                                font-weight: 900;
+                                padding: 1px 4px;
+                                border-radius: 4px;
+                                border: 1.5px solid #000;
+                                letter-spacing: 0.5px;
+                            ">LIVE</div>
                         </div>
                     </div>
                 </div>
@@ -198,7 +194,7 @@
                 <style>
                     @keyframes livePulse {
                         0% { opacity: 1; transform: scale(1); }
-                        50% { opacity: 0.5; transform: scale(1.2); }
+                        50% { opacity: 0.7; transform: scale(1.05); }
                         100% { opacity: 1; transform: scale(1); }
                     }
                 </style>
@@ -239,12 +235,10 @@
             const allPlayers = playersData;
             const topRanked = rankedData.length > 0 ? rankedData : allPlayers.sort((a, b) => (b.points || 0) - (a.points || 0));
 
-            // CONTENT INJECTION (Same as before)
+            // CONTENT INJECTION
             switch (id) {
                 case 'ranking':
-                    // USAR DATOS DEL RANKING CONTROLLER (REALES)
                     const top3 = topRanked.slice(0, 3);
-
                     contentHtml = `
                         <div style="padding: 40px; color:white;">
                             <span style="background:#fb7185; color:#000; padding:4px 12px; border-radius:50px; font-weight:950; font-size:0.6rem;">RANKING ACTUALIZADO</span>
@@ -263,11 +257,11 @@
                     break;
                 case 'clinica':
                     contentHtml = `
-                        <div style="padding: 40px; text-align:center;">
+                        <div style="padding: 40px; text-align:center; color: white;">
                             <div style="width:100px; height:100px; background:#f472b6; border-radius:30px; display:flex; align-items:center; justify-content:center; margin:0 auto 30px; box-shadow:0 15px 40px rgba(244,114,182,0.4);">
                                 <i class="fas fa-graduation-cap" style="color:black; font-size:3rem;"></i>
                             </div>
-                            <h2 style="color:white; font-size: 2rem; font-weight: 1000;">ESCUELA DE<br><span style="color:#f472b6">PÁDEL</span></h2>
+                            <h2 style="font-size: 2rem; font-weight: 1000;">ESCUELA DE<br><span style="color:#f472b6">PÁDEL</span></h2>
                             <p style="color:rgba(255,255,255,0.8); margin-top:15px; line-height:1.6; font-weight:600;">Mejora tu técnica con clases personalizadas y grupos adaptados a todos los niveles.</p>
                             <div style="margin-top:40px; background:rgba(255,255,255,0.05); padding:20px; border-radius:20px; border: 1px dashed #f472b6;">
                                 <p style="color:#f472b6; font-weight:900; font-size:0.85rem; margin:0; line-height:1.4;">
@@ -280,9 +274,9 @@
                 case 'live':
                     const onlinePlayers = Math.floor(allPlayers.length * 0.4) + 5;
                     contentHtml = `
-                        <div style="padding: 40px; text-align: left;">
+                        <div style="padding: 40px; text-align: left; color: white;">
                             <span style="background:#00E36D; color:#000; padding:4px 12px; border-radius:50px; font-weight:950; font-size:0.6rem;">ESTADO EN VIVO</span>
-                            <h2 style="color:white; font-size: 2.2rem; font-weight: 950; margin: 15px 0;">COMUNIDAD<br>EN AUGE</h2>
+                            <h2 style="font-size: 2.2rem; font-weight: 950; margin: 15px 0;">COMUNIDAD<br>EN AUGE</h2>
                             <div style="background:white; border-radius:30px; padding:30px; color:#000;">
                                 <div style="font-size:3rem; font-weight:950;">${onlinePlayers}</div>
                                 <div style="font-weight:900; opacity:0.5; font-size:0.7rem; text-transform:uppercase;">Jugadores hoy</div>
@@ -293,9 +287,9 @@
                 case 'weather':
                     const w = weatherData[0] || { temp: '--', icon: '☁️', intelligence: { ballSpeed: 'MEDIA' } };
                     contentHtml = `
-                        <div style="padding: 40px;">
+                        <div style="padding: 40px; color: white;">
                             <span style="background:#fbbf24; color:#000; padding:4px 12px; border-radius:50px; font-weight:950; font-size:0.6rem;">CONSEJO TÁCTICO</span>
-                            <h2 style="color:white; font-size: 2rem; font-weight: 950; margin-top:15px;">ESTRATEGIA<br>DE <span style="color:#fbbf24">PISTA</span></h2>
+                            <h2 style="font-size: 2rem; font-weight: 950; margin-top:15px;">ESTRATEGIA<br>DE <span style="color:#fbbf24">PISTA</span></h2>
                             <p style="color:rgba(255,255,255,0.6); margin-top:10px;">Basado en condiciones de ${w.name || 'Barcelona'}:</p>
                             <div style="margin-top:40px; background:rgba(251,191,36,0.1); border:1px solid #fbbf24; border-radius:30px; padding:30px; text-align:center;">
                                 <div style="font-size:4rem; margin-bottom:10px;">${w.icon}</div>
@@ -309,8 +303,8 @@
                 case 'matches':
                     const openMatches = allEvents.filter(e => e.status === 'open').slice(0, 2);
                     contentHtml = `
-                        <div style="padding: 40px;">
-                            <h2 style="color:white; font-size: 2rem; font-weight: 950;">PRÓXIMOS<br><span style="color:#ca8a04">RETOS</span></h2>
+                        <div style="padding: 40px; color: white;">
+                            <h2 style="font-size: 2rem; font-weight: 950;">PRÓXIMOS<br><span style="color:#ca8a04">RETOS</span></h2>
                             <p style="color:rgba(255,255,255,0.6); margin-top:10px;">Inscríbete en los eventos oficiales de esta semana.</p>
                             <div style="margin-top:30px; display:flex; flex-direction:column; gap:15px;">
                                 ${openMatches.length > 0 ? openMatches.map(m => `
@@ -345,11 +339,11 @@
                     break;
                 case 'security':
                     contentHtml = `
-                        <div style="padding: 40px;">
+                        <div style="padding: 40px; color: white;">
                             <div style="text-align:center; margin-bottom:40px;">
                                 <i class="fas fa-shield-check" style="color:#8b5cf6; font-size:5rem;"></i>
                             </div>
-                            <h2 style="color:white; font-size: 2rem; font-weight: 1000; text-align:center;">PRIVACIDAD<br>TOTAL</h2>
+                            <h2 style="font-size: 2rem; font-weight: 1000; text-align:center;">PRIVACIDAD<br>TOTAL</h2>
                             <div style="margin-top:30px; background:rgba(255,255,255,0.05); border-radius:20px; padding:20px; border-left:4px solid #8b5cf6;">
                                 <div style="color:white; font-weight:900; font-size:0.9rem;">ENCRIPTACIÓN DE DATOS</div>
                                 <div style="color:rgba(255,255,255,0.6); font-size:0.75rem; margin-top:8px; line-height:1.4;">Tus resultados y estadísticas están protegidos bajo protocolos de alta seguridad.</div>
@@ -359,9 +353,9 @@
                     break;
                 case 'partners':
                     contentHtml = `
-                        <div style="padding: 40px;">
+                        <div style="padding: 40px; color: white;">
                             <span style="background:#34d399; color:#000; padding:4px 12px; border-radius:50px; font-weight:950; font-size:0.6rem;">SOCIAL MATCH</span>
-                            <h2 style="color:white; font-size: 2rem; font-weight: 1000; margin-top:15px;">BUSCA<br><span style="color:#34d399">PAREJA</span></h2>
+                            <h2 style="font-size: 2rem; font-weight: 1000; margin-top:15px;">BUSCA<br><span style="color:#34d399">PAREJA</span></h2>
                             <div style="margin-top:40px; background:rgba(52,211,153,0.1); border:2px dashed #34d399; border-radius:30px; padding:30px; display:flex; flex-direction:column; align-items:center;">
                                 <div style="display:flex; gap:-10px; margin-bottom:15px;">
                                     ${Array(4).fill(0).map(() => `<div style="width:40px; height:40px; border-radius:50%; background:#111; border:2px solid #34d399; display:flex; align-items:center; justify-content:center; margin-left:-10px;"><i class="fas fa-user-ninja" style="font-size:1rem; color:#34d399;"></i></div>`).join('')}
@@ -374,9 +368,9 @@
                     break;
                 case 'shop':
                     contentHtml = `
-                        <div style="padding: 40px; text-align:center;">
+                        <div style="padding: 40px; text-align:center; color: white;">
                             <i class="fas fa-shopping-bag" style="font-size:5rem; color:#6366f1; margin-bottom:20px;"></i>
-                            <h2 style="color:white; font-size: 2.2rem; font-weight: 950;">SOMOSPADEL<br><span style="color:#6366f1">.EU</span></h2>
+                            <h2 style="font-size: 2.2rem; font-weight: 950;">SOMOSPADEL<br><span style="color:#6366f1">.EU</span></h2>
                             <p style="color:rgba(255,255,255,0.6); margin-top:15px;">Ofertas exclusivas en palas nuevas y ropa oficial.</p>
                         </div>
                     `;
@@ -404,12 +398,18 @@
                     <i class="fas fa-times-circle"></i>
                 </div>
 
-                <div style="flex:1; display:flex; flex-direction:column; justify-content:center; background: radial-gradient(circle at top right, #111, #000);">
+                <!-- NAVIGATION LAYERS -->
+                <div id="story-navigation-layer" style="position: absolute; inset: 0; z-index: 900; display: flex;">
+                    <div id="story-nav-prev" style="width: 30%; height: 100%;"></div>
+                    <div id="story-nav-next" style="width: 70%; height: 100%;"></div>
+                </div>
+
+                <div id="story-content-container" style="flex:1; display:flex; flex-direction:column; justify-content:center; background: radial-gradient(circle at top right, #111, #000); position: relative;">
                     ${contentHtml}
                 </div>
 
                 <!-- Footer with fixed label -->
-                <div style="padding:24px; background:rgba(0,0,0,0.9); backdrop-filter:blur(20px); border-top:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:16px;">
+                <div style="padding:24px; background:rgba(0,0,0,0.9); backdrop-filter:blur(20px); border-top:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:16px; position:relative; z-index:1000;">
                     <div style="width:44px; height:44px; border-radius:12px; background:${story.color}; display:flex; align-items:center; justify-content:center;">
                         <i class="fas ${story.icon}" style="color:black; font-size:1.4rem;"></i>
                     </div>
@@ -421,6 +421,7 @@
             `;
 
             modal.style.display = 'flex';
+            this.setupNavigationInteractions();
 
             // Start Fill Animation
             setTimeout(() => {
@@ -429,6 +430,138 @@
             }, 50);
 
             // AUTO-NEXT TIMER
+            this.startStoryTimer(index);
+        }
+
+        setupNavigationInteractions() {
+            const nextArea = document.getElementById('story-nav-next');
+            const prevArea = document.getElementById('story-nav-prev');
+            const modal = document.getElementById('story-v3-modal');
+
+            if (!nextArea || !prevArea || !modal) return;
+
+            // Tip navigation
+            nextArea.onclick = (e) => {
+                e.stopPropagation();
+                this.nextStory();
+            };
+            prevArea.onclick = (e) => {
+                e.stopPropagation();
+                this.prevStory();
+            };
+
+            // Touch Swipe Detection
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let isHolding = false;
+            let holdTimer = null;
+
+            modal.ontouchstart = (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+
+                // Pause on hold
+                holdTimer = setTimeout(() => {
+                    isHolding = true;
+                    this.pauseStory();
+                }, 150);
+            };
+
+            modal.ontouchend = (e) => {
+                clearTimeout(holdTimer);
+                if (isHolding) {
+                    isHolding = false;
+                    this.resumeStory();
+                    return;
+                }
+
+                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndY = e.changedTouches[0].clientY;
+                const diffX = touchEndX - touchStartX;
+                const diffY = touchEndY - touchStartY;
+
+                // Horizontal Swipe (Instagram style)
+                if (Math.abs(diffX) > 50 && Math.abs(diffY) < 100) {
+                    if (diffX < 0) this.nextStory();
+                    else this.prevStory();
+                }
+                // Close on swipe down
+                else if (diffY > 100 && Math.abs(diffX) < 100) {
+                    this.hideStory();
+                }
+            };
+
+            // Long press for Desktop (testing)
+            modal.onmousedown = () => {
+                holdTimer = setTimeout(() => {
+                    isHolding = true;
+                    this.pauseStory();
+                }, 150);
+            };
+            modal.onmouseup = () => {
+                clearTimeout(holdTimer);
+                if (isHolding) {
+                    isHolding = false;
+                    this.resumeStory();
+                }
+            };
+        }
+
+        pauseStory() {
+            console.log("⏸ Story Paused");
+            if (this.storyTimer) clearTimeout(this.storyTimer);
+            const currentFill = document.getElementById(`story-fill-${this.currentStoryIndex}`);
+            if (currentFill) {
+                const computedStyle = window.getComputedStyle(currentFill);
+                const transform = computedStyle.getPropertyValue('transform');
+                currentFill.style.transition = 'none';
+                currentFill.style.transform = transform;
+            }
+        }
+
+        resumeStory() {
+            console.log("▶ Story Resumed");
+            const index = this.currentStoryIndex;
+            const currentFill = document.getElementById(`story-fill-${index}`);
+            if (currentFill) {
+                const computedStyle = window.getComputedStyle(currentFill);
+                const transform = computedStyle.getPropertyValue('transform');
+                const matrix = new WebKitCSSMatrix(transform);
+                const currentScale = matrix.m11; // Extract scaleX
+
+                const remainingProgress = 1 - currentScale;
+                const remainingTime = remainingProgress * 5000;
+
+                currentFill.style.transition = `transform ${remainingTime}ms linear`;
+                currentFill.style.transform = 'scaleX(1)';
+
+                if (this.storyTimer) clearTimeout(this.storyTimer);
+                this.storyTimer = setTimeout(() => {
+                    this.nextStory();
+                }, remainingTime);
+            }
+        }
+
+        nextStory() {
+            const nextIndex = this.currentStoryIndex + 1;
+            if (nextIndex < this.stories.length) {
+                this.showStory(this.stories[nextIndex].id);
+            } else {
+                this.hideStory();
+            }
+        }
+
+        prevStory() {
+            const prevIndex = this.currentStoryIndex - 1;
+            if (prevIndex >= 0) {
+                this.showStory(this.stories[prevIndex].id);
+            } else {
+                // Restart current if it's the first
+                this.showStory(this.stories[0].id);
+            }
+        }
+
+        startStoryTimer(index) {
             if (this.storyTimer) clearTimeout(this.storyTimer);
             this.storyTimer = setTimeout(() => {
                 if (index < this.stories.length - 1) {

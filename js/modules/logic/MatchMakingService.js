@@ -18,12 +18,6 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
              * Maneja automáticamente la lógica de "Smart Courts" (ampliar pistas si hay más gente).
              */
             async generateRound(eventId, eventType, roundNum) {
-                console.log(`🎲 MatchMakingService: Generating Round ${roundNum} for ${eventType} ${eventId}`);
-
-                if (roundNum > 6) {
-                    throw new Error("Límite de 6 rondas alcanzado. No se pueden generar más.");
-                }
-
                 // Ensure dependencies exist
                 if (typeof window.FirebaseDB === 'undefined') throw new Error("FirebaseDB not loaded");
 
@@ -34,6 +28,11 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                 const event = await collection.getById(eventId);
 
                 if (!event) throw new Error("Event not found");
+
+                const maxRounds = parseInt(event.rounds_count) || 6;
+                if (roundNum > maxRounds) {
+                    throw new Error(`Límite de ${maxRounds} rondas alcanzado. No se pueden generar más.`);
+                }
 
                 // --- MUTEX LOCK (Prevent Double-Click Race Conditions) ---
                 const lockKey = `${eventId}_R${roundNum}`;
@@ -68,23 +67,79 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                         return existingRoundMatches;
                     }
 
-                    // --- SMART SCALING LOGIC ---
+                    // --- SMART SCALING LOGIC (ENHANCED WITH DURATION) ---
                     let effectiveCourts = event.max_courts || 4;
                     let courtsUpdated = false;
 
-                    if (isFixedPairs) {
-                        const pairsCount = (event.fixed_pairs || []).length;
-                        const needed = Math.floor(pairsCount / 2);
-                        if (needed > effectiveCourts) {
-                            effectiveCourts = needed;
-                            courtsUpdated = true;
+                    // NEW: Calculate courts based on duration and rounds
+                    const calculateCourtsFromDuration = () => {
+                        if (!event.time || !event.time_end) return null;
+
+                        try {
+                            // Parse times
+                            const [startH, startM] = event.time.split(':').map(Number);
+                            const [endH, endM] = event.time_end.split(':').map(Number);
+                            const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+
+                            if (durationMinutes <= 0) return null;
+
+                            const roundsCount = parseInt(event.rounds_count) || 6;
+                            const playersCount = (event.players || []).length;
+
+                            // Assumptions:
+                            // - Each match takes ~15 minutes
+                            // - Add 3 minutes between rounds for transitions
+                            const matchDuration = 15;
+                            const transitionTime = 3;
+                            const timePerRound = matchDuration + transitionTime;
+
+                            // Total time needed for all rounds
+                            const totalTimeNeeded = roundsCount * timePerRound;
+
+                            // If we don't have enough time, we need more courts to run matches in parallel
+                            if (totalTimeNeeded > durationMinutes) {
+                                // Calculate how many courts we need
+                                const courtsNeeded = Math.ceil(totalTimeNeeded / durationMinutes);
+
+                                // Also check player-based minimum
+                                const playerBasedCourts = Math.floor(playersCount / 4);
+
+                                // Take the maximum of both calculations
+                                return Math.max(courtsNeeded, playerBasedCourts, 2); // Minimum 2 courts
+                            }
+
+                            // If we have enough time, just use player-based calculation
+                            return Math.max(Math.floor(playersCount / 4), 2);
+
+                        } catch (err) {
+                            console.warn('Error calculating courts from duration:', err);
+                            return null;
                         }
+                    };
+
+                    // Try duration-based calculation first
+                    const durationBasedCourts = calculateCourtsFromDuration();
+
+                    if (durationBasedCourts && durationBasedCourts > effectiveCourts) {
+                        effectiveCourts = durationBasedCourts;
+                        courtsUpdated = true;
+                        console.log(`🧠 AI Duration Scaling: ${event.time} - ${event.time_end} (${event.rounds_count || 6} rondas) → ${effectiveCourts} pistas necesarias`);
                     } else {
-                        const playersCount = (event.players || []).length;
-                        const needed = Math.floor(playersCount / 4);
-                        if (needed > effectiveCourts) {
-                            effectiveCourts = needed;
-                            courtsUpdated = true;
+                        // Fallback to player-based scaling
+                        if (isFixedPairs) {
+                            const pairsCount = (event.fixed_pairs || []).length;
+                            const needed = Math.floor(pairsCount / 2);
+                            if (needed > effectiveCourts) {
+                                effectiveCourts = needed;
+                                courtsUpdated = true;
+                            }
+                        } else {
+                            const playersCount = (event.players || []).length;
+                            const needed = Math.floor(playersCount / 4);
+                            if (needed > effectiveCourts) {
+                                effectiveCourts = needed;
+                                courtsUpdated = true;
+                            }
                         }
                     }
 
@@ -272,18 +327,50 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                     };
                 }
 
+                // Helper to remove undefined fields
+                const cleanPayload = (obj) => {
+                    const cleaned = {};
+                    for (const [key, value] of Object.entries(obj)) {
+                        if (value !== undefined && value !== null) {
+                            if (Array.isArray(value)) {
+                                cleaned[key] = value.filter(v => v !== undefined && v !== null);
+                            } else {
+                                cleaned[key] = value;
+                            }
+                        }
+                    }
+                    return cleaned;
+                };
+
                 for (const m of matchesData) {
-                    const payload = {
-                        ...m,
+                    // Build base payload with explicit fields
+                    const basePayload = {
                         americana_id: eventId,
-                        round: parseInt(m.round),
+                        round: parseInt(m.round) || 1,
+                        court: parseInt(m.court) || 1,
                         status: 'scheduled',
                         score_a: 0,
                         score_b: 0,
-                        createdAt: new Date().toISOString()
+                        createdAt: new Date().toISOString(),
+                        team_a_ids: m.team_a_ids || [],
+                        team_a_names: m.team_a_names || [],
+                        teamA: m.teamA || '',
+                        team_b_ids: m.team_b_ids || [],
+                        team_b_names: m.team_b_names || [],
+                        teamB: m.teamB || ''
                     };
-                    const result = await collection.create(payload);
-                    created.push(result);
+
+                    // Clean undefined values
+                    const payload = cleanPayload(basePayload);
+
+                    try {
+                        const result = await collection.create(payload);
+                        created.push(result);
+                    } catch (err) {
+                        console.error(`❌ Error creating match:`, err);
+                        console.error('Payload:', payload);
+                        throw err;
+                    }
                 }
                 return created;
             },

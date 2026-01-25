@@ -319,7 +319,7 @@
             .ticker-content {
                 display: flex;
                 gap: 12px;
-                animation: slowTicker 60s linear infinite;
+                animation: slowTicker 25s linear infinite;
                 width: max-content;
                 padding: 10px 0;
             }
@@ -829,61 +829,112 @@
                     `);
                 }
 
-                // C. ACTIVE EVENTS (INSCRIPCIONES)
-                const openEvents = allEvents.filter(a => ['open', 'upcoming', 'draft', 'scheduled', 'live'].includes(a.status));
-                openEvents.forEach(am => {
-                    // 2. Determine Category Color (Consistent with User Preference)
-                    let catColor = '#00E36D'; // Default Green
-                    const lowerName = am.name.toLowerCase();
-                    if (lowerName.includes('femenin') || lowerName.includes('female') || am.category === 'female') {
-                        catColor = '#FF2D55'; // Pink
-                    } else if (lowerName.includes('mixt') || lowerName.includes('mix') || am.category === 'mixed') {
-                        catColor = '#FFD700'; // Yellow
-                    } else if (lowerName.includes('masculin') || lowerName.includes('male') || am.category === 'male') {
-                        catColor = '#00C4FF'; // Blue
+                // B. DYNAMIC CLIPS & TIPS (Variedad de noticias)
+                const dynamicPool = [
+                    {
+                        tag: '📈 TU NIVEL',
+                        icon: 'fa-chart-line',
+                        bgColor: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)',
+                        accent: '#38bdf8',
+                        title: 'Nivel Dinámico',
+                        desc: 'Tu nivel evoluciona con cada set. ¡Juega y demuestra tu progreso!'
+                    },
+                    {
+                        tag: '🏆 COMPETICIÓN',
+                        icon: 'fa-trophy',
+                        bgColor: 'linear-gradient(135deg, #111 0%, #701a75 100%)',
+                        accent: '#f472b6',
+                        title: 'Puntos y Ascensos',
+                        desc: 'Gana partidos para subir de pista y alcanzar el Top 1 del Ranking.'
+                    },
+                    {
+                        tag: '🎾 CONTROL TOTAL',
+                        icon: 'fa-user-check',
+                        bgColor: 'linear-gradient(135deg, #064e3b 0%, #059669 100%)',
+                        accent: '#34d399',
+                        title: 'Perfil y Stats',
+                        desc: 'Consulta tu historial, victorias y próximos retos desde tu perfil.'
+                    },
+                    {
+                        tag: '🛍️ TIENDA VIP',
+                        icon: 'fa-shopping-bag',
+                        bgColor: 'linear-gradient(135deg, #312e81 0%, #4338ca 100%)',
+                        accent: '#818cf8',
+                        title: 'SomosPadel Store',
+                        desc: 'Los mejores precios en palas de alta gama y equipación oficial.'
+                    },
+                    {
+                        tag: '🔔 ALERTAS LIVE',
+                        icon: 'fa-bell',
+                        bgColor: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%)',
+                        accent: '#a78bfa',
+                        title: 'Notificaciones',
+                        desc: 'Recibe avisos de cambios de pista y resultados al instante.'
                     }
+                ];
+
+                // --- PRIORITY: EVENTS FIRST ---
+                const openEvents = allEvents.filter(a => ['open', 'upcoming', 'scheduled', 'live'].includes(a.status));
+                openEvents.forEach(am => {
+                    let catColor = '#00E36D';
+                    const lowerName = am.name.toLowerCase();
+                    if (lowerName.includes('femenin') || lowerName.includes('female') || am.category === 'female') catColor = '#FF2D55';
+                    else if (lowerName.includes('mixt') || lowerName.includes('mix') || am.category === 'mixed') catColor = '#FFD700';
+                    else if (lowerName.includes('masculin') || lowerName.includes('male') || am.category === 'male') catColor = '#00C4FF';
 
                     let statusLabel = 'PRÓXIMO';
                     if (am.status === 'open') statusLabel = 'ABIERTO';
                     else if (am.status === 'live') statusLabel = 'EN JUEGO';
 
                     const categoryIcon = am.category === 'female' ? '♀️' : (am.category === 'male' ? '♂️' : '🎾');
-                    const targetRoute = am.status === 'open' ? 'entrenos' : 'live';
-                    const clickAction = targetRoute === 'entrenos'
-                        ? `Router.navigate('entrenos');`
-                        : `window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');`;
+                    const clickAction = am.status === 'open' ? `Router.navigate('entrenos');` : `window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');`;
 
                     itemsHtml.push(`
                         <div class="registration-ticker-card" onclick="event.stopPropagation(); ${clickAction}" 
-                            style="min-width: 280px; height: 160px; scroll-snap-align: center; 
+                            style="min-width: 240px; width: 240px; height: 160px; scroll-snap-align: center; 
                             background: linear-gradient(135deg, ${catColor}, ${catColor}cc); 
-                            border-radius: 28px; padding: 20px; flex-shrink: 0; 
-                            box-shadow: 0 15px 35px ${catColor}40, inset 0 0 20px rgba(255,255,255,0.1); 
+                            border-radius: 28px; padding: 18px; flex-shrink: 0; 
+                            box-shadow: 0 10px 25px ${catColor}40; 
                             position: relative; overflow: hidden; cursor: pointer; border: 1.5px solid rgba(255,255,255,0.2); 
-                            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-                            
-                            <!-- Animated Shine Effect -->
-                            <div style="position: absolute; inset: 0; background: linear-gradient(120deg, transparent, rgba(255,255,255,0.3), transparent); transform: translateX(-100%); animation: cardShineEffect 3s infinite; z-index: 2;"></div>
-                            
-                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-10deg); font-size: 10rem; opacity: 0.15; z-index: 1; filter: blur(2px);">${categoryIcon}</div>
-                            
-                            <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3; margin-bottom: 15px;">
-                                <span style="font-size:0.6rem; font-weight:1000; color:white; background:rgba(0,0,0,0.3); padding:5px 12px; border-radius:100px; text-transform:uppercase; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2);">${statusLabel}</span>
-                                <span style="font-size:0.65rem; color:rgba(255,255,255,0.8); font-weight:950; letter-spacing:1px; background:rgba(0,0,0,0.1); padding:4px 8px; border-radius:8px;">${this.formatDateShort(am.date)}</span>
+                            transition: all 0.4s;">
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-10deg); font-size: 8rem; opacity: 0.1; filter: blur(2px);">${categoryIcon}</div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3; margin-bottom: 12px;">
+                                <span style="font-size:0.55rem; font-weight:1000; color:white; background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:100px; text-transform:uppercase; border: 1px solid rgba(255,255,255,0.2);">${statusLabel}</span>
+                                <span style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; letter-spacing:1px;">${this.formatDateShort(am.date)}</span>
                             </div>
-
                             <div style="position:relative; z-index:3;">
-                                <h4 style="margin:0; color:white; font-size:1.25rem; font-weight:1000; line-height:1.1; letter-spacing:-0.5px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">${am.name}</h4>
-                                <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
+                                <h4 style="margin:0; color:white; font-size:1.1rem; font-weight:1000; line-height:1.1; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${am.name}</h4>
+                                <div style="display:flex; align-items:center; gap:8px; margin-top:10px;">
                                     <div style="width: 24px; height: 24px; background:rgba(255,255,255,0.2); border-radius:50%; display:flex; align-items:center; justify-content:center;">
-                                        <i class="far fa-clock" style="color:white; font-size:0.75rem;"></i>
+                                        <i class="far fa-clock" style="color:white; font-size:0.7rem;"></i>
                                     </div>
-                                    <span style="font-size:0.9rem; color:white; font-weight:900;">${am.time || '--:--'}</span>
+                                    <span style="font-size:0.85rem; color:white; font-weight:900;">${am.time || '--:--'}</span>
                                 </div>
                             </div>
-
-                            <div style="position:absolute; bottom:15px; right:15px; z-index:3; width:36px; height:36px; background:rgba(255,255,255,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1);">
+                            <div style="position:absolute; bottom:15px; right:15px; z-index:3; width:36px; height:36px; background:rgba(255,255,255,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; border: 1px solid rgba(255,255,255,0.1);">
                                 <i class="fas fa-chevron-right" style="color:white; font-size:1rem;"></i>
+                            </div>
+                        </div>
+                    `);
+                });
+
+                // --- POPURRÍ: ADD TIPS TO REACH 6-7 CARDS ---
+                const remainingNeeded = Math.max(0, 7 - itemsHtml.length);
+                const selectedTips = dynamicPool.sort(() => 0.5 - Math.random()).slice(0, remainingNeeded);
+
+                selectedTips.forEach(tip => {
+                    itemsHtml.push(`
+                        <div class="registration-ticker-card" style="min-width: 240px; width: 240px; height: 160px; scroll-snap-align: center; background: ${tip.bgColor}; border-radius: 24px; padding: 20px; flex-shrink: 0; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="position: absolute; right: -25px; bottom: -25px; font-size: 8rem; opacity: 0.08; filter: blur(3px);"><i class="fas ${tip.icon}"></i></div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 2;">
+                                <span style="font-size:0.6rem; font-weight:1000; color:white; background:rgba(0,0,0,0.4); padding:4px 10px; border-radius:10px; border:1px solid ${tip.accent}80; letter-spacing:1px; white-space:nowrap;">${tip.tag}</span>
+                                <div style="width:30px; height:30px; background:${tip.accent}20; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                                    <i class="fas ${tip.icon}" style="color:${tip.accent}; font-size:1rem;"></i>
+                                </div>
+                            </div>
+                            <div style="margin-top:20px; position:relative; z-index:2;">
+                                <div style="color:white; font-weight:1000; font-size:1.1rem; margin-bottom:6px; letter-spacing:-0.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${tip.title}</div>
+                                <div style="color:rgba(255,255,255,0.7); font-size:0.75rem; font-weight:600; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${tip.desc}</div>
                             </div>
                         </div>
                     `);
@@ -1333,23 +1384,60 @@
             if (!modal) {
                 modal = document.createElement('div');
                 modal.id = modalId;
-                modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 9999999; opacity: 0; transition: opacity 0.3s ease;`;
+                modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 9999999; opacity: 0; transition: opacity 0.3s ease;`;
                 modal.onclick = () => { modal.style.opacity = '0'; setTimeout(() => modal.remove(), 300); };
                 document.body.appendChild(modal);
             }
 
+            const guideItems = [
+                { title: 'HISTORIAS LIVE', icon: 'fa-play-circle', color: '#fb7185', desc: 'Sigue la actualidad del club al estilo Instagram. Pulsa derecha para avanzar, izquierda para volver o mantén para pausar.' },
+                { title: 'RANKING GLOBAL', icon: 'fa-trophy', color: '#CCFF00', desc: 'Suma puntos en Americanas y Entrenos. El sistema recalcula tu nivel dinámicamente según tus victorias.' },
+                { title: 'METEOROLOGÍA', icon: 'fa-cloud-sun', color: '#0ea5e9', desc: 'Análisis en tiempo real de temperatura y humedad. Te indicamos la velocidad de la bola y el agarre de pista óptimo.' },
+                { title: 'NOTIFICACIONES PUSH', icon: 'fa-bell', color: '#fbbf24', desc: 'Recibe avisos instantáneos cuando se abran inscripciones o cuando tu partido esté listo para empezar.' },
+                { title: 'APP MULTI-MODO', icon: 'fa-layer-group', color: '#a855f7', desc: 'Gestiona Americanas, Entrenos, Clases y Pozo desde un solo lugar con lógica de ascensos automáticos.' },
+                { title: 'PILOTO AUTOMÁTICO', icon: 'fa-robot', color: '#34d399', desc: 'El sistema genera cruces 4h antes del evento y notifica a los jugadores para que todo fluya sin esperas.' }
+            ];
+
             modal.innerHTML = `
-                <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 32px; padding: 30px 20px; width: 90%; max-width: 500px; position: relative; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7); text-align: left; border: 2px solid #CCFF00; animation: modalIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); max-height: 85vh; overflow-y: auto;" onclick="event.stopPropagation()">
-                    <div style="text-align: center; margin-bottom: 25px; position: sticky; top: 0; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding-bottom: 15px; z-index: 10;">
-                        <h3 style="margin: 0 0 8px 0; color: #CCFF00; font-weight: 950; font-size: 1.6rem; letter-spacing: -0.5px;">GUÍA SMART JUGADOR</h3>
-                        <p style="color: rgba(255,255,255,0.6); font-size: 0.75rem; margin: 0; font-weight: 700; letter-spacing: 1px;">APP SOMOSPADEL BCN</p>
+                <div style="background: #0a0a0b; border-radius: 32px; padding: 0; width: 92%; max-width: 480px; position: relative; box-shadow: 0 0 60px rgba(204,255,0,0.15); border: 1px solid rgba(255,255,255,0.1); animation: modalIn 0.5s cubic-bezier(0.19, 1, 0.22, 1); max-height: 85vh; display: flex; flex-direction: column;" onclick="event.stopPropagation()">
+                    
+                    <!-- Header -->
+                    <div style="padding: 30px 24px 20px; background: linear-gradient(180deg, rgba(204,255,0,0.05) 0%, transparent 100%); border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center;">
+                        <div style="width: 50px; height: 50px; background: #CCFF00; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; box-shadow: 0 0 20px rgba(204,255,0,0.3);">
+                            <i class="fas fa-book-open" style="color: black; font-size: 1.4rem;"></i>
+                        </div>
+                        <h3 style="margin: 0 0 4px 0; color: #fff; font-weight: 950; font-size: 1.5rem; letter-spacing: -0.5px;">GUÍA <span style="color:#CCFF00">SMART</span> JUGADOR</h3>
+                        <p style="color: rgba(255,255,255,0.4); font-size: 0.65rem; margin: 0; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;">Manual de Experiencia SomosPadel</p>
                     </div>
-                    <div style="margin-bottom: 20px; background: rgba(255,255,255,0.05); padding: 18px; border-radius: 16px; border: 1px solid rgba(204,255,0,0.2);">
-                        <p style="color: rgba(255,255,255,0.8); font-size: 0.85rem; line-height: 1.6;">Bienvenido a la nueva experiencia competitiva.</p>
+
+                    <!-- Scrollable Content -->
+                    <div style="flex: 1; overflow-y: auto; padding: 20px; padding-right: 15px;">
+                        <div style="display: grid; gap: 15px;">
+                            ${guideItems.map((item, i) => `
+                                <div style="display: flex; gap: 16px; background: rgba(255,255,255,0.03); padding: 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); animation: itemFadeIn 0.4s both ${i * 0.1}s;">
+                                    <div style="width: 44px; height: 44px; background: ${item.color}20; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid ${item.color}40;">
+                                        <i class="fas ${item.icon}" style="color: ${item.color}; font-size: 1.1rem;"></i>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <div style="color: white; font-weight: 900; font-size: 0.85rem; letter-spacing: 0.3px;">${item.title}</div>
+                                        <div style="color: rgba(255,255,255,0.5); font-size: 0.75rem; font-weight: 600; line-height: 1.5;">${item.desc}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
-                    <button style="width: 100%; background: linear-gradient(135deg, #CCFF00, #a3cc00); color: #000; border: none; padding: 18px; border-radius: 16px; font-weight: 950; font-size: 1rem; cursor: pointer;" onclick="this.closest('#chat-info-modal').click()">ENTENDIDO</button>
+
+                    <!-- Footer -->
+                    <div style="padding: 20px; background: #0a0a0b;">
+                        <button style="width: 100%; background: #CCFF00; color: #000; border: none; height: 58px; border-radius: 18px; font-weight: 950; font-size: 0.95rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 10px 25px rgba(204,255,0,0.2);" onclick="this.closest('#chat-info-modal').click()">TENGO EL CONTROL</button>
+                    </div>
                 </div>
-                <style> @keyframes modalIn { from { opacity: 0; transform: scale(0.8) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } } </style>
+                <style> 
+                    @keyframes modalIn { from { opacity: 0; transform: scale(0.9) translateY(30px); } to { opacity: 1; transform: scale(1) translateY(0); } } 
+                    @keyframes itemFadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+                    #chat-info-modal::-webkit-scrollbar { width: 5px; }
+                    #chat-info-modal::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+                </style>
             `;
             setTimeout(() => modal.style.opacity = '1', 10);
         }

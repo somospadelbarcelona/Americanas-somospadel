@@ -51,7 +51,7 @@ window.AdminViews.americanas_mgmt = async function () {
                     content.innerHTML = `
                         <div class="dashboard-grid-enterprise" style="grid-template-columns: 400px 1fr; gap: 2.5rem;">
                             <!-- Create Form -->
-                            <div class="glass-card-enterprise" style="background: var(--grad-dark); height: fit-content; padding: 2rem; position: sticky; top: 20px;">
+                            <div class="glass-card-enterprise" style="background: var(--grad-dark); height: fit-content; padding: 2rem; position: sticky; top: var(--admin-sticky-top); z-index: 10;">
                                 <h3 style="margin-bottom: 2rem; color: var(--primary); display: flex; align-items: center; gap: 10px; font-weight: 950; letter-spacing: 1px;">
                                     <span style="font-size: 1.5rem;">✨</span> CONFIGURAR AMERICANAS
                                 </h3>

@@ -53,6 +53,7 @@
         :root {
             --text: #ffffff !important;
             --text-muted: #bbbbbb !important;
+            --admin-sticky-top: 20px;
             color-scheme: dark;
             /* Indica al navegador que la página es oscura */
         }
@@ -707,10 +708,14 @@
                 </div>
 
                 <!-- Bloque 4: Logística y Precios -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
                     <div class="form-group">
                         <label><i class="fas fa-table-tennis"></i> PISTAS</label>
                         <input type="number" name="max_courts" class="pro-input" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-redo"></i> Nº PARTIDOS</label>
+                        <input type="number" name="rounds_count" class="pro-input" placeholder="6" value="6">
                     </div>
                     <div class="form-group">
                         <label><i class="fas fa-euro-sign"></i> SOCIO</label>
@@ -1221,6 +1226,10 @@
                 /* Mobile & Tablet Responsive - Full Viewport Width Force */
                 /* Mobile & Tablet Responsive - Full Viewport Width Force (Stacking Context Fix) */
                 @media (max-width: 1024px) {
+                    :root {
+                        --admin-sticky-top: 110px !important;
+                    }
+
 
                     /* Ocultar elementos innecesarios */
                     .mobile-menu-toggle,
@@ -1799,6 +1808,20 @@
             <script>console.log("✅ LevelReliabilityService script loaded. Service exists:", !!window.LevelReliabilityService);</script>
             <script src="js/modules/logic/SmartAlertsService.js"></script>
             <script src="js/modules/admin/AutopilotView.js"></script>
+            <script src="js/modules/logic/AutomationService.js"></script>
+            <script>
+                // Initialize Automation Service (Auto-Generate 4h before)
+                document.addEventListener('DOMContentLoaded', () => {
+                    setTimeout(() => {
+                        if (window.AutomationService) {
+                            console.log("🤖 Starting Automation Service (Auto-Pairing 4h before)...");
+                            window.AutomationService.init();
+                        } else {
+                            console.error("❌ AutomationService not loaded!");
+                        }
+                    }, 3000); // 3 seconds delay to ensure other services are ready
+                });
+            </script>
 </body>
 
 </html>

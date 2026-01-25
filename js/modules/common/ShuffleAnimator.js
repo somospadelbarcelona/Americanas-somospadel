@@ -1,19 +1,16 @@
 /**
  * ShuffleAnimator.js
- * Handles high-impact animations for draw/shuffle events.
- * Version: 2.0 Ultra Pro (With SomosPadel Brand Identity)
+ * handles ultra-high-impact animations for draw/shuffle events.
+ * Version: 3.0 Cinema Edition (Professional Tournament Style)
  */
 (function () {
+    'use strict';
+
     class ShuffleAnimator {
         constructor() {
             this.isAnimating = false;
         }
 
-        /**
-         * Triggers the full-screen shuffle animation
-         * @param {Object} data { players: [], courts: 4, mode: 'twister', round: 1, matches: [] }
-         * @param {Function} onComplete Callback when animation finishes
-         */
         animate(data, onComplete) {
             if (this.isAnimating) return;
             this.isAnimating = true;
@@ -21,95 +18,153 @@
             const overlay = document.createElement('div');
             overlay.id = 'shuffle-animator-overlay';
             overlay.style.cssText = `
-                position: fixed; inset: 0; background: #000; z-index: 99999;
+                position: fixed; inset: 0; background: radial-gradient(circle at center, #0a192f 0%, #000 100%); z-index: 999999;
                 display: flex; flex-direction: column; align-items: center;
                 font-family: 'Outfit', sans-serif; color: white; 
-                overflow-x: hidden; overflow-y: auto; padding: 60px 0 120px;
-                opacity: 0; transition: opacity 0.5s ease;
+                overflow-x: hidden; overflow-y: auto; padding: 40px 0 120px;
+                opacity: 0; transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
             `;
 
             overlay.innerHTML = `
-                <div id="shuffle-header" style="text-align: center; margin-bottom: 40px; z-index: 10; animation: slideDown 0.8s cubic-bezier(0.2, 1, 0.3, 1); flex-shrink: 0;">
-                    <div style="background: linear-gradient(90deg, #CCFF00, #00E36D); color: black; padding: 12px 40px; border-radius: 50px; font-weight: 950; font-size: 1.1rem; display: inline-block; box-shadow: 0 0 40px rgba(204,255,0,0.4); margin-bottom: 25px; letter-spacing: 2px; text-transform: uppercase;">
-                        DISFRUTA Y COMPITE
+                <!-- SKY BEAMS AND VORTEX EFFECTS -->
+                <div class="sky-beam beam-1"></div>
+                <div class="sky-beam beam-2"></div>
+                <div class="vortex-container"></div>
+                
+                <div id="shuffle-header" style="text-align: center; margin-bottom: 60px; z-index: 10; animation: tvHeaderEntry 1.5s both cubic-bezier(0.19, 1, 0.22, 1); flex-shrink: 0; position: relative;">
+                    <div class="tv-live-badge">🔴 EN VIVO</div>
+                    <h1 style="font-size: 3.5rem; font-weight: 1000; margin: 0; text-transform: uppercase; letter-spacing: -3px; line-height: 0.85;">
+                        <span style="color: #fff;">SORTEO</span><br>
+                        <span style="background: linear-gradient(90deg, #00C4FF, #CCFF00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 20px rgba(0,196,255,0.4));">RONDA ${data.round}</span>
+                    </h1>
+                    <div class="tv-sub-stats">
+                        <span style="color: #CCFF00;">SOMOSPADEL BCN</span> • <span style="color: #fff;">COMPITE Y DISFRUTA</span>
                     </div>
-                    <h1 style="font-size: 1.7rem; font-weight: 950; margin: 0; text-transform: uppercase; letter-spacing: -1px; color: #fff; line-height: 0.9;">GENERANDO <span style="color: #CCFF00;">RONDA ${data.round}</span></h1>
-                    <p style="color: rgba(255,255,255,0.4); font-size: 1.2rem; font-weight: 700; letter-spacing: 4px; margin-top: 15px;">CALCULANDO BALANCE PERFECTO...</p>
                 </div>
 
-                <div id="shuffle-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; width: 95%; max-width: 1600px; z-index: 10; flex: 1;">
-                    <!-- Court slots -->
+                <div id="shuffle-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; width: 98%; max-width: 1600px; z-index: 10; flex: 1; perspective: 1000px;">
+                    <!-- Court slots populated via JS -->
                 </div>
 
-                <canvas id="shuffle-canvas" style="position: fixed; inset: 0; z-index: 1; opacity: 0.4; pointer-events: none;"></canvas>
+                <canvas id="shuffle-canvas" style="position: fixed; inset: 0; z-index: 1; opacity: 0.6; pointer-events: none;"></canvas>
 
-                <!-- BOTTOM INFO BAR -->
-                <div style="position: fixed; bottom: 0; left: 0; width: 100%; height: 80px; background: rgba(0,0,0,0.8); border-top: 1px solid rgba(204,255,0,0.2); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(10px);">
-                    <div class="loader-spinner" style="border-width: 3px; width: 25px; height: 25px; margin-right: 20px; border-color: #CCFF00; border-top-color: transparent;"></div>
-                    <p id="shuffle-status-text" style="color: #CCFF00; font-weight: 900; letter-spacing: 5px; font-size: 0.9rem; margin: 0; text-transform: uppercase;">Sincronizando con base de datos real-time...</p>
+                <!-- BOTTOM TV GRAPHIC (SCOREBOARD STYLE) -->
+                <div class="tv-bottom-bar">
+                    <div class="tv-bar-content">
+                        <div class="tv-logo-mini">Σ</div>
+                        <div class="tv-ticker">
+                            <div class="ticker-text" id="shuffle-status-marquee">PREPARANDO PISTAS AZULES • CALCULANDO CRUCES POR NIVEL • SINCRONIZANDO RANKING GLOBAL • SOMOSPADEL BCN LIVE • </div>
+                        </div>
+                        <div class="tv-clock" id="shuffle-timer">00:00</div>
+                    </div>
                 </div>
 
-                <button id="close-shuffle" style="position: fixed; top: 30px; right: 30px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: white; width: 50px; height: 50px; border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 200; transition: all 0.3s; backdrop-filter: blur(5px);">
-                    <i class="fas fa-times" style="font-size: 1.2rem;"></i>
+                <button id="close-shuffle" class="tv-close-btn">
+                    <i class="fas fa-times"></i>
                 </button>
 
                 <style>
-                    @keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..950&display=swap');
                     
+                    @keyframes tvHeaderEntry { from { opacity: 0; transform: translateY(-40px) scale(0.9); filter: blur(20px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
+                    
+                    .tv-live-badge {
+                        background: #ff0000; color: white; padding: 4px 16px; border-radius: 4px; font-weight: 950; font-size: 0.7rem; 
+                        display: inline-block; margin-bottom: 15px; letter-spacing: 2px; box-shadow: 0 0 20px rgba(255,0,0,0.4);
+                        animation: tvPulse 1.5s infinite;
+                    }
+                    @keyframes tvPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+                    .tv-sub-stats {
+                        color: rgba(255,255,255,0.5); font-size: 0.65rem; font-weight: 900; letter-spacing: 3px; margin-top: 20px;
+                    }
+
                     .court-slot {
-                        background: linear-gradient(180deg, rgba(20,20,20,0.8) 0%, rgba(5,5,5,0.9) 100%);
-                        border: 1px solid rgba(255,255,255,0.05);
-                        width: 350px; padding: 30px; border-radius: 30px;
-                        transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
-                        transform: scale(0.8) translateY(100px); opacity: 0;
-                        position: relative; overflow: hidden;
-                        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+                        width: 380px; height: 520px; position: relative; border-radius: 12px;
+                        transition: all 1s cubic-bezier(0.19, 1, 0.22, 1);
+                        transform: rotateY(30deg) translateZ(-100px); opacity: 0;
+                        background: #111; border: 1px solid rgba(255,255,255,0.1);
+                        box-shadow: 0 50px 100px rgba(0,0,0,0.9);
+                        display: flex; flex-direction: column; overflow: hidden;
                     }
-                    .court-slot.visible { transform: scale(1) translateY(0); opacity: 1; }
-                    .court-slot::before {
-                        content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
-                        background: linear-gradient(90deg, #CCFF00, transparent); opacity: 0.5;
-                    }
+                    .court-slot.visible { transform: rotateY(0) translateZ(0); opacity: 1; }
                     
-                    .slot-name { 
-                        font-size: 1rem; font-weight: 950; color: #444; margin: 8px 0; padding: 0 12px; 
-                        background: rgba(255,255,255,0.03); border-radius: 12px; overflow: hidden; 
-                        height: 48px; position: relative; border: 1px solid rgba(255,255,255,0.02);
-                        transition: all 0.3s;
+                    /* THE PADEL COURT VISUAL */
+                    .padel-court-floor {
+                        height: 180px; width: 100%; position: relative;
+                        background: linear-gradient(180deg, #0056b3 0%, #003366 100%);
+                        border-bottom: 4px solid rgba(255,255,255,0.2);
+                        display: flex; align-items: center; justify-content: center; overflow: hidden;
                     }
-                    .slot-name.revealed { background: rgba(204,255,0,0.05); border-color: rgba(204,255,0,0.2); }
+                    .court-lines {
+                        position: absolute; inset: 15px; border: 2px solid rgba(255,255,255,0.3);
+                    }
+                    .court-net {
+                        position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: rgba(255,255,255,0.5);
+                    }
+                    .pista-name-overlay {
+                        position: absolute; color: rgba(255,255,255,0.8); font-weight: 1000; font-size: 2.5rem; letter-spacing: -2px;
+                        z-index: 2; transform: skewX(-10deg); text-shadow: 0 10px 20px rgba(0,0,0,0.5);
+                    }
+                    .tv-court-badge {
+                        position: absolute; top: 15px; right: 15px; background: #CCFF00; color: #000; padding: 4px 10px; border-radius: 4px; font-weight: 1000; font-size: 0.6rem;
+                    }
+
+                    .players-section { flex: 1; padding: 25px; display: flex; flex-direction: column; justify-content: space-between; background: #080808; }
+
+                    .slot-name { 
+                        height: 52px; position: relative; border-radius: 8px; margin: 4px 0; 
+                        background: rgba(255,255,255,0.03); border-left: 4px solid #00C4FF;
+                        overflow: hidden; display: flex; align-items: center; padding: 0 15px;
+                    }
+                    .slot-name.revealed { background: linear-gradient(90deg, rgba(0,196,255,0.1), transparent); border-left-color: #CCFF00; }
+                    .slot-name.opponent { border-left-color: #FF2D55; }
 
                     .scrolling-names {
-                        position: absolute; left: 0; width: 100%; text-align: center;
-                        animation: nameScroll 2s infinite linear;
-                        white-space: nowrap;
+                        color: rgba(0, 196, 255, 0.4); font-weight: 1000; font-size: 0.75rem;
+                        animation: tvNameScroll 1s infinite linear;
                     }
-                    @keyframes nameScroll { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+                    @keyframes tvNameScroll { 0% { opacity: 0.2; transform: translateY(100%); } 50% { opacity: 0.5; } 100% { opacity: 0.2; transform: translateY(-100%); } }
                     
                     .winner-name { 
-                        color: #fff !important; font-size: 1.3rem !important; font-weight: 950;
-                        height: 48px; line-height: 48px; text-align: center;
-                        animation: revealPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-                        text-shadow: 0 0 15px rgba(255,255,255,0.5);
+                        color: #fff; font-size: 1.1rem; font-weight: 1000; letter-spacing: 0.5px;
+                        animation: tvWinnerReveal 0.8s both cubic-bezier(0.19, 1, 0.22, 1);
                     }
-                    @keyframes revealPop {
-                        0% { transform: scale(2) rotate(-5deg); filter: blur(10px); color: #CCFF00; opacity: 0; }
-                        50% { filter: blur(0); }
-                        100% { transform: scale(1) rotate(0); color: #fff; opacity: 1; }
+                    @keyframes tvWinnerReveal {
+                        0% { transform: skewX(20deg) translateX(-20px); opacity: 0; filter: brightness(3); }
+                        100% { transform: skewX(0) translateX(0); opacity: 1; filter: brightness(1); }
                     }
-                    
-                    .pista-num {
-                        font-weight: 950; color: #CCFF00; font-size: 2.2rem; margin-bottom: 25px; 
-                        display: flex; align-items: center; gap: 15px; letter-spacing: -1px;
-                    }
-                    .pista-num::after { content: ''; flex: 1; height: 1px; background: rgba(204,255,0,0.2); }
 
-                    .loader-spinner {
-                        width: 30px; height: 30px; border: 3px solid rgba(204,255,0,0.2);
-                        border-top: 3px solid #CCFF00; border-radius: 50%;
-                        animation: spin 1s linear infinite;
+                    .vs-ribbon {
+                        background: #CCFF00; color: #000; font-weight: 1000; font-size: 0.6rem; 
+                        padding: 2px 10px; align-self: center; transform: rotate(-2deg); margin: 5px 0;
                     }
-                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+                    /* TV HUD STYLES */
+                    .tv-bottom-bar {
+                        position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+                        width: 90%; max-width: 1000px; height: 60px; background: #111;
+                        border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; z-index: 1000;
+                        box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+                    }
+                    .tv-bar-content { display: flex; height: 100%; align-items: center; }
+                    .tv-logo-mini { width: 60px; background: #CCFF00; color: #000; display: flex; align-items: center; justify-content: center; font-weight: 1000; font-size: 1.5rem; }
+                    .tv-ticker { flex: 1; padding: 0 20px; overflow: hidden; }
+                    .ticker-text { white-space: nowrap; font-weight: 900; font-size: 0.8rem; color: #fff; letter-spacing: 1px; animation: tvTicker 15s linear infinite; }
+                    @keyframes tvTicker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+                    .tv-clock { width: 100px; background: #222; height: 100%; display: flex; align-items: center; justify: center; font-weight: 1000; border-left: 1px solid rgba(255,255,255,0.1); }
+
+                    .tv-close-btn { 
+                        position: fixed; top: 30px; right: 30px; width: 60px; height: 60px; background: #CCFF00; border: none; 
+                        border-radius: 12px; cursor: pointer; display: none; z-index: 2000; color: #000; font-size: 1.5rem;
+                        box-shadow: 0 10px 30px rgba(204,255,0,0.3); transition: all 0.3s;
+                    }
+                    .tv-close-btn:hover { transform: scale(1.1) rotate(90deg); }
+
+                    /* LIGHT ANIMATIONS */
+                    .sky-beam { position: fixed; width: 2px; height: 150%; background: linear-gradient(to top, transparent, rgba(0,196,255,0.3), transparent); top: -25%; z-index: 0; }
+                    .beam-1 { left: 20%; transform: rotate(15deg); }
+                    .beam-2 { right: 20%; transform: rotate(-15deg); }
                 </style>
             `;
 
@@ -117,96 +172,61 @@
             setTimeout(() => overlay.style.opacity = '1', 10);
 
             this.initCanvas();
+            this.startTimer();
 
             const container = document.getElementById('shuffle-container');
             const numCourts = data.courts || 4;
 
-            // Create slots
             for (let i = 1; i <= numCourts; i++) {
                 const slot = document.createElement('div');
                 slot.className = 'court-slot';
                 slot.innerHTML = `
-                    <div class="pista-num">PISTA ${i}</div>
-                    <div class="slot-name" id="slot-${i}-p1"><div class="scrolling-names">${this.getRandomNamesText(data.players)}</div></div>
-                    <div class="slot-name" id="slot-${i}-p2"><div class="scrolling-names">${this.getRandomNamesText(data.players)}</div></div>
-                    <div style="height: 10px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.1); font-weight: 950; font-size: 0.7rem; margin: 10px 0; letter-spacing: 2px;">V S</div>
-                    <div class="slot-name" id="slot-${i}-p3"><div class="scrolling-names">${this.getRandomNamesText(data.players)}</div></div>
-                    <div class="slot-name" id="slot-${i}-p4"><div class="scrolling-names">${this.getRandomNamesText(data.players)}</div></div>
+                    <div class="padel-court-floor">
+                        <div class="court-lines"></div>
+                        <div class="court-net"></div>
+                        <div class="tv-court-badge">SOC LIVE</div>
+                        <div class="pista-name-overlay">PISTA ${i}</div>
+                    </div>
+                    <div class="players-section">
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <div class="slot-name" id="slot-${i}-p1"><div class="scrolling-names">${this.getRandomNamesText(data.players)}</div></div>
+                            <div class="slot-name" id="slot-${i}-p2"><div class="scrolling-names">${this.getRandomNamesText(data.players)}</div></div>
+                        </div>
+                        <div class="vs-ribbon">VERSUS</div>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <div class="slot-name opponent" id="slot-${i}-p3"><div class="scrolling-names">${this.getRandomNamesText(data.players)}</div></div>
+                            <div class="slot-name opponent" id="slot-${i}-p4"><div class="scrolling-names">${this.getRandomNamesText(data.players)}</div></div>
+                        </div>
+                    </div>
                 `;
                 container.appendChild(slot);
-
-                // Staggered enter
                 setTimeout(() => slot.classList.add('visible'), i * 150);
             }
 
-            // Dynamic Timers based on Round (Requested: More tension on Round 1)
             const isFirstRound = parseInt(data.round) === 1;
-            const shuffleDuration = isFirstRound ? 5000 : 2000;
+            const shuffleDuration = isFirstRound ? 6000 : 3000;
 
-            // Shuffle Animation phase
-            setTimeout(() => {
-                this.revealResults(data, overlay, onComplete);
-            }, shuffleDuration);
+            setTimeout(() => this.revealResults(data, overlay, onComplete), shuffleDuration);
 
-            // Close button logic
-            const closeBtn = document.getElementById('close-shuffle');
-            closeBtn.onclick = () => {
-                overlay.style.opacity = '0';
-                setTimeout(() => {
-                    overlay.remove();
-                    this.isAnimating = false;
-                    if (onComplete) onComplete();
-                }, 500);
-            };
-
-            // Show close button early so users can skip long animations
-            setTimeout(() => {
-                if (closeBtn) closeBtn.style.display = 'flex';
-            }, 1500);
+            const closeBtn = document.querySelector('.tv-close-btn');
+            closeBtn.onclick = () => this.finishAnimation(overlay, onComplete);
+            setTimeout(() => { closeBtn.style.display = 'block'; }, 2000);
         }
 
         revealResults(data, overlay, onComplete) {
             const matches = data.matches || [];
-            if (matches.length === 0) {
-                this.finishAnimation(overlay, onComplete);
-                return;
-            }
+            if (matches.length === 0) return this.finishAnimation(overlay, onComplete);
 
-            const statusText = document.getElementById('shuffle-status-text');
-            if (statusText) statusText.innerText = "SORTEO FINALIZADO • CUADRANTE ACTUALIZADO";
+            const marquee = document.getElementById('shuffle-status-marquee');
+            if (marquee) marquee.innerText = "SORTEO COMPLETADO • RESULTADOS PUBLICADOS • TODOS A PISTAS • REGLAMENTO SOMOSPADEL ACTIVADO • ";
 
             const isFirstRound = parseInt(data.round) === 1;
-            const matchDelay = isFirstRound ? 800 : 350;
-            const playerDelay = isFirstRound ? 250 : 120;
+            const matchDelay = isFirstRound ? 1200 : 500;
+            const playerDelay = isFirstRound ? 500 : 200;
 
             matches.forEach((m, idx) => {
                 const c = m.court;
-
-                // --- IDENTIFICAR JUGADORES (ROBUSTO) ---
-                let pNames = [];
-                const extractFullTeam = (namesArr, teamArr) => {
-                    const raw = namesArr || teamArr || [];
-                    const items = Array.isArray(raw) ? raw : [raw];
-                    let processed = [];
-                    items.forEach(item => {
-                        const str = (typeof item === 'object' ? (item.name || item.displayName) : String(item)) || '';
-                        if (str.includes(' / ')) {
-                            processed.push(...str.split(' / ').map(s => s.trim()));
-                        } else if (str) {
-                            processed.push(str);
-                        }
-                    });
-                    return processed;
-                };
-
-                const teamAnames = extractFullTeam(m.team_a_names, m.team_a);
-                const teamBnames = extractFullTeam(m.team_b_names, m.team_b);
-
-                // Forzar 2 nombres por equipo para que encajen en los 4 slots
-                while (teamAnames.length < 2) teamAnames.push('---');
-                while (teamBnames.length < 2) teamBnames.push('---');
-
-                pNames = [teamAnames[0], teamAnames[1], teamBnames[0], teamBnames[1]];
+                let pNames = this.extractNamesFromMatch(m);
 
                 setTimeout(() => {
                     for (let i = 1; i <= 4; i++) {
@@ -214,30 +234,38 @@
                             const el = document.getElementById(`slot-${c}-p${i}`);
                             if (el) {
                                 el.classList.add('revealed');
-                                const displayName = pNames[i - 1] || '---';
-                                el.innerHTML = `<div class="winner-name">${displayName.toUpperCase()}</div>`;
+                                el.innerHTML = `<div class="winner-name">${(pNames[i - 1] || '---').toUpperCase()}</div>`;
                             }
                         }, i * playerDelay);
                     }
                 }, idx * matchDelay);
             });
 
-            // Show close button after all revealed
             const totalRevealTime = (matches.length * matchDelay) + (4 * playerDelay);
             setTimeout(() => {
-                const closeBtn = document.getElementById('close-shuffle');
-                if (closeBtn) {
-                    closeBtn.style.display = 'flex';
-                    closeBtn.style.animation = 'slideDown 0.5s reverse ease'; // Just a quick way to say fade in/slide in
-                }
-
-                // Auto-close after 5 more seconds
                 setTimeout(() => {
-                    if (document.getElementById('shuffle-animator-overlay')) {
-                        this.finishAnimation(overlay, onComplete);
-                    }
-                }, 7000);
-            }, totalRevealTime + 500);
+                    if (document.getElementById('shuffle-animator-overlay')) this.finishAnimation(overlay, onComplete);
+                }, 10000);
+            }, totalRevealTime + 1000);
+        }
+
+        extractNamesFromMatch(m) {
+            const extractFullTeam = (namesArr, teamArr) => {
+                const raw = namesArr || teamArr || [];
+                const items = Array.isArray(raw) ? raw : [raw];
+                let processed = [];
+                items.forEach(item => {
+                    const str = (typeof item === 'object' ? (item.name || item.displayName) : String(item)) || '';
+                    if (str.includes(' / ')) processed.push(...str.split(' / ').map(s => s.trim()));
+                    else if (str) processed.push(str);
+                });
+                return processed;
+            };
+            const teamA = extractFullTeam(m.team_a_names, m.team_a);
+            const teamB = extractFullTeam(m.team_b_names, m.team_b);
+            while (teamA.length < 2) teamA.push('---');
+            while (teamB.length < 2) teamB.push('---');
+            return [teamA[0], teamA[1], teamB[0], teamB[1]];
         }
 
         finishAnimation(overlay, onComplete) {
@@ -247,21 +275,29 @@
                 overlay.remove();
                 this.isAnimating = false;
                 if (onComplete) onComplete();
-            }, 600);
+                if (this.timerInterval) clearInterval(this.timerInterval);
+            }, 1000);
         }
 
         getRandomNamesText(players) {
-            if (!players || players.length === 0) return "<div>...</div>";
-            const names = players.map(p => {
-                if (typeof p === 'string') return p;
-                return p.name || p.displayName || 'JUGADOR';
-            });
+            if (!players || players.length === 0) return "...";
+            const names = players.map(p => (typeof p === 'string' ? p : (p.name || p.displayName || 'JUGADOR')).split(' ')[0]);
             let text = "";
-            for (let i = 0; i < 40; i++) {
-                const n = names[Math.floor(Math.random() * names.length)];
-                text += `<div style="height:48px; line-height:48px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${n.toUpperCase()}</div>`;
+            for (let i = 0; i < 20; i++) {
+                text += `<div>${names[Math.floor(Math.random() * names.length)].toUpperCase()}</div>`;
             }
             return text;
+        }
+
+        startTimer() {
+            let sec = 0;
+            this.timerInterval = setInterval(() => {
+                sec++;
+                const m = Math.floor(sec / 60).toString().padStart(2, '0');
+                const s = (sec % 60).toString().padStart(2, '0');
+                const clock = document.getElementById('shuffle-timer');
+                if (clock) clock.innerText = `${m}:${s}`;
+            }, 1000);
         }
 
         initCanvas() {
@@ -269,36 +305,19 @@
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             let w, h;
-
-            const resize = () => {
-                w = canvas.width = window.innerWidth;
-                h = canvas.height = window.innerHeight;
-            };
+            const resize = () => { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; };
             window.addEventListener('resize', resize);
             resize();
-
             const particles = [];
-            for (let i = 0; i < 80; i++) {
-                particles.push({
-                    x: Math.random() * w,
-                    y: Math.random() * h,
-                    vx: (Math.random() - 0.5) * 1,
-                    vy: (Math.random() - 0.5) * 3,
-                    s: Math.random() * 2 + 1,
-                    o: Math.random() * 0.5 + 0.1
-                });
-            }
-
+            for (let i = 0; i < 100; i++) particles.push({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.5, vy: -(Math.random() * 2 + 0.5), s: Math.random() * 2 + 1, o: Math.random() * 0.5 });
             const draw = () => {
                 if (!document.getElementById('shuffle-canvas')) return;
                 ctx.clearRect(0, 0, w, h);
                 particles.forEach(p => {
-                    p.y -= p.vy; // Floating up
+                    p.y += p.vy; p.x += p.vx;
                     if (p.y < -10) { p.y = h + 10; p.x = Math.random() * w; }
-                    ctx.fillStyle = `rgba(204, 255, 0, ${p.o})`;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
-                    ctx.fill();
+                    ctx.fillStyle = `rgba(0, 196, 255, ${p.o})`;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); ctx.fill();
                 });
                 requestAnimationFrame(draw);
             };
