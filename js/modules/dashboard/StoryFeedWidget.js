@@ -151,44 +151,44 @@
 
             container.innerHTML = `
                 <div class="story-feed-v3-wrapper" style="position: relative; padding: 2px 0;">
-                    <!-- COMPACT HORIZONTAL LAYOUT -->
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; padding: 0 10px;">
-                        
-                        <!-- STORIES CENTERED -->
-                        <div class="story-h-scroll" style="justify-content: center; padding: 4px 0; gap: 12px; margin: 0; overflow: visible;">
+                    <div style="padding: 10px 15px; background: transparent;">
+                    <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+                        <!-- STORY ITEMS SCROLLER (FLEX GROW) -->
+                        <div style="flex: 1; display: flex; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; gap: 16px; padding: 5px 0; mask-image: linear-gradient(to right, black 85%, transparent 100%); -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);">
                             ${this.stories.map(story => `
-                                <div class="story-v3-item" style="min-width: 45px;" onclick="window.StoryFeedWidget.showStory('${story.id}')">
-                                    <div class="story-v3-outer">
-                                        <div class="story-v3-inner">
-                                            <i class="fas ${story.icon}" style="color: ${story.color}; font-size: 0.8rem;"></i>
+                                <div class="story-v3-item" style="min-width: 50px; flex-shrink: 0;" onclick="window.StoryFeedWidget.showStory('${story.id}')">
+                                    <div class="story-v3-outer" style="width: 48px; height: 48px;">
+                                        <div class="story-v3-inner" style="width: 42px; height: 42px;">
+                                            <i class="fas ${story.icon}" style="color: ${story.color}; font-size: 0.9rem;"></i>
                                         </div>
                                     </div>
-                                    <span class="story-v3-label">${story.label}</span>
+                                    <span class="story-v3-label" style="font-size: 0.55rem; margin-top: 6px;">${story.label}</span>
                                 </div>
                             `).join('')}
                         </div>
 
-                        <!-- BROADCAST HUB (SQUARE WIDGET) -->
+                        <!-- BROADCAST HUB (FIXED WIDTH) -->
                         <div style="
-                            width: 40px; 
-                            height: 40px; 
-                            background: rgba(0,227,109,0.15); 
-                            border-radius: 12px; 
+                            width: 48px; 
+                            height: 48px; 
+                            background: rgba(0,227,109,0.1); 
+                            border-radius: 14px; 
                             border: 1.5px solid #00E36D; 
                             display: flex; 
                             flex-direction: column; 
                             align-items: center; 
                             justify-content: center; 
-                            gap: 2px;
+                            gap: 1px;
                             flex-shrink: 0;
-                            box-shadow: 0 0 15px rgba(0,227,109,0.2), inset 0 0 10px rgba(0,227,109,0.1);
+                            box-shadow: 0 4px 15px rgba(0,227,109,0.15);
                             position: relative;
                             cursor: pointer;
+                            margin-bottom: 12px; /* Alineado con labels */
                         " onclick="window.StoryFeedWidget.showStory(window.StoryFeedWidget.stories[0].id)">
-                            <i class="fas fa-broadcast-tower" style="font-size: 0.9rem; color: #1e293b;"></i>
+                            <i class="fas fa-broadcast-tower" style="font-size: 1rem; color: #1e293b;"></i>
                             <div style="display: flex; align-items: center; gap: 2px;">
                                 <span style="width: 3px; height: 3px; background: #008f45; border-radius: 50%; animation: livePulse 2s infinite;"></span>
-                                <span style="font-size: 0.4rem; color: #1e293b; font-weight: 1000; letter-spacing: 0.2px;">LIVE</span>
+                                <span style="font-size: 0.45rem; color: #1e293b; font-weight: 1000; letter-spacing: 0.1px;">LIVE</span>
                             </div>
                         </div>
                     </div>
