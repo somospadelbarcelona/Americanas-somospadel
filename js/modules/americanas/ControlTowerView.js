@@ -730,69 +730,113 @@
             if (this.mainSection === 'help') return this.renderHelpContent();
             if (this.mainSection === 'history') return this.renderHistoryContent();
 
-            // DEFAULT: PLAYING AREA
+            // --- PREMIUM CATEGORY ENGINE ---
+            const category = this.currentAmericanaDoc?.category || 'pro';
+            const isFemale = category === 'female';
+            const isMixed = category === 'mixed';
+            const isMale = category === 'male';
+
+            let theme = {
+                grad: 'linear-gradient(135deg, #CCFF00 0%, #00E36D 100%)',
+                accent: '#CCFF00',
+                glow: 'rgba(204, 255, 0, 0.4)',
+                text: '#000',
+                border: '#00E36D'
+            };
+
+            if (isFemale) {
+                theme = {
+                    grad: 'linear-gradient(135deg, #FF2D55 0%, #FF5E7B 100%)',
+                    accent: '#FF2D55',
+                    glow: 'rgba(255, 45, 85, 0.4)',
+                    text: '#fff',
+                    border: '#FF2D55'
+                };
+            } else if (isMixed) {
+                theme = {
+                    grad: 'linear-gradient(135deg, #FFD700 0%, #FF9500 100%)',
+                    accent: '#FFD700',
+                    glow: 'rgba(255, 215, 0, 0.4)',
+                    text: '#000',
+                    border: '#FF9500'
+                };
+            } else if (isMale) {
+                theme = {
+                    grad: 'linear-gradient(135deg, #00C4FF 0%, #0072FF 100%)',
+                    accent: '#00C4FF',
+                    glow: 'rgba(0, 196, 255, 0.4)',
+                    text: '#fff',
+                    border: '#0072FF'
+                };
+            }
+
             const roundData = data?.currentRound || { matches: [] };
             const amName = this.currentAmericanaDoc ? this.currentAmericanaDoc.name : "Americana Activa";
 
             return `
-                <div class="tour-header-context" style="background: linear-gradient(135deg, #CCFF00 0%, #00E36D 100%); padding: 35px 20px; text-align: center; border-bottom: 2px solid rgba(0,0,0,0.05); position: relative;">
+                <div class="tour-header-context" style="background: ${theme.grad}; padding: 45px 20px 35px; text-align: center; border-bottom: 2px solid rgba(0,0,0,0.05); position: relative; overflow: hidden;">
+                    <!-- AMBIENT GLOW -->
+                    <div style="position: absolute; top: -50px; left: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.2); filter: blur(60px); border-radius: 50%;"></div>
+                    
                     <!-- ACTION BUTTONS -->
-                    <div style="position:absolute; top:15px; right:15px; display:flex; gap:10px; z-index:10; flex-wrap: wrap; justify-content: flex-end;">
+                    <div style="position:absolute; top:20px; right:20px; display:flex; gap:12px; z-index:10; flex-wrap: wrap; justify-content: flex-end;">
                          <div onclick="window.ControlTowerView.replayShuffleAnimation()" 
-                               style="background:black; color:#CCFF00; padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.7rem; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2); border: 1px solid #CCFF00;">
+                               style="background:rgba(0,0,0,0.7); color:${theme.accent}; padding:8px 16px; border-radius:12px; font-weight:950; font-size:0.65rem; cursor:pointer; backdrop-filter: blur(10px); border: 1px solid ${theme.accent}40; letter-spacing: 1px;">
                              <i class="fas fa-random"></i> SORTEO
                          </div>
                          <div onclick="window.ChatView.init('${this.currentAmericanaDoc?.id}', '${amName}')" 
-                               style="background:black; color:white; padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.7rem; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+                               style="background:rgba(0,0,0,0.7); color:white; padding:8px 16px; border-radius:12px; font-weight:950; font-size:0.65rem; cursor:pointer; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); letter-spacing: 1px;">
                              <i class="fas fa-comment-dots"></i> CHAT
                          </div>
                          <div onclick="window.openTVMode('${this.currentAmericanaDoc?.id}', '${this.currentAmericanaDoc?.isEntreno ? 'entreno' : 'americana'}')" 
-                               style="background:black; color:#CCFF00; padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.7rem; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+                               style="background:rgba(0,0,0,0.7); color:${theme.accent}; padding:8px 16px; border-radius:12px; font-weight:950; font-size:0.65rem; cursor:pointer; backdrop-filter: blur(10px); border: 1px solid ${theme.accent}40;">
                              <i class="fas fa-tv"></i> TV
                          </div>
                     </div>
+
                     ${isPlayingHere ? `
-                        <div style="background: rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.2); color: #000; display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 0.6rem; font-weight: 900; margin-bottom: 15px; letter-spacing: 1px; text-transform: uppercase;">
-                           ESTÁS PARTICIPANDO ✅
+                        <div style="background: rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.1); color: ${theme.text}; display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.65rem; font-weight: 950; margin-bottom: 20px; letter-spacing: 1px; text-transform: uppercase;">
+                           PARTICIPANDO EN VIVO ✅
                         </div>
                     ` : ''}
                     
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; position: relative; z-index: 2;">
                         <div style="position: relative;">
                             <img src="${this.currentAmericanaDoc?.image_url || 'img/logo_somospadel.png'}" 
-                                 style="width: 75px; height: 75px; border-radius: 50%; border: 3px solid white; box-shadow: 0 8px 25px rgba(0,0,0,0.2);"
+                                 style="width: 85px; height: 85px; border-radius: 50%; border: 4px solid white; box-shadow: 0 15px 35px rgba(0,0,0,0.3);"
                                  onerror="this.src='img/logo_somospadel.png'">
+                            <div style="position: absolute; bottom: -5px; right: -5px; background: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                                <span style="font-size: 1.1rem;">${isFemale ? '♀️' : isMale ? '♂️' : '🎾'}</span>
+                            </div>
                         </div>
-                        <h1 style="color: #000; margin: 0; font-family: 'Outfit'; font-weight: 900; font-size: 1.5rem; letter-spacing: -0.5px; text-shadow: 0 1px 0 rgba(255,255,255,0.4);">${amName.toUpperCase()}</h1>
+                        <h1 style="color: ${theme.text}; margin: 0; font-family: 'Outfit'; font-weight: 1000; font-size: 1.8rem; letter-spacing: -1px; line-height: 0.9;">${amName.toUpperCase()}</h1>
                     </div>
                     
-                    <div style="color: rgba(0,0,0,0.5); font-size: 0.8rem; margin-top: 8px; font-weight: 800; letter-spacing: 0.5px; display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                        <div>${this.currentAmericanaDoc?.date || ''} • ${(this.currentAmericanaDoc?.category === 'male' ? 'MASCULINA' :
-                    this.currentAmericanaDoc?.category === 'female' ? 'FEMENINA' :
-                        this.currentAmericanaDoc?.category === 'mixed' ? 'MIXTA' :
-                            this.currentAmericanaDoc?.category === 'open' ? 'TODOS' : 'PRO')}</div>
+                    <div style="color: ${theme.text}; opacity: 0.7; font-size: 0.85rem; margin-top: 15px; font-weight: 900; letter-spacing: 0.5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <div style="background: rgba(0,0,0,0.05); padding: 4px 12px; border-radius: 8px;">
+                            ${this.currentAmericanaDoc?.date || ''} • ${(isMale ? 'MASCULINA' : isFemale ? 'FEMENINA' : isMixed ? 'MIXTA' : 'CATEGORÍA PRO')}
+                        </div>
                         
                         ${(() => {
                     const mode = (this.currentAmericanaDoc?.pair_mode || this.currentAmericanaDoc?.format || '').toLowerCase();
                     const nameUpper = (this.currentAmericanaDoc?.name || '').toUpperCase();
                     let label = 'PAREJA FIJA';
-                    let color = '#a855f7';
+                    let modeColor = '#000';
 
                     if (nameUpper.includes('TWISTER') || mode.includes('twister') || nameUpper.includes('ROTATIVO') || mode.includes('rotating') || mode.includes('rotativo')) {
-                        label = 'TWISTER';
-                        color = '#38bdf8';
+                        label = 'MODO TWISTER';
                     }
 
-                    return `<div style="background: ${color}22; color: ${color}; border: 1px solid ${color}; padding: 2px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">MODO: ${label}</div>`;
+                    return `<div style="background: rgba(255,255,255,0.2); color: ${theme.text}; border: 1.5px solid rgba(255,255,255,0.3); padding: 5px 15px; border-radius: 12px; font-size: 0.7rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">${label}</div>`;
                 })()}
                     </div>
                 </div>
 
-                <div class="tour-sub-nav" style="background: rgba(255,255,255,0.8); backdrop-filter: blur(15px); padding: 12px 10px; display: flex; gap: 8px; border-bottom: 2px solid #CCFF00; position: sticky; top: 62px; z-index: 1001; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
-                    <button class="tour-menu-item ${this.activeTab === 'results' ? 'active' : ''}" style="flex:1; border-radius: 12px; font-size: 0.55rem; font-weight: 900; background: ${this.activeTab === 'results' ? 'linear-gradient(135deg, #CCFF00 0%, #B8E600 100%)' : '#f0f0f0'}; color: #000; border: none; box-shadow: ${this.activeTab === 'results' ? '0 4px 10px rgba(204,255,0,0.3)' : 'none'}; transition: 0.3s;" onclick="window.ControlTowerView.switchTab('results')">PARTIDOS</button>
-                    <button class="tour-menu-item ${this.activeTab === 'standings' ? 'active' : ''}" style="flex:1; border-radius: 12px; font-size: 0.55rem; font-weight: 900; background: ${this.activeTab === 'standings' ? 'linear-gradient(135deg, #CCFF00 0%, #B8E600 100%)' : '#f0f0f0'}; color: #000; border: none; box-shadow: ${this.activeTab === 'standings' ? '0 4px 10px rgba(204,255,0,0.3)' : 'none'}; transition: 0.3s;" onclick="window.ControlTowerView.switchTab('standings')">POSICIONES</button>
-                    <button class="tour-menu-item ${this.activeTab === 'summary' ? 'active' : ''}" style="flex:1; border-radius: 12px; font-size: 0.55rem; font-weight: 900; background: ${this.activeTab === 'summary' ? 'linear-gradient(135deg, #CCFF00 0%, #B8E600 100%)' : '#f0f0f0'}; color: #000; border: none; box-shadow: ${this.activeTab === 'summary' ? '0 4px 10px rgba(204,255,0,0.3)' : 'none'}; transition: 0.3s;" onclick="window.ControlTowerView.switchTab('summary')">STATS</button>
-                    <button class="tour-menu-item ${this.activeTab === 'report' ? 'active' : ''}" style="flex:1; border-radius: 12px; font-size: 0.55rem; font-weight: 900; background: ${this.activeTab === 'report' ? 'linear-gradient(135deg, #CCFF00 0%, #B8E600 100%)' : '#f0f0f0'}; color: #000; border: none; box-shadow: ${this.activeTab === 'report' ? '0 4px 10px rgba(204,255,0,0.3)' : 'none'}; transition: 0.3s;" onclick="window.ControlTowerView.switchTab('report')">INFORME</button>
+                <div class="tour-sub-nav" style="background: rgba(255,255,255,0.9); backdrop-filter: blur(20px); padding: 14px; display: flex; gap: 10px; border-bottom: 2px solid ${theme.accent}; position: sticky; top: 62px; z-index: 1001; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+                    <button class="tour-menu-item ${this.activeTab === 'results' ? 'active' : ''}" style="flex:1; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'results' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'results' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'results' ? '0 8px 20px ' + theme.glow : 'none'}; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);" onclick="window.ControlTowerView.switchTab('results')">PARTIDOS</button>
+                    <button class="tour-menu-item ${this.activeTab === 'standings' ? 'active' : ''}" style="flex:1; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'standings' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'standings' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'standings' ? '0 8px 20px ' + theme.glow : 'none'}; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);" onclick="window.ControlTowerView.switchTab('standings')">POSICIONES</button>
+                    <button class="tour-menu-item ${this.activeTab === 'summary' ? 'active' : ''}" style="flex:1; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'summary' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'summary' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'summary' ? '0 8px 20px ' + theme.glow : 'none'}; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);" onclick="window.ControlTowerView.switchTab('summary')">STATS</button>
+                    <button class="tour-menu-item ${this.activeTab === 'report' ? 'active' : ''}" style="flex:1; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'report' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'report' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'report' ? '0 8px 20px ' + theme.glow : 'none'}; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);" onclick="window.ControlTowerView.switchTab('report')">INFORME</button>
                 </div>
 
                 ${this.renderActiveContent(data, roundData)}
@@ -998,19 +1042,26 @@
         }
 
         renderRoundTabs(rounds, currentNum) {
+            const category = this.currentAmericanaDoc?.category || 'pro';
+
+            let activeColor = '#CCFF00';
+            if (category === 'female') activeColor = '#FF2D55';
+            else if (category === 'mixed') activeColor = '#FFD700';
+            else if (category === 'male') activeColor = '#00C4FF';
+
             return `
-                <div class="round-tabs-container" style="display:flex; gap:8px; align-items: center;">
+                <div class="round-tabs-container" style="display:flex; gap:8px; align-items: center; overflow-x: auto; padding: 5px 0;">
                     ${rounds.map(r => {
                 const isSel = parseInt(r.number) === parseInt(currentNum);
                 return `
                         <button type="button" 
                                 class="round-tab ${isSel ? 'active' : ''}" 
                                 onclick="window.ControlTowerView.goToRound(${r.number}, event)"
-                                style="background: ${isSel ? 'var(--playtomic-neon)' : '#222'}; 
-                                       color: ${isSel ? 'black' : '#fff'}; 
-                                       border: 1px solid ${isSel ? 'var(--playtomic-neon)' : '#444'};
-                                       padding: 10px 18px; border-radius: 12px; font-weight: 900; cursor: pointer; transition: 0.3s; min-width: 60px;
-                                       box-shadow: ${isSel ? '0 0 15px rgba(204,255,0,0.3)' : 'none'};">
+                                style="background: ${isSel ? activeColor : 'rgba(255,255,255,0.05)'}; 
+                                       color: ${isSel ? (activeColor === '#00C4FF' || activeColor === '#FF2D55' ? '#fff' : '#000') : '#999'}; 
+                                       border: 1px solid ${isSel ? activeColor : 'rgba(255,255,255,0.1)'};
+                                       padding: 12px 20px; border-radius: 14px; font-weight: 950; cursor: pointer; transition: 0.4s; min-width: 65px;
+                                       box-shadow: ${isSel ? '0 8px 20px ' + activeColor + '40' : 'none'}; text-transform: uppercase; font-size: 0.8rem;">
                             ${r.number}º
                         </button>
                     `}).join('')}

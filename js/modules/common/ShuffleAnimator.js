@@ -204,7 +204,7 @@
             }
 
             const isFirstRound = parseInt(data.round) === 1;
-            const shuffleDuration = isFirstRound ? 6000 : 3000;
+            const shuffleDuration = isFirstRound ? 6000 : 2000;
 
             setTimeout(() => this.revealResults(data, overlay, onComplete), shuffleDuration);
 
@@ -221,20 +221,23 @@
             if (marquee) marquee.innerText = "SORTEO COMPLETADO • RESULTADOS PUBLICADOS • TODOS A PISTAS • REGLAMENTO SOMOSPADEL ACTIVADO • ";
 
             const isFirstRound = parseInt(data.round) === 1;
-            const matchDelay = isFirstRound ? 1200 : 500;
-            const playerDelay = isFirstRound ? 500 : 200;
+            const matchDelay = isFirstRound ? 1200 : 300;
+            const playerDelay = isFirstRound ? 500 : 100;
 
             matches.forEach((m, idx) => {
-                const c = m.court;
+                // Fallback robusto para el número de pista: preferimos m.court, si no, m.court_id, si no, el índice + 1
+                const c = m.court || m.pista || (idx + 1);
                 let pNames = this.extractNamesFromMatch(m);
 
                 setTimeout(() => {
                     for (let i = 1; i <= 4; i++) {
                         setTimeout(() => {
-                            const el = document.getElementById(`slot-${c}-p${i}`);
+                            const slotId = `slot-${c}-p${i}`;
+                            const el = document.getElementById(slotId);
                             if (el) {
                                 el.classList.add('revealed');
-                                el.innerHTML = `<div class="winner-name">${(pNames[i - 1] || '---').toUpperCase()}</div>`;
+                                const nameToDisplay = (pNames[i - 1] || 'JUGADOR').toUpperCase();
+                                el.innerHTML = `<div class="winner-name">${nameToDisplay}</div>`;
                             }
                         }, i * playerDelay);
                     }
@@ -250,21 +253,36 @@
         }
 
         extractNamesFromMatch(m) {
-            const extractFullTeam = (namesArr, teamArr) => {
-                const raw = namesArr || teamArr || [];
-                const items = Array.isArray(raw) ? raw : [raw];
-                let processed = [];
-                items.forEach(item => {
-                    const str = (typeof item === 'object' ? (item.name || item.displayName) : String(item)) || '';
-                    if (str.includes(' / ')) processed.push(...str.split(' / ').map(s => s.trim()));
-                    else if (str) processed.push(str);
-                });
-                return processed;
-            };
-            const teamA = extractFullTeam(m.team_a_names, m.team_a);
-            const teamB = extractFullTeam(m.team_b_names, m.team_b);
+            // Intentar extraer de múltiples formatos posibles para máxima compatibilidad entre rondas
+            const teamA = [];
+            const teamB = [];
+
+            // 1. Array de nombres (Formato estándar)
+            if (Array.isArray(m.team_a_names)) teamA.push(...m.team_a_names);
+            if (Array.isArray(m.team_b_names)) teamB.push(...m.team_b_names);
+
+            // 2. Fallback: Campos individuales player1, player2...
+            if (teamA.length === 0) {
+                if (m.player1_name) teamA.push(m.player1_name);
+                if (m.p1_name) teamA.push(m.p1_name);
+                if (m.player2_name) teamA.push(m.player2_name);
+                if (m.p2_name) teamA.push(m.p2_name);
+            }
+            if (teamB.length === 0) {
+                if (m.player3_name) teamB.push(m.player3_name);
+                if (m.p3_name) teamB.push(m.p3_name);
+                if (m.player4_name) teamB.push(m.player4_name);
+                if (m.p4_name) teamB.push(m.p4_name);
+            }
+
+            // 3. Fallback: Nombres simples de equipo
+            if (teamA.length === 0 && m.teamA) teamA.push(m.teamA);
+            if (teamB.length === 0 && m.teamB) teamB.push(m.teamB);
+
+            // Rellenar hasta 2 por equipo
             while (teamA.length < 2) teamA.push('---');
             while (teamB.length < 2) teamB.push('---');
+
             return [teamA[0], teamA[1], teamB[0], teamB[1]];
         }
 

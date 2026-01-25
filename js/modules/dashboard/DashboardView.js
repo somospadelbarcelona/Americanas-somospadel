@@ -13,6 +13,14 @@
                     }
                 });
             }
+
+            // AUTO-REFRESH MOTOR: Renovación inteligente cada 5 minutos
+            this.refreshInterval = setInterval(() => {
+                if (window.Router && window.Router.currentRoute === 'dashboard') {
+                    console.log("🔄 [AI Motor] Renovando noticias y eventos en tiempo real...");
+                    this.renderLiveWidget();
+                }
+            }, 5 * 60 * 1000); // 5 min
         }
 
         async render(data) {
@@ -798,12 +806,13 @@
 
         async renderLiveWidget(context) {
             try {
-                // 1. DATA GATHERING (INTEL)
-                const [allEvents, weatherData, rankingData] = await Promise.all([
+                // 1. DATA GATHERING (INTEL) - Fresh fetch for real-time accuracy
+                const [allEvents, weatherData] = await Promise.all([
                     window.AmericanaService ? window.AmericanaService.getAllActiveEvents() : [],
-                    window.WeatherService ? window.WeatherService.getDashboardWeather() : [],
-                    window.RankingController ? window.RankingController.calculateSilently() : []
+                    window.WeatherService ? window.WeatherService.getDashboardWeather() : []
                 ]);
+
+                console.log(`🧠 [AI News Motor] Processing ${allEvents.length} events for priority feed.`);
 
                 let itemsHtml = [];
 
@@ -829,7 +838,7 @@
                     `);
                 }
 
-                // B. DYNAMIC CLIPS & TIPS (Variedad de noticias)
+                // B. DYNAMIC CLIPS & TIPS (AI Motor Expanded Pool)
                 const dynamicPool = [
                     {
                         tag: '📈 TU NIVEL',
@@ -870,27 +879,93 @@
                         accent: '#a78bfa',
                         title: 'Notificaciones',
                         desc: 'Recibe avisos de cambios de pista y resultados al instante.'
+                    },
+                    {
+                        tag: '💡 SMART TIP',
+                        icon: 'fa-brain',
+                        bgColor: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+                        accent: '#94a3b8',
+                        title: 'Navegación Gesto',
+                        desc: 'Desliza las historias o pulsa los laterales para pasar rápido.'
+                    },
+                    {
+                        tag: '⚡ PRO TIP',
+                        icon: 'fa-bolt',
+                        bgColor: 'linear-gradient(135deg, #451a03 0%, #92400e 100%)',
+                        accent: '#fbbf24',
+                        title: 'Saque Táctico',
+                        desc: 'Busca el cristal en el segundo saque para generar más errores.'
+                    },
+                    {
+                        tag: '👥 SOCIAL',
+                        icon: 'fa-users',
+                        bgColor: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+                        accent: '#a5b4fc',
+                        title: 'Chat de Grupo',
+                        desc: 'Conecta con otros jugadores y organiza partidos rápidamente.'
+                    },
+                    {
+                        tag: '🔥 RANKING LIVE',
+                        icon: 'fa-fire',
+                        bgColor: 'linear-gradient(135deg, #4c0519 0%, #9f1239 100%)',
+                        accent: '#fb7185',
+                        title: 'Ascenso Diario',
+                        desc: 'El ranking se actualiza cada hora. ¡No dejes de competir!'
                     }
                 ];
 
-                // --- PRIORITY: EVENTS FIRST ---
-                const openEvents = allEvents.filter(a => ['open', 'upcoming', 'scheduled', 'live'].includes(a.status));
-                openEvents.forEach(am => {
+                // --- AI MOTOR: PRIORITY & SHUFFLE LOGIC ---
+                // 1. First, Events (Highest Priority)
+                // Filter only OPEN events for registration focus
+                const openEvents = allEvents
+                    .filter(a => ['open', 'upcoming'].includes(a.status))
+                    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                // A. FEATURED EVENT PROMO (Always first if there are open events)
+                if (openEvents.length > 0) {
+                    const topEvt = openEvents[0];
+                    itemsHtml.push(`
+                        <div class="registration-ticker-card" onclick="Router.navigate('entrenos')" 
+                            style="min-width: 280px; width: 280px; height: 160px; scroll-snap-align: center; 
+                            background: linear-gradient(135deg, #00FF41 0%, #008f45 100%); 
+                            border-radius: 28px; padding: 20px; flex-shrink: 0; 
+                            box-shadow: 0 15px 35px rgba(0,255,65,0.3); 
+                            position: relative; overflow: hidden; cursor: pointer; border: 2px solid #00FF41; 
+                            transition: all 0.4s; transform: scale(1.02); z-index: 10;">
+                            
+                            <!-- MATRIX DECORATION -->
+                            <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.1; font-family: monospace; font-size: 0.5rem; line-height: 1; pointer-events: none;">
+                                01010101101010101010101010101010<br>10101010101101010101010101010101<br>01010101101010101010101010101010
+                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3; margin-bottom: 12px;">
+                                <span style="font-size:0.6rem; font-weight:1000; color:black; background:#fff; padding:4px 12px; border-radius:100px; text-transform:uppercase; letter-spacing:1px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🔥 ÚLTIMAS PLAZAS</span>
+                                <i class="fas fa-bolt" style="color:white; animation: pulseDot 1s infinite;"></i>
+                            </div>
+                            
+                            <div style="position:relative; z-index:3;">
+                                <div style="color:white; font-size:0.7rem; font-weight:800; opacity:0.9; text-transform:uppercase; letter-spacing:1px;">NUEVO EVENTO</div>
+                                <h4 style="margin:5px 0; color:white; font-size:1.25rem; font-weight:1000; line-height:1.1;">${topEvt.name.toUpperCase()}</h4>
+                                <div style="font-size: 0.8rem; color: #fff; font-weight: 900; background:rgba(0,0,0,0.2); display:inline-block; padding:4px 10px; border-radius:8px; margin-top:5px;">
+                                    🚀 ¡APÚNTATE YA!
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                }
+
+                // 1.B Individual Event Cards (The rest)
+                openEvents.slice(1).forEach(am => {
                     let catColor = '#00E36D';
                     const lowerName = am.name.toLowerCase();
                     if (lowerName.includes('femenin') || lowerName.includes('female') || am.category === 'female') catColor = '#FF2D55';
                     else if (lowerName.includes('mixt') || lowerName.includes('mix') || am.category === 'mixed') catColor = '#FFD700';
                     else if (lowerName.includes('masculin') || lowerName.includes('male') || am.category === 'male') catColor = '#00C4FF';
 
-                    let statusLabel = 'PRÓXIMO';
-                    if (am.status === 'open') statusLabel = 'ABIERTO';
-                    else if (am.status === 'live') statusLabel = 'EN JUEGO';
-
                     const categoryIcon = am.category === 'female' ? '♀️' : (am.category === 'male' ? '♂️' : '🎾');
-                    const clickAction = am.status === 'open' ? `Router.navigate('entrenos');` : `window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');`;
 
                     itemsHtml.push(`
-                        <div class="registration-ticker-card" onclick="event.stopPropagation(); ${clickAction}" 
+                        <div class="registration-ticker-card" onclick="Router.navigate('entrenos')" 
                             style="min-width: 240px; width: 240px; height: 160px; scroll-snap-align: center; 
                             background: linear-gradient(135deg, ${catColor}, ${catColor}cc); 
                             border-radius: 28px; padding: 18px; flex-shrink: 0; 
@@ -899,32 +974,34 @@
                             transition: all 0.4s;">
                             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-10deg); font-size: 8rem; opacity: 0.1; filter: blur(2px);">${categoryIcon}</div>
                             <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3; margin-bottom: 12px;">
-                                <span style="font-size:0.55rem; font-weight:1000; color:white; background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:100px; text-transform:uppercase; border: 1px solid rgba(255,255,255,0.2);">${statusLabel}</span>
+                                <span style="font-size:0.55rem; font-weight:1000; color:white; background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:100px; text-transform:uppercase; border: 1px solid rgba(255,255,255,0.2);">ABIERTO</span>
                                 <span style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; letter-spacing:1px;">${this.formatDateShort(am.date)}</span>
                             </div>
                             <div style="position:relative; z-index:3;">
                                 <h4 style="margin:0; color:white; font-size:1.1rem; font-weight:1000; line-height:1.1; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${am.name}</h4>
                                 <div style="display:flex; align-items:center; gap:8px; margin-top:10px;">
-                                    <div style="width: 24px; height: 24px; background:rgba(255,255,255,0.2); border-radius:50%; display:flex; align-items:center; justify-content:center;">
-                                        <i class="far fa-clock" style="color:white; font-size:0.7rem;"></i>
-                                    </div>
-                                    <span style="font-size:0.85rem; color:white; font-weight:900;">${am.time || '--:--'}</span>
+                                    <span style="font-size:0.75rem; color:white; font-weight:900; background:rgba(0,0,0,0.2); padding:2px 8px; border-radius:5px;">REGISTRAR →</span>
                                 </div>
-                            </div>
-                            <div style="position:absolute; bottom:15px; right:15px; z-index:3; width:36px; height:36px; background:rgba(255,255,255,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; border: 1px solid rgba(255,255,255,0.1);">
-                                <i class="fas fa-chevron-right" style="color:white; font-size:1rem;"></i>
                             </div>
                         </div>
                     `);
                 });
 
-                // --- POPURRÍ: ADD TIPS TO REACH 6-7 CARDS ---
-                const remainingNeeded = Math.max(0, 7 - itemsHtml.length);
-                const selectedTips = dynamicPool.sort(() => 0.5 - Math.random()).slice(0, remainingNeeded);
+                // 2. Add Dynamic Tips to fill up to 7-8 cards maximum
+                const maxCards = 8;
+                const remainingSlots = Math.max(0, maxCards - itemsHtml.length);
 
-                selectedTips.forEach(tip => {
+                // Shuffle the dynamic pool to ensure variety on every load
+                const shuffledPool = [...dynamicPool].sort(() => 0.5 - Math.random());
+                const selectedTips = shuffledPool.slice(0, remainingSlots);
+
+                selectedTips.forEach((tip, idx) => {
+                    const isAiPick = idx === 0; // The top pick by our "shuffling motor"
+                    const aiBadge = isAiPick ? `<div style="position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:4px; font-size:0.5rem; color:rgba(255,255,255,0.5); font-weight:900; letter-spacing:1px; border:0.5px solid rgba(255,255,255,0.1);"><i class="fas fa-sparkles" style="margin-right:4px;"></i>AI PICK</div>` : '';
+
                     itemsHtml.push(`
                         <div class="registration-ticker-card" style="min-width: 240px; width: 240px; height: 160px; scroll-snap-align: center; background: ${tip.bgColor}; border-radius: 24px; padding: 20px; flex-shrink: 0; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);">
+                            ${aiBadge}
                             <div style="position: absolute; right: -25px; bottom: -25px; font-size: 8rem; opacity: 0.08; filter: blur(3px);"><i class="fas ${tip.icon}"></i></div>
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 2;">
                                 <span style="font-size:0.6rem; font-weight:1000; color:white; background:rgba(0,0,0,0.4); padding:4px 10px; border-radius:10px; border:1px solid ${tip.accent}80; letter-spacing:1px; white-space:nowrap;">${tip.tag}</span>
