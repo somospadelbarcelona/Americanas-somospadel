@@ -415,7 +415,7 @@
                             </div>
                             <div style="text-align: center;">
                                 <div style="font-size: 1.1rem; font-weight: 950; color: #fff; letter-spacing: 1px;">CAPITÁN SOMOSPADEL</div>
-                                <div style="font-size: 0.6rem; color: #64748b; font-weight: 900; text-transform: uppercase;">Inteligencia Táctica Activa</div>
+                                <div style="font-size: 0.6rem; color: #64748b; font-weight: 900; text-transform: uppercase;">Sistema Táctico Activo</div>
                             </div>
                         </div>
                         <div id="captain-body-content" class="captain-body"></div>

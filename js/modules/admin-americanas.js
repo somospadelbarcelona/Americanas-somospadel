@@ -467,12 +467,24 @@ window.openEditAmericanaModal = async (e) => {
         if (form.querySelector('[name=pair_mode]')) form.querySelector('[name=pair_mode]').value = e.pair_mode || 'rotating';
         if (form.querySelector('[name=image_url]')) form.querySelector('[name=image_url]').value = e.image_url || '';
 
-        // Extra fields (similar to Entrenos)
-        if (form.querySelector('[name=duration]')) form.querySelector('[name=duration]').value = e.duration || '2h';
-        if (form.querySelector('[name=status]')) form.querySelector('[name=status]').value = e.status || 'open';
-        if (form.querySelector('[name=max_courts]')) form.querySelector('[name=max_courts]').value = e.max_courts || 6;
-        if (form.querySelector('[name=price_members]')) form.querySelector('[name=price_members]').value = e.price_members || 20;
-        if (form.querySelector('[name=price_external]')) form.querySelector('[name=price_external]').value = e.price_external || 25;
+        // --- DYNAMIC VISIBILITY OF FIXED PAIRS (AMERICANA) ---
+        const pairModeSelect = form.querySelector('[name=pair_mode]');
+        const pairsArea = document.getElementById('americana-fixed-pairs-area');
+
+        const togglePairsArea = () => {
+            if (pairsArea) {
+                if (pairModeSelect.value === 'fixed') {
+                    pairsArea.style.display = 'block';
+                } else {
+                    pairsArea.style.display = 'none';
+                }
+            }
+        };
+
+        if (pairModeSelect) {
+            pairModeSelect.onchange = togglePairsArea; // Bind change listener
+            togglePairsArea(); // Init state based on loaded value
+        }
 
         // Preview Image
         const preview = document.getElementById('edit-americana-img-preview');

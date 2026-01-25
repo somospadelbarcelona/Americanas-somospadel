@@ -365,27 +365,27 @@
                 // Calculate basic H2H
                 let h2hData = personalMatches.length > 0 ? this.calculateTopRivals(personalMatches, searchIds) : { nemesis: null, victim: null, topRivals: [] };
 
-                // ENRICH NEMESIS DATA (Fetch real name/phone from DB to fix "Unknown" and enable WhatsApp)
-                if (h2hData.nemesis && h2hData.nemesis.id) {
-                    try {
-                        // Quick fetch of the rival's actual profile
-                        const nemesisDoc = await this.db.players.getById(h2hData.nemesis.id);
-                        if (nemesisDoc) {
-                            // Overwrite with reliable data from Profile
-                            h2hData.nemesis.name = nemesisDoc.name || h2hData.nemesis.name || 'Rival';
+                // ENRICH H2H DATA (Fetch real name/phone from DB for Nemesis and Soulmate)
+                const enrich = async (item, type) => {
+                    if (item && item.id) {
+                        try {
+                            const doc = await this.db.players.getById(item.id);
+                            if (doc) {
+                                item.name = doc.name || item.name || (type === 'nemesis' ? 'Rival' : 'Socio');
+                                let rawPhone = doc.phone || '';
+                                rawPhone = rawPhone.replace(/\D/g, '');
+                                if (rawPhone.length === 9 && (rawPhone.startsWith('6') || rawPhone.startsWith('7'))) rawPhone = '34' + rawPhone;
+                                item.phone = rawPhone;
+                                console.log(`😈 enriched ${type}:`, item.name);
+                            }
+                        } catch (e) { }
+                    }
+                };
 
-                            // Format phone for WhatsApp
-                            let rawPhone = nemesisDoc.phone || '';
-                            // Strip non-numeric chars
-                            rawPhone = rawPhone.replace(/\D/g, '');
-                            // Add Spain prefix if missing and looks like a mobile
-                            if (rawPhone.length === 9 && (rawPhone.startsWith('6') || rawPhone.startsWith('7'))) rawPhone = '34' + rawPhone;
-
-                            h2hData.nemesis.phone = rawPhone;
-                            console.log("😈 ENRICHED NEMESIS:", h2hData.nemesis.name, h2hData.nemesis.phone);
-                        }
-                    } catch (e) { console.warn("Failed to enrich Nemesis data", e); }
-                }
+                await Promise.all([
+                    enrich(h2hData.nemesis, 'nemesis'),
+                    enrich(h2hData.soulmate, 'soulmate')
+                ]);
 
                 this.state = {
                     stats,
@@ -395,7 +395,7 @@
                     communityAvg: communityAvg,
                     fullData: userDoc,
                     reliability: reliabilityStatus,
-                    aiInsights: this.generateAIInsights(matchesList, stats),
+                    smartInsights: this.generateSmartInsights(matchesList, stats),
                     badges: this.calculateBadges(matchesList, stats),
                     h2h: h2hData
                 };
@@ -464,127 +464,63 @@
 
         calculateTopRivals(matches, userIds) {
             const rivals = {};
-            // Ensure inputs safety
-            if (!matches || !Array.isArray(matches)) return { nemesis: null, victim: null, topRivals: [] };
+            const partners = {};
+            if (!matches || !Array.isArray(matches)) return { nemesis: null, soulmate: null, topRivals: [] };
 
-            // Normalize IDs to array
             const myIds = Array.isArray(userIds) ? userIds : [userIds];
 
             matches.forEach(m => {
-                // Determine rivals (players in the OTHER team)
-                // Use .some() to check if any of my IDs are in the team arrays
-
                 let myTeam = null;
-                let otherTeam = null;
+                if (m.team_a_ids && m.team_a_ids.some(id => myIds.includes(String(id)))) myTeam = 'A';
+                else if (m.team_b_ids && m.team_b_ids.some(id => myIds.includes(String(id)))) myTeam = 'B';
 
-                // Try to identify my team based on IDs first
-                if (m.team_a_ids && m.team_a_ids.some(id => myIds.includes(id))) {
-                    myTeam = 'A';
-                    otherTeam = 'B';
-                }
-                else if (m.team_b_ids && m.team_b_ids.some(id => myIds.includes(id))) {
-                    myTeam = 'B';
-                    otherTeam = 'A';
-                }
+                if (!myTeam) return;
 
-                // If not found by ID, try legacy checks if necessary (or skip)
-                if (!myTeam) {
-                    return;
-                }
+                const opponentIds = myTeam === 'A' ? (m.team_b_ids || []) : (m.team_a_ids || []);
+                const partnerIds = myTeam === 'A' ? (m.team_a_ids || []) : (m.team_b_ids || []);
 
-                const opponentIds = otherTeam === 'A' ? m.team_a_ids : m.team_b_ids;
-
-                // Determine result from MY perspective
                 const sA = parseInt(m.score_a || 0);
                 const sB = parseInt(m.score_b || 0);
+                const iWon = (myTeam === 'A' && sA > sB) || (myTeam === 'B' && sB > sA);
+                const iLost = (myTeam === 'A' && sB > sA) || (myTeam === 'B' && sA > sB);
 
-                let result = 'D';
-                if (myTeam === 'A') {
-                    if (sA > sB) result = 'W';
-                    else if (sB > sA) result = 'L';
-                } else { // Team B
-                    if (sB > sA) result = 'W';
-                    else if (sA > sB) result = 'L';
-                }
+                // 1. Process Rivals
+                opponentIds.forEach(rid => {
+                    const id = String(rid);
+                    if (myIds.includes(id)) return;
+                    if (!rivals[id]) rivals[id] = { id, name: 'Jugador', matches: 0, wins: 0, losses: 0 };
+                    rivals[id].matches++;
+                    if (iWon) rivals[id].wins++; // I won against them
+                    if (iLost) rivals[id].losses++; // I lost against them
+                });
 
-                if (opponentIds && Array.isArray(opponentIds)) {
-                    opponentIds.forEach(rid => {
-                        if (!rid) return;
-
-                        // Try to find a name AND phone for this ID
-                        let rName = 'Jugador';
-                        let rPhone = null;
-
-                        // 1. Try modern 'players' array
-                        if (m.players && Array.isArray(m.players)) {
-                            const pObj = m.players.find(p => (p.id === rid || p.uid === rid));
-                            if (pObj) {
-                                if (pObj.name) rName = pObj.name;
-                                if (pObj.phone) rPhone = pObj.phone;
-                            }
-                        }
-
-                        // 2. Fallback: check legacy name/phone fields based on ID match
-                        if (rName === 'Jugador' || !rPhone) {
-                            const checkPlayerParams = (suffix) => {
-                                const idField = m[`player${suffix}`]?.id || m[`player${suffix}`];
-                                if (idField === rid) {
-                                    if (!rName || rName === 'Jugador') rName = m[`player${suffix}_name`] || m[`p${suffix}_name`] || m[`player${suffix}`]?.name;
-                                    if (!rPhone) rPhone = m[`player${suffix}`]?.phone;
-                                }
-                            };
-                            ['1', '2', '3', '4'].forEach(checkPlayerParams);
-                        }
-
-                        // 3. Last Resort by Team position (Heuristic)
-                        if (rName === 'Jugador') {
-                            if (otherTeam === 'A') {
-                                const idx = m.team_a_ids.indexOf(rid);
-                                if (idx === 0) rName = m.player1_name || m.p1_name;
-                                if (idx === 1) rName = m.player2_name || m.p2_name;
-                            } else {
-                                const idx = m.team_b_ids.indexOf(rid);
-                                if (idx === 0) rName = m.player3_name || m.p3_name;
-                                if (idx === 1) rName = m.player4_name || m.p4_name;
-                            }
-                        }
-
-                        if (!rivals[rid]) rivals[rid] = { id: rid, name: rName, phone: rPhone, matches: 0, wins: 0, losses: 0 };
-
-                        // Update info if we found better data now
-                        if (rivals[rid].name === 'Jugador' && rName !== 'Jugador') rivals[rid].name = rName;
-                        if (!rivals[rid].phone && rPhone) rivals[rid].phone = rPhone;
-
-                        rivals[rid].matches++;
-                        if (result === 'W') rivals[rid].wins++;
-                        if (result === 'L') rivals[rid].losses++;
-                    });
-                }
+                // 2. Process Partners
+                partnerIds.forEach(pid => {
+                    const id = String(pid);
+                    if (myIds.includes(id)) return;
+                    if (!partners[id]) partners[id] = { id, name: 'Socio', matches: 0, wins: 0 };
+                    partners[id].matches++;
+                    if (iWon) partners[id].wins++;
+                });
             });
 
             const rivalsArr = Object.values(rivals);
+            const partnersArr = Object.values(partners);
 
-            // 1. NEMESIS: Player with most LOSSES against
-            const nemesis = [...rivalsArr].sort((a, b) => {
-                if (b.losses !== a.losses) return b.losses - a.losses;
-                return b.matches - a.matches;
-            })[0];
+            // NEMESIS: Rival I lose to the most
+            const nemesis = rivalsArr.sort((a, b) => b.losses - a.losses || b.matches - a.matches)[0];
 
-            // 2. VICTIM: Player with most WINS against
-            const victim = [...rivalsArr].sort((a, b) => {
-                if (b.wins !== a.wins) return b.wins - a.wins;
-                return b.matches - a.matches;
-            })[0];
+            // SOULMATE: Partner I win with the most (min 2 matches)
+            const soulmate = partnersArr
+                .filter(p => p.matches >= 1)
+                .sort((a, b) => b.wins - a.wins || (b.wins / b.matches) - (a.wins / a.matches))[0];
 
-            // 3. CLASSIC RIVALS: Most matches played
-            const topRivals = rivalsArr.sort((a, b) => b.matches - a.matches).slice(0, 3);
-
-            return { nemesis, victim, topRivals };
+            return { nemesis, soulmate, topRivals: rivalsArr.sort((a, b) => b.matches - a.matches).slice(0, 3) };
         }
 
-        generateAIInsights(matches, stats) {
+        generateSmartInsights(matches, stats) {
             if (!matches || matches.length === 0) return {
-                summary: "Bienvenido a SomosPadel. Juega tus primeros partidos oficiales para que el Capitán IA analice tu estilo y te dé consejos tácticos.",
+                summary: "Bienvenido a SomosPadel. Juega tus primeros partidos oficiales para que el Capitán SomosPadel analice tu estilo y te dé consejos tácticos.",
                 badge: "NUEVO RECLUTA 🎾",
                 advice: "Céntrate en mantener la bola en juego y divertirte hoy.",
                 insights: [{ icon: '💡', text: "Primeras batallas pendientes" }]

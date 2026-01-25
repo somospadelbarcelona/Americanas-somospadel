@@ -1594,7 +1594,7 @@
                             </div>
                         </div>
 
-                        <!-- 5. ANALYTICS (MÉTRICAS IA) -->
+                        <!-- 5. ANALYTICS (MÉTRICAS AVANZADAS) -->
                         <div style="background: rgba(255,255,255,0.02); padding: 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.05);">
                             <div style="font-weight: 950; margin-bottom: 15px; color: #fff; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
                                 <div style="width: 36px; height: 36px; background: rgba(16,185,129,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #10b981;">

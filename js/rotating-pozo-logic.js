@@ -293,9 +293,9 @@ const RotatingPozoLogic = {
         const validOptions = options.filter(opt => {
             const pair1 = opt.teamA;
             const pair2 = opt.teamB;
-            // Check Repeats
-            if (pair1[0].last_partner === pair1[1].id) return false;
-            if (pair2[0].last_partner === pair2[1].id) return false;
+            // Check Repeats (Robust String comparison)
+            if (String(pair1[0].last_partner) === String(pair1[1].id)) return false;
+            if (String(pair2[0].last_partner) === String(pair2[1].id)) return false;
             return true;
         });
 

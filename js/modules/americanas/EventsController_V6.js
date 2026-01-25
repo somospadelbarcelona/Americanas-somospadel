@@ -1163,6 +1163,11 @@
                         ${cardsHtml}
                     </div>
 
+                    <!-- 🔗 RADAR DE SINERGIAS (PARTNER SUGGESTIONS) -->
+                    <div id="event-synergy-radar-root" style="margin-bottom: 40px;">
+                        <!-- Content loaded via JS -->
+                    </div>
+
                     <!-- FOOTER ACTIONS -->
                     <div style="display: flex; justify-content: center; gap: 20px; padding-bottom: 60px;">
                         <button onclick="document.getElementById('inscritos-modal').style.display = 'none';" 
@@ -1210,6 +1215,19 @@
                 </style>
             `;
             modal.style.display = 'block';
+
+            // Initialize Partner Synergy Radar in Modal
+            if (this.state.currentUser && window.PartnerSynergyWidget) {
+                setTimeout(() => {
+                    window.PartnerSynergyWidget.render(this.state.currentUser.uid || this.state.currentUser.id, 'event-synergy-radar-root', {
+                        title: '🔗 PAREJAS IDEALES EN ESTE EVENTO',
+                        subtitle: 'Sugerencias basadas en compatibilidad real',
+                        limit: 3,
+                        showDetails: true,
+                        compact: false
+                    }).catch(e => console.error('Synergy widget failed:', e));
+                }, 100);
+            }
         }
     }
 

@@ -140,23 +140,20 @@ window.loadAdminView = async function (viewName) {
             if (window.AutopilotView) window.AutopilotView.render();
             else console.error("AutopilotView not loaded");
         }
-        else if (viewName === 'entrenos_mgmt' && window.AdminViews.entrenos_mgmt) {
+        else if (viewName === 'network_pulse') {
+            if (window.NetworkPulseView) window.NetworkPulseView.render();
+            else console.error("NetworkPulseView not loaded");
+        }
+        else if (viewName === 'entrenos_mgmt' && window.AdminViews && window.AdminViews.entrenos_mgmt) {
             await window.AdminViews.entrenos_mgmt();
         }
         else if (viewName === 'matches') {
-            // "Resultados Americanas" loads the Generic Results View for Americanas
             if (window.loadResultsView) await window.loadResultsView('americana');
             else throw new Error("Results Module not loaded");
         }
         else if (viewName === 'entrenos_results') {
             if (window.loadResultsView) await window.loadResultsView('entreno');
             else throw new Error("Results Module not loaded");
-        }
-        else if (viewName === 'config' && window.AdminViews.config) {
-            await window.AdminViews.config(); // Assuming legacy config exists or imported
-        }
-        else if (viewName === 'menu_mgmt' && window.AdminViews.menu_mgmt) {
-            await window.AdminViews.menu_mgmt();
         }
         else {
             // Fallback for Simulator or others not yet refactored logic

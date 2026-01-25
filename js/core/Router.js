@@ -17,7 +17,18 @@
                 'agenda': () => this.handleControllerTab('EventsController', 'agenda'),
                 'results': () => this.handleControllerTab('EventsController', 'results'),
                 'entrenos': () => this.handleControllerTab('EventsController', 'entrenos'),
-                'records': () => window.RecordsController?.init()
+                'records': () => {
+                    console.log("🛣️ [Router] Executing records route...");
+                    if (window.RecordsController) {
+                        window.RecordsController.init();
+                    } else {
+                        console.error("❌ [Router] RecordsController not found in window!");
+                        // Emergency render if controller missing
+                        const content = document.getElementById('content-area');
+                        if (content) content.innerHTML = '<div style="padding:100px; color:white; text-align:center;">Error: Controller no listo. Reintenta en 1s...</div>';
+                        setTimeout(() => window.Router.navigate('records'), 1500);
+                    }
+                }
             };
 
             // Handle browser navigation

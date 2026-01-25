@@ -1,6 +1,6 @@
 /**
  * PlayerView.js
- * Premium AI-Enhanced Profile View for SomosPadel
+ * Premium SMART Profile View for SomosPadel
  * Updated: 2024 Design System with Glassmorphism and Advanced UX
  */
 (function () {
@@ -90,7 +90,7 @@
                     </div>
                     <div style="padding: 30px 20px;">
                         
-                        <!-- AI TACTICAL COACH: High-Tech Card -->
+                        <!-- TACTICAL COACH: High-Tech Card -->
                         <div style="margin-bottom: 40px; background: linear-gradient(135deg, rgba(204,255,0,0.08) 0%, rgba(0,0,0,0) 100%); 
                                     border: 1px solid rgba(204,255,0,0.15); border-radius: 32px; padding: 25px; position: relative; overflow: hidden; 
                                     box-shadow: 0 15px 40px rgba(0,0,0,0.4);">
@@ -101,16 +101,16 @@
                                     <div style="width: 36px; height: 36px; background: #CCFF00; color: #000; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; box-shadow: 0 0 15px rgba(204,255,0,0.3);">
                                         <i class="fas fa-robot"></i>
                                     </div>
-                                    <span style="font-weight: 950; font-size: 0.85rem; letter-spacing: 1px; color: #fff; text-transform: uppercase;">Capitán IA • Tactical Coach</span>
+                                    <span style="font-weight: 950; font-size: 0.85rem; letter-spacing: 1px; color: #fff; text-transform: uppercase;">Capitán SomosPadel • Asistente Táctico</span>
                                 </div>
                                 <span style="font-size: 0.65rem; background: rgba(204,255,0,0.15); color: #CCFF00; padding: 5px 12px; border-radius: 20px; font-weight: 950; border: 1px solid rgba(204,255,0,0.3); letter-spacing: 0.5px;">
-                                    ${data.aiInsights?.badge || 'ANALIZANDO...'}
+                                    ${data.smartInsights?.badge || 'ANALIZANDO...'}
                                 </span>
                             </div>
 
                             <div style="margin-bottom: 20px;">
                                 <p style="font-size: 1.1rem; line-height: 1.5; font-weight: 700; color: #fff; margin: 0 0 15px; letter-spacing: -0.2px;">
-                                    "${data.aiInsights?.summary || 'Sigue jugando para recibir consejos tácticos personalizados.'}"
+                                    "${data.smartInsights?.summary || 'Sigue jugando para recibir consejos tácticos personalizados.'}"
                                 </p>
                                 
                                 <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 18px; margin-bottom: 15px;">
@@ -118,12 +118,12 @@
                                         <i class="fas fa-bullseye"></i> CONSEJO TÁCTICO PARA HOY:
                                     </div>
                                     <p style="font-size: 0.9rem; color: #eee; line-height: 1.6; margin: 0; font-weight: 500;">
-                                        ${data.aiInsights?.advice || 'Mantén la intensidad desde el primer punto y busca profundidad en tus restos.'}
+                                        ${data.smartInsights?.advice || 'Mantén la intensidad desde el primer punto y busca profundidad en tus restos.'}
                                     </p>
                                 </div>
 
                                 <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                                    ${(data.aiInsights?.insights || []).map(ins => `
+                                    ${(data.smartInsights?.insights || []).map(ins => `
                                         <div style="background: rgba(255,255,255,0.05); padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 800; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.08); color: #888;">
                                             <span>${ins.icon}</span> <span>${ins.text}</span>
                                         </div>
@@ -177,25 +177,48 @@
                             </div>
                         </div>
 
-                        <!-- RIVALRY SECTION: NEMESIS ALERT -->
-                        ${data.h2h?.nemesis && data.h2h.nemesis.losses > 0 ? `
-                        <div style="margin-bottom: 30px; border: 1px solid #ef4444; background: linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(0,0,0,0) 100%); border-radius: 24px; padding: 20px; position: relative; overflow: hidden;">
-                            <div style="position: absolute; right: -20px; top: -20px; font-size: 5rem; color: #ef4444; opacity: 0.1;"><i class="fas fa-skull"></i></div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2;">
-                                <div>
-                                    <div style="color: #ef4444; font-size: 0.7rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">TU NÉMESIS 💀</div>
-                                    <div style="font-size: 0.65rem; color: #aaa; margin-bottom: 5px; font-style: italic;">Rival con mayor % de victorias sobre ti</div>
-                                    <div style="font-size: 1.4rem; font-weight: 950; color: white;">${data.h2h.nemesis.name || 'Rival Desconocido'}</div>
-                                    <div style="font-size: 0.8rem; color: #aaa; margin-top: 5px;">
-                                        Record H2H: <b style="color:#ef4444">${data.h2h.nemesis.losses} Derrotas</b> / <b style="color:#22c55e">${data.h2h.nemesis.wins} Victorias</b>
+                        <!-- RIVALRY & AFFINITY SECTION: NEMESIS & SOULMATE -->
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 40px;">
+                            
+                            <!-- 💀 NEMESIS CARD -->
+                            ${data.h2h?.nemesis && data.h2h.nemesis.losses > 0 ? `
+                            <div style="border: 1px solid #ef4444; background: linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(0,0,0,0) 100%); border-radius: 28px; padding: 22px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(239,68,68,0.15);">
+                                <div style="position: absolute; right: -15px; top: -15px; font-size: 6rem; color: #ef4444; opacity: 0.1;"><i class="fas fa-skull-crossbones"></i></div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2;">
+                                    <div>
+                                        <div style="color: #ef4444; font-size: 0.7rem; font-weight: 950; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">TU NÉMESIS 💀</div>
+                                        <div style="font-size: 1.5rem; font-weight: 950; color: white; letter-spacing: -0.5px;">${data.h2h.nemesis.name}</div>
+                                        <div style="font-size: 0.8rem; color: #aaa; margin-top: 6px; font-weight: 600;">
+                                            H2H: <b style="color:#ef4444">${data.h2h.nemesis.losses} Derrotas</b> / <b style="color:#22c55e">${data.h2h.nemesis.wins} Victorias</b>
+                                        </div>
                                     </div>
+                                    <button onclick="window.open('https://wa.me/${data.h2h.nemesis.phone || ''}?text=Hola ${data.h2h.nemesis.name}, mi detector de rivales dice que eres mi Némesis oficial 🔥. ¿Venganza en el próximo entreno? ⚔️', '_blank')" style="background: #ef4444; color: white; border: none; padding: 12px 18px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; text-transform: uppercase;">DESAFIAR</button>
                                 </div>
-                                <button onclick="window.open('https://wa.me/${data.h2h.nemesis.phone || ''}?text=Hola ${data.h2h.nemesis.name}, la app dice que eres mi Némesis (${data.h2h.nemesis.losses} derrotas). Te desafío oficialmente para el próximo entreno. ⚔️', '_blank')" style="background: #ef4444; color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 900; font-size: 0.7rem; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); text-transform: uppercase; letter-spacing: 0.5px;">
-                                    <i class="fas fa-glove-boxing"></i> DESAFIAR
-                                </button>
                             </div>
+                            ` : ''}
+
+                            <!-- ❤️ SOULMATE CARD (Best Partner) -->
+                            ${data.h2h?.soulmate && data.h2h.soulmate.matches > 0 ? `
+                            <div style="border: 1px solid #ec4899; background: linear-gradient(135deg, rgba(236,72,153,0.1) 0%, rgba(0,0,0,0) 100%); border-radius: 28px; padding: 22px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(236,72,153,0.15);">
+                                <div style="position: absolute; right: -15px; top: -15px; font-size: 6rem; color: #ec4899; opacity: 0.1;"><i class="fas fa-heart"></i></div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2;">
+                                    <div>
+                                        <div style="color: #ec4899; font-size: 0.7rem; font-weight: 950; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">ALMA GEMELA ❤️</div>
+                                        <div style="font-size: 1.5rem; font-weight: 950; color: white; letter-spacing: -0.5px;">${data.h2h.soulmate.name}</div>
+                                        <div style="font-size: 0.8rem; color: #aaa; margin-top: 6px; font-weight: 600;">
+                                            Sinergia: <b style="color:#ec4899">${data.h2h.soulmate.wins} Victorias juntos</b>
+                                        </div>
+                                    </div>
+                                    <button onclick="window.open('https://wa.me/${data.h2h.soulmate.phone || ''}?text=¡Hola ${data.h2h.soulmate.name}! La app de Americanas dice que eres mi Alma Gemela en la pista ❤️. ¿Cuándo repetimos victoria? 🎾🚀', '_blank')" style="background: #ec4899; color: white; border: none; padding: 12px 18px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; text-transform: uppercase;">LLAMAR</button>
+                                </div>
+                            </div>
+                            ` : ''}
                         </div>
-                        ` : ''}
+                        
+                        <!-- 🔗 RADAR DE SINERGIAS (SMART PARTNER MATCHING) -->
+                        <div id="player-synergy-radar-root" style="margin-bottom: 40px; animation: floatUp 0.95s ease-out forwards;">
+                            <!-- Content loaded via JS -->
+                        </div>
 
                         <!-- STATS GRID -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px;">
@@ -298,6 +321,19 @@
                 </div>
                 <input type="file" id="profile-photo-input" accept="image/*" style="display: none;" onchange="window.PlayerView.handlePhotoSelection(this)">
             `;
+
+            // Initialize Partner Synergy Radar
+            if (user && window.PartnerSynergyWidget) {
+                setTimeout(() => {
+                    window.PartnerSynergyWidget.render(user.uid || user.id, 'player-synergy-radar-root', {
+                        title: '🔗 RADAR DE SINERGIAS',
+                        subtitle: 'Tus parejas ideales inteligentes',
+                        limit: 5,
+                        showDetails: true,
+                        compact: false
+                    }).catch(e => console.error('Synergy widget failed:', e));
+                }, 100);
+            }
         }
 
         showUpdatePhotoPrompt() {

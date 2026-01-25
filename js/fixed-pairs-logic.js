@@ -191,10 +191,21 @@ const FixedPairsLogic = {
         // --- REORGANIZACIÓN INTELIGENTE DE PISTAS ---
         // Ordenar parejas por su pista actual (las que están en pistas mejores primero)
         // Esto respeta el movimiento arriba/abajo que acabamos de calcular
+        // --- REORGANIZACIÓN INTELIGENTE DE PISTAS ---
+        // Ordenar parejas por su pista actual, priorizando ganadores en caso de conflicto
         pairs.sort((a, b) => {
             const courtA = a.current_court || 999;
             const courtB = b.current_court || 999;
-            return courtA - courtB;
+
+            // 1. Prioridad Absoluta: Pista Objetivo
+            if (courtA !== courtB) return courtA - courtB;
+
+            // 2. Estabilidad: Ganadores primero (Evita que un perdedor desplace a un ganador en bordes)
+            if (a.won_last_match && !b.won_last_match) return -1;
+            if (!a.won_last_match && b.won_last_match) return 1;
+
+            // 3. Mérito: Juegos Ganados (Mayor a menor)
+            return (b.games_won || 0) - (a.games_won || 0);
         });
 
         // Reasignar pistas secuencialmente para llenar huecos

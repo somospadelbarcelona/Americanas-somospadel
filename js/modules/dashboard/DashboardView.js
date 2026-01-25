@@ -34,7 +34,7 @@
             if (headerName && userName) headerName.innerText = userName.split(' ')[0].toUpperCase();
             if (headerAvatar && userInitials) headerAvatar.innerText = userInitials;
 
-            // 2. Render IMMEDIATE SHELL (Loading State)
+            // 2. Render IMMEDIATE SHELL (Experience-Focused)
             container.innerHTML = `
                 <!-- MAIN DASHBOARD SCROLL CONTENT -->
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
@@ -44,7 +44,7 @@
                 ">
 
                     <!-- HEADER WITH NFL STYLE TICKER -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px; gap: 12px;">
                         <!-- NFL TICKER CONTAINER -->
                         <div id="header-ticker-container" style="
                             flex: 1; 
@@ -61,12 +61,12 @@
                         ">
                              <!-- Ticker Content -->
                              <div id="header-ticker-text" style="
-                                display: flex; 
-                                align-items: center; 
-                                width: 100%;
-                                padding: 0 10px;
-                                white-space: nowrap;
-                                overflow: hidden;
+                                 display: flex; 
+                                 align-items: center; 
+                                 width: 100%;
+                                 padding: 0 10px;
+                                 white-space: nowrap;
+                                 overflow: hidden;
                              ">
                                 <span style="font-size:0.7rem; color: #64748b; font-weight: 700; letter-spacing: 0.5px;">ESPERANDO LIVE...</span>
                             </div>
@@ -128,15 +128,26 @@
                             animation: shakeBell 2s infinite cubic-bezier(.36,.07,.19,.97) both;
                             color: #84cc16 !important;
                         }
+                        @keyframes cardShineEffect {
+                            0% { transform: translateX(-100%) skewX(-15deg); }
+                            30% { transform: translateX(100%) skewX(-15deg); }
+                            100% { transform: translateX(100%) skewX(-15deg); }
+                        }
                     </style>
+
+                    <!-- NEW STRATEGIC POSITION: PULSE STORIES (INSTAGRAM STYLE) -->
+                    <div id="story-feed-root" style="margin: 0 !important; animation: floatUp 0.8s ease-out forwards;">
+                        <!-- Cargado vía JS (StoryFeedWidget) -->
+                    </div>
 
                     <!-- 1. LIVE REGISTRATION WIDGET (FULL WIDTH SCROLLER) -->
                     <div id="registration-widget-root" style="
-                        background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+                        background: #0a0a0a;
                         border-radius: 28px;
                         margin: 4px 8px 1px !important; 
-                        padding: 8px 4px 0px !important; 
-                        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+                        padding: 12px 4px 0px !important; 
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+                        border: 1px solid rgba(255,255,255,0.05);
                         z-index: 10;
                         animation: floatUp 0.8s ease-out forwards;
                     ">
@@ -166,7 +177,7 @@
                         </div>
                     </div>
 
-                    <!-- 2. SOMOSPADEL.EU CONNECT (PREMIUM ENHANCED BANNER) -->
+                    <!-- 4. SOMOSPADEL.EU CONNECT (PREMIUM ENHANCED BANNER) -->
                     <div id="noticias-banner-root" style="padding: 1px 15px !important; animation: floatUp 0.85s ease-out forwards;">
                         <div class="noticias-banner-premium" style="
                             background: white; 
@@ -252,7 +263,16 @@
 
 
                     <!-- 3. NEW WEATHER WIDGET -->
-                    <div id="weather-widget-root" style="margin: 1px 15px 4px !important; animation: floatUp 0.8s ease-out forwards;">
+                    <div id="weather-widget-root" style="margin: 12px 15px !important; animation: floatUp 0.8s ease-out forwards;">
+                        <!-- Content loaded via JS -->
+                    </div>
+
+                    <!-- 5. RADAR DE SINERGIAS (SMART PARTNER MATCHING) -->
+                    <div id="partner-synergy-root" style="
+                        margin: 12px 15px !important;
+                        animation: floatUp 0.85s ease-out forwards;
+                        display: none; /* Se mostrará por JS si hay usuario */
+                    ">
                         <!-- Content loaded via JS -->
                     </div>
 
@@ -262,8 +282,8 @@
                         backdrop-filter: blur(20px);
                         border: 1px solid rgba(0, 227, 109, 0.2);
                         border-radius: 20px;
-                        margin: 1px 15px 4px !important;
-                        padding: 12px !important; /* Reducido de 15px */
+                        margin: 12px 15px !important;
+                        padding: 12px !important;
                         box-shadow: 0 15px 35px rgba(0,0,0,0.5);
                         animation: floatUp 0.85s ease-out forwards;
                     ">
@@ -275,61 +295,40 @@
                         </div>
                     </div>
 
-
-
-
-                    <!-- 1.5 ÚLTIMA HORA (AI FEED) -->
-                    <div id="ai-activity-root" style="
-                        background: rgba(30, 41, 59, 0.95);
-                        backdrop-filter: blur(20px);
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        border-radius: 28px;
-                        margin: 1px 15px 8px !important;
-                        padding: 12px !important;
-                        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-                        animation: floatUp 0.9s ease-out forwards;
-                    ">
-                        <div id="ai-activity-content" style="display:flex; flex-direction:column; gap:12px;">
-                            <!-- Predictive Content will be loaded here -->
-                        </div>
+                    <!-- 6. CYBER PULSE: CENTRO DE OPERACIONES -->
+                    <div id="network-pulse-root" style="margin: 10px 15px 50px !important;">
+                        <!-- Content loaded via JS -->
                     </div>
-                    
-                    <div id="hero-section-root" style="margin: 0 15px; min-height: 180px;">
-                        <div class="loader-mini" style="margin: 40px auto; opacity: 0.5;"></div>
-                    </div>
-
-                    <!-- TICKER STATS REMOVED PER USER REQUEST -->
-                    <!-- <div id="ticker-stats-root"></div> -->
-
-                    <div id="pro-content-root"></div>
 
                 </div>
 
-                <style>
-                    @keyframes slowTicker {
-                        0% { transform: translateX(0); }
-                        100% { transform: translateX(-50%); }
-                    }
-                    .ticker-container {
-                        width: 100%;
-                        overflow: hidden;
-                        position: relative;
-                        mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-                        -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-                    }
-                    .ticker-content {
-                        display: flex;
-                        gap: 12px;
-                        animation: slowTicker 60s linear infinite;
-                        width: max-content;
-                        padding: 10px 0;
-                    }
-                    .ticker-content:hover {
-                        animation-play-state: paused;
-                    }
-                    .dashboard-v2-container ::-webkit-scrollbar { display: none; }
-                </style>
-            `;
+
+
+        <style>
+            @keyframes slowTicker {
+                0% { transform: translateX(0); }
+                100% { transform: translateX(-50%); }
+            }
+            .ticker-container {
+                width: 100%;
+                overflow: hidden;
+                position: relative;
+                mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+                -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            }
+            .ticker-content {
+                display: flex;
+                gap: 12px;
+                animation: slowTicker 60s linear infinite;
+                width: max-content;
+                padding: 10px 0;
+            }
+            .ticker-content:hover {
+                animation-play-state: paused;
+            }
+            .dashboard-v2-container ::-webkit-scrollbar { display: none; }
+        </style>
+    `;
 
             // 3. ASYNC LOADING OF DATA-DEPENDENT COMPONENTS
             try {
@@ -345,26 +344,20 @@
                     heroRoot.innerHTML = this.renderSmartHero(context, userLevel);
                 }
 
-                // 1. DASHBOARD COMPONENT VISIBILITY
-                const legacyHero = document.getElementById('hero-section-root');
-                const legacyTicker = document.getElementById('ticker-stats-root');
+                // Load Partner Synergy Widget
+                if (user && window.PartnerSynergyWidget) {
+                    const synergyWidget = document.getElementById('partner-synergy-root');
+                    if (synergyWidget) synergyWidget.style.display = 'block';
+                    window.PartnerSynergyWidget.render(user.uid || user.id, 'partner-synergy-root', {
+                        title: '🔗 PAREJAS RECOMENDADAS',
+                        subtitle: 'Jugadores con los que tienes mayor química',
+                        limit: 3,
+                        showDetails: false,
+                        compact: true
+                    }).catch(e => console.error('Synergy widget failed:', e));
+                }
 
-                // Hide legacy hero/ticker (user requested removal)
-                if (legacyHero) legacyHero.style.display = 'none';
-                if (legacyTicker) legacyTicker.style.display = 'none'; // OCULTAR ÚLTIMOS RESULTADOS
-
-                // Ensure Top Widgets are visible (Inscripciones & Ultima Hora)
-                const regWidget = document.getElementById('registration-widget-root');
-                const aiActivity = document.getElementById('ai-activity-root');
-                if (regWidget) regWidget.style.display = 'block';
-                if (aiActivity) aiActivity.style.display = 'block';
-
-                if (aiActivity) aiActivity.style.display = 'block';
-
-                // 2. Fetch Real Data for new Widgets (SILENT CALCULATION)
-                if (window.RankingController) window.RankingController.calculateSilently().catch(e => console.error("Ranking calc failed", e));
-
-                // 2.1 Fetch Real Weather
+                // 2. Fetch Real Data for Weather Cards
                 let weatherData = [];
                 try {
                     if (window.WeatherService) {
@@ -372,17 +365,14 @@
                     }
                 } catch (e) { console.error("Weather fetch failed", e); }
 
-                // 2.2 Populate Weather Widget
+                // 2.2 Populate Weather Widget (Cards + Radar)
                 const weatherRoot = document.getElementById('weather-widget-root');
                 if (weatherRoot) {
-                    let weatherHtml = `
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            ${this.renderWeatherCard('EL PRAT', '--', '...', { wind: '--', hum: '--', rain: '--' })}
-                            ${this.renderWeatherCard('CORNELLÀ', '--', '...', { wind: '--', hum: '--', rain: '--' })}
-                        </div>`;
+                    let weatherHtml = '';
 
+                    // Render Cards first
                     if (weatherData && weatherData.length > 0) {
-                        weatherHtml = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">`;
+                        weatherHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">`;
                         weatherData.forEach(w => {
                             weatherHtml += this.renderWeatherCard(
                                 w.name,
@@ -401,95 +391,101 @@
                             );
                         });
                         weatherHtml += `</div>`;
+                    } else {
+                        weatherHtml += `
+                            <div style="
+                                text-align: center;
+                                padding: 50px 20px;
+                                background: #111;
+                                border-radius: 24px;
+                                border: 1px solid rgba(204,255,0,0.1);
+                                position: relative;
+                                overflow: hidden;
+                                box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+                            ">
+                                <!-- Tech Radar Animation -->
+                                <div style="
+                                    position: absolute; top: 0; left: 0; width: 200%; height: 2px;
+                                    background: linear-gradient(90deg, transparent, #CCFF00, transparent);
+                                    animation: scannerMove 4s linear infinite;
+                                    opacity: 0.3;
+                                "></div>
+                                
+                                <i class="fas fa-radar-scan fa-spin" style="
+                                    font-size: 3.5rem;
+                                    color: #CCFF00;
+                                    margin-bottom: 20px;
+                                    opacity: 0.2;
+                                    display: block;
+                                "></i>
+                                
+                                <div style="
+                                    color: white;
+                                    font-size: 1.1rem;
+                                    font-weight: 950;
+                                    letter-spacing: -0.5px;
+                                    text-transform: uppercase;
+                                ">RADAR DE COMPATIBILIDAD <span style="color:#CCFF00;">EN ESPERA</span></div>
+                                
+                                <div style="
+                                    color: rgba(255,255,255,0.4);
+                                    font-size: 0.8rem;
+                                    margin-top: 10px;
+                                    font-weight: 600;
+                                    max-width: 240px;
+                                    margin: 10px auto 0;
+                                ">Necesitamos más datos de nivel y victorias para calcular tu pareja perfecta.</div>
+
+                                <style>
+                                    @keyframes scannerMove {
+                                        0% { transform: translateY(-50px); opacity: 0; }
+                                        50% { opacity: 0.5; }
+                                        100% { transform: translateY(200px); opacity: 0; }
+                                    }
+                                </style>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                                ${this.renderWeatherCard('EL PRAT', '--', '...', { wind: '--', hum: '--', rain: '--' })}
+                                ${this.renderWeatherCard('CORNELLÀ', '--', '...', { wind: '--', hum: '--', rain: '--' })}
+                            </div>`;
                     }
 
-                    // Usamos RainViewer como visualizador profesional de datos (incluye fuentes de AEMET/Meteocat)
-                    // Configuración: Modo Oscuro, Sin predicción (solo real), Zoom 10, Opacidad alta, Capa suavizada
+                    // Append Radar below
                     weatherHtml += `
                         <style>
-                            @keyframes weatherFloat {
-                                0% { transform: translateY(0px) rotate(0deg); filter: drop-shadow(0 0 15px rgba(255,255,255,0.1)); }
-                                50% { transform: translateY(-8px) rotate(3deg); filter: drop-shadow(0 0 25px rgba(255,255,255,0.3)); }
-                                100% { transform: translateY(0px) rotate(0deg); filter: drop-shadow(0 0 15px rgba(255,255,255,0.1)); }
-                            }
                             @keyframes livePulse {
                                 0% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0.7); transform: scale(1); opacity: 1; }
                                 70% { box-shadow: 0 0 0 8px rgba(0, 227, 109, 0); transform: scale(1.2); opacity: 0.8; }
                                 100% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0); transform: scale(1); opacity: 1; }
                             }
                             @keyframes borderFlow {
-                                0% { border-color: rgba(255,255,255,0.1); }
-                                50% { border-color: rgba(255,255,255,0.25); }
-                                100% { border-color: rgba(255,255,255,0.1); }
-                            }
-                            @keyframes cardShine {
-                                0% { background-position: 0% 50%; }
-                                50% { background-position: 100% 50%; }
-                                100% { background-position: 0% 50%; }
+                                0% { border-color: rgba(255, 255, 255, 0.1); }
+                                50% { border-color: rgba(255, 255, 255, 0.25); }
+                                100% { border-color: rgba(255, 255, 255, 0.1); }
                             }
                         </style>
-                        <div style="margin-top: 20px; position: relative; border-radius: 32px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.6); background: #0f172a; animation: borderFlow 4s infinite;">
-                            <div style="
-                                background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
-                                padding: 16px 24px;
-                                display: flex;
-                                justify-content: space-between;
-                                align-items: center;
-                                border-bottom: 1px solid rgba(255,255,255,0.05);
-                            ">
+                        <div style="position: relative; border-radius: 32px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); background: #0f172a; animation: borderFlow 4s infinite;">
+                            <div style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
                                 <div style="display:flex; align-items:center; gap:10px;">
-                                    <div style="background: rgba(59, 130, 246, 0.2); padding: 8px; border-radius: 12px; color: #3b82f6;">
-                                        <i class="fas fa-satellite-dish" style="font-size: 1rem;"></i>
-                                    </div>
-                                    <div style="display:flex; flex-direction:column;">
-                                        <span style="font-size:0.9rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR EN VIVO</span>
-                                        <span style="font-size:0.65rem; color:#94a3b8; font-weight:700; text-transform:uppercase;">PRECIPITACIÓN EN TIEMPO REAL</span>
-                                    </div>
+                                    <span style="font-size:0.75rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR EN VIVO</span>
                                 </div>
                                 <div style="display:flex; align-items:center; gap:8px;">
-                                    <span style="width:10px; height:10px; background:#00E36D; border-radius:50%; animation: livePulse 2s infinite;"></span>
-                                    <span style="font-size:0.65rem; color: #00E36D; font-weight: 900; letter-spacing:1px; text-shadow: 0 0 10px rgba(0,227,109,0.5);">LIVE</span>
+                                    <span style="width:8px; height:8px; background:#00E36D; border-radius:50%; animation: livePulse 2s infinite;"></span>
+                                    <span style="font-size:0.6rem; color: #00E36D; font-weight: 900; letter-spacing:1px;">LIVE</span>
                                 </div>
                             </div>
-                            
-                            <div style="width: 100%; height: 380px; position: relative;">
-                                <!-- Windy.com Embed: Radar Overlay, Clean Interface, Centered on El Prat -->
-                                <iframe 
-                                    width="100%" 
-                                    height="100%" 
-                                    src="https://embed.windy.com/embed2.html?lat=41.320&lon=2.040&detailLat=41.327&detailLon=2.094&width=650&height=450&zoom=10&level=surface&overlay=radar&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1" 
-                                    frameborder="0"
-                                    style="filter: contrast(1.2) brightness(0.9);">
-                                </iframe>
-                                
-                                <!-- Capa de interacción superior para evitar capturas de scroll accidentales en móviles, pero permitiendo ver -->
-                                <div style="pointer-events:none; position:absolute; inset:0; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);"></div>
+                            <div style="width: 100%; height: 260px; position: relative;">
+                                <iframe width="100%" height="100%" src="https://embed.windy.com/embed2.html?lat=41.320&lon=2.040&zoom=10&level=surface&overlay=radar&product=radar&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1" frameborder="0" style="filter: contrast(1.1) brightness(0.9);"></iframe>
+                                <div style="pointer-events:none; position:absolute; inset:0; box-shadow: inset 0 0 30px rgba(0,0,0,0.5);"></div>
                             </div>
                         </div>
                     `;
-
                     weatherRoot.innerHTML = weatherHtml;
                     weatherRoot.style.display = 'block';
                 }
 
-                // 3. Populate Rest of Dashboard
-                const proRoot = document.getElementById('pro-content-root');
-                if (proRoot) {
-                    proRoot.innerHTML = `
-                        <div style="padding: 10px 15px 120px;">
-                            <!-- MI AGENDA (PLAYER'S EVENTS) -->
-                            <div class="section-header" style="padding: 0 5px; margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
-                                <h3 style="color:white; font-size:1.1rem; font-weight:950; letter-spacing:-0.5px; margin:0;">MI <span style="background: linear-gradient(90deg, #00E36D, #00c4ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AGENDA</span></h3>
-                                <span style="color:#00c4ff; font-size:0.8rem; font-weight:800; cursor:pointer;" onclick="Router.navigate('agenda')">Ver todo <i class="fas fa-chevron-right" style="font-size:0.6rem;"></i></span>
-                            </div>
 
-                            <!-- Horizontal Scroller for Agenda -->
-                            <div class="agenda-scroller" style="display: flex; overflow-x: auto; padding-bottom: 15px; gap: 15px; scroll-snap-type: x mandatory;">
-                                ${this.renderAgendaWidget(context.myEvents || [])}
-                            </div>
-                        </div>
-                    `;
-                }
+                // PRO CONTENT (AGENDA) REMOVED PER USER REQUEST
 
             } catch (err) {
                 console.error("Dashboard Render Error:", err);
@@ -497,6 +493,24 @@
 
             // 4. INIT HEADER TICKER SYNC
             this.initHeaderTickerSync();
+
+            // 5. FORCE LOAD NETWORK PULSE & STORIES
+            if (window.StoryFeedWidget) {
+                window.StoryFeedWidget.render('story-feed-root');
+            }
+
+            console.log("🌐 [DashboardView] Finalizing render, checking Cyber Pulse...");
+            if (window.NetworkPulseWidget && window.NetworkPulseService) {
+                const currentUser = window.Store ? window.Store.getState('currentUser') : null;
+                if (currentUser) {
+                    window.NetworkPulseService.init(currentUser.uid || currentUser.id);
+                    window.NetworkPulseWidget.render('network-pulse-root');
+                    console.log("✅ [DashboardView] Cyber Pulse Widget Triggered.");
+                } else {
+                    // Fallback para invitados o si el estado tarda en cargar
+                    window.NetworkPulseWidget.render('network-pulse-root');
+                }
+            }
         }
 
         initHeaderTickerSync() {
@@ -536,7 +550,7 @@
                             ${scrollingContent} <!-- Duplicamos para loop perfecto -->
                         </div>
                         <style>
-                            @keyframes marquee { 
+                            @keyframes marquee {
                                 0% { transform: translateX(0); } 
                                 100% { transform: translateX(-50%); } 
                             }
@@ -546,7 +560,7 @@
                     if (tickerContainer.dataset.lastNotifId === 'empty') return;
                     tickerContainer.dataset.lastNotifId = 'empty';
                     innerHTML = `
-                         <div style="display: flex; align-items: center; animation: marquee 15s linear infinite;">
+                        <div style="display: flex; align-items: center; animation: marquee 15s linear infinite;">
                             <span style="color: #84cc16; font-size: 0.8rem; margin-right: 6px;">📢</span>
                             <span style="color: #94a3b8; font-weight: 700; font-size: 0.65rem; text-transform: uppercase; margin-right: 40px;">Tu historial de avisos aparecerá aquí en tiempo real.</span>
                             <span style="color: #84cc16; font-size: 0.8rem; margin-right: 6px;">📢</span>
@@ -604,36 +618,22 @@
                             background-size: 2px 50px;
                             animation: rainFall 0.6s linear infinite;
                         "></div>
-                        <div style="
-                            position: absolute; inset: -100% 0 0 0;
-                            background-image: linear-gradient(to bottom, rgba(59,130,246,0) 0%, rgba(59,130,246,0.3) 50%, rgba(59,130,246,0) 100%);
-                            background-size: 1px 30px;
-                            animation: rainFall 0.4s linear infinite;
-                            margin-left: 20px;
-                        "></div>
                     </div>
                 `;
             } else if (isPropitious) {
                 // Sunny / Nice Vibe
                 cardBg = 'linear-gradient(135deg, #3f6212 0%, #022c22 100%)';
                 weatherOverlay = `
-                    <div style="
-                        position: absolute; top: -60px; right: -60px; width: 250px; height: 250px;
-                        background: radial-gradient(circle, rgba(253, 224, 71, 0.15) 0%, transparent 70%);
-                        filter: blur(20px);
-                        animation: sunPulse 6s ease-in-out infinite;
-                        pointer-events: none;
-                    "></div>
+                    <div style="position: absolute; top: -60px; right: -60px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(253, 224, 71, 0.15) 0%, transparent 70%); filter: blur(20px); animation: sunPulse 6s ease-in-out infinite; pointer-events: none;"></div>
                 `;
             } else {
-                // Neutral / Cold Vibe
                 cardBg = 'linear-gradient(135deg, #334155 0%, #0f172a 100%)';
             }
 
             return `
                 <style>
                     @keyframes rainFall { 0% { transform: translateY(0); } 100% { transform: translateY(100%); } }
-                    @keyframes sunPulse { 0%,100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 0.8; } }
+                    @keyframes sunPulse { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 0.8; } }
                     @keyframes textSlideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
                 </style>
                 <div style="
@@ -652,67 +652,45 @@
                     min-height: 280px;
                 ">
                     ${weatherOverlay}
-
-                    <!-- ICON + STATUS -->
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 2;">
                         <div style="font-size: 3.5rem; line-height: 1; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3)); animation: weatherFloat 5s ease-in-out infinite;">${icon}</div>
                         <div style="text-align: right;">
-                             <div style="
-                                background: rgba(0,0,0,0.3); color: ${statusColor}; 
-                                padding: 6px 14px; border-radius: 12px; 
-                                font-size: 0.65rem; font-weight: 950; 
-                                border: 1px solid ${statusColor}40; margin-bottom: 6px;
-                                box-shadow: 0 0 15px ${statusColor}20;
-                                backdrop-filter: blur(4px);
-                             ">${statusLabel}</div>
-                             <div style="font-size: 0.6rem; color: white; opacity: 0.6; font-weight: 800; letter-spacing: 1px;">SCORE ${intel.score}%</div>
+                            <div style="background: rgba(0,0,0,0.3); color: ${statusColor}; padding: 6px 14px; border-radius: 12px; font-size: 0.65rem; font-weight: 950; border: 1px solid ${statusColor}40; margin-bottom: 6px; box-shadow: 0 0 15px ${statusColor}20; backdrop-filter: blur(4px);">${statusLabel}</div>
+                            <div style="font-size: 0.6rem; color: white; opacity: 0.6; font-weight: 800; letter-spacing: 1px;">SCORE ${intel.score}%</div>
                         </div>
                     </div>
-                    
-                    <!-- MAIN TEMP -->
                     <div style="position: relative; z-index: 2; margin-top: 10px; animation: textSlideIn 0.5s ease-out;">
                         <div style="color: white; font-weight: 950; font-size: 2.8rem; line-height: 0.9; letter-spacing: -2px; text-shadow: 0 5px 10px rgba(0,0,0,0.5);">${temp}</div>
                         <div style="color: rgba(255,255,255,0.7); font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px;">${city}</div>
                     </div>
-
-                    <!-- AI PILLS -->
-                    <div style="
-                        margin-top: 15px; 
-                        background: rgba(255, 255, 255, 0.05); 
-                        border-radius: 20px; 
-                        padding: 15px; 
-                        border: 1px solid rgba(255,255,255,0.05); 
-                        display: flex; flex-direction: column; gap: 10px;
-                        position: relative; z-index: 2;
-                        backdrop-filter: blur(5px);
-                        animation: textSlideIn 0.7s ease-out;
-                    ">
+                    <div style="margin-top: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 10px; position: relative; z-index: 2; backdrop-filter: blur(5px); animation: textSlideIn 0.7s ease-out;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
                             <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-bolt" style="color:#fbbf24;"></i> VELOCIDAD BOLA</span>
                             <span style="font-size: 0.7rem; color: #fbbf24; font-weight: 950; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);">${intel.ballSpeed}</span>
                         </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-wind" style="color:#0ea5e9;"></i> VIENTO</span>
+                            <span style="font-size: 0.7rem; color: white; font-weight: 900;">${details.wind || '--'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-tint" style="color:#38bdf8;"></i> HUMEDAD</span>
+                            <span style="font-size: 0.7rem; color: white; font-weight: 900;">${details.hum || '--'}</span>
+                        </div>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-shoe-prints" style="color:#00c4ff;"></i> AGARRE PISTA</span>
-                            <span style="font-size: 0.7rem; color: #00c4ff; font-weight: 950; text-shadow: 0 0 10px rgba(0, 196, 255, 0.3);">${intel.gripStatus}</span>
+                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-hand-rock" style="color:#00E36D;"></i> AGARRE PISTA</span>
+                            <span style="font-size: 0.7rem; color: #00E36D; font-weight: 950;">${intel.gripStatus || 'ÓPTIMO'}</span>
                         </div>
                     </div>
 
-                    <!-- RECOMMENDATION & FOOTER -->
-                    <div style="margin-top: 10px; position: relative; z-index: 2; animation: textSlideIn 0.9s ease-out;">
-                        <div style="font-size: 0.7rem; color: white; opacity: 0.9; font-weight: 600; font-style: italic; line-height: 1.4; min-height: 2.8em;">
-                             " ${intel.recommendation} "
+                    <!-- TACTICAL INSIGHT -->
+                    <div style="margin-top: 12px; padding: 12px 14px; background: rgba(0,0,0,0.2); border-radius: 16px; border-left: 3px solid ${statusColor}; animation: textSlideIn 0.8s ease-out;">
+                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 5px;">
+                            <i class="fas fa-brain" style="font-size: 0.65rem; color: ${statusColor}; opacity: 0.9;"></i>
+                            <span style="font-size: 0.55rem; font-weight: 950; color: ${statusColor}; letter-spacing: 0.5px; text-transform: uppercase;">INSIGHT TÁCTICO</span>
                         </div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <i class="fas fa-wind" style="font-size: 0.8rem; color: rgba(255,255,255,0.5);"></i>
-                                <span style="font-size: 0.75rem; color: white; font-weight: 800;">${details.wind || '--'}</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
-                                <i class="fas fa-cloud-rain" style="font-size: 0.8rem; color: rgba(255,255,255,0.5);"></i>
-                                <span style="font-size: 0.75rem; color: white; font-weight: 800;">${details.rain || '0%'}</span>
-                            </div>
-                        </div>
+                        <p style="margin: 0; font-size: 0.7rem; color: rgba(255,255,255,0.7); font-weight: 600; line-height: 1.4;">
+                            ${intel.recommendation.replace('la IA', 'el sistema').replace('predictivo', 'estimado')}
+                        </p>
                     </div>
                 </div>
             `;
@@ -733,13 +711,7 @@
             }
 
             return myEvents.map(am => `
-                <div class="agenda-card" onclick="window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');" style="
-                    min-width: 280px; background: var(--bg-card);
-                    border-radius: 32px; border: 1px solid var(--border-subtle);
-                    padding: 24px; scroll-snap-align: center; position: relative;
-                    box-shadow: var(--shadow-md);
-                    transition: all 0.2s;
-                ">
+                <div class="agenda-card" onclick="window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');" style="min-width: 280px; background: var(--bg-card); border-radius: 32px; border: 1px solid var(--border-subtle); padding: 24px; scroll-snap-align: center; position: relative; box-shadow: var(--shadow-md); transition: all 0.2s;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                         <div style="color: var(--brand-neon); background: var(--brand-navy); padding: 4px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">${this.formatDateShort(am.date)}</div>
                         ${am.status === 'live' ?
@@ -792,24 +764,14 @@
             }
 
             return `
-                <div class="vibrant-hero-card" onclick="Router.navigate('live')" style="
-                    background: ${overlayColor};
-                    backdrop-filter: var(--backdrop-blur);
-                    border-radius: 32px;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    padding: 0;
-                    margin-bottom: 30px;
-                    overflow: hidden;
-                    box-shadow: var(--shadow-xl);
-                    position: relative;
-                ">
+                <div class="vibrant-hero-card" onclick="Router.navigate('live')" style="background: ${overlayColor}; backdrop-filter: var(--backdrop-blur); border-radius: 32px; border: 1px solid rgba(255, 255, 255, 0.1); padding: 0; margin-bottom: 30px; overflow: hidden; box-shadow: var(--shadow-xl); position: relative;">
                     <div style="height: 160px; background: url('${heroImage}') center/cover; position: relative;">
                         <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.6));"></div>
                         <div style="position: absolute; top: 20px; left: 20px; background: var(--brand-neon); padding: 6px 16px; border-radius: 12px; font-weight: 950; color: #000; font-size: 0.75rem; box-shadow: var(--shadow-neon); letter-spacing: 1px;">
                             ${pillText}
                         </div>
                     </div>
-                    
+
                     <div style="padding: 28px; color: white;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div>
@@ -821,11 +783,11 @@
                                 <div style="font-size: 0.75rem; font-weight: 700; opacity: 0.7; letter-spacing: 1px;">${context.matchDay || 'HOY'}</div>
                             </div>
                         </div>
-                        
+
                         <p style="margin: 20px 0 25px; font-size: 0.95rem; color: rgba(255,255,255,0.9); line-height: 1.5; font-weight: 500;">
                             ${explainerText}
                         </p>
-                        
+
                         <button class="btn-3d ${btnClass}" style="margin-top: 0; font-size: 1.1rem; height: 60px;">
                             ${btnText} <i class="fas fa-chevron-right" style="margin-left: 10px; font-size: 0.9rem;"></i>
                         </button>
@@ -845,242 +807,94 @@
 
                 let itemsHtml = [];
 
-                // A. WEATHER INTEL CARD (SMART)
+                // A. WEATHER INTEL CARD
                 if (weatherData && weatherData[0]) {
                     const w = weatherData[0];
                     itemsHtml.push(`
-                        <div class="registration-ticker-card" style="
-                            min-width: 260px; height: 160px; scroll-snap-align: center; 
-                            background: linear-gradient(120deg, #0f172a, #1e293b, #334155, #0f172a); 
-                            background-size: 400% 400%;
-                            animation: cardShine 15s ease infinite;
-                            border-radius: 24px; padding: 16px; flex-shrink: 0; 
-                            box-shadow: 0 10px 25px rgba(0,0,0,0.3); 
-                            position: relative; overflow: hidden;
-                            border: 1px solid rgba(255,255,255,0.05);
-                        ">
-                            <!-- Background Decoration -->
-                            <div style="position: absolute; right: -20px; bottom: -20px; font-size: 6rem; opacity: 0.1; filter: blur(2px); animation: weatherFloat 6s ease-in-out infinite;">
-                                ${w.icon}
-                            </div>
-                            
+                        <div class="registration-ticker-card" style="min-width: 280px; height: 160px; scroll-snap-align: center; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 18px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <div style="position: absolute; right: -20px; bottom: -20px; font-size: 7rem; opacity: 0.1; filter: blur(2px); animation: weatherFloat 6s ease-in-out infinite;">${w.icon}</div>
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 2;">
-                                <span style="font-size:0.6rem; font-weight:950; color:white; background:rgba(59, 130, 246, 0.8); padding:4px 10px; border-radius:8px; letter-spacing:0.5px; box-shadow: 0 4px 10px rgba(59,130,246,0.3);">METEO NOW</span>
-                                <span style="font-size:1.8rem; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); animation: weatherFloat 4s ease-in-out infinite;">${w.icon}</span>
+                                <span style="font-size:0.6rem; font-weight:950; color:white; background:rgba(59, 130, 246, 0.8); padding:4px 10px; border-radius:8px; letter-spacing:0.5px; box-shadow: 0 0 10px rgba(59,130,246,0.3);">METEO NOW</span>
+                                <span style="font-size:1.8rem;">${w.icon}</span>
                             </div>
-                            
-                            <div style="position: absolute; bottom: 16px; left: 16px; z-index: 2;">
-                                <div style="color:white; font-weight:950; font-size:1.6rem; line-height: 1; margin-bottom: 2px;">${w.temp}ºC</div>
-                                <div style="color:rgba(255,255,255,0.6); font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">${w.name}</div>
-                                <div style="color:#3b82f6; font-size:0.65rem; font-weight:950; letter-spacing:1px; margin-top:6px; text-transform:uppercase;">
-                                    BOLA ${w.intelligence?.ballSpeed || 'MEDIA'}
-                                </div>
+                            <div style="position: absolute; bottom: 18px; left: 18px; z-index: 2;">
+                                <div style="color:white; font-weight:950; font-size:1.8rem; line-height: 1; margin-bottom: 2px;">${w.temp}ºC</div>
+                                <div style="color:rgba(255,255,255,0.6); font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;">${w.name}</div>
+                            </div>
+                            <div style="position: absolute; bottom: 18px; right: 18px; z-index: 2; text-align: right; display:flex; flex-direction:column; gap:4px;">
+                                <div style="font-size:0.55rem; color:rgba(255,255,255,0.5); font-weight:800;"><i class="fas fa-wind" style="color:#0ea5e9;"></i> ${w.wind} km/h</div>
+                                <div style="font-size:0.55rem; color:rgba(255,255,255,0.5); font-weight:800;"><i class="fas fa-tint" style="color:#38bdf8;"></i> ${w.humidity}% HUD</div>
                             </div>
                         </div>
                     `);
-                }
-
-                // B. RANKING TOP CARD (SMART)
-                if (rankingData && rankingData.length > 0) {
-                    const top = rankingData[0];
-                    const second = rankingData[1];
-                    const pts1 = (top.stats.americanas.points || 0) + (top.stats.entrenos.points || 0);
-
-                    // Check if joint leaders (Same points, wins, and court1 count)
-                    const isJoint = second && pts1 > 0 &&
-                        pts1 === ((second.stats.americanas.points || 0) + (second.stats.entrenos.points || 0)) &&
-                        ((top.stats.americanas.won || 0) + (top.stats.entrenos.won || 0)) === ((second.stats.americanas.won || 0) + (second.stats.entrenos.won || 0)) &&
-                        ((top.stats.americanas.court1Count || 0) + (top.stats.entrenos.court1Count || 0)) === ((second.stats.americanas.court1Count || 0) + (second.stats.entrenos.court1Count || 0));
-
-                    if (isJoint) {
-                        itemsHtml.push(`
-                            <div class="registration-ticker-card" style="
-                                min-width: 300px; height: 160px; scroll-snap-align: center; 
-                                background: linear-gradient(120deg, #020617, #1e1b4b, #312e81, #000); 
-                                background-size: 300% 300%;
-                                animation: cardShine 8s ease infinite;
-                                border-top: 1px solid rgba(204,255,0,0.3); 
-                                border-radius: 24px; padding: 20px; flex-shrink: 0; 
-                                box-shadow: 0 15px 30px rgba(0,0,0,0.4); 
-                                display: flex; flex-direction: column; gap: 8px;
-                                position: relative; overflow: hidden;
-                            ">
-                                <!-- Efecto de neón interno -->
-                                <div style="position: absolute; top:0; left:0; width:100%; height:4px; background: #CCFF00; box-shadow: 0 0 15px #CCFF00;"></div>
-                                
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <span style="font-size:0.6rem; font-weight:950; color:black; background:#CCFF00; padding:3px 8px; border-radius:6px; letter-spacing:1px;">CO-LÍDERES GLOBALES</span>
-                                    <div style="display:flex; gap:-5px;">
-                                        <span style="font-size:1.1rem; z-index:2;">👑</span>
-                                        <span style="font-size:1.1rem; margin-left:-8px; opacity:0.8;">👑</span>
-                                    </div>
-                                </div>
-                                <div style="display:flex; flex-direction:column; gap:2px; margin-top:5px;">
-                                    <div style="color:white; font-weight:950; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">1. ${top.name.toUpperCase()}</div>
-                                    <div style="color:white; font-weight:950; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">2. ${second.name.toUpperCase()}</div>
-                                </div>
-                                <div style="color:#CCFF00; font-size:0.65rem; font-weight:950; letter-spacing:1px; margin-top:4px;">PUNTOS: ${pts1} • EMPATE TÉCNICO</div>
-                                <div style="color:#888; font-size:0.6rem; font-weight:800; display: flex; align-items: center; gap: 5px;"><i class="fas fa-trophy"></i> MVPS COMUNIDAD SOMOSPADEL</div>
-                            </div>
-                        `);
-                    } else {
-                        itemsHtml.push(`
-                            <div class="registration-ticker-card" style="
-                                min-width: 280px; height: 160px; scroll-snap-align: center; 
-                                background: linear-gradient(120deg, #2a1202, #451a03, #78350f, #000); 
-                                background-size: 300% 300%;
-                                animation: cardShine 10s ease infinite;
-                                border-top: 1px solid rgba(245,158,11,0.3); 
-                                border-radius: 24px; padding: 20px; flex-shrink: 0; 
-                                box-shadow: 0 15px 30px rgba(0,0,0,0.4); 
-                                display: flex; flex-direction: column; gap: 10px;
-                                position: relative; overflow: hidden;
-                            ">
-                                <!-- Efecto de neón interno -->
-                                <div style="position: absolute; top:0; left:0; width:100%; height:4px; background: #f59e0b; box-shadow: 0 0 15px #f59e0b;"></div>
-
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <span style="font-size:0.6rem; font-weight:950; color:white; background:#f59e0b; padding:3px 8px; border-radius:6px; letter-spacing:1px;">LÍDER GLOBAL</span>
-                                    <span style="font-size:1.2rem;">👑</span>
-                                </div>
-                                <div style="color:white; font-weight:950; font-size:1rem; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${top.name.toUpperCase()}</div>
-                                <div style="color:#f59e0b; font-size:0.65rem; font-weight:950; letter-spacing:1.2px;">PUNTOS: ${pts1} • LVL ${top.level.toFixed(2)}</div>
-                                <div style="color:#888; font-size:0.65rem; font-weight:800; display: flex; align-items: center; gap: 5px;"><i class="fas fa-trophy"></i> MVP COMUNIDAD SOMOSPADEL</div>
-                            </div>
-                        `);
-                    }
                 }
 
                 // C. ACTIVE EVENTS (INSCRIPCIONES)
                 const openEvents = allEvents.filter(a => ['open', 'upcoming', 'draft', 'scheduled', 'live'].includes(a.status));
                 openEvents.forEach(am => {
-                    let statusColor = '#00c4ff';
+                    // 2. Determine Category Color (Consistent with User Preference)
+                    let catColor = '#00E36D'; // Default Green
+                    const lowerName = am.name.toLowerCase();
+                    if (lowerName.includes('femenin') || lowerName.includes('female') || am.category === 'female') {
+                        catColor = '#FF2D55'; // Pink
+                    } else if (lowerName.includes('mixt') || lowerName.includes('mix') || am.category === 'mixed') {
+                        catColor = '#FFD700'; // Yellow
+                    } else if (lowerName.includes('masculin') || lowerName.includes('male') || am.category === 'male') {
+                        catColor = '#00C4FF'; // Blue
+                    }
+
                     let statusLabel = 'PRÓXIMO';
-                    let isLive = false;
+                    if (am.status === 'open') statusLabel = 'ABIERTO';
+                    else if (am.status === 'live') statusLabel = 'EN JUEGO';
 
-                    if (am.status === 'open') {
-                        statusColor = '#00E36D';
-                        statusLabel = 'ABIERTO';
-                    } else if (am.status === 'live') {
-                        statusColor = '#FF2D55';
-                        statusLabel = 'EN JUEGO';
-                        isLive = true;
-                    }
-
-                    const players = am.players || am.registeredPlayers || [];
-                    const maxPlayers = (am.max_courts || 0) * 4;
-                    const spotsLeft = Math.max(0, maxPlayers - players.length);
-                    const isFull = maxPlayers > 0 && players.length >= maxPlayers;
-                    const typeLabel = am.type === 'entreno' ? 'ENTRENO' : 'AMERICANA';
                     const categoryIcon = am.category === 'female' ? '♀️' : (am.category === 'male' ? '♂️' : '🎾');
-
-                    // DYNAMIC CARD THEMING
-                    let cardBackground = 'linear-gradient(135deg, #18181b 0%, #000 100%)'; // Default Dark
-                    let accentColor = statusColor;
-
-                    // Colores por Categoría / Tipo
-                    if (am.category === 'female') {
-                        // Fucsia / Purple Vibes
-                        cardBackground = 'linear-gradient(135deg, #be185d 0%, #831843 100%)';
-                        accentColor = '#fbcfe8';
-                    } else if (am.category === 'male') {
-                        // Blue / Cyan Vibes
-                        cardBackground = 'linear-gradient(135deg, #0369a1 0%, #0c4a6e 100%)';
-                        accentColor = '#bae6fd';
-                    } else if (am.category === 'mixed' || am.category === 'mixto') {
-                        // Lime / Green Vibes (Brand)
-                        cardBackground = 'linear-gradient(135deg, #4d7c0f 0%, #1a2e05 100%)';
-                        accentColor = '#d9f99d';
-                    } else {
-                        // Generic / Open - Orange/Slate
-                        cardBackground = 'linear-gradient(135deg, #b45309 0%, #78350f 100%)';
-                    }
-
-                    // Override for LIVE events
-                    if (isLive) {
-                        cardBackground = 'linear-gradient(135deg, #9f1239 0%, #881337 100%)'; // Red pulse
-                    }
+                    const targetRoute = am.status === 'open' ? 'entrenos' : 'live';
+                    const clickAction = targetRoute === 'entrenos'
+                        ? `Router.navigate('entrenos');`
+                        : `window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');`;
 
                     itemsHtml.push(`
-                        <div class="registration-ticker-card" 
-                             onclick="event.stopPropagation(); window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');" 
-                             style="
-                            min-width: 260px; 
-                            height: 160px;
-                            scroll-snap-align: center;
-                            background: ${cardBackground};
-                            background-size: 200% 200%;
-                            animation: cardShine 8s ease infinite;
-                            border-radius: 24px; 
-                            padding: 16px; 
-                            flex-shrink: 0; 
-                            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-                            position: relative; 
-                            overflow: hidden;
-                            cursor: pointer;
-                            border: 1px solid rgba(255,255,255,0.1);
-                            transition: transform 0.2s;
-                        ">
-                            <!-- Background Decoration (Watermark) -->
-                            <div style="
-                                position: absolute; 
-                                top: 50%; left: 50%; 
-                                transform: translate(-50%, -50%) rotate(-10deg); 
-                                font-size: 8rem; 
-                                opacity: 0.03; 
-                                pointer-events: none; 
-                                filter: blur(1px);
-                                z-index: 1;
-                            ">
-                                ${categoryIcon}
-                            </div>
+                        <div class="registration-ticker-card" onclick="event.stopPropagation(); ${clickAction}" 
+                            style="min-width: 280px; height: 160px; scroll-snap-align: center; 
+                            background: linear-gradient(135deg, ${catColor}, ${catColor}cc); 
+                            border-radius: 28px; padding: 20px; flex-shrink: 0; 
+                            box-shadow: 0 15px 35px ${catColor}40, inset 0 0 20px rgba(255,255,255,0.1); 
+                            position: relative; overflow: hidden; cursor: pointer; border: 1.5px solid rgba(255,255,255,0.2); 
+                            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
                             
-                            <!-- Header Status -->
-                            <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3;">
-                                <span style="font-size:0.6rem; font-weight:950; color:black; background:white; padding:4px 10px; border-radius:8px; letter-spacing:0.5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                                    ${statusLabel}
-                                    ${isLive ? '<i class="fas fa-circle" style="color:#FF2D55; font-size:0.4rem; margin-left:4px; animation:blink 1s infinite;"></i>' : ''}
-                                </span>
-                                <div style="display:flex; align-items:center; gap:4px; background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:12px; border: 1px solid rgba(255,255,255,0.1);">
-                                    <i class="fas fa-users" style="color:rgba(255,255,255,0.9); font-size:0.6rem;"></i>
-                                    <span style="font-size:0.7rem; font-weight:800; color:white;">${players.length}</span>
-                                    <span style="font-size:0.6rem; color:rgba(255,255,255,0.6); font-weight:600;">/${maxPlayers}</span>
+                            <!-- Animated Shine Effect -->
+                            <div style="position: absolute; inset: 0; background: linear-gradient(120deg, transparent, rgba(255,255,255,0.3), transparent); transform: translateX(-100%); animation: cardShineEffect 3s infinite; z-index: 2;"></div>
+                            
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-10deg); font-size: 10rem; opacity: 0.15; z-index: 1; filter: blur(2px);">${categoryIcon}</div>
+                            
+                            <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3; margin-bottom: 15px;">
+                                <span style="font-size:0.6rem; font-weight:1000; color:white; background:rgba(0,0,0,0.3); padding:5px 12px; border-radius:100px; text-transform:uppercase; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2);">${statusLabel}</span>
+                                <span style="font-size:0.65rem; color:rgba(255,255,255,0.8); font-weight:950; letter-spacing:1px; background:rgba(0,0,0,0.1); padding:4px 8px; border-radius:8px;">${this.formatDateShort(am.date)}</span>
+                            </div>
+
+                            <div style="position:relative; z-index:3;">
+                                <h4 style="margin:0; color:white; font-size:1.25rem; font-weight:1000; line-height:1.1; letter-spacing:-0.5px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">${am.name}</h4>
+                                <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
+                                    <div style="width: 24px; height: 24px; background:rgba(255,255,255,0.2); border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                                        <i class="far fa-clock" style="color:white; font-size:0.75rem;"></i>
+                                    </div>
+                                    <span style="font-size:0.9rem; color:white; font-weight:900;">${am.time || '--:--'}</span>
                                 </div>
                             </div>
 
-                            <!-- Main Content -->
-                            <div style="position: absolute; bottom: 16px; left: 16px; right: 16px; z-index: 2;">
-                                <div style="color:white; font-weight:950; font-size:1.1rem; line-height: 1.1; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-transform: uppercase;">
-                                    ${am.name}
-                                </div>
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <div style="display:flex; align-items:center; gap:4px;">
-                                        <i class="far fa-clock" style="color:rgba(255,255,255,0.9); font-size:0.75rem;"></i>
-                                        <span style="color:rgba(255,255,255,0.9); font-size:0.8rem; font-weight:700;">${am.time}h</span>
-                                    </div>
-                                    <div style="width:1px; height:10px; background:rgba(255,255,255,0.4);"></div>
-                                    <div style="color:${accentColor}; font-size:0.7rem; font-weight:950; text-transform:uppercase; letter-spacing:0.5px; background:rgba(0,0,0,0.3); padding: 2px 6px; border-radius:4px;">${typeLabel}</div>
-                                </div>
+                            <div style="position:absolute; bottom:15px; right:15px; z-index:3; width:36px; height:36px; background:rgba(255,255,255,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1);">
+                                <i class="fas fa-chevron-right" style="color:white; font-size:1rem;"></i>
                             </div>
-                            
-                            <!-- Progress Bar if open -->
-                            ${!isLive && !isFull ? `
-                                <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 5px; background: rgba(0,0,0,0.3);">
-                                    <div style="width: ${(players.length / maxPlayers) * 100}%; height: 100%; background: white; border-radius: 0 4px 0 0;"></div>
-                                </div>
-                            ` : ''}
                         </div>
                     `);
-
                 });
 
-                if (itemsHtml.length === 0) {
-                    return `<div style="width: 100%; text-align: center; color: #444; font-size: 0.75rem; font-weight: 700;">No hay novedades activas</div>`;
-                }
-
-                return itemsHtml.join('');
+                const scroller = document.getElementById('live-scroller-content');
+                const html = itemsHtml.join('');
+                if (scroller) scroller.innerHTML = html;
+                return html;
             } catch (err) {
-                console.error("Smart Ticker Build Error:", err);
+                console.error("renderLiveWidget Error:", err);
                 return '';
             }
         }
@@ -1177,17 +991,14 @@
 
         async loadLiveWidgetContent(context) {
             const container = document.getElementById('live-scroller-content');
-            const aiContainer = document.getElementById('ai-activity-content');
+            const smartContainer = document.getElementById('smart-activity-content');
             if (!container) return;
 
             try {
                 // 1. Load Registration Cards (Intelligent Ticker)
                 this.renderLiveWidget(context).then(widgetHtml => {
                     const scroller = document.getElementById('live-scroller-content');
-                    if (scroller) {
-                        // Intelligent Ticker: Emerges from shadows (center-biased)
-                        // scroller.classList.add('ticker-container'); // REMOVED to remove blur effect per user request
-                        // Duplicamos el contenido para el bucle infinito y que se vea "lleno" desde el inicio
+                    if (scroller && widgetHtml) {
                         scroller.innerHTML = `
                             <div class="ticker-content" style="padding-left: 20px;">
                                 ${widgetHtml} ${widgetHtml} ${widgetHtml}
@@ -1198,14 +1009,6 @@
                     console.error("Widget render failed", e);
                 });
 
-                // 2. Load AI Activity
-                if (aiContainer) {
-                    this.renderLiveActivity().then(html => {
-                        aiContainer.innerHTML = html;
-                    }).catch(e => {
-                        console.error("AI Activity failed", e);
-                    });
-                }
 
                 // 3. Load Activity Feed
                 const activityContainer = document.getElementById('activity-feed-content');
@@ -1216,6 +1019,14 @@
                         console.error("Activity Feed failed", e);
                     });
                 }
+                // 4. Load Network Pulse Widget
+                if (window.NetworkPulseWidget && window.NetworkPulseService) {
+                    const user = window.Store ? window.Store.getState('currentUser') : null;
+                    if (user) {
+                        window.NetworkPulseService.init(user.uid || user.id);
+                        window.NetworkPulseWidget.render('network-pulse-root');
+                    }
+                }
             } catch (e) {
                 console.error('❌ [DashboardView] Error loading widgets:', e);
             }
@@ -1223,7 +1034,6 @@
 
         async renderActivityFeed() {
             try {
-                // Inyectar estilos de animación si no existen
                 if (!document.getElementById('activity-feed-styles')) {
                     const style = document.createElement('style');
                     style.id = 'activity-feed-styles';
@@ -1242,49 +1052,32 @@
                             from { opacity: 0; transform: translateY(20px); }
                             to { opacity: 1; transform: translateY(0); }
                         }
-                        .activity-item-hover {
-                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        }
-                        .activity-item-hover:active {
-                            transform: scale(0.98);
-                        }
                     `;
                     document.head.appendChild(style);
                 }
 
                 const activities = [];
-
-                // 1. Obtener datos de múltiples fuentes en paralelo
                 const [registrations, urgentAlerts, rankingChanges] = await Promise.all([
-                    this.getRecentRegistrations(120), // Last 2 hours
+                    this.getRecentRegistrations(120),
                     this.getUrgentAlerts(),
                     this.getRankingChanges()
                 ]);
 
-                // 2. Convertir inscripciones a formato de actividad
                 registrations.forEach(reg => {
-                    // Configuración de colores según solicitud del usuario:
-                    // Femenino: Rosa | Mixto: Amarillo | Masculino: Verde | Todo/Otros: Azul
-
-                    let catColor = '#00C4FF'; // Default / Todo: Azul
-                    let catColorSec = '#7dd3fc';
-
+                    let catColor = '#00E36D'; // Default Green (Entrenos/Other)
+                    let catColorSec = '#86efac';
                     const lowerName = reg.eventName.toLowerCase();
 
                     if (lowerName.includes('femenin') || lowerName.includes('chicas') || lowerName.includes('female')) {
-                        // Femenino: Rosa (#FF2D55)
-                        catColor = '#FF2D55';
+                        catColor = '#FF2D55'; // Pink
                         catColorSec = '#ff5c8d';
                     } else if (lowerName.includes('mixt') || lowerName.includes('mix')) {
-                        // Mixto: Amarillo (#FFD700)
-                        catColor = '#FFD700';
+                        catColor = '#FFD700'; // Yellow
                         catColorSec = '#fde047';
                     } else if (lowerName.includes('masculin') || lowerName.includes('chicos') || lowerName.includes('male')) {
-                        // Masculino: Verde (#00E36D)
-                        catColor = '#00E36D';
-                        catColorSec = '#86efac';
+                        catColor = '#00C4FF'; // Blue
+                        catColorSec = '#7dd3fc';
                     }
-                    // El resto (Entrenos sin genero específico, Open, etc) se queda en AZUL por defecto.
 
                     activities.push({
                         type: 'registration',
@@ -1298,7 +1091,6 @@
                     });
                 });
 
-                // 3. Convertir alertas de urgencia
                 urgentAlerts.forEach(alert => {
                     activities.push({
                         type: 'urgent',
@@ -1306,14 +1098,13 @@
                         title: alert.title,
                         time: 'ahora',
                         color: '#ef4444',
-                        secondaryColor: '#f87171', // Red-400
+                        secondaryColor: '#f87171',
                         timestamp: alert.timestamp,
                         priority: 'critical',
                         score: 0
                     });
                 });
 
-                // 4. Convertir cambios de ranking
                 rankingChanges.forEach(change => {
                     activities.push({
                         type: 'ranking',
@@ -1321,24 +1112,19 @@
                         title: `${change.playerName} ${change.position === 1 ? 'lidera el ranking' : `está en TOP ${change.position}`}`,
                         time: this.formatRelativeTime(change.timestamp),
                         color: '#f59e0b',
-                        secondaryColor: '#fbbf24', // Amber-400
+                        secondaryColor: '#fbbf24',
                         timestamp: change.timestamp,
                         score: 0
                     });
                 });
 
-                // 5. Calcular scores para cada actividad
                 activities.forEach(a => {
                     a.score = this.calculateActivityScore(a);
                     if (!a.secondaryColor) a.secondaryColor = a.color;
                 });
 
-                // 6. Ordenar por score y limitar a top 5
-                const top5 = activities
-                    .sort((a, b) => b.score - a.score)
-                    .slice(0, 5);
+                const top5 = activities.sort((a, b) => b.score - a.score).slice(0, 5);
 
-                // 7. Renderizar
                 if (top5.length === 0) {
                     return `
                         <div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.4);">
@@ -1349,73 +1135,13 @@
                 }
 
                 return top5.map((activity, index) => `
-                    <div class="activity-item-hover" style="
-                        position: relative;
-                        display: flex;
-                        align-items: center;
-                        gap: 14px;
-                        padding: 12px 14px;
-                        /* Fondo tintado con el color de la categoría en lugar de negro puro */
-                        background: linear-gradient(135deg, ${activity.color}25 0%, rgba(20,20,30,0.8) 100%);
-                        border-radius: 16px;
-                        margin-bottom: 10px;
-                        /* Borde sutil del mismo color para integración */
-                        border: 1px solid ${activity.color}30;
-                        overflow: hidden;
-                        animation: slideInUp 0.6s ease-out backwards;
-                        animation-delay: ${index * 0.15}s;
-                        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-                    ">
-                        <!-- Living Color Bar -->
-                        <div style="
-                            position: absolute;
-                            left: 0;
-                            top: 0;
-                            bottom: 0;
-                            width: 6px;
-                            background: linear-gradient(180deg, ${activity.color}, ${activity.secondaryColor}, ${activity.color});
-                            background-size: 100% 200%;
-                            animation: gradientFlow 3s infinite linear;
-                            box-shadow: 0 0 15px ${activity.color}60;
-                        "></div>
-
-                        <!-- Icon Container with Glow -->
-                        <div style="
-                            font-size: 1.4rem;
-                            position: relative;
-                            z-index: 2;
-                            text-shadow: 0 0 20px ${activity.color}80;
-                            animation: pulseGlow 3s infinite ease-in-out;
-                            padding-left: 8px;
-                        ">${activity.icon}</div>
-
+                    <div class="activity-item-hover" style="position: relative; display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: linear-gradient(135deg, ${activity.color}25 0%, rgba(20, 20, 30, 0.8) 100%); border-radius: 16px; margin-bottom: 10px; border: 1px solid ${activity.color}30; overflow: hidden; animation: slideInUp 0.6s ease-out backwards; animation-delay: ${index * 0.15}s; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);">
+                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: linear-gradient(180deg, ${activity.color}, ${activity.secondaryColor}, ${activity.color}); background-size: 100% 200%; animation: gradientFlow 3s infinite linear; box-shadow: 0 0 15px ${activity.color}60;"></div>
+                        <div style="font-size: 1.4rem; position: relative; z-index: 2; text-shadow: 0 0 20px ${activity.color}80; animation: pulseGlow 3s infinite ease-in-out; padding-left: 8px;">${activity.icon}</div>
                         <div style="flex: 1; z-index: 2;">
-                            <div style="
-                                font-size: 0.85rem; 
-                                font-weight: 700; 
-                                color: rgba(255,255,255,0.9); 
-                                line-height: 1.3;
-                            ">
-                                ${activity.title}
-                            </div>
-                            <div style="
-                                font-size: 0.65rem; 
-                                color: rgba(255,255,255,0.5); 
-                                margin-top: 4px; 
-                                font-weight: 600;
-                                display: flex;
-                                align-items: center;
-                                gap: 6px;
-                            ">
-                                <span style="
-                                    display: inline-block;
-                                    width: 6px;
-                                    height: 6px;
-                                    border-radius: 50%;
-                                    background: ${activity.color};
-                                    box-shadow: 0 0 8px ${activity.color};
-                                    animation: pulseGlow 1.5s infinite;
-                                "></span>
+                            <div style="font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.9); line-height: 1.3;">${activity.title}</div>
+                            <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5); margin-top: 4px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${activity.color}; box-shadow: 0 0 8px ${activity.color}; animation: pulseGlow 1.5s infinite;"></span>
                                 ${activity.time}
                             </div>
                         </div>
@@ -1436,10 +1162,9 @@
                 events.forEach(event => {
                     const players = event.players || event.registeredPlayers || [];
                     if (players.length > 0) {
-                        // Simular timestamp reciente para últimos jugadores
                         const recentPlayers = players.slice(-Math.min(3, players.length));
                         recentPlayers.forEach((playerId, index) => {
-                            const timestamp = Date.now() - (index * 15 * 60 * 1000); // Cada 15 min
+                            const timestamp = Date.now() - (index * 15 * 60 * 1000);
                             if (timestamp > cutoff) {
                                 registrations.push({
                                     type: 'registration',
@@ -1467,7 +1192,6 @@
 
                 events.forEach(event => {
                     if (!['open', 'upcoming', 'scheduled'].includes(event.status)) return;
-
                     const players = (event.players || event.registeredPlayers || []).length;
                     const maxPlayers = (event.max_courts || 0) * 4;
                     const spotsLeft = maxPlayers - players;
@@ -1494,11 +1218,9 @@
         async getRankingChanges() {
             try {
                 if (!window.RankingController) return [];
-
                 const players = await window.RankingController.calculateSilently();
                 const changes = [];
 
-                // Top 3 jugadores con puntos
                 players.slice(0, 3).forEach((player, index) => {
                     const points = player.stats?.americanas?.points || 0;
                     if (points > 0) {
@@ -1507,11 +1229,10 @@
                             playerName: player.name,
                             position: index + 1,
                             points: points,
-                            timestamp: Date.now() - Math.random() * 7200000 // Últimas 2 horas
+                            timestamp: Date.now() - Math.random() * 7200000
                         });
                     }
                 });
-
                 return changes;
             } catch (e) {
                 console.error('Error getting ranking changes:', e);
@@ -1521,54 +1242,38 @@
 
         calculateActivityScore(activity) {
             let score = 0;
-
-            // 1. Urgencia temporal (0-100 puntos)
             const minutesAgo = (Date.now() - activity.timestamp) / 60000;
             score += Math.max(0, 100 - minutesAgo);
 
-            // 2. Prioridad por tipo (0-100 puntos)
             const priorityScores = {
-                'urgent': 100,      // Alertas de urgencia
-                'registration': 70, // Inscripciones
-                'ranking': 50,      // Cambios ranking
-                'match': 30,        // Partidos finalizados
-                'event': 20         // Nuevos eventos
+                'urgent': 100,
+                'registration': 70,
+                'ranking': 50,
+                'match': 30,
+                'event': 20
             };
             score += priorityScores[activity.type] || 0;
-
-            // 3. Bonus por criticidad
             if (activity.priority === 'critical') score += 50;
-
             return score;
         }
 
         formatRelativeTime(timestamp) {
             const seconds = Math.floor((Date.now() - timestamp) / 1000);
-
             if (seconds < 60) return 'ahora';
             if (seconds < 3600) return `hace ${Math.floor(seconds / 60)} min`;
-            if (seconds < 86400) return `hace ${Math.floor(seconds / 3600)}h`;
-            return `hace ${Math.floor(seconds / 86400)}d`;
+            if (seconds < 86400) return `hace ${Math.floor(seconds / 3600)} h`;
+            return `hace ${Math.floor(seconds / 86400)} d`;
         }
 
         getPlayerName(playerId) {
-            // Intentar obtener nombre del jugador
-            if (typeof playerId === 'string') {
-                // Es solo un ID, devolver "Alguien"
-                return 'Alguien';
-            } else if (playerId && playerId.name) {
-                // Es un objeto con nombre
-                return playerId.name.split(' ')[0];
-            }
+            if (typeof playerId === 'string') return 'Alguien';
+            if (playerId && playerId.name) return playerId.name.split(' ')[0];
             return 'Alguien';
         }
 
         async renderLiveActivity() {
             try {
                 const events = window.AmericanaService ? await window.AmericanaService.getAllActiveEvents() : [];
-                let recentActions = [];
-
-                // Find the most urgent event (fewest spots left)
                 const urgentAm = events.find(am => {
                     const pCount = (am.players || am.registeredPlayers || []).length;
                     const maxP = (am.max_courts || 0) * 4;
@@ -1587,49 +1292,16 @@
                     const btnText = isFull ? 'VER LISTA DE ESPERA' : 'APUNTARME AHORA';
                     const btnBg = isFull ? '#94a3b8' : '#00E36D';
                     const statusDesc = isFull ? '¡Pista completa! Avisaremos bajas.' : `¡Solo <b>${spots} plazas</b>! Se llenará pronto.`;
-
-                    // FIXED: Route explicitly to entrenos using global Router
                     const navigateAction = "window.Router.navigate('entrenos'); setTimeout(() => { if(window.EventsController) window.EventsController.filterByType('entreno'); }, 200);";
 
-                    let html = '';
-
-                    // Styles for seamless marquee
-                    html += `
+                    let html = `
                         <style>
-                            @keyframes marquee-scroll {
-                                0% { transform: translateX(0); }
-                                100% { transform: translateX(-50%); } 
-                            }
-                            .ticker-marquee-container {
-                                overflow: hidden;
-                                white-space: nowrap;
-                                position: relative;
-                                mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-                                -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-                            }
-                            .ticker-marquee-content {
-                                display: inline-block;
-                                animation: marquee-scroll 20s linear infinite;
-                                white-space: nowrap;
-                            }
-                            .ticker-tag {
-                                display: inline-flex;
-                                align-items: center;
-                                gap: 6px;
-                                background: rgba(255,255,255,0.08);
-                                padding: 6px 14px;
-                                border-radius: 100px;
-                                font-size: 0.75rem;
-                                color: white;
-                                font-weight: 700;
-                                border: 1px solid rgba(255,255,255,0.1);
-                                margin-right: 12px;
-                            }
+                            @keyframes marquee-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+                            .ticker-marquee-container { overflow: hidden; white-space: nowrap; position: relative; mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); }
+                            .ticker-marquee-content { display: inline-block; animation: marquee-scroll 25s linear infinite; white-space: nowrap; }
+                            .ticker-tag { display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.08); padding: 6px 14px; border-radius: 100px; font-size: 0.75rem; color: white; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.1); margin-right: 12px; }
                         </style>
-                    `;
-
-                    html += `
-                        <div class="ai-hero-card" onclick="${navigateAction}" style="background: ${cardBg}; border-radius: 16px; padding: 20px; color: white; position: relative; overflow: hidden; margin-bottom: 5px; cursor: pointer;">
+                        <div class="smart-hero-card" onclick="${navigateAction}" style="background: ${cardBg}; border-radius: 16px; padding: 20px; color: white; position: relative; overflow: hidden; margin-bottom: 5px; cursor: pointer;">
                             <div style="position: absolute; top: -20px; right: -20px; font-size: 5rem; color: rgba(255,255,255,0.1); transform: rotate(-15deg);"><i class="fas fa-star"></i></div>
                             <div style="background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 4px 12px; border-radius: 100px; font-size: 0.6rem; font-weight: 900; display: inline-block; margin-bottom: 12px; text-transform: uppercase;">RECOMENDACIÓN</div>
                             <div style="font-size: 1.4rem; font-weight: 900; margin-bottom: 5px;">${urgentAm.name}</div>
@@ -1640,114 +1312,45 @@
                         </div>
                     `;
 
-                    // Generate Hype Content
-                    const hypeMessages = [
-                        `🔥 <b>${pCount + 3} personas</b> viéndolo`,
-                        `⚡ <b>Alta Demanda</b>: Se llenará hoy`,
-                        `🏆 <b>Nivel Garantizado</b>`
-                    ];
-
+                    const hypeMessages = [`🔥 <b>${pCount + 3} personas</b> viéndolo`, `⚡ <b>Alta Demanda</b>: Se llenará hoy`, `🏆 <b>Nivel Garantizado</b>`];
                     if (players.length > 0) {
-                        // Pick a random player to show "X just joined"
                         const randomPlayer = players[Math.floor(Math.random() * players.length)];
                         const pName = (randomPlayer.name || 'Jugador').split(' ')[0];
                         hypeMessages.unshift(`🚀 <b>${pName}</b> acaba de unirse`);
                     }
 
-                    // Duplicate messages for smooth infinite scroll
-                    const tickerContent = [...hypeMessages, ...hypeMessages, ...hypeMessages].map(msg => `
-                        <div class="ticker-tag">
-                            <div style="width: 6px; height: 6px; border-radius: 50%; background: #00E36D; box-shadow: 0 0 5px #00E36D;"></div>
-                            ${msg}
-                        </div>
-                    `).join('');
-
-                    html += `
-                        <div class="ticker-marquee-container" style="padding: 5px 0;">
-                            <div class="ticker-marquee-content">
-                                ${tickerContent}
-                            </div>
-                        </div>
-                    `;
+                    const tickerItems = [...hypeMessages, ...hypeMessages].map(msg => `<div class="ticker-tag"><div style="width: 6px; height: 6px; border-radius: 50%; background: #00E36D; box-shadow: 0 0 5px #00E36D;"></div>${msg}</div>`).join('');
+                    html += `<div class="ticker-marquee-container" style="padding: 5px 0;"><div class="ticker-marquee-content">${tickerItems}</div></div>`;
                     return html;
                 }
-
                 return '';
             } catch (e) { return ''; }
         }
+
         async showChatInfo() {
             const modalId = 'chat-info-modal';
             let modal = document.getElementById(modalId);
             if (!modal) {
                 modal = document.createElement('div');
                 modal.id = modalId;
-                modal.style.cssText = `
-                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                    background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
-                    display: flex; align-items: center; justify-content: center;
-                    z-index: 9999999; opacity: 0; transition: opacity 0.3s ease;
-                `;
-                modal.onclick = () => {
-                    modal.style.opacity = '0';
-                    setTimeout(() => modal.remove(), 300);
-                };
+                modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 9999999; opacity: 0; transition: opacity 0.3s ease;`;
+                modal.onclick = () => { modal.style.opacity = '0'; setTimeout(() => modal.remove(), 300); };
                 document.body.appendChild(modal);
             }
 
             modal.innerHTML = `
-                <div style="
-                    background: white; border-radius: 32px; padding: 40px 30px;
-                    width: 90%; max-width: 450px; position: relative;
-                    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-                    text-align: center; border: 2px solid #CCFF00;
-                    animation: modalIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                " onclick="event.stopPropagation()">
-                    
-                    <h3 style="margin: 0 0 25px 0; color: #1e293b; font-weight: 950; font-size: 1.4rem; letter-spacing: -0.5px;">SOMOSPADEL.EU EXPERIENCE</h3>
-                    
-                    <!-- TV SECTION -->
-                    <div style="margin-bottom: 30px; text-align: left; background: #f8fafc; padding: 20px; border-radius: 20px; border: 1px solid #e2e8f0;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-                            <div style="width: 40px; height: 40px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; color: #CCFF00; font-size: 1.2rem;">
-                                <i class="fas fa-tv"></i>
-                            </div>
-                            <span style="font-weight: 900; color: #1e293b; font-size: 1rem;">LIVE TV</span>
-                        </div>
-                        <p style="color: #64748b; font-size: 0.85rem; line-height: 1.5; margin: 0; font-weight: 500;">
-                            Podrás seguir todos los resultados y la clasificación en vivo desde el <b>PC de Entrenos y Americanas</b> de SomosPadel BCN.
-                        </p>
+                <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 32px; padding: 30px 20px; width: 90%; max-width: 500px; position: relative; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7); text-align: left; border: 2px solid #CCFF00; animation: modalIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); max-height: 85vh; overflow-y: auto;" onclick="event.stopPropagation()">
+                    <div style="text-align: center; margin-bottom: 25px; position: sticky; top: 0; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding-bottom: 15px; z-index: 10;">
+                        <h3 style="margin: 0 0 8px 0; color: #CCFF00; font-weight: 950; font-size: 1.6rem; letter-spacing: -0.5px;">GUÍA SMART JUGADOR</h3>
+                        <p style="color: rgba(255,255,255,0.6); font-size: 0.75rem; margin: 0; font-weight: 700; letter-spacing: 1px;">APP SOMOSPADEL BCN</p>
                     </div>
-
-                    <!-- CHAT SECTION -->
-                    <div style="margin-bottom: 30px; text-align: left; background: #f8fafc; padding: 20px; border-radius: 20px; border: 1px solid #e2e8f0;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-                            <div style="width: 40px; height: 40px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; color: #0ea5e9; font-size: 1.2rem;">
-                                <i class="fas fa-comment-dots"></i>
-                            </div>
-                            <span style="font-weight: 900; color: #1e293b; font-size: 1rem;">CHAT DEL EVENTO</span>
-                        </div>
-                        <p style="color: #64748b; font-size: 0.85rem; line-height: 1.5; margin: 0; font-weight: 500;">
-                            Dentro de cada evento en vivo encontrarás un botón de <b>CHAT</b>. Úsalo para hablar con los rivales o pulsa <b>SOS</b> si te falta pareja a última hora.
-                        </p>
+                    <div style="margin-bottom: 20px; background: rgba(255,255,255,0.05); padding: 18px; border-radius: 16px; border: 1px solid rgba(204,255,0,0.2);">
+                        <p style="color: rgba(255,255,255,0.8); font-size: 0.85rem; line-height: 1.6;">Bienvenido a la nueva experiencia competitiva.</p>
                     </div>
-
-                    <div style="background: #1e293b; color: #CCFF00; padding: 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 800; margin-bottom: 25px;">
-                        <i class="fas fa-info-circle"></i> Encontrarás ambos iconos en los entrenos en juego y finalizados.
-                    </div>
-
-                    <button style="
-                        width: 100%; background: #CCFF00; color: #000;
-                        border: none; padding: 18px; border-radius: 16px;
-                        font-weight: 950; font-size: 1rem; cursor: pointer;
-                        box-shadow: 0 10px 20px rgba(204,255,0,0.2);
-                        transition: all 0.2s;
-                    " onclick="this.closest('#chat-info-modal').click()">ENTENDIDO</button>
+                    <button style="width: 100%; background: linear-gradient(135deg, #CCFF00, #a3cc00); color: #000; border: none; padding: 18px; border-radius: 16px; font-weight: 950; font-size: 1rem; cursor: pointer;" onclick="this.closest('#chat-info-modal').click()">ENTENDIDO</button>
                 </div>
-                <style>
-                    @keyframes modalIn { from { opacity: 0; transform: scale(0.8) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-                </style>
+                <style> @keyframes modalIn { from { opacity: 0; transform: scale(0.8) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } } </style>
             `;
-
             setTimeout(() => modal.style.opacity = '1', 10);
         }
     }

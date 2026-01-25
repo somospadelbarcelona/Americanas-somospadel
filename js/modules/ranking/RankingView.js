@@ -1,6 +1,6 @@
 /**
  * RankingView.js
- * Premium Matte Dark AI-Enhanced Ranking View for SomosPadel
+ * Premium Matte Dark SMART Ranking View for SomosPadel
  */
 (function () {
     class RankingView {

@@ -475,19 +475,10 @@
                     style="margin: 15px 10px 5px 10px; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.3); font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
                     Herramientas</div>
 
-                <button class="nav-item-pro" data-view="fix_players" onclick="loadAdminView('fix_players')">
-                    <span class="icon-box"><i class="fas fa-wrench"></i></span>
-                    <span class="nav-text">Reparar IDs Jugadores</span>
-                </button>
-
-                <button class="nav-item-pro" data-view="menu_mgmt" onclick="loadAdminView('menu_mgmt')">
-                    <span class="icon-box"><i class="fas fa-bars-staggered"></i></span>
-                    <span class="nav-text">MENU 3 PESTAÑAS</span>
-                </button>
-
-                <button class="nav-item-pro" data-view="config" onclick="loadAdminView('config')">
-                    <span class="icon-box"><i class="fas fa-sliders"></i></span>
-                    <span class="nav-text">Ajustes Engine</span>
+                <button class="nav-item-pro" data-view="network_pulse" onclick="loadAdminView('network_pulse')"
+                    style="border:1px solid rgba(0, 227, 109, 0.3); background:rgba(0, 227, 109, 0.05);">
+                    <span class="icon-box"><i class="fas fa-tower-broadcast" style="color:#00E36D;"></i></span>
+                    <span class="nav-text" style="color:#00E36D; font-weight:800;">OP CENTER 🔬</span>
                 </button>
 
                 <button class="nav-item-pro nav-item-logout" style="margin-top: auto;" onclick="AdminAuth.logout()">
@@ -796,11 +787,6 @@
                 <!-- Add Player Control -->
                 <div style="display: flex; gap: 10px; margin-bottom: 1rem; align-items: flex-start;">
                     <div id="autocomplete-container-entreno" style="flex: 1;"></div>
-                    <!-- Button logic will be handled by Autocomplete selection directly or we can keep button for manual trigger if needed, but Autocomplete usually adds on click. 
-                         Let's keep the button hidden or specialized? 
-                         User wants "rapido". Autocomplete click -> Add is fastest. 
-                         We can remove the button or keep it as specific "Add by ID"? 
-                         Let's rely on Autocomplete callback. -->
                 </div>
 
                 <!-- Participants List -->
@@ -811,6 +797,9 @@
                         Cargando
                         participantes...</div>
                 </div>
+
+                <!-- FIXED PAIRS MANAGEMENT AREA (Injected via AdminPairsUI) -->
+                <div id="entreno-fixed-pairs-area" style="margin-top: 20px;"></div>
             </div>
 
             <!-- WAITLIST MANAGEMENT SECTION -->
@@ -986,6 +975,9 @@
                         Cargando
                         participantes...</div>
                 </div>
+
+                <!-- FIXED PAIRS MANAGEMENT AREA (Injected via AdminPairsUI) -->
+                <div id="americana-fixed-pairs-area" style="margin-top: 20px;"></div>
             </div>
 
 
@@ -1120,6 +1112,7 @@
             <!-- Simulator (View) -->
             <script src="js/admin-simulator.js?v=5000"></script>
             <script src="js/modules/admin-simulator-view.js?v=5000"></script>
+            <script src="js/modules/logic/TwisterSimulation.js?v=1"></script>
             <script src="js/modules/admin-pairs-ui.js?v=2000"></script>
             <script src="js/modules/admin-results.js?v=4009"></script>
             <script src="js/modules/admin-users.js?v=1100"></script>
@@ -1146,11 +1139,12 @@
                 }, 2000);
             </script>
 
-            <!-- Admin UI Logic -->
-            <script src="js/admin.js?v=1100"></script>
+            <!-- Admin Modules & Services -->
+            <script src="js/modules/core/NetworkPulseService.js"></script>
+            <script src="js/modules/admin/NetworkPulseView.js"></script>
 
-            <!-- CRITICAL: Admin Logic Script -->
-            <!-- CRITICAL: Admin Logic Script (Loaded above) -->
+            <!-- Admin UI Logic (MAIN) -->
+            <script src="js/admin.js?v=1120"></script>
 
             <!-- DIAGNOSTIC CONSOLE -->
             <div id="debug-console"
@@ -1805,7 +1799,6 @@
             <script>console.log("✅ LevelReliabilityService script loaded. Service exists:", !!window.LevelReliabilityService);</script>
             <script src="js/modules/logic/SmartAlertsService.js"></script>
             <script src="js/modules/admin/AutopilotView.js"></script>
-            <script src="js/admin.js"></script>
 </body>
 
 </html>

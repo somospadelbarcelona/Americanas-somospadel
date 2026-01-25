@@ -646,6 +646,26 @@ window.openEditEntrenoModal = async (entreno) => {
             preview.style.display = 'block';
         }
 
+        // --- DYNAMIC VISIBILITY OF FIXED PAIRS ---
+        const pairModeSelect = form.querySelector('[name=pair_mode]');
+        const pairsArea = document.getElementById('entreno-fixed-pairs-area');
+
+        const togglePairsArea = () => {
+            if (pairsArea) {
+                if (pairModeSelect.value === 'fixed') {
+                    pairsArea.style.display = 'block';
+                    // Reload UI if empty logic needed, but usually LoadEntrenoParticipantsUI handles init.
+                } else {
+                    pairsArea.style.display = 'none';
+                }
+            }
+        };
+
+        if (pairModeSelect) {
+            pairModeSelect.onchange = togglePairsArea; // Bind change listener
+            togglePairsArea(); // Init state
+        }
+
     } catch (e) { console.error("Error mapping fields", e); }
 
 

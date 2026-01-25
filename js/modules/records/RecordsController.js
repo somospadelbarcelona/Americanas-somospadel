@@ -1,208 +1,210 @@
 /**
  * RecordsController.js
- * "Hall of Fame" Logic 🏆
- * Calculates historical records from all matches database.
+ * "Hall of Fame" Logic 🏆 - BIG DATA & SMART EDITION
  */
 (function () {
     class RecordsController {
         constructor() {
-            this.db = window.FirebaseDB;
-            this.state = {
-                records: {}
-            };
+            this.state = { records: null };
+            this.isCalculating = false;
         }
 
         async init() {
-            console.log("🏆 RecordsController Initializing...");
+            if (this.isCalculating) return;
             await this.calculateRecords();
         }
 
         async calculateRecords() {
+            if (this.isCalculating) return;
+
             try {
-                // Fetch ALL data needed (Heavy operation, maybe cache later)
-                const [allMatches, allPlayers] = await Promise.all([
-                    this.db.matches.getAll(),
-                    this.db.players.getAll()
-                ]);
-
-                // Also fetch entrenos matches if separate
-                const entrenosMatches = this.db.entrenos_matches ? await this.db.entrenos_matches.getAll() : [];
-                const totalMatches = [...allMatches, ...entrenosMatches];
-
-                console.log(`📊 Records: Analizando ${totalMatches.length} partidos y ${allPlayers.length} jugadores.`);
-
-                // 1. LONGEST WIN STREAK (La Racha Imparable)
-                const streaks = {}; // { userId: { current: 0, max: 0 } }
-
-                // Sort by date asc
-                totalMatches.sort((a, b) => {
-                    const da = a.date ? new Date(a.date.toDate ? a.date.toDate() : a.date) : new Date(0);
-                    const db = b.date ? new Date(b.date.toDate ? b.date.toDate() : b.date) : new Date(0);
-                    return da - db;
-                });
-
-                totalMatches.forEach(m => {
-                    if (!m.status === 'finished' && !m.finished) return;
-
-                    const sA = parseInt(m.score_a || 0);
-                    const sB = parseInt(m.score_b || 0);
-                    if (sA === sB) return; // Draws typically break streaks or are ignored? Let's say break.
-
-                    const winners = sA > sB ? (m.team_a_ids || []) : (m.team_b_ids || []);
-                    const losers = sA > sB ? (m.team_b_ids || []) : (m.team_a_ids || []);
-
-                    // Update winners
-                    winners.forEach(id => {
-                        if (!streaks[id]) streaks[id] = { current: 0, max: 0 };
-                        streaks[id].current++;
-                        if (streaks[id].current > streaks[id].max) streaks[id].max = streaks[id].current;
-                    });
-
-                    // Reset losers
-                    losers.forEach(id => {
-                        if (!streaks[id]) streaks[id] = { current: 0, max: 0 };
-                        streaks[id].current = 0;
-                    });
-                });
-
-                let maxStreak = { id: null, count: 0 };
-                for (const [uid, data] of Object.entries(streaks)) {
-                    if (data.max > maxStreak.count) maxStreak = { id: uid, count: data.max };
+                const db = window.FirebaseDB || window.db;
+                if (!db || !db.matches) {
+                    console.warn("⏳ Records: waiting for DB...");
+                    setTimeout(() => this.calculateRecords(), 500);
+                    return;
                 }
 
+                this.isCalculating = true;
 
-                // 2. MOST APPARITIONS (El Omnipresente - Maratoniano)
-                let mostMatches = { id: null, count: 0 };
-                allPlayers.forEach(p => {
-                    const m = parseInt(p.matches_played || 0);
-                    if (m > mostMatches.count) mostMatches = { id: p.id, count: m };
-                });
+                // 1. DATA GATHERING
+                const [matchesSnap, playersSnap, entMatchesSnap] = await Promise.all([
+                    db.matches.getAll(),
+                    db.players.getAll(),
+                    db.entrenos_matches ? db.entrenos_matches.getAll() : Promise.resolve([])
+                ]);
 
+                const playerMap = new Map(playersSnap.map(p => [String(p.id), p]));
+                const getName = (id) => playerMap.get(String(id))?.name || 'Anónimo';
+                const getLevel = (id) => parseFloat(playerMap.get(String(id))?.level || 0);
 
-                // 3. HIGHEST WIN RATE (El Francotirador - Min 10 matches)
-                let bestWR = { id: null, wr: 0, matches: 0 };
-                allPlayers.forEach(p => {
-                    const m = parseInt(p.matches_played || 0);
-                    const w = parseInt(p.wins || 0);
-                    if (m >= 10) {
-                        const wr = (w / m) * 100;
-                        if (wr > bestWR.wr) bestWR = { id: p.id, wr: wr, matches: m };
-                    }
-                });
+                let totalMatches = [...matchesSnap, ...entMatchesSnap].map(m => ({
+                    ...m,
+                    dateObj: this.parseDate(m.date || m.createdAt)
+                })).sort((a, b) => a.dateObj - b.dateObj);
 
-                // 4. BIGGEST WIN (La Apisonadora)
-                let biggestDiff = { id: null, diff: 0, score: '', date: '' };
+                totalMatches = totalMatches.filter(m =>
+                    (m.status === 'finished' || m.finished) &&
+                    (parseInt(m.score_a || 0) + parseInt(m.score_b || 0) > 0)
+                );
+
+                // --- 📊 CALCULATE METRICS ---
+                const stats = {};
+                const currentStreaks = {};
+                const recordStreaks = [];
+                const giantSlayers = [];
+                const catalysts = {}; // Tracks unique partners for wins
+                const ironManTracker = {}; // Tracks active weeks
+
                 totalMatches.forEach(m => {
-                    const sA = parseInt(m.score_a || 0);
-                    const sB = parseInt(m.score_b || 0);
-                    const diff = Math.abs(sA - sB);
-                    if (diff > biggestDiff.diff) {
-                        biggestDiff = {
-                            diff: diff,
-                            score: `${sA}-${sB}`,
-                            date: m.date,
-                            eventName: m.event_name || 'Partido'
-                        };
+                    const sA = parseInt(m.score_a);
+                    const sB = parseInt(m.score_b);
+                    const isDraw = sA === sB;
+                    const winningTeam = sA > sB ? 'a' : (sB > sA ? 'b' : 'draw');
+
+                    const teamA = (m.team_a_ids || []).filter(id => playerMap.has(String(id)));
+                    const teamB = (m.team_b_ids || []).filter(id => playerMap.has(String(id)));
+                    const allIds = [...teamA, ...teamB];
+
+                    // Level Avg for Giant Slayer
+                    const avgLvlA = teamA.reduce((sum, id) => sum + getLevel(id), 0) / (teamA.length || 1);
+                    const avgLvlB = teamB.reduce((sum, id) => sum + getLevel(id), 0) / (teamB.length || 1);
+
+                    if (!isDraw) {
+                        const winners = sA > sB ? teamA : teamB;
+                        const losers = sA > sB ? teamB : teamA;
+                        const winnerAvg = sA > sB ? avgLvlA : avgLvlB;
+                        const loserAvg = sA > sB ? avgLvlB : avgLvlA;
+
+                        winners.forEach(uid => {
+                            const id = String(uid);
+                            // STREAK
+                            if (!currentStreaks[id]) currentStreaks[id] = { count: 0, start: m.date };
+                            currentStreaks[id].count++;
+                            currentStreaks[id].end = m.date;
+
+                            // GIANT SLAYER
+                            const diff = loserAvg - getLevel(id);
+                            if (diff > 0) {
+                                giantSlayers.push({ id, diff, match: m.id, date: m.date });
+                            }
+
+                            // SOCIAL CATALYST (The versatile partner)
+                            if (!catalysts[id]) catalysts[id] = new Set();
+                            const partnerId = winners.find(pid => pid !== uid);
+                            if (partnerId) catalysts[id].add(String(partnerId));
+                        });
+
+                        losers.forEach(uid => {
+                            const id = String(uid);
+                            if (currentStreaks[id] && currentStreaks[id].count > 0) {
+                                recordStreaks.push({ id, ...currentStreaks[id] });
+                            }
+                            currentStreaks[id] = { count: 0, start: null };
+                        });
+                    }
+
+                    // Stats & Iron Man
+                    allIds.forEach(uid => {
+                        const id = String(uid);
+                        if (!stats[id]) stats[id] = { matches: 0, wins: 0, gamesConceded: 0, gamesWon: 0, court1Wins: 0 };
+                        stats[id].matches++;
+                        const isTeamA = teamA.includes(uid);
+                        stats[id].gamesConceded += isTeamA ? sB : sA;
+                        stats[id].gamesWon += isTeamA ? sA : sB;
+
+                        if (!isDraw && winningTeam === (isTeamA ? 'a' : 'b')) {
+                            stats[id].wins++;
+                            if (parseInt(m.court) === 1) stats[id].court1Wins++;
+                        }
+
+                        // Iron Man (Week tracker)
+                        if (!ironManTracker[id]) ironManTracker[id] = new Set();
+                        const d = new Date(m.dateObj);
+                        const weekKey = `${d.getFullYear()}-W${Math.ceil(d.getDate() / 7)}`;
+                        ironManTracker[id].add(weekKey);
+                    });
+                });
+
+                // Finalize active streaks
+                Object.entries(currentStreaks).forEach(([id, s]) => { if (s.count > 0) recordStreaks.push({ id, ...s }); });
+
+                // --- 🏺 GATHER CANDIDATES ---
+                const candidates = { streak: [], sniper: [], giant: [], catalyst: [], ironman: [], walls: [] };
+
+                playersSnap.forEach(p => {
+                    const id = String(p.id);
+                    const s = stats[id];
+                    if (!s) return;
+
+                    // 1. Sniper (Efficiency)
+                    if (s.matches >= 5) {
+                        candidates.sniper.push({ id, val: (s.wins / s.matches) * 100, display: `${((s.wins / s.matches) * 100).toFixed(1)}% Win Rate` });
+                    }
+
+                    // 2. Iron Man (Weeks active)
+                    const weeks = (ironManTracker[id] || []).size || 0;
+                    candidates.ironman.push({ id, val: weeks, display: `${weeks} semanas activo` });
+
+                    // 3. Social Catalyst (Partner diversity)
+                    const partners = (catalysts[id] || []).size || 0;
+                    candidates.catalyst.push({ id, val: partners, display: `${partners} socios distintos` });
+
+                    // 4. Defense Wall
+                    if (s.matches >= 5) {
+                        candidates.walls.push({ id, val: s.gamesConceded / s.matches, display: `${(s.gamesConceded / s.matches).toFixed(2)} juegos encajados/p` });
                     }
                 });
 
+                // Giant Slayer (Max diff)
+                const slayerBest = {};
+                giantSlayers.forEach(g => { if (!slayerBest[g.id] || g.diff > slayerBest[g.id].diff) slayerBest[g.id] = g; });
+                Object.values(slayerBest).forEach(g => candidates.giant.push({ id: g.id, val: g.diff, display: `+${g.diff.toFixed(2)} nivel diff` }));
 
-                // 5. THE FANATIC (El que más entra/participa)
-                // Note: Real App Opens tracking might need a new DB field 'app_opens'. 
-                // For now, we use 'matches_played' + a randomness factor or just matches as a proxy for engagement
-                // pending real tracking implementation.
-                let mostActive = { id: null, count: 0 };
-                allPlayers.forEach(p => {
-                    // Placeholder logic: most active is often the one with most matches or manual field
-                    const visits = parseInt(p.app_opens || p.matches_played || 0);
-                    if (visits > mostActive.count) mostActive = { id: p.id, count: visits };
-                });
+                // Best Streak
+                const bestStreakPerUser = {};
+                recordStreaks.forEach(r => { if (!bestStreakPerUser[r.id] || r.count > bestStreakPerUser[r.id].count) bestStreakPerUser[r.id] = r; });
+                Object.values(bestStreakPerUser).forEach(r => { if (r.count >= 2) candidates.streak.push({ id: r.id, val: r.count, display: `${r.count} victorias` }); });
 
-                // Map IDs to Names Robustly
-                const getName = (id) => {
-                    if (!id) return 'Anónimo';
-                    const p = allPlayers.find(u => u.id === id || u.uid === id || (u.name && u.name.toLowerCase() === String(id).toLowerCase()));
-                    return p ? p.name : 'Jugador'; // Keep Jugador if truly unknown, but search strictly
+                // --- HELPERS ---
+                const getPodium = (list, sortFn) => {
+                    const sorted = [...list].sort(sortFn);
+                    return { winner: sorted[0], top3: sorted.slice(0, 3).map(c => ({ name: getName(c.id), value: c.display, raw: c.val })) };
                 };
 
-                // Helper to generate Deep Analysis Text
-                const getDeepAnalysis = (type, rec) => {
-                    const name = rec.name === 'Jugador' || rec.name === 'Anónimo' ? 'este jugador' : rec.name;
-                    if (!rec.id && type !== 'power' || rec.name === 'Anónimo') return "Aún no hay suficientes datos para generar un análisis detallado. El puesto está vacante.";
+                const pStreak = getPodium(candidates.streak, (a, b) => b.val - a.val);
+                const pSniper = getPodium(candidates.sniper, (a, b) => b.val - a.val);
+                const pGiant = getPodium(candidates.giant, (a, b) => b.val - a.val);
+                const pCatalyst = getPodium(candidates.catalyst, (a, b) => b.val - a.val);
+                const pIron = getPodium(candidates.ironman, (a, b) => b.val - a.val);
+                const pWall = getPodium(candidates.walls, (a, b) => a.val - b.val);
 
-                    if (type === 'streak') return `El rendimiento de ${name} ha sido excepcional, logrando encadenar ${rec.count} victorias consecutivas sin ceder ni un solo empate. Esta consistencia bajo presión demuestra una fortaleza mental superior a la media del club.`;
-
-                    if (type === 'matches') return `${name} es el pilar de la comunidad. Con ${rec.count} apariciones oficiales, su compromiso y fidelidad son el motor de Somospadel BCN. Su experiencia en pista es un grado que pocos pueden igualar.`;
-
-                    if (type === 'sniper') return `Eficacia pura. ${name} no juega por jugar, juega para ganar. Mantener un Win Rate del ${rec.wr.toFixed(1)}% tras ${rec.matches} partidos indica una selección de tiro y posicionamiento táctico de nivel élite.`;
-
-                    if (type === 'power') return `Una demostración de fuerza absoluta. El marcador ${rec.score} quedará para la historia como el momento en que la balanza se rompió por completo. Un dominio total del juego aéreo y la red.`;
-
-                    if (type === 'fanatic') return `La pasión de ${name} por el pádel va más allá de la pista. Su interacción constante con la plataforma digital demuestra un interés genuino por mejorar y estar al día de toda la competición.`;
-
-                    return "Análisis generado por IA basado en rendimiento estadístico.";
+                const build = (p, title, icon, desc, color, analysis, vac) => {
+                    if (!p.winner) return { name: "VACANTE", id: null, title, icon, desc, deepAnalysis: vac, value: "-", color: "#444", top3: [] };
+                    return { id: p.winner.id, name: getName(p.winner.id), title, icon, desc, value: p.winner.value || p.winner.display.split(' ')[0], count: p.winner.display, color, top3: p.top3, deepAnalysis: analysis(p.winner, p.top3) };
                 };
 
-                // Final Object with DESCRIPTIONS AND DEEP ANALYSIS
+                // --- FINAL ASSEMBLY ---
                 this.state.records = {
-                    streak: {
-                        ...maxStreak,
-                        name: getName(maxStreak.id),
-                        title: "La Muralla",
-                        icon: "🧱",
-                        desc: "Se consigue ganando partidos oficiales de forma ininterrumpida.",
-                        deepAnalysis: getDeepAnalysis('streak', { ...maxStreak, name: getName(maxStreak.id) }),
-                        color: "#FFD700"
-                    },
-                    matches: {
-                        ...mostMatches,
-                        name: getName(mostMatches.id),
-                        title: "Maratoniano",
-                        icon: "🏃",
-                        desc: "Jugador con mayor número de partidos oficiales disputados.",
-                        deepAnalysis: getDeepAnalysis('matches', { ...mostMatches, name: getName(mostMatches.id) }),
-                        color: "#3b82f6"
-                    },
-                    sniper: {
-                        ...bestWR,
-                        name: getName(bestWR.id),
-                        title: "El Francotirador",
-                        icon: "🎯",
-                        desc: "Porcentaje de victorias más letal (min. 10 partidos).",
-                        deepAnalysis: getDeepAnalysis('sniper', { ...bestWR, name: getName(bestWR.id) }),
-                        color: "#ef4444"
-                    },
-                    power: {
-                        ...biggestDiff,
-                        title: "Apisonadora",
-                        icon: "🚜",
-                        desc: "Mayor diferencia de juegos en un solo partido.",
-                        deepAnalysis: getDeepAnalysis('power', biggestDiff),
-                        color: "#8b5cf6"
-                    },
-                    fanatic: {
-                        ...mostActive,
-                        name: getName(mostActive.id),
-                        title: "El Fanático",
-                        icon: "📱",
-                        desc: "Usuario más fiel y activo en la comunidad digital.",
-                        deepAnalysis: getDeepAnalysis('fanatic', { ...mostActive, name: getName(mostActive.id) }),
-                        color: "#10b981"
-                    }
+                    streak: build(pStreak, "La Muralla", "🧱", "Racha invicta en la temporada.", "#FFD700", (w) => `Imparable con una racha de <b>${w.val} victorias</b> consecutivas.`, "Nadie ha superado las 2 victorias seguidas aún."),
+                    giant: build(pGiant, "Mata-Gigantes", "🔴", "Venció al rival con más nivel de diferencia.", "#ef4444", (w) => `Victoria heroica superando una desventaja de <b>+${w.val.toFixed(2)} de nivel</b>.`, "Aún no hay gestas de este calibre."),
+                    catalyst: build(pCatalyst, "Socio de Oro", "🤝", "Gana con la mayor variedad de parejas.", "#3b82f6", (w) => `Es el camaleón del club: ha ganado con <b>${w.val} compañeros</b> distintos.`, "Falta diversidad de parejas."),
+                    sniper: build(pSniper, "Francotirador", "🎯", "Win Rate de máxima efectividad.", "#10b981", (w) => `Su ratio de acierto es quirúrgico: <b>${w.display}</b>.`, "Mínimo 5 partidos para entrar."),
+                    ironman: build(pIron, "El Infatigable", "⛓️", "Presencia constante en el club.", "#8b5cf6", (w) => `Es el pulmón de Somospadel: <b>${w.val} semanas</b> sin faltar a una cita.`, "La temporada acaba de empezar."),
+                    wall: build(pWall, "El Intocable", "🛡️", "Menos juegos encajados por partido.", "#6366f1", (w) => `Una muralla defensiva: solo concede <b>${w.val.toFixed(2)} juegos</b> por partido.`, "Datos en proceso.")
                 };
 
-                console.log("🏆 Records Calculated:", this.state.records);
+                console.log("🏆 Premium Records Cooked!");
                 if (window.RecordsView) window.RecordsView.render();
-
             } catch (e) {
-                console.error("Error calculating records", e);
+                console.error("Error cooking premium records", e);
+            } finally {
+                this.isCalculating = false;
             }
         }
 
-        getRecords() {
-            return this.state.records;
-        }
+        parseDate(d) { if (!d) return new Date(0); if (d.toDate) return d.toDate(); return new Date(d); }
+        getRecords() { return this.state.records; }
     }
-
     window.RecordsController = new RecordsController();
 })();

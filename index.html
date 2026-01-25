@@ -3,8 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <script src="js/security-core.js"></script>
-    <script src="js/core/SecurityArmor.js"></script>
+    <script src="js/security-core.js?v=2"></script>
+    <script src="js/core/SecurityArmor.js?v=2"></script>
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>App Somospadel BCN</title>
@@ -39,7 +39,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@700;800;900&family=Caveat:wght@700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
@@ -300,7 +300,8 @@
                 if (authModal) authModal.classList.remove('hidden');
                 if (appShell) appShell.classList.add('hidden');
                 console.log('🔐 Showing login modal - No user detected');
-            });
+            }
+        });
     </script>
 
     <div id="auth-modal" class="modal-overlay auth-overlay-enterprise hidden">
@@ -527,6 +528,10 @@
     <script src="js/rotating-pozo-logic.js"></script>
     <script src="js/modules/logic/LevelAdjustmentService.js"></script>
     <script src="js/modules/auth/AuthController.js"></script>
+    <script src="js/modules/common/PartnerSynergyService.js"></script>
+    <script src="js/modules/common/PartnerSynergyWidget.js"></script>
+    <script src="js/modules/core/NetworkPulseService.js"></script>
+    <script src="js/modules/dashboard/NetworkPulseWidget.js"></script>
 
     <!-- Layer 4: Views & controllers -->
     <!-- Dashboard Components (NEW) -->
@@ -534,6 +539,7 @@
     <script src="js/modules/dashboard/HeroCard.js"></script>
     <script src="js/modules/dashboard/QuickStats.js"></script>
     <script src="js/modules/dashboard/ActionGrid.js"></script>
+    <script src="js/modules/dashboard/StoryFeedWidget.js?v=5"></script>
     <script src="js/modules/dashboard/DashboardView.js?v=1009"></script>
     <script src="js/modules/dashboard/DashboardController.js"></script>
     <script src="js/modules/players/PlayerView.js?v=400"></script>
@@ -562,8 +568,8 @@
     <script src="js/modules/ranking/RankingController.js"></script>
 
     <!-- Hall of Fame (Records) Module -->
-    <script src="js/modules/records/RecordsView.js"></script>
-    <script src="js/modules/records/RecordsController.js"></script>
+    <script src="js/modules/records/RecordsView.js?v=2"></script>
+    <script src="js/modules/records/RecordsController.js?v=2"></script>
 
     <!-- Stats Module -->
     <script src="js/modules/stats/StatsView.js"></script>
