@@ -45,6 +45,10 @@
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     --shadow-neon: 0 0 20px rgba(204, 255, 0, 0.4);
     --backdrop-blur: blur(12px);
+
+    /* --- iOS SAFE AREAS --- */
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* RESET & BASE */
@@ -54,7 +58,8 @@ body {
     font-family: var(--font-body);
     margin: 0;
     -webkit-font-smoothing: antialiased;
-    padding-bottom: 100px;
+    padding-bottom: calc(100px + var(--safe-area-bottom));
+    /* Fixed for iOS Home Bar */
     /* Space for bottom nav */
 }
 
@@ -139,6 +144,19 @@ body {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
+    padding-top: var(--safe-area-top);
+    /* Added for iPhone Notch */
+}
+
+/* --- OPTIMIZED CONTENT AREA (iOS READY) --- */
+.main-content-optimized {
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* Dynamic viewport height for mobile browsers */
+    padding-top: calc(148px + var(--safe-area-top)) !important;
+    background-color: var(--bg-app);
+    overflow-x: hidden;
+    padding-bottom: var(--safe-area-bottom);
 }
 
 .dashboard-fixed-header .ticker-container {
@@ -147,6 +165,8 @@ body {
     z-index: 1005;
     background: linear-gradient(90deg, rgba(204, 255, 0, 0.6) 0%, rgba(0, 227, 109, 0.6) 50%, rgba(0, 196, 255, 0.6) 100%);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    /* iOS Safari Support */
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     height: 42px;
     display: flex;
@@ -1158,7 +1178,7 @@ body {
 .news-card h3 {
     margin: 10px 0;
     font-size: 1.2rem;
-    leading-trim: both;
+    /* leading-trim: both; - Removed: not standard */
 }
 
 .news-card p {
@@ -2253,17 +2273,18 @@ body {
     font-size: 2rem;
 }
 
-border-radius: 14px;
-/* Squircle */
-background: linear-gradient(135deg, var(--brand-navy), #334155);
-color: white;
-display: flex;
-align-items: center;
-justify-content: center;
-font-weight: 700;
-font-size: 1rem;
-box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
-border: 2px solid white;
+.cmd-avatar {
+    border-radius: 14px;
+    /* Squircle */
+    background: linear-gradient(135deg, var(--brand-navy), #334155);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+    border: 2px solid white;
 }
 
 .cmd-level-badge {
@@ -3045,7 +3066,7 @@ border: 2px solid white;
     filter: none !important;
     /* Reset any filters */
     /* Only apply shadow if transparent PNG */
-    drop-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 /* Adjust Command Brand Layout to accommodate AI on left */

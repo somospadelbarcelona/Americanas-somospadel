@@ -32,24 +32,33 @@ try {
     });
 } catch (e) { console.error("[SW] Firebase init error", e); }
 
-const CACHE_NAME = 'somospadel-pro-v25';
+const CACHE_NAME = 'somospadel-pro-v26';
 const STATIC_RESOURCES = [
     './',
     './index.html',
     './manifest.json',
-    './css/theme-playtomic.css?v=701',
-    './js/app.js?v=2026',
+    './css/theme-playtomic.css?v=702',
+    './js/app.js?v=2027', // Bumped version
     './img/logo_somospadel.png',
     'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&display=swap',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'
 ];
+
+// Message Handler for Manual Updates
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        console.log('[SW] Skipping waiting...');
+        self.skipWaiting();
+    }
+});
 
 // Install: Cache Shell
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_RESOURCES))
     );
-    self.skipWaiting();
+    // Remove automatic skipWaiting() to allow "New Version" prompt logic
+    // self.skipWaiting(); 
 });
 
 // Activate: Cleanup

@@ -13,7 +13,7 @@ window.AdminViews.entrenos_mgmt = async function () {
 
     if (titleEl) titleEl.textContent = 'Centro de Planificación de Entrenos';
     content.innerHTML = '<div class="loading-container"><div class="loader"></div><p>Cargando datos de entrenos...</p></div>';
-    console.log("🚀 AdminEntrenos Module v3.1 Fixed Loaded");
+    // console.log("🚀 AdminEntrenos Module v3.1 Fixed Loaded");
 
     try {
         const entrenos = await EventService.getAll(AppConstants.EVENT_TYPES.ENTRENO);
@@ -759,4 +759,4 @@ window.launchBatSignalEntreno = async (eventId) => {
     }
 };
 
-console.log("✅ Admin Entrenos Module v3.2 - Fully Loaded & Optimized");
+// console.log("✅ Admin Entrenos Module v3.2 - Fully Loaded & Optimized");
