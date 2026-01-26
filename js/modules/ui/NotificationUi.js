@@ -100,7 +100,8 @@ class NotificationUi {
 
         // Check Permissions status for banner (only if not dismissed this session or permanently)
         const isDismissed = localStorage.getItem('pushPromptDismissed');
-        if (Notification.permission === 'default' && window.messaging && !isDismissed) {
+        const notificationSupported = 'Notification' in window;
+        if (notificationSupported && Notification.permission === 'default' && window.messaging && !isDismissed) {
             document.getElementById('push-permission-box').style.display = 'block';
         }
 

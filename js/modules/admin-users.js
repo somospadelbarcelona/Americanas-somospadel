@@ -25,6 +25,7 @@ window.AdminViews.users = async function () {
         console.log("👥 Usuarios cargados en Admin:", users.length);
         window.allUsersCache = users;
         window.filteredUsers = [...users];
+        window._allPlayersCache = users; // Unified cache for WhatsApp sharing
     } catch (err) {
         console.error("❌ Error fetching players:", err);
         content.innerHTML = `

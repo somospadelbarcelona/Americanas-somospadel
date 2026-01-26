@@ -558,16 +558,22 @@ window.closeEntrenoModal = () => {
 
 // WhatsApp Share - Using Unified Service
 window.launchWhatsAppShareEntreno = (id) => {
+    console.log("🔗 launchWhatsAppShareEntreno called for:", id);
     EventService.getById('entreno', id).then(evt => {
         if (!evt) return;
-        if (window.WhatsAppService) {
-            window.WhatsAppService.shareStartFromAdmin(evt);
-        } else {
-            // Fallback legacy logic if Service not available
-            const text = `🎾 *NUEVO ENTRENO DISPONIBLE* 🎾\n\n📌 *${evt.name}*\n📅 ${formatDate(evt.date)} a las ${evt.time}\n📍 ${evt.location}\n\n👇 *APÚNTATE AQUÍ:* \nhttps://app-somospadel-bcn.web.app`;
-            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-            window.open(url, '_blank');
-        }
+
+        // Ensure WhatsAppService is ready (Small safety delay for Mobile)
+        const triggerShare = () => {
+            if (window.WhatsAppService) {
+                console.log("🚀 Triggering Unified WhatsApp Service...");
+                window.WhatsAppService.shareStartFromAdmin(evt);
+            } else {
+                console.warn("⚠️ WhatsAppService not found, retrying...");
+                setTimeout(triggerShare, 500);
+            }
+        };
+
+        triggerShare();
     });
 };
 

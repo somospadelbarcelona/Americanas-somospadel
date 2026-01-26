@@ -109,14 +109,15 @@ window.WhatsAppService = {
             else if (['female', 'chica', 'mujer', 'femenino'].includes(g)) gIcon = E.FEMALE + " ";
 
             const lvl = p.level || p.playtomic_level || '';
-            const lvlStr = lvl ? " (" + E.BOLT + "N" + lvl + ")" : "";
+            const lvlStr = lvl ? " (" + E.BOLT + "*N" + lvl + "*)" : "";
 
-            // --- EQUIPO LOGIC (Added) ---
-            let teamStr = "";
-            const teams = p.teams || p.EQUIPOS || p.equipos || p.Equipos;
+            // --- EQUIPO LOGIC ---
+            let teamStr = " _[EXTERNO]_";
+            const teams = p.teams || p.team_somospadel || p.EQUIPOS || p.equipos || p.Equipos;
             if (teams) {
-                const tName = Array.isArray(teams) ? teams[0] : String(teams).split(',')[0].trim();
-                if (tName) teamStr = ` [${tName.toUpperCase()}]`;
+                const tArray = Array.isArray(teams) ? teams : String(teams).split(',').map(t => t.trim());
+                const tName = tArray.find(t => t && t.length > 0);
+                if (tName) teamStr = " _[" + tName.toUpperCase() + "]_";
             }
 
             msg += (index + 1) + ". " + gIcon + pName + lvlStr + teamStr + "\n";
@@ -145,9 +146,18 @@ window.WhatsAppService = {
         try {
             console.log("📤 WhatsApp Share Start (V7.0)");
             let richPlayers = null;
+
+            // Optimization: Fetch players only if needed and try to be fast
             if (event.players && event.players.length > 0) {
                 try {
-                    const allUsers = await window.FirebaseDB.players.getAll();
+                    // Try to get cached players from Admin context if available to save time
+                    let allUsers = window._allPlayersCache;
+                    if (!allUsers) {
+                        console.log("⏱️ Fetching players for share...");
+                        allUsers = await window.FirebaseDB.players.getAll();
+                        window._allPlayersCache = allUsers; // Cache it
+                    }
+
                     richPlayers = event.players.map(p => {
                         const pid = (typeof p === 'string') ? p : (p.id || p.uid);
                         const user = allUsers.find(u => (u.id === pid) || (u.uid === pid));
@@ -156,10 +166,10 @@ window.WhatsAppService = {
                             name: (user ? user.name : (p.name || 'Jugador')),
                             level: user ? (user.level || user.self_rate_level || p.level) : p.level,
                             gender: user ? user.gender : (p.gender || null),
-                            teams: user ? (user.EQUIPOS || user.equipos || user.Equipos) : (p.teams || p.EQUIPOS || null)
+                            teams: user ? (user.team_somospadel || user.EQUIPOS || user.equipos || user.Equipos) : (p.teams || p.team_somospadel || p.EQUIPOS || null)
                         };
                     });
-                } catch (err) { console.warn(err); }
+                } catch (err) { console.warn("Player enrichment failed, using basic data", err); }
             }
 
             const text = this.generateMessage(event, richPlayers);
