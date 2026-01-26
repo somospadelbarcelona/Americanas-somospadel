@@ -110,6 +110,28 @@ window.AdminAuth = {
         const avEl = document.getElementById('admin-avatar');
         if (nameEl) nameEl.textContent = this.user.name;
         if (avEl) avEl.textContent = this.user.name.charAt(0);
+
+        // Add Force Refresh button to top bar if not exists
+        const topActions = document.querySelector('.top-actions');
+        if (topActions && !document.getElementById('force-refresh-btn')) {
+            const btn = document.createElement('button');
+            btn.id = 'force-refresh-btn';
+            btn.className = 'btn-micro';
+            btn.style.cssText = 'background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #888; padding: 5px 10px; border-radius: 6px; font-size: 0.65rem;';
+            btn.innerHTML = '<i class="fas fa-sync-alt"></i> FORCE REFRESH';
+            btn.onclick = () => {
+                if (confirm("¿Forzar recarga completa? Se limpiará la caché.")) {
+                    window.location.reload(true);
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.getRegistrations().then(regs => {
+                            for (let reg of regs) reg.unregister();
+                            window.location.href = window.location.href + '?v=' + Date.now();
+                        });
+                    }
+                }
+            };
+            topActions.prepend(btn);
+        }
     }
 };
 

@@ -1,8 +1,9 @@
 /**
  * admin-entrenos.js
  * View Controller for Entrenos Management.
- * Refactored to fix rendering and logic issues.
+ * Version: 5001 - Optimized for Mobile Actions
  */
+console.log("🚀 AdminEntrenos Loaded (v5001)");
 
 window.AdminViews = window.AdminViews || {};
 
@@ -280,42 +281,42 @@ function renderEntrenoCard(e) {
                 </div>
 
                 <!-- Action Group -->
-                <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                <div style="display: flex; gap: 8px; flex-shrink: 0; justify-content: flex-end; flex: 1;">
                     ${(e.status === 'open' || e.status === 'live') ? `
                     <button class="btn-micro" 
-                            style="background:rgba(255, 215, 0, 0.15); color:#FFD700; border:1px solid rgba(255, 215, 0, 0.3); padding: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;" 
+                            style="background: #FFD700 !important; color: #000 !important; border: none; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
                             onclick="window.launchBatSignalEntreno('${e.id}')"
                             title="Batseñal">
-                        <i class="fas fa-bullhorn" style="font-size: 0.9rem;"></i>
+                        <i class="fas fa-bullhorn" style="font-size: 1rem; color: #000 !important;"></i>
                     </button>
                     ` : ''}
 
                     <button class="btn-micro" 
-                            style="background:rgba(37, 211, 102, 0.15); color:#25D366; border:1px solid rgba(37, 211, 102, 0.3); padding: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;" 
+                            style="background: #25D366 !important; color: #fff !important; border: none; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
                             onclick="window.launchWhatsAppShareEntreno('${e.id}')"
                             title="WhatsApp">
-                        <i class="fab fa-whatsapp" style="font-size: 1rem;"></i>
+                        <i class="fab fa-whatsapp" style="font-size: 1.1rem; color: #fff !important;"></i>
                     </button>
                     
                     <button class="btn-micro" 
-                            style="background:rgba(100, 116, 139, 0.1); color:#94A3B8; border:1px solid rgba(100, 116, 139, 0.2); padding: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;" 
+                            style="background: #475569 !important; color: #fff !important; border: none; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
                             onclick='window.duplicateEntreno(${JSON.stringify(e).replace(/'/g, "&#39;")})' 
                             title="Duplicar">
-                        <i class="fas fa-clone" style="font-size: 0.85rem;"></i>
+                        <i class="fas fa-clone" style="font-size: 0.9rem; color: #fff !important;"></i>
                     </button>
                     
                     <button class="btn-micro" 
-                            style="background:rgba(59, 130, 246, 0.1); color:#60A5FA; border:1px solid rgba(59, 130, 246, 0.2); padding: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;" 
+                            style="background: #3B82F6 !important; color: #fff !important; border: none; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
                             onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' 
                             title="Editar">
-                        <i class="fas fa-pen" style="font-size: 0.85rem;"></i>
+                        <i class="fas fa-pen" style="font-size: 0.9rem; color: #fff !important;"></i>
                     </button>
                     
                     <button class="btn-micro" 
-                            style="background:rgba(239, 68, 68, 0.15); color:#EF4444; border:1px solid rgba(239, 68, 68, 0.3); padding: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;" 
+                            style="background: #EF4444 !important; color: #fff !important; border: none; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
                             onclick="window.deleteEntreno('${e.id}')" 
                             title="Eliminar">
-                        <i class="fas fa-trash-alt" style="font-size: 0.85rem;"></i>
+                        <i class="fas fa-trash-alt" style="font-size: 0.9rem; color: #fff !important;"></i>
                     </button>
                 </div>
             </div>
