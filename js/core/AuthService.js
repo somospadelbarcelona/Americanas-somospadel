@@ -163,9 +163,8 @@
         }
 
         async register(email, password, additionalData) {
+            const phone = email.split('@')[0];
             try {
-                const phone = email.split('@')[0];
-
                 // 1. Mandatory check for existing user in Firestore
                 const snapshot = await db.collection('players').where('phone', '==', phone).get();
                 if (!snapshot.empty) {
