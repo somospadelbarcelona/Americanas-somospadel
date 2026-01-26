@@ -114,7 +114,7 @@ window.WhatsAppService = {
         }
 
         msg += "\n" + E.DOWN + " *INSCRIBETE AQUI:* \n";
-        msg += E.LINK + " https://somospadelbarcelona.github.io/#entrenos\n";
+        msg += E.LINK + " https://somospadelbarcelona.github.io/Americanas-somospadel/#entrenos\n";
 
         return msg;
     },

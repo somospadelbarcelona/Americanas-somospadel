@@ -21,35 +21,25 @@
          * Inicializa el seguimiento de conectividad
          */
         async init(userId) {
-            if (this.initialized) return;
+            if (!userId || this.initialized) return;
             this.initialized = true;
 
-            // 1. Obtener total real de usuarios registrados (Fetch inicial + Escucha)
-            const fetchTotal = async () => {
-                try {
-                    const snap = await this.db.collection('users').get();
-                    this.totalUsersCount = snap.size || 0;
-                    this.notifyListeners();
-                } catch (e) { console.warn("Initial count fetch failed", e); }
-            };
-            fetchTotal();
-
-            this.db.collection('users').onSnapshot(snap => {
+            // 1. Obtener total real de usuarios registrados
+            try {
+                const snap = await this.db.collection('users').get();
                 this.totalUsersCount = snap.size || 0;
-                this.notifyListeners();
-            }, e => {
-                console.error('[NetworkPulse] Error counting users in realtime:', e);
-            });
-
-            // 2. Si hay ID, iniciar Latido (Heartbeat)
-            if (userId) {
-                this.startHeartbeat(userId);
+            } catch (e) {
+                console.error('[NetworkPulse] Error counting users:', e);
+                this.totalUsersCount = 0;
             }
 
-            // 3. Escuchar cambios globales (Nodos activos)
+            // 2. Iniciar Latido (Heartbeat)
+            this.startHeartbeat(userId);
+
+            // 3. Escuchar cambios globales
             this.listenToActiveNodes();
 
-            // 4. Actividad simulada (Background visual)
+            // 4. Actividad entrante
             this.startActivitySimulation();
         }
 

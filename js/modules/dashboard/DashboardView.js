@@ -303,13 +303,9 @@
                         </div>
                     </div>
 
-                    <!-- 🔥 SECCIÓN ÉLITE: COMUNIDAD (COACH) -->
-                    <div style="padding: 0 15px; margin-top: 30px; margin-bottom: 100px;">
-                        
-                        <div style="display: flex; flex-direction: column; gap: 20px;">
-                            <div id="padel-coach-root"></div>
-                            <div id="network-pulse-root"></div>
-                        </div>
+                    <!-- 6. CYBER PULSE: CENTRO DE OPERACIONES -->
+                    <div id="network-pulse-root" style="margin: 10px 15px 50px !important;">
+                        <!-- Content loaded via JS -->
                     </div>
 
                 </div>
@@ -512,18 +508,16 @@
             }
 
             console.log("🌐 [DashboardView] Finalizing render, checking Cyber Pulse...");
-
-            // 5.1 Initialize Padel Coach Academy
-            if (window.PadelCoachWidget) {
-                window.PadelCoachWidget.render('padel-coach-root');
-                console.log("🎾 [DashboardView] Padel Coach Academy Active.");
-            }
             if (window.NetworkPulseWidget && window.NetworkPulseService) {
                 const currentUser = window.Store ? window.Store.getState('currentUser') : null;
-                // Siempre inicializamos el servicio (ahora acepta userId opcional)
-                window.NetworkPulseService.init(currentUser ? (currentUser.uid || currentUser.id) : null);
-                window.NetworkPulseWidget.render('network-pulse-root');
-                console.log("✅ [DashboardView] Cyber Pulse Widget Triggered.");
+                if (currentUser) {
+                    window.NetworkPulseService.init(currentUser.uid || currentUser.id);
+                    window.NetworkPulseWidget.render('network-pulse-root');
+                    console.log("✅ [DashboardView] Cyber Pulse Widget Triggered.");
+                } else {
+                    // Fallback para invitados o si el estado tarda en cargar
+                    window.NetworkPulseWidget.render('network-pulse-root');
+                }
             }
         }
 
