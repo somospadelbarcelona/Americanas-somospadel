@@ -45,39 +45,38 @@ window.AdminViews.entrenos_mgmt = async function () {
             <div class="planning-area" id="entrenos-planning-area" style="display: flex; flex-direction: column; height: calc(100vh - 140px);">
                 
                 <!-- FILTER BAR -->
-                <div class="filter-bar-pro" style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr auto auto auto; gap: 8px; margin-bottom: 1.5rem; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); align-items: center;">
-                    <div style="position:relative;">
+                <div class="filter-bar-pro" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.5rem; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); align-items: center;">
+                    <div style="position:relative; grid-column: span 2;">
                         <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.3); font-size:0.8rem;"></i>
-                        <input type="text" id="entreno-search-input" placeholder="Nombre..."
-                            style="padding-left:35px; height:42px; font-size:0.85rem; width:100%; border-radius:10px; background:rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                        <input type="text" id="entreno-search-input" placeholder="Buscar por nombre..."
+                            style="padding-left:35px; height:45px; font-size:0.9rem; width:100%; border-radius:12px; background:rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
                     </div>
-                    <select id="filter-month" class="pro-input" style="height:42px; padding: 0 10px; font-size: 0.8rem;">
+                    <select id="filter-month" class="pro-input" style="height:45px; font-size: 0.8rem;">
                         <option value="all">MES: TODOS</option>
                         ${monthOptions}
                     </select>
-                    <select id="filter-status" class="pro-input" style="height:42px; padding: 0 10px; font-size: 0.8rem;">
+                    <select id="filter-status" class="pro-input" style="height:45px; font-size: 0.8rem;">
                         <option value="all">ESTADO: TODOS</option>
                         <option value="open">🟢 ABIERTO</option>
                         <option value="live">🎾 EN JUEGO</option>
                         <option value="finished">🏁 FINALIZADO</option>
                         <option value="pairing">🔀 EMPAREJANDO</option>
                     </select>
-                    <select id="filter-category" class="pro-input" style="height:42px; padding: 0 10px; font-size: 0.8rem;">
-                        <option value="all">CAT: TODAS</option>
+                    <select id="filter-category" class="pro-input" style="height:45px; font-size: 0.8rem;">
+                        <option value="all">CATEGORÍA: TODAS</option>
                         <option value="male">MASCULINO</option>
                         <option value="female">FEMENINO</option>
                         <option value="mixed">MIXTO</option>
-                        <option value="open">OPEN</option>
+                        <option value="open">OPEN / TODOS</option>
                     </select>
-                    <button class="btn-outline-pro" onclick="document.getElementById('entreno-search-input').value=''; document.getElementById('filter-month').value='all'; document.getElementById('filter-status').value='all'; document.getElementById('filter-category').value='all'; loadAdminView('entrenos_mgmt')" style="height:42px; padding: 0 15px; font-size: 0.7rem;">
-                        <i class="fas fa-eraser"></i> LIMPIAR
-                    </button>
-                    <button class="btn-primary-pro" onclick="loadAdminView('entrenos_create')" style="height:42px; padding: 0 15px; font-weight: 800; font-size: 0.8rem;">
-                        <i class="fas fa-plus"></i> NUEVO
-                    </button>
-                    <button class="btn-outline-pro" onclick="loadAdminView('entrenos_mgmt')" style="height:42px; width: 42px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
+                    <div style="display:flex; gap: 8px;">
+                        <button class="btn-outline-pro" onclick="document.getElementById('entreno-search-input').value=''; document.getElementById('filter-month').value='all'; document.getElementById('filter-status').value='all'; document.getElementById('filter-category').value='all'; loadAdminView('entrenos_mgmt')" style="flex:1; height:45px; font-size: 0.7rem; padding: 0;">
+                            <i class="fas fa-eraser"></i> LIMPIAR
+                        </button>
+                        <button class="btn-outline-pro" onclick="loadAdminView('entrenos_mgmt')" style="width: 45px; height:45px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- SCROLLABLE LIST -->
@@ -231,27 +230,32 @@ function renderEntrenoCard(e) {
              data-month="${month}" 
              data-status="${e.status || 'open'}" 
              data-category="${e.category || 'open'}"
-             style="margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: center; padding: 1.2rem; border-left: 4px solid ${statusColor}; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%);">
-            <div style="display: flex; gap: 1.2rem; align-items: center; flex: 1;">
-                <div class="entreno-preview-img" style="width: 70px; height: 70px; border-radius: 12px; background: url('${(e.image_url || '').replace(/ /g, '%20')}') center/cover; border: 1px solid rgba(255,255,255,0.1); position:relative;">
+             style="margin-bottom: 1.2rem; display: flex; flex-direction: column; padding: 1.2rem; border-left: 4px solid ${statusColor}; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%); gap: 1rem;">
+            
+            <div style="display: flex; gap: 1.2rem; align-items: flex-start;">
+                <div class="entreno-preview-img" style="width: 60px; height: 60px; border-radius: 12px; background: url('${(e.image_url || '').replace(/ /g, '%20')}') center/cover; border: 1px solid rgba(255,255,255,0.1); position:relative; flex-shrink: 0;">
                     <div style="position:absolute; bottom:-5px; right:-5px; background:${statusColor}; width:12px; height:12px; border-radius:50%; border:2px solid #1a1c23;"></div>
                 </div>
-                <div class="entreno-info-pro" style="flex: 1;">
-                    <div style="font-weight: 950; font-size: 1.2rem; color: #FFFFFF; margin-bottom: 0.3rem;">${e.name.toUpperCase()}</div>
-                    <div style="display: flex; gap: 1.2rem; font-size: 0.8rem; color: var(--text-muted); flex-wrap: wrap; align-items: center;">
-                         <span style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-calendar-alt" style="color: #60A5FA; font-size: 0.95rem;"></i> <span style="color:#eee; font-weight: 600;">${formatDate(e.date)}</span></span>
-                         <span style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-clock" style="color: #A78BFA; font-size: 0.95rem;"></i> <span style="color:#eee; font-weight: 600;">${e.time || '10:00'}${e.time_end ? ' - ' + e.time_end : ''}</span></span>
-                         ${durationText ? `<span style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-hourglass-half" style="color: #FBBF24; font-size: 0.95rem;"></i> <span style="color:#FBBF24; font-weight: 700;">${durationText}</span></span>` : ''}
-                         <span onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' style="cursor:pointer; display: flex; align-items: center; gap: 6px;" title="Gestionar participantes"><i class="fas fa-users" style="color: #34D399; font-size: 0.95rem;"></i> <span style="color:var(--primary); font-weight:800;">${playersCount}</span><span style="opacity:0.5; font-weight: 600;">/${maxPlayers}</span></span>
+                <div class="entreno-info-pro" style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 950; font-size: 1.1rem; color: #FFFFFF; margin-bottom: 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                        ${e.name.toUpperCase()}
                     </div>
+                    <div style="display: flex; gap: 0.8rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap; align-items: center;">
+                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-calendar-alt" style="color: #60A5FA;"></i> <span style="color:#eee; font-weight: 600;">${formatDate(e.date)}</span></span>
+                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-clock" style="color: #A78BFA;"></i> <span style="color:#eee; font-weight: 600;">${e.time || '10:00'}</span></span>
+                         <span onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' style="cursor:pointer; display: flex; align-items: center; gap: 5px;" title="Gestionar participantes">
+                            <i class="fas fa-users" style="color: #34D399;"></i> <span style="color:var(--primary); font-weight:800;">${playersCount}</span><span style="opacity:0.5;">/${maxPlayers}</span>
+                         </span>
+                    </div>
+                </div>
+                <div style="background:rgba(255,255,255,0.05); padding:6px 10px; border-radius:8px; font-size:0.7rem; font-weight:900; color:var(--primary); border: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;">
+                    ${e.price_members || 15}€
                 </div>
             </div>
             
-             <!-- RIGHT ACTIONS AREA -->
-            <div style="display: flex; align-items: center; gap: 12px;">
-                
-                <!-- Status Selector (Dropdown) -->
-                <div style="position: relative; min-width: 140px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.03);">
+                <!-- Status Selector -->
+                <div style="position: relative; flex: 1; min-width: 120px;">
                     <select onchange="window.updateEntrenoStatus('${e.id}', this.value)" 
                             style="
                                 width: 100%;
@@ -259,15 +263,13 @@ function renderEntrenoCard(e) {
                                 background: ${statusColor}15; 
                                 color: #FFFFFF; 
                                 border: 1px solid ${statusColor}; 
-                                padding: 8px 10px; 
+                                padding: 8px 12px; 
                                 border-radius: 8px; 
                                 font-weight: 800; 
-                                font-size: 0.7rem; 
+                                font-size: 0.65rem; 
                                 cursor: pointer; 
-                                text-align: center;
-                                outline: none;
                                 text-transform: uppercase;
-                                letter-spacing: 1px;
+                                outline: none;
                             ">
                         <option value="open" ${e.status === 'open' ? 'selected' : ''}>🟢 ABIERTA</option>
                         <option value="pairing" ${e.status === 'pairing' ? 'selected' : ''}>🔀 EMPAREJAMIENTO</option>
@@ -275,44 +277,46 @@ function renderEntrenoCard(e) {
                         <option value="finished" ${e.status === 'finished' ? 'selected' : ''}>🏁 FINALIZADA</option>
                         <option value="cancelled" ${e.status === 'cancelled' ? 'selected' : ''}>⛔ ANULADO</option>
                     </select>
-                    <i class="fas fa-chevron-down" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; color: #FFFFFF; pointer-events: none;"></i>
                 </div>
 
-                <!-- Action Menu -->
-                <div style="display: flex; gap: 8px;">
-                    <!-- Batseñal Button (Only for Open/Live events) -->
+                <!-- Action Group -->
+                <div style="display: flex; gap: 6px; flex-shrink: 0;">
                     ${(e.status === 'open' || e.status === 'live') ? `
                     <button class="btn-micro" 
-                            style="background:rgba(255, 215, 0, 0.2); color:#FFD700; border:1px solid rgba(255, 215, 0, 0.5); padding: 10px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;" 
+                            style="background:rgba(255, 215, 0, 0.15); color:#FFD700; border:1px solid rgba(255, 215, 0, 0.3); padding: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;" 
                             onclick="window.launchBatSignalEntreno('${e.id}')"
-                            title="Lanzar Batseñal (Buscar Sustitutos)">
-                        <i class="fas fa-bullhorn" style="font-size: 1.1rem;"></i>
+                            title="Batseñal">
+                        <i class="fas fa-bullhorn" style="font-size: 0.9rem;"></i>
                     </button>
                     ` : ''}
 
                     <button class="btn-micro" 
-                            style="background:rgba(37, 211, 102, 0.2); color:#25D366; border:1px solid rgba(37, 211, 102, 0.4); padding: 10px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;" 
+                            style="background:rgba(37, 211, 102, 0.15); color:#25D366; border:1px solid rgba(37, 211, 102, 0.3); padding: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;" 
                             onclick="window.launchWhatsAppShareEntreno('${e.id}')"
-                            title="Compartir WhatsApp">
-                        <i class="fab fa-whatsapp" style="font-size: 1.1rem;"></i>
+                            title="WhatsApp">
+                        <i class="fab fa-whatsapp" style="font-size: 1rem;"></i>
                     </button>
+                    
                     <button class="btn-micro" 
-                            style="background:rgba(100, 116, 139, 0.15); color:#94A3B8; border:1px solid rgba(100, 116, 139, 0.3); padding: 10px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;" 
+                            style="background:rgba(100, 116, 139, 0.1); color:#94A3B8; border:1px solid rgba(100, 116, 139, 0.2); padding: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;" 
                             onclick='window.duplicateEntreno(${JSON.stringify(e).replace(/'/g, "&#39;")})' 
-                            title="Duplicar">📋</button>
+                            title="Duplicar">
+                        <i class="fas fa-clone" style="font-size: 0.85rem;"></i>
+                    </button>
+                    
                     <button class="btn-micro" 
-                            style="background:rgba(59, 130, 246, 0.15); color:#60A5FA; border:1px solid rgba(59, 130, 246, 0.3); padding: 10px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;" 
+                            style="background:rgba(59, 130, 246, 0.1); color:#60A5FA; border:1px solid rgba(59, 130, 246, 0.2); padding: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;" 
                             onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' 
-                            title="Editar">✏️</button>
+                            title="Editar">
+                        <i class="fas fa-pen" style="font-size: 0.85rem;"></i>
+                    </button>
+                    
                     <button class="btn-micro" 
-                            style="background:rgba(239, 68, 68, 0.2); color:#EF4444; border:1px solid rgba(239, 68, 68, 0.4); padding: 10px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;" 
+                            style="background:rgba(239, 68, 68, 0.15); color:#EF4444; border:1px solid rgba(239, 68, 68, 0.3); padding: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;" 
                             onclick="window.deleteEntreno('${e.id}')" 
-                            title="Eliminar">🗑️</button>
-                </div>
-
-                <!-- Price/Badge -->
-                <div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:8px; font-size:0.75rem; font-weight:900; color:var(--primary); min-width:60px; text-align:center; border: 1px solid rgba(255,255,255,0.05);">
-                    ${e.price_members || 15}€
+                            title="Eliminar">
+                        <i class="fas fa-trash-alt" style="font-size: 0.85rem;"></i>
+                    </button>
                 </div>
             </div>
         </div>`;
