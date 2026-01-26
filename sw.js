@@ -32,13 +32,15 @@ try {
     });
 } catch (e) { console.error("[SW] Firebase init error", e); }
 
-const CACHE_NAME = 'somospadel-pro-v30';
+const CACHE_NAME = 'somospadel-pro-v35';
 const STATIC_RESOURCES = [
     './',
     './index.html',
     './manifest.json',
     './css/theme-playtomic.css?v=701',
     './js/app.js?v=2026',
+    './js/core/AuthService.js?v=12.1',
+    './js/modules/auth/AuthController.js?v=12.1',
     './img/logo_somospadel.png',
     'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&display=swap',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'

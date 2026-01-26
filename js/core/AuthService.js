@@ -256,7 +256,7 @@
     }
 
     window.AuthService = new AuthService();
-    console.log("🛡️ AuthService Global Loaded (Restored)");
+    console.log("🛡️ AuthService Global Loaded (v10.1 - Fixed Phone Scope)");
 
     // Setup login form listener
     document.addEventListener('DOMContentLoaded', () => {

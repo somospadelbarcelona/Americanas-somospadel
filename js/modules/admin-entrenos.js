@@ -7,15 +7,18 @@
 window.AdminViews = window.AdminViews || {};
 
 // Main Management View
+// 1. GESTOR DE ENTRENOS (Listado y Filtros)
 window.AdminViews.entrenos_mgmt = async function () {
     const content = document.getElementById('content-area');
     const titleEl = document.getElementById('page-title');
 
-    if (titleEl) titleEl.textContent = 'Centro de Planificación de Entrenos';
-    content.innerHTML = '<div class="loading-container"><div class="loader"></div><p>Cargando datos de entrenos...</p></div>';
-    console.log("🚀 AdminEntrenos Module v3.1 Fixed Loaded");
+    if (titleEl) titleEl.textContent = 'Gestor de Entrenos';
+    content.innerHTML = '<div class="loading-container"><div class="loader"></div><p>Cargando todos los entrenos...</p></div>';
 
     try {
+        // Forzar recarga de datos saltando caché si es posible
+        if (window.CacheService) window.CacheService.remove(`all_entrenos`);
+
         const entrenos = await EventService.getAll(AppConstants.EVENT_TYPES.ENTRENO);
         const sortedEntrenos = entrenos.sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -25,7 +28,7 @@ window.AdminViews.entrenos_mgmt = async function () {
             if (e.date.includes('-')) return e.date.substring(0, 7); // YYYY-MM
             if (e.date.includes('/')) {
                 const p = e.date.split('/');
-                return `${p[2]}-${p[0].padStart(2, '0')}`; // Changes m-d-y assumption to d-m-y if needed? assuming stored ISO or standard
+                return `${p[2]}-${p[0].padStart(2, '0')}`;
             }
             return null;
         }))].filter(Boolean).sort((a, b) => b.localeCompare(a));
@@ -36,136 +39,147 @@ window.AdminViews.entrenos_mgmt = async function () {
             return `<option value="${m}">${(monthNames[mm] || mm).toUpperCase()} ${y}</option>`;
         }).join('');
 
-        // 📝 Generate List HTML
         const listHtml = sortedEntrenos.map(evt => renderEntrenoCard(evt)).join('');
 
-        // 🏗️ Build Main Layout
         content.innerHTML = `
-            <div style="display: grid; grid-template-columns: 350px 1fr; gap: 20px; height: calc(100vh - 140px);">
+            <div class="planning-area" id="entrenos-planning-area" style="display: flex; flex-direction: column; height: calc(100vh - 140px);">
                 
-                <!-- 1. CREATE FORM COLUMN -->
-                <div class="glass-card-enterprise" style="overflow-y: auto; height: 100%;">
-                    <h3 style="color: var(--primary); margin-bottom: 1.5rem;"><i class="fas fa-plus-circle"></i> NUEVO ENTRENO</h3>
-                    
-                    <form id="create-entreno-form" class="pro-form compact-admin-form">
-                        <div class="form-group">
-                            <label>NOMBRE DEL EVENTO</label>
-                            <input type="text" name="name" class="pro-input" placeholder="Ej: Entreno Mañanero" required style="font-weight:700;">
-                        </div>
-
-                        <div class="form-row-compact">
-                            <div class="form-group">
-                                <label>FECHA</label>
-                                <input type="date" name="date" class="pro-input" required>
-                            </div>
-                            <div class="form-group">
-                                <label>HORA</label>
-                                <input type="time" name="time" class="pro-input" value="10:00" required>
-                            </div>
-                        </div>
-
-                        <div class="form-row-compact">
-                            <div class="form-group">
-                                <label>CATEGORÍA</label>
-                                <select name="category" class="pro-input">
-                                    <option value="open">TODOS / OPEN</option>
-                                    <option value="male">MASCULINO</option>
-                                    <option value="female">FEMENINO</option>
-                                    <option value="mixed">MIXTO</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>SEDE</label>
-                                <select name="location" class="pro-input">
-                                    <option value="Barcelona Pádel el Prat">EL PRAT</option>
-                                    <option value="Delfos Cornellá">DELFOS</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-row-compact">
-                            <div class="form-group">
-                                <label>PISTAS</label>
-                                <input type="number" name="max_courts" class="pro-input" value="4" min="1">
-                            </div>
-                             <div class="form-group">
-                                <label>MODO</label>
-                                <select name="pair_mode" class="pro-input">
-                                    <option value="fixed">PAREJA FIJA</option>
-                                    <option value="rotating">TWISTER (Individual)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>IMAGEN (URL)</label>
-                            <input type="text" name="image_url" class="pro-input" placeholder="Automático..." style="font-size: 0.8rem;">
-                            <!-- Image preset buttons could go here if needed -->
-                        </div>
-
-                        <input type="hidden" name="status" value="open">
-                        
-                        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                            <button type="submit" class="btn-primary-pro" style="width: 100%; justify-content: center; font-weight: 800;">
-                                CREAR ENTRENO 🚀
-                            </button>
-                        </div>
-                    </form>
+                <!-- FILTER BAR -->
+                <div class="filter-bar-pro" style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr auto auto auto; gap: 8px; margin-bottom: 1.5rem; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); align-items: center;">
+                    <div style="position:relative;">
+                        <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.3); font-size:0.8rem;"></i>
+                        <input type="text" id="entreno-search-input" placeholder="Nombre..."
+                            style="padding-left:35px; height:42px; font-size:0.85rem; width:100%; border-radius:10px; background:rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                    </div>
+                    <select id="filter-month" class="pro-input" style="height:42px; padding: 0 10px; font-size: 0.8rem;">
+                        <option value="all">MES: TODOS</option>
+                        ${monthOptions}
+                    </select>
+                    <select id="filter-status" class="pro-input" style="height:42px; padding: 0 10px; font-size: 0.8rem;">
+                        <option value="all">ESTADO: TODOS</option>
+                        <option value="open">🟢 ABIERTO</option>
+                        <option value="live">🎾 EN JUEGO</option>
+                        <option value="finished">🏁 FINALIZADO</option>
+                        <option value="pairing">🔀 EMPAREJANDO</option>
+                    </select>
+                    <select id="filter-category" class="pro-input" style="height:42px; padding: 0 10px; font-size: 0.8rem;">
+                        <option value="all">CAT: TODAS</option>
+                        <option value="male">MASCULINO</option>
+                        <option value="female">FEMENINO</option>
+                        <option value="mixed">MIXTO</option>
+                        <option value="open">OPEN</option>
+                    </select>
+                    <button class="btn-outline-pro" onclick="document.getElementById('entreno-search-input').value=''; document.getElementById('filter-month').value='all'; document.getElementById('filter-status').value='all'; document.getElementById('filter-category').value='all'; loadAdminView('entrenos_mgmt')" style="height:42px; padding: 0 15px; font-size: 0.7rem;">
+                        <i class="fas fa-eraser"></i> LIMPIAR
+                    </button>
+                    <button class="btn-primary-pro" onclick="loadAdminView('entrenos_create')" style="height:42px; padding: 0 15px; font-weight: 800; font-size: 0.8rem;">
+                        <i class="fas fa-plus"></i> NUEVO
+                    </button>
+                    <button class="btn-outline-pro" onclick="loadAdminView('entrenos_mgmt')" style="height:42px; width: 42px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
                 </div>
 
-                <!-- 2. LIST & FILTER COLUMN -->
-                <div class="planning-area" id="entrenos-planning-area" style="overflow-y: hidden; display: flex; flex-direction: column; height: 100%;">
-                    
-                    <!-- FILTER BAR -->
-                    <div class="filter-bar-pro" style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 1rem; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); align-items: center;">
-                        <div style="position:relative;">
-                            <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.3); font-size:0.8rem;"></i>
-                            <input type="text" id="entreno-search-input" placeholder="Buscar..."
-                                style="padding-left:35px; height:40px; font-size:0.8rem; width:100%; border-radius:10px; background:rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
-                        </div>
-                        <select id="filter-month" class="pro-input-micro">
-                            <option value="all">MES: TODOS</option>
-                            ${monthOptions}
-                        </select>
-                        <select id="filter-status" class="pro-input-micro">
-                            <option value="all">ESTADO: TODOS</option>
-                            <option value="open">🟢 ABIERTO</option>
-                            <option value="live">🎾 EN JUEGO</option>
-                            <option value="finished">🏁 FINALIZADO</option>
-                            <option value="pairing">🔀 EMPAREJANDO</option>
-                        </select>
-                        <select id="filter-category" class="pro-input-micro">
-                            <option value="all">CAT: TODAS</option>
-                            <option value="male">MASCULINO</option>
-                            <option value="female">FEMENINO</option>
-                            <option value="mixed">MIXTO</option>
-                        </select>
-                        <button class="btn-micro" onclick="loadAdminView('entrenos_mgmt')" style="height:40px; width: 40px; font-size: 1rem;">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                    </div>
-
-                    <!-- SCROLLABLE LIST -->
-                    <div class="entreno-scroll-list" id="entrenos-list-container" style="overflow-y: auto; padding-right: 5px; flex: 1;">
-                        ${listHtml.length ? listHtml : '<div class="glass-card-enterprise" style="text-align:center; padding: 4rem; color: var(--text-muted);">No hay entrenos registrados.</div>'}
-                    </div>
+                <!-- SCROLLABLE LIST -->
+                <div class="entreno-scroll-list" id="entrenos-list-container" style="overflow-y: auto; padding-right: 10px; flex: 1;">
+                    ${listHtml.length ? listHtml : '<div class="glass-card-enterprise" style="text-align:center; padding: 5rem; color: var(--text-muted);"><i class="fas fa-terminal" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.2;"></i><br>No se encontraron entrenos con los filtros actuales.</div>'}
                 </div>
             </div>
         `;
 
-        // 🛠️ Setup Logic
-        setupCreateForm();
         setupFilters();
 
-        // 🔄 Start Auto-Bot Loop
-        if (window.adminAutoInterval) clearInterval(window.adminAutoInterval);
-        window.api.runAutomation(); // Call logic once
-        window.adminAutoInterval = setInterval(window.api.runAutomation, 30000);
-
     } catch (e) {
-        console.error("Critical Error in AdminEntrenos:", e);
-        content.innerHTML = `<div class="error-box"><h3>Error cargando módulo</h3><p>${e.message}</p></div>`;
+        console.error("Error en Gestor Entrenos:", e);
+        content.innerHTML = `<div class="error-box"><h3>Error de conexión</h3><p>${e.message}</p></div>`;
     }
+};
+
+// 2. CREAR ENTRENO (Formulario Dedicado)
+window.AdminViews.entrenos_create = async function () {
+    const content = document.getElementById('content-area');
+    const titleEl = document.getElementById('page-title');
+
+    if (titleEl) titleEl.textContent = 'Crear Nuevo Entreno';
+
+    content.innerHTML = `
+        <div style="max-width: 600px; margin: 0 auto;">
+            <div class="glass-card-enterprise" style="padding: 2.5rem;">
+                <h3 style="color: var(--primary); margin-bottom: 2rem; display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-plus-circle" style="font-size: 1.5rem;"></i> CONFIGURACIÓN DEL EVENTO
+                </h3>
+                
+                <form id="create-entreno-form" class="pro-form">
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label>NOMBRE DEL EVENTO</label>
+                        <input type="text" name="name" class="pro-input" placeholder="Ej: Entreno Mañanero Intensivo" required style="font-weight:800; font-size: 1.1rem; height: 50px;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 1.5rem;">
+                        <div class="form-group">
+                            <label>FECHA DEL EVENTO</label>
+                            <input type="date" name="date" class="pro-input" required style="height: 50px;">
+                        </div>
+                        <div class="form-group">
+                            <label>HORA DE INICIO</label>
+                            <input type="time" name="time" class="pro-input" value="10:00" required style="height: 50px;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 1.5rem;">
+                        <div class="form-group">
+                            <label>CATEGORÍA / GÉNERO</label>
+                            <select name="category" class="pro-input" style="height: 50px;">
+                                <option value="open">TODOS / OPEN</option>
+                                <option value="male">MASCULINO</option>
+                                <option value="female">FEMENINO</option>
+                                <option value="mixed">MIXTO</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>SEDE / UBICACIÓN</label>
+                            <select name="location" class="pro-input" style="height: 50px;">
+                                <option value="Barcelona Pádel el Prat">EL PRAT</option>
+                                <option value="Delfos Cornellá">DELFOS</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 1.5rem;">
+                        <div class="form-group">
+                            <label>NÚMERO DE PISTAS</label>
+                            <input type="number" name="max_courts" class="pro-input" value="4" min="1" style="height: 50px;">
+                        </div>
+                         <div class="form-group">
+                            <label>MODO DE JUEGO</label>
+                            <select name="pair_mode" class="pro-input" style="height: 50px;">
+                                <option value="fixed">🔒 PAREJA FIJA</option>
+                                <option value="rotating">🌪️ TWISTER (Individual)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 2rem;">
+                        <label>URL DE IMAGEN (OPCIONAL)</label>
+                        <input type="text" name="image_url" class="pro-input" placeholder="Se asignará una automática si se deja vacío" style="font-size: 0.85rem; height: 50px;">
+                    </div>
+
+                    <input type="hidden" name="status" value="open">
+                    
+                    <div style="display: flex; gap: 15px; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <button type="button" class="btn-outline-pro" onclick="loadAdminView('entrenos_mgmt')" style="flex: 1; height: 55px; font-weight: 700;">
+                            CANCELAR
+                        </button>
+                        <button type="submit" class="btn-primary-pro" style="flex: 2; height: 55px; font-weight: 900; font-size: 1.1rem; box-shadow: 0 8px 25px rgba(204,255,0,0.3);">
+                            PUBLICAR ENTRENO 🚀
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+
+    setupCreateForm();
 };
 
 // --- HELPER FUNCTIONS --- //
@@ -666,4 +680,11 @@ window.launchBatSignalEntreno = async (eventId) => {
     }
 };
 
-console.log("✅ Admin Entrenos Module v3.2 - Fully Loaded & Optimized");
+// --- INITIALIZATION ---
+if (window.adminAutoInterval) clearInterval(window.adminAutoInterval);
+if (window.api && window.api.runAutomation) {
+    window.api.runAutomation();
+    window.adminAutoInterval = setInterval(window.api.runAutomation, 30000);
+}
+
+console.log("✅ Admin Entrenos Module v3.5 - Splitted & Optimized");

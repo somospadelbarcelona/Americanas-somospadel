@@ -147,6 +147,9 @@ window.loadAdminView = async function (viewName) {
         else if (viewName === 'entrenos_mgmt' && window.AdminViews && window.AdminViews.entrenos_mgmt) {
             await window.AdminViews.entrenos_mgmt();
         }
+        else if (viewName === 'entrenos_create' && window.AdminViews && window.AdminViews.entrenos_create) {
+            await window.AdminViews.entrenos_create();
+        }
         else if (viewName === 'matches') {
             if (window.loadResultsView) await window.loadResultsView('americana');
             else throw new Error("Results Module not loaded");
