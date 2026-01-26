@@ -634,10 +634,30 @@ window.closeEntrenoModal = () => {
 window.launchWhatsAppShareEntreno = (id) => {
     // Finds the event in local cache or fetches it
     EventService.getById('entreno', id).then(evt => {
-        if (!evt) return;
-        const text = `🎾 *NUEVO ENTRENO DISPONIBLE* 🎾\n\n📌 *${evt.name}*\n📅 ${formatDate(evt.date)} a las ${evt.time}\n📍 ${evt.location}\n\n👇 *APÚNTATE AQUÍ:* \nhttps://app-somospadel-bcn.web.app`;
-        const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-        window.open(url, '_blank');
+        // 1. Prepare Variable Data (Safe Encode)
+        const name = encodeURIComponent(evt.name || 'Entreno');
+        const date = encodeURIComponent(formatDate(evt.date));
+        const time = encodeURIComponent(evt.time || '10:00');
+        const location = encodeURIComponent(evt.location || 'Club');
+
+        // 2. Hardcoded URL-Encoded Emojis (Bypasses JS String rendering issues)
+        // 🎾 = %F0%9F%8E%BE
+        // 📌 = %F0%9F%93%8C
+        // 📅 = %F0%9F%93%85
+        // 📍 = %F0%9F%93%8D
+        // 👇 = %F0%9F%91%87
+
+        const tennis = "%F0%9F%8E%BE";
+        const pin = "%F0%9F%93%8C";
+        const cal = "%F0%9F%93%85";
+        const loc = "%F0%9F%93%8D";
+        const down = "%F0%9F%91%87";
+        const br = "%0A"; // Newline
+
+        // 3. Construct Final URL directly
+        const fullUrl = `https://wa.me/?text=${tennis}%20*NUEVO%20ENTRENO%20DISPONIBLE*%20${tennis}${br}${br}${pin}%20*${name}*${br}${cal}%20${date}%20a%20las%20${time}${br}${loc}%20${location}${br}${br}${down}%20*APÚNTATE%20AQUÍ:*${br}https://somospadelbarcelona.github.io/#entrenos`;
+
+        window.open(fullUrl, '_blank');
     });
 };
 

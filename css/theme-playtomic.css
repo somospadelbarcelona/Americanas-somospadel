@@ -1200,6 +1200,28 @@ body {
     margin-top: 10px;
 }
 
+/* --- NEWS SCROLLER --- */
+.news-scroll-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 16px;
+    padding: 0 20px 20px 20px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.news-scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+.news-card {
+    min-width: 280px;
+    /* Fixed width for news cards */
+    flex: 0 0 auto;
+}
+
+
 .btn-hub-action.secondary {
     background: #E1306C;
     color: white;
@@ -1609,14 +1631,37 @@ body {
     font-weight: 700;
 }
 
+/* --- MOBILE SCROLL OPTIMIZATION --- */
 .dash-menu-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    /* Changed from grid to flex for horizontal scroll */
     gap: 15px;
-    padding: 0 20px 100px 20px;
+    padding: 10px 20px 30px 20px;
+    /* Reduced bottom padding */
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    /* Hide scrollbar Firefox */
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: stretch;
+}
+
+.dash-menu-grid::-webkit-scrollbar {
+    display: none;
+    /* Hide scrollbar Chrome/Safari */
 }
 
 .menu-card {
+    min-width: 100px;
+    /* Ensure minimum width */
+    flex: 0 0 auto;
+    /* Prevent shrinking/growing */
+    width: 100px;
+    /* Fixed width for uniform look */
+
     background: white;
     border-radius: 16px;
     padding: 20px;

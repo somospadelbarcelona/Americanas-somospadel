@@ -198,11 +198,41 @@
 
                 return { success: true, pendingValidation: true };
             } catch (error) {
-                console.warn("⚠️ Register failed:", error.message);
+                console.warn("⚠️ Firebase Auth Register failed:", error.code, error.message);
+
+                // === LOCAL REGISTRATION FALLBACK ===
+                // If Firebase Auth is misconfigured (CONFIGURATION_NOT_FOUND) or fails,
+                // we fallback to creating the user directly in Firestore.
+                const fatalErrors = ['auth/configuration-not-found', 'auth/operation-not-allowed', 'CONFIGURATION_NOT_FOUND'];
+                const isConfigError = fatalErrors.some(e => error.message.includes(e) || error.code === e);
+
+                if (isConfigError || error.code === 400) {
+                    console.log("🛠️ Attempting LOCAL REGISTRATION (Firestore Only)...");
+                    try {
+                        const localUid = 'local_' + phone + '_' + Date.now();
+                        const hashedPassword = await this.hashPassword(password);
+
+                        await window.FirebaseDB.players.create({
+                            ...additionalData,
+                            phone: phone,
+                            uid: localUid,
+                            id: localUid, // Ensure ID consistency
+                            password: hashedPassword,
+                            status: 'pending', // Validation required
+                            authMethod: 'local_fallback'
+                        });
+
+                        return { success: true, pendingValidation: true, fallback: true };
+
+                    } catch (dbError) {
+                        console.error("Local Registration Failed:", dbError);
+                        return { success: false, error: "Error de registro (Local): " + dbError.message };
+                    }
+                }
 
                 // Propagate clear errors to UI
                 if (error.code === 'auth/email-already-in-use') {
-                    return { success: false, error: "Este teléfono ya está registrado en el sistema de autenticación." };
+                    return { success: false, error: "Este teléfono ya está registrado en el sistema." };
                 }
 
                 return { success: false, error: error.message || "Error desconocido en el registro" };

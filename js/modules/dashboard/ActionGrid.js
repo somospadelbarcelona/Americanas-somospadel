@@ -14,8 +14,9 @@
             const actions = this.getActions(context);
 
             return `
-                <div style="padding: 0 20px; margin-bottom: 100px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <!-- WRAPPER SCROLL HORIZONTAL (Action Grid) -->
+                <div style="width: 100%; overflow: hidden;">
+                    <div class="dash-menu-grid" style="display: flex; overflow-x: auto; gap: 12px; padding: 10px 20px 20px 20px; scrollbar-width: none;">
                         ${actions.map(action => this.renderAction(action)).join('')}
                     </div>
                 </div>
@@ -77,71 +78,29 @@
             return `
                 <div 
                     onclick="Router.navigate('${action.route}')" 
+                    class="menu-card ${isHighlight ? 'highlight' : ''}"
                     style="
-                        background: white;
-                        padding: 20px 16px;
-                        border-radius: 16px;
+                        /* Overridden by CSS class .menu-card but kept for fallback inline specifics if needed */
                         border: ${isHighlight ? '2px solid ' + action.color : '1px solid #E0E0E0'};
-                        box-shadow: ${isHighlight ? '0 4px 16px rgba(204,255,0,0.2)' : '0 2px 8px rgba(0,0,0,0.04)'};
-                        cursor: pointer;
-                        transition: all 0.2s;
-                        position: relative;
-                        overflow: hidden;
                     "
-                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.1)'"
-                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='${isHighlight ? '0 4px 16px rgba(204,255,0,0.2)' : '0 2px 8px rgba(0,0,0,0.04)'}'"
                 >
                     ${hasNotification && typeof action.badge === 'number' && action.badge > 0 ? `
-                        <div style="
-                            position: absolute;
-                            top: 12px;
-                            right: 12px;
-                            background: #FF3B30;
-                            color: white;
-                            width: 22px;
-                            height: 22px;
-                            border-radius: 50%;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-size: 0.7rem;
-                            font-weight: 900;
-                            box-shadow: 0 2px 8px rgba(255,59,48,0.4);
-                            animation: pulse 2s infinite;
-                        ">
+                        <div style="position: absolute; top: 8px; right: 8px; background: #FF3B30; color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 900; box-shadow: 0 2px 5px rgba(255,59,48,0.4);">
                             ${action.badge}
                         </div>
                     ` : ''}
 
-                    <div style="
-                        background: ${isHighlight ? action.color : '#F8F9FA'};
-                        width: 48px;
-                        height: 48px;
-                        border-radius: 12px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-size: 1.5rem;
-                        margin-bottom: 12px;
-                        ${isHighlight ? 'box-shadow: 0 4px 12px rgba(204,255,0,0.3);' : ''}
-                    ">
+                    <div class="icon-box" style="color: ${isHighlight ? 'black' : action.color}; background: ${isHighlight ? action.color : '#F3F4F6'};">
                         ${action.icon}
                     </div>
 
-                    <div style="
-                        font-size: 0.95rem;
-                        font-weight: 800;
-                        color: #000;
-                        margin-bottom: 4px;
-                    ">
+                    <div class="menu-title" style="font-size: 0.8rem;">
                         ${action.title}
                     </div>
 
-                    <div style="
-                        font-size: 0.7rem;
-                        color: ${hasNotification && typeof action.badge === 'string' ? action.color : '#666'};
-                        font-weight: ${hasNotification ? '700' : '600'};
-                    ">
+                    <div class="menu-desc" style="display:none;">
+                         <!-- Hidden desc for compact view -->
+                    </div>
                         ${action.badge && typeof action.badge === 'number' && action.badge > 0
                     ? `${action.badge} ${action.badgeText}`
                     : action.badgeText
