@@ -1098,12 +1098,15 @@
             const maxCourts = parseInt(evt.max_courts || evt.courts || 4);
             const maxPlayers = maxCourts * 4;
 
-            const cardsHtml = dbPlayers.map(p => {
+            const cardsHtml = dbPlayers.map((p, index) => {
                 const teams = Array.isArray(p.team_somospadel) ? p.team_somospadel : (p.team_somospadel ? [p.team_somospadel] : []);
-                const level = p.level || '3.0';
+                const level = parseFloat(p.level || 3.0).toFixed(2);
+                const name = (p.name || 'JUGADOR').toUpperCase();
+                const photo = p.photo_url || p.photoURL || 'img/logo_somospadel.png';
 
                 const joinedAtRaw = p.joinedAt;
-                const joinedAtStr = joinedAtRaw ? new Date(joinedAtRaw).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) + ' ' + new Date(joinedAtRaw).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : 'SIN FECHA';
+                const joinedAtStr = joinedAtRaw ? new Date(joinedAtRaw).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                const joinedDateStr = joinedAtRaw ? new Date(joinedAtRaw).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : '';
 
                 const teamsBadges = teams.length > 0 ? teams.map(t => {
                     let teamColor = '#38bdf8';
@@ -1111,50 +1114,93 @@
                     if (t.includes('4º')) teamColor = '#84cc16';
                     if (t.includes('3º')) teamColor = '#38bdf8';
                     if (t.includes('2º')) teamColor = '#f59e0b';
-                    if (t.toUpperCase().includes('MIXTO')) {
-                        teamColor = '#ef4444'; // ROJO
-                        textColor = '#fff';
-                    }
-                    return `<span style="background: ${teamColor}; color: ${textColor}; font-size: 0.55rem; font-weight: 950; padding: 2px 8px; border-radius: 6px; margin: 2px; display: inline-block;">${t.toUpperCase()}</span>`;
-                }).join('') : `<span style="background: #333; color: #888; font-size: 0.55rem; font-weight: 900; padding: 2px 8px; border-radius: 6px; margin: 2px; display: inline-block;">SIN EQUIPO</span>`;
+                    if (t.toUpperCase().includes('MIXTO')) { teamColor = '#ef4444'; textColor = '#fff'; }
+                    return `<span style="background: ${teamColor}; color: ${textColor}; font-size: 0.55rem; font-weight: 950; padding: 3px 10px; border-radius: 4px; margin: 2px; display: inline-block; letter-spacing: 0.5px;">${t.toUpperCase()}</span>`;
+                }).join('') : `<span style="background: #222; color: #666; font-size: 0.55rem; font-weight: 900; padding: 3px 10px; border-radius: 4px; margin: 2px; display: inline-block;">SIN EQUIPO</span>`;
+
+                const rank = index + 1;
 
                 return `
-                    <div style="background: #111; border: 1px solid #222; border-radius: 16px; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; transition: all 0.2s; min-height: 140px;">
-                        <div style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); background: #CCFF00; color: #000; font-size: 0.6rem; font-weight: 950; padding: 2px 10px; border-radius: 10px; border: 2px solid #000;">LVL ${level}</div>
-                        
-                        <div style="font-weight: 900; font-size: 0.9rem; text-align: center; color: #fff; margin-bottom: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">${(p.name || 'SIN NOMBRE').toUpperCase()}</div>
-                        
-                        <div style="display: flex; flex-wrap: wrap; justify-content: center; width: 100%; margin-bottom: 8px;">
-                            ${teamsBadges}
+                    <div class="cnn-player-card" style="
+                        background: linear-gradient(135deg, #0f172a 0%, #000000 100%);
+                        border: 1px solid rgba(255,255,255,0.1);
+                        border-radius: 20px;
+                        padding: 0;
+                        display: flex;
+                        flex-direction: column;
+                        position: relative;
+                        overflow: hidden;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                        height: 100%;
+                        min-height: 180px;
+                    ">
+                        <!-- Top Banner with Rank and Level -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <div style="background: #CCFF00; color: #000; font-size: 0.7rem; font-weight: 950; padding: 2px 10px; border-radius: 6px; box-shadow: 0 0 15px rgba(204,255,0,0.4);">
+                                RANK #${rank}
+                            </div>
+                            <div style="color: #CCFF00; font-size: 0.8rem; font-weight: 950; letter-spacing: 1px;">
+                                <small style="opacity: 0.7; font-size: 0.5rem; vertical-align: middle;">LVL</small> ${level}
+                            </div>
                         </div>
 
-                        <div style="width: 100%; display: flex; justify-content: center; border-top: 1px solid #222; padding-top: 10px;">
-                            <span style="background: linear-gradient(135deg, #a855f7 0%, #064e3b 100%); color: #fff; font-size: 0.65rem; font-weight: 950; padding: 4px 12px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(168, 85, 247, 0.2);">
-                                IN: ${joinedAtStr}
-                            </span>
+                        <!-- Player Section -->
+                        <div style="padding: 15px; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;">
+                            <div style="width: 50px; height: 50px; border-radius: 12px; background: url('${photo}') center/cover; border: 2px solid #CCFF00; box-shadow: 0 0 15px rgba(204,255,0,0.2);"></div>
+                            
+                            <div style="width: 100%;">
+                                <div style="font-weight: 950; font-size: 0.95rem; color: #fff; line-height: 1.1; margin-bottom: 4px; height: 2.2rem; display: flex; align-items: center; justify-content: center; overflow: hidden; text-overflow: ellipsis;">
+                                    ${name}
+                                </div>
+                                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;">
+                                    ${teamsBadges}
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Bottom Broadcast Bar -->
+                        <div style="background: #CCFF0010; padding: 8px 12px; border-top: 1px solid rgba(204,255,0,0.1); display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-size: 0.6rem; color: #888; font-weight: 800;">REGS: <span style="color: #eee;">${joinedDateStr}</span></div>
+                            <div style="font-size: 0.65rem; color: #fff; font-weight: 950; display: flex; align-items: center; gap: 5px;">
+                                <div style="width: 6px; height: 6px; background: #00E36D; border-radius: 50%; box-shadow: 0 0 8px #00E36D; animation: neon-flicker 1.5s infinite;"></div>
+                                ${joinedAtStr}
+                            </div>
+                        </div>
+                        
+                        <!-- Slanted decorative element (Holographic feel) -->
+                        <div style="position: absolute; bottom: 0; right: 0; width: 40px; height: 40px; background: linear-gradient(135deg, transparent 50%, rgba(204,255,0,0.05) 50%); pointer-events: none;"></div>
                     </div>
                 `;
             }).join('');
 
             modal.innerHTML = `
-                <div style="padding: 40px 20px; max-width: 1200px; margin: 0 auto; width: 100%;">
-                    <!-- HEADER -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #222; padding-bottom: 20px;">
+                <div style="padding: 40px 20px; max-width: 1400px; margin: 0 auto; width: 100%;">
+                    <!-- HEADER HIGH-TECH -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; background: linear-gradient(90deg, rgba(0,0,0,0.8), rgba(15,23,42,0.5)); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
                         <div>
-                            <h1 style="margin: 0; font-size: 1.8rem; font-weight: 950; text-transform: uppercase; letter-spacing: -1px;">LISTA DE <span style="color: #CCFF00;">INSCRITOS</span></h1>
-                            <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 8px;">
-                                <p style="margin: 0; color: #fff; font-weight: 900; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">${evt.name}</p>
-                                <div style="display: flex; align-items: center; gap: 15px; color: #888; font-size: 0.75rem; font-weight: 800;">
-                                    <span><i class="far fa-clock" style="color: #CCFF00; margin-right: 5px;"></i> ${evt.time || '17:00 - 19:00'}</span>
-                                    <span><i class="fas fa-map-marker-alt" style="color: #FF3B30; margin-right: 5px;"></i> ${evt.sede || evt.location || 'Barcelona Pádel el Prat'}</span>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                <span style="background: #CCFF00; color: #000; padding: 3px 12px; border-radius: 6px; font-weight: 950; font-size: 0.7rem; letter-spacing: 2px;">BROADCAST</span>
+                                <div style="width: 8px; height: 8px; background: #FF2D55; border-radius: 50%; animation: pulse 1s infinite;"></div>
+                                <span style="font-size: 0.65rem; font-weight: 900; color: #FF2D55; letter-spacing: 1px;">PRE-PARTY LIVE</span>
+                            </div>
+                            <h1 style="margin: 0; font-size: 2.2rem; font-weight: 950; text-transform: uppercase; letter-spacing: -2px; line-height: 0.9;">INSCRITOS <span style="color: #CCFF00; -webkit-text-stroke: 1px #CCFF00; -webkit-text-fill-color: transparent;">CONFIRMADOS</span></h1>
+                            <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 15px;">
+                                <p style="margin: 0; color: #fff; font-weight: 900; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">${evt.name}</p>
+                                <div style="display: flex; align-items: center; gap: 20px; color: #64748b; font-size: 0.8rem; font-weight: 800;">
+                                    <span style="display: flex; align-items: center; gap: 8px;"><i class="far fa-clock" style="color: #CCFF00; font-size: 1.1rem;"></i> ${evt.time || '17:00 - 19:00'}</span>
+                                    <span style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-map-marker-alt" style="color: #FF3B30; font-size: 1.1rem;"></i> ${evt.sede || evt.location || 'SomosPadel BCN'}</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="neon-ledger" style="text-align: center; background: #000; border: 3px solid #CCFF00; padding: 12px 25px; border-radius: 20px; box-shadow: 0 0 20px rgba(204,255,0,0.3), inset 0 0 10px rgba(204,255,0,0.2); position: relative; overflow: hidden;">
-                            <div style="font-size: 0.65rem; font-weight: 950; color: #CCFF00; margin-bottom: 4px; letter-spacing: 2px; text-transform: uppercase;">PLAZAS OCUPADAS</div>
-                            <div style="font-size: 2.2rem; font-weight: 950; color: #fff; text-shadow: 0 0 15px #CCFF00;">${dbPlayers.length}<span style="color: #333; font-size: 1.2rem; text-shadow: none;"> / ${maxPlayers}</span></div>
+                        
+                        <div class="cnn-ledger-glass" style="text-align: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(20px); border: 2px solid #CCFF00; padding: 20px 40px; border-radius: 24px; box-shadow: 0 0 30px rgba(204,255,0,0.2), inset 0 0 20px rgba(204,255,0,0.1); position: relative; overflow: hidden; min-width: 200px;">
+                            <div style="font-size: 0.75rem; font-weight: 950; color: #CCFF00; margin-bottom: 8px; letter-spacing: 3px; text-transform: uppercase;">PLAYER COUNT</div>
+                            <div style="font-size: 3.5rem; font-weight: 1000; color: #fff; text-shadow: 0 0 20px #CCFF00; line-height: 0.8;">
+                                ${dbPlayers.length}<span style="color: rgba(255,255,255,0.2); font-size: 1.8rem; font-weight: 700; margin-left: 5px;">/ ${maxPlayers}</span>
+                            </div>
                             <div class="led-pulse"></div>
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(circle at 50% 0%, rgba(204,255,0,0.1) 0%, transparent 70%);"></div>
                         </div>
                     </div>
 

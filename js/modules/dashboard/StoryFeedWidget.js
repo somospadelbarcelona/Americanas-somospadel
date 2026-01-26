@@ -139,22 +139,27 @@
             if (!container) return;
 
             container.innerHTML = `
-                <div class="story-feed-v3-wrapper" style="position: relative; padding: 2px 0;">
-                    <div style="padding: 10px 15px; background: transparent;">
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%;">
-                        <!-- STORY ITEMS SCROLLER (CENTERED) -->
-                        <div style="display: flex; justify-content: center; gap: 14px; padding: 5px 0;">
-                            ${this.stories.map(story => `
-                                <div class="story-v3-item" style="min-width: 48px; flex-shrink: 0;" onclick="window.StoryFeedWidget.showStory('${story.id}')">
-                                    <div class="story-v3-outer">
-                                        <div class="story-v3-inner">
-                                            <i class="fas ${story.icon}" style="color: ${story.color}; font-size: 0.95rem;"></i>
-                                        </div>
+                <div class="story-feed-v3-wrapper" style="position: relative; padding: 8px 0;">
+                    <!-- GRID DE ESFERAS RESPONSIVE -->
+                    <div style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(55px, 1fr));
+                        gap: 12px;
+                        padding: 8px 15px;
+                        max-width: 100%;
+                        justify-items: center;
+                    ">
+                        <!-- STORY ITEMS (6 ESFERAS) -->
+                        ${this.stories.map(story => `
+                            <div class="story-v3-item" onclick="window.StoryFeedWidget.showStory('${story.id}')">
+                                <div class="story-v3-outer">
+                                    <div class="story-v3-inner">
+                                        <i class="fas ${story.icon}" style="color: ${story.color}; font-size: 0.95rem;"></i>
                                     </div>
-                                    <span class="story-v3-label">${story.label}</span>
                                 </div>
-                            `).join('')}
-                        </div>
+                                <span class="story-v3-label">${story.label}</span>
+                            </div>
+                        `).join('')}
 
                         <!-- INSTAGRAM STYLE LIVE HUB -->
                         <div style="
@@ -166,7 +171,6 @@
                             flex-direction: column; 
                             align-items: center; 
                             justify-content: center; 
-                            flex-shrink: 0;
                             box-shadow: 0 4px 15px rgba(188,24,136,0.3);
                             position: relative;
                             cursor: pointer;
@@ -196,6 +200,27 @@
                         0% { opacity: 1; transform: scale(1); }
                         50% { opacity: 0.7; transform: scale(1.05); }
                         100% { opacity: 1; transform: scale(1); }
+                    }
+                    
+                    /* Responsive para pantallas muy pequeñas (iPhone SE, etc) */
+                    @media (max-width: 375px) {
+                        .story-feed-v3-wrapper > div {
+                            grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)) !important;
+                            gap: 10px !important;
+                            padding: 8px 10px !important;
+                        }
+                        .story-v3-label {
+                            font-size: 0.5rem !important;
+                        }
+                    }
+                    
+                    /* Para tablets y pantallas más grandes */
+                    @media (min-width: 768px) {
+                        .story-feed-v3-wrapper > div {
+                            grid-template-columns: repeat(7, 1fr) !important;
+                            max-width: 600px;
+                            margin: 0 auto;
+                        }
                     }
                 </style>
             `;

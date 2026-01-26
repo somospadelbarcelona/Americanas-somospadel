@@ -1,0 +1,274 @@
+rules_version = '2';
+
+// ============================================
+// FIRESTORE SECURITY RULES - APP SOMOSPADEL BCN
+// ============================================
+// Versión: 2.0 PRO
+// Última actualización: 2026-01-26
+// ============================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==========================================
+    // HELPER FUNCTIONS
+    // ==========================================
+    
+    // Verificar si el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Verificar si el usuario es Super Admin
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/players/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/players/$(request.auth.uid)).data.role == 'super_admin';
+    }
+    
+    // Verificar si el usuario es Admin (super_admin o admin_player)
+    function isAdmin() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/players/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/players/$(request.auth.uid)).data.role in ['super_admin', 'admin_player'];
+    }
+    
+    // Verificar si el usuario está activo
+    function isActiveUser() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/players/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/players/$(request.auth.uid)).data.status == 'active';
+    }
+    
+    // Verificar si es el propio usuario
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // ==========================================
+    // COLECCIÓN: PLAYERS (Jugadores)
+    // ==========================================
+    match /players/{playerId} {
+      // LECTURA: Pública para permitir login por teléfono
+      // IMPORTANTE: No guardar datos ultra-sensibles aquí
+      allow read: if true;
+      
+      // CREACIÓN: Solo admins pueden crear nuevos jugadores
+      allow create: if isAdmin();
+      
+      // ACTUALIZACIÓN: 
+      // - Admins pueden actualizar cualquier perfil
+      // - Los usuarios pueden actualizar su propio perfil (campos limitados)
+      allow update: if isAdmin() || 
+                      (isOwner(playerId) && 
+                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status', 'matches_played']));
+      
+      // BORRADO: Solo admins pueden borrar jugadores
+      allow delete: if isAdmin();
+      
+      // Notificaciones anidadas dentro de cada jugador
+      match /notifications/{notificationId} {
+        allow read: if isAuthenticated() && (request.auth.uid == playerId || isAdmin());
+        // Permitir CREAR notificaciones a cualquier usuario autenticado (para avisos de chat/partidos)
+        allow create: if isAuthenticated();
+        // Modificar/Borrar solo el dueño o admins
+        allow update, delete: if isAuthenticated() && (request.auth.uid == playerId || isAdmin());
+      }
+    }
+
+    
+    // ==========================================
+    // COLECCIÓN: AMERICANAS (Eventos Americana)
+    // ==========================================
+    match /americanas/{americanaId} {
+      // LECTURA: Todos los usuarios autenticados
+      allow read: if isAuthenticated();
+      
+      // CREACIÓN: Solo admins
+      allow create: if isAdmin();
+      
+      // ACTUALIZACIÓN: Admins pueden actualizar todo
+      allow update: if isAdmin();
+      
+      // EXCEPCIÓN: Los usuarios pueden inscribirse si el evento está abierto
+      allow update: if isAuthenticated() && 
+                      resource.data.status == 'open' &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['players', 'registeredPlayers', 'waitlist']);
+      
+      // BORRADO: Solo admins
+      allow delete: if isAdmin();
+    }
+    
+    // ==========================================
+    // COLECCIÓN: ENTRENOS (Entrenamientos)
+    // ==========================================
+    match /entrenos/{entrenoId} {
+      // LECTURA: Todos los usuarios autenticados
+      allow read: if isAuthenticated();
+      
+      // CREACIÓN: Solo admins
+      allow create: if isAdmin();
+      
+      // ACTUALIZACIÓN: Admins pueden actualizar todo
+      allow update: if isAdmin();
+      
+      // EXCEPCIÓN: Los usuarios pueden inscribirse si el evento está abierto
+      allow update: if isAuthenticated() && 
+                      resource.data.status == 'open' &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['players', 'registeredPlayers', 'waitlist']);
+      
+      // BORRADO: Solo admins
+      allow delete: if isAdmin();
+    }
+    
+    // ==========================================
+    // COLECCIÓN: MATCHES (Partidos)
+    // ==========================================
+    match /matches/{matchId} {
+      // LECTURA: Todos los usuarios autenticados
+      allow read: if isAuthenticated();
+      
+      // ESCRITURA: Solo admins
+      allow create, update: if isAdmin();
+      
+      // BORRADO: Solo admins
+      allow delete: if isAdmin();
+    }
+    
+    // ==========================================
+    // COLECCIÓN: ENTRENOS_MATCHES (Partidos de Entreno)
+    // ==========================================
+    match /entrenos_matches/{matchId} {
+      // LECTURA: Todos los usuarios autenticados
+      allow read: if isAuthenticated();
+      
+      // ESCRITURA: Solo admins
+      allow create, update: if isAdmin();
+      
+      // BORRADO: Solo admins
+      allow delete: if isAdmin();
+    }
+    
+    // ==========================================
+    // COLECCIÓN: MENU_ITEMS (Elementos del Menú)
+    // ==========================================
+    match /menu_items/{menuId} {
+      // LECTURA: Todos los usuarios autenticados
+      allow read: if isAuthenticated();
+      
+      // ESCRITURA: Solo super admins
+      allow create, update, delete: if isSuperAdmin();
+    }
+    
+    // ==========================================
+    // COLECCIÓN: LEVEL_HISTORY (Historial de Niveles)
+    // ==========================================
+    match /level_history/{historyId} {
+      // LECTURA: Todos los usuarios autenticados
+      allow read: if isAuthenticated();
+      
+      // ESCRITURA: Solo admins
+      allow create, update: if isAdmin();
+      
+      // BORRADO: Solo admins
+      allow delete: if isAdmin();
+    }
+    
+    // ==========================================
+    // COLECCIÓN: NOTIFICATIONS (Notificaciones)
+    // ==========================================
+    match /notifications/{notificationId} {
+      // LECTURA: Solo el destinatario o admins
+      allow read: if isAuthenticated() && 
+                    (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // ESCRITURA: Solo admins
+      allow create, update: if isAdmin();
+      
+      // BORRADO: El destinatario puede borrar sus notificaciones o admins
+      allow delete: if isAuthenticated() && 
+                      (resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    // ==========================================
+    // COLECCIÓN: FCM_TOKENS (Tokens de Notificaciones Push)
+    // ==========================================
+    match /fcm_tokens/{tokenId} {
+      // LECTURA: Solo el propietario del token o admins
+      allow read: if isAuthenticated() && 
+                    (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // ESCRITURA: El usuario puede crear/actualizar su propio token
+      allow create, update: if isAuthenticated() && 
+                              request.resource.data.userId == request.auth.uid;
+      
+      // BORRADO: El usuario puede borrar su propio token o admins
+      allow delete: if isAuthenticated() && 
+                      (resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    // ==========================================
+    // COLECCIÓN: BATSEÑAL (Sistema de Sustituciones)
+    // ==========================================
+    match /batsenal/{batsenalId} {
+      // LECTURA: Todos los usuarios autenticados
+      allow read: if isAuthenticated();
+      
+      // ESCRITURA: Usuarios activos pueden crear solicitudes
+      allow create: if isActiveUser();
+      
+      // ACTUALIZACIÓN: Solo admins o el creador
+      allow update: if isAdmin() || 
+                      (isAuthenticated() && resource.data.createdBy == request.auth.uid);
+      
+      // BORRADO: Solo admins o el creador
+      allow delete: if isAdmin() || 
+                      (isAuthenticated() && resource.data.createdBy == request.auth.uid);
+    }
+    
+    // ==========================================
+    // COLECCIÓN: CHATS (Mensajería Táctica)
+    // ==========================================
+    match /chats/{eventId} {
+      // LECTURA: Todos los usuarios autenticados
+      allow read: if isAuthenticated();
+      
+      // ESCRITURA: Todos los autenticados (para señales SOS)
+      allow write: if isAuthenticated();
+
+      // Mensajes dentro de cada chat
+      match /messages/{messageId} {
+        // LECTURA: Todos los usuarios autenticados
+        allow read: if isAuthenticated();
+        
+        // CREACIÓN: Todos los usuarios autenticados pueden enviar mensajes
+        allow create: if isAuthenticated();
+        
+        // ACTUALIZACIÓN: Solo el autor o admins
+        allow update: if isAuthenticated() && 
+                        (resource.data.senderId == request.auth.uid || isAdmin());
+        
+        // BORRADO: Solo admins (para mensajes ofensivos) o el autor
+        allow delete: if isAdmin() || 
+                        (isAuthenticated() && resource.data.senderId == request.auth.uid);
+      }
+    }
+    
+    // ==========================================
+    // COLECCIÓN: CONFIG (Configuración Global)
+    // ==========================================
+    match /config/{configId} {
+      // LECTURA: Todos los usuarios autenticados
+      allow read: if isAuthenticated();
+      
+      // ESCRITURA: Solo admins
+      allow write: if isAdmin();
+    }
+    
+    // ==========================================
+    // REGLA POR DEFECTO: DENEGAR TODO LO DEMÁS
+    // ==========================================
+    // Cualquier colección no especificada arriba será denegada por defecto
+    // Esto es una buena práctica de seguridad
+  }
+}

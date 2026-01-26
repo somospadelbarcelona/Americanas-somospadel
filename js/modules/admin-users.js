@@ -159,7 +159,7 @@ window.AdminViews.users = async function () {
                         ${canManageUsers ? `
                             ${isPending ? `<button class="btn-primary-pro" style="padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 950; background: #00E36D; color: black; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 227, 109, 0.4);" onclick="approveUser('${u.id}')">🚀 VALIDAR</button>` : ''}
                             <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick='openEditUserModal(${JSON.stringify(u).replace(/'/g, "&#39;")})'>EDITAR</button>
-                            <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; color: var(--danger); border-color: var(--danger-dim);" onclick="deleteUser('${u.id}')">🗑️</button>
+                            <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; color: var(--danger); border-color: var(--danger-dim);" onclick="deleteUser('${u.id}', event)">🗑️</button>
                         ` : '<span style="color:var(--text-muted); font-size:0.7rem;">👁️ SOLO LECTURA</span>'}
                     </div>
                 </td>
@@ -562,20 +562,69 @@ window.AdminViews.users = async function () {
     };
 
     // NEW: DELETE USER FUNCTION
-    window.deleteUser = async (id) => {
-        if (!confirm("⚠️ ¿Estás seguro de que quieres ELIMINAR este usuario?\n\nEsta acción no se puede deshacer.")) return;
+    window.deleteUser = async (id, event) => {
+        const userToDelete = window.allUsersCache.find(u => u.id === id);
+        const name = userToDelete ? userToDelete.name : 'este usuario';
+
+        if (!confirm(`⚠️ ¿Estás seguro de que quieres ELIMINAR a "${name}"?\n\nEsta acción borrará permanentemente su perfil y no se puede deshacer.`)) return;
+
+        // Feedback visual en el botón
+        const btn = event.target.closest('button');
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btn.disabled = true;
 
         try {
-            await FirebaseDB.players.delete(id);
-            alert("✅ Usuario eliminado correctamente.");
+            console.log(`🗑️ Eliminando usuario ${id} (${name})...`);
 
-            // Refresh data
-            const users = await FirebaseDB.players.getAll();
-            window.allUsersCache = users;
+            // PRIMERO: Borrar de Firebase y ESPERAR confirmación
+            await FirebaseDB.players.delete(id);
+            console.log(`✅ Usuario ${id} eliminado de Firebase correctamente`);
+
+            // SEGUNDO: Esperar un momento para asegurar que Firebase procesó el borrado
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // TERCERO: Recargar TODA la base de datos para asegurar sincronización
+            console.log("🔄 Recargando base de datos completa...");
+            const freshUsers = await FirebaseDB.players.getAll();
+
+            // CUARTO: Verificar que el usuario realmente fue borrado
+            const stillExists = freshUsers.find(u => u.id === id);
+            if (stillExists) {
+                throw new Error("El usuario sigue existiendo en la base de datos después del borrado. Puede ser un problema de permisos.");
+            }
+
+            // QUINTO: Actualizar caché y UI
+            window.allUsersCache = freshUsers;
+            window.filteredUsers = [...freshUsers];
+            window._allPlayersCache = freshUsers;
             window.multiFilterUsers();
+
+            // SEXTO: Mostrar confirmación
+            alert(`✅ "${name}" ha sido eliminado correctamente.`);
+
         } catch (e) {
-            console.error(e);
-            alert("❌ Error al eliminar usuario: " + e.message);
+            console.error("❌ Error al eliminar usuario:", e);
+            let errorMsg = e.message;
+            if (errorMsg.includes('permission-denied')) {
+                errorMsg = "No tienes permisos suficientes en Firebase para borrar jugadores. Contacta con el administrador principal.";
+            }
+            alert("❌ Error al eliminar: " + errorMsg);
+
+            // Restaurar botón y recargar datos para mostrar el estado real
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+
+            // Recargar datos para asegurar que mostramos el estado real de la DB
+            try {
+                const freshUsers = await FirebaseDB.players.getAll();
+                window.allUsersCache = freshUsers;
+                window.filteredUsers = [...freshUsers];
+                window._allPlayersCache = freshUsers;
+                window.multiFilterUsers();
+            } catch (reloadErr) {
+                console.error("Error recargando datos:", reloadErr);
+            }
         }
     };
 

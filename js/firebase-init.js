@@ -141,7 +141,29 @@ const FirebaseDB = {
         },
 
         async delete(id) {
+            console.log(`🗑️ [Firebase] Intentando borrar jugador: ${id}`);
+
+            // PASO 1: Verificar que existe antes de borrar
+            const docBefore = await db.collection('players').doc(id).get();
+            if (!docBefore.exists) {
+                throw new Error(`El jugador con ID ${id} no existe en la base de datos.`);
+            }
+
+            // PASO 2: Ejecutar el borrado
             await db.collection('players').doc(id).delete();
+            console.log(`✅ [Firebase] Comando delete() ejecutado para: ${id}`);
+
+            // PASO 3: Esperar un momento para que Firebase procese
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            // PASO 4: Verificar que realmente se borró
+            const docAfter = await db.collection('players').doc(id).get();
+            if (docAfter.exists) {
+                console.error(`❌ [Firebase] El documento ${id} SIGUE EXISTIENDO después del delete()`);
+                throw new Error(`FIREBASE SECURITY ERROR: El documento no se pudo borrar. Verifica las reglas de seguridad en Firebase Console. Es posible que tu usuario no tenga permisos de escritura/borrado en la colección 'players'.`);
+            }
+
+            console.log(`✅ [Firebase] Borrado verificado correctamente: ${id}`);
         },
 
         async cleanupFictional() {
