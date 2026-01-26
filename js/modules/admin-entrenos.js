@@ -556,14 +556,18 @@ window.closeEntrenoModal = () => {
     }
 };
 
-// WhatsApp Share Added Back
+// WhatsApp Share - Using Unified Service
 window.launchWhatsAppShareEntreno = (id) => {
-    // Finds the event in local cache or fetches it
     EventService.getById('entreno', id).then(evt => {
         if (!evt) return;
-        const text = `🎾 *NUEVO ENTRENO DISPONIBLE* 🎾\n\n📌 *${evt.name}*\n📅 ${formatDate(evt.date)} a las ${evt.time}\n📍 ${evt.location}\n\n👇 *APÚNTATE AQUÍ:* \nhttps://app-somospadel-bcn.web.app`;
-        const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-        window.open(url, '_blank');
+        if (window.WhatsAppService) {
+            window.WhatsAppService.shareStartFromAdmin(evt);
+        } else {
+            // Fallback legacy logic if Service not available
+            const text = `🎾 *NUEVO ENTRENO DISPONIBLE* 🎾\n\n📌 *${evt.name}*\n📅 ${formatDate(evt.date)} a las ${evt.time}\n📍 ${evt.location}\n\n👇 *APÚNTATE AQUÍ:* \nhttps://app-somospadel-bcn.web.app`;
+            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
     });
 };
 

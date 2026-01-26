@@ -303,10 +303,7 @@
                         </div>
                     </div>
 
-                    <!-- 6. CYBER PULSE: CENTRO DE OPERACIONES -->
-                    <div id="network-pulse-root" style="margin: 10px 15px 50px !important;">
-                        <!-- Content loaded via JS -->
-                    </div>
+
 
                 </div>
 
@@ -507,18 +504,7 @@
                 window.StoryFeedWidget.render('story-feed-root');
             }
 
-            console.log("🌐 [DashboardView] Finalizing render, checking Cyber Pulse...");
-            if (window.NetworkPulseWidget && window.NetworkPulseService) {
-                const currentUser = window.Store ? window.Store.getState('currentUser') : null;
-                if (currentUser) {
-                    window.NetworkPulseService.init(currentUser.uid || currentUser.id);
-                    window.NetworkPulseWidget.render('network-pulse-root');
-                    console.log("✅ [DashboardView] Cyber Pulse Widget Triggered.");
-                } else {
-                    // Fallback para invitados o si el estado tarda en cargar
-                    window.NetworkPulseWidget.render('network-pulse-root');
-                }
-            }
+
         }
 
         initHeaderTickerSync() {
@@ -1147,14 +1133,7 @@
                         console.error("Activity Feed failed", e);
                     });
                 }
-                // 4. Load Network Pulse Widget
-                if (window.NetworkPulseWidget && window.NetworkPulseService) {
-                    const user = window.Store ? window.Store.getState('currentUser') : null;
-                    if (user) {
-                        window.NetworkPulseService.init(user.uid || user.id);
-                        window.NetworkPulseWidget.render('network-pulse-root');
-                    }
-                }
+
             } catch (e) {
                 console.error('❌ [DashboardView] Error loading widgets:', e);
             }

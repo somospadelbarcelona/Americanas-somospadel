@@ -16,11 +16,19 @@ class NotificationService {
         this.chatUnsubscribes = new Map(); // Usar Map para trackear por EventID
         this.serviceStartTime = Date.now();
         this.token = null;
+        this.hasLoadedInitialBatch = false;
         this.init();
     }
 
     init() {
-        // 1. Escuchar autenticación real de Firebase
+        // 1. Verificar si window.auth existe, si no, esperar un poco (Fix para Mobile Race Conditions)
+        if (!window.auth) {
+            console.warn("⏳ [NotificationService] window.auth not ready, retrying in 500ms...");
+            setTimeout(() => this.init(), 500);
+            return;
+        }
+
+        // Escuchar autenticación real de Firebase
         window.auth.onAuthStateChanged(user => {
             if (user) {
                 console.log("🔔 [NotificationService] Firebase Auth session detected:", user.uid);
@@ -143,15 +151,20 @@ class NotificationService {
                 this.initChatObserver();
 
                 // NEW: Visual feedback for local/dev environment
+                let isFirstLoad = !this.hasLoadedInitialBatch;
+
                 if (snapshot.docChanges().length > 0) {
                     snapshot.docChanges().forEach(change => {
                         if (change.type === 'added') {
                             const data = change.doc.data();
-                            if (!data.read) {
+
+                            // Only show visual toasts for NEW arrivals after initial load
+                            // to prevent clumping on startup
+                            if (!data.read && !isFirstLoad) {
                                 console.log("📣 NEW NOTIFICATION RECEIVED:", data.title, data.body);
                                 this.showNativeNotification(data.title, data.body, data.data);
 
-                                // Opcional: Feedback visual discreto si no hay permisos push
+                                // Feedback visual discreto si no hay permisos push
                                 const notificationSupported = 'Notification' in window;
                                 if (!notificationSupported || Notification.permission !== 'granted') {
                                     this.showInAppToast(data.title, data.body);
@@ -160,6 +173,8 @@ class NotificationService {
                         }
                     });
                 }
+
+                this.hasLoadedInitialBatch = true;
 
                 this.notifySubscribers();
                 this.updateAppBadge(); // NEW: Actualizar badge del icono de la app
@@ -548,25 +563,76 @@ class NotificationService {
     }
 
     /**
-     * Muestra un aviso visual dentro de la app (útil si el navegador bloquea push en local)
+     * Muestra un aviso visual dentro de la app con sistema de apilado (Stacking)
      */
     showInAppToast(title, body) {
+        // 1. Asegurar contenedor de Toasts
+        let container = document.getElementById('toast-stack-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-stack-container';
+            container.style.cssText = `
+                position: fixed;
+                bottom: 85px;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                flex-direction: column-reverse; /* Las nuevas van abajo */
+                gap: 10px;
+                pointer-events: none;
+                z-index: 999999;
+                width: 90%;
+                max-width: 380px;
+            `;
+            document.body.appendChild(container);
+        }
+
         const toast = document.createElement('div');
         toast.style.cssText = `
-            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
-            background: #CCFF00; color: black; padding: 15px 25px; border-radius: 40px;
-            font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 0.9rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 999999;
-            display: flex; align-items: center; gap: 15px; border: 2px solid black;
-            animation: slideUp 0.5s ease-out;
+            pointer-events: auto;
+            background: #CCFF00;
+            color: black;
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.85rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 2px solid black;
+            animation: slideUpToast 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s;
         `;
-        toast.innerHTML = `<i class="fas fa-bell"></i> <div><div style="font-size:0.7rem; opacity:0.7;">NOTIFICACIÓN</div>${title}</div>`;
-        document.body.appendChild(toast);
 
+        if (!document.getElementById('toast-animations')) {
+            const s = document.createElement('style');
+            s.id = 'toast-animations';
+            s.textContent = `@keyframes slideUpToast { from { opacity: 0; transform: translateY(30px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }`;
+            document.head.appendChild(s);
+        }
+
+        toast.innerHTML = `
+            <div style="width:34px; height:34px; background:rgba(0,0,0,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div style="flex:1;">
+                <div style="font-size:0.6rem; opacity:0.6; text-transform:uppercase; letter-spacing:1px; margin-bottom:1px;">AVISO RECIENTE</div>
+                <div style="line-height:1.2;">${title}</div>
+            </div>
+        `;
+
+        container.appendChild(toast);
+
+        // Auto-remove
         setTimeout(() => {
             toast.style.opacity = '0';
-            toast.style.transition = 'opacity 0.5s';
-            setTimeout(() => toast.remove(), 500);
+            toast.style.transform = 'translateY(-10px) scale(0.95)';
+            setTimeout(() => {
+                toast.remove();
+                if (container.children.length === 0) container.remove();
+            }, 300);
         }, 5000);
     }
 }

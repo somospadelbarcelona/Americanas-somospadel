@@ -33,7 +33,7 @@ window.WhatsAppService = {
     },
 
     /**
-     * Generates a formatted message for an event
+     * Generates a formatted message for an event (Legacy Layout from Image)
      */
     generateMessage(event, richPlayers = null) {
         if (!event) return '';
@@ -87,10 +87,15 @@ window.WhatsAppService = {
         if (spotsLeft === 0) msg += E.RED + " *COMPLETO*\n\n";
         else msg += E.STAR + " *" + spotsLeft + " PLAZAS LIBRES*\n\n";
 
-        if (isMixed && richPlayers) {
+        if ((isMixed || isFemale) && richPlayers) {
             const m = richPlayers.filter(p => ['male', 'chico', 'hombre', 'masculino'].includes((p.gender || '').toLowerCase())).length;
             const f = richPlayers.filter(p => ['female', 'chica', 'mujer', 'femenino'].includes((p.gender || '').toLowerCase())).length;
-            if (m + f > 0) msg += E.BALANCE + " *Balance:* " + E.MALE + " " + m + " - " + E.FEMALE + " " + f + "\n\n";
+
+            if (isMixed && (m + f > 0)) {
+                msg += E.BALANCE + " *Balance:* " + E.MALE + " " + m + " - " + E.FEMALE + " " + f + "\n\n";
+            } else if (isFemale && f > 0) {
+                msg += E.BALANCE + " *Jugadoras:* " + E.FEMALE + " " + f + "\n\n";
+            }
         }
 
         msg += "*Jugadores*\n\n";
@@ -98,23 +103,37 @@ window.WhatsAppService = {
         const displayList = richPlayers || players;
         displayList.forEach((p, index) => {
             let pName = p.name ? p.name.trim() : 'Jugador';
-            let gIcon = '';
+            let gIcon = '👤 ';
             const g = (p.gender || '').toLowerCase();
             if (['male', 'chico', 'hombre', 'masculino'].includes(g)) gIcon = E.MALE + " ";
             else if (['female', 'chica', 'mujer', 'femenino'].includes(g)) gIcon = E.FEMALE + " ";
 
-            const lvl = p.level || p.playtomic_level || '?.?';
-            const lvlStr = (lvl && lvl !== '?.?') ? " (" + E.BOLT + "N" + lvl + ")" : "";
-            msg += (index + 1) + ". " + gIcon + pName + lvlStr + "\n";
+            const lvl = p.level || p.playtomic_level || '';
+            const lvlStr = lvl ? " (" + E.BOLT + "N" + lvl + ")" : "";
+
+            // --- EQUIPO LOGIC (Added) ---
+            let teamStr = "";
+            const teams = p.teams || p.EQUIPOS || p.equipos || p.Equipos;
+            if (teams) {
+                const tName = Array.isArray(teams) ? teams[0] : String(teams).split(',')[0].trim();
+                if (tName) teamStr = ` [${tName.toUpperCase()}]`;
+            }
+
+            msg += (index + 1) + ". " + gIcon + pName + lvlStr + teamStr + "\n";
         });
 
-        // Numerical vacancies instead of just balls
+        // Vacancies
         for (let i = players.length; i < maxPlayers; i++) {
             msg += (i + 1) + ". " + E.TENNIS + " \n";
         }
 
+        // Base URL logic
+        const baseUrl = "https://somospadelbarcelona.github.io/Americanas-somospadel";
+        const sectionHash = isAmericana ? "#americanas" : "#entrenos";
+        const finalUrl = `${baseUrl}/${sectionHash}`;
+
         msg += "\n" + E.DOWN + " *INSCRIBETE AQUI:* \n";
-        msg += E.LINK + " https://somospadelbarcelona.github.io/Americanas-somospadel/#entrenos\n";
+        msg += E.LINK + " " + finalUrl + "\n";
 
         return msg;
     },
@@ -130,8 +149,15 @@ window.WhatsAppService = {
                 try {
                     const allUsers = await window.FirebaseDB.players.getAll();
                     richPlayers = event.players.map(p => {
-                        const user = allUsers.find(u => (u.id === p.id) || (u.uid === p.id));
-                        return { ...p, level: user ? (user.level || user.self_rate_level || p.level) : p.level, gender: user ? user.gender : null };
+                        const pid = (typeof p === 'string') ? p : (p.id || p.uid);
+                        const user = allUsers.find(u => (u.id === pid) || (u.uid === pid));
+                        return {
+                            ...p,
+                            name: (user ? user.name : (p.name || 'Jugador')),
+                            level: user ? (user.level || user.self_rate_level || p.level) : p.level,
+                            gender: user ? user.gender : (p.gender || null),
+                            teams: user ? (user.EQUIPOS || user.equipos || user.Equipos) : (p.teams || p.EQUIPOS || null)
+                        };
                     });
                 } catch (err) { console.warn(err); }
             }

@@ -1079,13 +1079,22 @@
             <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js?v=999"></script>
 
             <!-- Firebase SDK (v10 Compat) -->
-            <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js?v=999"></script>
-            <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js?v=999"></script>
-            <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js?v=999"></script>
+            <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+            <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+            <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
-            <!-- App Logic -->
-            <script src="js/firebase-config.js?v=999"></script>
-            <script src="js/firebase-init.js?v=999"></script>
+            <!-- App Logic: Config Inline to prevent Mobile Cache Errors -->
+            <script>
+                window.FIREBASE_CONFIG = {
+                    apiKey: "AIzaSyBCy8nN4wKL2Cqvxp_mkmYpsA923N1g5iE",
+                    authDomain: "americanas-somospadel.firebaseapp.com",
+                    projectId: "americanas-somospadel",
+                    storageBucket: "americanas-somospadel.firebasestorage.app",
+                    messagingSenderId: "638578709472",
+                    appId: "1:638578709472:web:bf99bbb7688a947b4bd185"
+                };
+            </script>
+            <script src="js/firebase-init.js?v=5005"></script>
 
             <!-- NEW ARCHITECTURE: CORE & SERVICES -->
             <script src="js/modules/core/Constants.js?v=2000"></script>
@@ -1119,6 +1128,10 @@
             </script>
 
             <!-- Admin Modules (Lazy Loaded Logic) -->
+            <script src="js/modules/logic/LevelReliabilityService.js"></script>
+            <script src="js/modules/logic/SmartAlertsService.js"></script>
+            <script src="js/modules/admin/AutopilotView.js"></script>
+
             <!-- Simulator (View) -->
             <script src="js/admin-simulator.js?v=5000"></script>
             <script src="js/modules/admin-simulator-view.js?v=5000"></script>
@@ -1127,7 +1140,7 @@
             <script src="js/modules/admin-results.js?v=4009"></script>
             <script src="js/modules/admin-users.js?v=1100"></script>
             <script src="js/modules/admin-americanas.js?v=4007"></script>
-            <script src="js/modules/common/WhatsAppService.js"></script>
+            <script src="js/modules/common/WhatsAppService.js?v=7003"></script>
             <script src="js/modules/admin-entrenos.js?v=5001"></script>
 
 
@@ -1801,18 +1814,12 @@
                     };
                 })();
             </script>
-            <!-- CORE SERVICES -->
-            <script src="js/modules/common/NotificationService.js"></script>
+            <!-- CORE SERVICES (Consolidated) -->
             <script src="js/modules/logic/MatchMakingService.js"></script>
             <script src="js/modules/americanas/AmericanaLogic.js"></script>
             <script src="js/modules/americanas/AmericanaService.js"></script>
 
-            <!-- ADMIN MODULES -->
-            <script>console.log("🧩 Loading LevelReliabilityService...");</script>
-            <script src="js/modules/logic/LevelReliabilityService.js"></script>
-            <script>console.log("✅ LevelReliabilityService script loaded. Service exists:", !!window.LevelReliabilityService);</script>
-            <script src="js/modules/logic/SmartAlertsService.js"></script>
-            <script src="js/modules/admin/AutopilotView.js"></script>
+            <!-- ADMIN AUTOMATION -->
             <script src="js/modules/logic/AutomationService.js"></script>
             <script>
                 // Initialize Automation Service (Auto-Generate 4h before)
@@ -1824,7 +1831,7 @@
                         } else {
                             console.error("❌ AutomationService not loaded!");
                         }
-                    }, 3000); // 3 seconds delay to ensure other services are ready
+                    }, 3000);
                 });
             </script>
 </body>
