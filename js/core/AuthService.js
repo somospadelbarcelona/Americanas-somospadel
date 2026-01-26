@@ -198,11 +198,46 @@
 
                 return { success: true, pendingValidation: true };
             } catch (error) {
-                console.warn("⚠️ Register failed:", error.message);
+                console.warn("⚠️ Firebase Auth Register failed:", error.code, error.message);
 
-                // Propagate clear errors to UI
+                // === LOCAL REGISTRATION FALLBACK ===
+                // Si Firebase Auth no está configurado (CONFIGURATION_NOT_FOUND) o falla,
+                // creamos el usuario directamente en Firestore como fallback.
+                const fatalErrors = ['auth/configuration-not-found', 'auth/operation-not-allowed', 'CONFIGURATION_NOT_FOUND'];
+                const errStr = typeof error === 'string' ? error : JSON.stringify(error);
+                const isConfigError = fatalErrors.some(e => errStr.includes(e) || (error.code && error.code === e));
+
+                if (isConfigError || error.code === 400) {
+                    console.log("🛠️ Intentando REGISTRO LOCAL (Solo Firestore)...");
+                    try {
+                        const localUid = 'local_' + phone + '_' + Date.now();
+                        const hashedPassword = await this.hashPassword(password);
+
+                        const userData = {
+                            ...additionalData,
+                            phone: phone,
+                            uid: localUid,
+                            id: localUid,
+                            password: hashedPassword,
+                            status: 'pending', // ⏳ PENDIENTE DE VALIDACIÓN MANUAL
+                            authMethod: 'local_fallback',
+                            createdAt: new Date().toISOString()
+                        };
+
+                        await window.FirebaseDB.players.create(userData);
+
+                        console.log("✅ Usuario registrado (Pendiente de validación)");
+                        return { success: true, pendingValidation: true };
+
+                    } catch (dbError) {
+                        console.error("Registro Local Falló:", dbError);
+                        return { success: false, error: "Error de registro (Local): " + dbError.message };
+                    }
+                }
+
+                // Propagar errores claros a la UI
                 if (error.code === 'auth/email-already-in-use') {
-                    return { success: false, error: "Este teléfono ya está registrado en el sistema de autenticación." };
+                    return { success: false, error: "Este teléfono ya está registrado." };
                 }
 
                 return { success: false, error: error.message || "Error desconocido en el registro" };

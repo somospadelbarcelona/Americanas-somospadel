@@ -84,20 +84,26 @@ window.AdminViews.users = async function () {
             `;
 
             return `
-                <tr class="pro-table-row" style="background: ${isPending ? 'rgba(255,165,0,0.05)' : 'transparent'}">
+                <tr class="pro-table-row" style="background: ${isPending ? 'rgba(255,165,0,0.12)' : 'transparent'}; border-left: ${isPending ? '4px solid #ff9800' : 'none'};">
                 <td>
                     <div class="pro-player-cell">
-                        <div class="pro-avatar" style="background: ${isSuper ? 'linear-gradient(135deg, #FFD700, #FFA500)' : (u.role === 'admin_player' ? 'var(--primary-glow)' : '')}; color: ${isSuper ? 'black' : 'white'}; box-shadow: ${isSuper ? '0 0 10px #FFD700' : 'none'};">${(u.name || '?').charAt(0)}</div>
+                        <div class="pro-avatar" style="background: ${isSuper ? 'linear-gradient(135deg, #FFD700, #FFA500)' : (u.role === 'admin_player' ? 'var(--primary-glow)' : (isPending ? '#ff9800' : ''))}; color: ${isSuper ? 'black' : 'white'}; box-shadow: ${isSuper ? '0 0 10px #FFD700' : 'none'};">
+                            ${isPending ? '⏳' : (u.name || '?').charAt(0)}
+                        </div>
                         <div>
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <div style="font-weight: 700; color: ${isSuper ? '#FFD700' : 'var(--text)'};">${u.name || 'Sin Nombre'}</div>
                                 ${u.membership === 'somospadel_bcn' ? '<span style="font-size:0.6rem; background: var(--primary); color:black; padding: 2px 5px; border-radius:4px; font-weight:700;">COMUNIDAD BCN</span>' : ''}
+                                ${isPending ? '<span style="font-size:0.55rem; background: #ff9800; color:black; padding: 2px 5px; border-radius:4px; font-weight:800; letter-spacing:1px; animation: blink 1.5s infinite;">SOLICITUD</span>' : ''}
                             </div>
                             <div style="font-size: 0.7rem; font-weight: 500; color: ${isSuper ? '#FFD700' : (u.role === 'admin_player' ? 'var(--primary)' : 'var(--text-muted)')};">
                                 ${roleBadge}
                             </div>
                         </div>
                     </div>
+                    <style>
+                        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+                    </style>
                 </td>
                 
                 <!-- NEW TEAMS COLUMN -->
@@ -117,14 +123,7 @@ window.AdminViews.users = async function () {
                         ${(() => {
                     if (window.LevelReliabilityService) {
                         const rel = window.LevelReliabilityService.getReliability(u);
-                        // console.log(`[UI] Reliability for ${u.name}:`, rel);
-                        return `
-                                    <i class="fas ${rel.icon}" 
-                                       style="color: ${rel.color} !important; font-size: 0.8rem; cursor: help;" 
-                                       title="${rel.label}${rel.daysInactive !== Infinity ? ` (hace ${rel.daysInactive} días)` : ''}"></i>
-                                `;
-                    } else {
-                        console.error("[CRITICAL] LevelReliabilityService NOT FOUND in window. Still rendering without semaphore.");
+                        return `<i class="fas ${rel.icon}" style="color: ${rel.color} !important; font-size: 0.8rem; cursor: help;" title="${rel.label}"></i>`;
                     }
                     return '';
                 })()}
@@ -150,14 +149,14 @@ window.AdminViews.users = async function () {
                 </td>
 
                 <td>
-                     <span class="pro-category-badge" style="background: ${u.status === 'active' ? 'var(--primary)' : 'transparent'}; color: ${u.status === 'active' ? 'black' : 'var(--warning)'}; border-color: ${u.status === 'active' ? 'var(--primary)' : 'var(--warning)'}; font-weight: 800;">
+                     <span class="pro-category-badge" style="background: ${isPending ? '#ff9800' : (u.status === 'active' ? 'var(--primary)' : 'transparent')}; color: ${isPending ? 'black' : (u.status === 'active' ? 'black' : 'var(--warning)')}; border-color: ${isPending ? '#ff9800' : (u.status === 'active' ? 'var(--primary)' : 'var(--warning)')}; font-weight: 800;">
                         ${(u.status === 'active' ? 'ACTIVO' : (u.status || 'PENDIENTE')).toUpperCase()}
                     </span>
                 </td>
                 <td style="text-align: right;">
                     <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
                         ${canManageUsers ? `
-                            ${isPending ? `<button class="btn-primary-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick="approveUser('${u.id}')">VALIDAR</button>` : ''}
+                            ${isPending ? `<button class="btn-primary-pro" style="padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 950; background: #00E36D; color: black; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 227, 109, 0.4);" onclick="approveUser('${u.id}')">🚀 VALIDAR</button>` : ''}
                             <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick='openEditUserModal(${JSON.stringify(u).replace(/'/g, "&#39;")})'>EDITAR</button>
                             <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; color: var(--danger); border-color: var(--danger-dim);" onclick="deleteUser('${u.id}')">🗑️</button>
                         ` : '<span style="color:var(--text-muted); font-size:0.7rem;">👁️ SOLO LECTURA</span>'}

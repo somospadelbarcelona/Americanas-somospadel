@@ -116,6 +116,7 @@
                             if (btn) btn.textContent = originalText;
                         } else {
                             alert("✅ ¡Cuenta Creada! Iniciando sesión...");
+                            setTimeout(() => window.location.reload(), 1000);
                         }
                     } catch (err) {
                         alert("❌ Error Inesperado: " + err.message);

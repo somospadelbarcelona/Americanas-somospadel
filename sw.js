@@ -32,7 +32,7 @@ try {
     });
 } catch (e) { console.error("[SW] Firebase init error", e); }
 
-const CACHE_NAME = 'somospadel-pro-v25';
+const CACHE_NAME = 'somospadel-pro-v30';
 const STATIC_RESOURCES = [
     './',
     './index.html',

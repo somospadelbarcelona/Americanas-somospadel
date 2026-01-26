@@ -12,6 +12,9 @@
         init() {
             if (!('serviceWorker' in navigator)) return;
 
+            // LIMPIEZA FORZADA: Eliminar cachés antiguos que apuntan a rutas incorrectas
+            this.cleanupOldCaches();
+
             // Escuchar cambios de controlador (cuando el nuevo SW toma el control)
             navigator.serviceWorker.addEventListener('controllerchange', () => {
                 console.log("🔄 UpdateManager: New version active. Reloading...");
@@ -38,6 +41,23 @@
                     });
                 });
             });
+        }
+
+        async cleanupOldCaches() {
+            try {
+                const cacheNames = await caches.keys();
+                const oldCaches = cacheNames.filter(name =>
+                    name.includes('somospadel') && !name.includes('v28')
+                );
+
+                if (oldCaches.length > 0) {
+                    console.log(`🧹 Limpiando ${oldCaches.length} cachés antiguos...`);
+                    await Promise.all(oldCaches.map(name => caches.delete(name)));
+                    console.log('✅ Cachés antiguos eliminados');
+                }
+            } catch (e) {
+                console.warn('⚠️ Error limpiando cachés:', e);
+            }
         }
 
         promptUpdate(registration) {
