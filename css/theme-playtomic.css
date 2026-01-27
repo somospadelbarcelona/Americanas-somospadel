@@ -3928,3 +3928,100 @@ border: 2px solid white;
     background: rgba(204, 255, 0, 0.1);
     color: white;
 }
+
+/* ========================================
+   MOBILE OPTIMIZATION (iPhone & Small Screens)
+   ======================================== */
+
+/* iPhone & Small Mobile Devices (max-width: 390px) */
+@media only screen and (max-width: 390px) {
+
+    /* Optimizar el cmd-bar para que quepa en una línea */
+    .cmd-bar {
+        padding: 8px 12px !important;
+        height: 56px !important;
+    }
+
+    /* Reducir tamaño del logo */
+    .cmd-brand img {
+        height: 28px !important;
+        width: auto !important;
+    }
+
+    /* Reducir espaciado entre logo y texto */
+    .cmd-brand {
+        gap: 6px !important;
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* Reducir tamaño de fuente del texto principal */
+    .cmd-brand>div>span:first-child {
+        font-size: 0.65rem !important;
+        letter-spacing: -0.8px !important;
+    }
+
+    /* Reducir tamaño del subtítulo */
+    .cmd-brand>div>span:last-child {
+        font-size: 0.4rem !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    /* Reducir espaciado del contenedor del avatar */
+    .cmd-avatar-container {
+        gap: 6px !important;
+        padding: 3px 6px !important;
+    }
+
+    /* Reducir tamaño del texto del usuario */
+    .cmd-avatar-container>div>span:first-child {
+        font-size: 0.4rem !important;
+    }
+
+    .cmd-avatar-container>div>span:last-child {
+        font-size: 0.6rem !important;
+        max-width: 50px !important;
+    }
+
+    /* Reducir tamaño del avatar */
+    .cmd-avatar {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 0.7rem !important;
+    }
+
+    /* Reducir tamaño del icono de logout */
+    .cmd-avatar-container>div:last-child {
+        font-size: 0.85rem !important;
+        padding: 3px !important;
+    }
+
+    /* Reducir tamaño del botón hamburguesa */
+    .header-burger-btn {
+        font-size: 1.1rem !important;
+        padding: 4px !important;
+    }
+}
+
+/* Tablets y móviles medianos (391px - 768px) */
+@media only screen and (min-width: 391px) and (max-width: 768px) {
+    .cmd-bar {
+        padding: 10px 15px !important;
+    }
+
+    .cmd-brand img {
+        height: 30px !important;
+    }
+
+    .cmd-brand {
+        gap: 8px !important;
+    }
+
+    .cmd-brand>div>span:first-child {
+        font-size: 0.75rem !important;
+    }
+
+    .cmd-brand>div>span:last-child {
+        font-size: 0.45rem !important;
+    }
+}

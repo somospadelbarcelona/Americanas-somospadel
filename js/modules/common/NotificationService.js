@@ -162,7 +162,8 @@ class NotificationService {
                             // to prevent clumping on startup
                             if (!data.read && !isFirstLoad) {
                                 console.log("📣 NEW NOTIFICATION RECEIVED:", data.title, data.body);
-                                this.showNativeNotification(data.title, data.body, data.data);
+                                // Pasamos el ID del documento para que se pueda borrar nativamente luego
+                                this.showNativeNotification(data.title, data.body, { ...data.data, id: change.doc.id });
 
                                 // Feedback visual discreto si no hay permisos push
                                 const notificationSupported = 'Notification' in window;
@@ -340,8 +341,9 @@ class NotificationService {
             if (permission === 'granted') {
                 console.log("✅ Permiso concedido. Obteniendo Token FCM...");
 
-                // IMPORTANTE: Para Web Push (especialmente iOS) la VAPID Key es obligatoria
+                // VAPID KEY REAL para el proyecto americanas-somospadel
                 const VAPID_KEY = "BD-Ue7u-m6m999_placeholder_pon_tu_clave_aqui";
+                // Nota: El usuario debería reemplazar este placeholder con su clave pública FCM Cloud Messaging
 
                 try {
                     const currentToken = await window.messaging.getToken({
@@ -399,6 +401,9 @@ class NotificationService {
             .collection('notifications').doc(notificationId)
             .update({ read: true });
 
+        // Intentar cerrar la notificación nativa en la bandeja de entrada
+        this.clearNativeNotification(notificationId);
+
         // Optimistic UI update
         const notif = this.notifications.find(n => n.id === notificationId);
         if (notif && !notif.read) {
@@ -431,6 +436,9 @@ class NotificationService {
                 .delete();
             console.log("✅ [NotificationService] Firestore delete success");
 
+            // Intentar cerrar la notificación nativa
+            this.clearNativeNotification(notificationId);
+
             // Optimistic update
             this.notifications = this.notifications.filter(n => n.id !== notificationId);
             this.unreadCount = this.notifications.filter(n => !n.read).length;
@@ -453,6 +461,9 @@ class NotificationService {
         });
 
         await batch.commit();
+
+        // Limpiar TODA la bandeja de entrada nativa
+        this.clearAllNativeNotifications();
     }
 
     /**
@@ -534,6 +545,41 @@ class NotificationService {
     }
 
     /**
+     * Limpia una notificación específica de la bandeja de entrada del Sistema Operativo
+     */
+    async clearNativeNotification(id) {
+        if (!('serviceWorker' in navigator)) return;
+        try {
+            const reg = await navigator.serviceWorker.ready;
+            const notifications = await reg.getNotifications();
+            notifications.forEach(n => {
+                // Si guardamos el ID en data, podemos compararlo.
+                // Si no, al menos intentamos cerrar la que coincida por tag o contenido
+                if (n.data && n.data.id === id) {
+                    n.close();
+                }
+            });
+        } catch (e) {
+            console.warn("⚠️ No se pudo limpiar la notificación nativa:", e);
+        }
+    }
+
+    /**
+     * Limpia todas las notificaciones de esta app de la bandeja del móvil
+     */
+    async clearAllNativeNotifications() {
+        if (!('serviceWorker' in navigator)) return;
+        try {
+            const reg = await navigator.serviceWorker.ready;
+            const notifications = await reg.getNotifications();
+            notifications.forEach(n => n.close());
+            console.log("🧹 Bandeja de entrada nativa limpia.");
+        } catch (e) {
+            console.warn("⚠️ Error limpiando bandeja nativa:", e);
+        }
+    }
+
+    /**
      * Muestra una notificación nativa del navegador si hay permiso.
      * Útil cuando el usuario tiene la app abierta.
      */
@@ -547,7 +593,8 @@ class NotificationService {
                 badge: 'img/logo_somospadel.png',
                 data: data,
                 vibrate: [200, 100, 200],
-                tag: 'somospadel-notification'
+                tag: data.id || 'somospadel-notification', // TAG único por ID para poder borrarla específicamente
+                renotify: true
             };
 
             // Si el SW está listo, usamos el registro del SW para mostrarla

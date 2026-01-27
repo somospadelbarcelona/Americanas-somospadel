@@ -25,14 +25,58 @@ try {
             body: payload.notification.body,
             icon: '/img/logo_somospadel.png',
             badge: '/img/logo_somospadel.png',
+            tag: payload.data?.tag || 'somospadel-general', // Ayuda a agrupar y gestionar borrado
+            renotify: true,
             data: payload.data
         };
 
-        self.registration.showNotification(notificationTitle, notificationOptions);
+        return self.registration.showNotification(notificationTitle, notificationOptions);
     });
 } catch (e) { console.error("[SW] Firebase init error", e); }
 
-const CACHE_NAME = 'somospadel-pro-v35';
+// Evento: Click en Notificación (SOLUCIONA que no se borren)
+self.addEventListener('notificationclick', (event) => {
+    console.log('[SW] Notification click Received.');
+
+    // 1. Cerrar la notificación inmediatamente
+    event.notification.close();
+
+    // 2. Definir URL de destino
+    const urlToOpen = event.notification.data?.url || '/';
+
+    // 3. Abrir o enfocar ventana
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+            // Si ya hay una ventana abierta, enfocarla y navegar
+            for (let i = 0; i < windowClients.length; i++) {
+                const client = windowClients[i];
+                if ('focus' in client) {
+                    return client.focus().then(c => {
+                        if (urlToOpen !== '/') c.navigate(urlToOpen);
+                    });
+                }
+            }
+            // Si no hay ventana, abrir una nueva
+            if (clients.openWindow) {
+                return clients.openWindow(urlToOpen);
+            }
+        })
+    );
+});
+
+// Evento: Cierre manual por el usuario (swipe)
+self.addEventListener('notificationclose', (event) => {
+    console.log('[SW] Notification was closed/swiped away', event.notification.tag);
+});
+
+// Forzar actualización inmediata si el usuario lo pide desde la UI
+self.addEventListener('message', (event) => {
+    if (event.data === 'skipWaiting') {
+        self.skipWaiting();
+    }
+});
+
+const CACHE_NAME = 'somospadel-pro-v36';
 const STATIC_RESOURCES = [
     './',
     './index.html',

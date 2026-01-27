@@ -15,8 +15,7 @@
                 { id: 'clinica', label: 'ESCUELA', icon: 'fa-graduation-cap', color: '#f472b6' },
                 { id: 'live', label: 'ACTIVOS', icon: 'fa-users', color: '#00E36D' },
                 { id: 'weather', label: 'VELOCIDAD', icon: 'fa-bolt', color: '#fbbf24' },
-                { id: 'matches', label: 'EVENTOS', icon: 'fa-star', color: '#ca8a04' },
-                { id: 'growth', label: 'INSIGHT', icon: 'fa-chart-line', color: '#0ea5e9' }
+                { id: 'matches', label: 'EVENTOS', icon: 'fa-star', color: '#ca8a04' }
             ];
         }
 
@@ -139,57 +138,61 @@
             if (!container) return;
 
             container.innerHTML = `
-                <div class="story-feed-v3-wrapper" style="position: relative; padding: 8px 0;">
-                    <!-- GRID DE ESFERAS RESPONSIVE -->
+                <div class="story-feed-v3-wrapper" style="position: relative; padding: 4px 0;">
+                    <!-- FLEX LAYOUT FOR MOBILE (5 SPHERES + LIVE) -->
                     <div style="
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(55px, 1fr));
-                        gap: 12px;
-                        padding: 8px 15px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: flex-start;
+                        gap: 8px;
+                        padding: 8px 12px;
                         max-width: 100%;
-                        justify-items: center;
+                        overflow: hidden;
                     ">
-                        <!-- STORY ITEMS (6 ESFERAS) -->
-                        ${this.stories.map(story => `
-                            <div class="story-v3-item" onclick="window.StoryFeedWidget.showStory('${story.id}')">
-                                <div class="story-v3-outer">
+                        <!-- STORY ITEMS (LIMIT TO 5) -->
+                        ${this.stories.slice(0, 5).map(story => `
+                            <div class="story-v3-item" style="flex: 1; min-width: 0;" onclick="window.StoryFeedWidget.showStory('${story.id}')">
+                                <div class="story-v3-outer" style="width: 44px; height: 44px; margin: 0 auto;">
                                     <div class="story-v3-inner">
-                                        <i class="fas ${story.icon}" style="color: ${story.color}; font-size: 0.95rem;"></i>
+                                        <i class="fas ${story.icon}" style="color: ${story.color}; font-size: 0.85rem;"></i>
                                     </div>
                                 </div>
-                                <span class="story-v3-label">${story.label}</span>
+                                <span class="story-v3-label" style="font-size: 0.5rem; margin-top: 4px;">${story.label}</span>
                             </div>
                         `).join('')}
 
-                        <!-- INSTAGRAM STYLE LIVE HUB -->
-                        <div style="
-                            width: 50px; 
-                            height: 50px; 
-                            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); 
-                            border-radius: 18px; 
-                            display: flex; 
-                            flex-direction: column; 
-                            align-items: center; 
-                            justify-content: center; 
-                            box-shadow: 0 4px 15px rgba(188,24,136,0.3);
-                            position: relative;
-                            cursor: pointer;
-                            margin-bottom: 15px;
-                            border: 2px solid #000;
-                        " onclick="window.StoryFeedWidget.showStory('live')">
-                            <i class="fas fa-video" style="font-size: 1.1rem; color: #fff; filter: drop-shadow(0 0 5px rgba(255,255,255,0.3));"></i>
+                        <!-- INSTAGRAM STYLE LIVE HUB (6th Position) -->
+                        <div class="story-v3-item" style="flex: 1; min-width: 0;" onclick="window.StoryFeedWidget.showStory('live')">
                             <div style="
-                                position: absolute;
-                                bottom: -5px;
-                                background: #ed4956;
-                                color: #fff;
-                                font-size: 0.45rem;
-                                font-weight: 900;
-                                padding: 1px 4px;
-                                border-radius: 4px;
+                                width: 44px; 
+                                height: 44px; 
+                                background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); 
+                                border-radius: 16px; 
+                                display: flex; 
+                                flex-direction: column; 
+                                align-items: center; 
+                                justify-content: center; 
+                                box-shadow: 0 4px 12px rgba(188,24,136,0.3);
+                                position: relative;
+                                cursor: pointer;
                                 border: 1.5px solid #000;
-                                letter-spacing: 0.5px;
-                            ">LIVE</div>
+                                margin: 0 auto;
+                            ">
+                                <i class="fas fa-video" style="font-size: 1rem; color: #fff; filter: drop-shadow(0 0 3px rgba(255,255,255,0.3));"></i>
+                                <div style="
+                                    position: absolute;
+                                    bottom: -4px;
+                                    background: #ed4956;
+                                    color: #fff;
+                                    font-size: 0.4rem;
+                                    font-weight: 950;
+                                    padding: 0px 3px;
+                                    border-radius: 3px;
+                                    border: 1px solid #000;
+                                    letter-spacing: 0.2px;
+                                ">LIVE</div>
+                            </div>
+                            <span class="story-v3-label" style="font-size: 0.5rem; margin-top: 4px;">LIVE</span>
                         </div>
                     </div>
                 </div>

@@ -175,13 +175,31 @@
                             </div>
                         </div>
                         
-                        <div id="live-scroller-content" class="live-scroller" style="overflow-x: auto; display: flex; padding: 5px 8px 10px; gap: 8px !important; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
-                            <!-- SKELETON PLACEHOLDERS TO START "FULL" -->
-                            ${Array(4).fill(0).map(() => `
-                                <div style="min-width: 265px; height: 140px; background: rgba(0,0,0,0.03); border-radius: 18px; border: 1px solid rgba(0,0,0,0.05); overflow: hidden; position: relative; flex-shrink: 0; scroll-snap-align: center;">
-                                    <div style="position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); transform: translateX(-100%); animation: skeletonShine 1.5s infinite;"></div>
-                                </div>
-                            `).join('')}
+                        <div id="live-scroller-content" style="overflow: hidden; width: 100%; position: relative;">
+                            <style>
+                                @keyframes marqueeNews {
+                                    0% { transform: translateX(0); }
+                                    100% { transform: translateX(-50%); }
+                                }
+                                .news-marquee-track {
+                                    display: flex;
+                                    gap: 12px;
+                                    width: max-content;
+                                    animation: marqueeNews 40s linear infinite;
+                                    padding: 5px 8px 15px;
+                                }
+                                .news-marquee-track:hover {
+                                    animation-play-state: paused;
+                                }
+                            </style>
+                            <div id="live-scroller-inner" class="news-marquee-track">
+                                <!-- SKELETON PLACEHOLDERS -->
+                                ${Array(4).fill(0).map(() => `
+                                    <div style="min-width: 265px; height: 140px; background: rgba(0,0,0,0.03); border-radius: 18px; border: 1px solid rgba(0,0,0,0.05); overflow: hidden; position: relative; flex-shrink: 0;">
+                                        <div style="position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); transform: translateX(-100%); animation: skeletonShine 1.5s infinite;"></div>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
                     </div>
 
@@ -930,8 +948,8 @@
                             </div>
                             
                             <div style="position:relative; z-index:3;">
-                                <div style="color:white; font-size:0.7rem; font-weight:800; opacity:0.9; text-transform:uppercase; letter-spacing:1px;">NUEVO EVENTO</div>
-                                <h4 style="margin:5px 0; color:white; font-size:1.25rem; font-weight:1000; line-height:1.1;">${topEvt.name.toUpperCase()}</h4>
+                                <div style="color:white; font-size:0.65rem; font-weight:800; opacity:0.9; text-transform:uppercase; letter-spacing:1px;">NUEVO EVENTO</div>
+                                <h4 style="margin:2px 0; color:white; font-size:0.95rem; font-weight:1000; line-height:1.2; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; max-height: 2.4em;">${topEvt.name.toUpperCase()}</h4>
                                 <div style="font-size: 0.8rem; color: #fff; font-weight: 900; background:rgba(0,0,0,0.2); display:inline-block; padding:4px 10px; border-radius:8px; margin-top:5px;">
                                     🚀 ¡APÚNTATE YA!
                                 </div>
@@ -964,7 +982,7 @@
                                 <span style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; letter-spacing:1px;">${this.formatDateShort(am.date)}</span>
                             </div>
                             <div style="position:relative; z-index:3;">
-                                <h4 style="margin:0; color:white; font-size:1.1rem; font-weight:1000; line-height:1.1; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${am.name}</h4>
+                                <h4 style="margin:0; color:white; font-size:0.9rem; font-weight:1000; line-height:1.2; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${am.name}</h4>
                                 <div style="display:flex; align-items:center; gap:8px; margin-top:10px;">
                                     <span style="font-size:0.75rem; color:white; font-weight:900; background:rgba(0,0,0,0.2); padding:2px 8px; border-radius:5px;">REGISTRAR →</span>
                                 </div>
@@ -1003,9 +1021,12 @@
                     `);
                 });
 
-                const scroller = document.getElementById('live-scroller-content');
+                const scroller = document.getElementById('live-scroller-inner');
                 const html = itemsHtml.join('');
-                if (scroller) scroller.innerHTML = html;
+                if (scroller) {
+                    // Duplicamos el contenido para el loop infinito del marquee
+                    scroller.innerHTML = html + html;
+                }
                 return html;
             } catch (err) {
                 console.error("renderLiveWidget Error:", err);
@@ -1110,18 +1131,8 @@
 
             try {
                 // 1. Load Registration Cards (Intelligent Ticker)
-                this.renderLiveWidget(context).then(widgetHtml => {
-                    const scroller = document.getElementById('live-scroller-content');
-                    if (scroller && widgetHtml) {
-                        scroller.innerHTML = `
-                            <div class="ticker-content" style="padding-left: 20px;">
-                                ${widgetHtml} ${widgetHtml} ${widgetHtml}
-                            </div>
-                        `;
-                    }
-                }).catch(e => {
-                    console.error("Widget render failed", e);
-                });
+                // renderLiveWidget ya se encarga de inyectar en 'live-scroller-inner'
+                this.renderLiveWidget(context);
 
 
                 // 3. Load Activity Feed
@@ -1145,19 +1156,81 @@
                     const style = document.createElement('style');
                     style.id = 'activity-feed-styles';
                     style.textContent = `
-                        @keyframes gradientFlow {
-                            0% { background-position: 0% 50%; }
-                            50% { background-position: 100% 50%; }
-                            100% { background-position: 0% 50%; }
+                        @keyframes timelinePulse {
+                            0% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0.4); }
+                            70% { box-shadow: 0 0 0 10px rgba(0, 227, 109, 0); }
+                            100% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0); }
                         }
-                        @keyframes pulseGlow {
-                            0% { opacity: 0.5; transform: scale(0.95); }
-                            50% { opacity: 1; transform: scale(1.1); filter: brightness(1.2); }
-                            100% { opacity: 0.5; transform: scale(0.95); }
+                        @keyframes showtimeSlide {
+                            0% { opacity: 0; transform: translateX(-30px) skewX(-15deg) scale(0.8); filter: brightness(3) blur(10px); }
+                            70% { transform: translateX(5px) skewX(0deg) scale(1.05); filter: brightness(1.2) blur(0px); }
+                            100% { opacity: 1; transform: translateX(0) skewX(0deg) scale(1); filter: brightness(1) blur(0px); }
                         }
-                        @keyframes slideInUp {
-                            from { opacity: 0; transform: translateY(20px); }
-                            to { opacity: 1; transform: translateY(0); }
+                        @keyframes glint {
+                            0% { left: -100%; }
+                            20% { left: 100%; }
+                            100% { left: 100%; }
+                        }
+                        .activity-timeline-line {
+                            position: absolute;
+                            left: 24px;
+                            top: 10px;
+                            bottom: 10px;
+                            width: 2px;
+                            background: linear-gradient(to bottom, transparent, rgba(0,227,109,0.3), transparent);
+                        }
+                        .activity-glass-card {
+                            background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%);
+                            backdrop-filter: blur(20px);
+                            border: 1px solid rgba(255, 255, 255, 0.08);
+                            border-radius: 12px;
+                            padding: 16px 18px 16px 50px;
+                            position: relative;
+                            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                            cursor: pointer;
+                            overflow: hidden;
+                            margin-bottom: 2px;
+                        }
+                        .activity-glass-card::before {
+                            content: '';
+                            position: absolute;
+                            top: 0; left: -100%;
+                            width: 100%; height: 100%;
+                            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+                            animation: glint 5s infinite linear;
+                        }
+                        /* Look "TV Show" Scanlines */
+                        .activity-glass-card::after {
+                            content: '';
+                            position: absolute;
+                            inset: 0;
+                            background: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255,255,255,0.02) 2px);
+                            pointer-events: none;
+                        }
+                        .activity-glass-card:hover {
+                            background: rgba(255, 255, 255, 0.12);
+                            transform: scale(1.03) translateX(10px) rotate(-0.5deg);
+                            border-color: rgba(204, 255, 0, 0.5);
+                            box-shadow: -10px 10px 30px rgba(0,0,0,0.5);
+                        }
+                        .activity-dot {
+                            position: absolute;
+                            left: 17px;
+                            top: 50%;
+                            transform: translateY(-50%);
+                            width: 14px;
+                            height: 14px;
+                            border-radius: 4px;
+                            z-index: 2;
+                            border: 2px solid #000;
+                            box-shadow: 0 0 15px currentColor;
+                        }
+                        .activity-impact-badge {
+                            position: absolute;
+                            top: 0; left: 0;
+                            width: 4px; height: 100%;
+                            background: currentColor;
+                            box-shadow: 0 0 15px currentColor;
                         }
                     `;
                     document.head.appendChild(style);
@@ -1172,27 +1245,31 @@
 
                 registrations.forEach(reg => {
                     let catColor = '#00E36D'; // Default Green (Entrenos/Other)
-                    let catColorSec = '#86efac';
                     const lowerName = reg.eventName.toLowerCase();
 
                     if (lowerName.includes('femenin') || lowerName.includes('chicas') || lowerName.includes('female')) {
                         catColor = '#FF2D55'; // Pink
-                        catColorSec = '#ff5c8d';
                     } else if (lowerName.includes('mixt') || lowerName.includes('mix')) {
                         catColor = '#FFD700'; // Yellow
-                        catColorSec = '#fde047';
                     } else if (lowerName.includes('masculin') || lowerName.includes('chicos') || lowerName.includes('male')) {
                         catColor = '#00C4FF'; // Blue
-                        catColorSec = '#7dd3fc';
                     }
+
+                    // Lógica de colores de equipo idéntica a EventsController_V6
+                    const t = reg.playerTeam ? reg.playerTeam.toUpperCase() : '';
+                    let teamColor = '#38bdf8'; // Default Cyan (3º)
+                    if (t.includes('4º')) teamColor = '#84cc16'; // Neon Green
+                    if (t.includes('3º')) teamColor = '#38bdf8'; // Cyan
+                    if (t.includes('2º')) teamColor = '#f59e0b'; // Gold/Orange
+                    if (t.includes('MIXTO')) teamColor = '#ef4444'; // Red
 
                     activities.push({
                         type: 'registration',
                         icon: '🎾',
-                        title: `<span style="color:white;">${reg.playerName}</span> se unió a <span style="color:${catColorSec}; text-transform:uppercase;">${reg.eventName}</span>`,
+                        title: reg.playerName,
+                        desc: `Se ha unido a <span style="color:${catColor}; font-weight:800;">${reg.eventName}</span>${reg.playerTeam ? `<br><span style="color:${teamColor}; font-size:0.65rem; font-weight:950; letter-spacing:1px; text-shadow: 0 0 8px ${teamColor}60; border-bottom: 2px solid ${teamColor}; padding-bottom: 1px;">${t}</span>` : ''}`,
                         time: this.formatRelativeTime(reg.timestamp),
                         color: catColor,
-                        secondaryColor: catColorSec,
                         timestamp: reg.timestamp,
                         score: 0
                     });
@@ -1202,13 +1279,14 @@
                     activities.push({
                         type: 'urgent',
                         icon: '🚨',
-                        title: alert.title,
+                        title: '¡ÚLTIMA HORA!',
+                        desc: alert.title,
                         time: 'ahora',
                         color: '#ef4444',
-                        secondaryColor: '#f87171',
                         timestamp: alert.timestamp,
                         priority: 'critical',
-                        score: 0
+                        score: 0,
+                        action: 'Entrenos'
                     });
                 });
 
@@ -1216,68 +1294,89 @@
                     activities.push({
                         type: 'ranking',
                         icon: change.position === 1 ? '👑' : '📈',
-                        title: `${change.playerName} ${change.position === 1 ? 'lidera el ranking' : `está en TOP ${change.position}`}`,
+                        title: change.playerName,
+                        desc: `${change.position === 1 ? '¡NUEVO LÍDER!' : `Entra en el TOP ${change.position}`} del ranking`,
                         time: this.formatRelativeTime(change.timestamp),
                         color: '#f59e0b',
-                        secondaryColor: '#fbbf24',
                         timestamp: change.timestamp,
                         score: 0
                     });
                 });
 
-                activities.forEach(a => {
-                    a.score = this.calculateActivityScore(a);
-                    if (!a.secondaryColor) a.secondaryColor = a.color;
-                });
+                activities.sort((a, b) => b.timestamp - a.timestamp);
+                const top6 = activities.slice(0, 6);
 
-                const top5 = activities.sort((a, b) => b.score - a.score).slice(0, 5);
-
-                if (top5.length === 0) {
+                if (top6.length === 0) {
                     return `
-                        <div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.4);">
-                            <i class="fas fa-inbox" style="font-size: 1.5rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
-                            <div style="font-size: 0.75rem; font-weight: 700;">Sin actividad reciente</div>
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.03); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                <i class="fas fa-radar" style="color:rgba(255,255,255,0.2); font-size: 1.5rem; animation: pulseGlow 2s infinite;"></i>
+                            </div>
+                            <div style="color: rgba(255,255,255,0.3); font-size: 0.8rem; font-weight: 700; letter-spacing: 1px;">RADAR BUSCANDO ACTIVIDAD...</div>
                         </div>
                     `;
                 }
 
-                return top5.map((activity, index) => `
-                    <div class="activity-item-hover" style="position: relative; display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: linear-gradient(135deg, ${activity.color}25 0%, rgba(20, 20, 30, 0.8) 100%); border-radius: 16px; margin-bottom: 10px; border: 1px solid ${activity.color}30; overflow: hidden; animation: slideInUp 0.6s ease-out backwards; animation-delay: ${index * 0.15}s; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);">
-                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: linear-gradient(180deg, ${activity.color}, ${activity.secondaryColor}, ${activity.color}); background-size: 100% 200%; animation: gradientFlow 3s infinite linear; box-shadow: 0 0 15px ${activity.color}60;"></div>
-                        <div style="font-size: 1.4rem; position: relative; z-index: 2; text-shadow: 0 0 20px ${activity.color}80; animation: pulseGlow 3s infinite ease-in-out; padding-left: 8px;">${activity.icon}</div>
-                        <div style="flex: 1; z-index: 2;">
-                            <div style="font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.9); line-height: 1.3;">${activity.title}</div>
-                            <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5); margin-top: 4px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${activity.color}; box-shadow: 0 0 8px ${activity.color}; animation: pulseGlow 1.5s infinite;"></span>
-                                ${activity.time}
-                            </div>
+                return `
+                    <div style="position: relative;">
+                        <div class="activity-timeline-line"></div>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            ${top6.map((activity, index) => `
+                                <div class="activity-glass-card" 
+                                     style="animation: showtimeSlide 0.6s both ${index * 0.12}s; color: ${activity.color};"
+                                     onclick="${activity.action ? `window.Router.navigate('${activity.action.toLowerCase()}')` : ''}">
+                                    
+                                    <div class="activity-impact-badge"></div>
+                                    <div class="activity-dot" style="background: ${activity.color}; ${index === 0 ? 'animation: timelinePulse 1.5s infinite;' : ''}"></div>
+                                    
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; position: relative; z-index: 1;">
+                                        <div style="flex: 1;">
+                                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                                <span style="font-size: 0.95rem; font-weight: 1000; color: white; text-transform: uppercase; letter-spacing: -0.5px; font-style: italic;">${activity.title}</span>
+                                                ${activity.priority === 'critical' ? `<span style="background: #ef4444; color: white; font-size: 0.55rem; font-weight: 1000; padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; animation: pulse 1s infinite; box-shadow: 0 0 15px #ef4444;">BREAKING</span>` : ''}
+                                            </div>
+                                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.7); font-weight: 700; line-height: 1.5; letter-spacing: 0.2px;">${activity.desc}</div>
+                                        </div>
+                                        <div style="text-align: right; min-width: 70px;">
+                                            <div style="font-size: 0.6rem; color: ${activity.color}; font-weight: 1000; text-transform: uppercase; opacity: 0.8; letter-spacing: 1px;">${activity.time}</div>
+                                            ${activity.action ? `
+                                                <div style="margin-top: 8px; font-size: 0.55rem; font-weight: 1000; color: #000; background: ${activity.color}; padding: 3px 10px; border-radius: 4px; display: inline-block; box-shadow: 0 4px 10px ${activity.color}40; transform: skewX(-10deg);">
+                                                    ${activity.action.toUpperCase()}
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
-                `).join('');
+                `;
             } catch (e) {
                 console.error('Activity Feed error:', e);
                 return '';
             }
         }
 
-        async getRecentRegistrations(minutesAgo = 60) {
+        async getRecentRegistrations(hoursAgo = 48) {
             try {
-                const cutoff = Date.now() - (minutesAgo * 60 * 1000);
+                const cutoff = Date.now() - (hoursAgo * 60 * 60 * 1000);
                 const events = window.AmericanaService ? await window.AmericanaService.getAllActiveEvents() : [];
                 const registrations = [];
 
                 events.forEach(event => {
                     const players = event.players || event.registeredPlayers || [];
                     if (players.length > 0) {
-                        const recentPlayers = players.slice(-Math.min(3, players.length));
-                        recentPlayers.forEach((playerId, index) => {
-                            const timestamp = Date.now() - (index * 15 * 60 * 1000);
-                            if (timestamp > cutoff) {
+                        players.forEach(p => {
+                            // Usar el joinedAt real si existe, si no, ignorar registros antiguos o sin fecha
+                            const joinDate = p.joinedAt ? new Date(p.joinedAt).getTime() : 0;
+
+                            if (joinDate > cutoff) {
                                 registrations.push({
                                     type: 'registration',
-                                    playerName: this.getPlayerName(playerId),
+                                    playerName: p.name || 'Jugador',
+                                    playerTeam: Array.isArray(p.team_somospadel) ? p.team_somospadel[0] : (p.team_somospadel || ''),
                                     eventName: event.name,
-                                    timestamp: timestamp,
+                                    timestamp: joinDate,
                                     eventId: event.id
                                 });
                             }
@@ -1364,12 +1463,19 @@
             return score;
         }
 
+        formatDateTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            return `${hours}:${minutes} ${day}/${month}`;
+        }
+
         formatRelativeTime(timestamp) {
-            const seconds = Math.floor((Date.now() - timestamp) / 1000);
-            if (seconds < 60) return 'ahora';
-            if (seconds < 3600) return `hace ${Math.floor(seconds / 60)} min`;
-            if (seconds < 86400) return `hace ${Math.floor(seconds / 3600)} h`;
-            return `hace ${Math.floor(seconds / 86400)} d`;
+            if (!timestamp) return '';
+            return this.formatDateTime(timestamp);
         }
 
         getPlayerName(playerId) {

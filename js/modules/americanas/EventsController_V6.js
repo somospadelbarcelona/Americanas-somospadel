@@ -1174,30 +1174,98 @@
                 `;
             }).join('');
 
+            modal.style.cssText = `position: fixed; inset: 0; background: #000; z-index: 30000; overflow-y: auto; font-family: 'Outfit', sans-serif; color: white; display: flex; flex-direction: column;`;
             modal.innerHTML = `
-                <div style="padding: 40px 20px; max-width: 1400px; margin: 0 auto; width: 100%;">
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Montserrat:wght@900&display=swap');
+                </style>
+                <div class="broadcast-container" style="padding: 40px 20px; max-width: 1400px; margin: 0 auto; width: 100%; box-sizing: border-box;">
                     <!-- HEADER HIGH-TECH -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; background: linear-gradient(90deg, rgba(0,0,0,0.8), rgba(15,23,42,0.5)); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
-                        <div>
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                    <div class="broadcast-header" style="
+                        display: flex; 
+                        justify-content: space-between; 
+                        align-items: center; 
+                        margin-bottom: 30px; 
+                        background: linear-gradient(90deg, rgba(0,0,0,0.8), rgba(15,23,42,0.5)); 
+                        padding: 25px; 
+                        border-radius: 20px; 
+                        border: 1px solid rgba(255,255,255,0.05); 
+                        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+                        gap: 20px;
+                    ">
+                        <div style="flex: 1; min-width: 250px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
+                            <div>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px; flex-wrap: wrap;">
                                 <span style="background: #CCFF00; color: #000; padding: 3px 12px; border-radius: 6px; font-weight: 950; font-size: 0.7rem; letter-spacing: 2px;">BROADCAST</span>
-                                <div style="width: 8px; height: 8px; background: #FF2D55; border-radius: 50%; animation: pulse 1s infinite;"></div>
-                                <span style="font-size: 0.65rem; font-weight: 900; color: #FF2D55; letter-spacing: 1px;">PRE-PARTY LIVE</span>
-                            </div>
-                            <h1 style="margin: 0; font-size: 2.2rem; font-weight: 950; text-transform: uppercase; letter-spacing: -2px; line-height: 0.9;">INSCRITOS <span style="color: #CCFF00; -webkit-text-stroke: 1px #CCFF00; -webkit-text-fill-color: transparent;">CONFIRMADOS</span></h1>
-                            <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 15px;">
-                                <p style="margin: 0; color: #fff; font-weight: 900; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">${evt.name}</p>
-                                <div style="display: flex; align-items: center; gap: 20px; color: #64748b; font-size: 0.8rem; font-weight: 800;">
-                                    <span style="display: flex; align-items: center; gap: 8px;"><i class="far fa-clock" style="color: #CCFF00; font-size: 1.1rem;"></i> ${evt.time || '17:00 - 19:00'}</span>
-                                    <span style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-map-marker-alt" style="color: #FF3B30; font-size: 1.1rem;"></i> ${evt.sede || evt.location || 'SomosPadel BCN'}</span>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <div style="width: 8px; height: 8px; background: #FF2D55; border-radius: 50%; animation: pulse 1s infinite;"></div>
+                                    <span style="font-size: 0.65rem; font-weight: 900; color: #FF2D55; letter-spacing: 1px;">PRE-PARTY LIVE</span>
                                 </div>
+                            </div>
+                            <h1 class="hero-title" style="
+                                margin: 0; 
+                                font-family: 'Montserrat', sans-serif; 
+                                font-size: 2.2rem; 
+                                font-weight: 900; 
+                                text-transform: uppercase; 
+                                letter-spacing: -1.5px; 
+                                line-height: 1;
+                                display: flex;
+                                align-items: center;
+                                flex-wrap: wrap;
+                                gap: 10px;
+                            ">
+                                INSCRITOS 
+                                <span style="
+                                    background: rgba(0,0,0,0.9);
+                                    color: #CCFF00; 
+                                    font-family: 'Syncopate', sans-serif;
+                                    padding: 6px 20px;
+                                    border: 2px solid #CCFF00;
+                                    border-radius: 12px;
+                                    font-size: 0.7em;
+                                    letter-spacing: 2px;
+                                    text-shadow: 0 0 10px #CCFF00;
+                                    box-shadow: 0 0 25px rgba(204, 255, 0, 0.4), inset 0 0 10px rgba(204, 255, 0, 0.2);
+                                    animation: neonColorShift 8s infinite linear;
+                                    transform: skewX(-10deg);
+                                    display: inline-block;
+                                    white-space: nowrap;
+                                ">CONFIRMADOS</span>
+                            </h1>
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                                <p style="margin: 0; color: #fff; font-weight: 900; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">${evt.name}</p>
+                                <div style="display: flex; align-items: center; gap: 15px; color: #64748b; font-size: 0.75rem; font-weight: 800; flex-wrap: wrap;">
+                                    <span style="display: flex; align-items: center; gap: 6px;"><i class="far fa-clock" style="color: #CCFF00; font-size: 1rem;"></i> ${evt.time || '17:00 - 19:00'}</span>
+                                    <span style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-map-marker-alt" style="color: #FF3B30; font-size: 1rem;"></i> ${evt.sede || evt.location || 'SomosPadel BCN'}</span>
+                                </div>
+                            </div>
+                            <div class="broadcast-logo-container" style="display: flex; align-items: center; justify-content: center;">
+                                <img src="img/logo_somospadel.png" style="
+                                    width: 110px; 
+                                    height: 110px; 
+                                    object-fit: contain; 
+                                    filter: drop-shadow(0 0 15px rgba(204,255,0,0.3)) brightness(1.1);
+                                    margin-top: -15px;
+                                " alt="Logo SomosPadel">
                             </div>
                         </div>
                         
-                        <div class="cnn-ledger-glass" style="text-align: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(20px); border: 2px solid #CCFF00; padding: 20px 40px; border-radius: 24px; box-shadow: 0 0 30px rgba(204,255,0,0.2), inset 0 0 20px rgba(204,255,0,0.1); position: relative; overflow: hidden; min-width: 200px;">
-                            <div style="font-size: 0.75rem; font-weight: 950; color: #CCFF00; margin-bottom: 8px; letter-spacing: 3px; text-transform: uppercase;">PLAYER COUNT</div>
-                            <div style="font-size: 3.5rem; font-weight: 1000; color: #fff; text-shadow: 0 0 20px #CCFF00; line-height: 0.8;">
-                                ${dbPlayers.length}<span style="color: rgba(255,255,255,0.2); font-size: 1.8rem; font-weight: 700; margin-left: 5px;">/ ${maxPlayers}</span>
+                        <div class="cnn-ledger-glass" style="
+                            text-align: center; 
+                            background: rgba(0,0,0,0.5); 
+                            backdrop-filter: blur(20px); 
+                            border: 2px solid #CCFF00; 
+                            padding: 15px 30px; 
+                            border-radius: 24px; 
+                            box-shadow: 0 0 30px rgba(204,255,0,0.2), inset 0 0 20px rgba(204,255,0,0.1); 
+                            position: relative; 
+                            overflow: hidden; 
+                            min-width: 140px;
+                        ">
+                            <div style="font-size: 0.6rem; font-weight: 950; color: #CCFF00; margin-bottom: 5px; letter-spacing: 2px; text-transform: uppercase;">PLAYER COUNT</div>
+                            <div style="font-size: 2.8rem; font-weight: 1000; color: #fff; text-shadow: 0 0 20px #CCFF00; line-height: 0.9;">
+                                ${dbPlayers.length}<span style="color: rgba(255,255,255,0.2); font-size: 1.4rem; font-weight: 700; margin-left: 2px;">/${maxPlayers}</span>
                             </div>
                             <div class="led-pulse"></div>
                             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(circle at 50% 0%, rgba(204,255,0,0.1) 0%, transparent 70%);"></div>
@@ -1205,7 +1273,12 @@
                     </div>
 
                     <!-- HIGH DENSITY GRID -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-bottom: 40px;">
+                    <div class="broadcast-grid" style="
+                        display: grid; 
+                        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+                        gap: 15px; 
+                        margin-bottom: 40px;
+                    ">
                         ${cardsHtml}
                     </div>
 
@@ -1235,6 +1308,34 @@
                     #inscritos-modal::-webkit-scrollbar { width: 6px; }
                     #inscritos-modal::-webkit-scrollbar-thumb { background: #CCFF00; border-radius: 10px; }
                     
+                    @media (max-width: 768px) {
+                        .broadcast-header {
+                            flex-direction: column;
+                            align-items: flex-start;
+                            padding: 15px;
+                        }
+                        .hero-title {
+                            font-size: 1.8rem !important;
+                        }
+                        .cnn-ledger-glass {
+                            width: 100%;
+                            box-sizing: border-box;
+                        }
+                        .broadcast-container {
+                            padding: 20px 10px;
+                        }
+                        .broadcast-logo-container {
+                            display: none !important;
+                        }
+                    }
+
+                    @media (max-width: 550px) {
+                        .broadcast-grid {
+                            grid-template-columns: repeat(2, 1fr) !important;
+                            gap: 10px !important;
+                        }
+                    }
+                    
                     .neon-ledger {
                         animation: led-glow 2s ease-in-out infinite alternate;
                     }
@@ -1257,6 +1358,12 @@
                         0% { left: -100%; }
                         50% { left: 150%; }
                         100% { left: 150%; }
+                    }
+
+                    @keyframes neonColorShift {
+                        0%, 100% { color: #CCFF00; border-color: #CCFF00; box-shadow: 0 0 25px rgba(204, 255, 0, 0.4), inset 0 0 10px rgba(204, 255, 0, 0.2); text-shadow: 0 0 10px #CCFF00; }
+                        33% { color: #38bdf8; border-color: #38bdf8; box-shadow: 0 0 25px rgba(56, 189, 248, 0.4), inset 0 0 10px rgba(56, 189, 248, 0.2); text-shadow: 0 0 10px #38bdf8; }
+                        66% { color: #FF2D55; border-color: #FF2D55; box-shadow: 0 0 25px rgba(255, 45, 85, 0.4), inset 0 0 10px rgba(255, 45, 85, 0.2); text-shadow: 0 0 10px #FF2D55; }
                     }
                 </style>
             `;

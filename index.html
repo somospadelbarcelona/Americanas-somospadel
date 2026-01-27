@@ -582,21 +582,89 @@
     <!-- Entry Point -->
     <script src="js/app.js?v=2026"></script>
 
-    <!-- PWA Service Worker Registration -->
+    <!-- PWA Service Worker Registration & Intelligent Updates -->
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                // Usar ruta relativa para compatibilidad con GH Pages / Subcarpetas
-                navigator.serviceWorker.register('./sw.js')
-                    .then(registration => {
-                        console.log('✅ Service Worker registrado:', registration.scope);
-                        // Forzar update si hay cambios
-                        registration.update();
-                    })
-                    .catch(error => {
-                        console.log('❌ Error al registrar Service Worker:', error);
+            let registration;
+
+            // 1. Registro inicial
+            window.addEventListener('load', async () => {
+                try {
+                    registration = await navigator.serviceWorker.register('./sw.js');
+                    console.log('✅ Service Worker activo:', registration.scope);
+
+                    // Escuchar actualizaciones encontradas
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showUpdateToast(registration);
+                            }
+                        });
                     });
+
+                    // Forzar check de actualización cada vez que se abre la app
+                    registration.update();
+
+                } catch (error) {
+                    console.log('❌ Error Service Worker:', error);
+                }
             });
+
+            // 2. Recargar página cuando el nuevo SW tome el control
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    window.location.reload();
+                    refreshing = true;
+                }
+            });
+
+            // 3. UI de actualización (Toast Neón)
+            function showUpdateToast(reg) {
+                // Solo mostrar si NotificationService está listo para usar su sistema de toasts
+                if (window.NotificationService) {
+                    const updateContainer = document.createElement('div');
+                    updateContainer.id = 'pwa-update-banner';
+                    updateContainer.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        z-index: 1000000;
+                        background: #000;
+                        border: 2px solid #CCFF00;
+                        padding: 15px 25px;
+                        border-radius: 50px;
+                        display: flex;
+                        align-items: center;
+                        gap: 15px;
+                        box-shadow: 0 0 30px rgba(204,255,0,0.4);
+                        animation: slideDownUpdate 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    `;
+
+                    updateContainer.innerHTML = `
+                        <div style="width:10px; height:10px; background:#CCFF00; border-radius:50%; animation: pulse 1s infinite;"></div>
+                        <span style="color:white; font-weight:800; font-size:0.8rem; font-family:'Outfit';">NUEVA VERSIÓN DISPONIBLE</span>
+                        <button id="pwa-refresh-btn" style="background:#CCFF00; color:#000; border:none; padding:8px 18px; border-radius:20px; font-weight:900; font-size:0.75rem; cursor:pointer; text-transform:uppercase;">ACTUALIZAR</button>
+                    `;
+
+                    if (!document.getElementById('pwa-anim')) {
+                        const s = document.createElement('style');
+                        s.id = 'pwa-anim';
+                        s.textContent = `@keyframes slideDownUpdate { from { transform: translateX(-50%) translateY(-100px); opacity:0; } to { transform: translateX(-50%) translateY(0); opacity:1; } }`;
+                        document.head.appendChild(s);
+                    }
+
+                    document.body.appendChild(updateContainer);
+
+                    document.getElementById('pwa-refresh-btn').onclick = () => {
+                        if (reg.waiting) {
+                            reg.waiting.postMessage('skipWaiting');
+                        }
+                    };
+                }
+            }
         }
     </script>
 </body>
