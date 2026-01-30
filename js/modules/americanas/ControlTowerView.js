@@ -40,14 +40,13 @@
             this.autoStartInterval = null;
         }
 
-        goToRound(n, event) {
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            const num = parseInt(n);
-            console.log("🚀 [TowerExpert] Navegando a ronda:", num);
-            this.selectedRound = num;
+        goToRound(round, evt) {
+            if (evt) evt.stopPropagation();
+            this.selectedRound = round;
+
+            // Auto-scroll to top to prevent visual gaps
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
             this.recalc();
         }
 
@@ -261,24 +260,37 @@
                         }
                     }
 
-                    // --- DETECT NEW DRAW FOR ANIMATION (Mobile/Tower) ---
-                    if (this.allMatches.length > 0 && window.ShuffleAnimator) {
+                    // --- DETECT NEW DRAW FOR ANIMATION (Improved for Sync) ---
+                    if (this.allMatches.length > 0 && window.ShuffleAnimator && !this.isGeneratingRound) {
                         const maxRound = Math.max(...this.allMatches.map(m => parseInt(m.round)));
                         const isNewRoundDetected = !this._lastAnimatedRound || maxRound > this._lastAnimatedRound;
 
-                        // Only animate if we are in the playing section and results tab
                         const isMainArea = this.mainSection === 'playing' && this.activeTab === 'results';
                         const currentMatches = this.allMatches.filter(m => parseInt(m.round) === maxRound);
-                        const isPending = currentMatches.every(m => !m.score_a && m.status !== 'finished');
 
-                        if (isNewRoundDetected && isPending && isMainArea) {
-                            this._lastAnimatedRound = maxRound;
-                            window.ShuffleAnimator.animate({
-                                round: maxRound,
-                                players: this.currentAmericanaDoc?.players || [],
-                                courts: this.currentAmericanaDoc?.max_courts || 4,
-                                matches: currentMatches
-                            });
+                        // Check if it's really a new round with at least one match
+                        if (isNewRoundDetected && currentMatches.length > 0 && isMainArea) {
+                            // Debounce: Wait a bit for all matches of the round to arrive before animating
+                            if (this._animTimeout) clearTimeout(this._animTimeout);
+                            this._animTimeout = setTimeout(() => {
+                                // RE-FETCH to get latest matches after delay
+                                const finalMatches = this.allMatches.filter(m => parseInt(m.round) === maxRound);
+                                const isStillPending = finalMatches.every(m => !m.score_a && m.status !== 'finished');
+
+                                if (isStillPending) {
+                                    console.log(`🎬 [Tower] Auto-starting animation for Round ${maxRound}`);
+                                    this._lastAnimatedRound = maxRound;
+                                    window.ShuffleAnimator.animate({
+                                        round: maxRound,
+                                        players: this.currentAmericanaDoc?.players || [],
+                                        courts: this.currentAmericanaDoc?.max_courts || 4,
+                                        matches: finalMatches
+                                    }, () => {
+                                        // Auto-switch to the new round tab
+                                        this.goToRound(maxRound);
+                                    });
+                                }
+                            }, 1500);
                         }
                     }
 
@@ -293,36 +305,37 @@
         }
 
         checkRoundCompletion(matches) {
-            if (!this.currentAmericanaDoc) return;
+            if (!this.currentAmericanaDoc || matches.length === 0) return;
 
-            // 1. Determine Current Round (Max Round existing or specific logic?)
-            // Usually we look at the highest round number present in matches.
-            // But if we are viewing history, we might confuse it.
-            // Let's assume 'Current Round' is the highest round created.
-            if (matches.length === 0) return;
-
+            // 1. Determine the Highest Round with matches
             const maxRound = Math.max(...matches.map(m => parseInt(m.round || 1)));
 
-            // 2. Filter matches for this round
-            const currentRoundMatches = matches.filter(m => parseInt(m.round) === maxRound);
+            // 2. Filter matches for this SPECIFIC max round
+            const maxRoundMatches = matches.filter(m => parseInt(m.round) === maxRound);
 
-            // 3. Check if ALL are finished
-            const allFinished = currentRoundMatches.every(m => m.status === 'finished');
+            // 3. Check if ALL are finished in the highest round
+            const allFinished = maxRoundMatches.length > 0 && maxRoundMatches.every(m => m.status === 'finished');
 
-            if (allFinished && currentRoundMatches.length > 0) {
-                // Check if already prompted/dismissed
+            // 4. Also check if the NEXT round already exists (if so, we don't need the prompt)
+            const nextRound = maxRound + 1;
+            const nextRoundExists = matches.some(m => parseInt(m.round) === nextRound);
+
+            if (allFinished && !nextRoundExists) {
+                // Check if already prompted/dismissed for this specific max round
                 if (this.roundPromptDismissedFor === maxRound) return;
 
                 // Check if Max Rounds reached (e.g. 6)
                 const totalRounds = this.currentAmericanaDoc.rounds || 6;
-                if (maxRound >= totalRounds) return; // End of Event
+                if (maxRound >= totalRounds) return;
 
-                // SHOW PROMPT
+                // SHOW PROMPT for the current completed round
                 this.showRoundFinishedModal(maxRound);
             } else {
-                // Reset dismissal if we somehow went back (unlikely but safe)
-                if (!allFinished) this.roundPromptDismissedFor = null;
-                this.closeRoundFinishedModal();
+                // Reset dismissal if round is no longer finished or if we have moved on
+                if (!allFinished || nextRoundExists) {
+                    this.roundPromptDismissedFor = null;
+                    this.closeRoundFinishedModal();
+                }
             }
         }
 
@@ -859,10 +872,18 @@
             const grid = document.querySelector('.tour-grid-container');
             if (!grid) return false;
 
-            // 1. Update Round Tabs (Naive is fine, low interaction)
+            // 1. Update Round Tabs
             const filterBar = document.querySelector('.tour-filter-bar');
             if (filterBar) {
-                // Only update if changed to prevent flicker, or just replace innerHTML is fast enough usually
+                // Detect Round Change -> If round changed, force full render to prevent stale prompts
+                const activeTab = filterBar.querySelector('.round-tab.active');
+                // Extract the round number from the button's text, e.g., "1º" -> 1
+                const lastRoundInUI = activeTab ? parseInt(activeTab.innerText.replace('º', '')) : -1;
+                if (lastRoundInUI !== roundData.number) {
+                    console.log("[SmartUpdate] Round change detected. Forcing full render.");
+                    return false;
+                }
+
                 const newTabs = this.renderRoundTabs(allRounds, roundData.number);
                 if (filterBar.innerHTML !== newTabs) filterBar.innerHTML = newTabs;
             }
@@ -977,10 +998,21 @@
                 }
             });
 
-            // Remove lingering Next Round UI if present to re-append/check logic later? 
-            // Better to let renderResultsView handle that? No, smartUpdate handles Grid. 
-            // We should arguably just return false if structure changes drastically,
-            // but for filtering cards this logic is sound.
+            // 4. SYNC "NEXT ROUND" PROMPT
+            const existingPrompt = document.getElementById('next-round-btn-container');
+            const maxRound = this.allMatches.length > 0 ? Math.max(...this.allMatches.map(m => parseInt(m.round || 1))) : 1;
+            const isRoundComplete = roundData.matches.length > 0 && roundData.matches.every(m => m.isFinished);
+            const shouldShowPrompt = isRoundComplete &&
+                parseInt(roundData.number) === maxRound &&
+                this.currentAmericanaDoc?.status === 'live';
+
+            if (!shouldShowPrompt && existingPrompt) {
+                existingPrompt.remove();
+            } else if (shouldShowPrompt && !existingPrompt) {
+                // If the prompt should be shown but isn't present, force a full re-render
+                // to ensure it's inserted correctly by renderResultsView.
+                return false;
+            }
 
             return true;
         }
@@ -988,11 +1020,14 @@
         renderResultsView(roundData, allRounds, isLiveEvent = false) {
             const tabs = this.renderRoundTabs(allRounds, roundData.number);
 
-            // CHECK FOR ROUND COMPLETION
+            // 🏁 SMART PROMPT LOGIC: Only show prompt if viewing the HIGHEST existing round
+            const maxRound = this.allMatches.length > 0 ? Math.max(...this.allMatches.map(m => parseInt(m.round || 1))) : 1;
+            const isViewingMaxRound = parseInt(roundData.number) === maxRound;
+
             const isRoundComplete = roundData.matches.length > 0 && roundData.matches.every(m => m.isFinished);
             let nextRoundUI = '';
 
-            if (isRoundComplete && this.currentAmericanaDoc?.status === 'live') {
+            if (isRoundComplete && isViewingMaxRound && this.currentAmericanaDoc?.status === 'live') {
                 nextRoundUI = `
                     <div id="next-round-btn-container" class="animate-pop-in" style="margin-top: 30px; background: white; padding: 25px; border-radius: 20px; border: 2px solid #CCFF00; box-shadow: 0 10px 30px rgba(204,255,0,0.2); text-align: center;">
                         <h3 style="margin: 0 0 15px 0; font-weight: 900; font-size: 1.1rem;">🏁 RONDA ${roundData.number} FINALIZADA</h3>
@@ -1015,7 +1050,7 @@
             }
 
             let emptyMessage = isLiveEvent ?
-                'Generando emparejamientos...<br><span style="font-size:0.7rem; font-weight:400; opacity:0.6;">Aparecerán aquí en unos segundos.</span>' :
+                '<div style="display:flex; justify-content:center; padding:40px;"><div class="loader"></div></div>' :
                 'Selecciona una ronda válida...';
 
             return `
@@ -1023,17 +1058,6 @@
                    ${tabs}
                 </div>
                 <div class="tour-grid-container" style="padding: 16px; display: grid; gap: 16px; padding-bottom: 100px;">
-                    <!-- REPLAY DRAWS BUTTON (NEW) -->
-                    ${roundData.matches.length > 0 ? `
-                    <div style="display:flex; justify-content:center; margin-bottom: 5px;">
-                        <button onclick="window.ControlTowerView.replayShuffleAnimation()" 
-                                style="background: rgba(204,255,0,0.1); border: 1px solid rgba(204,255,0,0.3); color: #CCFF00; padding: 8px 20px; border-radius: 50px; font-weight: 950; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s;"
-                                onmouseover="this.style.background='rgba(204,255,0,0.2)'" onmouseout="this.style.background='rgba(204,255,0,0.1)'">
-                            <i class="fas fa-random"></i> VER SORTEO ANIMADO
-                        </button>
-                    </div>
-                    ` : ''}
-
                     ${roundData.matches.length ? '' : `<div style="color:#999; width:100%; text-align:center; padding:80px; font-weight:700; line-height:1.5;">${emptyMessage}</div>`}
                     ${roundData.matches.map(match => this.renderTournamentCard(match)).join('')}
                     ${nextRoundUI}
@@ -1049,22 +1073,46 @@
             else if (category === 'mixed') activeColor = '#FFD700';
             else if (category === 'male') activeColor = '#00C4FF';
 
+            let replayButtonHtml = '';
+            if (this.allMatches && this.allMatches.some(m => parseInt(m.round) === parseInt(currentNum))) {
+                replayButtonHtml = `
+                    <div style="width: 1px; height: 30px; background: rgba(0,0,0,0.1); margin: 0 5px;"></div>
+                    <button onclick="window.ControlTowerView.replayShuffleAnimation()" 
+                        style="background: #111; color: #CCFF00; border: 1px solid #CCFF00; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 10px rgba(204,255,0,0.3);"
+                        title="Ver Sorteo Animado">
+                        <i class="fas fa-play"></i>
+                    </button>
+                 `;
+            }
+
             return `
+                <style>
+                    @keyframes neonPulse {
+                        0% { box-shadow: 0 0 5px var(--active-color), 0 0 10px var(--active-color); transform: scale(1); }
+                        50% { box-shadow: 0 0 20px var(--active-color), 0 0 30px var(--active-color); transform: scale(1.05); }
+                        100% { box-shadow: 0 0 5px var(--active-color), 0 0 10px var(--active-color); transform: scale(1); }
+                    }
+                </style>
                 <div class="round-tabs-container" style="display:flex; gap:8px; align-items: center; overflow-x: auto; padding: 5px 0;">
                     ${rounds.map(r => {
                 const isSel = parseInt(r.number) === parseInt(currentNum);
+                // Use a dedicated active class or inline style with custom property for animation
                 return `
                         <button type="button" 
                                 class="round-tab ${isSel ? 'active' : ''}" 
                                 onclick="window.ControlTowerView.goToRound(${r.number}, event)"
-                                style="background: ${isSel ? activeColor : 'rgba(255,255,255,0.05)'}; 
-                                       color: ${isSel ? (activeColor === '#00C4FF' || activeColor === '#FF2D55' ? '#fff' : '#000') : '#999'}; 
+                                style="--active-color: ${activeColor};
+                                       background: ${isSel ? activeColor : 'rgba(255,255,255,0.05)'}; 
+                                       color: ${isSel ? '#000' : '#999'}; 
                                        border: 1px solid ${isSel ? activeColor : 'rgba(255,255,255,0.1)'};
                                        padding: 12px 20px; border-radius: 14px; font-weight: 950; cursor: pointer; transition: 0.4s; min-width: 65px;
-                                       box-shadow: ${isSel ? '0 8px 20px ' + activeColor + '40' : 'none'}; text-transform: uppercase; font-size: 0.8rem;">
+                                       box-shadow: ${isSel ? `0 0 20px ${activeColor}` : 'none'}; 
+                                       animation: ${isSel ? 'neonPulse 2s infinite' : 'none'};
+                                       text-transform: uppercase; font-size: 0.8rem;">
                             ${r.number}º
                         </button>
                     `}).join('')}
+                    ${replayButtonHtml}
                 </div>
             `;
         }
@@ -1081,191 +1129,183 @@
 
         renderTournamentCard(match) {
             try {
+                const user = window.Store ? window.Store.getState('currentUser') : null;
                 const isEntreno = this.currentAmericanaDoc?.isEntreno;
                 const colorClass = `border-${(match.court % 4) + 1}`;
 
-                // --- WOW STATUS VISUALS ---
-                const evtStatus = this.currentAmericanaDoc?.status;
-                const isLive = evtStatus === 'live' && !match.isFinished;
-                const isPairing = evtStatus === 'pairing';
-
-                let statusText = '<span style="color:#BBB;">ESPERANDO</span>';
-                if (match.isFinished) {
-                    statusText = '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">FINALIZADO</span>';
-                } else if (isLive) {
-                    statusText = '<span class="status-badge-live">⚡ EN JUEGO</span>';
-                } else if (isPairing) {
-                    statusText = '<span style="background: #0ea5e9; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">PRÓXIMO</span>';
-                }
-
-                const sA = parseInt(match.score_a || 0);
-                const sB = parseInt(match.score_b || 0);
-
-                // --- 1. Calculate Time ---
-                const timeLabel = (window.calculateMatchTime && typeof window.calculateMatchTime === 'function')
-                    ? window.calculateMatchTime(this.currentAmericanaDoc?.time || "10:00", parseInt(match.round) || 1)
-                    : "Seguido";
-
-                // --- 2. Styles ---
-                const winnerStyle = "color: #111 !important; font-weight: 950 !important; border-bottom: 4px solid #CCFF00; padding-bottom: 2px; text-decoration: none; text-shadow: 0 0 8px rgba(204,255,0,0.15);";
-                const normalStyle = "color: #111; font-weight: 800; padding: 6px 0;";
-                const styleA = (match.isFinished && sA > sB) ? winnerStyle : normalStyle;
-                const styleB = (match.isFinished && sB > sA) ? winnerStyle : normalStyle;
-
-                // --- 3. Interaction Logic ---
-                const user = window.Store ? window.Store.getState('currentUser') : null;
-                const isRegisteredInEvent = this.currentAmericanaDoc && user && (
-                    (this.currentAmericanaDoc.players || []).some(p => (p.id || p.uid) === user.uid) ||
-                    (this.currentAmericanaDoc.registeredPlayers || []).includes(user.uid)
-                );
-
+                // --- 1. USER CONTEXT & PERMISSIONS ---
                 const getTeamName = (namesArr, teamStr) => {
                     if (teamStr && typeof teamStr === 'string' && teamStr.length > 0) return teamStr;
                     if (Array.isArray(namesArr)) return namesArr.join(' / ');
                     return String(namesArr || '');
                 };
 
-                const safeTeamA = getTeamName(match.team_a_names, match.teamA) || 'JUGADOR A';
-                const safeTeamB = getTeamName(match.team_b_names, match.teamB) || 'JUGADOR B';
+                const safeTeamA = getTeamName(match.team_a_names, match.teamA) || 'EQUIPO A';
+                const safeTeamB = getTeamName(match.team_b_names, match.teamB) || 'EQUIPO B';
 
-                const isPartA = user && (match.team_a_ids?.includes(user.uid) || safeTeamA.includes(user.name));
-                const isPartB = user && (match.team_b_ids?.includes(user.uid) || safeTeamB.includes(user.name));
+                const isPartA = user && (match.team_a_ids?.includes(user.uid) || safeTeamA.toLowerCase().includes((user.name || '').toLowerCase()));
+                const isPartB = user && (match.team_b_ids?.includes(user.uid) || safeTeamB.toLowerCase().includes((user.name || '').toLowerCase()));
+                const isMyMatch = isPartA || isPartB;
                 const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain'].includes((user?.role || '').toLowerCase());
 
-                // EDIT ALLOWED CHECK
-                // EDIT ALLOWED CHECK (Relaxed for Usability)
-                const canEdit = (this.currentAmericanaDoc?.status === 'live') && (user);
+                // --- 2. STATUS & THEME ---
+                const evtStatus = this.currentAmericanaDoc?.status;
+                const isFinished = match.isFinished || match.status === 'finished';
+                const isLive = evtStatus === 'live' && !isFinished;
 
+                let statusBadge = '';
+                if (isFinished) {
+                    statusBadge = '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 950; font-size: 0.6rem; letter-spacing: 0.5px; text-transform:uppercase;">FINALIZADO</span>';
+                } else if (isLive) {
+                    statusBadge = '<span class="status-badge-live" style="animation: pulse 1s infinite alternate;">⚡ EN JUEGO</span>';
+                } else {
+                    statusBadge = '<span style="background: rgba(255,255,255,0.1); color: #888; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">PROGRAMADO</span>';
+                }
+
+                const sA = parseInt(match.score_a || 0);
+                const sB = parseInt(match.score_b || 0);
+
+                const timeLabel = (window.calculateMatchTime && typeof window.calculateMatchTime === 'function')
+                    ? window.calculateMatchTime(this.currentAmericanaDoc?.time || "10:00", parseInt(match.round) || 1)
+                    : "Seguido";
+
+                // --- 3. DYNAMIC STYLES ---
+                const cardStyle = isMyMatch && isLive
+                    ? 'border: 3px solid #CCFF00; box-shadow: 0 0 35px rgba(204, 255, 0, 0.4); transform: scale(1.03); z-index: 10;'
+                    : 'border: 1px solid var(--border-subtle);';
+
+                const winnerA = isFinished && sA > sB;
+                const winnerB = isFinished && sB > sA;
+
+                // --- 4. ACTION AREA (UX REVOLUTION) ---
+                const canEdit = (evtStatus === 'live' || evtStatus === 'adjusting') && user;
                 let actionArea = '';
 
-                let shareBtnHTML = '';
-
-                if (match.isFinished) {
-                    const userDelta = match.team_a_ids?.includes(user?.uid) ? (match.delta_a || 0) : (match.delta_b || 0);
-
-                    // REGISTRO OBLIGATORIO: Guardamos los datos para que el modal los encuentre
+                if (isFinished) {
+                    const userDelta = isPartA ? (match.delta_a || 0) : (match.delta_b || 0);
                     if (!window._matchRegistry) window._matchRegistry = {};
                     window._matchRegistry[match.id] = match;
 
-                    shareBtnHTML = `
-                        <button onclick="shareVictory('${match.id}', ${userDelta})"
-                                style="background: linear-gradient(135deg, #CCFF00 0%, #00E36D 100%); color: black; border: none; padding: 12px 20px; border-radius: 12px; font-size: 0.8rem; cursor: pointer; font-weight: 900; box-shadow: 0 4px 15px rgba(204,255,0,0.3); display: flex; align-items: center; gap: 8px; margin-top: 10px; width: 100%; justify-content: center; text-transform: uppercase;">
-                            <i class="fab fa-instagram"></i> COMPARTIR VICTORIA
-                        </button>
-                    `;
-
-                    let editBtnHTML = '';
-                    if (canEdit) {
-                        editBtnHTML = `
-                            <button onclick="document.getElementById('edit-actions-${match.id}').style.display='flex'; this.style.display='none'" 
-                                    style="background: transparent; border: 1px solid #333; color: #666; padding: 8px 16px; border-radius: 12px; font-size: 0.75rem; cursor: pointer; font-weight: 700;">
-                                ✏️ CORREGIR
-                            </button>
-                            <div id="edit-actions-${match.id}" style="display: none; margin-top: 10px; width: 100%;">
-                                    <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
-                                        <div style="display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; padding:10px; border-radius:12px;">
-                                            <div style="display:flex; align-items:center; gap:8px;">
-                                                <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', -1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:white; font-weight:900;">-</button>
-                                                <span id="score-a-val-${match.id}" style="font-size:1.2rem; font-weight:900; width:30px; text-align:center;">${sA}</span>
-                                                <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', 1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:#fff; color:#25D366; font-weight:900;">+</button>
-                                            </div>
-                                            <div style="font-weight:900; color:#ddd; font-size:1.2rem;">-</div>
-                                            <div style="display:flex; align-items:center; gap:8px;">
-                                                <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', -1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:white; font-weight:900;">-</button>
-                                                <span id="score-b-val-${match.id}" style="font-size:1.2rem; font-weight:900; width:30px; text-align:center;">${sB}</span>
-                                                <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', 1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:#fff; color:#25D366; font-weight:900;">+</button>
-                                            </div>
-                                        </div>
-                                        <button onclick="window.ControlTowerView.finishMatch('${match.id}')" style="width:100%; padding:12px; background: #CCFF00; color:black; font-weight:900; border:none; border-radius:10px; box-shadow: 0 4px 10px rgba(204,255,0,0.3);">
-                                            ✅ CONFIRMAR RESULTADO
-                                        </button>
-                                    </div>
-                            </div>
-                        `;
-                    }
-
                     actionArea = `
-                        <div style="margin-top: 10px; text-align: center; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                            ${editBtnHTML}
+                        <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+                            <button onclick="shareVictory('${match.id}', ${userDelta})"
+                                    style="background: linear-gradient(135deg, #CCFF00 0%, #00E36D 100%); color: black; border: none; padding: 14px; border-radius: 16px; font-size: 0.8rem; cursor: pointer; font-weight: 950; box-shadow: 0 4px 15px rgba(204,255,0,0.3); display: flex; align-items: center; gap: 10px; justify-content: center; text-transform: uppercase; width: 100%;">
+                                <i class="fab fa-instagram" style="font-size: 1.1rem;"></i> COMPARTIR VICTORIA
+                            </button>
+                            ${isAdmin ? `
+                                <button onclick="window.ControlTowerView.unlockMatch('${match.id}')" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #666; padding: 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 700;">
+                                    <i class="fas fa-lock-open"></i> DESBLOQUEAR PARA EDITAR
+                                </button>
+                            ` : ''}
                         </div>
                     `;
-
                 } else if (canEdit) {
-                    // LIVE MATCH EDITING
+                    // NEW HIGH-INTERACTION PAD FOR PLAYERS
                     actionArea = `
-                        <div style="margin-top:15px; padding-top:15px; border-top:1px dashed #eee;">
-                            <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; padding:10px; border-radius:12px;">
-                                    <div style="display:flex; align-items:center; gap:8px;">
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', -1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:white; font-weight:900;">-</button>
-                                        <span id="score-a-val-${match.id}" style="font-size:1.2rem; font-weight:900; width:30px; text-align:center;">${sA}</span>
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', 1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:#fff; color:#25D366; font-weight:900;">+</button>
-                                    </div>
-                                    <div style="font-weight:900; color:#ddd; font-size:1.2rem;">-</div>
-                                    <div style="display:flex; align-items:center; gap:8px;">
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', -1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:white; font-weight:900;">-</button>
-                                        <span id="score-b-val-${match.id}" style="font-size:1.2rem; font-weight:900; width:30px; text-align:center;">${sB}</span>
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', 1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:#fff; color:#25D366; font-weight:900;">+</button>
+                        <div style="margin-top:20px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.05);">
+                            <div style="text-align:center; margin-bottom:15px;">
+                                <span style="font-size:0.6rem; font-weight:950; color:var(--brand-neon); letter-spacing:2px; text-transform:uppercase;">INTRODUCIR RESULTADO</span>
+                            </div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                                <!-- TEAM A CONTROLS -->
+                                <div style="display:flex; flex-direction:column; align-items:center; gap:10px; background:rgba(255,255,255,0.02); padding:15px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
+                                    <div style="font-size:0.6rem; color:#888; font-weight:900; text-transform:uppercase;">EQ. ARRIBA</div>
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', -1)" style="width:40px; height:40px; border-radius:50%; border:none; background:#333; color:white; font-size:1.5rem; display:flex; align-items:center; justify-content:center;">-</button>
+                                        <span id="score-a-val-${match.id}" style="font-size:2rem; font-weight:950; color:white; min-width:40px; text-align:center;">${sA}</span>
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', 1)" style="width:40px; height:40px; border-radius:50%; border:none; background:var(--brand-neon); color:black; font-size:1.5rem; display:flex; align-items:center; justify-content:center;">+</button>
                                     </div>
                                 </div>
-                                <button onclick="window.ControlTowerView.finishMatch('${match.id}')" style="width:100%; padding:12px; background: #CCFF00; color:black; font-weight:900; border:none; border-radius:10px; box-shadow: 0 4px 10px rgba(204,255,0,0.3);">
-                                    ✅ CONFIRMAR RESULTADO
-                                </button>
+                                <!-- TEAM B CONTROLS -->
+                                <div style="display:flex; flex-direction:column; align-items:center; gap:10px; background:rgba(255,255,255,0.02); padding:15px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
+                                    <div style="font-size:0.6rem; color:#888; font-weight:900; text-transform:uppercase;">EQ. ABAJO</div>
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', -1)" style="width:40px; height:40px; border-radius:50%; border:none; background:#333; color:white; font-size:1.5rem; display:flex; align-items:center; justify-content:center;">-</button>
+                                        <span id="score-b-val-${match.id}" style="font-size:2rem; font-weight:950; color:white; min-width:40px; text-align:center;">${sB}</span>
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', 1)" style="width:40px; height:40px; border-radius:50%; border:none; background:var(--brand-neon); color:black; font-size:1.5rem; display:flex; align-items:center; justify-content:center;">+</button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>`;
+                            <button onclick="window.ControlTowerView.finishMatch('${match.id}')" 
+                                    style="width:100%; margin-top:20px; padding:18px; background:var(--brand-neon); color:black; font-weight:950; font-size:1rem; border:none; border-radius:20px; box-shadow: 0 10px 25px rgba(204,255,0,0.3); display:flex; align-items:center; justify-content:center; gap:12px; transition:0.3s;"
+                                    onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                                <i class="fas fa-check-circle" style="font-size:1.2rem;"></i> FINALIZAR PARTIDO
+                            </button>
+                        </div>
+                    `;
+                } else if (!isFinished && !canEdit) {
+                    actionArea = `
+                        <div style="margin-top:15px; padding:12px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:12px; text-align:center;">
+                            <span style="font-size:0.7rem; color:#666; font-weight:700;">MODO ESPECTADOR • SOLO LECTURA</span>
+                        </div>
+                    `;
                 }
 
                 return `
                     <div id="tour-match-${match.id}" class="tour-match-card ${colorClass}" style="
-                        background: var(--bg-card); 
-                        border-radius: 28px; 
-                        border: 1px solid var(--border-subtle); 
+                        background: #0f172a; 
+                        border-radius: 32px; 
                         overflow: hidden; 
-                        box-shadow: var(--shadow-md);
-                        transition: all 0.3s ease;
+                        box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+                        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                        ${cardStyle}
                     ">
-                        <div style="padding: 14px 20px; background: var(--brand-navy); display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 0.65rem; font-weight: 900; color: rgba(255,255,255,0.6); letter-spacing: 1.5px; text-transform: uppercase;">
-                                <i class="fas fa-th-large" style="color: var(--brand-neon); margin-right: 6px;"></i> PISTA ${match.court} • P${match.round} • ${timeLabel}
+                        <!-- CARD HEADER -->
+                        <div style="padding: 16px 24px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03);">
+                            <span style="font-size: 0.65rem; font-weight: 900; color: rgba(255,255,255,0.5); letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 8px; height: 8px; background: var(--brand-neon); border-radius: 50%; box-shadow: 0 0 10px var(--brand-neon);"></div>
+                                PISTA ${match.court} • P${match.round} • ${timeLabel}
                             </span>
-                            <div class="status-area">${statusText}</div>
+                            <div class="status-area">${statusBadge}</div>
                         </div>
                         
+                        <!-- TEAMS & SCORES -->
                         <div style="padding: 24px;">
-                            <div style="display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 15px; margin-bottom: 15px;">
-                                <div id="match-name-a-${match.id}" style="font-size: 1rem; color: var(--text-primary); transition: all 0.3s; ${styleA}; display: flex; align-items: center; gap: 10px;">
-                                    ${match.isFinished && sA > sB ? '<i class="fas fa-trophy" style="color: #CCFF00; font-size: 0.9rem;"></i>' : ''}
-                                    ${safeTeamA}
+                            <!-- TEAM A -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                                    <div style="font-size: 1.05rem; color: #fff; font-weight: 900; line-height: 1.2; text-transform: uppercase; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px;">
+                                        ${winnerA ? '<i class="fas fa-trophy" style="color: var(--brand-neon); font-size: 0.9rem;"></i>' : ''}
+                                        <span style="${winnerA ? 'border-bottom: 2px solid var(--brand-neon);' : ''}">${safeTeamA}</span>
+                                    </div>
+                                    ${isPartA ? '<span style="color: var(--brand-neon); font-size: 0.6rem; font-weight: 950; letter-spacing: 1px;">TU EQUIPO ★</span>' : ''}
                                 </div>
                                 <div id="match-score-a-${match.id}" style="
-                                    background: ${match.isFinished && sA > sB ? 'var(--brand-neon)' : 'var(--bg-app)'}; 
-                                    color: ${match.isFinished && sA > sB ? 'black' : 'var(--text-primary)'}; 
-                                    width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; 
-                                    font-weight: 950; font-size: 1.3rem; 
-                                    box-shadow: ${match.isFinished && sA > sB ? 'var(--shadow-neon)' : 'inset 0 2px 4px rgba(0,0,0,0.05)'};
+                                    background: ${winnerA ? 'var(--brand-neon)' : 'rgba(255,255,255,0.05)'}; 
+                                    color: ${winnerA ? 'black' : 'white'}; 
+                                    min-width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; 
+                                    font-weight: 950; font-size: 1.6rem; border: 1px solid ${winnerA ? 'var(--brand-neon)' : 'rgba(255,255,255,0.1)'};
+                                    box-shadow: ${winnerA ? '0 0 20px rgba(204,255,0,0.3)' : 'none'};
+                                    transition: all 0.3s;
                                 ">${sA}</div>
                             </div>
                             
-                            <div style="height: 1px; background: var(--border-subtle); margin-bottom: 15px; position: relative;">
+                            <!-- DIVIDER -->
+                            <div style="height: 1px; background: linear-gradient(to right, rgba(204,255,0,0.4), transparent); margin-bottom: 20px; position: relative;">
                                 <div style="position: absolute; left: 0; top: -1px; width: 40px; height: 3px; background: var(--brand-neon); border-radius: 10px;"></div>
                             </div>
                             
-                            <div style="display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 15px;">
-                                <div id="match-name-b-${match.id}" style="font-size: 1rem; color: var(--text-primary); transition: all 0.3s; ${styleB}; display: flex; align-items: center; gap: 10px;">
-                                    ${match.isFinished && sB > sA ? '<i class="fas fa-trophy" style="color: #CCFF00; font-size: 0.9rem;"></i>' : ''}
-                                    ${safeTeamB}
+                            <!-- TEAM B -->
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                                    <div style="font-size: 1.05rem; color: #fff; font-weight: 900; line-height: 1.2; text-transform: uppercase; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px;">
+                                        ${winnerB ? '<i class="fas fa-trophy" style="color: var(--brand-neon); font-size: 0.9rem;"></i>' : ''}
+                                        <span style="${winnerB ? 'border-bottom: 2px solid var(--brand-neon);' : ''}">${safeTeamB}</span>
+                                    </div>
+                                    ${isPartB ? '<span style="color: var(--brand-neon); font-size: 0.6rem; font-weight: 950; letter-spacing: 1px;">TU EQUIPO ★</span>' : ''}
                                 </div>
                                 <div id="match-score-b-${match.id}" style="
-                                    background: ${match.isFinished && sB > sA ? 'var(--brand-neon)' : 'var(--bg-app)'}; 
-                                    color: ${match.isFinished && sB > sA ? 'black' : 'var(--text-primary)'}; 
-                                    width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; 
-                                    font-weight: 950; font-size: 1.3rem; 
-                                    box-shadow: ${match.isFinished && sB > sA ? 'var(--shadow-neon)' : 'inset 0 2px 4px rgba(0,0,0,0.05)'};
+                                    background: ${winnerB ? 'var(--brand-neon)' : 'rgba(255,255,255,0.05)'}; 
+                                    color: ${winnerB ? 'black' : 'white'}; 
+                                    min-width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; 
+                                    font-weight: 950; font-size: 1.6rem; border: 1px solid ${winnerB ? 'var(--brand-neon)' : 'rgba(255,255,255,0.1)'};
+                                    box-shadow: ${winnerB ? '0 0 20px rgba(204,255,0,0.3)' : 'none'};
+                                    transition: all 0.3s;
                                 ">${sB}</div>
                             </div>
                             
+                            <!-- ACTION AREA -->
                             ${actionArea}
-                            ${match.isFinished ? shareBtnHTML : ''}
                         </div>
                     </div>
                 `;
@@ -1276,37 +1316,52 @@
         }
 
         async adjustScore(matchId, field, delta) {
-            const isEntreno = this.currentAmericanaDoc?.isEntreno;
-            const collection = isEntreno ? 'entrenos_matches' : 'matches';
-            // Optimistic update supported by auto-re-render from onSnapshot listener
+            // Find the match in local state
             const match = this.allMatches.find(m => m.id === matchId);
             if (!match) return;
 
-            let currentVal = parseInt(match[field] || 0);
-            let newVal = currentVal + delta;
-            if (newVal < 0) newVal = 0;
+            // 1. UPDATE LOCAL STATE (Optimistic)
+            const currentVal = parseInt(match[field] || 0);
+            const newVal = Math.max(0, currentVal + delta);
+            match[field] = newVal;
+
+            // 2. TRIGGER UI SYNC IMMEDIATELY
+            // This will call recalc() -> render() -> smartUpdateResults()
+            // Since we updated match[field], the UI will reflect it instantly.
+            this.recalc();
+
+            // 3. HAPTIC FEEDBACK
+            if (window.navigator?.vibrate) window.navigator.vibrate(20);
+
+            // 4. PERSIST TO FIREBASE
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const collection = isEntreno ? 'entrenos_matches' : 'matches';
 
             try {
-                // Update specific field
                 await window.db.collection(collection).doc(matchId).update({
-                    [field]: newVal,
-                    // Note: We don't finish match here, just track score
+                    [field]: newVal
                 });
+                console.log(`✅ Score synced to cloud: ${field} = ${newVal}`);
             } catch (e) {
-                console.error("Score update failed:", e);
+                console.error("❌ Firebase update failed:", e);
+                // On failure, the next snapshot will naturally roll back the UI
+                alert("Error al guardar: " + (e.message.includes('permission') ? "No tienes permisos." : e.message));
             }
         }
 
         async finishMatch(matchId) {
             const isEntreno = this.currentAmericanaDoc?.isEntreno;
             const collection = isEntreno ? 'entrenos_matches' : 'matches';
+
+            // Haptic feedback
+            if (window.navigator?.vibrate) window.navigator.vibrate([30, 50, 30]);
+
             try {
                 await window.db.collection(collection).doc(matchId).update({
                     status: 'finished'
                 });
                 console.log("Match finished:", matchId);
 
-                // 📈 UPDATE PLAYER LEVELS
                 if (window.LevelService) {
                     const match = this.allMatches.find(m => m.id === matchId);
                     if (match) {
@@ -1316,6 +1371,22 @@
                 }
             } catch (e) {
                 console.error("Finish match failed:", e);
+            }
+        }
+
+        async unlockMatch(matchId) {
+            if (!confirm("¿Desbloquear partido para corregir el resultado?")) return;
+
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const collection = isEntreno ? 'entrenos_matches' : 'matches';
+            try {
+                await window.db.collection(collection).doc(matchId).update({
+                    status: 'live'
+                });
+                console.log("Match unlocked:", matchId);
+                this.recalc();
+            } catch (e) {
+                console.error("Unlock failed:", e);
             }
         }
 
@@ -1366,7 +1437,9 @@
             if (!confirm(msg)) return;
 
             const btnContainer = document.getElementById('next-round-btn-container');
-            if (btnContainer) btnContainer.innerHTML = '<div class="loader"></div>';
+            if (btnContainer) {
+                btnContainer.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; gap:15px; padding:20px;"><div class="loader"></div><span style="font-weight:800; color:#888;">GENERANDO...</span></div>';
+            }
 
             try {
                 if (nextRoundExists) {
@@ -1380,26 +1453,43 @@
                     await window.AmericanaService.generateEntrenoNextRound(this.currentAmericanaDoc.id, round);
                 }
 
-                // SUCCESS NOTIFICATION
-                const toast = document.createElement('div');
-                toast.innerHTML = `
-                    <div style="background: #25D366; color: white; padding: 20px 40px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; border: 2px solid white;">
-                        <span style="font-size: 2rem;">✅</span>
-                        <div>
-                            <h3 style="margin:0; font-weight: 900; font-size: 1.2rem;">RONDA ${nextRound} GENERADA</h3>
-                            <p style="margin:5px 0 0 0; opacity: 0.9;">Los partidos están listos (0-0).</p>
-                        </div>
-                    </div>
-                `;
-                toast.style.cssText = "position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);";
-                document.body.appendChild(toast);
+                // --- AUTO-TRANSITION LOGIC ---
+                console.log("⏳ Waiting for matches to sync...");
 
-                setTimeout(() => {
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translate(-50%, -60%)';
-                    toast.style.transition = 'all 0.5s ease';
-                    setTimeout(() => toast.remove(), 500);
-                }, 2500);
+                // Helper to wait for matches
+                const waitForMatches = async () => {
+                    let attempts = 0;
+                    while (attempts < 20) { // Try for ~10 seconds
+                        // Force a check/re-render might be needed if state is external, 
+                        // but usually this.allMatches updates via listener. 
+                        // We check this.allMatches directly.
+                        const matchesForNextRound = this.allMatches.filter(m => parseInt(m.round) === nextRound);
+                        if (matchesForNextRound.length > 0) return matchesForNextRound;
+
+                        await new Promise(r => setTimeout(r, 500));
+                        attempts++;
+                    }
+                    return [];
+                };
+
+                const newMatches = await waitForMatches();
+
+                if (newMatches.length > 0 && window.ShuffleAnimator) {
+                    // Play Animation
+                    window.ShuffleAnimator.animate({
+                        round: nextRound,
+                        players: this.currentAmericanaDoc?.players || [],
+                        courts: this.currentAmericanaDoc?.max_courts || 4,
+                        matches: newMatches
+                    }, () => {
+                        // ON COMPLETE: Switch Tab
+                        this.goToRound(nextRound);
+                    });
+                } else {
+                    // Fallback if no animation or timeout
+                    this.goToRound(nextRound);
+                    alert("Ronda generada (Animación omitida por timeout de sincronización).");
+                }
 
             } catch (e) {
                 console.error(e);
@@ -1683,6 +1773,8 @@
                 players: this.currentAmericanaDoc?.players || [],
                 courts: this.currentAmericanaDoc?.max_courts || 4,
                 matches: currentMatches
+            }, () => {
+                this.goToRound(currentRound);
             });
         }
     } // End of ControlTowerView class

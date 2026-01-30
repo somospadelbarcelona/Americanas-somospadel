@@ -281,8 +281,9 @@
                     const diffMs = times.start - now;
                     const diffHours = diffMs / (1000 * 60 * 60);
 
-                    if (diffHours <= 4 && diffHours > 0) {
-                        console.log(`⏰ [AutoAutomation] OPEN -> PAIRING: ${evt.name}`);
+                    // Changed from 4 to 3 hours as per user request
+                    if (diffHours <= 3 && diffHours > 0) {
+                        console.log(`⏰ [AutoAutomation] OPEN -> PAIRING (3h trigger): ${evt.name}`);
                         if (window.EventService && window.AmericanaService) {
                             window.EventService.updateEvent(evt.type, evt.id, { status: 'pairing' })
                                 .then(() => window.AmericanaService.generateFirstRoundMatches(evt.id, evt.type))

@@ -175,7 +175,8 @@
             this.startTimer();
 
             const container = document.getElementById('shuffle-container');
-            const numCourts = data.courts || 4;
+            const maxMatchCourt = data.matches ? Math.max(0, ...data.matches.map(m => parseInt(m.court || m.pista || 0))) : 0;
+            const numCourts = Math.max(data.courts || 4, maxMatchCourt);
 
             for (let i = 1; i <= numCourts; i++) {
                 const slot = document.createElement('div');
@@ -203,8 +204,9 @@
                 setTimeout(() => slot.classList.add('visible'), i * 150);
             }
 
+            // Uniform experience or slightly faster but not instant
             const isFirstRound = parseInt(data.round) === 1;
-            const shuffleDuration = isFirstRound ? 6000 : 2000;
+            const shuffleDuration = isFirstRound ? 6000 : 4000; // Increased from 2000 for visibility
 
             setTimeout(() => this.revealResults(data, overlay, onComplete), shuffleDuration);
 
@@ -221,12 +223,18 @@
             if (marquee) marquee.innerText = "SORTEO COMPLETADO • RESULTADOS PUBLICADOS • TODOS A PISTAS • REGLAMENTO SOMOSPADEL ACTIVADO • ";
 
             const isFirstRound = parseInt(data.round) === 1;
-            const matchDelay = isFirstRound ? 1200 : 300;
-            const playerDelay = isFirstRound ? 500 : 100;
+            const matchDelay = isFirstRound ? 1200 : 800;
+            const playerDelay = isFirstRound ? 500 : 250;
+
+            const revealedCourts = new Set();
 
             matches.forEach((m, idx) => {
-                // Fallback robusto para el número de pista: preferimos m.court, si no, m.court_id, si no, el índice + 1
-                const c = m.court || m.pista || (idx + 1);
+                // Robust parsing for court ID (handles strings like "PISTA 2" or numbers)
+                let val = parseInt(String(m.court || m.pista || '').replace(/\D/g, ''));
+                if (isNaN(val)) val = idx + 1;
+                const c = val;
+                revealedCourts.add(c);
+
                 let pNames = this.extractNamesFromMatch(m);
 
                 setTimeout(() => {
@@ -245,11 +253,44 @@
             });
 
             const totalRevealTime = (matches.length * matchDelay) + (4 * playerDelay);
+
+            // SWEEPER: Clean up any courts that didn't get a match.
+            // Increased safety buffer to 2000ms to ensure it never preempts a valid reveal.
             setTimeout(() => {
+                const slots = document.querySelectorAll('.court-slot');
+                slots.forEach((slot, index) => {
+                    // Robust ID inference
+                    const pisteOverlay = slot.querySelector('.pista-name-overlay');
+                    let pisteNum = index + 1; // Default
+                    if (pisteOverlay) {
+                        const txt = pisteOverlay.innerText.replace(/\D/g, '');
+                        if (txt) pisteNum = parseInt(txt);
+                    }
+
+                    if (!revealedCourts.has(pisteNum)) {
+                        const nameSlots = slot.querySelectorAll('.slot-name:not(.revealed)');
+                        nameSlots.forEach(ns => {
+                            ns.classList.add('revealed');
+                            ns.style.background = 'rgba(255,255,255,0.05)';
+                            ns.innerHTML = '<div class="winner-name" style="color: #666; font-size: 0.8rem; letter-spacing: 1px;">DISPONIBLE</div>';
+                        });
+                        const ribbon = slot.querySelector('.vs-ribbon');
+                        if (ribbon) ribbon.style.opacity = '0';
+                    }
+                });
+            }, totalRevealTime + 2000);
+
+            // TOTAL DURATION
+            // increased buffer to allow reading
+            setTimeout(() => {
+                const btn = document.querySelector('.tv-close-btn');
+                if (btn) btn.classList.add('pulse-attention'); // hypothetical class to draw attention
+
                 setTimeout(() => {
+                    // Auto-close if still open
                     if (document.getElementById('shuffle-animator-overlay')) this.finishAnimation(overlay, onComplete);
-                }, 10000);
-            }, totalRevealTime + 1000);
+                }, 6000);
+            }, totalRevealTime + 2500);
         }
 
         extractNamesFromMatch(m) {
@@ -257,11 +298,23 @@
             const teamA = [];
             const teamB = [];
 
-            // 1. Array de nombres (Formato estándar)
-            if (Array.isArray(m.team_a_names)) teamA.push(...m.team_a_names);
-            if (Array.isArray(m.team_b_names)) teamB.push(...m.team_b_names);
+            // 1. Array de objetos de jugador (Formato de MatchmakingService round 2+)
+            if (Array.isArray(m.team_a)) teamA.push(...m.team_a.map(p => p.name || p.displayName || '---'));
+            if (Array.isArray(m.team_b)) teamB.push(...m.team_b.map(p => p.name || p.displayName || '---'));
 
-            // 2. Fallback: Campos individuales player1, player2...
+            // 2. Formato de String (Formato de MatchmakingService guardado: "Name 1 / Name 2")
+            if (teamA.length === 0 && typeof m.team_a_names === 'string' && m.team_a_names.includes(' / ')) {
+                teamA.push(...m.team_a_names.split(' / '));
+            }
+            if (teamB.length === 0 && typeof m.team_b_names === 'string' && m.team_b_names.includes(' / ')) {
+                teamB.push(...m.team_b_names.split(' / '));
+            }
+
+            // 3. Array de nombres (Formato estándar)
+            if (teamA.length === 0 && Array.isArray(m.team_a_names)) teamA.push(...m.team_a_names);
+            if (teamB.length === 0 && Array.isArray(m.team_b_names)) teamB.push(...m.team_b_names);
+
+            // 4. Fallback: Campos individuales player1, player2...
             if (teamA.length === 0) {
                 if (m.player1_name) teamA.push(m.player1_name);
                 if (m.p1_name) teamA.push(m.p1_name);
@@ -275,7 +328,7 @@
                 if (m.p4_name) teamB.push(m.p4_name);
             }
 
-            // 3. Fallback: Nombres simples de equipo
+            // 5. Fallback: Nombres simples de equipo
             if (teamA.length === 0 && m.teamA) teamA.push(m.teamA);
             if (teamB.length === 0 && m.teamB) teamB.push(m.teamB);
 
