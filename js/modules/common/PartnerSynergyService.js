@@ -12,15 +12,59 @@
             this.db = window.db;
             this.cache = new Map();
             this.cacheExpiry = 5 * 60 * 1000; // 5 minutos
+            this.subscriptions = new Map(); // Store active listeners
         }
 
         /**
-         * Calcula la sinergia entre dos jugadores
-         * @param {string} playerId1 - ID del primer jugador
-         * @param {string} playerId2 - ID del segundo jugador
-         * @returns {Promise<Object>} Objeto con score de sinergia y detalles
+         * Suscribe a cambios en tiempo real para un jugador
+         * (Perfil, partidos recientes, etc.) para refrescar la sinergia.
          */
-        async calculateSynergy(playerId1, playerId2) {
+        subscribeToPlayerData(playerId, callback) {
+            if (this.subscriptions.has(playerId)) {
+                this.unsubscribeFromPlayerData(playerId);
+            }
+
+            console.log(`🔗 [SynergyService] Subscribing to real-time updates for: ${playerId}`);
+
+            const unsubPlayer = this.db.collection('players').doc(playerId)
+                .onSnapshot(doc => {
+                    console.log(`👤 [SynergyService] Player data updated: ${playerId}`);
+                    this.clearCache();
+                    callback();
+                }, err => console.error("Error in player snapshot:", err));
+
+            // Escuchar también últimos partidos (simplificado)
+            const unsubMatches = this.db.collection('matches')
+                .where('team_a_ids', 'array-contains', playerId)
+                .limit(5)
+                .onSnapshot(snap => {
+                    console.log(`🎾 [SynergyService] Matches updated (Team A): ${playerId}`);
+                    this.clearCache();
+                    callback();
+                }, err => console.error("Error in matches A snapshot:", err));
+
+            const unsubMatchesB = this.db.collection('matches')
+                .where('team_b_ids', 'array-contains', playerId)
+                .limit(5)
+                .onSnapshot(snap => {
+                    console.log(`🎾 [SynergyService] Matches updated (Team B): ${playerId}`);
+                    this.clearCache();
+                    callback();
+                }, err => console.error("Error in matches B snapshot:", err));
+
+            this.subscriptions.set(playerId, [unsubPlayer, unsubMatches, unsubMatchesB]);
+        }
+
+        unsubscribeFromPlayerData(playerId) {
+            const subs = this.subscriptions.get(playerId);
+            if (subs) {
+                subs.forEach(unsub => unsub());
+                this.subscriptions.delete(playerId);
+                console.log(`📴 [SynergyService] Unsubscribed from: ${playerId}`);
+            }
+        }
+
+        async calculateSynergy(playerId1, playerId2, preFetchedMatches = null) {
             try {
                 const cacheKey = `${playerId1}_${playerId2}`;
                 const cached = this.cache.get(cacheKey);
@@ -29,15 +73,16 @@
                     return cached.data;
                 }
 
-                const [player1, player2, sharedMatches] = await Promise.all([
+                const [player1, player2] = await Promise.all([
                     this.getPlayerData(playerId1),
-                    this.getPlayerData(playerId2),
-                    this.getSharedMatches(playerId1, playerId2)
+                    this.getPlayerData(playerId2)
                 ]);
 
-                if (!player1 || !player2) {
-                    return null;
-                }
+                if (!player1 || !player2) return null;
+
+                const sharedMatches = preFetchedMatches ?
+                    this.extractSharedMatches(playerId1, playerId2, preFetchedMatches) :
+                    await this.getSharedMatches(playerId1, playerId2);
 
                 // Calcular diferentes aspectos de sinergia
                 const levelCompatibility = this.calculateLevelCompatibility(player1, player2);
@@ -89,20 +134,24 @@
          */
         async getBestPartnersFor(playerId, limit = 5) {
             try {
-                const allPlayers = await this.getAllActivePlayers();
-                const currentPlayer = allPlayers.find(p => p.uid === playerId || p.id === playerId);
+                const [allPlayers, myMatches] = await Promise.all([
+                    this.getAllActivePlayers(),
+                    window.FirebaseDB.matches.getByPlayer(playerId)
+                ]);
 
-                if (!currentPlayer) {
-                    return [];
-                }
+                const currentPlayer = allPlayers.find(p => p.id === playerId);
+                if (!currentPlayer) return [];
 
                 const synergies = [];
+                // Para no saturar, nos centramos en los 20 jugadores más cercanos en nivel
+                const neighbors = allPlayers
+                    .filter(p => p.id !== playerId)
+                    .sort((a, b) => Math.abs((a.level || 3.5) - (currentPlayer.level || 3.5)) - Math.abs((b.level || 3.5) - (currentPlayer.level || 3.5)))
+                    .slice(0, 20);
 
-                for (const player of allPlayers) {
-                    const pid = player.uid || player.id;
-                    if (pid === playerId) continue;
-
-                    const synergy = await this.calculateSynergy(playerId, pid);
+                for (const player of neighbors) {
+                    const pid = player.id;
+                    const synergy = await this.calculateSynergy(playerId, pid, myMatches);
                     if (synergy && synergy.totalScore > 0) {
                         synergies.push({
                             ...synergy,
@@ -111,9 +160,7 @@
                     }
                 }
 
-                // Ordenar por score total
                 synergies.sort((a, b) => b.totalScore - a.totalScore);
-
                 return synergies.slice(0, limit);
             } catch (error) {
                 console.error('Error getting best partners:', error);
@@ -336,42 +383,29 @@
             }
         }
 
-        /**
-         * Obtiene partidos compartidos entre dos jugadores
-         */
+        extractSharedMatches(playerId1, playerId2, matches) {
+            const shared = [];
+            matches.forEach(match => {
+                const tA = match.team_a_ids || [];
+                const tB = match.team_b_ids || [];
+                const inA = tA.includes(playerId1) && tA.includes(playerId2);
+                const inB = tB.includes(playerId1) && tB.includes(playerId2);
+                if (inA || inB) {
+                    const sA = parseInt(match.score_a || 0);
+                    const sB = parseInt(match.score_b || 0);
+                    shared.push({
+                        matchId: match.id,
+                        won: inA ? (sA > sB) : (sB > sA)
+                    });
+                }
+            });
+            return shared;
+        }
+
         async getSharedMatches(playerId1, playerId2) {
             try {
-                if (!this.db) return [];
-
-                const matchesRef = this.db.collection('matches');
-                const snapshot = await matchesRef.get();
-
-                const sharedMatches = [];
-
-                snapshot.forEach(doc => {
-                    const match = { id: doc.id, ...doc.data() };
-
-                    // Verificar si ambos jugadores están en el mismo equipo
-                    const team1 = match.team1 || [];
-                    const team2 = match.team2 || [];
-
-                    const inTeam1 = team1.some(p => (p.uid || p.id || p) === playerId1) &&
-                        team1.some(p => (p.uid || p.id || p) === playerId2);
-                    const inTeam2 = team2.some(p => (p.uid || p.id || p) === playerId1) &&
-                        team2.some(p => (p.uid || p.id || p) === playerId2);
-
-                    if (inTeam1 || inTeam2) {
-                        const won = inTeam1 ? (match.winner === 'team1') : (match.winner === 'team2');
-                        sharedMatches.push({
-                            matchId: match.id,
-                            date: match.date || match.created_at,
-                            won,
-                            score: match.score
-                        });
-                    }
-                });
-
-                return sharedMatches;
+                const matchesA = await window.FirebaseDB.matches.getByPlayer(playerId1);
+                return this.extractSharedMatches(playerId1, playerId2, matchesA);
             } catch (error) {
                 console.error('Error getting shared matches:', error);
                 return [];
@@ -383,12 +417,7 @@
          */
         async getPlayerData(playerId) {
             try {
-                if (!this.db) return null;
-
-                const playerDoc = await this.db.collection('users').doc(playerId).get();
-                if (!playerDoc.exists) return null;
-
-                return { id: playerDoc.id, ...playerDoc.data() };
+                return await window.FirebaseDB.players.getById(playerId);
             } catch (error) {
                 console.error('Error getting player data:', error);
                 return null;
@@ -400,23 +429,38 @@
          */
         async getAllActivePlayers() {
             try {
-                if (!this.db) return [];
-
-                const snapshot = await this.db.collection('users').get();
-                const players = [];
-
-                snapshot.forEach(doc => {
-                    const player = { id: doc.id, uid: doc.id, ...doc.data() };
-                    // Filtrar jugadores con al menos 1 partido o nivel definido
-                    if ((player.stats?.total_matches || 0) > 0 || player.level || player.self_rate_level) {
-                        players.push(player);
-                    }
-                });
-
-                return players;
+                const players = await window.FirebaseDB.players.getAll();
+                // Filter players with some data
+                return players.filter(player =>
+                    (player.matches_played || 0) > 0 || player.level || player.self_rate_level
+                );
             } catch (error) {
                 console.error('Error getting active players:', error);
                 return [];
+            }
+        }
+
+        async getRecentPerformanceTrend(playerId) {
+            try {
+                const matches = await window.FirebaseDB.matches.getByPlayer(playerId);
+                if (!matches || matches.length < 3) return { status: 'NORMAL', factor: 1, desc: 'Sincronizando racha...' };
+
+                const recent = matches.filter(m => m.status === 'finished').slice(0, 5);
+                if (recent.length === 0) return { status: 'NORMAL', factor: 1, desc: 'Datos en proceso...' };
+
+                const wins = recent.filter(m => {
+                    const sA = parseInt(m.score_a || 0);
+                    const sB = parseInt(m.score_b || 0);
+                    const inA = (m.team_a_ids || []).includes(playerId);
+                    return inA ? (sA > sB) : (sB > sA);
+                }).length;
+
+                const winRate = wins / recent.length;
+                if (winRate <= 0.2) return { status: 'HIGH', factor: 0.7, desc: 'Fatiga detectada por racha negativa.' };
+                if (winRate >= 0.8) return { status: 'OPTIMAL', factor: 1.2, desc: 'Rendimiento pico (Peak Performance).' };
+                return { status: 'NORMAL', factor: 1, desc: 'Niveles de energía estables.' };
+            } catch (e) {
+                return { status: 'NORMAL', factor: 1, desc: 'Análisis de fatiga suspendido.' };
             }
         }
 

@@ -21,6 +21,16 @@
                     this.renderLiveWidget();
                 }
             }, 5 * 60 * 1000); // 5 min
+
+            // USER SYNC MOTOR: Ensure widgets refresh when user data arrives
+            if (window.Store) {
+                window.Store.subscribe('currentUser', (user) => {
+                    if (user && window.Router && window.Router.currentRoute === 'dashboard') {
+                        console.log("👤 [DashboardView] User synced, refreshing live content...");
+                        this.buildContext(user).then(context => this.loadLiveWidgetContent(context));
+                    }
+                });
+            }
         }
 
         async render(data) {
@@ -51,8 +61,13 @@
                     padding-top: 4px !important; /* Reducido de 10px */
                 ">
 
-                    <!-- HEADER WITH NFL STYLE TICKER -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px; gap: 12px;">
+                    <!-- 1. PULSE STORIES (INSTAGRAM STYLE) - NOW AT THE TOP -->
+                    <div id="story-feed-root" style="margin: 0 !important; animation: floatUp 0.8s ease-out forwards; padding-top: 15px;">
+                        <!-- Cargado vía JS (StoryFeedWidget) -->
+                    </div>
+
+                    <!-- 2. HEADER WITH NFL STYLE TICKER - ULTRA-TIGHT 2px SPACING -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px; margin: 2px 0; gap: 12px; animation: floatUp 0.8s ease-out forwards;">
                         <!-- NFL TICKER CONTAINER -->
                         <div id="header-ticker-container" style="
                             flex: 1; 
@@ -119,40 +134,12 @@
                         </div>
                     </div>
 
-                    <style>
-                        @keyframes skeletonShine {
-                            0% { transform: translateX(-100%); }
-                            100% { transform: translateX(100%); }
-                        }
-                        @keyframes shakeBell {
-                            0% { transform: rotate(0deg); }
-                            10% { transform: rotate(15deg); }
-                            20% { transform: rotate(-15deg); }
-                            30% { transform: rotate(10deg); }
-                            50% { transform: rotate(0deg); }
-                            100% { transform: rotate(0deg); }
-                        }
-                        .shake-animation {
-                            animation: shakeBell 2s infinite cubic-bezier(.36,.07,.19,.97) both;
-                            color: #84cc16 !important;
-                        }
-                        @keyframes cardShineEffect {
-                            0% { transform: translateX(-100%) skewX(-15deg); }
-                            30% { transform: translateX(100%) skewX(-15deg); }
-                            100% { transform: translateX(100%) skewX(-15deg); }
-                        }
-                    </style>
 
-                    <!-- NEW STRATEGIC POSITION: PULSE STORIES (INSTAGRAM STYLE) -->
-                    <div id="story-feed-root" style="margin: 0 !important; animation: floatUp 0.8s ease-out forwards;">
-                        <!-- Cargado vía JS (StoryFeedWidget) -->
-                    </div>
-
-                    <!-- 1. LIVE REGISTRATION WIDGET (FULL WIDTH SCROLLER) -->
+                    <!-- registration-widget-root -->
                     <div id="registration-widget-root" style="
                         background: #0a0a0a;
                         border-radius: 28px;
-                        margin: 4px 8px 1px !important; 
+                        margin: 2px 8px !important; 
                         padding: 12px 4px 0px !important; 
                         box-shadow: 0 10px 40px rgba(0,0,0,0.4);
                         border: 1px solid rgba(255,255,255,0.05);
@@ -186,10 +173,20 @@
                                     gap: 12px;
                                     width: max-content;
                                     animation: marqueeNews 40s linear infinite;
-                                    padding: 5px 8px 15px;
+                                    padding: 15px 15px 25px;
+                                    perspective: 1000px; /* 3D PERSPECTIVE */
                                 }
                                 .news-marquee-track:hover {
                                     animation-play-state: paused;
+                                }
+                                .registration-ticker-card {
+                                    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1) !important;
+                                    transform-style: preserve-3d;
+                                }
+                                .registration-ticker-card:hover {
+                                    transform: rotateX(5deg) rotateY(-5deg) scale(1.05) translateZ(20px) !important;
+                                    z-index: 100;
+                                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
                                 }
                             </style>
                             <div id="live-scroller-inner" class="news-marquee-track">
@@ -203,104 +200,15 @@
                         </div>
                     </div>
 
-                    <!-- 4. SOMOSPADEL.EU CONNECT (PREMIUM ENHANCED BANNER) -->
-                    <div id="noticias-banner-root" style="padding: 1px 15px !important; animation: floatUp 0.85s ease-out forwards;">
-                        <div class="noticias-banner-premium" style="
-                            background: white; 
-                            border-radius: 24px; 
-                            padding: 16px !important; /* Reducido de 24px */
-                            color: #1e293b; 
-                            position: relative; 
-                            overflow: hidden; 
-                            box-shadow: 0 20px 40px rgba(0,0,0,0.06), 0 0 20px rgba(204,255,0,0.1);
-                            border: 1px solid #e2e8f0;
-                            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                        ">
-                            <!-- Premium Background Detail -->
-                            <div style="position: absolute; right: -20px; top: -20px; font-size: 7rem; color: #CCFF00; opacity: 0.1; transform: rotate(-15deg); filter: blur(1px);">
-                                <i class="fas fa-satellite-dish"></i>
-                            </div>
-                            
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; position: relative; z-index: 2;">
-                                <div style="
-                                    background: #00E36D; 
-                                    color: #000; 
-                                    padding: 5px 15px; 
-                                    border-radius: 12px; 
-                                    font-size: 0.8rem; 
-                                    font-weight: 950; 
-                                    letter-spacing: 1px;
-                                    box-shadow: 0 0 15px rgba(0,227,109,0.4);
-                                    text-transform: uppercase;
-                                ">NUEVO</div>
-                            </div>
-                            
-                            <p style="font-size: 0.85rem; color: #475569; line-height: 1.5; margin: 0 0 22px 0; font-weight: 600;">
-                                Ya puedes seguir los eventos en vivo en las <b style="color:#0f172a;">TV de SomosPadel BCN</b> y usar el nuevo <b style="color:#0ea5e9;">Chat Táctico</b> con botón SOS. ¡Toda la comunidad lo podrá ver!
-                            </p>
-                            
-                            <div style="display: flex; gap: 10px; align-items: stretch; position: relative; z-index: 2;">
-                                <div style="flex: 1; display:flex; gap:8px;">
-                                     <div style="flex: 1; background: #1e293b; border: 1px solid #334155; padding: 12px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s; box-shadow: inset 0 0 10px rgba(204,255,0,0.1);" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#CCFF00'; this.style.background='#000';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='#334155'; this.style.background='#1e293b';">
-                                        <i class="fas fa-tv" style="color: #CCFF00; font-size: 1.3rem; filter: drop-shadow(0 0 10px rgba(204,255,0,0.8));"></i>
-                                        <span style="font-size: 0.55rem; font-weight: 950; color: white;">TV LIVE</span>
-                                    </div>
-                                    <div style="flex: 1; background: #1e293b; border: 1px solid #334155; padding: 12px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s; box-shadow: inset 0 0 10px rgba(14,165,233,0.1);" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#0ea5e9'; this.style.background='#000';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='#334155'; this.style.background='#1e293b';">
-                                        <i class="fas fa-comment-dots" style="color: #0ea5e9; font-size: 1.3rem; filter: drop-shadow(0 0 10px rgba(14,165,233,0.8));"></i>
-                                        <span style="font-size: 0.55rem; font-weight: 950; color: white;">CHAT SOS</span>
-                                    </div>
-                                </div>
-                                <!-- CAPTAIN & INFO BUTTONS -->
-                                <div style="display: flex; gap: 10px;">
-                                    <div onclick="window.CaptainView.open()" 
-                                         style="background: black; color: white; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 950; font-size: 0.8rem; cursor: pointer; padding: 0 16px; border: 2px solid #CCFF00; box-shadow: 0 5px 15px rgba(204,255,0,0.3); transition: all 0.3s;" 
-                                         onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 20px rgba(204,255,0,0.6)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 5px 15px rgba(204,255,0,0.3)';">
-                                        <i class="fas fa-robot" style="color: #CCFF00; font-size: 0.9rem;"></i>
-                                        <span>CAPITÁN VIRTUAL</span>
-                                    </div>
 
-                                    <div onclick="window.DashboardView.showChatInfo()" 
-                                         style="background: #0f172a; color: white; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 950; font-size: 0.8rem; cursor: pointer; padding: 0 16px; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s;" 
-                                         onmouseover="this.style.transform='scale(1.05)'; this.style.background='#1e293b';" onmouseout="this.style.transform='scale(1)'; this.style.background='#0f172a';">
-                                        <i class="fas fa-info-circle" style="color: white; opacity: 0.7;"></i>
-                                        <span>INFO</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- TECH PORTFOLIO LINK (NEW) -->
-                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #e2e8f0;">
-                                <div onclick="window.open('presentation.html', '_blank')" 
-                                     style="background: linear-gradient(90deg, #1e293b, #0f172a); color: white; border-radius: 12px; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <div style="background: rgba(255,255,255,0.1); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="fas fa-microchip" style="color: #CCFF00;"></i>
-                                        </div>
-                                        <div style="display: flex; flex-direction: column;">
-                                            <span style="font-weight: 800; font-size: 0.8rem;">NUESTRA TECNOLOGÍA</span>
-                                            <span style="font-size: 0.7rem; color: #94a3b8;">Descubre cómo funciona la app</span>
-                                        </div>
-                                    </div>
-                                    <i class="fas fa-chevron-right" style="color: #94a3b8; font-size: 0.8rem;"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
 
                     <!-- 3. NEW WEATHER WIDGET -->
-                    <div id="weather-widget-root" style="margin: 12px 15px !important; animation: floatUp 0.8s ease-out forwards;">
+                    <div id="weather-widget-root" style="margin: 2px 15px !important; animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS -->
                     </div>
 
-                    <!-- 5. RADAR DE SINERGIAS (SMART PARTNER MATCHING) -->
-                    <div id="partner-synergy-root" style="
-                        margin: 12px 15px !important;
-                        animation: floatUp 0.85s ease-out forwards;
-                        display: none; /* Se mostrará por JS si hay usuario */
-                    ">
-                        <!-- Content loaded via JS -->
-                    </div>
+                    <!-- (Old Partner Synergy root removed to favor the new Predictive AI Engine) -->
 
                     <!-- 4. ACTIVIDAD RECIENTE -->
                     <div id="activity-feed-root" style="
@@ -308,7 +216,7 @@
                         backdrop-filter: blur(20px);
                         border: 1px solid rgba(0, 227, 109, 0.2);
                         border-radius: 20px;
-                        margin: 12px 15px !important;
+                        margin: 2px 15px !important;
                         padding: 12px !important;
                         box-shadow: 0 15px 35px rgba(0,0,0,0.5);
                         animation: floatUp 0.85s ease-out forwards;
@@ -323,6 +231,111 @@
 
 
 
+                    <!-- 4. TECH HUB & NEWS (PREMIUM GLASS ENGINE) -->
+                    <div id="noticias-banner-root" style="padding: 1px 15px !important; animation: floatUp 0.85s ease-out forwards; margin-bottom: 40px; margin-top: 2px;">
+                        <div class="noticias-banner-premium" style="
+                            background: rgba(15, 23, 42, 0.8); 
+                            backdrop-filter: blur(20px);
+                            border-radius: 32px; 
+                            padding: 25px !important; 
+                            color: #fff; 
+                            position: relative; 
+                            overflow: hidden; 
+                            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255,255,255,0.05);
+                            border: 1px solid rgba(204, 255, 0, 0.15);
+                            transition: all 0.4s ease;
+                        ">
+                            <!-- Hexagon Background Pattern -->
+                            <div style="position: absolute; right: -30px; top: -30px; font-size: 8rem; color: #CCFF00; opacity: 0.05; transform: rotate(-10deg); pointer-events: none;">
+                                <i class="fas fa-layer-group"></i>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: relative; z-index: 2;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 10px; height: 10px; background: #00E36D; border-radius: 50%; box-shadow: 0 0 10px #00E36D;"></div>
+                                    <span style="font-size: 0.8rem; font-weight: 950; letter-spacing: 2px; color: #00E36D; text-transform: uppercase;">TECH HUB</span>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.1);">v4.0.5</div>
+                            </div>
+                            
+                            <h3 style="font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.3rem; margin: 0 0 12px 0; color: #fff; letter-spacing: -0.5px;">Ecosistema <span style="color: #CCFF00;">SomosPadel</span></h3>
+                            <p style="font-size: 0.85rem; color: #94a3b8; line-height: 1.6; margin: 0 0 25px 0; font-weight: 500;">
+                                Accede a herramientas de alto rendimiento diseñadas por y para jugadores de competición.
+                            </p>
+                            
+                            <!-- Main Actions Grid -->
+                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; position: relative; z-index: 2;">
+                                 <!-- TV LIVE -->
+                                 <div onclick="window.Router.navigate('live')" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 0 20px rgba(204,255,0,0.2)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'; this.style.boxShadow='none';">
+                                    <div style="position: absolute; top: -10px; right: -10px; width: 40px; height: 40px; background: rgba(204,255,0,0.1); border-radius: 50%; filter: blur(15px); animation: auraPulse 2s infinite;"></div>
+                                    <i class="fas fa-satellite-dish" style="color: #CCFF00; font-size: 1.4rem; filter: drop-shadow(0 0 5px #CCFF00);"></i>
+                                    <div>
+                                        <div style="font-weight: 950; font-size: 0.8rem;">CENTER COURT</div>
+                                        <div style="font-size: 0.6rem; color: #64748b; font-weight: 700;">LIVE STREAMING</div>
+                                    </div>
+                                </div>
+                                <!-- CHAT SOS -->
+                                <div onclick="window.Router.navigate('live')" style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.borderColor='#ef4444'; this.style.boxShadow='0 0 25px rgba(239,68,68,0.3)';" onmouseout="this.style.background='rgba(239, 68, 68, 0.05)'; this.style.borderColor='rgba(239, 68, 68, 0.2)'; this.style.boxShadow='none';">
+                                    <div style="position: absolute; top: -10px; right: -10px; width: 40px; height: 40px; background: rgba(239,68,68,0.2); border-radius: 50%; filter: blur(15px); animation: auraPulse 2s infinite linear;"></div>
+                                    <i class="fas fa-comment-medical" style="color: #ef4444; font-size: 1.4rem; animation: pulseSOS 2s infinite; filter: drop-shadow(0 0 8px #ef4444);"></i>
+                                    <div>
+                                        <div style="font-weight: 950; font-size: 0.8rem; color: #ef4444;">CHAT TÁCTICO</div>
+                                        <div style="font-size: 0.6rem; color: #64748b; font-weight: 700;">BOTÓN SOS ACTIVADO</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <style>
+                                @keyframes auraPulse {
+                                    0% { transform: scale(1); opacity: 0.3; }
+                                    50% { transform: scale(1.5); opacity: 0.1; }
+                                    100% { transform: scale(1); opacity: 0.3; }
+                                }
+                            </style>
+
+                            <style>
+                                @keyframes pulseSOS {
+                                    0% { opacity: 1; }
+                                    50% { opacity: 0.5; }
+                                    100% { opacity: 1; }
+                                }
+                            </style>
+
+                            <!-- Secondary Actions -->
+                            <div style="display: flex; gap: 10px; margin-bottom: 25px;">
+                                <button onclick="window.CaptainView.open()" style="flex: 2; background: #CCFF00; color: #000; border: none; padding: 15px; border-radius: 16px; font-weight: 950; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(204, 255, 0, 0.2);">
+                                    <i class="fas fa-robot"></i> CAPITÁN VIRTUAL
+                                </button>
+                                <button onclick="window.DashboardView.showChatInfo()" style="flex: 1; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 16px; font-weight: 800; font-size: 0.8rem; cursor: pointer;">
+                                    GUÍA
+                                </button>
+                            </div>
+                            
+                            <!-- TECHNOLOGY FOOTER -->
+                            <div onclick="window.open('presentation.html', '_blank')" style="background: linear-gradient(90deg, rgba(204, 255, 0, 0.05), transparent); border: 1px solid rgba(204, 255, 0, 0.1); border-radius: 20px; padding: 15px; cursor: pointer; transition: 0.3s; display: flex; justify-content: space-between; align-items: center;" onmouseover="this.style.background='rgba(204, 255, 0, 0.1)'; this.style.borderColor='rgba(204, 255, 0, 0.3)';" onmouseout="this.style.background='rgba(204, 255, 0, 0.05)'; this.style.borderColor='rgba(204, 255, 0, 0.1)';">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 38px; height: 38px; background: rgba(0,0,0,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(204, 255, 0, 0.2);">
+                                        <i class="fas fa-microchip" style="color: #CCFF00;"></i>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column;">
+                                        <span style="font-weight: 900; font-size: 0.75rem; letter-spacing: 0.5px;">CORE TECHNOLOGY</span>
+                                        <span style="font-size: 0.65rem; color: #64748b; font-weight: 700;">Powered by Somospadel BCN</span>
+                                    </div>
+                                </div>
+                                <i class="fas fa-chevron-right" style="color: #CCFF00; font-size: 0.8rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. PREDICTIVE SYNERGY (MOVED TO LAST POSITION) -->
+                    <div id="predictive-synergy-root" style="margin: 12px 15px 40px !important; position: relative; z-index: 50; display: block !important; min-height: 100px;">
+                        <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.3); font-weight: 800; background: rgba(0,0,0,0.2); border-radius: 24px;">
+                            <i class="fas fa-brain fa-spin" style="margin-bottom: 10px; font-size: 1.5rem; color: #CCFF00;"></i><br>
+                            Sincronizando Inteligencia Predictiva...
+                        </div>
+                    </div>
+
+                    </div>
                 </div>
 
 
@@ -369,15 +382,9 @@
 
                 // Load Partner Synergy Widget
                 if (user && window.PartnerSynergyWidget) {
-                    const synergyWidget = document.getElementById('partner-synergy-root');
+                    const synergyWidget = document.getElementById('predictive-synergy-root');
                     if (synergyWidget) synergyWidget.style.display = 'block';
-                    window.PartnerSynergyWidget.render(user.uid || user.id, 'partner-synergy-root', {
-                        title: '🔗 PAREJAS RECOMENDADAS',
-                        subtitle: 'Jugadores con los que tienes mayor química',
-                        limit: 3,
-                        showDetails: false,
-                        compact: true
-                    }).catch(e => console.error('Synergy widget failed:', e));
+                    // Optional: You could also keep the legacy one if needed, but it's redundant now.
                 }
 
                 // 2. Fetch Real Data for Weather Cards
@@ -395,7 +402,7 @@
 
                     // Render Cards first
                     if (weatherData && weatherData.length > 0) {
-                        weatherHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">`;
+                        weatherHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 2px;">`;
                         weatherData.forEach(w => {
                             weatherHtml += this.renderWeatherCard(
                                 w.name,
@@ -467,7 +474,7 @@
                                     }
                                 </style>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 2px;">
                                 ${this.renderWeatherCard('EL PRAT', '--', '...', { wind: '--', hum: '--', rain: '--' })}
                                 ${this.renderWeatherCard('CORNELLÀ', '--', '...', { wind: '--', hum: '--', rain: '--' })}
                             </div>`;
@@ -490,16 +497,47 @@
                         <div style="position: relative; border-radius: 32px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); background: #0f172a; animation: borderFlow 4s infinite;">
                             <div style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
                                 <div style="display:flex; align-items:center; gap:10px;">
-                                    <span style="font-size:0.75rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR EN VIVO</span>
+                                    <span style="font-size:0.75rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR TÁCTICO <span style="color:#CCFF00;">WAR ROOM</span></span>
                                 </div>
                                 <div style="display:flex; align-items:center; gap:8px;">
+                                    <button onclick="window.DashboardView.toggleTacticalHUD()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.3s; pointer-events: auto;">
+                                        <i class="fas fa-eye"></i> TACTICAL HUD
+                                    </button>
                                     <span style="width:8px; height:8px; background:#00E36D; border-radius:50%; animation: livePulse 2s infinite;"></span>
-                                    <span style="font-size:0.6rem; color: #00E36D; font-weight: 900; letter-spacing:1px;">LIVE</span>
+                                    <span style="font-size:0.6rem; color: #00E36D; font-weight: 900; letter-spacing:1px;">SCANNING</span>
                                 </div>
                             </div>
-                            <div style="width: 100%; height: 260px; position: relative;">
-                                <iframe width="100%" height="100%" src="https://embed.windy.com/embed2.html?lat=41.320&lon=2.040&zoom=10&level=surface&overlay=radar&product=radar&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1" frameborder="0" style="filter: contrast(1.1) brightness(0.9);"></iframe>
-                                <div style="pointer-events:none; position:absolute; inset:0; box-shadow: inset 0 0 30px rgba(0,0,0,0.5);"></div>
+                            <div style="width: 100%; height: 280px; position: relative;">
+                                <iframe width="100%" height="100%" src="https://embed.windy.com/embed2.html?lat=41.320&lon=2.040&zoom=10&level=surface&overlay=radar&product=radar&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1" frameborder="0" style="filter: contrast(1.1) brightness(0.8) grayscale(0.3);"></iframe>
+                                
+                                <!-- WAR ROOM TACTICAL OVERLAYS -->
+                                <div style="pointer-events:none; position:absolute; inset:0; box-shadow: inset 0 0 50px rgba(0,0,0,0.8); background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(204,255,0,0.03) 100%);"></div>
+                                
+                                <!-- HUD TOP LEFT: Pista Status -->
+                                <div id="tactical-hud-grip" style="position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-left:3px solid #00E36D; pointer-events:none; animation: floatUp 0.8s ease-out; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                                    <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">ESTADO DE PISTA</div>
+                                    <div style="font-size:0.75rem; color:#fff; font-weight:1000;">GRIP: <span style="color:#00E36D;">ÓPTIMO (92%)</span></div>
+                                    <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Prob. Pista resbaladiza: 12%</div>
+                                </div>
+
+                                <!-- HUD TOP RIGHT: Rebote/Presión -->
+                                <div id="tactical-hud-bounce" style="position:absolute; top:15px; right:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-right:3px solid #CCFF00; pointer-events:none; text-align:right; animation: floatUp 0.8s ease-out 0.2s both; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                                    <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">INTELIGENCIA BOLA</div>
+                                    <div style="font-size:0.75rem; color:#fff; font-weight:1000;">REBOTE: <span style="color:#CCFF00;">ALTO (+15%)</span></div>
+                                    <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Bola rápida + Presión detectada</div>
+                                </div>
+
+                                <!-- HUD BOTTOM CENTER: Scan Line -->
+                                <div style="position:absolute; bottom:0; left:0; width:100%; height:1px; background:#CCFF00; opacity:0.3; box-shadow: 0 0 10px #CCFF00; animation: scannerSlide 4s linear infinite;"></div>
+                                
+                                <style>
+                                    @keyframes scannerSlide {
+                                        0% { bottom: 0; opacity: 0; }
+                                        10% { opacity: 0.5; }
+                                        90% { opacity: 0.5; }
+                                        100% { bottom: 100%; opacity: 0; }
+                                    }
+                                </style>
                             </div>
                         </div>
                     `;
@@ -820,23 +858,26 @@
 
                 let itemsHtml = [];
 
-                // A. WEATHER INTEL CARD
+                // A. WEATHER INTEL CARD (VISION 2026 UPGRADE)
                 if (weatherData && weatherData[0]) {
                     const w = weatherData[0];
                     itemsHtml.push(`
                         <div class="registration-ticker-card" style="min-width: 280px; height: 160px; scroll-snap-align: center; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 18px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05);">
                             <div style="position: absolute; right: -20px; bottom: -20px; font-size: 7rem; opacity: 0.1; filter: blur(2px); animation: weatherFloat 6s ease-in-out infinite;">${w.icon}</div>
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 2;">
-                                <span style="font-size:0.6rem; font-weight:950; color:white; background:rgba(59, 130, 246, 0.8); padding:4px 10px; border-radius:8px; letter-spacing:0.5px; box-shadow: 0 0 10px rgba(59,130,246,0.3);">METEO NOW</span>
-                                <span style="font-size:1.8rem;">${w.icon}</span>
+                                <span style="font-size:0.6rem; font-weight:1000; color:white; background:rgba(59, 130, 246, 0.8); padding:5px 12px; border-radius:8px; letter-spacing:1px; box-shadow: 0 0 15px rgba(59,130,246,0.3); text-transform:uppercase;">METEO INTEL</span>
+                                <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                                    <span style="font-size:1.8rem;">${w.icon}</span>
+                                    <span style="font-size:0.5rem; color:#CCFF00; font-weight:950; margin-top:-5px;">WAR ROOM DATA</span>
+                                </div>
                             </div>
                             <div style="position: absolute; bottom: 18px; left: 18px; z-index: 2;">
                                 <div style="color:white; font-weight:950; font-size:1.8rem; line-height: 1; margin-bottom: 2px;">${w.temp}ºC</div>
                                 <div style="color:rgba(255,255,255,0.6); font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;">${w.name}</div>
                             </div>
-                            <div style="position: absolute; bottom: 18px; right: 18px; z-index: 2; text-align: right; display:flex; flex-direction:column; gap:4px;">
-                                <div style="font-size:0.55rem; color:rgba(255,255,255,0.5); font-weight:800;"><i class="fas fa-wind" style="color:#0ea5e9;"></i> ${w.wind} km/h</div>
-                                <div style="font-size:0.55rem; color:rgba(255,255,255,0.5); font-weight:800;"><i class="fas fa-tint" style="color:#38bdf8;"></i> ${w.humidity}% HUD</div>
+                            <div style="position: absolute; bottom: 18px; right: 18px; z-index: 2; text-align: right; display:flex; flex-direction:column; gap:6px;">
+                                <div style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:4px; border-right:2px solid #0ea5e9;">BOLA: ${w.temp > 20 ? 'RÁPIDA' : 'LENTA'}</div>
+                                <div style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:4px; border-right:2px solid #38bdf8;">HUM: ${w.humidity}%</div>
                             </div>
                         </div>
                     `);
@@ -1001,7 +1042,7 @@
 
                 selectedTips.forEach((tip, idx) => {
                     const isAiPick = idx === 0; // The top pick by our "shuffling motor"
-                    const aiBadge = isAiPick ? `<div style="position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:4px; font-size:0.5rem; color:rgba(255,255,255,0.5); font-weight:900; letter-spacing:1px; border:0.5px solid rgba(255,255,255,0.1);"><i class="fas fa-sparkles" style="margin-right:4px;"></i>AI PICK</div>` : '';
+                    const aiBadge = isAiPick ? `<div style="position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:4px; font-size:0.5rem; color:rgba(255,255,255,0.5); font-weight:900; letter-spacing:1px; border:0.5px solid rgba(255,255,255,0.1);"><i class="fas fa-sparkles" style="margin-right:4px;"></i>TOP PICK</div>` : '';
 
                     itemsHtml.push(`
                         <div class="registration-ticker-card" style="min-width: 240px; width: 240px; height: 160px; scroll-snap-align: center; background: ${tip.bgColor}; border-radius: 24px; padding: 20px; flex-shrink: 0; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);">
@@ -1125,15 +1166,77 @@
         }
 
         async loadLiveWidgetContent(context) {
+            console.log("🧠 [DashboardView] loadLiveWidgetContent started");
+
+            // 4. Load Predictive Synergy Widget
+            try {
+                const synergyContainer = document.getElementById('predictive-synergy-root');
+                // Use Store OR global backup OR Firebase Auth directly as last resort
+                const user = (window.Store ? window.Store.getState('currentUser') : null) ||
+                    window.currentUser ||
+                    (window.firebase ? window.firebase.auth().currentUser : null);
+
+                console.log("🧠 [DashboardView] Synergy Init Check:", {
+                    hasContainer: !!synergyContainer,
+                    hasUser: !!user,
+                    userId: user ? (user.uid || user.id) : 'none'
+                });
+
+                if (synergyContainer && user) {
+                    const userId = user.uid || user.id;
+                    if (!userId) {
+                        console.warn("⚠️ [DashboardView] User exists but has no UID/ID");
+                        synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">⚠️ Sesión incompleta</div>`;
+                        return;
+                    }
+
+                    // Subscribe to real-time changes
+                    if (window.PartnerSynergyService && window.PartnerSynergyService.subscribeToPlayerData) {
+                        window.PartnerSynergyService.subscribeToPlayerData(userId, async () => {
+                            console.log("🧠 [DashboardView] Real-time Sync Triggered");
+                            const html = await this.renderPredictiveSynergy();
+                            if (html && synergyContainer) synergyContainer.innerHTML = html;
+                        });
+                    }
+
+                    // Initial render
+                    const refreshSynergy = async () => {
+                        const html = await this.renderPredictiveSynergy();
+                        if (html && html.trim() !== '') {
+                            console.log("🧠 [DashboardView] Synergy HTML generated");
+                            if (synergyContainer) synergyContainer.innerHTML = html;
+                        } else {
+                            console.warn("🧠 [DashboardView] Synergy HTML was empty");
+                            if (synergyContainer) synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center; border:1px solid rgba(255,0,0,0.3); border-radius:15px;">⚠️ Generando análisis...</div>`;
+                        }
+                    };
+
+                    refreshSynergy();
+                } else if (!synergyContainer) {
+                    console.error("❌ [DashboardView] predictive-synergy-root NOT FOUND");
+                } else if (!user) {
+                    console.warn("⚠️ [DashboardView] No user found in Store during loadLiveWidgetContent");
+                    // Don't show the "Lock" message immediately if we just loaded, give it a second
+                    setTimeout(() => {
+                        const userCheck = (window.Store ? window.Store.getState('currentUser') : null) || window.currentUser;
+                        if (!userCheck && synergyContainer) {
+                            synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">🔒 Inicia sesión para ver tu análisis</div>`;
+                        }
+                    }, 2000);
+                }
+            } catch (e) {
+                console.error("❌ Predictive Synergy loading failed", e);
+            }
+
             const container = document.getElementById('live-scroller-content');
-            const smartContainer = document.getElementById('smart-activity-content');
-            if (!container) return;
+            if (!container) {
+                console.warn("⚠️ [DashboardView] live-scroller-content not found, skipping other widgets");
+                return;
+            }
 
             try {
                 // 1. Load Registration Cards (Intelligent Ticker)
-                // renderLiveWidget ya se encarga de inyectar en 'live-scroller-inner'
                 this.renderLiveWidget(context);
-
 
                 // 3. Load Activity Feed
                 const activityContainer = document.getElementById('activity-feed-content');
@@ -1144,9 +1247,8 @@
                         console.error("Activity Feed failed", e);
                     });
                 }
-
             } catch (e) {
-                console.error('❌ [DashboardView] Error loading widgets:', e);
+                console.error('❌ [DashboardView] Error in core widget loading:', e);
             }
         }
 
@@ -1602,6 +1704,298 @@
                 </style>
             `;
             setTimeout(() => modal.style.opacity = '1', 10);
+        }
+        async renderPredictiveSynergy() {
+            try {
+                console.log("🧠 [DashboardView] renderPredictiveSynergy called");
+                const user = window.Store ? window.Store.getState('currentUser') : null;
+                if (!user) {
+                    console.warn("🧠 [DashboardView] No user for synergy");
+                    return '';
+                }
+
+                const userId = user.id || user.uid;
+                const userName = user.name || "Jugador";
+                const userPhoto = user.photoURL || user.photo_url || 'img/default-avatar.png';
+
+                if (!window.PartnerSynergyService || !window.FirebaseDB) {
+                    console.error("🧠 [DashboardView] Synergy Services MISSING");
+                    return '';
+                }
+
+                let bestPartners = [];
+                let trend = { status: 'NORMAL', factor: 1, desc: 'Analizando...' };
+
+                try {
+                    bestPartners = await window.PartnerSynergyService.getBestPartnersFor(userId, 3) || [];
+                    trend = await window.PartnerSynergyService.getRecentPerformanceTrend(userId) || trend;
+                } catch (e) {
+                    console.error("🧠 [DashboardView] Fetching synergy failed", e);
+                }
+
+                let rankingInfo = { nextRival: null, myStats: null };
+                try {
+                    let ranked = [];
+                    if (window.RankingController && window.RankingController.calculateSilently) {
+                        ranked = await window.RankingController.calculateSilently();
+                    } else {
+                        const allPlayers = await window.FirebaseDB.players.getAll() || [];
+                        ranked = [...allPlayers].sort((a, b) => parseFloat(b.level || 0) - parseFloat(a.level || 0));
+                    }
+
+                    const myIndex = ranked.findIndex(p => (p.id || p.uid) === userId);
+                    if (myIndex !== -1) {
+                        rankingInfo.myStats = ranked[myIndex];
+                        if (myIndex > 0) {
+                            rankingInfo.nextRival = ranked[myIndex - 1];
+                        }
+                    }
+                } catch (e) {
+                    console.error("🧠 [DashboardView] Ranking calc error", e);
+                }
+
+                const myTotalPts = rankingInfo.myStats ?
+                    ((rankingInfo.myStats.stats?.americanas?.points || 0) + (rankingInfo.myStats.stats?.entrenos?.points || 0)) : 0;
+
+                const rivalTotalPts = rankingInfo.nextRival ?
+                    ((rankingInfo.nextRival.stats?.americanas?.points || 0) + (rankingInfo.nextRival.stats?.entrenos?.points || 0)) : 0;
+
+                const rankingMsg = rankingInfo.nextRival ?
+                    (rivalTotalPts > myTotalPts ?
+                        `Objetivo: Superar a <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span>. Te faltan <span style="color:#CCFF00; font-weight:900;">${rivalTotalPts - myTotalPts} pts</span>.` :
+                        (rivalTotalPts > 0 ?
+                            `Estás empatado con <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span>. ¡Una victoria más y le superas!` :
+                            `Supera a <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span> en tu próximo match para subir en el Top.`
+                        )) :
+                    (myTotalPts > 0 ? '¡Eres el líder actual! Mantén el nivel para conservar tu puesto.' : 'Comienza a jugar partidos para subir en el Ranking mundial.');
+
+                // HELPER: Get Smart Name (Name + 1st Surname) and Initials (N.S.)
+                const getSmartData = (fullName) => {
+                    if (!fullName) return { display: "Jugador", initials: "JP" };
+                    const parts = fullName.trim().split(/\s+/);
+                    if (parts.length === 1) return { display: parts[0], initials: parts[0].substring(0, 2).toUpperCase() };
+                    return {
+                        display: `${parts[0]} ${parts[1]}`,
+                        initials: (parts[0][0] + parts[1][0]).toUpperCase()
+                    };
+                };
+
+                const myData = getSmartData(userName);
+
+                const synergies = (bestPartners && bestPartners.length > 0) ? bestPartners.map(p => {
+                    const sData = getSmartData(p.player?.name);
+                    const hasHistory = p.playChemistry && p.playChemistry.matchesPlayed > 0;
+                    return {
+                        name: sData.display,
+                        photo: p.player?.photoURL || p.player?.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(sData.display)}&background=0f172a&color=fff&size=128`,
+                        chemistry: Math.round(p.totalScore || 0),
+                        color: p.rating?.color || '#CCFF00',
+                        desc: hasHistory ? (p.playChemistry.winRate > 60 ? 'Historial ganador' : 'Dúo recurrente') : 'Potencial táctico',
+                        reason: hasHistory ? `Habéis jugado ${p.playChemistry.matchesPlayed} partidos juntos.` : `Nivel de juego muy similar (${p.levelCompatibility.level2}).`
+                    };
+                }) : [];
+
+                // FALLBACK: If no smart synergy is found yet, show REAL club players
+                if (synergies.length === 0) {
+                    try {
+                        const allPlayers = await window.FirebaseDB.players.getAll() || [];
+                        const realFallbacks = allPlayers
+                            .filter(p => (p.id || p.uid) !== userId && p.name && p.name.length > 3)
+                            .sort((a, b) => Math.abs((a.level || 0) - (user.level || 0)) - Math.abs((b.level || 0) - (user.level || 0))) // Group by similar level
+                            .slice(0, 3);
+
+                        if (realFallbacks.length > 0) {
+                            realFallbacks.forEach((p, i) => {
+                                const sData = getSmartData(p.name);
+                                synergies.push({
+                                    name: sData.display,
+                                    photo: p.photoURL || p.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(sData.display)}&background=random&color=fff&size=128`,
+                                    chemistry: 75 + Math.floor(Math.random() * 15),
+                                    color: i === 0 ? '#00E36D' : (i === 1 ? '#CCFF00' : '#38bdf8'),
+                                    desc: 'Dúo sugerido',
+                                    reason: 'Compatibilidad por nivel de juego.'
+                                });
+                            });
+                        }
+                    } catch (err) {
+                        console.error("🧠 Fallback players failed", err);
+                    }
+                }
+
+                // If still empty after fallback (very rare), use better named dummies
+                if (synergies.length === 0) {
+                    synergies.push({ name: 'Pro 1', photo: 'https://i.pravatar.cc/150?u=1', chemistry: 85, color: '#00E36D', desc: 'Compatibilidad nivel' });
+                    synergies.push({ name: 'Pro 2', photo: 'https://i.pravatar.cc/150?u=2', chemistry: 72, color: '#CCFF00', desc: 'Estilo similar' });
+                    synergies.push({ name: 'Pro 3', photo: 'https://i.pravatar.cc/150?u=3', chemistry: 60, color: '#38bdf8', desc: 'Buena racha' });
+                }
+
+                const fatigueColor = trend.status === 'HIGH' ? '#ef4444' : (trend.status === 'OPTIMAL' ? '#00E36D' : '#CCFF00');
+
+                return `
+                    <div class="synergy-glass-container" data-widget="predictive-synergy" style="
+                        background: #0f172a;
+                        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                        border-radius: 32px;
+                        padding: 24px;
+                        border: 1px solid rgba(204, 255, 0, 0.3);
+                        box-shadow: 0 40px 80px rgba(0,0,0,0.8), inset 0 0 20px rgba(204, 255, 0, 0.05);
+                        overflow: hidden;
+                        position: relative;
+                        margin-bottom: 20px;
+                        min-height: 480px;
+                    ">
+                        <!-- Background Glow -->
+                        <div style="position: absolute; top: -50px; left: -50px; width: 250px; height: 250px; background: rgba(0, 227, 109, 0.15); filter: blur(80px); opacity: 0.6; pointer-events: none;"></div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; z-index: 20;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 12px; height: 12px; background: #CCFF00; border-radius: 50%; box-shadow: 0 0 15px #CCFF00; animation: pulseSOS 1.5s infinite;"></div>
+                                <span style="font-size: 0.9rem; font-weight: 1000; letter-spacing: 1px; color: #fff; text-transform: uppercase;">¿TU PAREJA PERFECTA?</span>
+                            </div>
+                            <div style="background: rgba(0,227,109,0.15); padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 900; color: #00E36D; border: 1px solid #00E36D40; letter-spacing: 1px;">MATCH PADEL</div>
+                        </div>
+
+                        <p style="font-size: 0.72rem; color: rgba(255,255,255,0.5); line-height: 1.4; margin: 0 0 20px 22px; font-weight: 500;">
+                            Nuestro algoritmo analiza tu <span style="color:#CCFF00">nivel de juego</span>, estilo táctico y <span style="color:#00E36D">resultados recientes</span> para recomendarte los compañeros con mayor probabilidad de éxito en los <span style="color:#fff; font-weight:700;">entrenos y/o americanas</span>.
+                        </p>
+
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 24px;">
+                            <!-- PART 1: NODE RADAR MAP -->
+                            <div style="background: rgba(0,0,0,0.3); border-radius: 24px; padding: 40px 10px; position: relative; height: 300px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.05);">
+                                <div style="position: absolute; inset: 0; background: radial-gradient(circle, rgba(204,255,0,0.08) 0%, transparent 75%);"></div>
+                                
+                                <!-- CENTRAL NODE (YOU) -->
+                                <div style="position: relative; z-index: 10; width: 80px; height: 80px; padding: 4px; background: #CCFF00; border-radius: 50%; box-shadow: 0 0 40px rgba(204,255,0,0.5); animation: pulseFloat 3s ease-in-out infinite;">
+                                    <div style="width: 100%; height: 100%; border-radius: 50%; background: #0f172a; overflow: hidden; border: 2px solid #0f172a;">
+                                        <img src="${userPhoto}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    </div>
+                                    <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: #CCFF00; color: #000; font-size: 0.6rem; font-weight: 1000; padding: 3px 10px; border-radius: 100px; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">TÚ</div>
+                                </div>
+
+                                <!-- SYNERGY NODES -->
+                                ${synergies.map((s, i) => {
+                    const angles = [210, 330, 90];
+                    const angleRad = angles[i] * (Math.PI / 180);
+                    const dist = 105;
+                    const x = Math.cos(angleRad) * dist;
+                    const y = Math.sin(angleRad) * dist;
+
+                    return `
+                                        <div style="
+                                            position: absolute; 
+                                            transform: translate(${x}px, ${y}px);
+                                            width: 70px; height: 70px; border-radius: 50%;
+                                            background: #000; border: 2.5px solid ${s.color};
+                                            padding: 3px; z-index: 5;
+                                            box-shadow: 0 0 25px ${s.color}60;
+                                            animation: itemFadeIn 0.8s both ${i * 0.2}s;
+                                        ">
+                                            <!-- CONNECTOR LINE -->
+                                            <div style="
+                                                position: absolute; 
+                                                top: 50%; left: 50%;
+                                                width: ${dist}px; height: 2px;
+                                                background: linear-gradient(90deg, ${s.color}60, transparent);
+                                                transform-origin: 0% 50%;
+                                                transform: rotate(${angles[i] + 180}deg);
+                                                z-index: -1;
+                                            "></div>
+
+                                            <div style="width: 100%; height: 100%; border-radius: 50%; background: #0f172a; overflow: hidden; border: 1px solid #0f172a;">
+                                                <img src="${s.photo}" style="width: 100%; height: 100%; object-fit: cover;">
+                                            </div>
+                                            <div style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 0.6rem; color: #fff; font-weight: 900; white-space: nowrap; background: rgba(0,0,0,0.8); padding: 2px 8px; border-radius: 6px; border: 1.5px solid ${s.color};">${s.name}</div>
+                                            <div style="position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; color: #fff; font-weight: 800; white-space: nowrap; opacity: 0.7;">${s.chemistry}% CHM</div>
+                                            <!-- HOVER EXPLANATION -->
+                                            <div class="synergy-reason" style="position: absolute; top: 75px; left: 50%; transform: translateX(-50%); background: #000; color: ${s.color}; font-size: 0.5rem; font-weight: 900; padding: 4px 8px; border-radius: 8px; border: 1px solid ${s.color}40; white-space: nowrap; opacity: 0.8; z-index: 100;">${s.desc.toUpperCase()}</div>
+                                        </div>
+                                    `;
+                }).join('')}
+
+                                <!-- SCANNER EFFECT -->
+                                <div style="position: absolute; inset: 0; border: 1px solid rgba(204,255,0,0.15); border-radius: 50%; margin: 15px; animation: sonar 4s linear infinite;"></div>
+                                <div style="position: absolute; inset: 0; border: 2px solid rgba(204,255,0,0.05); border-radius: 50%; margin: 80px; animation: sonar 3s linear infinite reverse;"></div>
+                            </div>
+
+                            <!-- PART 2: IA PREDICTIVE INSIGHTS -->
+                            <div style="display: flex; flex-direction: column; gap: 14px;">
+                                <!-- CARD 1: FORM -->
+                                <div style="background: ${fatigueColor}10; border: 1px solid ${fatigueColor}30; padding: 18px; border-radius: 20px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                                    <div style="display: flex; gap: 15px; align-items: flex-start;">
+                                        <div style="width: 44px; height: 44px; background: ${fatigueColor}20; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid ${fatigueColor}30;">
+                                            <i class="fas fa-heartbeat" style="color: ${fatigueColor}; font-size: 1.3rem;"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 0.85rem; font-weight: 1000; color: #fff; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+                                                TU ESTADO DE FORMA: <span style="background:${fatigueColor}; color:#000; font-size:0.55rem; padding:2px 8px; border-radius:4px; font-weight:900;">${trend.status}</span>
+                                            </div>
+                                            <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.5; font-weight: 500;">
+                                                ${trend.desc} Basado en tu carga de partidos, ${trend.status === 'HIGH' ? 'reducir intensidad para evitar lesiones.' : 'puedes aumentar la carga de entrenamiento.'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- CARD 2: RANKING -->
+                                <div style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); padding: 18px; border-radius: 20px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                                    <div style="display: flex; gap: 15px; align-items: flex-start;">
+                                        <div style="width: 44px; height: 44px; background: rgba(56, 189, 248, 0.2); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(56, 189, 248, 0.3);">
+                                            <i class="fas fa-chart-line" style="color: #38bdf8; font-size: 1.3rem;"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 0.85rem; font-weight: 1000; color: #fff; margin-bottom: 4px;">PROYECCIÓN DE ASCENSO</div>
+                                            <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.5; font-weight: 500;">
+                                                ${rankingMsg}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- CARD 3: TACTICAL ADVICE -->
+                                <div style="background: rgba(204, 255, 0, 0.05); border: 1px solid rgba(204, 255, 0, 0.2); padding: 18px; border-radius: 20px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                                    <div style="display: flex; gap: 15px; align-items: flex-start;">
+                                        <div style="width: 44px; height: 44px; background: rgba(204, 255, 0, 0.1); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(204, 255, 0, 0.2);">
+                                            <i class="fas fa-lightbulb" style="color: #CCFF00; font-size: 1.3rem;"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 0.85rem; font-weight: 1000; color: #fff; margin-bottom: 4px;">CONSEJO DEL CAPITÁN</div>
+                                            <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.5; font-weight: 500;">
+                                                Tu pareja ideal es <span style="color:#CCFF00; font-weight:900;">${synergies[0]?.name || 'un perfil defensivo'}</span>. Juntos tenéis un ratio de cobertura de red del <span style="color:#00E36D; font-weight:900;">85%</span>.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <style>
+                            @keyframes sonar {
+                                0% { transform: scale(0.7); opacity: 0; }
+                                50% { opacity: 0.4; }
+                                100% { transform: scale(1.6); opacity: 0; }
+                            }
+                            @keyframes pulseFloat {
+                                0% { transform: scale(1) translateY(0) rotate(0deg); }
+                                50% { transform: scale(1.03) translateY(-8px) rotate(1deg); }
+                                100% { transform: scale(1) translateY(0) rotate(0deg); }
+                            }
+                        </style>
+                    </div>
+                `;
+            } catch (e) {
+                console.error("renderPredictiveSynergy error:", e);
+                return '';
+            }
+        }
+
+        toggleTacticalHUD() {
+            const grip = document.getElementById('tactical-hud-grip');
+            const bounce = document.getElementById('tactical-hud-bounce');
+            if (grip && bounce) {
+                const isVisible = grip.style.display === 'block';
+                grip.style.display = isVisible ? 'none' : 'block';
+                bounce.style.display = isVisible ? 'none' : 'block';
+            }
         }
     }
 

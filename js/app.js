@@ -182,8 +182,8 @@
                 if (dockContainer) {
                     dockContainer.innerHTML = `
                         <nav class="nav-dock">
-                            <button class="p-nav-item" data-view="events" onclick="window.Router.navigate('events')">
-                                <div class="nav-icon-box"><i class="fas fa-calendar-check"></i></div>
+                            <button class="p-nav-item" data-view="dashboard" onclick="window.Router.navigate('dashboard')">
+                                <div class="nav-icon-box"><i class="fas fa-home"></i></div>
                                 <span>INICIO</span>
                             </button>
                             <button class="p-nav-item" data-view="americanas" onclick="window.Router.navigate('americanas')">

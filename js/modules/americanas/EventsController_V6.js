@@ -454,6 +454,45 @@
             }
 
             container.innerHTML = `<div class="fade-in">${navHtml}${contentHtml}</div>`;
+
+            // TRIGGER ASYNC CONTENT FOR ENTRENOS
+            if (this.state.activeTab === 'entrenos') {
+                this.loadSynergyWidget();
+            }
+        }
+
+        async loadSynergyWidget() {
+            const root = document.getElementById('predictive-synergy-entrenos-root');
+            if (!root) return;
+
+            const user = (window.Store ? window.Store.getState('currentUser') : null) || window.currentUser;
+            if (!user) {
+                root.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">🔒 Inicia sesión para ver tu análisis</div>`;
+                return;
+            }
+
+            if (!window.DashboardView || !window.DashboardView.renderPredictiveSynergy) {
+                console.warn("DashboardView not ready for synergy");
+                return;
+            }
+
+            // Subscribirse si existe el servicio
+            const userId = user.uid || user.id;
+            if (window.PartnerSynergyService && window.PartnerSynergyService.subscribeToPlayerData) {
+                window.PartnerSynergyService.subscribeToPlayerData(userId, async () => {
+                    if (document.getElementById('predictive-synergy-entrenos-root')) {
+                        const html = await window.DashboardView.renderPredictiveSynergy();
+                        const newRoot = document.getElementById('predictive-synergy-entrenos-root');
+                        if (newRoot && html) newRoot.innerHTML = html;
+                    }
+                });
+            }
+
+            // Initial Render
+            const html = await window.DashboardView.renderPredictiveSynergy();
+            if (html && document.getElementById('predictive-synergy-entrenos-root')) {
+                document.getElementById('predictive-synergy-entrenos-root').innerHTML = html;
+            }
         }
 
         renderEntrenoGuideModal() {
@@ -582,10 +621,18 @@
                     <div style="padding-bottom: 120px; padding-left:10px; padding-right:10px;">
                         ${events.length === 0 ? `<div style="padding:100px 40px; text-align:center; color:#444;"><i class="fas fa-filter" style="font-size: 4rem; opacity: 0.1;"></i><h3 style="color:#666;">SIN RESULTADOS</h3></div>` : eventsHtml}
                         ${(this.state.activeTab === 'entrenos') ? `
-                        <div style="margin-top: 25px; display: flex; justify-content: center; padding-bottom: 20px;">
+                        <div style="margin-top: 25px; display: flex; flex-direction: column; align-items: center; padding-bottom: 20px; gap: 20px;">
                             <button onclick="window.EventsController.renderEntrenoGuideModal()" style="background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); padding: 12px 25px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-info-circle" style="color: #CCFF00;"></i> ¿CÓMO FUNCIONAN LOS FORMATOS?
                             </button>
+
+                            <!-- PREDICTIVE SYNERGY WIDGET (MIRROR FROM DASHBOARD) -->
+                            <div id="predictive-synergy-entrenos-root" style="width: 100%; max-width: 500px; margin: 0 auto;">
+                                <div style="text-align: center; padding: 30px; color: rgba(255,255,255,0.2); font-weight: 800; background: rgba(0,0,0,0.1); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
+                                    <i class="fas fa-brain fa-spin" style="margin-bottom: 10px; font-size: 1.2rem; color: #CCFF00;"></i><br>
+                                    Cargando tu compatibilidad...
+                                </div>
+                            </div>
                         </div>` : ''}
                     </div>
                 </div>
