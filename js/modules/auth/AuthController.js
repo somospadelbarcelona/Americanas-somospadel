@@ -64,6 +64,19 @@
                             if (btn) btn.textContent = originalText;
                         } else {
                             console.log("✅ Login Success!");
+
+                            // Hide Modal & Show App
+                            const authModal = document.getElementById('auth-modal');
+                            const appShell = document.getElementById('app-shell');
+                            if (authModal) authModal.style.display = 'none'; // Force hide due to !important in CSS
+                            if (appShell) appShell.classList.remove('hidden');
+
+                            // Navigate to Dashboard
+                            if (window.Router) {
+                                window.Router.navigate('dashboard');
+                            } else {
+                                window.location.reload();
+                            }
                         }
                     } catch (err) {
                         alert("❌ Error Inesperado: " + err.message);

@@ -9,14 +9,29 @@
     class StoryFeedWidget {
         constructor() {
             this.containerId = 'story-feed-root';
-            // Reducimos a las 6 más importantes para que quepan perfectas y centradas sin cortarse
-            this.stories = [
+
+            // POOL OF ALL AVAILABLE STORIES
+            const contentPool = [
                 { id: 'ranking', label: 'RANKING', icon: 'fa-trophy', color: '#fb7185' },
                 { id: 'clinica', label: 'ESCUELA', icon: 'fa-graduation-cap', color: '#f472b6' },
-                { id: 'live', label: 'ACTIVOS', icon: 'fa-users', color: '#00E36D' },
                 { id: 'weather', label: 'VELOCIDAD', icon: 'fa-bolt', color: '#fbbf24' },
-                { id: 'matches', label: 'EVENTOS', icon: 'fa-star', color: '#ca8a04' }
+                { id: 'matches', label: 'EVENTOS', icon: 'fa-star', color: '#ca8a04' },
+                { id: 'growth', label: 'OBJETIVO', icon: 'fa-chart-line', color: '#0ea5e9' },
+                { id: 'security', label: 'SEGURIDAD', icon: 'fa-shield-alt', color: '#8b5cf6' },
+                { id: 'partners', label: 'PARTNERS', icon: 'fa-handshake', color: '#34d399' },
+                { id: 'shop', label: 'TIENDA', icon: 'fa-shopping-bag', color: '#6366f1' }
             ];
+
+            // RANDOMIZE SELECTION (Pick 5 unique random stories each time)
+            this.stories = this.shuffleArray(contentPool).slice(0, 5);
+        }
+
+        shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
         }
 
         render(containerId) {

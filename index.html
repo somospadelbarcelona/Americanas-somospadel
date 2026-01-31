@@ -304,197 +304,277 @@
         });
     </script>
 
-    <div id="auth-modal" class="modal-overlay auth-overlay-enterprise hidden">
-        <div class="modal-content admin-login-card"
-            style="padding: 15px 20px !important; margin: 10px; max-height: 95vh; overflow-y: auto;">
-            <div style="text-align: center; margin-bottom: 0.8rem;">
-                <img src="img/logo_somospadel.png" class="login-ball-animate"
-                    style="height: 70px; margin-bottom: 0.5rem; margin-top: 10px;" alt="Somos Padel">
-                <h2
-                    style="color: white !important; font-weight: 900; letter-spacing: 1px; font-size: 1.2rem; margin: 0; text-shadow: 0 0 10px rgba(0,0,0,0.5);">
-                    ACCESO JUGADORES</h2>
-                <div
-                    style="color: var(--brand-neon); font-size: 0.6rem; font-weight: 800; letter-spacing: 2px; margin-top: 2px;">
-                    APP SOMOSPADEL BCN</div>
+    <div id="auth-modal" class="modal-overlay auth-overlay-enterprise"
+        style="backdrop-filter: blur(30px); background: radial-gradient(circle at center, #1a3a1a 0%, #0d1f2d 30%, #0a0f1a 60%, #000000 100%); display: flex !important; z-index: 2147483647 !important; align-items: center; justify-content: center; position: fixed; inset: 0;">
+
+        <!-- ANIMATIONS CSS -->
+        <style>
+            /* Card Entrance */
+            .card-enter {
+                animation: cardSlideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+                opacity: 0;
+                /* Animación maneja la entrada, pero aseguramos forwards */
+                transform: translateY(20px);
+            }
+
+            @keyframes cardSlideUp {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            /* ESTILO "BRILLI BRILLI" NEÓN INTENSO */
+            .card-super-led {
+                border: 2px solid #CCFF00;
+                /* La animación se maneja en combinación con card-enter abajo */
+            }
+
+            /* NUEVA CLASE MÁGICA DE COLORES INTENSA */
+            .card-magic-border {
+                border: 3px solid #CCFF00;
+                /* Animación compuesta: Entrada + Glow Infinito */
+                animation:
+                    cardSlideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards,
+                    magicColors 3s linear infinite;
+            }
+
+            @keyframes magicColors {
+                0% {
+                    border-color: #ffe600;
+                    /* Amarillo Brillante */
+                    box-shadow: 0 0 30px rgba(255, 230, 0, 0.7), 0 0 60px rgba(255, 230, 0, 0.3);
+                }
+
+                25% {
+                    border-color: #ff00ff;
+                    /* Magenta Neón */
+                    box-shadow: 0 0 30px rgba(255, 0, 255, 0.7), 0 0 60px rgba(255, 0, 255, 0.3);
+                }
+
+                50% {
+                    border-color: #00ffff;
+                    /* Cyan Eléctrico */
+                    box-shadow: 0 0 30px rgba(0, 255, 255, 0.7), 0 0 60px rgba(0, 255, 255, 0.3);
+                }
+
+                75% {
+                    border-color: #ff5500;
+                    /* Naranja Lava */
+                    box-shadow: 0 0 30px rgba(255, 85, 0, 0.7), 0 0 60px rgba(255, 85, 0, 0.3);
+                }
+
+                100% {
+                    border-color: #ffe600;
+                    /* Vuelta al inicio */
+                    box-shadow: 0 0 30px rgba(255, 230, 0, 0.7), 0 0 60px rgba(255, 230, 0, 0.3);
+                }
+            }
+
+            /* Logo Live Physics */
+            .logo-live {
+                animation: floatBallLive 4s ease-in-out infinite;
+                transform-origin: bottom center;
+            }
+
+            @keyframes floatBallLive {
+
+                0%,
+                100% {
+                    transform: translateY(0) scale(1) rotate(0deg);
+                    filter: drop-shadow(0 0 20px rgba(204, 255, 0, 0.5));
+                }
+
+                50% {
+                    transform: translateY(-12px) scale(1.05) rotate(5deg);
+                    filter: drop-shadow(0 15px 30px rgba(204, 255, 0, 0.3));
+                }
+            }
+
+            /* Input Focus */
+            .clean-input {
+                box-sizing: border-box;
+            }
+
+            .clean-input:focus {
+                outline: none;
+                border: 2px solid #CCFF00 !important;
+                box-shadow: 0 0 0 4px rgba(204, 255, 0, 0.1);
+            }
+
+            /* Button Hover */
+            .neon-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(204, 255, 0, 0.4);
+            }
+
+            /* Checkbox Custom */
+            .custom-checkbox {
+                appearance: none;
+                width: 20px;
+                height: 20px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                border-radius: 4px;
+                background: transparent;
+                cursor: pointer;
+                position: relative;
+                transition: all 0.2s;
+            }
+
+            .custom-checkbox:checked {
+                background: #CCFF00;
+                border-color: #CCFF00;
+            }
+
+            .custom-checkbox:checked::after {
+                content: '✓';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: black;
+                font-weight: bold;
+                font-size: 14px;
+            }
+        </style>
+
+        <!-- The Card -->
+        <div class="modal-content admin-login-card card-enter card-magic-border"
+            style="margin: 40px auto; background: #0a0a0a; border-radius: 24px; position: relative; max-width: 360px; width: 100%; padding: 40px 30px; overflow: visible !important;">
+
+            <!-- Logo with Glow -->
+            <div style="text-align: center; margin-bottom: 30px;">
+                <img src="img/logo_somospadel.png" class="logo-live" style="height: 80px; margin-bottom: 25px;"
+                    alt="Somos Padel">
+
+                <h1
+                    style="color: white; font-weight: 900; font-size: 1.4rem; margin: 0 0 5px 0; font-family: 'Outfit', sans-serif; letter-spacing: 0.5px;">
+                    ACCESO JUGADORES
+                </h1>
+                <p
+                    style="color: #CCFF00; font-size: 0.75rem; font-weight: 800; margin: 0; letter-spacing: 1px; text-transform: uppercase;">
+                    App Somospadel BCN
+                </p>
             </div>
 
             <!-- Login Form -->
-            <form id="login-form" class="pro-form">
-                <div class="form-group" style="margin-bottom: 0.8rem;">
+            <form id="login-form" style="width: 100%;">
+
+                <!-- Phone Input -->
+                <div style="margin-bottom: 20px;">
                     <label
-                        style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.3rem; font-size:0.7rem; font-weight:700;">TELÉFONO
-                        DE ACCESO</label>
-                    <input type="text" name="phone" placeholder="Usuario o Teléfono" class="pro-input" required
+                        style="display: block; color: rgba(255,255,255,0.7); font-size: 0.7rem; font-weight: 800; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Teléfono de acceso
+                    </label>
+                    <input type="text" name="phone" placeholder="Tu usuario o Teléfono" class="clean-input" required
                         autocomplete="username"
-                        style="width:100%; height:50px; box-sizing: border-box; padding: 0 15px;">
+                        style="width: 100%; height: 50px; background: #eff6ff; border: 2px solid transparent; border-radius: 12px; color: #0f172a; padding: 0 18px; font-weight: 600; font-size: 0.95rem; transition: all 0.3s; font-family: 'Outfit';">
                 </div>
 
-                <div class="form-group" style="margin-bottom: 1rem;">
+                <!-- Password Input -->
+                <div style="margin-bottom: 16px;">
                     <label
-                        style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.8rem; font-size:0.8rem; font-weight:700;">CLAVE
-                        DE SEGURIDAD</label>
-                    <div style="position: relative; width: 100%;">
-                        <input type="password" name="password" id="login-password-input" placeholder="••••••"
-                            class="pro-input" required autocomplete="current-password"
-                            style="width: 100%; height:55px; box-sizing: border-box; padding: 0 45px 0 15px;">
-                        <i class="fas fa-eye"
-                            onclick="const i = document.getElementById('login-password-input'); i.type = i.type === 'password' ? 'text' : 'password'; this.classList.toggle('fa-eye'); this.classList.toggle('fa-eye-slash');"
-                            style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #333; cursor: pointer; z-index: 10; font-size: 1.2rem;"></i>
+                        style="display: block; color: rgba(255,255,255,0.7); font-size: 0.7rem; font-weight: 800; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Clave de seguridad
+                    </label>
+                    <div style="position: relative;">
+                        <input type="password" name="password" id="login-password-input" placeholder="•••••"
+                            class="clean-input" required autocomplete="current-password"
+                            style="width: 100%; height: 50px; background: #eff6ff; border: 2px solid transparent; border-radius: 12px; color: #0f172a; padding: 0 50px 0 18px; font-weight: 600; font-size: 0.95rem; transition: all 0.3s; font-family: 'Outfit';">
+                        <i class="fas fa-eye" id="toggle-password"
+                            onclick="const i=document.getElementById('login-password-input'); const isPassword = i.type==='password'; i.type = isPassword ? 'text' : 'password'; this.classList.toggle('fa-eye'); this.classList.toggle('fa-eye-slash');"
+                            style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: #64748b; cursor: pointer; font-size: 1.1rem;"></i>
                     </div>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 2rem; padding-left: 5px;">
-                    <!-- Removed 'Mantener sesión' as requested -->
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <input type="checkbox" id="show-password-opt"
-                            onchange="const i = document.getElementById('login-password-input'); i.type = this.checked ? 'text' : 'password';"
-                            style="width: 20px; height: 20px; cursor: pointer; accent-color: #CCFF00;">
-                        <label for="show-password-opt"
-                            style="color: rgba(255,255,255,0.8); font-size: 0.9rem; cursor: pointer;">Mostrar
-                            contraseña</label>
-                    </div>
+                <!-- Show Password Checkbox -->
+                <div style="margin-bottom: 30px; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="show-password-check" class="custom-checkbox"
+                        onclick="const pwd = document.getElementById('login-password-input'); const icon = document.getElementById('toggle-password'); const isChecked = this.checked; pwd.type = isChecked ? 'text' : 'password'; icon.className = isChecked ? 'fas fa-eye-slash' : 'fas fa-eye';">
+                    <label for="show-password-check"
+                        style="color: rgba(255,255,255,0.6); font-size: 0.85rem; cursor: pointer; user-select: none; font-weight: 600;">
+                        Mostrar contraseña
+                    </label>
                 </div>
 
-                <button type="submit" class="btn-primary-pro"
-                    style="height:55px; font-size:1.1rem; letter-spacing:1px;">ENTRAR A LA APP 🚀</button>
+                <!-- Main CTA Button -->
+                <button type="submit" class="neon-btn"
+                    style="width: 100%; height: 56px; background: #CCFF00; color: #0a0a0a; border: none; border-radius: 14px; font-weight: 950; font-size: 1.1rem; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(204, 255, 0, 0.2); display: flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Outfit';">
+                    ENTRAR A LA APP 🚀
+                </button>
 
-                <div style="margin-top: 20px; text-align: center;">
+                <!-- Footer Links -->
+                <div style="margin-top: 35px; text-align: center;">
                     <a href="presentation.html" target="_blank"
-                        style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; display: inline-block;">
-                        <i class="fas fa-microchip" style="margin-right: 5px;"></i> Conoce nuestra tecnología
+                        style="color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; border: 1px solid rgba(255,255,255,0.2); border-radius: 30px; background: rgba(255,255,255,0.05); transition: all 0.2s;">
+                        <i class="fas fa-microchip"></i> Conoce nuestra tecnología
                     </a>
                 </div>
 
-                <p class="auth-switch-text" style="color: rgba(255,255,255,0.5); margin-top:20px;">¿Eres nuevo? <a
-                        href="#" class="auth-switch-link" style="color: var(--brand-neon); font-weight:800;"
-                        onclick="toggleAuthMode('register')">Crear cuenta pro</a></p>
-            </form>
-
-            <!-- Register Form -->
-            <form id="register-form" class="pro-form hidden">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div>
-                        <label
-                            style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.5rem; font-size:0.8rem;">NOMBRE</label>
-                        <input type="text" name="name" placeholder="Tu Nombre" class="pro-input" required>
-                    </div>
-                    <div>
-                        <label
-                            style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.5rem; font-size:0.8rem;">TELÉFONO</label>
-                        <input type="text" name="phone" placeholder="600..." class="pro-input" required>
-                    </div>
-                </div>
-
-                <div>
-                    <label
-                        style="color: rgba(255,255,255,0.7); display:block; margin-bottom:0.5rem; font-size:0.8rem;">CONTRASEÑA</label>
-                    <input type="password" name="password" placeholder="Mín. 6 caracteres" class="pro-input" required>
-                </div>
-
-                <style>
-                    .glass-card {
-                        background: rgba(255, 255, 255, 0.95);
-                        backdrop-filter: blur(10px);
-                        border-radius: 20px;
-                        border: 1px solid rgba(0, 0, 0, 0.05);
-                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-                    }
-
-                    /* --- WOW EFFECTS (LIVE MATCHES) --- */
-                    @keyframes neonPulse {
-                        0% {
-                            box-shadow: 0 0 5px rgba(204, 255, 0, 0.2), 0 0 10px rgba(204, 255, 0, 0.1);
-                            border-color: rgba(204, 255, 0, 0.5);
-                        }
-
-                        50% {
-                            box-shadow: 0 0 20px rgba(204, 255, 0, 0.6), 0 0 30px rgba(204, 255, 0, 0.4);
-                            border-color: #CCFF00;
-                        }
-
-                        100% {
-                            box-shadow: 0 0 5px rgba(204, 255, 0, 0.2), 0 0 10px rgba(204, 255, 0, 0.1);
-                            border-color: rgba(204, 255, 0, 0.5);
-                        }
-                    }
-
-                    .match-card-live {
-                        animation: neonPulse 2s infinite ease-in-out;
-                        background: radial-gradient(circle at center, rgba(204, 255, 0, 0.03) 0%, rgba(255, 255, 255, 1) 100%) !important;
-                        transform: scale(1.02);
-                        z-index: 10;
-                        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-                    }
-
-                    .status-badge-live {
-                        background: #CCFF00;
-                        color: black !important;
-                        box-shadow: 0 0 10px #ccff00;
-                        padding: 4px 12px !important;
-                        border-radius: 12px;
-                        /* Fixed radius */
-                        font-size: 0.6rem !important;
-                        font-weight: 900 !important;
-                        text-transform: uppercase;
-                        animation: blink 1s infinite alternate;
-                    }
-
-                    @keyframes blink {
-                        from {
-                            opacity: 1;
-                        }
-
-                        to {
-                            opacity: 0.7;
-                        }
-                    }
-                </style>
-                <div
-                    style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
-                    <label
-                        style="color: var(--brand-neon); margin-bottom: 0.8rem; font-size: 0.7rem; font-weight: 800; display: block;">🎾
-                        PERFIL DE JUGADOR</label>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div>
-                            <label style="color: rgba(255,255,255,0.7); font-size:0.7rem;">GÉNERO</label>
-                            <select name="gender" class="pro-input" required style="padding: 0.8rem;">
-                                <option value="M">Masculino</option>
-                                <option value="F">Femenino</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="color: rgba(255,255,255,0.7); font-size:0.7rem;">LADO</label>
-                            <select name="play_preference" class="pro-input" style="padding: 0.8rem;">
-                                <option value="indifferent" selected>Indiferente</option>
-                                <option value="drive">Drive</option>
-                                <option value="reves">Revés</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div style="margin-top: 1rem;">
-                        <label style="color: rgba(255,255,255,0.7); font-size:0.7rem;">NIVEL INICIAL (0-7)</label>
-                        <input type="number" name="self_rate_level" step="0.1" min="0" max="7" value="3.5"
-                            class="pro-input" required>
-                    </div>
-                </div>
-
-                <div style="margin-top: 20px; text-align: center;">
-                    <a href="presentation.html" target="_blank"
-                        style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; display: inline-block;">
-                        <i class="fas fa-microchip" style="margin-right: 5px;"></i> Conoce nuestra tecnología
+                <div style="text-align: center; margin-top: 25px;">
+                    <span style="color: rgba(255,255,255,0.5); font-size: 0.9rem; font-weight: 500;">¿Eres nuevo?</span>
+                    <a href="#" class="auth-switch-link"
+                        style="color: #CCFF00; font-weight: 800; text-decoration: none; margin-left: 5px; font-size: 0.9rem;"
+                        onclick="toggleAuthMode('register')">
+                        Crear cuenta pro
                     </a>
                 </div>
-
-                <button type="submit" class="btn-primary-pro">UNIRME AHORA</button>
-                <p class="auth-switch-text" style="color: rgba(255,255,255,0.5);">¿Ya tienes cuenta? <a href="#"
-                        class="auth-switch-link" style="color: var(--brand-neon);"
-                        onclick="toggleAuthMode('login')">Iniciar sesión</a></p>
             </form>
+
+            <!-- Register Form (Hidden) -->
+            <form id="register-form" class="hidden" style="width: 100%; animation: fadeInUp 0.4s;">
+                <h2
+                    style="color: white; text-align: center; margin-bottom: 25px; font-weight: 800; font-size: 1.3rem; font-family: 'Outfit';">
+                    REGISTRO JUGADOR
+                </h2>
+
+                <div style="margin-bottom: 15px;">
+                    <input type="text" name="name" placeholder="Nombre Completo" class="clean-input" required
+                        style="width: 100%; height: 50px; background: white; border: 2px solid transparent; border-radius: 12px; color: #0a0a0a; padding: 0 18px; font-weight: 500;">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                    <input type="text" name="phone" placeholder="Móvil" class="clean-input" required
+                        style="height: 50px; background: white; border: 2px solid transparent; border-radius: 12px; color: #0a0a0a; padding: 0 18px; font-weight: 500;">
+                    <input type="password" name="password" placeholder="Clave" class="clean-input" required
+                        style="height: 50px; background: white; border: 2px solid transparent; border-radius: 12px; color: #0a0a0a; padding: 0 18px; font-weight: 500;">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px;">
+                    <input type="number" name="self_rate_level" step="0.1" min="0" max="7" value="3.5"
+                        class="clean-input" required placeholder="Nivel (0-7)"
+                        style="height: 50px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: white; padding: 0 15px; font-weight: 600;">
+                    <select name="gender" class="clean-input"
+                        style="height: 50px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: white; padding: 0 15px; font-weight: 600;">
+                        <option value="M">Masculino</option>
+                        <option value="F">Femenino</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="neon-btn"
+                    style="width: 100%; height: 56px; background: #CCFF00; color: #0a0a0a; border: none; border-radius: 14px; font-weight: 800; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(204, 255, 0, 0.3); text-transform: uppercase; letter-spacing: 0.5px;">
+                    EMPEZAR A JUGAR
+                </button>
+
+                <div style="margin-top: 25px; text-align: center;">
+                    <a href="#" style="color: rgba(255,255,255,0.6); font-size: 0.85rem; text-decoration: none;"
+                        onclick="toggleAuthMode('login')">
+                        <i class="fas fa-chevron-left" style="margin-right: 5px;"></i> Volver
+                    </a>
+                </div>
+            </form>
+
+            <!-- Brand Signature -->
+            <div
+                style="text-align: center; margin-top: 35px; padding-top: 25px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <span
+                    style="font-family: 'Montserrat', sans-serif; font-weight: 400; font-size: 0.7rem; letter-spacing: 1px; color: rgba(255,255,255,0.4);">Somospadel
+                    BCN</span>
+                <span
+                    style="font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 0.7rem; letter-spacing: 1px; color: #CCFF00; margin-left: 3px;">2026</span>
+            </div>
         </div>
     </div>
-
-    <!-- Scripts Architecture -->
-    <!-- Layer 1: Config & Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
@@ -540,7 +620,7 @@
     <script src="js/modules/dashboard/QuickStats.js"></script>
     <script src="js/modules/dashboard/ActionGrid.js"></script>
     <script src="js/modules/dashboard/StoryFeedWidget.js?v=5"></script>
-    <script src="js/modules/dashboard/DashboardView.js?v=1020"></script>
+    <script src="js/modules/dashboard/DashboardView.js?v=1026"></script>
     <script src="js/modules/dashboard/DashboardController.js"></script>
     <script src="js/modules/players/PlayerView.js?v=400"></script>
     <script src="js/modules/players/PlayerController.js?v=400"></script>

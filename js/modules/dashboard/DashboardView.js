@@ -58,88 +58,118 @@
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
                     background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.08) 0%, transparent 70%);
                     min-height: 100vh;
-                    padding-top: 4px !important; /* Reducido de 10px */
+                    padding-top: 10px !important;
                 ">
 
-                    <!-- 1. PULSE STORIES (INSTAGRAM STYLE) - NOW AT THE TOP -->
-                    <div id="story-feed-root" style="margin: 0 !important; animation: floatUp 0.8s ease-out forwards; padding-top: 15px;">
+                    <!-- 1. PULSE STORIES (INSTAGRAM STYLE) -->
+                    <div id="story-feed-root" style="margin: 0 !important; animation: floatUp 0.8s ease-out forwards; padding-top: 2px;">
                         <!-- Cargado vía JS (StoryFeedWidget) -->
                     </div>
 
-                    <!-- 2. HEADER WITH NFL STYLE TICKER - ULTRA-TIGHT 2px SPACING -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px; margin: 2px 0; gap: 12px; animation: floatUp 0.8s ease-out forwards;">
-                        <!-- NFL TICKER CONTAINER -->
-                        <div id="header-ticker-container" style="
-                            flex: 1; 
+                    <!-- 2. COMMAND CENTER (RE-DESIGNED & MOVED BELOW SPHERES) -->
+                    <div style="
+                        display: flex; 
+                        align-items: stretch; 
+                        gap: 8px; 
+                        padding: 0 10px; 
+                        margin: 2px 0 6px 0; 
+                        animation: floatUp 0.85s ease-out forwards;
+                    ">
+                        <!-- TICKER: TACTICAL DATA STREAM (WHITE HOUSE GRADE) -->
+                        <div style="
+                            flex: 1;
+                            background: linear-gradient(90deg, rgba(8, 10, 16, 0.95) 0%, rgba(15, 20, 30, 0.98) 100%); 
+                            backdrop-filter: blur(20px);
+                            border: 1px solid rgba(255, 255, 255, 0.08); 
+                            border-right: 2px solid rgba(204, 255, 0, 0.5);
+                            border-radius: 14px; 
+                            height: 48px; 
+                            display: flex; 
+                            align-items: center; 
+                            padding: 0 4px 0 12px; 
                             overflow: hidden; 
-                            background: #0f172a; 
-                            border: 1px solid #334155;
-                            border-left: 3px solid #84cc16; /* NFL/Sports Accent */
-                            border-radius: 4px;
-                            height: 34px; /* SMALLER HEIGHT */
-                            display: flex;
-                            align-items: center;
                             position: relative;
-                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                            box-shadow: 0 15px 40px -10px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.5);
                         ">
-                             <!-- Ticker Content -->
-                             <div id="header-ticker-text" style="
-                                 display: flex; 
-                                 align-items: center; 
-                                 width: 100%;
-                                 padding: 0 10px;
-                                 white-space: nowrap;
-                                 overflow: hidden;
-                             ">
-                                <span style="font-size:0.7rem; color: #64748b; font-weight: 700; letter-spacing: 0.5px;">ESPERANDO LIVE...</span>
+                            <!-- Background: Hex Tech Pattern -->
+                            <div style="position: absolute; inset: 0; background-image: radial-gradient(#ffffff 0.5px, transparent 0.5px), radial-gradient(#ffffff 0.5px, #080a10 0.5px); background-size: 20px 20px; background-position: 0 0, 10px 10px; opacity: 0.03; pointer-events: none;"></div>
+                            
+                            <!-- Animation: Scanner Line -->
+                            <div style="position: absolute; top:0; bottom:0; width: 2px; background: linear-gradient(to bottom, transparent, #CCFF00, transparent); opacity: 0.2; animation: scanTicker 4s ease-in-out infinite; left: 0;"></div>
+                            <style> @keyframes scanTicker { 0% { left: -10%; opacity:0; } 50% { opacity:0.3;} 100% { left: 110%; opacity:0; } } </style>
+
+                            <!-- AI Status Node (Pulsing Sonar) -->
+                            <div style="position: relative; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
+                                <div style="position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #CCFF00; opacity: 0.2; animation: sonarWave 2s infinite cubic-bezier(0, 0, 0.2, 1);"></div>
+                                <div style="position: absolute; width: 60%; height: 60%; border-radius: 50%; background: #CCFF00; opacity: 0.4; animation: sonarWave 2s infinite cubic-bezier(0, 0, 0.2, 1) 0.5s;"></div>
+                                <div style="width: 6px; height: 6px; background: #CCFF00; border-radius: 50%; box-shadow: 0 0 10px #CCFF00; z-index: 2;"></div>
                             </div>
-                        </div>
-                        
-                        <!-- CAPTAIN ROBOT ICON -->
-                        <div style="position: relative; cursor: pointer; flex-shrink: 0;" onclick="window.CaptainView.open()">
-                            <div style="
-                                filter: drop-shadow(0 0 8px rgba(204, 255, 0, 0.4));
-                                transition: transform 0.2s;
-                                display: flex; align-items: center; justify-content: center;
-                                width: 34px; height: 34px;
-                                background: #222;
-                                border-radius: 50%;
-                                border: 1px solid #CCFF00;
-                            "
-                            onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 0 15px rgba(204,255,0,0.6)';" 
-                            onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">
-                                <i class="fas fa-robot" style="font-size: 1rem; color: #fff;"></i>
+                            <style> @keyframes sonarWave { 0% { transform: scale(0.5); opacity: 0; } 50% { opacity: 0.5; } 100% { transform: scale(2.5); opacity: 0; } } </style>
+                            
+                            <!-- Ticker Content Zone -->
+                            <div id="header-ticker-text" style="flex: 1; overflow: hidden; position: relative; z-index: 2; height: 100%;">
+                                 <!-- JS Injected -->
                             </div>
                         </div>
 
-                        <!-- WOW BELL -->
-                        <div style="position: relative; cursor: pointer; flex-shrink: 0;" onclick="window.NotificationUi.toggle()">
-                            <div style="
-                                background: linear-gradient(135deg, #facc15 0%, #ca8a04 100%);
-                                -webkit-background-clip: text;
-                                -webkit-text-fill-color: transparent;
-                                filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.4));
+                        <!-- ACTIONS: ROBOT + NOTIFICATIONS -->
+                        <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                            <!-- Captain Robot (Quick Access) -->
+                            <div onclick="window.CaptainView.open()" style="
+                                width: 44px; 
+                                height: 44px; 
+                                background: linear-gradient(145deg, #1e293b, #0f172a);
+                                border: 1px solid rgba(255, 255, 255, 0.1); 
+                                border-radius: 12px; 
+                                display: flex; 
+                                align-items: center; 
+                                justify-content: center; 
+                                cursor: pointer; 
+                                box-shadow: 0 5px 15px -3px rgba(0,0,0,0.6);
+                                position: relative;
                                 transition: transform 0.2s;
-                            ">
-                                <i id="notif-bell-icon" class="fas fa-bell" style="font-size: 1.5rem;"></i>
+                            " onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                                <i class="fas fa-robot" style="color: #CCFF00; font-size: 1.1rem; filter: drop-shadow(0 0 8px rgba(204,255,0,0.4)); animation: float 6s infinite ease-in-out;"></i>
                             </div>
                             
-                            <div id="notif-badge" style="
-                                position: absolute; top: -3px; right: -3px; 
-                                background: #ef4444; color: white; border: 2px solid #0f172a;
-                                font-size: 0.55rem; font-weight: 900; min-width: 16px; height: 16px;
-                                border-radius: 50%; display: none; align-items: center; justify-content: center;
-                                padding: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-                            ">0</div>
+                            <!-- Notifications -->
+                            <div onclick="window.NotificationUi.toggle()" style="
+                                width: 44px; 
+                                height: 44px; 
+                                background: rgba(255, 255, 255, 0.03); 
+                                backdrop-filter: blur(10px);
+                                border: 1px solid rgba(255, 255, 255, 0.1); 
+                                border-radius: 12px; 
+                                display: flex; 
+                                align-items: center; 
+                                justify-content: center; 
+                                cursor: pointer; 
+                                position: relative;
+                            ">
+                                <i class="fas fa-bell" style="color: #94a3b8; font-size: 1.2rem; transition: color 0.3s;"></i>
+                                <div id="notif-badge-bubble" style="
+                                    position: absolute; 
+                                    top: 10px; 
+                                    right: 12px; 
+                                    width: 8px; 
+                                    height: 8px; 
+                                    background: #FF2D55; 
+                                    border-radius: 50%; 
+                                    box-shadow: 0 0 10px #FF2D55;
+                                    display: ${window.NotificationService?.unreadCount > 0 ? 'block' : 'none'};
+                                "></div>
+                            </div>
                         </div>
                     </div>
+
+
 
 
                     <!-- registration-widget-root -->
                     <div id="registration-widget-root" style="
                         background: #0a0a0a;
                         border-radius: 28px;
-                        margin: 2px 8px !important; 
+                        margin: 0px 8px 4px 8px !important;  
                         padding: 12px 4px 0px !important; 
                         box-shadow: 0 10px 40px rgba(0,0,0,0.4);
                         border: 1px solid rgba(255,255,255,0.05);
@@ -564,61 +594,168 @@
         }
 
         initHeaderTickerSync() {
-            // 1. Definir la lógica de renderizado del ticker
+            // Aseguramos que el ticker global sea visible
+            const globalTicker = document.querySelector('.ticker-container');
+            if (globalTicker) globalTicker.style.display = 'flex';
+
+
             const updateTicker = (data) => {
                 const tickerContainer = document.getElementById('header-ticker-text');
                 if (!tickerContainer) return;
 
-                const items = (data.items && data.items.length > 0) ? data.items.slice(0, 5) : [];
-                let innerHTML = '';
+                // Stop previous interval
+                if (tickerContainer._animInterval) {
+                    clearInterval(tickerContainer._animInterval);
+                    tickerContainer._animInterval = null;
+                }
 
-                if (items.length > 0) {
-                    // Evitar re-render si el ID del primer item no ha cambiado (reducción de parpadeo)
-                    if (tickerContainer.dataset.lastNotifId === items[0].id) return;
-                    tickerContainer.dataset.lastNotifId = items[0].id;
+                // DATA PROCESSING STRATEGY: REAL SYSTEM STATUS
+                let realItems = (data.items && data.items.length > 0) ? data.items : [];
 
-                    const generateContent = (list) => {
-                        return list.map(item => {
-                            const badgeLabel = item.isChat ? 'CHAT' : 'LIVE';
-                            const badgeBg = item.isChat ? '#0ea5e9' : '#ef4444';
-                            const badgeShadow = item.isChat ? 'rgba(14,165,233,0.5)' : 'rgba(239,68,68,0.5)';
-                            return `
-                                <div style="display: flex; align-items: center; margin-right: 60px; white-space: nowrap;">
-                                    <span style="background: ${badgeBg}; color: white; font-size: 0.6rem; font-weight: 950; padding: 2px 6px; border-radius: 4px; margin-right: 10px; flex-shrink: 0; box-shadow: 0 0 15px ${badgeShadow};">${badgeLabel}</span>
-                                    <span style="font-weight: 900; color: #fff; font-size: 0.75rem; margin-right: 6px; text-transform: uppercase;">${item.title}</span> 
-                                    <span style="color: #cbd5e1; font-weight: 600; font-size: 0.75rem; text-transform: uppercase;">${item.body}</span>
+                // AMBIENT FEED: FUNCTIONAL NAVIGATION TIPS (Always True)
+                // Usamos mensajes genéricos que invitan a usar la app, sin inventar eventos específicos.
+                const ambientItems = [
+                    { id: 'amb-1', title: '🎾 SECCIÓN ENTRENAMIENTOS', body: 'Consulta los horarios y disponibilidad de clases.' },
+                    { id: 'amb-2', title: '📅 AGENDA DE CLUB', body: 'Revisa los próximos eventos confirmados en el calendario.' },
+                    { id: 'amb-3', title: '📈 TU PROGRESO', body: 'Entrena, compite y mejora tu posición en el ranking.' },
+                    { id: 'amb-4', title: '💬 CHAT COMUNIDAD', body: 'Conecta con otros jugadores en la sala en vivo.' },
+                    { id: 'amb-5', title: '🧬 SISTEMA ACTIVO', body: 'Monitorizando notificaciones y reservas en tiempo real.', isTactical: true }
+                ];
+
+                // MERGE: Real items take priority. Fill with guiding tips.
+                let items = [...realItems];
+                if (items.length < 5) {
+                    const needed = 5 - items.length;
+                    items = items.concat(ambientItems.slice(0, needed));
+                }
+
+                let currentIndex = 0;
+
+                const getAction = (item) => {
+                    // Combine Title and Body for smarter keyword detection
+                    const content = (String(item.title || '') + ' ' + String(item.body || '')).toUpperCase();
+
+                    if (content.includes('ENTRENO') || content.includes('CLASE') || content.includes('ESCUELA')) return "window.Router.navigate('entrenos')";
+                    if (content.includes('BATSEÑAL') || content.includes('PLAZA') || item.isUrgent) return "window.Router.navigate('events')";
+                    if (content.includes('RANKING') || content.includes('MVP') || content.includes('TOP')) return "window.Router.navigate('ranking')";
+                    if (item.isChat || content.includes('CHAT') || content.includes('LIVE')) return "window.Router.navigate('live')";
+
+                    return "window.NotificationUi.toggle()"; // Default: open drawer
+                };
+
+                const renderCurrentItem = () => {
+                    const item = items[currentIndex];
+                    const isTactical = item.isTactical;
+                    const isUrgent = !isTactical && (String(item.title).includes('PLAZA LIBRE') || String(item.title).includes('BATSEÑAL') || item.isUrgent);
+                    const action = getAction(item);
+
+                    let badgeLabel = 'NEWS';
+                    let badgeStyle = 'background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3);';
+                    let icon = '📰';
+                    let glowEffect = '';
+
+                    if (isTactical) {
+                        badgeLabel = 'SYSTEM';
+                        badgeStyle = 'background: rgba(204, 255, 0, 0.15); color: #CCFF00; border: 1px solid #CCFF00; box-shadow: 0 0 10px rgba(204, 255, 0, 0.3);';
+                        icon = '⚙️';
+                    } else if (isUrgent) {
+                        badgeLabel = 'BREAKING';
+                        badgeStyle = 'background: #FF003C; color: white; border: 1px solid #FF003C; box-shadow: 0 0 20px rgba(255, 0, 60, 0.6); animation: flashBadge 1s infinite;';
+                        icon = '🚨';
+                        glowEffect = 'text-shadow: 0 0 10px #FF003C;';
+                    } else if (item.isChat) {
+                        badgeLabel = 'LIVE CHAT';
+                        badgeStyle = 'background: #0099FF; color: white; border: 1px solid #0099FF; box-shadow: 0 0 15px rgba(0, 153, 255, 0.5);';
+                        icon = '💬';
+                    } else {
+                        badgeLabel = 'UPDATE';
+                        badgeStyle = 'background: #00E36D; color: #000; border: 1px solid #00E36D; font-weight:900;';
+                        icon = '🎾';
+                    }
+
+                    // Spectacle HTML
+                    tickerContainer.innerHTML = `
+                        <div onclick="${action}" style="
+                            width:100%; 
+                            height:100%; 
+                            display:flex; 
+                            align-items:center; 
+                            justify-content:center; 
+                            gap: 12px;
+                            cursor: pointer;
+                            position: relative;
+                            overflow: hidden;
+                        " class="ticker-slide-entry">
+                            
+                            <!-- PROGRESS BAR (TIMER) -->
+                            <div style="position: absolute; bottom: 0; left: 0; height: 2px; background: #fff; width: 0%; animation: loadBar 5s linear forwards; opacity: 0.5;"></div>
+
+                             <!-- BADGE AREA -->
+                             <div style="
+                                font-size: 0.65rem; 
+                                font-weight: 800; 
+                                padding: 4px 10px; 
+                                border-radius: 4px; 
+                                text-transform: uppercase; 
+                                letter-spacing: 1px; 
+                                display: flex; 
+                                align-items: center; 
+                                gap: 6px;
+                                flex-shrink: 0;
+                                transition: transform 0.2s;
+                                ${badgeStyle}
+                             ">
+                                ${icon} ${badgeLabel}
+                             </div>
+
+                             <!-- CONTENT AREA -->
+                             <div style="display:flex; flex-direction:column; justify-content: center; overflow:hidden; text-align:left;">
+                                <div style="display:flex; align-items:center;">
+                                    <span style="
+                                        font-weight: 900; 
+                                        color: #fff; 
+                                        font-size: 0.9rem; 
+                                        text-transform: uppercase; 
+                                        letter-spacing: 0.5px; 
+                                        font-family: 'Outfit';
+                                        ${glowEffect}
+                                    ">
+                                        ${item.title} 
+                                    </span>
+                                    ${isUrgent ? '<span style="margin-left:8px; font-size:0.6rem; color:#FF003C; animation:blinkFast 0.5s infinite;">● LIVE</span>' : ''}
                                 </div>
-                            `;
-                        }).join('');
-                    };
-
-                    const scrollingContent = generateContent(items);
-
-                    innerHTML = `
-                        <div style="display: flex; align-items: center; animation: marquee 25s linear infinite; padding-left: 10px;">
-                            ${scrollingContent}
-                            ${scrollingContent} <!-- Duplicamos para loop perfecto -->
+                                <div style="font-size:0.55rem; color:rgba(255,255,255,0.5); font-weight:600; letter-spacing:0.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width: 200px;">
+                                    ${item.body || 'Haz clic para más detalles'}
+                                </div>
+                             </div>
+                             
+                             <!-- HOVER HINT -->
+                             <div style="position: absolute; right: 0; opacity: 0.3;">
+                                <i class="fas fa-chevron-right" style="color:white; font-size: 0.8rem;"></i>
+                             </div>
                         </div>
                         <style>
-                            @keyframes marquee {
-                                0% { transform: translateX(0); } 
-                                100% { transform: translateX(-50%); } 
+                            .ticker-slide-entry { animation: slideUpEnter 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+                            .ticker-slide-entry:active { transform: scale(0.98); }
+                            @keyframes slideUpEnter {
+                                0% { transform: translateY(20px); opacity: 0; }
+                                100% { transform: translateY(0); opacity: 1; }
                             }
+                            @keyframes loadBar { from { width: 0%; } to { width: 100%; } }
+                            @keyframes flashBadge { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+                            @keyframes blinkFast { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
                         </style>
                     `;
-                } else {
-                    if (tickerContainer.dataset.lastNotifId === 'empty') return;
-                    tickerContainer.dataset.lastNotifId = 'empty';
-                    innerHTML = `
-                        <div style="display: flex; align-items: center; animation: marquee 15s linear infinite;">
-                            <span style="color: #84cc16; font-size: 0.8rem; margin-right: 6px;">📢</span>
-                            <span style="color: #94a3b8; font-weight: 700; font-size: 0.65rem; text-transform: uppercase; margin-right: 40px;">Tu historial de avisos aparecerá aquí en tiempo real.</span>
-                            <span style="color: #84cc16; font-size: 0.8rem; margin-right: 6px;">📢</span>
-                            <span style="color: #94a3b8; font-weight: 700; font-size: 0.65rem; text-transform: uppercase;">Tu historial de avisos aparecerá aquí en tiempo real.</span>
-                        </div>
-                    `;
+                };
+
+                renderCurrentItem();
+
+                if (items.length > 1 || items.length === 3) { // Force rotate even for default layout
+                    tickerContainer._animInterval = setInterval(() => {
+                        currentIndex = (currentIndex + 1) % items.length;
+                        renderCurrentItem();
+                    }, 5000);
                 }
-                tickerContainer.innerHTML = innerHTML;
             };
 
             // 2. Lógica de sincronización robusta
