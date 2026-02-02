@@ -5,11 +5,11 @@
 
 (function () {
     const CONFIG = {
-        enableDevToolsDetection: true, // Detectar si abren F12
-        disableRightClick: true,       // Bloquear clic derecho
-        disableCopyPaste: true,        // Bloquear copiar/pegar
-        disableKeys: true,             // Bloquear F12, Ctrl+U, etc.
-        debuggerTrap: true             // Activar trampa de debugger infinito
+        enableDevToolsDetection: false,
+        disableRightClick: false,
+        disableCopyPaste: false,
+        disableKeys: false,
+        debuggerTrap: false
     };
 
     // 1. DISABLE RIGHT CLICK
@@ -88,8 +88,10 @@
 
             // Si tardamos mucho entre start y end, es que estaba pausado (DevTools abierto)
             if (end - start > 100) {
-                document.body.innerHTML = '<div style="background:black; color:red; height:100vh; display:flex; align-items:center; justify-content:center; font-family:monospace; font-size:2rem; text-align:center;"><h1>⚠️ ACCESO DENEGADO<br><span style="font-size:1rem; color:white;">Sistema de Seguridad Activado. Cierre las herramientas de desarrollo.</span></h1></div>';
-                window.location.reload(); // Bucle de recarga molesto
+                // DESACTIVADO PORQUE DA FALSOS POSITIVOS
+                // document.body.innerHTML = '<div style="background:black; color:red; height:100vh; display:flex; align-items:center; justify-content:center; font-family:monospace; font-size:2rem; text-align:center;"><h1>⚠️ ACCESO DENEGADO<br><span style="font-size:1rem; color:white;">Sistema de Seguridad Activado. Cierre las herramientas de desarrollo.</span></h1></div>';
+                // window.location.reload(); // Bucle de recarga molesto
+                console.warn("Debugger trap triggered, but blocking is disabled.");
             }
         }, 1000);
     }

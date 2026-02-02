@@ -3,12 +3,22 @@
  * Entry Point de la aplicación compatible con file://
  */
 (function () {
-    window.calculateMatchTime = (startTime, roundNum) => {
+    /**
+     * Calcula la hora exacta de un partido basándose en:
+     * - startTime: hora de inicio del evento (ej: "10:00")
+     * - roundNum: número de ronda (1-6)
+     * - matchDuration: duración de cada partido en minutos (default: 20)
+     * 
+     * Cada ronda empieza cuando termina la anterior (20 min por defecto)
+     */
+    window.calculateMatchTime = (startTime, roundNum, matchDuration = 20) => {
         if (!startTime) return "00:00";
         try {
             const [hours, minutes] = startTime.split(':').map(Number);
             const date = new Date();
-            date.setHours(hours, minutes + (roundNum - 1) * 20, 0, 0);
+            // Ronda 1 = hora inicio, Ronda 2 = +20min, Ronda 3 = +40min, etc.
+            const totalMinutesOffset = (roundNum - 1) * matchDuration;
+            date.setHours(hours, minutes + totalMinutesOffset, 0, 0);
             return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
         } catch (e) {
             console.error("Error calculating match time:", e);
@@ -43,6 +53,13 @@
         }
 
         handleAuthorized() {
+            const user = window.Store.getState('currentUser');
+            if (user && user.uid && window.db) {
+                window.db.collection('players').doc(user.uid).update({
+                    lastLogin: new Date().toISOString()
+                }).catch(e => console.warn("⏳ [App] Error actualizando lastLogin:", e));
+            }
+
             const authModal = document.getElementById('auth-modal');
             if (authModal) authModal.classList.add('hidden');
 
@@ -100,6 +117,9 @@
             };
 
             try {
+                const currentUser = window.Store.getState('currentUser');
+                const isAdmin = currentUser && ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain'].includes((currentUser.role || '').toLowerCase());
+
                 // A. Render Side Menu (Hamburger) - STATIC
                 if (menuContainer) {
                     // NEW MENU STRUCTURE
@@ -147,12 +167,14 @@
                         </div>
 
                         <!-- 3. SYSTEMS -->
+                        ${isAdmin ? `
                         <div style="padding: 0 10px;">
                             <div class="drawer-item" onclick="window.location.href='admin.html'" style="opacity: 0.8;">
                                 <i class="fas fa-user-shield" style="color: #ccc;"></i>
                                 <span>PANEL ADMIN</span>
                             </div>
                         </div>
+                        ` : ''}
                     `;
                 }
 
@@ -160,8 +182,8 @@
                 if (dockContainer) {
                     dockContainer.innerHTML = `
                         <nav class="nav-dock">
-                            <button class="p-nav-item" data-view="events" onclick="window.Router.navigate('events')">
-                                <div class="nav-icon-box"><i class="fas fa-calendar-check"></i></div>
+                            <button class="p-nav-item" data-view="dashboard" onclick="window.Router.navigate('dashboard')">
+                                <div class="nav-icon-box"><i class="fas fa-home"></i></div>
                                 <span>INICIO</span>
                             </button>
                             <button class="p-nav-item" data-view="americanas" onclick="window.Router.navigate('americanas')">

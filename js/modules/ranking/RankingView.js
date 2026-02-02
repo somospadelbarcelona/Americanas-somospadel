@@ -1,11 +1,11 @@
 /**
  * RankingView.js
- * Premium Matte Dark AI-Enhanced Ranking View for SomosPadel
+ * Premium Matte Dark SMART Ranking View for SomosPadel
  */
 (function () {
     class RankingView {
         constructor() {
-            this.currentView = 'americanas'; // americanas | entrenos
+            this.currentView = 'entrenos'; // americanas | entrenos
             this.currentCategory = 'todas'; // todas | male | female | mixed
             this.playersData = [];
         }
@@ -32,8 +32,8 @@
                             </div>
                         </div>
 
-                        <!-- A. MVP SPOTLIGHT (HIGHLIGHTED) -->
-                        ${topPlayer ? `
+                        <!-- A. MVP SPOTLIGHT (HIGHLIGHTED) - ONLY SHOW IF DATA EXISTS -->
+                        ${(topPlayer && topPlayer.stats && topPlayer.stats.americanas && topPlayer.stats.americanas.points > 0) ? `
                         <div style="
                             background: white;
                             border: 1px solid #e2e8f0;
@@ -79,7 +79,7 @@
                         </div>
                         ` : ''}
 
-                        <!-- B. SKILLS DASHBOARD -->
+                        <!-- B. MI RENDIMIENTO -->
                         <div style="
                             background: white;
                             border: 1px solid #e2e8f0;
@@ -91,25 +91,66 @@
                                 <i class="fas fa-chart-pie" style="color: #84cc16;"></i> MI RENDIMIENTO
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px 25px;">
-                                ${[
-                    { label: '% VICTORIAS', val: skills.winRate, color: '#84cc16' },
-                    { label: '% JUEGOS', val: skills.gamesRatio, color: '#0ea5e9' },
-                    { label: 'PUNTOS', val: skills.points, color: '#84cc16' },
-                    { label: 'EXPERIENCIA', val: skills.level, color: '#0ea5e9' }
-                ].map(s => `
-                                    <div>
-                                        <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: #64748b; margin-bottom: 8px; font-weight: 900; letter-spacing: 0.5px;">
-                                            <span>${s.label}</span>
-                                            <span style="color: #0f172a;">${s.val}%</span>
-                                        </div>
-                                        <div style="height: 6px; background: #f1f5f9; border-radius: 100px; overflow: hidden;">
-                                            <div style="width: ${s.val}%; height: 100%; background: ${s.color};"></div>
-                                        </div>
-                                    </div>
-                                `).join('')}
+                                ${(() => {
+                    const currentUser = window.Store?.getState('currentUser');
+                    if (!currentUser) {
+                        return '<div style="grid-column: 1 / -1; text-align:center; color:#94a3b8; padding: 20px;">Inicia sesión para ver tus estadísticas</div>';
+                    }
+
+                    const userStats = players.find(p => p.id === currentUser.uid || p.id === currentUser.id);
+                    if (!userStats || !userStats.stats) {
+                        return '<div style="grid-column: 1 / -1; text-align:center; color:#94a3b8; padding: 20px;">Juega tu primer partido para ver estadísticas</div>';
+                    }
+
+                    // Combinar stats de americanas y entrenos
+                    const combined = {
+                        played: (userStats.stats.americanas?.played || 0) + (userStats.stats.entrenos?.played || 0),
+                        won: (userStats.stats.americanas?.won || 0) + (userStats.stats.entrenos?.won || 0),
+                        gamesWon: (userStats.stats.americanas?.gamesWon || 0) + (userStats.stats.entrenos?.gamesWon || 0),
+                        gamesLost: (userStats.stats.americanas?.gamesLost || 0) + (userStats.stats.entrenos?.gamesLost || 0),
+                        points: (userStats.stats.americanas?.points || 0) + (userStats.stats.entrenos?.points || 0)
+                    };
+
+                    // 1. EFECTIVIDAD (Win Rate)
+                    const winRate = combined.played > 0 ? Math.round((combined.won / combined.played) * 100) : 0;
+
+                    // 2. RACHA ACTUAL (simplificado: basado en win rate reciente)
+                    // TODO: Implementar cálculo real desde historial de partidos
+                    const recentPerformance = winRate >= 60 ? 3 : (winRate >= 40 ? 1 : -1);
+                    const streakDisplay = recentPerformance > 0 ? `+${recentPerformance}` : recentPerformance;
+                    const streakPercent = Math.min(Math.abs(recentPerformance) * 25, 100);
+                    const streakColor = recentPerformance >= 0 ? '#84cc16' : '#ef4444';
+
+                    // 3. RATIO DE JUEGOS
+                    const totalGames = combined.gamesWon + combined.gamesLost;
+                    const gamesRatio = totalGames > 0 ? Math.round((combined.gamesWon / totalGames) * 100) : 0;
+
+                    // 4. ACTIVIDAD (partidos jugados)
+                    // Normalizar: 10+ partidos = 100%
+                    const activityRate = Math.min(Math.round((combined.played / 10) * 100), 100);
+
+                    return [
+                        { label: 'EFECTIVIDAD', val: winRate, color: '#84cc16', suffix: '%', display: `${winRate}%` },
+                        { label: 'RACHA', val: streakPercent, color: streakColor, suffix: '', display: streakDisplay },
+                        { label: 'RATIO JUEGOS', val: gamesRatio, color: '#0ea5e9', suffix: '%', display: `${gamesRatio}%` },
+                        { label: 'ACTIVIDAD', val: activityRate, color: '#a855f7', suffix: '', display: `${combined.played} partidos` }
+                    ].map(s => `
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: #64748b; margin-bottom: 8px; font-weight: 900; letter-spacing: 0.5px;">
+                                <span>${s.label}</span>
+                                <span style="color: #0f172a;">${s.display}</span>
+                            </div>
+                            <div style="height: 6px; background: #f1f5f9; border-radius: 100px; overflow: hidden;">
+                                <div style="width: ${s.val}%; height: 100%; background: ${s.color};"></div>
+                            </div>
+                        </div>
+                    `).join('');
+                })()}
                             </div>
                         </div>
                     </div>
+
+
 
                     <!-- Main Navigation Tabs -->
                     <div style="margin-top: -15px; display: flex; justify-content: center; padding: 0 25px; position: relative; z-index: 10;">
@@ -167,9 +208,30 @@
             filtered.sort((a, b) => {
                 const sA = a.stats[this.currentView];
                 const sB = b.stats[this.currentView];
+
                 const pA = this.currentCategory === 'todas' ? sA.points : (sA.categories[this.currentCategory]?.points || 0);
                 const pB = this.currentCategory === 'todas' ? sB.points : (sB.categories[this.currentCategory]?.points || 0);
+
+                // 1. Points (Primary)
                 if (pB !== pA) return pB - pA;
+
+                // 2. Entrenos Tie-Breakers
+                if (this.currentView === 'entrenos') {
+                    const c1A = this.currentCategory === 'todas' ? sA.court1Count : (sA.categories[this.currentCategory]?.court1Count || 0);
+                    const c1B = this.currentCategory === 'todas' ? sB.court1Count : (sB.categories[this.currentCategory]?.court1Count || 0);
+
+                    // Court 1 Count (Who played most in T1?)
+                    if (c1B !== c1A) return c1B - c1A;
+
+                    // Note: "Last Match Court" is not easily available in Global Accumulated Stats without complex tracking
+                    // So we fallback to Level, or maybe Win Rate?
+                    // Let's use Win Rate as secondary tie breaker for global stats
+                    const wrA = (sA.played > 0) ? (sA.won / sA.played) : 0;
+                    const wrB = (sB.played > 0) ? (sB.won / sB.played) : 0;
+                    if (Math.abs(wrB - wrA) > 0.01) return wrB - wrA;
+                }
+
+                // 3. Fallback: Level
                 return b.level - a.level;
             });
 
@@ -239,6 +301,89 @@
                     </div>
                 </div>
             `;
+        }
+
+        renderRecentActivity() {
+            const activities = this.getRecentActivities();
+
+            if (activities.length === 0) {
+                return `
+                    <div style="text-align: center; padding: 20px; color: #94a3b8;">
+                        <i class="fas fa-inbox" style="font-size: 2rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
+                        <div style="font-size: 0.85rem; font-weight: 600;">Sin actividad reciente</div>
+                    </div>
+                `;
+            }
+
+            return activities.slice(0, 5).map(activity => `
+                <div style="
+                    display: flex;
+                    align-items: start;
+                    gap: 12px;
+                    padding: 12px;
+                    background: #f8fafc;
+                    border-radius: 16px;
+                    border-left: 3px solid ${activity.color};
+                    transition: all 0.2s;
+                    cursor: pointer;
+                " onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+                    <div style="font-size: 1.2rem;">${activity.icon}</div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #0f172a; line-height: 1.3;">
+                            ${activity.title}
+                        </div>
+                        <div style="font-size: 0.65rem; color: #64748b; margin-top: 4px; font-weight: 600;">
+                            ${activity.time}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        getRecentActivities() {
+            const activities = [];
+            const now = new Date();
+
+            // Añadir actividades de ejemplo (TODO: obtener desde Firebase en tiempo real)
+            const sampleActivities = [
+                {
+                    icon: '🎾',
+                    title: 'Nuevo jugador se unió a AMERICANA MIXTA',
+                    time: 'hace 15 min',
+                    color: '#84cc16',
+                    timestamp: now.getTime() - 900000
+                },
+                {
+                    icon: '✅',
+                    title: 'Partido finalizado en MASCULINA',
+                    time: 'hace 1h',
+                    color: '#0ea5e9',
+                    timestamp: now.getTime() - 3600000
+                },
+                {
+                    icon: '🆕',
+                    title: 'Nueva americana FEMENINA creada',
+                    time: 'hace 3h',
+                    color: '#a855f7',
+                    timestamp: now.getTime() - 10800000
+                },
+                {
+                    icon: '📈',
+                    title: 'Cambio en el TOP 3 del ranking',
+                    time: 'hace 5h',
+                    color: '#f59e0b',
+                    timestamp: now.getTime() - 18000000
+                },
+                {
+                    icon: '⏰',
+                    title: 'ENTRENO MIXTO comienza pronto',
+                    time: 'en 2h',
+                    color: '#ec4899',
+                    timestamp: now.getTime() + 7200000
+                }
+            ];
+
+            return sampleActivities.sort((a, b) => b.timestamp - a.timestamp);
         }
     }
 

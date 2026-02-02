@@ -114,7 +114,8 @@ const AdminSimulator = {
                     : (category === 'male' ? 'img/ball-masculina.png' : (category === 'female' ? 'img/ball-femenina.png' : 'img/ball-mixta.png')),
                 pair_mode: pairMode,
                 price_members: config.price_members || 12,
-                price_external: config.price_external || 14
+                price_external: config.price_external || 14,
+                is_simulation: true
             };
 
             const newAmericana = await FirebaseDB.americanas.create(americanaData);
@@ -232,7 +233,8 @@ const AdminSimulator = {
                 image_url: imageUrl,
                 pair_mode: pairMode,
                 price_members: config.price_members || 20,
-                price_external: config.price_external || 25
+                price_external: config.price_external || 25,
+                is_simulation: true
             };
 
             const newEntreno = await FirebaseDB.entrenos.create(entrenoData);
@@ -294,6 +296,56 @@ const AdminSimulator = {
         }
     },
 
+    /**
+     * Limpiar todos los datos generados por el simulador
+     */
+    async cleanupSimulatedData() {
+        console.log("🧹 Iniciando limpieza de datos simulados...");
+        let totalEvents = 0;
+        let totalMatches = 0;
+
+        try {
+            // 1. Limpiar Americanas
+            const americanas = await FirebaseDB.americanas.getAll();
+            const simAmericanas = americanas.filter(a => a.is_simulation === true);
+
+            for (const a of simAmericanas) {
+                const matches = await FirebaseDB.matches.getByAmericana(a.id);
+                for (const m of matches) {
+                    await FirebaseDB.matches.delete(m.id);
+                    totalMatches++;
+                }
+                await FirebaseDB.americanas.delete(a.id);
+                totalEvents++;
+                console.log(`- Borrada Americana: ${a.name}`);
+            }
+
+            // 2. Limpiar Entrenos
+            const entrenos = await FirebaseDB.entrenos.getAll();
+            const simEntrenos = entrenos.filter(e => e.is_simulation === true);
+
+            for (const e of simEntrenos) {
+                const matches = await FirebaseDB.entrenos_matches.getByAmericana(e.id);
+                for (const m of matches) {
+                    await FirebaseDB.entrenos_matches.delete(m.id);
+                    totalMatches++;
+                }
+                await FirebaseDB.entrenos.delete(e.id);
+                totalEvents++;
+                console.log(`- Borrado Entreno: ${e.name}`);
+            }
+
+            console.log(`✅ Limpieza completada. Borrados ${totalEvents} eventos y ${totalMatches} partidos.`);
+            alert(`✅ ¡Limpieza completada!\nSe han borrado ${totalEvents} eventos simulados y ${totalMatches} partidos.`);
+
+            // Recargar vista si estamos en admin
+            if (window.loadAdminView) window.loadAdminView('dashboard');
+
+        } catch (error) {
+            console.error("❌ Error en la limpieza:", error);
+            alert("❌ Error al limpiar datos: " + error.message);
+        }
+    }
 };
 
 window.AdminSimulator = AdminSimulator;

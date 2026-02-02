@@ -569,9 +569,9 @@ h4 {
 /* --- FORMS --- */
 input,
 select {
-    background: white;
-    border: 1px solid var(--border-color);
-    color: var(--text);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
     border-radius: var(--radius-sm);
     padding: 0.8rem 1rem;
     font-size: 0.95rem;
@@ -586,12 +586,18 @@ select:focus {
     box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
 }
 
+/* FIX DROPDOWN VISIBILITY */
+option {
+    color: #000 !important;
+    background: #fff !important;
+}
+
 label {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
     font-size: 0.85rem;
-    color: var(--text);
+    color: #ffffff;
 }
 
 /* --- TABLES --- */
@@ -668,8 +674,10 @@ tr:hover td {
     padding: 2.5rem;
     position: relative;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    max-height: 90vh; /* Ensure it fits in viewport */
-    overflow-y: auto; /* Enable internal scrolling */
+    max-height: 90vh;
+    /* Ensure it fits in viewport */
+    overflow-y: auto;
+    /* Enable internal scrolling */
 }
 
 /* Explicitly kill the white background from the admin screenshot */
@@ -930,9 +938,6 @@ tr:hover td {
     background-position: right 0.8rem center;
     background-size: 0.8rem;
     padding-right: 2rem !important;
-}
-
-letter-spacing: 1px;
 }
 
 .pro-avatar {

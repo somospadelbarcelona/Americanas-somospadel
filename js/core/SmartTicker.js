@@ -24,6 +24,11 @@
 
             // Actualizar datos cada 5 minutos
             this.updateInterval = setInterval(() => this.update(), 300000);
+
+            // Escuchar notificaciones en tiempo real para incluirlas en el ticker
+            if (window.NotificationService) {
+                window.NotificationService.onUpdate(() => this.update());
+            }
         }
 
         injectStyles() {
@@ -125,6 +130,17 @@
 
             // Añadir selección aleatoria
             const getRandom = (arr, count) => arr.sort(() => 0.5 - Math.random()).slice(0, count);
+
+            // --- 3. NOTIFICACIONES RECIENTES ---
+            try {
+                if (window.NotificationService && window.NotificationService.notifications) {
+                    // Cogemos las 3 últimas no leídas
+                    const notifs = window.NotificationService.notifications.filter(n => !n.read).slice(0, 3);
+                    notifs.forEach(n => {
+                        insights.unshift({ label: '🔔 ÚLTIMA HORA', text: n.title + ": " + n.body, color: '#ef4444' });
+                    });
+                }
+            } catch (e) { }
 
             getRandom(tactics, 4).forEach(t => insights.push({ label: '🎓 ACADEMIA', text: t, color: '#CCFF00' }));
             getRandom(science, 3).forEach(t => insights.push({ label: '🧬 PÁDEL SCIENCE', text: t, color: '#0ea5e9' }));

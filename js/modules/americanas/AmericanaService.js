@@ -17,6 +17,24 @@
             }
         }
 
+        validateGender(category, userGender) {
+            const cat = category || 'open';
+            const g = (userGender || '').toLowerCase();
+            const isChico = g === 'm' || g === 'chico';
+            const isChica = g === 'f' || g === 'chica';
+
+            if (cat === 'male' && !isChico) {
+                throw new Error("⛔ Categoría MASCULINA: Solo permitida para chicos.");
+            }
+            if (cat === 'female' && !isChica) {
+                throw new Error("⛔ Categoría FEMENINA: Solo permitida para chicas.");
+            }
+            if (cat === 'mixed' && !isChico && !isChica) {
+                throw new Error("⛔ Categoría MIXTA: Debes definir tu género en el perfil.");
+            }
+            return true;
+        }
+
         /**
          * Helper to get the correct collection service (Admin vs Public)
          */
@@ -59,10 +77,9 @@
                     ...ents.map(e => ({ ...e, type: 'entreno' }))
                 ];
 
-                const todayStr = new Date().toISOString().split('T')[0];
-
+                // Filtramos por estado, no por fecha, para asegurar que eventos en curso sigan monitorizados
                 return all
-                    .filter(e => e.status !== 'finished' && e.date >= todayStr)
+                    .filter(e => e.status !== 'finished')
                     .sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
             } catch (error) {
                 console.error("Error fetching all active events:", error);
@@ -91,16 +108,10 @@
                     throw new Error("Ya estás inscrito en este evento.");
                 }
 
-                // GENDER CHECK
-                const userGender = user.gender || 'M';
-                const cat = event.category || 'open';
+                // GENDER VALIDATION
+                this.validateGender(event.category, user.gender);
 
-                if (cat === 'male' && userGender !== 'M' && userGender !== 'chico') {
-                    throw new Error("Este evento es exclusivo para categoría MASCULINA.");
-                }
-                if (cat === 'female' && userGender !== 'F' && userGender !== 'chica') {
-                    throw new Error("Este evento es exclusivo para categoría FEMENINA.");
-                }
+                const userGender = user.gender || 'M';
 
                 const normalizedGender = (userGender === 'M' || userGender === 'chico') ? 'chico' :
                     (userGender === 'F' || userGender === 'chica') ? 'chica' : '?';
@@ -110,6 +121,7 @@
                     uid: user.uid,
                     name: user.name || user.displayName || user.email || 'Jugador',
                     level: user.level || user.self_rate_level || '3.5',
+                    team_somospadel: user.team_somospadel || user.team || [],
                     gender: normalizedGender,
                     joinedAt: new Date().toISOString()
                 };
@@ -137,7 +149,39 @@
                     }
                 }
 
-                // --- NOTIFICATIONS (DISABLED BY REQUEST) ---
+                // --- NOTIFICATIONS ---
+                if (window.NotificationService) {
+                    const evtName = event.name || type.toUpperCase();
+                    const evtLink = { url: 'live', eventId: americanaId };
+
+                    // 1. Notify the user who joined
+                    window.NotificationService.sendNotificationToUser(
+                        user.uid,
+                        "Inscripción Confirmada",
+                        `Te has apuntado a ${evtName}. ¡A darlo todo!`,
+                        evtLink
+                    );
+
+                    // 2. Notify other players (Peer-to-Peer)
+                    // We iterate EXISTING players (before push) to notify them.
+                    // Wait, 'players' array already has the new player pushed in line 124.
+                    // So we filter out the current user.
+                    const others = players.filter(p => (p.uid || p.id) !== user.uid);
+
+                    // Limit broadcast to avoid timeout/spam issues
+                    if (others.length < 50) {
+                        others.forEach(p => {
+                            const pid = p.uid || p.id;
+                            window.NotificationService.sendNotificationToUser(
+                                pid,
+                                "Nuevo Jugador",
+                                `${user.name} se ha unido a ${evtName}`,
+                                evtLink
+                            ).catch(e => console.warn("Failed to notify peer", pid));
+                        });
+                    }
+                }
+
                 // this.notifyAdminOfRegistration(event, user);
 
                 return { success: true };
@@ -179,7 +223,6 @@
                 const event = await service.getById(americanaId);
                 if (!event) throw new Error("Evento no encontrado");
 
-                // Check both legacy and current fields
                 const currentPlayers = event.players || event.registeredPlayers || [];
                 const newPlayers = currentPlayers.filter(p => {
                     const id = (typeof p === 'string') ? p : (p.uid || p.id);
@@ -188,26 +231,97 @@
 
                 const updates = {
                     registeredPlayers: newPlayers,
-                    players: newPlayers // Sync both strictly
+                    players: newPlayers
                 };
 
-                // STATUS REVERSION LOGIC: If dropping below required players, revert to 'open'
-                const maxCourts = event.max_courts || 4;
-                const minPlayers = maxCourts * 4;
-
-                if (event.status === 'live' && newPlayers.length < minPlayers) {
+                const maxPlayers = (event.max_courts || 4) * 4;
+                if (event.status === 'live' && newPlayers.length < maxPlayers) {
                     updates.status = 'open';
-                    console.log(`[AmericanaService] Event ${americanaId} (${type}) reverted to OPEN. Purging matches...`);
-
-                    // Purge matches if reverting to open to avoid stale results
                     await this.purgeMatches(americanaId, type);
                 }
 
                 await service.update(americanaId, updates);
+
+                // --- SMART WAITLIST LOGIC ---
+                if (newPlayers.length < maxPlayers) {
+                    await this.triggerNextInWaitlist(americanaId, type);
+                }
+
+                if (window.NotificationService) {
+                    const evtName = event.name || type.toUpperCase();
+                    window.NotificationService.sendNotificationToUser(userId, "Baja Confirmada", `Te has dado de baja de ${evtName}.`, { url: 'americanas' });
+                }
+
                 return { success: true };
             } catch (err) {
                 console.error(`Error in removePlayer (${type}):`, err);
                 return { success: false, error: err.message };
+            }
+        }
+
+        async triggerNextInWaitlist(eventId, type) {
+            try {
+                const service = this._getCollectionService(type);
+                const event = await service.getById(eventId);
+                const waitlist = event.waitlist || [];
+                if (waitlist.length === 0 || event.waitlist_pending_user) return;
+
+                const nextUser = waitlist[0];
+                await service.update(eventId, {
+                    waitlist_pending_user: nextUser,
+                    waitlist_notified_at: new Date().toISOString(),
+                    waitlist: waitlist.slice(1)
+                });
+
+                if (window.NotificationService) {
+                    window.NotificationService.sendNotificationToUser(nextUser.uid, "¡PLAZA LIBRE! 🎾", `Tienes 10 MINUTOS para confirmar tu plaza en ${event.name}.`, { url: 'live', eventId, action: 'confirm_waitlist' });
+                }
+            } catch (err) { console.error("Waitlist Trigger Error:", err); }
+        }
+
+        async addToWaitlist(eventId, user, type = 'americana') {
+            try {
+                const service = this._getCollectionService(type);
+                const event = await service.getById(eventId);
+                const waitlist = event.waitlist || [];
+                if (waitlist.find(p => p.uid === user.uid)) throw new Error("Ya estás en lista de espera.");
+
+                // GENDER VALIDATION
+                this.validateGender(event.category, user.gender);
+
+                waitlist.push({
+                    uid: user.uid,
+                    name: user.name,
+                    gender: user.gender || 'M',
+                    joinedAt: new Date().toISOString()
+                });
+                await service.update(eventId, { waitlist });
+                return { success: true };
+            } catch (err) { return { success: false, error: err.message }; }
+        }
+
+        async confirmWaitlist(eventId, userId, type = 'americana') {
+            try {
+                const service = this._getCollectionService(type);
+                const event = await service.getById(eventId);
+                if (!event.waitlist_pending_user || event.waitlist_pending_user.uid !== userId) throw new Error("Expirado.");
+                await this.addPlayer(eventId, event.waitlist_pending_user, type);
+                await service.update(eventId, { waitlist_pending_user: null, waitlist_notified_at: null });
+                return { success: true };
+            } catch (err) { return { success: false, error: err.message }; }
+        }
+
+        async processWaitlistTimeouts() {
+            const all = await this.getAllActiveEvents();
+            const now = new Date();
+            for (const evt of all) {
+                if (evt.waitlist_pending_user && evt.waitlist_notified_at) {
+                    if ((now - new Date(evt.waitlist_notified_at)) / 60000 >= 10) {
+                        const service = this._getCollectionService(evt.type);
+                        await service.update(evt.id, { waitlist_pending_user: null, waitlist_notified_at: null });
+                        await this.triggerNextInWaitlist(evt.id, evt.type);
+                    }
+                }
             }
         }
 
@@ -291,10 +405,19 @@
         async generateNextRound(eventId, currentRound, type = 'entreno') {
             try {
                 if (!window.MatchMakingService) throw new Error("MatchMakingService not loaded");
+
+                // CHECK AND CLEANUP NEXT ROUND (Fix for Ghost Results)
+                const nextRound = currentRound + 1;
+
+                // Aggressively delete any partial/ghost matches for this round before regenerating
+                console.log(`🧹 [AmericanaService] Pruning R${nextRound} before generation to prevent ghost scores...`);
+                await this.deleteRound(eventId, nextRound, type);
+
                 console.log(`🤖 [AmericanaService] Delegating Next Round generation to MatchMakingService for ${type} ${eventId}`);
-                return await window.MatchMakingService.generateRound(eventId, type, currentRound + 1);
+                return await window.MatchMakingService.generateRound(eventId, type, nextRound);
             } catch (err) {
                 console.error("❌ Error generating next round:", err);
+                throw err; // RETHROW to let Controller handle it
             }
         }
     }

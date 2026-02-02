@@ -8,7 +8,8 @@ window.AppConstants = {
         OPEN: 'open',
         LIVE: 'live',
         FINISHED: 'finished',
-        ADJUSTING: 'adjusting' // Intermediate state for modifying pairs without triggering auto-logic
+        ADJUSTING: 'adjusting', // Intermediate state for modifying pairs without triggering auto-logic
+        PAIRING: 'pairing'
     },
 
     ROLES: {
@@ -60,16 +61,28 @@ window.AppConstants = {
             open: 'img/entreno todo delfos.jpg'
         },
         AMERICANA: {
-            male: 'img/americana masculina.jpg',
-            female: 'img/americana femeninas.jpg',
-            mixed: 'img/americana mixta.jpg',
-            open: 'img/americana mixta.jpg'
+            male: 'img/americana%20masculina.jpg',
+            female: 'img/americana%20femeninas.jpg',
+            mixed: 'img/americana%20mixta.jpg',
+            open: 'img/americana%20mixta.jpg'
         },
         BALLS: {
             male: 'img/ball-masculina.png',
             female: 'img/ball-femenina.png',
             mixed: 'img/ball-mixta.png'
         }
+    },
+
+    // Niveles predefinidos por equipo
+    TEAM_LEVELS: {
+        '3º Masculino A': 3.75,
+        '3º Masculino B': 3.5,
+        '4º Masculino': 3,
+        '4º Mixto A': 3, // Assuming all 4 mixed are level 3 based on '4ºMIXTO'
+        '4º Mixto B': 3,
+        '3º Mixto': 3.5,
+        '2º Femenino': 3.5,
+        '4º Femenino': 3
     }
 };
 
