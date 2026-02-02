@@ -40,17 +40,10 @@
 
             // 1. Get Real User Data
             const user = window.Store ? window.Store.getState('currentUser') : null;
-            const userName = user ? (user.name || "Alejandro Coscolín") : "Alejandro Coscolín";
-            const userInitials = userName.substring(0, 2).toUpperCase();
-
-            // Simulation of Level (In real app, fetch from Store)
             const userLevel = user ? (user.level || "3.5") : "3.5";
 
-            // UPDATE GLOBAL HEADER (If exists)
-            const headerName = document.getElementById('header-user-name');
-            const headerAvatar = document.getElementById('header-user-avatar');
-            if (headerName && userName) headerName.innerText = userName.split(' ')[0].toUpperCase();
-            if (headerAvatar && userInitials) headerAvatar.innerText = userInitials;
+            // Header is updated globally by AppInstance in app.js on user change.
+            // We just ensure we have visibility on the level here.
 
             // 2. Render IMMEDIATE SHELL (Experience-Focused)
             container.innerHTML = `
@@ -192,31 +185,30 @@
                             </div>
                         </div>
                         
-                        <div id="live-scroller-content" style="overflow: hidden; width: 100%; position: relative;">
+                        <div id="live-scroller-content" style="overflow: hidden; width: 100%; position: relative; cursor: grab;">
                             <style>
                                 @keyframes marqueeNews {
-                                    0% { transform: translateX(0); }
-                                    100% { transform: translateX(-50%); }
+                                    0% { transform: translate3d(0, 0, 0); }
+                                    100% { transform: translate3d(-50%, 0, 0); }
                                 }
                                 .news-marquee-track {
                                     display: flex;
                                     gap: 12px;
                                     width: max-content;
-                                    animation: marqueeNews 40s linear infinite;
+                                    animation: marqueeNews 45s linear infinite;
                                     padding: 15px 15px 25px;
-                                    perspective: 1000px; /* 3D PERSPECTIVE */
+                                    will-change: transform;
+                                    backface-visibility: hidden;
                                 }
-                                .news-marquee-track:hover {
-                                    animation-play-state: paused;
+                                /* Only pause on desktop hover to avoid mobile sticking */
+                                @media (hover: hover) {
+                                    .news-marquee-track:hover {
+                                        animation-play-state: paused;
+                                    }
                                 }
                                 .registration-ticker-card {
-                                    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1) !important;
-                                    transform-style: preserve-3d;
-                                }
-                                .registration-ticker-card:hover {
-                                    transform: rotateX(5deg) rotateY(-5deg) scale(1.05) translateZ(20px) !important;
-                                    z-index: 100;
-                                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+                                    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+                                    flex-shrink: 0;
                                 }
                             </style>
                             <div id="live-scroller-inner" class="news-marquee-track">
@@ -999,7 +991,7 @@
                 if (weatherData && weatherData[0]) {
                     const w = weatherData[0];
                     itemsHtml.push(`
-                        <div class="registration-ticker-card" style="min-width: 280px; height: 160px; scroll-snap-align: center; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 18px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05);">
+                        <div class="registration-ticker-card" style="min-width: 280px; height: 160px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 18px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05);">
                             <div style="position: absolute; right: -20px; bottom: -20px; font-size: 7rem; opacity: 0.1; filter: blur(2px); animation: weatherFloat 6s ease-in-out infinite;">${w.icon}</div>
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 2;">
                                 <span style="font-size:0.6rem; font-weight:1000; color:white; background:rgba(59, 130, 246, 0.8); padding:5px 12px; border-radius:8px; letter-spacing:1px; box-shadow: 0 0 15px rgba(59,130,246,0.3); text-transform:uppercase;">METEO INTEL</span>
@@ -1108,12 +1100,12 @@
                     const topEvt = openEvents[0];
                     itemsHtml.push(`
                         <div class="registration-ticker-card" onclick="Router.navigate('entrenos')" 
-                            style="min-width: 280px; width: 280px; height: 160px; scroll-snap-align: center; 
+                            style="min-width: 280px; width: 280px; height: 160px; 
                             background: linear-gradient(135deg, #00FF41 0%, #008f45 100%); 
                             border-radius: 28px; padding: 20px; flex-shrink: 0; 
                             box-shadow: 0 15px 35px rgba(0,255,65,0.3); 
                             position: relative; overflow: hidden; cursor: pointer; border: 2px solid #00FF41; 
-                            transition: all 0.4s; transform: scale(1.02); z-index: 10;">
+                            transition: all 0.4s; z-index: 10;">
                             
                             <!-- MATRIX DECORATION -->
                             <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.1; font-family: monospace; font-size: 0.5rem; line-height: 1; pointer-events: none;">
@@ -1148,7 +1140,7 @@
 
                     itemsHtml.push(`
                         <div class="registration-ticker-card" onclick="Router.navigate('entrenos')" 
-                            style="min-width: 240px; width: 240px; height: 160px; scroll-snap-align: center; 
+                            style="min-width: 240px; width: 240px; height: 160px; 
                             background: linear-gradient(135deg, ${catColor}, ${catColor}cc); 
                             border-radius: 28px; padding: 18px; flex-shrink: 0; 
                             box-shadow: 0 10px 25px ${catColor}40; 
@@ -1182,7 +1174,7 @@
                     const aiBadge = isAiPick ? `<div style="position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:4px; font-size:0.5rem; color:rgba(255,255,255,0.5); font-weight:900; letter-spacing:1px; border:0.5px solid rgba(255,255,255,0.1);"><i class="fas fa-sparkles" style="margin-right:4px;"></i>TOP PICK</div>` : '';
 
                     itemsHtml.push(`
-                        <div class="registration-ticker-card" style="min-width: 240px; width: 240px; height: 160px; scroll-snap-align: center; background: ${tip.bgColor}; border-radius: 24px; padding: 20px; flex-shrink: 0; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <div class="registration-ticker-card" style="min-width: 240px; width: 240px; height: 160px; background: ${tip.bgColor}; border-radius: 24px; padding: 20px; flex-shrink: 0; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);">
                             ${aiBadge}
                             <div style="position: absolute; right: -25px; bottom: -25px; font-size: 8rem; opacity: 0.08; filter: blur(3px);"><i class="fas ${tip.icon}"></i></div>
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 2;">

@@ -41,6 +41,7 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
         // Export to window for global access across scripts
         window.db = db;
         window.auth = auth;
+        window.FirebaseFirestore = firebase.firestore; // ADDED: Global access to FieldPath, etc.
 
         // Initialize Messaging
         let messaging;

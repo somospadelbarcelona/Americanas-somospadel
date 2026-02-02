@@ -54,6 +54,10 @@
 
         handleAuthorized() {
             const user = window.Store.getState('currentUser');
+
+            // UPDATE GLOBAL HEADER
+            this.updateGlobalHeader(user);
+
             if (user && user.uid && window.db) {
                 window.db.collection('players').doc(user.uid).update({
                     lastLogin: new Date().toISOString()
@@ -210,11 +214,33 @@
         }
 
         handleGuest() {
+            this.updateGlobalHeader(null);
             const authModal = document.getElementById('auth-modal');
             if (authModal) authModal.classList.remove('hidden');
 
             const appShell = document.getElementById('app-shell');
             if (appShell) appShell.classList.add('hidden');
+        }
+
+        updateGlobalHeader(user) {
+            const headerName = document.getElementById('header-user-name');
+            const headerAvatar = document.getElementById('header-user-avatar');
+
+            if (headerName) {
+                // Prioritize user.name from DB, then displayName from Auth, then placeholder
+                const rawName = user ? (user.name || user.displayName || "Jugador") : "Invitado";
+                headerName.innerText = rawName.split(' ')[0].toUpperCase();
+            }
+
+            if (headerAvatar) {
+                if (user && user.photoURL) {
+                    headerAvatar.innerHTML = `<img src="${user.photoURL}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                } else {
+                    const rawName = user ? (user.name || user.displayName || "J") : "I";
+                    const initials = rawName.substring(0, 2).toUpperCase();
+                    headerAvatar.innerHTML = initials;
+                }
+            }
         }
 
         setupNavigation() {
