@@ -448,6 +448,32 @@ class NotificationService {
         }
     }
 
+    async deleteAllMyNotifications() {
+        const uid = this.currentUserUid || window.auth.currentUser?.uid || window.Store?.getState('currentUser')?.uid;
+        if (!uid) return;
+
+        if (!confirm("¿Seguro que quieres borrar todas tus notificaciones?")) return;
+
+        try {
+            const snapshot = await window.db.collection('players').doc(uid).collection('notifications').get();
+            if (snapshot.empty) return;
+
+            const batch = window.db.batch();
+            snapshot.docs.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+
+            console.log("🧹 [NotificationService] User notifications cleared");
+
+            // Local cleanup
+            this.notifications = [];
+            this.unreadCount = 0;
+            this.clearAllNativeNotifications();
+            this.notifySubscribers();
+        } catch (e) {
+            console.error("Error clearing notifications:", e);
+        }
+    }
+
     async markAllAsRead() {
         const user = window.auth.currentUser;
         if (!user) return;
