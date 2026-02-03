@@ -52,7 +52,15 @@ window.AdminViews.users = async function () {
 
         tbody.innerHTML = data.map(u => {
             const isPending = u.status === 'pending';
-            const canManageUsers = AdminAuth.user && AdminAuth.hasAdminRole(AdminAuth.user.role);
+
+            // EXPERT DEBUG: check if AdminAuth is ready
+            const adminUser = window.AdminAuth ? window.AdminAuth.user : null;
+            const canManageUsers = adminUser && window.AdminAuth.hasAdminRole(adminUser.role);
+
+            if (!canManageUsers && !window._roleWarned) {
+                console.warn("⚠️ [SECURITY] Admin permissions not detected for current session.", adminUser);
+                window._roleWarned = true;
+            }
 
             let roleBadge = (u.role || 'player').toUpperCase();
             if (u.role === 'super_admin') roleBadge = '👑 SUPER ADMIN';

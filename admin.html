@@ -3,6 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <script src="js/security-core.js"></script>
     <script src="js/core/SecurityArmor.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1083,7 +1086,7 @@
             <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
             <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
-            <!-- App Logic: Config Inline to prevent Mobile Cache Errors -->
+            <!-- App Config -->
             <script>
                 window.FIREBASE_CONFIG = {
                     apiKey: "AIzaSyBCy8nN4wKL2Cqvxp_mkmYpsA923N1g5iE",
@@ -1094,10 +1097,16 @@
                     appId: "1:638578709472:web:bf99bbb7688a947b4bd185"
                 };
             </script>
-            <script src="js/firebase-init.js?v=5005"></script>
+            <script src="js/firebase-init.js?v=5006"></script>
 
-            <!-- NEW ARCHITECTURE: CORE & SERVICES -->
+            <!-- CORE SERVICES & UI TOOLS -->
             <script src="js/modules/core/Constants.js?v=2000"></script>
+            <script src="js/modules/ui/PremiumModal.js?v=1001"></script>
+            <script src="js/core/AuthService.js?v=1001"></script>
+
+            <!-- ADMIN CORE (Must load before modules that use AdminAuth) -->
+            <script src="js/admin.js?v=1121"></script>
+
             <!-- Module Logic -->
             <script src="js/modules/ui/PlayerAutocomplete.js"></script>
             <script src="js/modules/common/EventService.js"></script>
@@ -1138,7 +1147,7 @@
             <script src="js/modules/logic/TwisterSimulation.js?v=1"></script>
             <script src="js/modules/admin-pairs-ui.js?v=2000"></script>
             <script src="js/modules/admin-results.js?v=4009"></script>
-            <script src="js/modules/admin-users.js?v=1105"></script>
+            <script src="js/modules/admin-users.js?v=1106"></script>
             <script src="js/modules/admin-americanas.js?v=4007"></script>
             <script src="js/modules/common/WhatsAppService.js?v=7015"></script>
             <script src="js/modules/admin-entrenos.js?v=5010"></script>
@@ -1165,9 +1174,6 @@
             <!-- Admin Modules & Services -->
             <script src="js/modules/core/NetworkPulseService.js"></script>
             <script src="js/modules/admin/NetworkPulseView.js"></script>
-
-            <!-- Admin UI Logic (MAIN) -->
-            <script src="js/admin.js?v=1120"></script>
 
             <!-- DIAGNOSTIC CONSOLE -->
             <div id="debug-console"

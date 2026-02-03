@@ -86,21 +86,28 @@ window.AdminAuth = {
                 // NEW: Ensure Firebase Auth baseline even for PIN login
                 if (window.firebase && firebase.auth) {
                     try {
-                        if (!firebase.auth().currentUser) {
-                            console.log("🔐 Authenticating Admin with Firebase Infrastructure (Anonymous)...");
-                            await firebase.auth().signInAnonymously();
-                        }
+                        // FORCE anonymous sign-in for admin panel to enable infrastructure writes
+                        console.log("🔐 Authenticating Admin Infrastructure (Anonymous)...");
+                        await firebase.auth().signInAnonymously();
+                        console.log("✅ Admin Infrastructure Authenticated:", firebase.auth().currentUser.uid);
                     } catch (authErr) {
                         console.error("Firebase Infra Auth failed:", authErr);
                     }
                 }
 
                 this.setUser(user);
+                if (!isAuto && window.PremiumModal) {
+                    window.PremiumModal.alert({ title: "✅ ACCESO CONCEDIDO", message: `Bienvenido, ${user.name}.`, type: 'success' });
+                }
             } else {
-                throw new Error("CÓDIGO INCORRECTO");
+                throw new Error("CÓDIGO DE ACCESO INCORRECTO");
             }
         } catch (e) {
-            alert(e.message);
+            if (window.PremiumModal) {
+                window.PremiumModal.alert({ title: "❌ ERROR", message: e.message, type: 'error' });
+            } else {
+                alert(e.message);
+            }
         }
     },
 
