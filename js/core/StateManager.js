@@ -37,7 +37,7 @@
         }
     }
 
-    // Expose globally
+    // Expose globally with absolute priority
     window.Store = new StateManager();
-    console.log("📦 StateManager Global Loaded");
+    console.log("📦 StateManager Global Loaded & Initialized");
 })();

@@ -15,10 +15,23 @@
             if (auth) {
                 auth.onAuthStateChanged(user => {
                     console.log("Firebase Auth State Changed:", user ? user.uid : "No user");
-                    if (user) {
-                        this.handleAuthStateChange(user);
+
+                    // Safety: Check if Store is alive before calling setState
+                    if (window.Store && window.Store.setState) {
+                        if (user) {
+                            this.handleAuthStateChange(user);
+                        } else {
+                            window.Store.setState('currentUser', null);
+                        }
                     } else {
-                        window.Store.setState('currentUser', null);
+                        console.warn("⚠️ window.Store not ready during Auth session change.");
+                        // Retry once after a small delay
+                        setTimeout(() => {
+                            if (window.Store && window.Store.setState) {
+                                if (user) this.handleAuthStateChange(user);
+                                else window.Store.setState('currentUser', null);
+                            }
+                        }, 500);
                     }
                 });
             }
@@ -85,8 +98,10 @@
                     displayName: user.displayName,
                     ...playerData
                 };
-
-                window.Store.setState('currentUser', finalUser);
+                // Safety: Update store
+                if (window.Store && window.Store.setState) {
+                    window.Store.setState('currentUser', finalUser);
+                }
                 return { success: true, user: finalUser };
             } catch (error) {
                 console.warn("⚠️ Firebase Login failed, trying Local Fallback...", error.code);
@@ -151,7 +166,10 @@
                         localAuth: true // Flag to indicate local authentication
                     };
 
-                    window.Store.setState('currentUser', mockUser);
+                    // Safety: Update store
+                    if (window.Store && window.Store.setState) {
+                        window.Store.setState('currentUser', mockUser);
+                    }
                     console.log("✅ LOCAL AUTH SUCCESS:", mockUser.name);
                     return { success: true, user: mockUser };
 
@@ -247,7 +265,10 @@
         async logout() {
             try {
                 if (auth) await auth.signOut();
-                window.Store.setState('currentUser', null);
+                // Safety: Update store
+                if (window.Store && window.Store.setState) {
+                    window.Store.setState('currentUser', null);
+                }
                 return { success: true };
             } catch (error) {
                 return { success: false, error: error.message };

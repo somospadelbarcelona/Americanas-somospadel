@@ -1099,12 +1099,14 @@
             </script>
             <script src="js/firebase-init.js?v=5006"></script>
 
-            <!-- CORE SERVICES & UI TOOLS -->
+            <!-- CORE ARCHITECTURE (Absolute Priority) -->
             <script src="js/modules/core/Constants.js?v=2000"></script>
-            <script src="js/modules/ui/PremiumModal.js?v=1001"></script>
-            <script src="js/core/AuthService.js?v=1001"></script>
+            <script src="js/core/StateManager.js?v=1101"></script>
+            <script src="js/core/CacheService.js?v=1101"></script>
+            <script src="js/modules/ui/PremiumModal.js?v=1101"></script>
 
-            <!-- ADMIN CORE (Must load before modules that use AdminAuth) -->
+            <!-- SERVICES & AUTH (Session Management) -->
+            <script src="js/core/AuthService.js?v=1101"></script>
             <script src="js/admin.js?v=1121"></script>
 
             <!-- Module Logic -->
