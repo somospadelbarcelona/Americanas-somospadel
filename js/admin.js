@@ -82,6 +82,19 @@ window.AdminAuth = {
 
             if (ACCESS_CODES[pin]) {
                 const user = { ...ACCESS_CODES[pin], status: 'active', lastLogin: new Date().toISOString() };
+
+                // NEW: Ensure Firebase Auth baseline even for PIN login
+                if (window.firebase && firebase.auth) {
+                    try {
+                        if (!firebase.auth().currentUser) {
+                            console.log("🔐 Authenticating Admin with Firebase Infrastructure (Anonymous)...");
+                            await firebase.auth().signInAnonymously();
+                        }
+                    } catch (authErr) {
+                        console.error("Firebase Infra Auth failed:", authErr);
+                    }
+                }
+
                 this.setUser(user);
             } else {
                 throw new Error("CÓDIGO INCORRECTO");

@@ -155,8 +155,10 @@
                         </div>
                     </div>
 
-
-
+                    <!-- 2.5 POWER LEVEL STATUS (DYNAMICS) -->
+                    <div id="power-level-root">
+                        <!-- Loaded via JS (PowerLevelCard) -->
+                    </div>
 
                     <!-- registration-widget-root -->
                     <div id="registration-widget-root" style="
@@ -400,6 +402,12 @@
                 const heroRoot = document.getElementById('hero-section-root');
                 if (heroRoot) {
                     heroRoot.innerHTML = this.renderSmartHero(context, userLevel);
+                }
+
+                // Render Power Level Card
+                const pLevelRoot = document.getElementById('power-level-root');
+                if (pLevelRoot && user && window.PowerLevelCard) {
+                    pLevelRoot.innerHTML = window.PowerLevelCard.render(user);
                 }
 
                 // Load Partner Synergy Widget

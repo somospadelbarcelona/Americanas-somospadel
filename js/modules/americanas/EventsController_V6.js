@@ -885,7 +885,7 @@
 
             if (isCancelled) {
                 btnLabel = 'ANULADO'; btnIcon = 'fa-ban'; btnColor = '#ef4444'; // Red
-                cardAction = "alert('⛔ Este evento ha sido cancelado por la organización.')";
+                cardAction = "window.PremiumModal.alert({ title: '⛔ ANULADO', message: 'Este evento ha sido cancelado por la organización.', type: 'error' })";
                 fabAction = cardAction;
             } else if (isFinished || evt.status === 'finished') {
                 btnLabel = 'VER'; btnIcon = 'fa-history'; btnColor = '#64748b';
@@ -907,7 +907,7 @@
 
                 btnColor = '#4b5563';
                 const msg = mismatchCase === 'none' ? 'Debes definir tu género en el perfil para apuntarte a un evento Mixto.' : `Este evento es exclusivo para ${mismatchCase === 'male' ? 'HOMBRES' : 'MUJERES'}.`;
-                fabAction = `alert('⚠️ ${msg}')`;
+                fabAction = `window.PremiumModal.alert({ title: '⚠️ RESTRICCIÓN', message: '${msg}' })`;
             } else if (isInWaitlist) {
                 btnLabel = `ESPERA (Pos ${waitlistPos})`; btnIcon = 'fa-hourglass-half'; btnColor = '#94a3b8';
                 fabAction = `window.EventsController.leaveWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
@@ -1041,7 +1041,7 @@
                 window.ControlTowerView.prepareLoad(id, type, action);
                 window.Router.navigate('live');
             } else {
-                alert("Cargando módulo de control...");
+                window.PremiumModal.alert({ title: "⏳ CARGANDO", message: "Cargando módulo de control de pista..." });
             }
         }
 
@@ -1054,34 +1054,87 @@
         }
 
         async joinEvent(id, type = 'americana') {
-            if (!this.state.currentUser) { alert("Inicia sesión."); return; }
-            if (await this.waitForService() && confirm("¿Inscribirse?")) {
+            if (!this.state.currentUser) {
+                window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión para inscribirte." });
+                return;
+            }
+            if (await this.waitForService()) {
+                const confirmed = await window.PremiumModal.confirm({
+                    title: "🎾 INSCRIBIRSE",
+                    message: "¿Quieres apuntarte a este evento?",
+                    confirmText: "SÍ, APUNTARME"
+                });
+                if (!confirmed) return;
+
                 const res = await window.AmericanaService.addPlayer(id, this.state.currentUser, type);
-                alert(res.success ? "Inscripción OK" : "Error: " + res.error);
+                window.PremiumModal.alert({
+                    title: res.success ? "✅ ÉXITO" : "❌ ERROR",
+                    message: res.success ? "Te has inscrito correctamente." : "Error: " + res.error,
+                    type: res.success ? 'success' : 'error'
+                });
             }
         }
 
         async leaveEvent(id, type = 'americana') {
-            if (!this.state.currentUser) { alert("Inicia sesión."); return; }
-            if (await this.waitForService() && confirm("¿Darse de baja?")) {
+            if (!this.state.currentUser) {
+                window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión." });
+                return;
+            }
+            if (await this.waitForService()) {
+                const confirmed = await window.PremiumModal.confirm({
+                    title: "👋 DARSE DE BAJA",
+                    message: "¿Seguro que quieres borrarte del evento?",
+                    confirmText: "SÍ, BORRARME",
+                    confirmColor: "#FF3B30"
+                });
+                if (!confirmed) return;
+
                 const res = await window.AmericanaService.removePlayer(id, this.state.currentUser.uid, type);
-                alert(res.success ? "Baja tramitada" : "Error: " + res.error);
+                window.PremiumModal.alert({
+                    title: res.success ? "✅ TRÁMITE REALIZADO" : "❌ ERROR",
+                    message: res.success ? "Baja tramitada correctamente." : "Error: " + res.error,
+                    type: res.success ? 'success' : 'error'
+                });
             }
         }
 
         async joinWaitlist(id, type = 'americana') {
-            if (!this.state.currentUser) { alert("Inicia sesión."); return; }
-            if (confirm("Evento lleno. ¿Entrar en lista de espera? Te avisaremos si queda una plaza libre.")) {
+            if (!this.state.currentUser) {
+                window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión." });
+                return;
+            }
+            const confirmed = await window.PremiumModal.confirm({
+                title: "⏳ LISTA DE ESPERA",
+                message: "El evento está lleno. ¿Quieres entrar en lista de espera? Te avisaremos si queda una plaza libre.",
+                confirmText: "ENTRAR EN ESPERA"
+            });
+            if (confirmed) {
                 const res = await window.AmericanaService.addToWaitlist(id, this.state.currentUser, type);
-                alert(res.success ? "En lista de espera ✅" : "Error: " + res.error);
+                window.PremiumModal.alert({
+                    title: res.success ? "✅ REGISTRADO" : "❌ ERROR",
+                    message: res.success ? "Estás en lista de espera. ¡Suerte!" : "Error: " + res.error,
+                    type: res.success ? 'success' : 'error'
+                });
             }
         }
 
         async confirmWaitlist(id, type = 'americana') {
-            if (!this.state.currentUser) { alert("Inicia sesión."); return; }
-            if (confirm("¿Confirmar tu plaza ahora?")) {
+            if (!this.state.currentUser) {
+                window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión." });
+                return;
+            }
+            const confirmed = await window.PremiumModal.confirm({
+                title: "✨ CONFIRMAR PLAZA",
+                message: "¡Ha quedado una plaza libre para ti! ¿Confirmas tu asistencia ahora?",
+                confirmText: "SÍ, CONFIRMAR YA"
+            });
+            if (confirmed) {
                 const res = await window.AmericanaService.confirmWaitlist(id, this.state.currentUser.uid, type);
-                alert(res.success ? "¡Bienvenido al evento! 🎾" : "Error: " + res.error);
+                window.PremiumModal.alert({
+                    title: res.success ? "🎾 ¡DENTRO!" : "❌ ERROR",
+                    message: res.success ? "¡Bienvenido al evento!" : "Error: " + res.error,
+                    type: res.success ? 'success' : 'error'
+                });
             }
         }
 
@@ -1090,7 +1143,7 @@
             const event = await service.getById(id);
             const newWaitlist = (event.waitlist || []).filter(p => p.uid !== this.state.currentUser.uid);
             await service.update(id, { waitlist: newWaitlist });
-            alert("Has salido de la lista de espera.");
+            window.PremiumModal.alert({ title: "ℹ️ INFO", message: "Has salido de la lista de espera." });
         }
 
         async showInscritosModal(id, type) {

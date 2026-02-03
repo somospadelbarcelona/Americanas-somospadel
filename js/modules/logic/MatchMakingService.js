@@ -49,34 +49,30 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                     const isFixedPairs = event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED;
 
                     // --- CRITICAL IDEMPOTENCY CHECK (DB Level) ---
-                    // Verifica si ya existen partidos para esta ronda para evitar duplicados si el usuario pulsa 2// Idempotency check (DB level)
                     const checkColl = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
                     const existingSnap = await window.db.collection(checkColl)
                         .where('americana_id', '==', eventId)
+                        .where('round', '==', roundNum)
                         .get();
-                    const existingRoundMatches = [];
-                    existingSnap.docs.forEach(doc => {
-                        const d = doc.data();
-                        if (parseInt(d.round) === roundNum) {
-                            existingRoundMatches.push({ id: doc.id, ...d });
-                        }
-                    });
 
-                    if (existingRoundMatches.length > 0) {
+                    if (!existingSnap.empty) {
+                        const existingRoundMatches = existingSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         console.warn(`🛑 BLOQUEO DE DUPLICADOS: Ya existen ${existingRoundMatches.length} partidos en Ronda ${roundNum}. Se devuelven los existentes.`);
                         return existingRoundMatches;
                     }
 
                     // --- SMART SCALING LOGIC (ENHANCED WITH DURATION) ---
-                    let effectiveCourts = event.max_courts || 4;
+                    let effectiveCourts = parseInt(event.max_courts || 4);
                     let courtsUpdated = false;
+
+                    const playersCount = (event.players || []).length;
+                    const maxPossibleCourts = Math.floor(playersCount / 4);
 
                     // NEW: Calculate courts based on duration and rounds
                     const calculateCourtsFromDuration = () => {
                         if (!event.time || !event.time_end) return null;
 
                         try {
-                            // Parse times
                             const [startH, startM] = event.time.split(':').map(Number);
                             const [endH, endM] = event.time_end.split(':').map(Number);
                             const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
@@ -86,64 +82,51 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                             const roundsCount = parseInt(event.rounds_count) || 6;
                             const playersCount = (event.players || []).length;
 
-                            // Assumptions:
-                            // - Each match takes ~15 minutes
-                            // - Add 3 minutes between rounds for transitions
-                            const matchDuration = 15;
-                            const transitionTime = 3;
-                            const timePerRound = matchDuration + transitionTime;
+                            // Each match takes ~15 minutes + 3 minutes transition
+                            const timePerRound = 18;
 
-                            // Total time needed for all rounds
-                            const totalTimeNeeded = roundsCount * timePerRound;
+                            // Total matches that need to be played in total across all rounds
+                            const totalMatchSets = roundsCount * Math.ceil(playersCount / 4);
 
-                            // If we don't have enough time, we need more courts to run matches in parallel
-                            if (totalTimeNeeded > durationMinutes) {
-                                // Calculate how many courts we need
-                                const courtsNeeded = Math.ceil(totalTimeNeeded / durationMinutes);
+                            // Max rounds that can fit sequentially in the duration
+                            const maxSequentialRounds = Math.floor(durationMinutes / timePerRound);
 
-                                // Also check player-based minimum
-                                const playerBasedCourts = Math.floor(playersCount / 4);
+                            if (maxSequentialRounds <= 0) return Math.floor(playersCount / 4);
 
-                                // Take the maximum of both calculations
-                                return Math.max(courtsNeeded, playerBasedCourts, 2); // Minimum 2 courts
-                            }
+                            // Required parallelism: how many courts do we need to hit the target?
+                            const courtsNeeded = Math.ceil(totalMatchSets / maxSequentialRounds);
 
-                            // If we have enough time, just use player-based calculation
-                            return Math.max(Math.floor(playersCount / 4), 2);
-
+                            return Math.max(courtsNeeded, 2);
                         } catch (err) {
                             console.warn('Error calculating courts from duration:', err);
                             return null;
                         }
                     };
 
-                    // Try duration-based calculation first
                     const durationBasedCourts = calculateCourtsFromDuration();
 
-                    if (durationBasedCourts && durationBasedCourts > effectiveCourts) {
-                        effectiveCourts = durationBasedCourts;
-                        courtsUpdated = true;
-                        console.log(`🧠 AI Duration Scaling: ${event.time} - ${event.time_end} (${event.rounds_count || 6} rondas) → ${effectiveCourts} pistas necesarias`);
+                    if (durationBasedCourts) {
+                        if (durationBasedCourts > effectiveCourts) {
+                            effectiveCourts = durationBasedCourts;
+                            courtsUpdated = true;
+                            console.log(`🧠 AI Duration Scaling: Needs ${durationBasedCourts} courts to finish on time.`);
+                        }
                     } else {
                         // Fallback to player-based scaling
-                        if (isFixedPairs) {
-                            const pairsCount = (event.fixed_pairs || []).length;
-                            const needed = Math.floor(pairsCount / 2);
-                            if (needed > effectiveCourts) {
-                                effectiveCourts = needed;
-                                courtsUpdated = true;
-                            }
-                        } else {
-                            const playersCount = (event.players || []).length;
-                            const needed = Math.floor(playersCount / 4);
-                            if (needed > effectiveCourts) {
-                                effectiveCourts = needed;
-                                courtsUpdated = true;
-                            }
+                        if (maxPossibleCourts > effectiveCourts) {
+                            effectiveCourts = maxPossibleCourts;
+                            courtsUpdated = true;
                         }
                     }
 
-                    if (courtsUpdated) {
+                    // CAP: Never exceed player capacity
+                    if (effectiveCourts > maxPossibleCourts) {
+                        console.log(`⚠️ AI Scaling CAP: Reducing from ${effectiveCourts} to ${maxPossibleCourts} (Player Limit)`);
+                        effectiveCourts = maxPossibleCourts;
+                        courtsUpdated = (effectiveCourts !== parseInt(event.max_courts || 4));
+                    }
+
+                    if (courtsUpdated && effectiveCourts > 0) {
                         console.log(`🤖 AI Scaling: Upgrading to ${effectiveCourts} courts.`);
                         await collection.update(eventId, { max_courts: effectiveCourts });
                         event.max_courts = effectiveCourts;

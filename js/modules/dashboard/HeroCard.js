@@ -345,14 +345,22 @@
                 // Implementar confirmación
                 console.log('Confirming attendance for match:', matchId);
                 // Actualizar UI
-                alert('¡Asistencia confirmada! Nos vemos en pista 🎾');
+                window.PremiumModal.alert({
+                    title: "✅ CONFIRMADO",
+                    message: "¡Asistencia confirmada! Nos vemos en pista 🎾",
+                    type: 'success'
+                });
                 // Recargar dashboard
                 if (window.DashboardController) {
                     window.DashboardController.load();
                 }
             } catch (e) {
                 console.error('Error confirming:', e);
-                alert('Error al confirmar. Inténtalo de nuevo.');
+                window.PremiumModal.alert({
+                    title: "ERROR",
+                    message: "No se pudo confirmar la asistencia. Inténtalo de nuevo.",
+                    type: 'danger'
+                });
             }
         },
 

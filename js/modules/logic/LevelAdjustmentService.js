@@ -82,7 +82,7 @@
             if (window.NotificationService) {
                 const winnerNames = wonA ? namesA : namesB;
                 const deltaWin = wonA ? adjustA : adjustB;
-                window.NotificationService.showToast(`🏆 Niveles actualizados: Ganadores +${deltaWin.toFixed(3)}`, 'success');
+                window.NotificationService.showInAppToast(`🏆 NIVEL ACTUALIZADO`, `Ganadores: +${deltaWin.toFixed(3)} | Perdedores: -${deltaWin.toFixed(3)}`);
             } else {
                 // Fallback alert (console only to avoid annoying popups)
                 // console.log(`Alert: Niveles actualizados`);
@@ -184,7 +184,14 @@
          * Procesa todos los partidos finalizados desde el principio de los tiempos.
          */
         async recalculateAllLevels() {
-            if (!confirm("⚠️ ¿RECALCULAR TODOS LOS NIVELES?\n\nEsto reseteará los niveles de todos los jugadores basándose en su historial de partidos y re-generará el historial de niveles.\n\n¿Continuar?")) return;
+            const confirmed = await window.PremiumModal.confirm({
+                title: "⚠️ RECALCULO GLOBAL",
+                message: "Esto reseteará los niveles de todos los jugadores basándose en su historial de partidos y re-generará el historial de niveles.<br><br>¿Deseas continuar?",
+                confirmText: "INICIAR RECALCULO",
+                type: 'danger'
+            });
+
+            if (!confirmed) return;
 
             console.log("🚀 Iniciando Recálculo Global de Niveles...");
 
@@ -310,11 +317,19 @@
                 }
                 if (opCount > 0) await opBatch.commit();
 
-                alert("✅ Recálculo global completado con éxito.");
+                await window.PremiumModal.alert({
+                    title: "ÉXITO",
+                    message: "Recálculo global completado con éxito. El sistema ha sido actualizado.",
+                    type: 'success'
+                });
                 location.reload();
             } catch (e) {
                 console.error("Error crítico en recálculo:", e);
-                alert("❌ Error: " + e.message);
+                window.PremiumModal.alert({
+                    title: "ERROR CRÍTICO",
+                    message: "Error en el recálculo: " + e.message,
+                    type: 'danger'
+                });
             }
         }
     };

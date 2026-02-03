@@ -229,7 +229,9 @@
             if (headerName) {
                 // Prioritize user.name from DB, then displayName from Auth, then placeholder
                 const rawName = user ? (user.name || user.displayName || "Jugador") : "Invitado";
-                headerName.innerText = rawName.split(' ')[0].toUpperCase();
+                const level = user ? (user.level || 3.5).toFixed(2) : "--";
+                const roleIcon = user?.role === 'super_admin' ? ' 👑' : '';
+                headerName.innerHTML = `${rawName.split(' ')[0].toUpperCase()} <span style="color: #CCFF00; font-size: 0.7rem; margin-left: 4px;">[${level}${roleIcon}]</span>`;
             }
 
             if (headerAvatar) {

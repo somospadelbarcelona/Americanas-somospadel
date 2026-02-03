@@ -324,7 +324,11 @@ class NotificationService {
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
         if (isIOS && !isStandalone) {
-            alert("⚠️ NOTIFICACIONES EN IPHONE:\n\nPara recibir avisos en tu iPhone, debes añadir esta App a tu pantalla de inicio:\n1. Pulsa el botón 'Compartir' (cuadrado con flecha)\n2. Selecciona 'Añadir a pantalla de inicio'");
+            window.PremiumModal.alert({
+                title: "📲 INSTALAR EN IPHONE",
+                message: "Para recibir avisos en tu iPhone, añade esta App a tu pantalla de inicio:<br><br>1. Pulsa el botón <strong>'Compartir'</strong> (cuadrado con flecha)<br>2. Selecciona <strong>'Añadir a pantalla de inicio'</strong>",
+                type: 'info'
+            });
             return false;
         }
 
@@ -363,7 +367,11 @@ class NotificationService {
                 }
             } else {
                 console.log("🚫 Permiso denegado por el usuario.");
-                alert("Has denegado las notificaciones. No recibirás avisos de nuevos partidos.");
+                window.PremiumModal.alert({
+                    title: "AVISO BLOCK",
+                    message: "Has denegado las notificaciones. No podrás recibir avisos de nuevos partidos en tiempo real.",
+                    type: 'warning'
+                });
             }
         } catch (e) {
             console.error("🚨 Error en el flujo de permisos:", e);
@@ -448,11 +456,11 @@ class NotificationService {
         }
     }
 
-    async deleteAllMyNotifications() {
+    async deleteAllMyNotifications(skipConfirm = false) {
         const uid = this.currentUserUid || window.auth.currentUser?.uid || window.Store?.getState('currentUser')?.uid;
         if (!uid) return;
 
-        if (!confirm("¿Seguro que quieres borrar todas tus notificaciones?")) return;
+        if (!skipConfirm && !confirm("¿Seguro que quieres borrar todas tus notificaciones?")) return;
 
         try {
             const snapshot = await window.db.collection('players').doc(uid).collection('notifications').get();
@@ -636,7 +644,7 @@ class NotificationService {
     }
 
     /**
-     * Muestra un aviso visual dentro de la app con sistema de apilado (Stacking)
+     * Muestra un aviso visual dentro de la app con sistema de apilado (Stacking) Premium
      */
     showInAppToast(title, body) {
         // 1. Asegurar contenedor de Toasts
@@ -644,55 +652,19 @@ class NotificationService {
         if (!container) {
             container = document.createElement('div');
             container.id = 'toast-stack-container';
-            container.style.cssText = `
-                position: fixed;
-                bottom: 85px;
-                left: 50%;
-                transform: translateX(-50%);
-                display: flex;
-                flex-direction: column-reverse; /* Las nuevas van abajo */
-                gap: 10px;
-                pointer-events: none;
-                z-index: 999999;
-                width: 90%;
-                max-width: 380px;
-            `;
             document.body.appendChild(container);
         }
 
         const toast = document.createElement('div');
-        toast.style.cssText = `
-            pointer-events: auto;
-            background: #CCFF00;
-            color: black;
-            padding: 12px 20px;
-            border-radius: 20px;
-            font-family: 'Outfit', sans-serif;
-            font-weight: 800;
-            font-size: 0.85rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border: 2px solid black;
-            animation: slideUpToast 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            transition: all 0.3s;
-        `;
-
-        if (!document.getElementById('toast-animations')) {
-            const s = document.createElement('style');
-            s.id = 'toast-animations';
-            s.textContent = `@keyframes slideUpToast { from { opacity: 0; transform: translateY(30px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }`;
-            document.head.appendChild(s);
-        }
+        toast.className = 'premium-toast';
 
         toast.innerHTML = `
-            <div style="width:34px; height:34px; background:rgba(0,0,0,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <div class="toast-icon">
                 <i class="fas fa-bell"></i>
             </div>
-            <div style="flex:1;">
-                <div style="font-size:0.6rem; opacity:0.6; text-transform:uppercase; letter-spacing:1px; margin-bottom:1px;">AVISO RECIENTE</div>
-                <div style="line-height:1.2;">${title}</div>
+            <div class="toast-content">
+                <div class="toast-label">AVISO RECIENTE</div>
+                <div class="toast-title">${title}</div>
             </div>
         `;
 
@@ -701,7 +673,7 @@ class NotificationService {
         // Auto-remove
         setTimeout(() => {
             toast.style.opacity = '0';
-            toast.style.transform = 'translateY(-10px) scale(0.95)';
+            toast.style.transform = 'translateX(20px) scale(0.95)';
             setTimeout(() => {
                 toast.remove();
                 if (container.children.length === 0) container.remove();

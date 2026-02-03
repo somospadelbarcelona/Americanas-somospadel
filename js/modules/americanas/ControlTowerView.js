@@ -386,7 +386,11 @@
                         this.closeRoundFinishedModal();
                     }
                 } catch (e) {
-                    alert("Error: " + e.message);
+                    window.PremiumModal.alert({
+                        title: "❌ ERROR",
+                        message: "No se pudo generar la siguiente ronda: " + e.message,
+                        type: 'error'
+                    });
                     btn.innerHTML = '✅ SÍ, SIGUIENTE RONDA';
                 }
             };
@@ -1345,7 +1349,11 @@
             } catch (e) {
                 console.error("❌ Firebase update failed:", e);
                 // On failure, the next snapshot will naturally roll back the UI
-                alert("Error al guardar: " + (e.message.includes('permission') ? "No tienes permisos." : e.message));
+                window.PremiumModal.alert({
+                    title: "❌ ERROR AL GUARDAR",
+                    message: e.message.includes('permission') ? "No tienes permisos para editar este resultado." : e.message,
+                    type: 'error'
+                });
             }
         }
 
@@ -1375,7 +1383,13 @@
         }
 
         async unlockMatch(matchId) {
-            if (!confirm("¿Desbloquear partido para corregir el resultado?")) return;
+            const confirmed = await window.PremiumModal.confirm({
+                title: "🔓 DESBLOQUEAR PARTIDO",
+                message: "¿Quieres desbloquear este partido para corregir el resultado?",
+                confirmText: "DESBLOQUEAR",
+                cancelText: "CANCELAR"
+            });
+            if (!confirmed) return;
 
             const isEntreno = this.currentAmericanaDoc?.isEntreno;
             const collection = isEntreno ? 'entrenos_matches' : 'matches';
@@ -1429,12 +1443,24 @@
 
             const nextRoundExists = this.allMatches.some(m => parseInt(m.round) === nextRound);
 
-            let msg = "¿CONFIRMAR CAMBIO DE RONDA?\\n\\nAsegúrate de que todos los resultados sean correctos.";
+            let title = "🚀 SIGUIENTE RONDA";
+            let msg = "¿CONFIRMAR CAMBIO DE RONDA?\n\nAsegúrate de que todos los resultados sean correctos.";
+            let color = "#CCFF00";
+
             if (nextRoundExists) {
-                msg = `⚠️ ATENCIÓN: LA RONDA ${nextRound} YA EXISTE\\n\\nAl confirmar, SE BORRARÁ la Ronda ${nextRound} actual y se regenerará con los nuevos resultados.\\n\\n¿Estás seguro de que deseas regenerar cruces?`;
+                title = "⚠️ REGENERAR RONDA";
+                msg = `LA RONDA ${nextRound} YA EXISTE\n\nAl confirmar, SE BORRARÁ la Ronda ${nextRound} actual y se regenerará.\n\n¿Estás seguro?`;
+                color = "#FF3B30";
             }
 
-            if (!confirm(msg)) return;
+            const confirmed = await window.PremiumModal.confirm({
+                title: title,
+                message: msg,
+                confirmText: "CONFIRMAR",
+                cancelText: "CANCELAR"
+            });
+
+            if (!confirmed) return;
 
             const btnContainer = document.getElementById('next-round-btn-container');
             if (btnContainer) {
@@ -1488,12 +1514,19 @@
                 } else {
                     // Fallback if no animation or timeout
                     this.goToRound(nextRound);
-                    alert("Ronda generada (Animación omitida por timeout de sincronización).");
+                    window.PremiumModal.alert({
+                        title: "✅ RONDA GENERADA",
+                        message: "Ronda generada correctamente (Animación omitida por sincronización)."
+                    });
                 }
 
             } catch (e) {
                 console.error(e);
-                alert("Error al generar ronda: " + e.message);
+                window.PremiumModal.alert({
+                    title: "❌ ERROR",
+                    message: "Error al generar ronda: " + e.message,
+                    type: 'error'
+                });
                 this.recalc();
             }
         }

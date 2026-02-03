@@ -11,16 +11,26 @@ window.onerror = function (msg, url, line, col, error) {
     if (!url) url = 'Script Inline/Desconocido';
 
     console.error("Critical Error Catch:", msg, url, line, col, error);
-    alert("🔴 ERROR DETECTADO\n" +
-        "Mensaje: " + msg + "\n" +
-        "Archivo: " + url + "\n" +
-        "Línea: " + line + "\n" +
-        "Detalles: " + errorDetail.substring(0, 100));
+    if (window.PremiumModal) {
+        window.PremiumModal.alert({
+            title: "🔴 ERROR DETECTADO",
+            message: `<strong>Mensaje:</strong> ${msg}<br><strong>Archivo:</strong> ${url}<br><strong>Línea:</strong> ${line}<br><strong>Detalles:</strong> ${errorDetail.substring(0, 50)}...`,
+            type: 'danger'
+        });
+    } else {
+        console.error("Critical Error Catch:", msg, url, line, col, error);
+    }
     return false;
 };
 
 window.addEventListener('unhandledrejection', function (event) {
-    alert("🔴 ERROR ASÍNCRONO:\n" + event.reason);
+    if (window.PremiumModal) {
+        window.PremiumModal.alert({
+            title: "🔴 ERROR ASÍNCRONO",
+            message: event.reason,
+            type: 'danger'
+        });
+    }
 });
 
 // Initialize Firebase
@@ -55,29 +65,46 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
             }
         } catch (e) { console.warn("Messaging init error", e); }
 
-        /* 
-        // Enable offline persistence (Disabled temporarily to diagnose hangs)
-        db.enablePersistence()
+        // Enable offline persistence (Premium UX: Works in subways/low signal)
+        db.enablePersistence({ synchronizeTabs: true })
+            .then(() => {
+                console.log("📦 Firestore persistence enabled");
+            })
             .catch((err) => {
                 if (err.code == 'failed-precondition') {
-                    console.warn("⚠️ Multiple tabs open, persistence can only be enabled in one tab at a time.");
+                    console.warn("⚠️ Multiple tabs open, persistence limited.");
                 } else if (err.code == 'unimplemented') {
-                    console.warn("⚠️ The current browser doesn't support persistence.");
+                    console.warn("⚠️ Current browser doesn't support persistence.");
                 }
             });
-        console.log("📦 Firestore persistence enabled");
-        */
-        console.log("📦 Firestore persistence disabled for safety");
     } catch (error) {
         console.error("❌ Firebase initialization error:", error);
-        alert("🔴 FIREBASE ERROR: " + error.message);
+        if (window.PremiumModal) {
+            window.PremiumModal.alert({
+                title: "🔴 FIREBASE ERROR",
+                message: error.message,
+                type: 'danger'
+            });
+        }
     }
 }
 if (typeof window.FIREBASE_CONFIG === 'undefined') {
-    alert("🔴 CONFIG ERROR: firebase-config.js no cargado");
+    if (window.PremiumModal) {
+        window.PremiumModal.alert({
+            title: "🔴 CONFIG ERROR",
+            message: "firebase-config.js no cargado",
+            type: 'danger'
+        });
+    }
 }
 if (typeof firebase === 'undefined') {
-    alert("🔴 NETWORK ERROR: Firebase SDK no cargado. Revisa tu internet.");
+    if (window.PremiumModal) {
+        window.PremiumModal.alert({
+            title: "🔴 NETWORK ERROR",
+            message: "Firebase SDK no cargado. Revisa tu internet.",
+            type: 'danger'
+        });
+    }
 }
 
 
@@ -89,11 +116,13 @@ const FirebaseDB = {
     // Players Collection
     players: {
         async getAll() {
-            console.log("🔥 FirebaseDB.players.getAll() called");
             if (!db) throw new Error("Firebase DB not initialized yet");
             const snapshot = await db.collection('players').get();
-            console.log("✅ FirebaseDB.players.getAll() success, docs:", snapshot.docs.length);
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            return snapshot.docs.map(doc => {
+                const data = doc.data();
+                // Ensure doc.id is the master ID and doesn't get overwritten by an internal 'id' or 'uid' from data
+                return { ...data, id: doc.id, uid: doc.uid || data.uid || doc.id };
+            });
         },
 
         async getById(id) {
@@ -125,46 +154,70 @@ const FirebaseDB = {
                 throw new Error("El teléfono debe tener 9 dígitos.");
             }
 
-            const docRef = await db.collection('players').add({
+            const payload = {
                 ...data,
                 name: name,
                 phone: phone === 'NOA' ? 'NOA' : phone,
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            };
+
+            let docRef;
+            if (data.id) {
+                // Use provided ID (important for local fallbacks and imports)
+                await db.collection('players').doc(data.id).set(payload);
+                docRef = db.collection('players').doc(data.id);
+            } else {
+                docRef = await db.collection('players').add(payload);
+            }
+
             const doc = await docRef.get();
-            return { id: doc.id, ...doc.data() };
+            return { ...doc.data(), id: doc.id };
         },
 
         async update(id, data) {
-            await db.collection('players').doc(id).update(data);
-            const doc = await db.collection('players').doc(id).get();
-            return { id: doc.id, ...doc.data() };
+            const cleanId = (id || "").toString().trim();
+            if (!cleanId) throw new Error("ID de jugador no válido para actualizar");
+
+            try {
+                await db.collection('players').doc(cleanId).update(data);
+                const doc = await db.collection('players').doc(cleanId).get();
+                return { id: doc.id, ...doc.data() };
+            } catch (err) {
+                console.error("Error in FirebaseDB.players.update:", err);
+                if (err.message.includes("permission-denied")) {
+                    throw new Error("No tienes permisos de escritura en la base de datos Firestore. Asegúrate de estar autenticado como Admin en Firebase Auth.");
+                }
+                throw err;
+            }
         },
 
         async delete(id) {
-            console.log(`🗑️ [Firebase] Intentando borrar jugador: ${id}`);
+            const cleanId = (id || "").toString().trim();
+            if (!cleanId) throw new Error("ID de jugador no especificado");
 
-            // PASO 1: Verificar que existe antes de borrar
-            const docBefore = await db.collection('players').doc(id).get();
-            if (!docBefore.exists) {
-                throw new Error(`El jugador con ID ${id} no existe en la base de datos.`);
+            console.log(`🗑️ [Firebase] Intentando borrar jugador: ${cleanId}`);
+
+            const docRef = db.collection('players').doc(cleanId);
+
+            try {
+                const docBefore = await docRef.get();
+
+                if (!docBefore.exists) {
+                    console.warn(`⚠️ El jugador con ID ${cleanId} ya no existe en la DB.`);
+                    return;
+                }
+
+                await docRef.delete();
+                console.log(`✅ [Firebase] Comando delete executed for: ${cleanId}`);
+
+                await new Promise(r => setTimeout(r, 500));
+            } catch (err) {
+                console.error("Error direct deleting:", err);
+                if (err.message.includes("permission-denied")) {
+                    throw new Error("🔥 ERROR DE PERMISOS: Firestore ha bloqueado el borrado. Esto ocurre porque estás usando un 'Login por PIN' local pero no estás autenticado en el sistema de Firebase Auth (Infraestructura). Recomendación: Revisa las reglas de seguridad en la consola Firebase o usa el 'Admin Login' oficial.");
+                }
+                throw new Error(`Error de Firebase: ${err.message}`);
             }
-
-            // PASO 2: Ejecutar el borrado
-            await db.collection('players').doc(id).delete();
-            console.log(`✅ [Firebase] Comando delete() ejecutado para: ${id}`);
-
-            // PASO 3: Esperar un momento para que Firebase procese
-            await new Promise(resolve => setTimeout(resolve, 800));
-
-            // PASO 4: Verificar que realmente se borró
-            const docAfter = await db.collection('players').doc(id).get();
-            if (docAfter.exists) {
-                console.error(`❌ [Firebase] El documento ${id} SIGUE EXISTIENDO después del delete()`);
-                throw new Error(`FIREBASE SECURITY ERROR: El documento no se pudo borrar. Verifica las reglas de seguridad en Firebase Console. Es posible que tu usuario no tenga permisos de escritura/borrado en la colección 'players'.`);
-            }
-
-            console.log(`✅ [Firebase] Borrado verificado correctamente: ${id}`);
         },
 
         async cleanupFictional() {

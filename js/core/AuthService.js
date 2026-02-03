@@ -277,7 +277,11 @@
                     if (modal) modal.classList.add('hidden');
                 } else {
                     console.error('❌ Login failed:', result.error);
-                    alert('Error al iniciar sesión: ' + result.error);
+                    window.PremiumModal.alert({
+                        title: "❌ ERROR DE ACCESO",
+                        message: result.error,
+                        type: 'error'
+                    });
                 }
             });
         }

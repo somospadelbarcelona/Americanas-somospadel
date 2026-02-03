@@ -400,7 +400,11 @@
                 const optimizedBase64 = await this.compressImage(file);
                 const res = await window.PlayerController.updatePhoto(optimizedBase64);
                 if (res.success) window.loadView('perfil'); // Reload
-                else alert("Error: " + res.error);
+                else window.PremiumModal.alert({
+                    title: "ERROR",
+                    message: "No se pudo actualizar la foto: " + res.error,
+                    type: 'danger'
+                });
             } catch (error) {
                 console.error("Photo error:", error);
             }
@@ -432,8 +436,16 @@
             const pass = prompt("Introduce nueva contraseña (min 6 car):");
             if (pass && pass.length >= 6) {
                 const res = await window.PlayerController.updatePassword(pass);
-                if (res.success) alert("Contraseña actualizada 🔐");
-                else alert("Error: " + res.error);
+                if (res.success) window.PremiumModal.alert({
+                    title: "🔐 SEGURIDAD",
+                    message: "Contraseña actualizada correctamente.",
+                    type: 'success'
+                });
+                else window.PremiumModal.alert({
+                    title: "ERROR",
+                    message: "No se pudo actualizar: " + res.error,
+                    type: 'danger'
+                });
             }
         }
     }

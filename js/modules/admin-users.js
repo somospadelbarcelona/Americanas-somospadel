@@ -307,7 +307,11 @@ window.AdminViews.users = async function () {
             // Feedback visual?
         } catch (e) {
             console.error(e);
-            alert("❌ Error al actualizar partidos");
+            window.PremiumModal.alert({
+                title: "❌ ERROR",
+                message: "No se pudo actualizar el contador de partidos.",
+                type: 'error'
+            });
         }
     };
 
@@ -343,12 +347,22 @@ window.AdminViews.users = async function () {
             }
         } catch (e) {
             console.error(e);
-            alert("❌ Error al añadir equipo");
+            window.PremiumModal.alert({
+                title: "❌ ERROR",
+                message: "No se pudo añadir el jugador al equipo.",
+                type: 'error'
+            });
         }
     };
 
     window.quickRemoveTeam = async (id, teamToRemove) => {
-        if (!confirm(`¿Quitar del equipo ${teamToRemove}?`)) return;
+        const confirmed = await window.PremiumModal.confirm({
+            title: "🗑️ QUITAR EQUIPO",
+            message: `¿Seguro que quieres quitar al jugador del equipo ${teamToRemove}?`,
+            confirmText: "QUITAR",
+            confirmColor: "#FF3B30"
+        });
+        if (!confirmed) return;
         try {
             const user = window.allUsersCache.find(u => u.id === id);
             if (!user) return;
@@ -379,7 +393,11 @@ window.AdminViews.users = async function () {
             window.renderUserRows(window.filteredUsers);
         } catch (e) {
             console.error(e);
-            alert("❌ Error al quitar equipo");
+            window.PremiumModal.alert({
+                title: "❌ ERROR",
+                message: "No se pudo eliminar el equipo.",
+                type: 'error'
+            });
         }
     };
 
@@ -438,7 +456,12 @@ window.AdminViews.users = async function () {
     };
 
     window.approveUser = async (id) => {
-        if (!confirm("¿Confirmar acceso para este jugador? Pasará a estado ACTIVO.")) return;
+        const confirmed = await window.PremiumModal.confirm({
+            title: "🚀 VALIDAR JUGADOR",
+            message: "¿Quieres confirmar el acceso para este jugador? Pasará a estado ACTIVO inmediatamente.",
+            confirmText: "VALIDAR"
+        });
+        if (!confirmed) return;
         try {
             await FirebaseDB.players.update(id, { status: 'active' });
 
@@ -447,16 +470,28 @@ window.AdminViews.users = async function () {
             window.allUsersCache = users;
             window.multiFilterUsers(); // Re-apply filters
 
-            alert("✅ Usuario validado correctamente");
+            window.PremiumModal.alert({
+                title: "✅ ÉXITO",
+                message: "Usuario validado y activado correctamente.",
+                type: 'success'
+            });
         } catch (e) {
             console.error("Error validando usuario:", e);
-            alert("❌ Error al validar: " + e.message);
+            window.PremiumModal.alert({
+                title: "❌ ERROR",
+                message: "Error al validar: " + e.message,
+                type: 'error'
+            });
         }
     };
 
     window.exportToExcel = () => {
         if (typeof XLSX === 'undefined') {
-            alert('Error: Librería de exportación no cargada. Por favor, recarga la página.');
+            window.PremiumModal.alert({
+                title: "❌ LIBRERÍA AUSENTE",
+                message: "La librería de exportación no se ha cargado. Por favor, recarga la página.",
+                type: 'error'
+            });
             return;
         }
 
@@ -566,7 +601,13 @@ window.AdminViews.users = async function () {
         const userToDelete = window.allUsersCache.find(u => u.id === id);
         const name = userToDelete ? userToDelete.name : 'este usuario';
 
-        if (!confirm(`⚠️ ¿Estás seguro de que quieres ELIMINAR a "${name}"?\n\nEsta acción borrará permanentemente su perfil y no se puede deshacer.`)) return;
+        const confirmed = await window.PremiumModal.confirm({
+            title: "⚠️ ELIMINAR JUGADOR",
+            message: `¿Estás seguro de que quieres eliminar a "${name.toUpperCase()}"?\n\nEsta acción es irreversible y borrará todo su historial.`,
+            confirmText: "ELIMINAR PERMANENTEMENTE",
+            confirmColor: "#FF3B30"
+        });
+        if (!confirmed) return;
 
         // Feedback visual en el botón
         const btn = event.target.closest('button');
@@ -601,15 +642,22 @@ window.AdminViews.users = async function () {
             window.multiFilterUsers();
 
             // SEXTO: Mostrar confirmación
-            alert(`✅ "${name}" ha sido eliminado correctamente.`);
+            window.PremiumModal.alert({
+                title: "🗑️ ELIMINADO",
+                message: `El jugador "${name}" ha sido borrado de la base de datos.`,
+                type: 'success'
+            });
 
         } catch (e) {
-            console.error("❌ Error al eliminar usuario:", e);
             let errorMsg = e.message;
             if (errorMsg.includes('permission-denied')) {
-                errorMsg = "No tienes permisos suficientes en Firebase para borrar jugadores. Contacta con el administrador principal.";
+                errorMsg = "No tienes permisos suficientes en Firebase para borrar jugadores.";
             }
-            alert("❌ Error al eliminar: " + errorMsg);
+            window.PremiumModal.alert({
+                title: "❌ ERROR CRÍTICO",
+                message: "No se pudo eliminar el registro: " + errorMsg,
+                type: 'error'
+            });
 
             // Restaurar botón y recargar datos para mostrar el estado real
             btn.innerHTML = originalContent;
@@ -696,13 +744,13 @@ window.AdminViews.users = async function () {
             if (id) {
                 // UPDATE
                 await FirebaseDB.players.update(id, userData);
-                alert("✅ Jugador actualizado correctamente.");
+                window.PremiumModal.alert({ title: "✅ ACTUALIZADO", message: "Jugador actualizado correctamente." });
             } else {
                 // CREATE
                 // Validations for new user
                 if (!userData.phone) throw new Error("El teléfono es obligatorio.");
                 await FirebaseDB.players.create(userData); // Assuming create handles ID generation or logic
-                alert("✅ Jugador registrado correctamente.");
+                window.PremiumModal.alert({ title: "✅ REGISTRADO", message: "Jugador registrado correctamente." });
             }
 
             // Refresh & Close
@@ -713,7 +761,11 @@ window.AdminViews.users = async function () {
 
         } catch (err) {
             console.error(err);
-            alert("❌ Error al guardar: " + err.message);
+            window.PremiumModal.alert({
+                title: "❌ ERROR",
+                message: "No se pudo guardar: " + err.message,
+                type: 'error'
+            });
         } finally {
             btn.textContent = originalText;
             btn.disabled = false;
@@ -724,7 +776,10 @@ window.AdminViews.users = async function () {
 // WhatsApp Actions Helper (Global)
 window.openWhatsAppActions = (phone, name) => {
     // Just a shell for now, logic likely in main utils or simple alerts
-    if (!phone) return alert("Sin teléfono");
+    if (!phone) {
+        window.PremiumModal.alert({ title: "⚠️ SIN TELÉFONO", message: "Este jugador no tiene un número registrado." });
+        return;
+    }
     const safePhone = phone.replace(/\D/g, '');
     const url = `https://wa.me/${safePhone}`;
     window.open(url, '_blank');
@@ -732,7 +787,13 @@ window.openWhatsAppActions = (phone, name) => {
 
 // NEW: RECALCULATE STATS FUNCTION (DESTRUCTIVE CLEANUP)
 window.recalculateMatchesPlayed = async () => {
-    if (!confirm("⚠️ MODO LIMPIEZA TOTAL: ¿Deseas ELIMINAR permanentemente los partidos huérfanos de la base de datos?\n\nEl sistema escaneará cada partido. Si pertenece a un evento que ya no existe, el partido será BORRADO físicamente. Luego se recalcularán las estadísticas.")) return;
+    const confirmed = await window.PremiumModal.confirm({
+        title: "⚠️ MODO LIMPIEZA TOTAL",
+        message: "¿Deseas ELIMINAR permanentemente los partidos huérfanos?\n\nEl sistema escaneará cada partido y borrará aquellos de eventos inexistentes.",
+        confirmText: "INICIAR LIMPIEZA",
+        confirmColor: "#FF3B30"
+    });
+    if (!confirmed) return;
 
     const btn = document.querySelector('button[onclick="recalculateMatchesPlayed()"]');
     let originalText = "";
@@ -870,7 +931,11 @@ window.recalculateMatchesPlayed = async () => {
         }
         await Promise.all(updates);
 
-        alert(`✅ LIMPIEZA COMPLETA.\n\n- Partidos huérfanos ELIMINADOS: ${deletedMatches}\n- Perfiles actualizados: ${updatedCount}`);
+        window.PremiumModal.alert({
+            title: "✅ LIMPIEZA COMPLETA",
+            message: `Partidos huérfanos eliminados: ${deletedMatches}\nPerfiles actualizados: ${updatedCount}`,
+            type: 'success'
+        });
 
         // Refresh
         const users = await FirebaseDB.players.getAll();
@@ -879,7 +944,11 @@ window.recalculateMatchesPlayed = async () => {
 
     } catch (e) {
         console.error(e);
-        alert("❌ Error crítico: " + e.message);
+        window.PremiumModal.alert({
+            title: "❌ ERROR CRÍTICO",
+            message: e.message,
+            type: 'error'
+        });
     } finally {
         if (btn) {
             btn.textContent = originalText;
@@ -893,10 +962,18 @@ window.recalculateMatchesPlayed = async () => {
 // --- BATCH ACTION: RESET LEVELS ---
 // --- BATCH ACTION: UPDATE LEVELS BY TEAM ---
 window.batchUpdateTeamLevels = async () => {
-    if (!confirm("⚠️ ATENCIÓN: Esta acción RECALCULARÁ los niveles de TODOS los jugadores basándose en sus equipos.\n\nSe usará la configuración de AppConstants.TEAM_LEVELS.\n¿Estás seguro?")) return;
+    const confirmed = await window.PremiumModal.confirm({
+        title: "⚠️ ACTUALIZACIÓN MASIVA",
+        message: "¿Recalcular niveles de TODOS los jugadores según sus equipos?\n\nSe usará la tabla oficial de prioridad por género.",
+        confirmText: "SÍ, RECALCULAR"
+    });
+    if (!confirmed) return;
 
     const users = window.allUsersCache || [];
-    if (users.length === 0) return alert("No hay usuarios cargados.");
+    if (users.length === 0) {
+        window.PremiumModal.alert({ title: "ℹ️ INFO", message: "No hay usuarios cargados para procesar." });
+        return;
+    }
 
     const content = document.getElementById('content-area');
     // Show Loading
@@ -925,12 +1002,20 @@ window.batchUpdateTeamLevels = async () => {
             }
         }
 
-        alert(`✅ Proceso completado.\nSe han actualizado ${count} jugadores según sus equipos.`);
+        window.PremiumModal.alert({
+            title: "✅ PROCESO COMPLETADO",
+            message: `Se han actualizado ${count} jugadores con éxito.`,
+            type: 'success'
+        });
         window.location.reload();
 
     } catch (e) {
         console.error(e);
-        alert("❌ Error durante el proceso masivo: " + e.message);
+        window.PremiumModal.alert({
+            title: "❌ ERROR EN PROCESO",
+            message: e.message,
+            type: 'error'
+        });
         window.location.reload();
     }
 };

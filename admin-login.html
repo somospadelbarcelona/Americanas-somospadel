@@ -290,6 +290,18 @@
                 // LOGIN EXITOSO
                 console.log('✅ Login exitoso:', user.name);
 
+                // NEW: Ensure Firebase Auth Infrastructure session for rules to pass
+                if (window.firebase && firebase.auth) {
+                    try {
+                        if (!firebase.auth().currentUser) {
+                            console.log("🔐 Authenticating Admin with Firebase Infrastructure...");
+                            await firebase.auth().signInAnonymously();
+                        }
+                    } catch (authErr) {
+                        console.error("Firebase Infra Auth failed:", authErr);
+                    }
+                }
+
                 // Guardar en localStorage
                 localStorage.setItem('adminUser', JSON.stringify(user));
                 localStorage.setItem('currentUser', JSON.stringify(user));
