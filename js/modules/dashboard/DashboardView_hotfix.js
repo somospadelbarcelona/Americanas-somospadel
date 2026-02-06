@@ -3,10 +3,29 @@
  * "Context-First" Mobile Dashboard
  * Designed for Clarity, Speed and Outdoor Use
  */
-console.log("✅ [v40] DashboardView Loaded Correctly");
+console.log("✅ [HOTFIX] DashboardView LOADED from NEW FILE");
 (function () {
+    // VISUAL VERIFICATION
+    setTimeout(() => console.log("%c 🚀 CAMBIOS APLICADOS: Dashboard Interactivo ", "background: #CCFF00; color: #000; font-size: 14px; padding: 4px; font-weight: bold;"), 1000);
+
     class DashboardView {
         constructor() {
+            // Global Navigation Helper for News
+            window.dashNavigate = (route, source = 'news') => {
+                console.log(`🏁 [GLOBAL NAV] From: ${source}, Route: ${route}`);
+                try {
+                    if (route.startsWith('http')) {
+                        window.open(route, '_blank');
+                    } else if (window.Router) {
+                        window.Router.navigate(route);
+                    } else {
+                        console.error("Router not found");
+                    }
+                } catch (e) {
+                    console.error("Navigation failed:", e);
+                }
+            };
+
             if (window.Store) {
                 window.Store.subscribe('dashboardData', (data) => {
                     if (window.Router && window.Router.currentRoute === 'dashboard') {
@@ -122,9 +141,18 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                         animation-play-state: paused;
                                     }
                                 }
-                                .registration-ticker-card {
+                                .news-marquee-track:active, 
+                                .scene-3d-track:active,
+                                .infinite-scroll-wrapper:active {
+                                    animation-play-state: paused !important;
+                                }
+
+                                .registration-ticker-card, 
+                                .holo-card {
                                     transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
                                     flex-shrink: 0;
+                                    pointer-events: auto !important;
+                                    user-select: none;
                                 }
                                 
                                 /* 3D HOLO ENGINE STYLES */
@@ -213,19 +241,19 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     " onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                         
                         <!-- BG Effect -->
-                        <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.15; background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 15px 15px;"></div>
-                        <div style="position: absolute; right: -50px; bottom: -50px; width: 200px; height: 200px; background: #ffffff; filter: blur(60px); opacity: 0.2;"></div>
-                        <div style="position: absolute; left: -20px; top: -20px; width: 100px; height: 100px; background: #CCFF00; filter: blur(50px); opacity: 0.3;"></div>
+                        <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.15; background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 15px 15px; pointer-events: none;"></div>
+                        <div style="position: absolute; right: -50px; bottom: -50px; width: 200px; height: 200px; background: #ffffff; filter: blur(60px); opacity: 0.2; pointer-events: none;"></div>
+                        <div style="position: absolute; left: -20px; top: -20px; width: 100px; height: 100px; background: #CCFF00; filter: blur(50px); opacity: 0.3; pointer-events: none;"></div>
 
                         <!-- Image Section (Left) -->
-                        <div style="width: 45%; position: relative; display: flex; align-items: center; justify-content: center; z-index: 5;">
+                        <div style="width: 45%; position: relative; display: flex; align-items: center; justify-content: center; z-index: 5; pointer-events: none;">
                              <img src="./img/sudadera.jpg" 
                                   onerror="this.style.display='none'" 
                                   style="width: 110%; height: 110%; object-fit: contain; transform: rotate(-5deg) scale(1.2) translateY(5px); filter: drop-shadow(0 15px 25px rgba(0,0,0,0.4));">
                         </div>
 
                         <!-- Content Section (Right) -->
-                        <div style="width: 55%; padding: 15px 20px 15px 10px; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 2;">
+                        <div style="width: 55%; padding: 15px 20px 15px 10px; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 2; pointer-events: none;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
                                 <div style="
                                     background: #CCFF00; 
@@ -246,7 +274,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                             <div style="font-size: 1rem; color: #e0f2fe; font-weight: 300; margin-bottom: 2px; letter-spacing: 1px;">SOMOSPADEL BCN</div>
                             
                             <!-- Price & Button Row -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; gap: 10px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; gap: 10px; pointer-events: auto;">
                                 <div style="color:white; font-weight:900; font-size:1.2rem; text-shadow:0 2px 10px rgba(0,0,0,0.3);">
                                     24<span style="font-size:0.7rem; vertical-align:top;">,99€</span>
                                 </div>
@@ -264,6 +292,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                     gap: 6px; 
                                     transition: all 0.2s;
                                     transform-origin: center;
+                                    cursor: pointer;
                                 " onmouseover="this.style.transform='scale(1.1) rotate(2deg)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.3)'" onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.2)'">
                                     COMPRAR <i class="fas fa-shopping-cart"></i>
                                 </div>
@@ -745,16 +774,16 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             }
 
             return myEvents.map(am => `
-                <div class="agenda-card" onclick="window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');" style="min-width: 280px; background: var(--bg-card); border-radius: 32px; border: 1px solid var(--border-subtle); padding: 24px; scroll-snap-align: center; position: relative; box-shadow: var(--shadow-md); transition: all 0.2s;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <div class="agenda-card" onclick="window.ControlTowerView?.prepareLoad('${am.id}'); Router.navigate('live');" style="min-width: 280px; background: var(--bg-card); border-radius: 32px; border: 1px solid var(--border-subtle); padding: 24px; scroll-snap-align: center; position: relative; box-shadow: var(--shadow-md); transition: all 0.2s; cursor: pointer;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; pointer-events: none;">
                         <div style="color: var(--brand-neon); background: var(--brand-navy); padding: 4px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">${this.formatDateShort(am.date)}</div>
                         ${am.status === 'live' ?
                     `<div style="background: rgba(255, 45, 85, 0.2); color: #FF2D55; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; animation: blink 1s infinite; border: 1px solid #FF2D55;">EN VIVO 🔴</div>` :
                     `<div style="background: rgba(6, 182, 212, 0.1); color: var(--brand-accent); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900;">CONFIRMADO</div>`
                 }
                     </div>
-                    <h4 style="margin: 0; color: var(--text-primary); font-size: 1.3rem; font-weight: 950; letter-spacing: -0.5px; line-height: 1.2;">${am.name}</h4>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
+                    <h4 style="margin: 0; color: var(--text-primary); font-size: 1.3rem; font-weight: 950; letter-spacing: -0.5px; line-height: 1.2; pointer-events: none;">${am.name}</h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--border-subtle); pointer-events: none;">
                         <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 800;"><i class="far fa-clock" style="color: var(--brand-neon); margin-right: 8px;"></i> ${am.time}</span>
                         <div style="width: 36px; height: 36px; background: var(--brand-navy); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; box-shadow: var(--shadow-sm);">
                             <i class="fas fa-chevron-right"></i>
@@ -894,19 +923,19 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 if (weatherData && weatherData[0]) {
                     const w = weatherData[0];
                     itemsHtml.push(`
-                <div class="registration-ticker-card" onclick="window.StoryFeedWidget.showStory('weather')" style="cursor: pointer; min-width: 280px; height: 160px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 18px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05);">
-                            <div style="position: absolute; right: -20px; bottom: -20px; font-size: 7rem; opacity: 0.1; filter: blur(2px); animation: weatherFloat 6s ease-in-out infinite;">${w.icon}</div>
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 2;">
+                <div class="registration-ticker-card" onclick="window.dashNavigate('weather_story', 'weather')" style="cursor: pointer; min-width: 280px; height: 160px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 18px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <div style="position: absolute; right: -20px; bottom: -20px; font-size: 7rem; opacity: 0.1; filter: blur(2px); animation: weatherFloat 6s ease-in-out infinite; pointer-events: none;">${w.icon}</div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 2; pointer-events: none;">
                                 <span style="font-size:0.6rem; font-weight:1000; color:white; background:rgba(59, 130, 246, 0.8); padding:5px 12px; border-radius:8px; letter-spacing:1px; box-shadow: 0 0 15px rgba(59,130,246,0.3); text-transform:uppercase;">METEO</span>
                                 <div style="display:flex; flex-direction:column; align-items:flex-end;">
                                     <span style="font-size:1.8rem;">${w.icon}</span>
                                 </div>
                             </div>
-                            <div style="position: absolute; bottom: 18px; left: 18px; z-index: 2;">
+                            <div style="position: absolute; bottom: 18px; left: 18px; z-index: 2; pointer-events: none;">
                                 <div style="color:white; font-weight:950; font-size:1.8rem; line-height: 1; margin-bottom: 2px;">${w.temp}ºC</div>
                                 <div style="color:rgba(255,255,255,0.6); font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;">${w.name}</div>
                             </div>
-                            <div style="position: absolute; bottom: 18px; right: 18px; z-index: 2; text-align: right; display:flex; flex-direction:column; gap:6px;">
+                            <div style="position: absolute; bottom: 18px; right: 18px; z-index: 2; text-align: right; display:flex; flex-direction:column; gap:6px; pointer-events: none;">
                                 <div style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:4px; border-right:2px solid #0ea5e9;">BOLA: ${w.temp > 20 ? 'RÁPIDA' : 'LENTA'}</div>
                                 <div style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:4px; border-right:2px solid #38bdf8;">HUM: ${w.humidity}%</div>
                             </div>
@@ -931,7 +960,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 if (openEvents.length > 0) {
                     const topEvt = openEvents[0];
                     itemsHtml.push(`
-                    <div class="holo-card" onclick="console.log('🚀 [Dashboard] Event Clicked!'); window.Router.navigate('entrenos')" style="min-width: 280px; width: 280px; height: 180px; ${getAiVisual('fire')} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="holo-card" onclick="window.dashNavigate('entrenos', 'event')" style="min-width: 280px; width: 280px; height: 180px; ${getAiVisual('fire')} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
                         <div style="position: absolute; inset:0; background: url('https://media.giphy.com/media/3o7btQ8jDTSLStx3Ko/giphy.gif') center/cover; opacity: 0.15; mix-blend-mode: overlay; pointer-events: none;"></div>
                         <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.2; background: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 3px); pointer-events: none;"></div>
                         
@@ -954,7 +983,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     if (lowerName.includes('fem') || lowerName.includes('wom')) aiClass = 'neon';
 
                     itemsHtml.push(`
-                    <div class="holo-card" onclick="console.log('🚀 [Dashboard] Event Clicked!'); window.Router.navigate('entrenos')" style="min-width: 260px; width: 260px; height: 180px; ${getAiVisual(aiClass)} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="holo-card" onclick="window.dashNavigate('entrenos', 'event')" style="min-width: 260px; width: 260px; height: 180px; ${getAiVisual(aiClass)} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
                         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; opacity: 0.2; filter: blur(4px); color: rgba(255,255,255,0.5); pointer-events: none;"><i class="fas fa-medal"></i></div>
                         <div style="position: absolute; inset: 0; background: linear-gradient(top, transparent, rgba(0,0,0,0.8)); pointer-events: none;"></div>
                         
@@ -974,19 +1003,19 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 const shuffledPool = [...dynamicPool].sort(() => 0.5 - Math.random());
                 const selectedTips = shuffledPool.slice(0, remainingSlots);
 
-                // HELPER: Interactive Action wrapper
-                const doAction = (act) => `console.log('👆 Card Clicked:', '${act}'); ${act}`;
-
-                // Update Actions in dynamicPool for Robustness
-                dynamicPool.forEach(p => {
-                    if (p.action && !p.action.includes('console.log')) {
-                        p.action = `console.log('🚀 Navigating to ${p.title}...'); ` + p.action;
-                    }
-                });
-
                 selectedTips.forEach((tip, idx) => {
+                    // Extract route from action for dashNavigate
+                    let route = 'dashboard';
+                    if (tip.action.includes("'profile'")) route = 'profile';
+                    if (tip.action.includes("'ranking'")) route = 'ranking';
+                    if (tip.action.includes("'https")) {
+                        const match = tip.action.match(/'(https[^']+)'/);
+                        if (match) route = match[1];
+                    }
+                    if (tip.action.includes('showChatInfo')) route = 'chat_info';
+
                     itemsHtml.push(`
-                    <div class="holo-card" onclick="${tip.action || ''}" style="cursor: pointer; min-width: 260px; width: 260px; height: 180px; background: #0f172a; border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="holo-card" onclick="window.dashNavigate('${route}', 'tip')" style="cursor: pointer; min-width: 260px; width: 260px; height: 180px; background: #0f172a; border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);">
                         <!-- VISUAL PLACEHOLDER -->
                         <div style="position: absolute; inset:0; background: conic-gradient(from 180deg at 50% 50%, #1e293b 0deg, #0f172a 120deg, ${tip.accent} 240deg, #1e293b 360deg); opacity: 0.4; pointer-events: none;"></div>
                         <div style="position: absolute; top:0; left:0; width:100%; height:100%; filter: url(#noise); opacity: 0.1; pointer-events: none;"></div>
@@ -1378,22 +1407,19 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
         /**
          * 2026 UPDATE: Show a one-time tip to let the user know about the new Profile capabilities.
          */
-        showProfileTip() {
-            // Only show if not shown in this session
-            if (sessionStorage.getItem('profileTipShown')) return;
-
-            setTimeout(async () => {
-                if (window.PremiumModal) {
-                    await window.PremiumModal.alert({
-                        title: '💡 TIP DE NAVEGACIÓN',
-                        message: 'Hemos optimizado tu experiencia. Ahora tus <b>Acciones Rápidas</b> y tu <b>Estado Físico</b> están centralizados en tu <b>PERFIL</b>.<br><br>¡Haz clic en tu foto o en la pestaña Perfil para verlo todo!',
-                        btnText: '¡ENTENDIDO!',
-                        type: 'info'
-                    });
-                    sessionStorage.setItem('profileTipShown', 'true');
-                }
-            }, 3000); // 3 second delay for better user experience
+        showChatInfo() {
+            if (window.PremiumModal) {
+                window.PremiumModal.alert({
+                    title: '💡 NAVEGACIÓN GESTUAL',
+                    message: 'Desliza lateralmente en las historias para navegar rápido entre ellas.<br>Toca los bordes de la pantalla para avanzar o retroceder.',
+                    type: 'info'
+                });
+            } else {
+                alert("💡 TIP: Desliza las historias para navegar.");
+            }
         }
+
+        // --- PHASE 1 HELPERS ---
 
         async renderActivityFeed(targetId = null) {
             try {

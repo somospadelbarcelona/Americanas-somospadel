@@ -12,7 +12,7 @@
 
             // POOL OF ALL AVAILABLE STORIES
             const contentPool = [
-                { id: 'ranking', label: 'RANKING', icon: 'fa-trophy', color: '#fb7185' },
+                { id: 'ranking', label: 'RANKING 🔍', icon: 'fa-trophy', color: '#fb7185' },
                 { id: 'clinica', label: 'ESCUELA', icon: 'fa-graduation-cap', color: '#f472b6' },
                 { id: 'weather', label: 'VELOCIDAD', icon: 'fa-bolt', color: '#fbbf24' },
                 { id: 'matches', label: 'EVENTOS', icon: 'fa-star', color: '#ca8a04' },
@@ -23,7 +23,9 @@
             ];
 
             // RANDOMIZE SELECTION (Pick 5 unique random stories each time)
-            this.stories = this.shuffleArray(contentPool).slice(0, 5);
+            // FORCE RANKING TO BE FIRST (User Request for Search Visibility)
+            const shuffled = this.shuffleArray(contentPool.filter(s => s.id !== 'ranking'));
+            this.stories = [contentPool.find(s => s.id === 'ranking'), ...shuffled].slice(0, 5);
         }
 
         shuffleArray(array) {
@@ -50,8 +52,9 @@
             style.textContent = `
                 /* Story Bar Layout */
                 .story-feed-v3-wrapper {
-                    padding: 10px 0;
+                    padding: 5px 0; /* Reduced top padding to balance with bottom label space */
                     user-select: none;
+                    perspective: 1200px;
                 }
                 .story-h-scroll {
                     display: flex;
@@ -70,38 +73,79 @@
                     align-items: center;
                     gap: 8px;
                     cursor: pointer;
-                    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    transform-style: preserve-3d;
+                    animation: sphereFloat 6s ease-in-out infinite;
                 }
-                .story-v3-item:hover { transform: scale(1.05); }
+                .story-v3-item:nth-child(odd) { animation-delay: 0s; }
+                .story-v3-item:nth-child(even) { animation-delay: 1.5s; }
+                
+                .story-v3-item:hover { 
+                    transform: translateY(-8px) scale(1.1) rotateX(10deg); 
+                    z-index: 10;
+                }
+
+                @keyframes sphereFloat {
+                    0%, 100% { transform: translateY(0) rotateX(0); }
+                    50% { transform: translateY(-6px) rotateX(10deg); }
+                }
 
                 .story-v3-outer {
-                    width: 48px;
-                    height: 48px;
+                    width: 54px;
+                    height: 54px;
                     border-radius: 50%;
                     padding: 2.5px;
-                    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+                    background: linear-gradient(135deg, #f09433 0%, #dc2743 50%, #bc1888 100%);
                     position: relative;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 2px 10px rgba(255,255,255,0.4);
+                    transition: box-shadow 0.3s;
+                }
+                .story-v3-item:hover .story-v3-outer {
+                    box-shadow: 0 20px 40px rgba(220, 39, 67, 0.6), inset 0 2px 10px rgba(255,255,255,0.6);
                 }
                 
                 .story-v3-inner {
                     width: 100%;
                     height: 100%;
                     border-radius: 50%;
-                    background: #000;
+                    background: radial-gradient(circle at 30% 30%, #333, #000);
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    border: 1.5px solid #000;
+                    border: 1.5px solid rgba(0,0,0,0.5);
                     overflow: hidden;
+                    position: relative;
+                }
+                /* Glare effect on inner sphere */
+                .story-v3-inner::after {
+                    content: '';
+                    position: absolute;
+                    top: 10%;
+                    left: 20%;
+                    width: 25%;
+                    height: 15%;
+                    border-radius: 50%;
+                    background: rgba(255,255,255,0.1);
+                    filter: blur(2px);
+                    transform: skewX(-20deg);
                 }
                 
                 .story-v3-label {
                     font-size: 0.55rem;
-                    font-weight: 800;
-                    color: #1e293b;
-                    letter-spacing: 0.1px;
+                    font-weight: 950; /* Ultra Bold */
+                    color: #000000; /* Pure Black */
+                    letter-spacing: 0.5px;
                     text-transform: uppercase;
                     white-space: nowrap;
+                    margin-top: 6px;
+                    
+                    /* SHARPNESS FIXES */
+                    transform: translateZ(0); 
+                    backface-visibility: hidden;
+                    -webkit-font-smoothing: antialiased;
+                    -moz-osx-font-smoothing: grayscale;
+                    text-rendering: optimizeLegibility;
+                    text-shadow: none; /* No shadow for clean black look */
                 }
 
                 .story-v3-modal {
@@ -153,61 +197,63 @@
             if (!container) return;
 
             container.innerHTML = `
-                <div class="story-feed-v3-wrapper" style="position: relative; padding: 2px 0;">
+                <div class="story-feed-v3-wrapper" style="position: relative; padding: 5px 0 10px;">
                     <!-- FLEX LAYOUT FOR MOBILE (5 SPHERES + LIVE) -->
                     <div style="
                         display: flex;
                         justify-content: space-between;
-                        align-items: flex-start;
-                        gap: 8px;
-                        padding: 2px 12px 6px;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 10px 20px;
                         max-width: 100%;
-                        overflow: hidden;
+                        overflow: visible;
                     ">
                         <!-- STORY ITEMS (LIMIT TO 5) -->
                         ${this.stories.slice(0, 5).map(story => `
                             <div class="story-v3-item" style="flex: 1; min-width: 0;" onclick="window.StoryFeedWidget.showStory('${story.id}')">
-                                <div class="story-v3-outer" style="width: 44px; height: 44px; margin: 0 auto;">
+                                <div class="story-v3-outer" style="margin: 0 auto;">
                                     <div class="story-v3-inner">
-                                        <i class="fas ${story.icon}" style="color: ${story.color}; font-size: 0.85rem;"></i>
+                                        <i class="fas ${story.icon}" style="color: ${story.color}; font-size: 1.1rem; filter: drop-shadow(0 0 5px ${story.color});"></i>
                                     </div>
                                 </div>
-                                <span class="story-v3-label" style="font-size: 0.5rem; margin-top: 4px;">${story.label}</span>
+                                <span class="story-v3-label">${story.label}</span>
                             </div>
                         `).join('')}
 
                         <!-- INSTAGRAM STYLE LIVE HUB (6th Position) -->
                         <div class="story-v3-item" style="flex: 1; min-width: 0;" onclick="window.StoryFeedWidget.showStory('live')">
                             <div style="
-                                width: 44px; 
-                                height: 44px; 
-                                background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); 
-                                border-radius: 16px; 
+                                width: 54px; 
+                                height: 54px; 
+                                background: linear-gradient(135deg, #f09433, #dc2743, #bc1888); 
+                                border-radius: 20px; 
                                 display: flex; 
                                 flex-direction: column; 
                                 align-items: center; 
                                 justify-content: center; 
-                                box-shadow: 0 4px 12px rgba(188,24,136,0.3);
+                                box-shadow: 0 10px 25px rgba(220, 39, 67, 0.4);
                                 position: relative;
                                 cursor: pointer;
-                                border: 1.5px solid #000;
+                                border: 1.5px solid rgba(255,255,255,0.1);
                                 margin: 0 auto;
+                                animation: livePulse 2s infinite;
                             ">
-                                <i class="fas fa-video" style="font-size: 1rem; color: #fff; filter: drop-shadow(0 0 3px rgba(255,255,255,0.3));"></i>
+                                <i class="fas fa-video" style="font-size: 1.2rem; color: #fff; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));"></i>
                                 <div style="
                                     position: absolute;
-                                    bottom: -4px;
+                                    bottom: -6px;
                                     background: #ed4956;
                                     color: #fff;
-                                    font-size: 0.4rem;
+                                    font-size: 0.45rem;
                                     font-weight: 950;
-                                    padding: 0px 3px;
-                                    border-radius: 3px;
-                                    border: 1px solid #000;
-                                    letter-spacing: 0.2px;
+                                    padding: 1px 5px;
+                                    border-radius: 4px;
+                                    border: 2px solid #0f172a;
+                                    letter-spacing: 0.5px;
+                                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
                                 ">LIVE</div>
                             </div>
-                            <span class="story-v3-label" style="font-size: 0.5rem; margin-top: 4px;">LIVE</span>
+                            <span class="story-v3-label">DIRECTO</span>
                         </div>
                     </div>
                 </div>
@@ -281,19 +327,40 @@
             // CONTENT INJECTION
             switch (id) {
                 case 'ranking':
+                    this.currentRankingData = topRanked; // Store for search
                     const top3 = topRanked.slice(0, 3);
                     contentHtml = `
-                        <div style="padding: 40px; color:white;">
-                            <span style="background:#fb7185; color:#000; padding:4px 12px; border-radius:50px; font-weight:950; font-size:0.6rem;">RANKING ACTUALIZADO</span>
-                            <h2 style="font-size: 2.2rem; font-weight: 950; margin: 15px 0;">LOS REYES<br>DE <span style="color:#fb7185">LA PISTA</span></h2>
-                            <div style="margin-top:30px; display:flex; flex-direction:column; gap:12px;">
-                                ${top3.length > 0 ? top3.map((p, i) => `
-                                    <div style="display:flex; align-items:center; gap:15px; background:rgba(251,113,133,0.1); padding:15px; border-radius:18px; border:1px solid rgba(251,113,133,0.2); animation: enterStoryCard 0.5s both ${i * 0.1}s;">
-                                        <div style="font-size:1.5rem; font-weight:900; color:#fb7185;">#${i + 1}</div>
-                                        <div style="flex:1; font-weight:800; font-size:1rem; text-transform:uppercase;">${p.name || 'Pro Player'}</div>
-                                        <div style="font-weight:900; color:#fb7185;">${Math.round((p.stats?.americanas?.points || 0) + (p.stats?.entrenos?.points || 0))} PTS</div>
-                                    </div>
-                                `).join('') : '<p style="color:rgba(255,255,255,0.4); text-align:center;">Analizando métricas del club...</p>'}
+                        <div style="padding: 40px; color:white; height:100%; display:flex; flex-direction:column;">
+                            <div id="ranking-default-view">
+                                <span style="background:#fb7185; color:#000; padding:4px 12px; border-radius:50px; font-weight:950; font-size:0.6rem;">RANKING ACTUALIZADO</span>
+                                <h2 style="font-size: 2.2rem; font-weight: 950; margin: 15px 0;">LOS REYES<br>DE <span style="color:#fb7185">LA PISTA</span></h2>
+                            </div>
+
+                            <!-- SEARCH BAR -->
+                            <div style="margin-bottom:20px; position:relative; z-index:1005;">
+                                <div style="position:relative;">
+                                    <i class="fas fa-search" style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.4);"></i>
+                                    <input type="text" placeholder="Buscar jugador..." 
+                                        onclick="event.stopPropagation()"
+                                        onkeyup="window.StoryFeedWidget.onRankingSearch(this.value)"
+                                        onfocus="window.StoryFeedWidget.pauseStory()"
+                                        style="width:100%; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); padding:12px 12px 12px 45px; border-radius:15px; color:white; font-weight:700; outline:none; font-family:inherit; font-size: 0.9rem;">
+                                </div>
+                            </div>
+
+                            <div id="ranking-content-area" style="overflow-y:auto; flex:1; padding-bottom:50px; -ms-overflow-style: none; scrollbar-width: none;">
+                                <!-- DEFAULT TOP 3 -->
+                                <div id="ranking-top-list" style="display:flex; flex-direction:column; gap:12px;">
+                                    ${top3.length > 0 ? top3.map((p, i) => `
+                                        <div style="display:flex; align-items:center; gap:15px; background:rgba(251,113,133,0.1); padding:15px; border-radius:18px; border:1px solid rgba(251,113,133,0.2); animation: enterStoryCard 0.5s both ${i * 0.1}s;">
+                                            <div style="font-size:1.5rem; font-weight:900; color:#fb7185; min-width: 40px;">#${i + 1}</div>
+                                            <div style="flex:1; font-weight:800; font-size:1rem; text-transform:uppercase;">${p.name || 'Pro Player'}</div>
+                                            <div style="font-weight:900; color:#fb7185;">${Math.round((p.stats?.americanas?.points || 0) + (p.stats?.entrenos?.points || 0))} PTS</div>
+                                        </div>
+                                    `).join('') : '<p style="color:rgba(255,255,255,0.4); text-align:center;">Analizando métricas del club...</p>'}
+                                </div>
+                                <!-- SEARCH RESULTS (Hidden by default) -->
+                                <div id="ranking-search-results" style="display:none; flex-direction:column; gap:10px;"></div>
                             </div>
                         </div>
                     `;
@@ -613,6 +680,43 @@
                     this.hideStory();
                 }
             }, 5050);
+        }
+
+        onRankingSearch(query) {
+            const resultsContainer = document.getElementById('ranking-search-results');
+            const topList = document.getElementById('ranking-top-list');
+            const defaultHeader = document.getElementById('ranking-default-view');
+
+            if (!resultsContainer || !topList || !this.currentRankingData) return;
+
+            if (query.length < 2) {
+                resultsContainer.style.display = 'none';
+                topList.style.display = 'flex';
+                if (defaultHeader) defaultHeader.style.display = 'block';
+                return;
+            }
+
+            // Perform search
+            const lowerQ = query.toLowerCase();
+            const matches = this.currentRankingData
+                .map((p, index) => ({ ...p, originalRank: index + 1 }))
+                .filter(p => (p.name || '').toLowerCase().includes(lowerQ));
+
+            topList.style.display = 'none';
+            if (defaultHeader) defaultHeader.style.display = 'none';
+            resultsContainer.style.display = 'flex';
+
+            if (matches.length === 0) {
+                resultsContainer.innerHTML = '<div style="text-align:center; opacity:0.6; padding:20px;">No se encontraron jugadores</div>';
+            } else {
+                resultsContainer.innerHTML = matches.slice(0, 10).map(p => `
+                    <div style="display:flex; align-items:center; gap:15px; background:rgba(255,255,255,0.05); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); animation: fadeIn 0.3s ease-out;">
+                        <div style="font-size:1rem; font-weight:900; color:#fb7185; width:40px;">#${p.originalRank}</div>
+                        <div style="flex:1; font-weight:700; font-size:0.9rem; text-transform:uppercase;">${p.name}</div>
+                        <div style="font-weight:900; color:white; font-size:0.8rem;">${Math.round((p.stats?.americanas?.points || 0) + (p.stats?.entrenos?.points || 0))} PTS</div>
+                    </div>
+                `).join('');
+            }
         }
 
         hideStory() {

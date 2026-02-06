@@ -76,7 +76,7 @@ self.addEventListener('message', (event) => {
     }
 });
 
-const CACHE_NAME = 'somospadel-pro-v36';
+const CACHE_NAME = 'somospadel-pro-v40';
 const STATIC_RESOURCES = [
     './',
     './index.html',
@@ -135,6 +135,13 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         fetch(event.request)
             .catch(() => caches.match(event.request))
-            .then(res => res || caches.match('./index.html'))
+            .then(res => {
+                if (res) return res;
+                // Only return index.html for navigation or HTML requests
+                if (event.request.mode === 'navigate' || (event.request.headers.get('accept') || '').includes('text/html')) {
+                    return caches.match('./index.html');
+                }
+                return null;
+            })
     );
 });

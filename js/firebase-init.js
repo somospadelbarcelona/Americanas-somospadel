@@ -1,4 +1,4 @@
-console.log("🔥 Initializing Firebase...");
+console.log("🔥 [v99] Initializing Firebase...");
 
 // GLOBAL ERROR DIAGNOSTIC
 window.onerror = function (msg, url, line, col, error) {

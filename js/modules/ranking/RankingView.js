@@ -104,24 +104,54 @@
                         </div>
                     </div>
 
-                    <!-- Category Filters -->
-                    <div style="display: flex; gap: 8px; justify-content: flex-start; padding: 25px 25px 15px; overflow-x: auto; scrollbar-width: none; align-items: center; position: relative; z-index: 4;">
-                        ${['todas', 'male', 'female', 'mixed'].map(cat => `
-                            <button onclick="window.RankingView.filterByCategory('${cat}')" 
-                                style="white-space: nowrap; padding: 10px 20px; border-radius: 14px; border: 1px solid ${this.currentCategory === cat ? '#CCFF00' : 'rgba(255,255,255,0.05)'}; background: ${this.currentCategory === cat ? '#CCFF00' : 'rgba(255,255,255,0.03)'}; color: ${this.currentCategory === cat ? 'black' : '#64748b'}; font-weight: 950; font-size: 0.65rem; transition: all 0.2s; text-transform: uppercase;">
-                                ${cat === 'todas' ? 'GLOBAL' : (cat === 'male' ? 'MASC.' : (cat === 'female' ? 'FEM.' : 'MIXTA'))}
+                    <!-- Category Filters & Search -->
+                    <div style="padding: 0 25px 15px; position: relative; z-index: 4;">
+                        <!-- SEARCH BAR -->
+                        <div style="margin-bottom: 20px; position: relative;">
+                            <div style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #64748b;">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <input type="text" 
+                                id="ranking-search-input" 
+                                placeholder="Buscar jugador por nombre..." 
+                                onkeyup="window.RankingView.handleSearch(this.value)"
+                                style="
+                                    width: 100%; 
+                                    background: rgba(255, 255, 255, 0.03); 
+                                    border: 1px solid rgba(255, 255, 255, 0.08); 
+                                    border-radius: 18px; 
+                                    padding: 14px 14px 14px 48px; 
+                                    color: white; 
+                                    font-family: 'Outfit'; 
+                                    font-weight: 600; 
+                                    font-size: 0.9rem; 
+                                    outline: none; 
+                                    transition: all 0.3s;
+                                    box-sizing: border-box;
+                                "
+                                onfocus="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(204,255,0,0.3)';"
+                                onblur="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.08)';"
+                            >
+                        </div>
+
+                        <div style="display: flex; gap: 8px; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; align-items: center;">
+                            ${['todas', 'male', 'female', 'mixed'].map(cat => `
+                                <button onclick="window.RankingView.filterByCategory('${cat}')" 
+                                    style="white-space: nowrap; padding: 10px 20px; border-radius: 14px; border: 1px solid ${this.currentCategory === cat ? '#CCFF00' : 'rgba(255,255,255,0.05)'}; background: ${this.currentCategory === cat ? '#CCFF00' : 'rgba(255,255,255,0.03)'}; color: ${this.currentCategory === cat ? 'black' : '#64748b'}; font-weight: 950; font-size: 0.65rem; transition: all 0.2s; text-transform: uppercase;">
+                                    ${cat === 'todas' ? 'GLOBAL' : (cat === 'male' ? 'MASC.' : (cat === 'female' ? 'FEM.' : 'MIXTA'))}
+                                </button>
+                            `).join('')}
+                            
+                            <button onclick="window.RankingView.shareCurrentRanking()" 
+                                style="margin-left: auto; background: #25D366; color: white; border: none; padding: 10px 18px; border-radius: 14px; font-weight: 950; font-size: 0.65rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 5px 20px rgba(37, 211, 102, 0.2);">
+                                <i class="fab fa-whatsapp" style="font-size: 0.9rem;"></i>
                             </button>
-                        `).join('')}
-                        
-                        <button onclick="window.RankingView.shareCurrentRanking()" 
-                            style="margin-left: auto; background: #25D366; color: white; border: none; padding: 10px 18px; border-radius: 14px; font-weight: 950; font-size: 0.65rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 5px 20px rgba(37, 211, 102, 0.2);">
-                            <i class="fab fa-whatsapp" style="font-size: 0.9rem;"></i>
-                        </button>
+                        </div>
                     </div>
 
                     <!-- Player List Container -->
                     <div id="ranking-list-body" style="padding: 0 20px 100px;">
-                        ${this.renderRankingList()}
+                        ${this.renderRankingList('')}
                     </div>
                 </div>
             `;
@@ -190,54 +220,73 @@
             `;
         }
 
-        renderRankingList() {
-            let filtered = this.playersData.filter(p => {
+        renderRankingList(searchQuery = '') {
+            // 1. Get ALL players that have played in this view
+            let fullList = this.playersData.filter(p => {
                 const s = p.stats[this.currentView];
-                if (!s || s.played === 0) return false;
-                if (this.currentCategory !== 'todas') {
-                    // Check if player has played in this specific category (gender/type)
-                    // This data needs to be robustly stored in player.stats[view].categories
-                    const hasCat = s.categories && s.categories[this.currentCategory] && s.categories[this.currentCategory].played > 0;
-                    if (!hasCat) return false;
-                }
-                return true;
+                return s && s.played > 0;
             });
 
-            // Sorting Logic (Centralized)
-            filtered.sort((a, b) => {
+            // 2. Sort them to get the GLOBAL ranking order
+            fullList.sort((a, b) => {
                 const sA = a.stats[this.currentView];
                 const sB = b.stats[this.currentView];
-                const pA = this.currentCategory === 'todas' ? sA.points : (sA.categories[this.currentCategory]?.points || 0);
-                const pB = this.currentCategory === 'todas' ? sB.points : (sB.categories[this.currentCategory]?.points || 0);
+                const pA = sA.points;
+                const pB = sB.points;
                 if (pB !== pA) return pB - pA;
                 return (b.level || 0) - (a.level || 0);
             });
 
-            if (filtered.length === 0) {
+            // 3. Assign global rank and filter by Category if not searching
+            // If searching, we skip category filter to find the player anywhere
+            const isSearching = searchQuery && searchQuery.length >= 2;
+
+            const rankedList = fullList.map((p, i) => {
+                return { ...p, globalRank: i + 1 };
+            });
+
+            let finalDisplayList = rankedList.filter(p => {
+                const s = p.stats[this.currentView];
+
+                // If searching, filter by name
+                if (isSearching) {
+                    return p.name.toLowerCase().includes(searchQuery.toLowerCase());
+                }
+
+                // If not searching, filter by category
+                if (this.currentCategory !== 'todas') {
+                    const hasCat = s.categories && s.categories[this.currentCategory] && s.categories[this.currentCategory].played > 0;
+                    return hasCat;
+                }
+                return true;
+            });
+
+            if (finalDisplayList.length === 0) {
                 return `
                     <div style="text-align: center; padding: 60px 25px; background: rgba(255,255,255,0.02); border-radius: 32px; color: #444; border: 1px dashed rgba(255,255,255,0.05);">
                          <i class="fas fa-trophy" style="font-size: 3rem; color: #222; margin-bottom: 20px;"></i>
-                        <h4 style="margin: 0; color: #666; font-weight: 950;">Sin líderes aún</h4>
-                        <p style="font-size: 0.8rem; margin-top: 8px; font-weight: 700;">Participa en eventos para aparecer aquí.</p>
+                        <h4 style="margin: 0; color: #666; font-weight: 950;">${isSearching ? 'Sin resultados' : 'Sin líderes aún'}</h4>
+                        <p style="font-size: 0.8rem; margin-top: 8px; font-weight: 700;">${isSearching ? 'Prueba con otro nombre' : 'Participa en eventos para aparecer aquí.'}</p>
                     </div>
                 `;
             }
 
-            // Slice out the first 3 if we are in "todas" category to avoid redundancy with podium
-            // Actually, keep them but style them differently
             return `
                 <div style="display: flex; flex-direction: column; gap: 12px;">
-                    ${filtered.map((p, i) => this.renderPlayerRow(p, i, filtered[i - 1])).join('')}
+                    ${finalDisplayList.map((p, i) => this.renderPlayerRow(p, p.globalRank, finalDisplayList[i - 1])).join('')}
                 </div>
             `;
         }
 
-        renderPlayerRow(p, index, prevPlayer) {
+        renderPlayerRow(p, rank, prevPlayer) {
             const s = p.stats[this.currentView];
             const pStats = this.currentCategory === 'todas' ? s : (s.categories[this.currentCategory] || { points: 0, played: 0, won: 0 });
 
-            const isTop3 = index < 3;
-            const rankColor = index === 0 ? '#FFD700' : (index === 1 ? '#C0C0C0' : (index === 2 ? '#CD7F32' : '#64748b'));
+            const isTop3 = rank <= 3;
+            const rankColor = rank === 1 ? '#FFD700' : (rank === 2 ? '#C0C0C0' : (rank === 3 ? '#CD7F32' : '#64748b'));
+            const index = rank - 1;
+
+            // Note: pointsToNext logic will be slightly inaccurate when filtered but UX is better this way
             const pointsToNext = prevPlayer ? (prevPlayer.stats[this.currentView].points - pStats.points) : 0;
 
             // Trend (Simulated for UX/UI demo - can be bound to real delta in next update)
@@ -258,7 +307,7 @@
                     <!-- Rank & Trend -->
                     <div style="width: 35px; text-align: center;">
                         <div style="font-weight: 950; font-size: ${isTop3 ? '1.2rem' : '0.9rem'}; color: ${rankColor}; line-height: 1;">
-                            ${index + 1}
+                            ${rank}
                         </div>
                         <div style="font-size: 0.7rem; margin-top: 2px;">${trendIcon}</div>
                     </div>
@@ -319,7 +368,23 @@
 
         filterByCategory(cat) {
             this.currentCategory = cat;
+            const searchInput = document.getElementById('ranking-search-input');
+            const query = searchInput ? searchInput.value : '';
             this.render(this.playersData);
+            if (searchInput && query) searchInput.value = query; // Keep query alive
+        }
+
+        handleSearch(query) {
+            const listContainer = document.getElementById('ranking-list-body');
+            const podiumRow = document.getElementById('ranking-podium-root');
+
+            if (query.length >= 2) {
+                if (podiumRow) podiumRow.style.display = 'none';
+                if (listContainer) listContainer.innerHTML = this.renderRankingList(query);
+            } else {
+                if (podiumRow) podiumRow.style.display = 'block';
+                if (listContainer) listContainer.innerHTML = this.renderRankingList('');
+            }
         }
 
         shareCurrentRanking() {
