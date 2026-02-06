@@ -54,123 +54,30 @@
                     padding-top: 10px !important;
                 ">
 
-                    <!-- 1. PULSE STORIES (INSTAGRAM STYLE) -->
+                    <!-- NEW CONTEXT-FIRST ARCHITECTURE -->
+                    
+                    <!-- 4. PULSE STORIES (Instagram Style) -->
                     <div id="story-feed-root" style="margin: 0 !important; animation: floatUp 0.8s ease-out forwards; padding-top: 2px;">
                         <!-- Cargado vía JS (StoryFeedWidget) -->
                     </div>
 
-                    <!-- 2. COMMAND CENTER (RE-DESIGNED & MOVED BELOW SPHERES) -->
-                    <div style="
-                        display: flex; 
-                        align-items: stretch; 
-                        gap: 8px; 
-                        padding: 0 10px; 
-                        margin: 2px 0 6px 0; 
-                        animation: floatUp 0.85s ease-out forwards;
-                    ">
-                        <!-- TICKER: TACTICAL DATA STREAM (WHITE HOUSE GRADE) -->
-                        <div style="
-                            flex: 1;
-                            background: linear-gradient(90deg, rgba(8, 10, 16, 0.95) 0%, rgba(15, 20, 30, 0.98) 100%); 
-                            backdrop-filter: blur(20px);
-                            border: 1px solid rgba(255, 255, 255, 0.08); 
-                            border-right: 2px solid rgba(204, 255, 0, 0.5);
-                            border-radius: 14px; 
-                            height: 48px; 
-                            display: flex; 
-                            align-items: center; 
-                            padding: 0 4px 0 12px; 
-                            overflow: hidden; 
-                            position: relative;
-                            box-shadow: 0 15px 40px -10px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.5);
-                        ">
-                            <!-- Background: Hex Tech Pattern -->
-                            <div style="position: absolute; inset: 0; background-image: radial-gradient(#ffffff 0.5px, transparent 0.5px), radial-gradient(#ffffff 0.5px, #080a10 0.5px); background-size: 20px 20px; background-position: 0 0, 10px 10px; opacity: 0.03; pointer-events: none;"></div>
-                            
-                            <!-- Animation: Scanner Line -->
-                            <div style="position: absolute; top:0; bottom:0; width: 2px; background: linear-gradient(to bottom, transparent, #CCFF00, transparent); opacity: 0.2; animation: scanTicker 4s ease-in-out infinite; left: 0;"></div>
-                            <style> @keyframes scanTicker { 0% { left: -10%; opacity:0; } 50% { opacity:0.3;} 100% { left: 110%; opacity:0; } } </style>
-
-                            <!-- AI Status Node (Pulsing Sonar) -->
-                            <div style="position: relative; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
-                                <div style="position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #CCFF00; opacity: 0.2; animation: sonarWave 2s infinite cubic-bezier(0, 0, 0.2, 1);"></div>
-                                <div style="position: absolute; width: 60%; height: 60%; border-radius: 50%; background: #CCFF00; opacity: 0.4; animation: sonarWave 2s infinite cubic-bezier(0, 0, 0.2, 1) 0.5s;"></div>
-                                <div style="width: 6px; height: 6px; background: #CCFF00; border-radius: 50%; box-shadow: 0 0 10px #CCFF00; z-index: 2;"></div>
-                            </div>
-                            <style> @keyframes sonarWave { 0% { transform: scale(0.5); opacity: 0; } 50% { opacity: 0.5; } 100% { transform: scale(2.5); opacity: 0; } } </style>
-                            
-                            <!-- Ticker Content Zone -->
-                            <div id="header-ticker-text" style="flex: 1; overflow: hidden; position: relative; z-index: 2; height: 100%;">
-                                 <!-- JS Injected -->
-                            </div>
-                        </div>
-
-                        <!-- ACTIONS: ROBOT + NOTIFICATIONS -->
-                        <div style="display: flex; gap: 6px; flex-shrink: 0;">
-                            <!-- Captain Robot (Quick Access) -->
-                            <div onclick="window.CaptainView.open()" style="
-                                width: 44px; 
-                                height: 44px; 
-                                background: linear-gradient(145deg, #1e293b, #0f172a);
-                                border: 1px solid rgba(255, 255, 255, 0.1); 
-                                border-radius: 12px; 
-                                display: flex; 
-                                align-items: center; 
-                                justify-content: center; 
-                                cursor: pointer; 
-                                box-shadow: 0 5px 15px -3px rgba(0,0,0,0.6);
-                                position: relative;
-                                transition: transform 0.2s;
-                            " onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                                <i class="fas fa-robot" style="color: #CCFF00; font-size: 1.1rem; filter: drop-shadow(0 0 8px rgba(204,255,0,0.4)); animation: float 6s infinite ease-in-out;"></i>
-                            </div>
-                            
-                            <!-- Notifications -->
-                            <div onclick="window.NotificationUi.toggle()" style="
-                                width: 44px; 
-                                height: 44px; 
-                                background: rgba(255, 255, 255, 0.03); 
-                                backdrop-filter: blur(10px);
-                                border: 1px solid rgba(255, 255, 255, 0.1); 
-                                border-radius: 12px; 
-                                display: flex; 
-                                align-items: center; 
-                                justify-content: center; 
-                                cursor: pointer; 
-                                position: relative;
-                            ">
-                                <i class="fas fa-bell" style="color: #94a3b8; font-size: 1.2rem; transition: color 0.3s;"></i>
-                                <div id="notif-badge-bubble" style="
-                                    position: absolute; 
-                                    top: 10px; 
-                                    right: 12px; 
-                                    width: 8px; 
-                                    height: 8px; 
-                                    background: #FF2D55; 
-                                    border-radius: 50%; 
-                                    box-shadow: 0 0 10px #FF2D55;
-                                    display: ${window.NotificationService?.unreadCount > 0 ? 'block' : 'none'};
-                                "></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 2.5 POWER LEVEL STATUS (DYNAMICS) -->
-                    <div id="power-level-root">
+                    <!-- 5. POWER LEVEL STATUS -->
+                    <div id="power-level-root" style="animation: floatUp 0.8s ease-out forwards;">
                         <!-- Loaded via JS (PowerLevelCard) -->
                     </div>
 
-                    <!-- registration-widget-root -->
+                    <!-- 6. NEWS MARQUEE (LEGACY BUT COOL) -->
                     <div id="registration-widget-root" style="
                         background: #0a0a0a;
                         border-radius: 28px;
-                        margin: 0px 8px 4px 8px !important;  
+                        margin: 2px 15px 12px !important;  
                         padding: 12px 4px 0px !important; 
                         box-shadow: 0 10px 40px rgba(0,0,0,0.4);
                         border: 1px solid rgba(255,255,255,0.05);
                         z-index: 10;
                         animation: floatUp 0.8s ease-out forwards;
                     ">
+
                         <div class="live-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px !important; padding: 0 14px;">
                             <div style="
                                 background: #00E36D; 
@@ -395,14 +302,13 @@
                 // Build context (Might take time)
                 const context = await this.buildContext(user);
 
-                // Load Widget Content
+                // phase 3: load dynamic contents
                 this.loadLiveWidgetContent(context);
 
-                // Populate Hero Section
-                const heroRoot = document.getElementById('hero-section-root');
-                if (heroRoot) {
-                    heroRoot.innerHTML = this.renderSmartHero(context, userLevel);
-                }
+                // 2026 UPDATE: Recordatorio de que todo lo importante está en PERFIL
+                this.showProfileTip();
+
+                window.scrollTo(0, 0);
 
                 // Render Power Level Card
                 const pLevelRoot = document.getElementById('power-level-root');
@@ -414,7 +320,6 @@
                 if (user && window.PartnerSynergyWidget) {
                     const synergyWidget = document.getElementById('predictive-synergy-root');
                     if (synergyWidget) synergyWidget.style.display = 'block';
-                    // Optional: You could also keep the legacy one if needed, but it's redundant now.
                 }
 
                 // 2. Fetch Real Data for Weather Cards
@@ -1226,6 +1131,10 @@
             return `${days[date.getDay()]} ${date.getDate()}`;
         }
 
+        /**
+         * Real data context builder for the Hero Card
+         * @param {Object} user - The current logged in user
+         */
         async buildContext(user) {
             const context = {
                 status: 'EMPTY',
@@ -1238,68 +1147,241 @@
                 eventDateRaw: null,
                 hasMatchToday: false,
                 hasOpenTournament: false,
+                hasRecentVictory: false,
+                hasMatchThisWeek: false,
                 activeTournaments: 0,
                 upcomingMatches: 0,
-                myEvents: []
+                myEvents: [],
+                scoreA: null,
+                scoreB: null,
+                pointsEarned: 0,
+                newRank: '-',
+                confirmed: false,
+                matchId: null,
+                matchType: null
             };
 
+            if (!user) return context;
+
             try {
-                if (window.AmericanaService) {
-                    const allAmericanas = await window.AmericanaService.getActiveAmericanas();
-                    if (!allAmericanas || allAmericanas.length === 0) return context;
+                // 1. Get All Events & User Stats (Real-time or Cached)
+                const [allEvents, rankedPlayers] = await Promise.all([
+                    window.AmericanaService ? window.AmericanaService.getAllActiveEvents() : [],
+                    window.RankingController ? window.RankingController.calculateSilently() : []
+                ]);
 
-                    // 1. Check for Active Tournaments (for ActionGrid badges)
-                    const openAmericanas = allAmericanas.filter(a => ['open', 'upcoming', 'scheduled'].includes(a.status));
-                    context.activeTournaments = openAmericanas.length;
-                    context.hasOpenTournament = openAmericanas.length > 0;
+                const userId = user.uid || user.id;
 
-                    if (user) {
-                        // 2. Check for User's Matches
-                        context.myEvents = allAmericanas.filter(a => {
-                            const players = a.players || a.registeredPlayers || [];
-                            return players.some(p => p === user.uid || (p.uid === user.uid) || (p.id === user.uid));
-                        });
+                // 2. Real Rank Calculation
+                if (rankedPlayers.length > 0) {
+                    const myRankIndex = rankedPlayers.findIndex(p => p.id === userId);
+                    context.newRank = myRankIndex !== -1 ? (myRankIndex + 1).toString() : '-';
+                }
 
-                        context.upcomingMatches = context.myEvents.filter(a => a.status !== 'finished').length;
+                // 3. Victory Detection (Last 24h)
+                const winningMatch = await this.checkRecentVictory(user);
+                context.hasRecentVictory = !!winningMatch;
+                if (winningMatch) {
+                    const isTeamA = (winningMatch.team_a_ids || []).includes(userId);
+                    context.scoreA = isTeamA ? winningMatch.score_a : winningMatch.score_b;
+                    context.scoreB = isTeamA ? winningMatch.score_b : winningMatch.score_a;
+                    context.opponents = isTeamA ? winningMatch.team_b_names : winningMatch.team_a_names;
+                }
 
-                        // ONLY focus on events that are NOT finished
-                        const myEvent = context.myEvents.find(e => !['finished', 'closed'].includes(e.status));
-
-                        if (myEvent) {
-                            const now = new Date();
-                            const eventDate = new Date(myEvent.date);
-                            const isToday = eventDate.toDateString() === now.toDateString();
-
-                            if (myEvent.status === 'live' || (myEvent.status === 'scheduled' && isToday)) {
-                                context.status = 'LIVE_MATCH';
-                                context.hasMatchToday = true;
-                                context.eventName = myEvent.name;
-                                context.matchTime = myEvent.time;
-                                context.matchDay = 'HOY';
-                                context.court = myEvent.court || 'Pista 1';
-                            } else {
-                                context.status = 'UPCOMING_EVENT';
-                                context.eventName = myEvent.name;
-                                context.eventTime = myEvent.time || '18:00';
-                                context.matchDay = this.formatDate(myEvent.date);
-                            }
-                        } else {
-                            // No active events, just show default or nothing
-                            context.status = 'EMPTY';
-                        }
+                // 4. Inscriptions & Waitlist Monitor
+                const openEvents = allEvents.filter(a => ['open', 'upcoming', 'scheduled'].includes(a.status));
+                context.activeTournaments = openEvents.length;
+                // 5. STATS & ARCHIVE (Calculated silently in background)
+                if (window.RankingController) {
+                    const ranked = await window.RankingController.calculateSilently();
+                    const me = ranked.find(p => p.id === userId);
+                    if (me) {
+                        context.myRank = me.rank;
+                        context.rankStatus = me.trend || 'stable';
                     }
                 }
-            } catch (e) {
-                console.warn("Context build failed", e);
+
+                // 2026 UPDATE: Fetch active tournaments for ActionGrid badge
+                if (window.AmericanaService) {
+                    const activeEvents = await window.AmericanaService.getAllActiveEvents();
+                    context.activeTournaments = activeEvents.filter(e => e.type === 'americana' && e.status !== 'finished').length;
+
+                    // Specific active tournament for QuickStats (if user is in one)
+                    context.activeTournament = activeEvents.find(e =>
+                        e.type === 'americana' &&
+                        e.status !== 'finished' &&
+                        (e.players || []).some(p => p.id === userId)
+                    );
+                }
+
+                // 5. User's specific participation (re-ordered)
+                context.myEvents = allEvents.filter(a => {
+                    const players = a.players || a.registeredPlayers || [];
+                    return players.some(p => (p.uid || p.id || p) === userId);
+                });
+
+                context.upcomingMatches = context.myEvents.filter(e => e.status !== 'finished').length;
+                context.hasMatchThisWeek = context.upcomingMatches > 0;
+
+                // 6. DEEP DIVE: Current/Next Match Details
+                const myActiveEvent = context.myEvents.find(e => !['finished', 'closed'].includes(e.status));
+
+                if (myActiveEvent) {
+                    const isTodayMatch = this.isToday(myActiveEvent.date);
+                    const isLive = myActiveEvent.status === 'live' || myActiveEvent.status === 'in_progress';
+
+                    if (isTodayMatch || isLive) {
+                        context.hasMatchToday = true;
+                        context.status = isLive ? 'LIVE_MATCH' : 'UPCOMING_EVENT';
+                        context.eventName = myActiveEvent.name;
+                        context.matchTime = myActiveEvent.time || '18:00';
+                        context.matchDay = 'HOY';
+                        context.tournamentName = myActiveEvent.type === 'entreno' ? 'Entreno (Pozo)' : 'Americana';
+                        context.eventDateRaw = myActiveEvent.date;
+                        context.matchType = myActiveEvent.type;
+
+                        // FETCH REAL MATCH DATA (Court, Partner, Opponents)
+                        const matchData = await this.fetchMatchDetails(userId, myActiveEvent.id, myActiveEvent.type);
+                        if (matchData) {
+                            context.matchId = matchData.id;
+                            context.court = matchData.court || '?';
+                            context.partner = matchData.partnerName || 'Asignando...';
+                            context.opponents = matchData.opponentsNames || 'Asignando...';
+                            context.confirmed = matchData.confirmations ? !!matchData.confirmations[userId] : false;
+                        }
+                    } else {
+                        context.status = 'UPCOMING_EVENT';
+                        context.eventName = myActiveEvent.name;
+                        context.matchTime = myActiveEvent.time || '18:00';
+                        context.matchDay = this.formatFriendlyDate(myActiveEvent.date);
+                    }
+                } else if (context.hasRecentVictory) {
+                    context.status = 'VICTORY';
+                    context.pointsEarned = 15; // Mock for now, should calculate
+                } else if (context.hasOpenTournament) {
+                    context.status = 'EMPTY';
+                }
+
+            } catch (err) {
+                console.error("❌ [DashboardView] Error building user context:", err);
             }
+
             return context;
         }
+
+        // --- PHASE 1 HELPERS ---
+
+        isToday(dateStr) {
+            if (!dateStr) return false;
+            const today = new Date().toISOString().split('T')[0];
+            return dateStr === today;
+        }
+
+        formatFriendlyDate(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            return `${days[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`;
+        }
+
+        async fetchMatchDetails(userId, eventId, type) {
+            try {
+                const collectionName = (type === 'entreno') ? 'entrenos_matches' : 'matches';
+                // We fetch matches for this event where the user participates
+                const snapshot = await window.db.collection(collectionName)
+                    .where('americana_id', '==', eventId)
+                    .orderBy('round', 'desc')
+                    .limit(10)
+                    .get();
+
+                if (snapshot.empty) return null;
+
+                const userMatch = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                    .find(m => {
+                        const ids = [...(m.team_a_ids || []), ...(m.team_b_ids || [])];
+                        return ids.includes(userId);
+                    });
+
+                if (!userMatch) return null;
+
+                const isTeamA = (userMatch.team_a_ids || []).includes(userId);
+                const myTeamIds = isTeamA ? userMatch.team_a_ids : userMatch.team_b_ids;
+                const opponentNamesRaw = isTeamA ? userMatch.team_b_names : userMatch.team_a_names;
+                const myTeamNamesRaw = isTeamA ? userMatch.team_a_names : userMatch.team_b_names;
+
+                const pId = myTeamIds.find(id => id !== userId);
+                let partnerName = 'Solo';
+                if (pId && myTeamNamesRaw) {
+                    // Extract name from namesRaw "Name 1 / Name 2"
+                    const names = myTeamNamesRaw.split(' / ');
+                    const user = window.Store.getState('currentUser');
+                    partnerName = names.find(n => !n.toLowerCase().includes(user.name.toLowerCase())) || names[1] || names[0];
+                }
+
+                return {
+                    id: userMatch.id,
+                    court: userMatch.court,
+                    partnerName: partnerName,
+                    opponentsNames: opponentNamesRaw,
+                    confirmations: userMatch.confirmations || {},
+                    round: userMatch.round
+                };
+            } catch (e) {
+                console.warn("fetchMatchDetails error:", e);
+                return null;
+            }
+        }
+
+        async checkRecentVictory(user) {
+            try {
+                const userId = user.uid || user.id;
+                const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+                const pulls = await Promise.all([
+                    window.db.collection('matches').where('status', '==', 'finished').where('created_at', '>', yesterday).get(),
+                    window.db.collection('entrenos_matches').where('status', '==', 'finished').where('created_at', '>', yesterday).get()
+                ]);
+
+                const allRecentMatches = [...pulls[0].docs, ...pulls[1].docs].map(doc => doc.data());
+
+                return allRecentMatches.find(m => {
+                    const isTeamA = (m.team_a_ids || []).includes(userId);
+                    const isTeamB = (m.team_b_ids || []).includes(userId);
+                    if (!isTeamA && !isTeamB) return false;
+
+                    const scoreA = parseInt(m.score_a || 0);
+                    const scoreB = parseInt(m.score_b || 0);
+
+                    if (isTeamA) return scoreA > scoreB;
+                    if (isTeamB) return scoreB > scoreA;
+                    return false;
+                });
+            } catch (e) {
+                return null;
+            }
+        }
+
 
         formatDate(dateString) {
             if (!dateString) return '';
             const date = new Date(dateString);
             const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
             return `${days[date.getDay()]} ${date.getDate()}`;
+        }
+
+        /**
+         * Normaliza un timestamp de Firestore o JS a milisegundos
+         */
+        _getTimestampValue(ts) {
+            if (!ts) return Date.now();
+            if (ts.toMillis) return ts.toMillis();
+            if (ts instanceof Date) return ts.getTime();
+            if (typeof ts === 'string') {
+                const d = new Date(ts);
+                return isNaN(d.getTime()) ? Date.now() : d.getTime();
+            }
+            if (typeof ts === 'number') return ts;
+            return Date.now();
         }
 
         async loadLiveWidgetContent(context) {
@@ -1389,8 +1471,30 @@
             }
         }
 
-        async renderActivityFeed() {
+        /**
+         * 2026 UPDATE: Show a one-time tip to let the user know about the new Profile capabilities.
+         */
+        showProfileTip() {
+            // Only show if not shown in this session
+            if (sessionStorage.getItem('profileTipShown')) return;
+
+            setTimeout(async () => {
+                if (window.PremiumModal) {
+                    await window.PremiumModal.alert({
+                        title: '💡 TIP DE NAVEGACIÓN',
+                        message: 'Hemos optimizado tu experiencia. Ahora tus <b>Acciones Rápidas</b> y tu <b>Estado Físico</b> están centralizados en tu <b>PERFIL</b>.<br><br>¡Haz clic en tu foto o en la pestaña Perfil para verlo todo!',
+                        btnText: '¡ENTENDIDO!',
+                        type: 'info'
+                    });
+                    sessionStorage.setItem('profileTipShown', 'true');
+                }
+            }, 3000); // 3 second delay for better user experience
+        }
+
+        async renderActivityFeed(targetId = 'activities-root') {
             try {
+                const root = document.getElementById(targetId);
+                if (!root) return;
                 if (!document.getElementById('activity-feed-styles')) {
                     const style = document.createElement('style');
                     style.id = 'activity-feed-styles';
@@ -1482,6 +1586,21 @@
                     this.getRankingChanges()
                 ]);
 
+                // 2026 UPDATE: Inyectar notificaciones reales (Firestore + Chat)
+                const realNotifications = window.NotificationService ? window.NotificationService.getMergedNotifications() : [];
+                realNotifications.forEach(notif => {
+                    activities.push({
+                        type: notif.isChat ? 'chat' : 'notification',
+                        icon: notif.isChat ? '💬' : '🔔',
+                        title: notif.title || 'Notificación',
+                        desc: notif.body || '',
+                        time: this.formatRelativeTime(notif.timestamp),
+                        color: notif.isChat ? '#CCFF00' : '#38bdf8',
+                        timestamp: notif.timestamp,
+                        score: 30 // Prioridad alta para notificaciones personales
+                    });
+                });
+
                 registrations.forEach(reg => {
                     let catColor = '#00E36D'; // Default Green (Entrenos/Other)
                     const lowerName = reg.eventName.toLowerCase();
@@ -1542,7 +1661,11 @@
                     });
                 });
 
-                activities.sort((a, b) => b.timestamp - a.timestamp);
+                activities.sort((a, b) => {
+                    const timeA = this._getTimestampValue(a.timestamp);
+                    const timeB = this._getTimestampValue(b.timestamp);
+                    return timeB - timeA;
+                });
                 const top6 = activities.slice(0, 6);
 
                 if (top6.length === 0) {

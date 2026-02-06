@@ -88,9 +88,13 @@
                             </button>
                         </div>
                     </div>
-                    <div style="padding: 30px 20px;">
-                        
-                        <!-- TACTICAL COACH: High-Tech Card -->
+                    <div style="padding: 10px 0;">
+                        <!-- DASHBOARD INTEGRATION: Top Widgets -->
+                        <div id="profile-hero-root" style="margin-bottom: 5px;"></div>
+                        <div id="profile-stats-root" style="margin-bottom: 25px;"></div>
+                        <div id="profile-actions-root" style="margin-bottom: 40px;"></div>
+
+                        <!-- TACTICAL COACH: High-Tech Card (Moved below widgets) -->
                         <div style="margin-bottom: 40px; background: linear-gradient(135deg, rgba(204,255,0,0.08) 0%, rgba(0,0,0,0) 100%); 
                                     border: 1px solid rgba(204,255,0,0.15); border-radius: 32px; padding: 25px; position: relative; overflow: hidden; 
                                     box-shadow: 0 15px 40px rgba(0,0,0,0.4);">
@@ -299,7 +303,7 @@
                         </div>
 
                         <!-- SETTINGS Glass Edition -->
-                        <div style="background: rgba(255,255,255,0.03); border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden;">
+                        <div style="background: rgba(255,255,255,0.03); border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; margin-bottom: 40px;">
                             <div onclick="window.PlayerView.showUpdatePasswordPrompt()" style="display: flex; align-items: center; padding: 22px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;">
                                 <div style="width: 44px; height: 44px; background: rgba(59,130,246,0.1); color: #3b82f6; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1px solid rgba(59,130,246,0.2);"><i class="fas fa-key"></i></div>
                                 <div style="flex: 1; margin-left: 18px;">
@@ -317,10 +321,48 @@
                             </div>
                         </div>
 
+                        <!-- 2026 UPDATE: Activity Feed & Pulse inside Profile -->
+                        <div style="margin-bottom: 40px;">
+                            <h3 style="margin: 0 0 20px; font-size: 1.1rem; font-weight: 950; letter-spacing: 1px; color: #fff; text-transform: uppercase;">
+                                <i class="fas fa-rss" style="color: #38bdf8;"></i> MI PULSO SOMOSPADEL
+                            </h3>
+                            <div id="profile-pulse-root"></div>
+                            <div id="profile-activity-root" style="margin-top: 20px;"></div>
+                        </div>
+
                     </div>
                 </div>
                 <input type="file" id="profile-photo-input" accept="image/*" style="display: none;" onchange="window.PlayerView.handlePhotoSelection(this)">
             `;
+
+            // 2026 UPDATE: Inyectar widgets de Dashboard en el Perfil
+            const context = data.context || { status: 'EMPTY' };
+            const heroRoot = document.getElementById('profile-hero-root');
+            if (heroRoot && window.HeroCard) heroRoot.innerHTML = window.HeroCard.render(context);
+
+            const statsRoot = document.getElementById('profile-stats-root');
+            if (statsRoot && window.QuickStats) {
+                const displayStats = {
+                    ...user,
+                    matches_played: data.stats.matches,
+                    wins: data.stats.won,
+                    win_rate: data.stats.winRate,
+                    recentMatches: data.recentMatches
+                };
+                statsRoot.innerHTML = window.QuickStats.render(displayStats, context.activeTournament);
+            }
+
+            const actionsRoot = document.getElementById('profile-actions-root');
+            if (actionsRoot && window.ActionGrid) actionsRoot.innerHTML = window.ActionGrid.render(context);
+
+            // Feed & Pulse
+            if (window.NetworkPulseWidget) {
+                window.NetworkPulseWidget.render('profile-pulse-root');
+            }
+
+            if (window.DashboardView) {
+                window.DashboardView.renderActivityFeed('profile-activity-root');
+            }
 
             // Initialize Partner Synergy Radar
             if (user && window.PartnerSynergyWidget) {

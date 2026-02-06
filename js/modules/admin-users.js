@@ -572,7 +572,14 @@ window.AdminViews.users = async function () {
 
         const pwdInput = document.getElementById('admin-user-pwd-input');
         if (pwdInput) {
-            pwdInput.value = user.password || '';
+            // Si la contraseña ya está hasheada (SHA-256 tiene 64 chars), no la mostramos para evitar confusión
+            if (user.password && user.password.length === 64) {
+                pwdInput.value = '';
+                pwdInput.placeholder = "CONTRASEÑA CIFRADA (Escribe para cambiar)";
+            } else {
+                pwdInput.value = user.password || '';
+                pwdInput.placeholder = "Introduce nueva contraseña";
+            }
             pwdInput.type = 'password'; // Reset to hidden
             const toggle = document.getElementById('toggle-admin-user-pwd');
             if (toggle) { toggle.classList.remove('fa-eye-slash'); toggle.classList.add('fa-eye'); }
@@ -745,8 +752,8 @@ window.AdminViews.users = async function () {
 
             const pwd = formData.get('password');
             if (pwd && pwd.trim() !== '') {
-                userData.password = pwd.trim(); // Only send if changed
-                // Note: Password update logic might need backend support or special handling
+                // SECURITY: Hash the password before saving
+                userData.password = await window.FirebaseDB.security.hashPassword(pwd.trim());
             }
 
             if (id) {

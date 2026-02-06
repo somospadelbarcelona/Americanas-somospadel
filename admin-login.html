@@ -275,8 +275,31 @@
                     throw new Error('❌ Usuario no encontrado. Verifica el teléfono.');
                 }
 
-                if (user.password !== password && user.password !== upperPass) {
+                // SECURITY: Hash comparison
+                const inputHash = await window.FirebaseDB.security.hashPassword(password);
+                const inputHashUpper = await window.FirebaseDB.security.hashPassword(upperPass);
+
+                let isValid = false;
+                let needsMigration = false;
+
+                if (user.password === inputHash || user.password === inputHashUpper) {
+                    isValid = true;
+                } else if (user.password === password || user.password === upperPass) {
+                    // LEGACY PLAIN TEXT MATCH
+                    isValid = true;
+                    needsMigration = true;
+                }
+
+                if (!isValid) {
                     throw new Error('❌ Contraseña incorrecta.');
+                }
+
+                // AUTO-MIGRATE TO HASHED PASSWORD
+                if (needsMigration) {
+                    console.log("🔐 Migrating legacy admin password to hash...");
+                    await window.FirebaseDB.players.update(user.id, {
+                        password: inputHash
+                    });
                 }
 
                 if (!hasAdminRole(user.role)) {

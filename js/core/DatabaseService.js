@@ -17,9 +17,9 @@
             // Smart Cache for specific collections (like players)
             const cacheKey = `all_${this.collectionName}`;
             if (window.CacheService) {
-                const cached = window.CacheService.get(cacheKey);
+                const cached = await window.CacheService.get('database', cacheKey);
                 if (cached) {
-                    console.log(`🚀 [Cache] Serving ${this.collectionName} from LocalStorage`);
+                    console.log(`🚀 [Cache] Serving ${this.collectionName} from IndexedDB`);
                     return cached;
                 }
             }
@@ -28,7 +28,7 @@
             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
             if (window.CacheService && data.length > 0) {
-                window.CacheService.set(cacheKey, data, 1000 * 60 * 15); // Cache for 15 mins
+                await window.CacheService.set('database', cacheKey, data, 1000 * 60 * 15); // Cache for 15 mins
             }
             return data;
         }
@@ -38,7 +38,7 @@
 
             const cacheKey = `doc_${this.collectionName}_${id}`;
             if (window.CacheService) {
-                const cached = window.CacheService.get(cacheKey);
+                const cached = await window.CacheService.get('database', cacheKey);
                 if (cached) return cached;
             }
 
@@ -47,7 +47,7 @@
             const data = { id: doc.id, ...doc.data() };
 
             if (window.CacheService) {
-                window.CacheService.set(cacheKey, data, 1000 * 60 * 60); // Cache individual docs for 1h
+                await window.CacheService.set('database', cacheKey, data, 1000 * 60 * 60); // Cache individual docs for 1h
             }
             return data;
         }

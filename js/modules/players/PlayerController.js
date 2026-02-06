@@ -287,6 +287,8 @@
                             date: dateStr,
                             eventName: m.americana_name || m.event_name || (m.collection === 'entrenos_matches' ? 'Entreno' : 'Americana'),
                             score: `${sA} - ${sB}`,
+                            sA: sA,
+                            sB: sB,
                             result: iWon ? 'W' : (isTie ? 'D' : 'L'),
                             color: iWon ? '#22c55e' : (isTie ? '#94a3b8' : '#ef4444')
                         });
@@ -387,9 +389,12 @@
                     enrich(h2hData.soulmate, 'soulmate')
                 ]);
 
+                // Generate Context for Dash Widgets in Profile
+                const context = window.ContextService ? await window.ContextService.buildPlayerContext(userDoc) : { status: 'EMPTY' };
+
                 this.state = {
                     stats,
-                    // FIX: Don't generate synthetic matches, let it be empty so the View triggers the "Pro Dashboard"
+                    context,
                     recentMatches: matchesList,
                     levelHistory: levelHistory,
                     communityAvg: communityAvg,
@@ -537,8 +542,8 @@
             let tightLosses = 0;
             let dominance = 0; // Huge wins
             recent.forEach(m => {
-                const sA = parseInt(m.score_a || 0);
-                const sB = parseInt(m.score_b || 0);
+                const sA = m.sA || 0;
+                const sB = m.sB || 0;
                 const diff = Math.abs(sA - sB);
                 if (m.result === 'L' && diff <= 2) tightLosses++;
                 if (m.result === 'W' && diff >= 4) dominance++;

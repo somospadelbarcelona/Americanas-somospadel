@@ -153,14 +153,14 @@
             if (!container) return;
 
             container.innerHTML = `
-                <div class="story-feed-v3-wrapper" style="position: relative; padding: 4px 0;">
+                <div class="story-feed-v3-wrapper" style="position: relative; padding: 2px 0;">
                     <!-- FLEX LAYOUT FOR MOBILE (5 SPHERES + LIVE) -->
                     <div style="
                         display: flex;
                         justify-content: space-between;
                         align-items: flex-start;
                         gap: 8px;
-                        padding: 8px 12px;
+                        padding: 2px 12px 6px;
                         max-width: 100%;
                         overflow: hidden;
                     ">

@@ -105,7 +105,7 @@
                         " onmouseover="this.style.borderColor='#CCFF00'" onmouseout="this.style.borderColor='#E0E0E0'">
                             VER DETALLES
                         </button>
-                        <button ${ctx.confirmed ? 'disabled' : ''} onclick="HeroCardActions.confirmAttendance('${ctx.matchId}')" style="
+                        <button ${ctx.confirmed ? 'disabled' : ''} onclick="HeroCardActions.confirmAttendance('${ctx.matchId}', '${ctx.matchType}')" style="
                             background: ${ctx.confirmed ? '#34C759' : '#CCFF00'};
                             border: none;
                             color: black;
@@ -251,15 +251,15 @@
                         📅 ESTA SEMANA
                     </div>
                     <div style="font-size: 1.4rem; font-weight: 900; color: #000; margin-bottom: 16px;">
-                        Tienes ${ctx.matchesThisWeek} ${ctx.matchesThisWeek === 1 ? 'partido' : 'partidos'}
+                        Tienes ${ctx.upcomingMatches} ${ctx.upcomingMatches === 1 ? 'partido' : 'partidos'}
                     </div>
                     
                     <div style="background: #F8F9FA; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
                         <div style="font-size: 0.85rem; font-weight: 700; color: #333; margin-bottom: 8px;">
-                            Próximo: ${ctx.nextMatchDay} a las ${ctx.nextMatchTime}
+                            Próximo: ${ctx.matchDay} a las ${ctx.matchTime}
                         </div>
                         <div style="font-size: 0.75rem; color: #666;">
-                            ${ctx.tournamentName}
+                            ${ctx.tournamentName || ctx.eventName || 'Evento de Pádel'}
                         </div>
                     </div>
 
@@ -340,19 +340,33 @@
 
     // Acciones de la Hero Card
     window.HeroCardActions = {
-        confirmAttendance: async (matchId) => {
+        confirmAttendance: async (matchId, matchType) => {
             try {
-                // Implementar confirmación
-                console.log('Confirming attendance for match:', matchId);
+                const user = window.Store.getState('currentUser');
+                if (!user) throw new Error("Debes iniciar sesión");
+
+                const collectionName = (matchType === 'entreno') ? 'entrenos_matches' : 'matches';
+
+                // Actualizar en Firestore: confirmations[userId] = true
+                await window.db.collection(collectionName).doc(matchId).set({
+                    confirmations: {
+                        [user.uid || user.id]: true
+                    }
+                }, { merge: true });
+
+                console.log('✅ Attendance confirmed for:', matchId);
+
                 // Actualizar UI
                 window.PremiumModal.alert({
-                    title: "✅ CONFIRMADO",
-                    message: "¡Asistencia confirmada! Nos vemos en pista 🎾",
+                    title: "✅ ASISTENCIA CONFIRMADA",
+                    message: "¡Excelente! El capitán ya sabe que vienes. ¡A por todas! 🎾",
                     type: 'success'
                 });
-                // Recargar dashboard
-                if (window.DashboardController) {
-                    window.DashboardController.load();
+
+                // Recargar dashboard forzando actualización de contexto
+                if (window.DashboardView && window.DashboardView.render) {
+                    const data = window.Store.getState('dashboardData');
+                    window.DashboardView.render(data);
                 }
             } catch (e) {
                 console.error('Error confirming:', e);

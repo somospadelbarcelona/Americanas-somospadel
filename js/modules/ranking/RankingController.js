@@ -18,13 +18,31 @@
          */
         async init() {
             const content = document.getElementById('content-area');
-            if (content) {
-                content.innerHTML = '<div class="loader-container" style="display:flex; justify-content:center; align-items:center; height:60vh;"><div class="loader"></div></div>';
+
+            // Pattern: Stale-While-Revalidate
+            const render = (players) => {
+                if (window.RankingView) window.RankingView.render(players);
+            };
+
+            // 1. Try to load from cache first for instant UI
+            const cachedRanking = await window.CacheService.get('general', 'global_ranking');
+            if (cachedRanking) {
+                console.log("⚡ [Ranking] Instant load from IndexedDB.");
+                render(cachedRanking);
+            } else {
+                if (content) {
+                    content.innerHTML = '<div class="loader-container" style="display:flex; justify-content:center; align-items:center; height:60vh;"><div class="loader"></div></div>';
+                }
             }
-            // Perform calculation and then render
-            const players = await this.calculateSilently();
-            if (window.RankingView) {
-                window.RankingView.render(players);
+
+            // 2. Background Revalidation
+            const freshRanking = await this.calculateSilently();
+
+            // 3. Update UI if changed
+            if (JSON.stringify(cachedRanking) !== JSON.stringify(freshRanking)) {
+                console.log("🔄 [Ranking] Cache updated with fresh data.");
+                render(freshRanking);
+                await window.CacheService.set('general', 'global_ranking', freshRanking);
             }
         }
 
@@ -75,23 +93,111 @@
                 const americanaIds = allAmericanas.map(e => e.id);
                 const entrenoIds = allEntrenos.map(e => e.id);
 
-                const [americanaMatchesArr, entrenoMatchesArr] = await Promise.all([
-                    Promise.all(americanaIds.map(id => this.db.matches.getByAmericana(id))),
-                    Promise.all(entrenoIds.map(id => this.db.entrenos_matches.getByAmericana(id)))
+                console.log(`📡 [Ranking] Batch-fetching matches for ${americanaIds.length} americanas and ${entrenoIds.length} entrenos...`);
+
+                // HELPER: Batch fetcher to avoid many small requests
+                const fetchMatchesInBatches = async (collection, ids) => {
+                    const BATCH_SIZE = 30; // Firestore 'in' limit
+                    let allResults = [];
+                    for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+                        const batch = ids.slice(i, i + BATCH_SIZE);
+                        const snap = await window.db.collection(collection)
+                            .where('americana_id', 'in', batch)
+                            .get();
+                        allResults = allResults.concat(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                    }
+                    return allResults;
+                };
+
+                const [allAmeMatchesRaw, allEntMatchesRaw] = await Promise.all([
+                    fetchMatchesInBatches('matches', americanaIds),
+                    fetchMatchesInBatches('entrenos_matches', entrenoIds)
                 ]);
 
-                // Flatten match arrays
-                const allAmeMatches = americanaMatchesArr.flat().filter(m => m.status === 'finished');
-                const allEntMatches = entrenoMatchesArr.flat().filter(m => m.status === 'finished');
+                // Filter valid matches: status finished OR matches with a recorded score
+                const matchFilter = m => m.status === 'finished' || (parseInt(m.score_a || 0) + parseInt(m.score_b || 0)) > 0;
+                const allAmeMatches = allAmeMatchesRaw.filter(matchFilter);
+                const allEntMatches = allEntMatchesRaw.filter(matchFilter);
 
-                // === AI OPTIMIZATION: USE CENTRALIZED SERVICE (AUDIT FIX) ===
-                const ameStats = window.StandingsService.calculate(allAmeMatches, 'americana');
-                const entStats = window.StandingsService.calculate(allEntMatches, 'entreno');
+                console.log(`✅ [Ranking] Processed ${allAmeMatches.length + allEntMatches.length} matches from batch fetch.`);
 
-                // 3. Merge Stats into Player Profile
+                // 3. Process matches into categorized player stats
+                const playerStatsMap = {};
+                const eventMap = new Map(validEvents.map(e => [e.id, e]));
+
+                const processMatchPool = (matches, viewKey) => {
+                    matches.forEach(m => {
+                        const evt = eventMap.get(m.americana_id);
+                        if (!evt) return;
+
+                        const rawCat = (evt.category || 'male').toLowerCase();
+                        let cat = 'male';
+                        if (rawCat.includes('fem')) cat = 'female';
+                        else if (rawCat.includes('mix')) cat = 'mixed';
+                        else if (rawCat === 'male' || rawCat.includes('masc')) cat = 'male';
+                        else if (rawCat === 'open' || rawCat === 'todas') cat = 'male'; // Fallback or handle differently
+
+                        const teamA = m.team_a_ids || [];
+                        const teamB = m.team_b_ids || [];
+                        const sA = parseInt(m.score_a || 0);
+                        const sB = parseInt(m.score_b || 0);
+
+                        const updateStats = (id, scoreSelf, scoreOther, isWon, isC1, court, round) => {
+                            if (!playerStatsMap[id]) {
+                                playerStatsMap[id] = {
+                                    id, stats: {
+                                        americanas: { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, lastMatchCourt: 99, lastMatchRound: 0, categories: {} },
+                                        entrenos: { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, lastMatchCourt: 99, lastMatchRound: 0, categories: {} }
+                                    }
+                                };
+                            }
+                            const s = playerStatsMap[id].stats[viewKey];
+
+                            // 1. Update Global View Stats
+                            const isNewer = round >= (s.lastMatchRound || 0);
+                            s.played++;
+                            s.gamesWon += scoreSelf;
+                            s.gamesLost += scoreOther;
+                            if (isWon) { s.won++; s.points += 3; } else { s.lost++; }
+                            if (isC1) s.court1Count++;
+                            if (isNewer) {
+                                s.lastMatchRound = round;
+                                s.lastMatchCourt = parseInt(court || 99);
+                            }
+
+                            // 2. Update Category Stats
+                            if (!s.categories[cat]) {
+                                s.categories[cat] = { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, lastMatchCourt: 99, lastMatchRound: 0 };
+                            }
+                            const cs = s.categories[cat];
+                            cs.played++;
+                            cs.gamesWon += scoreSelf;
+                            cs.gamesLost += scoreOther;
+                            if (isWon) { cs.won++; cs.points += 3; } else { cs.lost++; }
+                            if (isC1) cs.court1Count++;
+                            if (isNewer) {
+                                cs.lastMatchRound = round;
+                                cs.lastMatchCourt = parseInt(court || 99);
+                            }
+                        };
+
+                        const isWonA = sA > sB;
+                        const isWonB = sB > sA;
+                        const isC1 = parseInt(m.court || 99) === 1;
+                        const court = m.court || 99;
+                        const round = m.round || 0;
+
+                        teamA.forEach(id => updateStats(id, sA, sB, isWonA, isC1, court, round));
+                        teamB.forEach(id => updateStats(id, sB, sA, isWonB, isC1, court, round));
+                    });
+                };
+
+                processMatchPool(allAmeMatches, 'americanas');
+                processMatchPool(allEntMatches, 'entrenos');
+
+                // 4. Merge Stats into Player Profile
                 const playersList = players.map(p => {
-                    const ame = ameStats.find(s => s.uid === p.id) || {};
-                    const ent = entStats.find(s => s.uid === p.id) || {};
+                    const ps = playerStatsMap[p.id] || { stats: { americanas: { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, categories: {} }, entrenos: { points: 0, played: 0, won: 0, lost: 0, gamesWon: 0, gamesLost: 0, court1Count: 0, categories: {} } } };
 
                     return {
                         id: p.id,
@@ -99,27 +205,7 @@
                         level: parseFloat(p.level || p.self_rate_level || 3.5),
                         gender: p.gender || 'chico',
                         photo_url: p.photo_url || null,
-                        stats: {
-                            americanas: {
-                                points: ame.leaguePoints || 0, // Using 3-1-0 points
-                                played: ame.played || 0,
-                                won: ame.won || 0,
-                                lost: ame.lost || 0,
-                                gamesWon: ame.points || 0,
-                                gamesLost: ame.gamesLost || 0,
-                                court1Count: ame.court1Count || 0
-                            },
-                            entrenos: {
-                                points: ent.leaguePoints || 0,
-                                played: ent.played || 0,
-                                won: ent.won || 0,
-                                lost: ent.lost || 0,
-                                gamesWon: ent.points || 0,
-                                gamesLost: ent.gamesLost || 0,
-                                court1Count: ent.court1Count || 0,
-                                lastMatchCourt: ent.lastMatchCourt || 99
-                            }
-                        }
+                        stats: ps.stats
                     };
                 });
 

@@ -208,6 +208,104 @@ window.WhatsAppService = {
             let f = new Intl.DateTimeFormat('es-ES', options).format(date);
             return f.charAt(0).toUpperCase() + f.slice(1);
         } catch (e) { return dateString; }
+    },
+
+    /**
+     * Share full ranking list
+     */
+    async shareRanking(title, players, viewType) {
+        const E = this.E;
+        let msg = E.TROPHY + " *RANKING SOMOSPADEL BCN* " + E.TROPHY + "\n";
+        msg += "*" + title.toUpperCase() + "* (" + viewType.toUpperCase() + ")\n";
+        msg += "--------------------------\n\n";
+
+        players.slice(0, 15).forEach((p, i) => {
+            const medal = i === 0 ? "🥇" : (i === 1 ? "🥈" : (i === 2 ? "🥉" : (i + 1) + "."));
+            const name = p.name || "Jugador";
+            const pts = p.points || 0;
+            const lvl = (p.level && !isNaN(p.level)) ? " _(N" + parseFloat(p.level).toFixed(2) + ")_" : "";
+
+            msg += medal + " *" + name + "* " + pts + " pts" + lvl + "\n";
+        });
+
+        msg += "\n" + E.DOWN + " *MIRA EL RANKING COMPLETO:* \n";
+        msg += E.LINK + " https://somospadelbarcelona.github.io/Americanas-somospadel/#ranking\n";
+
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || isIOS;
+
+        if (isMobile && navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Ranking Somospadel',
+                    text: msg
+                });
+                return;
+            } catch (e) { console.warn("Native share failed", e); }
+        }
+
+        const encodedText = encodeURIComponent(msg);
+        const url = "https://api.whatsapp.com/send?text=" + encodedText;
+
+        if (isIOS) {
+            window.location.href = url;
+        } else {
+            window.open(url, '_blank');
+        }
+    },
+
+    /**
+     * Share Hall of Fame (Records)
+     */
+    async shareHallOfFame(records) {
+        if (!records) return;
+        const E = this.E;
+
+        let msg = E.TROPHY + " *SALÓN DE LA FAMA - SOMOSPADEL BCN* " + E.TROPHY + "\n";
+        msg += "*TEMPORADA 2026*\n";
+        msg += "--------------------------\n\n";
+
+        const items = [
+            { r: records.alpha, t: "REY DE LA 1" },
+            { r: records.punisher, t: "EL VERDUGO" },
+            { r: records.ame, t: "MAESTRO DE AMERICANAS" },
+            { r: records.ent, t: "REY DE COPAS (Entrenos)" },
+            { r: records.streak, t: "LA MURALLA (Victorias)" },
+            { r: records.giant, t: "MATA-GIGANTES" },
+            { r: records.catalyst, t: "SOCIO DE ORO" },
+            { r: records.sniper, t: "FRANCOTIRADOR" },
+            { r: records.ironman, t: "EL INFATIGABLE" },
+            { r: records.wall, t: "EL INTOCABLE" }
+        ];
+
+        items.forEach(item => {
+            if (item.r && item.r.name !== 'VACANTE') {
+                const icon = item.r.icon || "🏆";
+                msg += icon + " *" + item.t + "*\n";
+                msg += "👑 " + item.r.name + " (" + item.r.value + ")\n\n";
+            }
+        });
+
+        msg += E.DOWN + " *MIRA TODOS LOS DETALLES:* \n";
+        msg += E.LINK + " https://somospadelbarcelona.github.io/Americanas-somospadel/#records\n";
+
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || isIOS;
+
+        if (isMobile && navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Salón de la Fama Somospadel',
+                    text: msg
+                });
+                return;
+            } catch (e) { }
+        }
+
+        const encodedText = encodeURIComponent(msg);
+        const url = "https://api.whatsapp.com/send?text=" + encodedText;
+        if (isIOS) window.location.href = url;
+        else window.open(url, '_blank');
     }
 };
 

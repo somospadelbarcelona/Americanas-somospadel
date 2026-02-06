@@ -117,12 +117,20 @@ const FirebaseDB = {
     players: {
         async getAll() {
             if (!db) throw new Error("Firebase DB not initialized yet");
-            const snapshot = await db.collection('players').get();
-            return snapshot.docs.map(doc => {
-                const data = doc.data();
-                // Ensure doc.id is the master ID and doesn't get overwritten by an internal 'id' or 'uid' from data
-                return { ...data, id: doc.id, uid: doc.uid || data.uid || doc.id };
-            });
+
+            const fetchFn = async () => {
+                const snapshot = await db.collection('players').get();
+                return snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return { ...data, id: doc.id, uid: doc.uid || data.uid || doc.id };
+                });
+            };
+
+            // Turbo Cache: Instant load with SWR
+            if (window.CacheService) {
+                return await window.CacheService.swr('players', 'all', fetchFn);
+            }
+            return await fetchFn();
         },
 
         async getById(id) {
@@ -163,12 +171,14 @@ const FirebaseDB = {
 
             let docRef;
             if (data.id) {
-                // Use provided ID (important for local fallbacks and imports)
                 await db.collection('players').doc(data.id).set(payload);
                 docRef = db.collection('players').doc(data.id);
             } else {
                 docRef = await db.collection('players').add(payload);
             }
+
+            // Invalidate Cache
+            if (window.CacheService) window.CacheService.remove('players', 'all');
 
             const doc = await docRef.get();
             return { ...doc.data(), id: doc.id };
@@ -180,12 +190,15 @@ const FirebaseDB = {
 
             try {
                 await db.collection('players').doc(cleanId).update(data);
+                // Invalidate Cache
+                if (window.CacheService) window.CacheService.remove('players', 'all');
+
                 const doc = await db.collection('players').doc(cleanId).get();
                 return { id: doc.id, ...doc.data() };
             } catch (err) {
                 console.error("Error in FirebaseDB.players.update:", err);
                 if (err.message.includes("permission-denied")) {
-                    throw new Error("No tienes permisos de escritura en la base de datos Firestore. Asegúrate de estar autenticado como Admin en Firebase Auth.");
+                    throw new Error("No tienes permisos de escritura en la base de datos Firestore.");
                 }
                 throw err;
             }
@@ -195,63 +208,59 @@ const FirebaseDB = {
             const cleanId = (id || "").toString().trim();
             if (!cleanId) throw new Error("ID de jugador no especificado");
 
-            console.log(`🗑️ [Firebase] Intentando borrar jugador: ${cleanId}`);
-
             const docRef = db.collection('players').doc(cleanId);
-
             try {
-                const docBefore = await docRef.get();
-
-                if (!docBefore.exists) {
-                    console.warn(`⚠️ El jugador con ID ${cleanId} ya no existe en la DB.`);
-                    return;
-                }
-
                 await docRef.delete();
-                console.log(`✅ [Firebase] Comando delete executed for: ${cleanId}`);
-
-                await new Promise(r => setTimeout(r, 500));
+                // Invalidate Cache
+                if (window.CacheService) window.CacheService.remove('players', 'all');
             } catch (err) {
                 console.error("Error direct deleting:", err);
-                if (err.message.includes("permission-denied")) {
-                    throw new Error("🔥 ERROR DE PERMISOS: Firestore ha bloqueado el borrado. Esto ocurre porque estás usando un 'Login por PIN' local pero no estás autenticado en el sistema de Firebase Auth (Infraestructura). Recomendación: Revisa las reglas de seguridad en la consola Firebase o usa el 'Admin Login' oficial.");
-                }
                 throw new Error(`Error de Firebase: ${err.message}`);
             }
         },
 
         async cleanupFictional() {
-            console.log("🧹 Inicia limpieza de base de datos profesional...");
             const snapshot = await db.collection('players').get();
             let deletedCount = 0;
-
             for (const doc of snapshot.docs) {
                 const data = doc.data();
-                const name = (data.name || "").toLowerCase();
-                const phone = (data.phone || "").toString();
-
-                // Rules for "fictional" data
-                const isTest = name.includes('test') || name.includes('ficticio') || name.includes('prueba');
-                const isInvalidPhone = phone.length < 9 && phone !== 'NOA';
-
-                if (isTest || isInvalidPhone) {
-                    console.log(`🗑️ Eliminando usuario no profesional: ${data.name} (${phone})`);
+                if ((data.name || "").toLowerCase().includes('test')) {
                     await doc.ref.delete();
                     deletedCount++;
                 }
             }
-            console.log(`✅ Limpieza completada. ${deletedCount} registros eliminados.`);
+            if (deletedCount > 0 && window.CacheService) window.CacheService.remove('players', 'all');
             return deletedCount;
+        }
+    },
+
+    // ============================================
+    // SECURITY HELPERS
+    // ============================================
+    security: {
+        async hashPassword(password) {
+            if (!password) return "";
+            const msgUint8 = new TextEncoder().encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
     },
 
     // Americanas Collection
     americanas: {
         async getAll() {
-            const snapshot = await db.collection('americanas')
-                .orderBy('date', 'desc')
-                .get();
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const fetchFn = async () => {
+                const snapshot = await db.collection('americanas')
+                    .orderBy('date', 'desc')
+                    .get();
+                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            };
+
+            if (window.CacheService) {
+                return await window.CacheService.swr('americanas', 'all', fetchFn);
+            }
+            return await fetchFn();
         },
 
         async getById(id) {
@@ -276,12 +285,19 @@ const FirebaseDB = {
                 ...data,
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
             });
+
+            // Invalidate cache
+            if (window.CacheService) window.CacheService.remove('americanas', 'all');
+
             const doc = await docRef.get();
             return { id: doc.id, ...doc.data() };
         },
 
         async update(id, data) {
             await db.collection('americanas').doc(id).update(data);
+            // Invalidate cache
+            if (window.CacheService) window.CacheService.remove('americanas', 'all');
+
             const doc = await db.collection('americanas').doc(id).get();
             return { id: doc.id, ...doc.data() };
         },
@@ -290,16 +306,19 @@ const FirebaseDB = {
             await db.collection('americanas').doc(americanaId).update({
                 players: firebase.firestore.FieldValue.arrayUnion(playerId)
             });
+            if (window.CacheService) window.CacheService.remove('americanas', 'all');
         },
 
         async removePlayer(americanaId, playerId) {
             await db.collection('americanas').doc(americanaId).update({
                 players: firebase.firestore.FieldValue.arrayRemove(playerId)
             });
+            if (window.CacheService) window.CacheService.remove('americanas', 'all');
         },
 
         async delete(id) {
             await db.collection('americanas').doc(id).delete();
+            if (window.CacheService) window.CacheService.remove('americanas', 'all');
         },
 
         // ========== WAITLIST MANAGEMENT ==========
@@ -362,8 +381,15 @@ const FirebaseDB = {
     // Matches Collection
     matches: {
         async getAll() {
-            const snapshot = await db.collection('matches').get();
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const fetchFn = async () => {
+                const snapshot = await db.collection('matches').get();
+                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            };
+
+            if (window.CacheService) {
+                return await window.CacheService.swr('matches', 'all', fetchFn);
+            }
+            return await fetchFn();
         },
         async getByAmericana(americanaId) {
             const snapshot = await db.collection('matches')

@@ -2,79 +2,125 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Auxiliary function to check if user is Admin or Super Admin
+    // ==========================================
+    // FUNCIONES AUXILIARES (CORE SECURITY)
+    // ==========================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Verifica si el usuario tiene rol de administrador en su documento de perfil
     function isAdmin() {
-      return request.auth != null && 
+      return isAuthenticated() && 
              get(/databases/$(database)/documents/players/$(request.auth.uid)).data.role in ['admin', 'admin_player', 'super_admin'];
     }
 
-    // RULES FOR PLAYERS
+    // Verifica si el documento pertenece al usuario autenticado
+    function isOwner(playerId) {
+      return isAuthenticated() && request.auth.uid == playerId;
+    }
+
+    // ==========================================
+    // REGLAS PARA JUGADORES (PII & ROLES)
+    // ==========================================
     match /players/{playerId} {
-      // Allow read for login discovery. Protect sensitive fields if possible in future.
-      allow read: if true; 
+      // Permitimos lectura a usuarios autenticados para que funcione el Ranking y búsquedas.
+      // NOTA: Se recomienda en el futuro mover datos sensibles (como hashes de pass) a una subcolección privada.
+      allow read: if isAuthenticated(); 
       
-      // Allow management if authenticated (Infrastructure check)
-      // This is necessary for the PIN login system to work with Firestore Delete
-      allow write: if request.auth != null;
+      // Registro inicial: Cualquier usuario autenticado puede crear su perfil.
+      allow create: if isAuthenticated();
+      
+      // SEGURIDAD CRÍTICA: 
+      // 1. Los admins pueden editar todo.
+      // 2. Los usuarios solo pueden editar su perfil PERO NO pueden cambiarse el ROL ni el ESTADO (Escalada de Privilegios).
+      allow update: if isAdmin() || 
+                    (isOwner(playerId) && 
+                     !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status']));
+      
+      // SOLO los admins pueden borrar jugadores.
+      allow delete: if isAdmin();
       
       match /notifications/{notificationId} {
-          allow read: if request.auth != null && (request.auth.uid == playerId || isAdmin());
-          // Allow internal creation for chat/match alerts
-          allow create: if request.auth != null;
-          // Modify/Delete only the owner
-          allow update, delete: if request.auth != null && (request.auth.uid == playerId || isAdmin());
+          allow read: if isOwner(playerId) || isAdmin();
+          allow create: if isAuthenticated();
+          allow update, delete: if isOwner(playerId) || isAdmin();
       }
     }
 
-    // RULES FOR EVENTS (AMERICANAS & ENTRENOS)
-    match /{collection}/{eventId} {
-      allow read: if request.auth != null;
-      
-      // Admins only for full write
+    // ==========================================
+    // REGLAS PARA EVENTOS (AMERICANAS & ENTRENOS)
+    // ==========================================
+    match /americanas/{eventId} {
+      allow read: if isAuthenticated();
       allow write: if isAdmin();
       
-      // Allow players to register if event is open
-      allow update: if request.auth != null && 
+      // Permitir a jugadores inscribirse/desinscribirse si el evento está abierto
+      allow update: if isAuthenticated() && 
                     resource.data.status == 'open' &&
                     (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['players', 'registeredPlayers', 'waitlist']));
     }
 
-    // RULES FOR MATCHES
+    match /entrenos/{eventId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+      allow update: if isAuthenticated() && 
+                    resource.data.status == 'open' &&
+                    (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['players', 'registeredPlayers', 'waitlist']));
+    }
+
+    // ==========================================
+    // REGLAS PARA PARTIDOS (INTEGRIDAD DE RESULTADOS)
+    // ==========================================
     match /matches/{matchId} {
-      allow read: if request.auth != null;
+      allow read: if isAuthenticated();
       allow create, delete: if isAdmin();
-      allow update: if request.auth != null;
+      // Permitimos update general por ahora (para que los capitanes/jugadores marquen resultados si la app lo permite)
+      // En una fase superior, restringiríamos esto a los IDs de los jugadores del partido.
+      allow update: if isAuthenticated();
     }
     
     match /entrenos_matches/{matchId} {
-      allow read: if request.auth != null;
+      allow read: if isAuthenticated();
       allow create, delete: if isAdmin();
-      allow update: if request.auth != null;
+      allow update: if isAuthenticated();
     }
 
-    // RULES FOR MENU & CONFIG
+    // ==========================================
+    // MISCELÁNEA (CONFIG & MENÚS)
+    // ==========================================
     match /menu_items/{itemId} {
-      allow read: if true;
+      allow read: if true; // El menú suele ser visible antes del login completo o para invitados
       allow write: if isAdmin();
     }
     
     match /config/{configId} {
-      allow read: if request.auth != null;
+      allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
 
-    // RULES FOR CHATS
+    // ==========================================
+    // SISTEMA DE CHATS (COMUNICACIÓN)
+    // ==========================================
     match /chats/{eventId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
 
       match /messages/{messageId} {
-        allow read: if request.auth != null;
-        allow create: if request.auth != null;
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
         allow delete: if isAdmin();
-        allow update: if request.auth != null && 
+        // Solo el emisor puede editar su mensaje o un admin
+        allow update: if isAuthenticated() && 
                       (resource.data.senderId == request.auth.uid || isAdmin());
       }
     }
+    
+    // Regla de seguridad final: denegar todo lo que no esté explícitamente permitido
+    match /{allPaths=**} {
+      allow read, write: if isAdmin();
+    }
   }
 }
+

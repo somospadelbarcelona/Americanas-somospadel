@@ -51,8 +51,9 @@
             try {
                 if (!this.db) return [];
                 const all = await this.db.getAll();
+                const today = new Date().toISOString().split('T')[0];
                 return all
-                    .filter(a => a.status !== 'finished')
+                    .filter(a => a.status !== 'finished' && (a.date >= today || a.status === 'live'))
                     .sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
             } catch (error) {
                 console.error("Error fetching active americanas:", error);
@@ -77,9 +78,12 @@
                     ...ents.map(e => ({ ...e, type: 'entreno' }))
                 ];
 
-                // Filtramos por estado, no por fecha, para asegurar que eventos en curso sigan monitorizados
+                const today = new Date().toISOString().split('T')[0];
+
+                // Filtramos por estado Y fecha para evitar que eventos antiguos olvidados "ensucien" el Dashboard
+                // Excepción: Eventos 'live' (por si alguno se alarga o el admin lo tiene activo)
                 return all
-                    .filter(e => e.status !== 'finished')
+                    .filter(e => e.status !== 'finished' && (e.date >= today || e.status === 'live'))
                     .sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
             } catch (error) {
                 console.error("Error fetching all active events:", error);

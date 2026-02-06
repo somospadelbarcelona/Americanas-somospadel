@@ -28,17 +28,28 @@
                         <p style="color: #bbb; margin-top: 10px; font-size: 0.7rem; letter-spacing: 4px; text-transform: uppercase; font-weight: 800; position:relative; z-index:2;">
                             LEYENDAS DE SOMOSPADEL
                         </p>
-                        <div class="handwritten-seal">Temporada 2026</div>
+                        
+                        <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
+                            <div class="handwritten-seal" style="margin:0;">Temporada 2026</div>
+                            <button onclick="window.RecordsView.shareHallOfFame()" 
+                                style="background: #25D366; color: white; border: none; padding: 8px 18px; border-radius: 12px; font-weight: 950; font-size: 0.65rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3); cursor: pointer; position:relative; z-index:2;">
+                                <i class="fab fa-whatsapp" style="font-size: 0.95rem;"></i> COMPARTIR
+                            </button>
+                        </div>
                     </div>
 
                     <!-- RECORDS GRID -->
-                    <div style="padding: 30px 15px; display: grid; gap: 35px; max-width: 700px; margin: 0 auto;">
-                        ${this.renderCard(records.giant, "Level Delta Hit", 1)}
-                        ${this.renderCard(records.streak, "Victorias seguidas", 2)}
-                        ${this.renderCard(records.catalyst, "Compañeros distintos", 3)}
-                        ${this.renderCard(records.sniper, "Efectividad %", 4)}
-                        ${this.renderCard(records.ironman, "Semanas Activo", 5)}
-                        ${this.renderCard(records.wall, "Juegos Encajados", 6)}
+                    <div style="padding: 30px 15px; display: grid; gap: 35px; max-width: 730px; margin: 0 auto;">
+                        ${this.renderCard(records.alpha, "Partidos en Pista 1", 1)}
+                        ${this.renderCard(records.punisher, "Ratio Killer", 2)}
+                        ${this.renderCard(records.ame, "Puntos Americanas", 3)}
+                        ${this.renderCard(records.ent, "Puntos Entrenos", 4)}
+                        ${this.renderCard(records.giant, "Level Delta Hit", 5)}
+                        ${this.renderCard(records.streak, "Victorias seguidas", 6)}
+                        ${this.renderCard(records.catalyst, "Compañeros distintos", 7)}
+                        ${this.renderCard(records.sniper, "Efectividad %", 8)}
+                        ${this.renderCard(records.ironman, "Semanas Activo", 9)}
+                        ${this.renderCard(records.wall, "Juegos Encajados", 10)}
                     </div>
                 </div>
 
@@ -48,7 +59,7 @@
                     @keyframes iconFloat { 0% { transform: translateY(0) rotate(0deg); opacity: 0.15; } 50% { transform: translateY(-10px) rotate(5deg); opacity: 0.25; } 100% { transform: translateY(0) rotate(0deg); opacity: 0.15; } }
                     @keyframes writing { from { width: 0; opacity: 0; } to { width: 170px; opacity: 1; } }
                     
-                    .handwritten-seal { font-family: 'Caveat', cursive; font-size: 1.8rem; color: #CCFF00; margin: 15px auto 0 auto; position: relative; z-index: 5; width: 170px; white-space: nowrap; overflow: hidden; border-right: 2px solid transparent; animation: writing 2s cubic-bezier(0.4, 0, 0.2, 1) forwards; text-shadow: 0 0 10px rgba(204,255,0,0.4); transform: rotate(-3deg); }
+                    .handwritten-seal { font-family: 'Caveat', cursive; font-size: 1.8rem; color: #CCFF00; position: relative; z-index: 5; width: 170px; white-space: nowrap; overflow: hidden; border-right: 2px solid transparent; animation: writing 2s cubic-bezier(0.4, 0, 0.2, 1) forwards; text-shadow: 0 0 10px rgba(204,255,0,0.4); transform: rotate(-3deg); }
                     .fame-title { font-family: 'Montserrat', sans-serif; font-weight: 950; font-size: 2.8rem; text-transform: uppercase; color: #fff; margin: 0; letter-spacing: -2px; animation: neonTitle 3s infinite alternate; position: relative; z-index: 2; }
                     .hero-glow { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 60%); pointer-events: none; }
                     
@@ -140,6 +151,14 @@
                 </div>
             `;
         }
+
+        shareHallOfFame() {
+            const records = window.RecordsController ? window.RecordsController.getRecords() : null;
+            if (records && window.WhatsAppService) {
+                window.WhatsAppService.shareHallOfFame(records);
+            }
+        }
     }
     window.RecordsView = new RecordsView();
+    window.RecordsView.shareHallOfFame = window.RecordsView.shareHallOfFame.bind(window.RecordsView);
 })();
