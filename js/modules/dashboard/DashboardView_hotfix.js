@@ -149,10 +149,57 @@ console.log("✅ [HOTFIX] DashboardView LOADED from NEW FILE");
 
                                 .registration-ticker-card, 
                                 .holo-card {
-                                    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+                                    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
                                     flex-shrink: 0;
                                     pointer-events: auto !important;
                                     user-select: none;
+                                    position: relative;
+                                    overflow: hidden;
+                                    transform-style: preserve-3d;
+                                }
+
+                                .registration-ticker-card::before,
+                                .holo-card::before {
+                                    content: '';
+                                    position: absolute;
+                                    top: 0; left: -150%;
+                                    width: 100%; height: 100%;
+                                    background: linear-gradient(
+                                        90deg, 
+                                        transparent, 
+                                        rgba(255,255,255,0.05) 45%, 
+                                        rgba(255,255,255,0.15) 50%, 
+                                        rgba(255,255,255,0.05) 55%, 
+                                        transparent
+                                    );
+                                    transform: skewX(-25deg);
+                                    transition: 0s;
+                                    z-index: 5;
+                                    pointer-events: none;
+                                }
+
+                                .registration-ticker-card:hover::before,
+                                .holo-card:hover::before {
+                                    left: 150%;
+                                    transition: 0.8s ease-in-out;
+                                }
+
+                                .registration-ticker-card:hover,
+                                .holo-card:hover {
+                                    transform: translateY(-8px) scale(1.02) rotateX(2deg);
+                                    border-color: rgba(255,255,255,0.4) !important;
+                                    box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 20px rgba(255,255,255,0.1) !important;
+                                    z-index: 50;
+                                }
+
+                                @keyframes tagPulse {
+                                    0% { opacity: 0.7; transform: scale(1); }
+                                    50% { opacity: 1; transform: scale(1.05); }
+                                    100% { opacity: 0.7; transform: scale(1); }
+                                }
+
+                                .premium-tag {
+                                    animation: tagPulse 2s infinite ease-in-out;
                                 }
                                 
                                 /* 3D HOLO ENGINE STYLES */
@@ -186,19 +233,12 @@ console.log("✅ [HOTFIX] DashboardView LOADED from NEW FILE");
                                     0% { transform: translateX(0); }
                                     100% { transform: translateX(-50%); }
                                 }
-                                .holo-card {
+                                .holo-card-inner {
                                     transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
                                     transform: rotateY(15deg);
                                     transform-origin: left center;
-                                    backdrop-filter: blur(5px);
-                                    -webkit-backdrop-filter: blur(5px);
-                                }
-                                .holo-card:hover {
-                                    transform: rotateY(0deg) scale(1.05) translateZ(20px);
-                                    z-index: 50;
-                                    box-shadow: 0 25px 50px rgba(0,0,0,0.8) !important;
-                                    border-color: #fff !important;
-                                    filter: brightness(1.2);
+                                    backdrop-filter: blur(8px);
+                                    -webkit-backdrop-filter: blur(8px);
                                 }
                             </style>
                             <div id="live-scroller-inner" class="infinite-scroll-wrapper" style="transform-style: preserve-3d; padding-left: 20px;">
@@ -223,7 +263,7 @@ console.log("✅ [HOTFIX] DashboardView LOADED from NEW FILE");
 
 
 
-                    <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - CLEAN INTERACTIVE -->
+                    <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - MOBILE OPTIMIZED -->
                     <div id="merch-widget-root" onclick="window.open('https://wa.me/34649219350?text=Hola!%20Me%20interesa%20la%20sudadera%20de%20Somos%20Padel%20BCN', '_blank')" style="
                         margin: 2px 15px 12px !important; 
                         background: radial-gradient(circle at 10% 20%, #60a5fa 0%, #1e40af 100%);
@@ -246,55 +286,56 @@ console.log("✅ [HOTFIX] DashboardView LOADED from NEW FILE");
                         <div style="position: absolute; left: -20px; top: -20px; width: 100px; height: 100px; background: #CCFF00; filter: blur(50px); opacity: 0.3; pointer-events: none;"></div>
 
                         <!-- Image Section (Left) -->
-                        <div style="width: 45%; position: relative; display: flex; align-items: center; justify-content: center; z-index: 5; pointer-events: none;">
+                        <div style="width: 42%; position: relative; display: flex; align-items: center; justify-content: center; z-index: 5; pointer-events: none;">
                              <img src="./img/sudadera.jpg" 
                                   onerror="this.style.display='none'" 
-                                  style="width: 110%; height: 110%; object-fit: contain; transform: rotate(-5deg) scale(1.2) translateY(5px); filter: drop-shadow(0 15px 25px rgba(0,0,0,0.4));">
+                                  style="width: 120%; height: 120%; object-fit: contain; transform: rotate(-5deg) scale(1.15) translateY(5px); filter: drop-shadow(0 15px 25px rgba(0,0,0,0.4));">
                         </div>
 
                         <!-- Content Section (Right) -->
-                        <div style="width: 55%; padding: 15px 20px 15px 10px; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 2; pointer-events: none;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+                        <div style="width: 58%; padding: 15px 15px 15px 5px; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 2; pointer-events: none;">
+                            <div style="display:flex; justify-content:flex-start; align-items:center; margin-bottom: 6px;">
                                 <div style="
                                     background: #CCFF00; 
                                     color: #000; 
-                                    font-size: 0.65rem; 
+                                    font-size: 0.6rem; 
                                     font-weight: 1000; 
-                                    padding: 4px 10px; 
-                                    border-radius: 8px; 
+                                    padding: 3px 8px; 
+                                    border-radius: 6px; 
                                     text-transform: uppercase;
                                     letter-spacing: 0.5px;
                                     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
                                 ">NUEVA COLECCIÓN</div>
                             </div>
                             
-                            <h3 style="margin: 0; font-size: 1.2rem; color: white; font-weight: 900; line-height: 1; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                            <h3 style="margin: 0; font-size: 1.1rem; color: white; font-weight: 900; line-height: 1; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">
                                 SUDADERA
                             </h3>
-                            <div style="font-size: 1rem; color: #e0f2fe; font-weight: 300; margin-bottom: 2px; letter-spacing: 1px;">SOMOSPADEL BCN</div>
+                            <div style="font-size: 0.8rem; color: #e0f2fe; font-weight: 400; margin-bottom: 2px; letter-spacing: 0.5px; white-space: nowrap;">SOMOSPADEL BCN</div>
                             
                             <!-- Price & Button Row -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; gap: 10px; pointer-events: auto;">
-                                <div style="color:white; font-weight:900; font-size:1.2rem; text-shadow:0 2px 10px rgba(0,0,0,0.3);">
-                                    24<span style="font-size:0.7rem; vertical-align:top;">,99€</span>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; gap: 8px; pointer-events: auto;">
+                                <div style="color:white; font-weight:900; font-size:1.1rem; text-shadow:0 2px 10px rgba(0,0,0,0.3); white-space: nowrap;">
+                                    24<span style="font-size:0.6rem; vertical-align:top;">,99€</span>
                                 </div>
 
                                 <div style="
                                     background: white; 
                                     color: #1e40af; 
-                                    font-size: 0.75rem; 
+                                    font-size: 0.72rem; 
                                     font-weight: 950; 
-                                    padding: 8px 16px; 
-                                    border-radius: 20px; 
+                                    padding: 7px 14px; 
+                                    border-radius: 18px; 
                                     box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
                                     display: flex; 
                                     align-items: center; 
-                                    gap: 6px; 
+                                    gap: 5px; 
                                     transition: all 0.2s;
                                     transform-origin: center;
                                     cursor: pointer;
-                                " onmouseover="this.style.transform='scale(1.1) rotate(2deg)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.3)'" onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.2)'">
-                                    COMPRAR <i class="fas fa-shopping-cart"></i>
+                                    white-space: nowrap;
+                                " onmouseover="this.style.transform='scale(1.05) rotate(1deg)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.3)'" onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.2)'">
+                                    COMPRAR <i class="fas fa-shopping-cart" style="font-size: 0.7rem;"></i>
                                 </div>
                             </div>
                         </div>
@@ -923,10 +964,10 @@ console.log("✅ [HOTFIX] DashboardView LOADED from NEW FILE");
                 if (weatherData && weatherData[0]) {
                     const w = weatherData[0];
                     itemsHtml.push(`
-                <div class="registration-ticker-card" onclick="window.dashNavigate('weather_story', 'weather')" style="cursor: pointer; min-width: 280px; height: 160px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 18px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05);">
+                <div class="registration-ticker-card" onclick="window.dashNavigate('weather_story', 'weather')" style="cursor: pointer; min-width: 280px; width: 280px; height: 180px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 18px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05);">
                             <div style="position: absolute; right: -20px; bottom: -20px; font-size: 7rem; opacity: 0.1; filter: blur(2px); animation: weatherFloat 6s ease-in-out infinite; pointer-events: none;">${w.icon}</div>
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 2; pointer-events: none;">
-                                <span style="font-size:0.6rem; font-weight:1000; color:white; background:rgba(59, 130, 246, 0.8); padding:5px 12px; border-radius:8px; letter-spacing:1px; box-shadow: 0 0 15px rgba(59,130,246,0.3); text-transform:uppercase;">METEO</span>
+                                <span class="premium-tag" style="font-size:0.6rem; font-weight:1000; color:white; background:rgba(59, 130, 246, 0.8); padding:5px 12px; border-radius:8px; letter-spacing:1px; box-shadow: 0 0 15px rgba(59,130,246,0.3); text-transform:uppercase;">METEO</span>
                                 <div style="display:flex; flex-direction:column; align-items:flex-end;">
                                     <span style="font-size:1.8rem;">${w.icon}</span>
                                 </div>
@@ -965,7 +1006,7 @@ console.log("✅ [HOTFIX] DashboardView LOADED from NEW FILE");
                         <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.2; background: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 3px); pointer-events: none;"></div>
                         
                         <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3; margin-bottom: 20px; pointer-events: none;">
-                            <span style="font-size:0.65rem; font-weight:1000; color:white; background:#ff4d00; padding:6px 14px; border-radius:100px; text-transform:uppercase; letter-spacing:1px; box-shadow: 0 0 15px #ff4d00;">RECOMENDACIÓN</span>
+                            <span class="premium-tag" style="font-size:0.65rem; font-weight:1000; color:white; background:#ff4d00; padding:6px 14px; border-radius:100px; text-transform:uppercase; letter-spacing:1px; box-shadow: 0 0 15px #ff4d00;">RECOMENDACIÓN</span>
                             <i class="fas fa-fire-alt" style="color:#ffcdb2; animation: pulseDot 1s infinite;"></i>
                         </div>
                         <div style="position:relative; z-index:3; pointer-events: none;">
@@ -983,12 +1024,12 @@ console.log("✅ [HOTFIX] DashboardView LOADED from NEW FILE");
                     if (lowerName.includes('fem') || lowerName.includes('wom')) aiClass = 'neon';
 
                     itemsHtml.push(`
-                    <div class="holo-card" onclick="window.dashNavigate('entrenos', 'event')" style="min-width: 260px; width: 260px; height: 180px; ${getAiVisual(aiClass)} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="holo-card" onclick="window.dashNavigate('entrenos', 'event')" style="min-width: 280px; width: 280px; height: 180px; ${getAiVisual(aiClass)} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
                         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; opacity: 0.2; filter: blur(4px); color: rgba(255,255,255,0.5); pointer-events: none;"><i class="fas fa-medal"></i></div>
                         <div style="position: absolute; inset: 0; background: linear-gradient(top, transparent, rgba(0,0,0,0.8)); pointer-events: none;"></div>
                         
                         <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3; margin-bottom: 12px; pointer-events: none;">
-                             <span style="font-size:0.6rem; color:rgba(255,255,255,0.8); font-weight:950; letter-spacing:1px; border: 1px solid rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 8px;">${this.formatDateShort(am.date)}</span>
+                             <span class="premium-tag" style="font-size:0.6rem; color:rgba(255,255,255,0.8); font-weight:950; letter-spacing:1px; border: 1px solid rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 8px;">${this.formatDateShort(am.date)}</span>
                         </div>
                         <div style="position:relative; z-index:3; margin-top: auto; pointer-events: none;">
                             <h4 style="margin:0; color:white; font-size:1rem; font-weight:1000; line-height:1.2;">${am.name}</h4>
@@ -1015,13 +1056,13 @@ console.log("✅ [HOTFIX] DashboardView LOADED from NEW FILE");
                     if (tip.action.includes('showChatInfo')) route = 'chat_info';
 
                     itemsHtml.push(`
-                    <div class="holo-card" onclick="window.dashNavigate('${route}', 'tip')" style="cursor: pointer; min-width: 260px; width: 260px; height: 180px; background: #0f172a; border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="holo-card" onclick="window.dashNavigate('${route}', 'tip')" style="cursor: pointer; min-width: 280px; width: 280px; height: 180px; background: #0f172a; border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);">
                         <!-- VISUAL PLACEHOLDER -->
                         <div style="position: absolute; inset:0; background: conic-gradient(from 180deg at 50% 50%, #1e293b 0deg, #0f172a 120deg, ${tip.accent} 240deg, #1e293b 360deg); opacity: 0.4; pointer-events: none;"></div>
                         <div style="position: absolute; top:0; left:0; width:100%; height:100%; filter: url(#noise); opacity: 0.1; pointer-events: none;"></div>
                         
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 2; pointer-events: none;">
-                            <span style="font-size:0.6rem; font-weight:1000; color:white; background:rgba(0,0,0,0.4); padding:4px 10px; border-radius:10px; border:1px solid ${tip.accent}80; letter-spacing:1px; white-space:nowrap;">${tip.tag}</span>
+                            <span class="premium-tag" style="font-size:0.6rem; font-weight:1000; color:white; background:rgba(0,0,0,0.4); padding:4px 10px; border-radius:10px; border:1px solid ${tip.accent}80; letter-spacing:1px; white-space:nowrap;">${tip.tag}</span>
                             <div style="width:30px; height:30px; background:${tip.accent}20; border-radius:50%; display:flex; align-items:center; justify-content:center;">
                                 <i class="fas ${tip.icon}" style="color:${tip.accent}; font-size:1rem;"></i>
                             </div>
