@@ -76,7 +76,7 @@ self.addEventListener('message', (event) => {
     }
 });
 
-const CACHE_NAME = 'somospadel-pro-v40';
+const CACHE_NAME = 'somospadel-pro-v45';
 const STATIC_RESOURCES = [
     './',
     './index.html',

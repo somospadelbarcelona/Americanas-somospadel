@@ -1,12 +1,7 @@
-/**
- * DashboardView.js [v40 CLEAN]
- * "Context-First" Mobile Dashboard
- * Designed for Clarity, Speed and Outdoor Use
- */
-console.log("✅ [HOTFIX] DashboardView LOADED from NEW FILE");
 (function () {
     // VISUAL VERIFICATION
-    setTimeout(() => console.log("%c 🚀 CAMBIOS APLICADOS: Dashboard Interactivo ", "background: #CCFF00; color: #000; font-size: 14px; padding: 4px; font-weight: bold;"), 1000);
+    setTimeout(() => console.log("%c 🚀 DASHBOARD ENGINE V9: CLEAN MODE ", "background: #CCFF00; color: #000; font-size: 14px; padding: 4px; font-weight: bold;"), 1000);
+
 
     class DashboardView {
         constructor() {
@@ -51,6 +46,7 @@ console.log("✅ [HOTFIX] DashboardView LOADED from NEW FILE");
                     }
                 });
             }
+
         }
 
         async render(data) {
@@ -80,6 +76,8 @@ console.log("✅ [HOTFIX] DashboardView LOADED from NEW FILE");
                     <div id="story-feed-root" style="margin: 0 !important; animation: floatUp 0.8s ease-out forwards; padding-top: 2px;">
                         <!-- Cargado vía JS (StoryFeedWidget) -->
                     </div>
+
+                    <!-- (Old Quick Actions Grid removed to favor the new Floating command Center) -->
 
 
                     <!-- 6. NEWS MARQUEE (3D HOLO ENGINE) -->
@@ -263,79 +261,74 @@ console.log("✅ [HOTFIX] DashboardView LOADED from NEW FILE");
 
 
 
-                    <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - MOBILE OPTIMIZED -->
+                    <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - FINAL MOBILE FIX -->
                     <div id="merch-widget-root" onclick="window.open('https://wa.me/34649219350?text=Hola!%20Me%20interesa%20la%20sudadera%20de%20Somos%20Padel%20BCN', '_blank')" style="
                         margin: 2px 15px 12px !important; 
-                        background: radial-gradient(circle at 10% 20%, #60a5fa 0%, #1e40af 100%);
+                        background: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
                         border-radius: 24px;
                         padding: 0;
                         position: relative;
                         overflow: hidden;
-                        box-shadow: 0 15px 40px rgba(30, 60, 114, 0.4);
-                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+                        border: 1px solid rgba(255, 255, 255, 0.25);
                         cursor: pointer;
                         animation: floatUp 0.8s ease-out forwards;
                         display: flex;
-                        height: 160px;
+                        height: 180px;
                         transition: transform 0.2s;
                     " onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                         
                         <!-- BG Effect -->
-                        <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.15; background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 15px 15px; pointer-events: none;"></div>
-                        <div style="position: absolute; right: -50px; bottom: -50px; width: 200px; height: 200px; background: #ffffff; filter: blur(60px); opacity: 0.2; pointer-events: none;"></div>
-                        <div style="position: absolute; left: -20px; top: -20px; width: 100px; height: 100px; background: #CCFF00; filter: blur(50px); opacity: 0.3; pointer-events: none;"></div>
+                        <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.1; background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 15px 15px; pointer-events: none;"></div>
 
-                        <!-- Image Section (Left) -->
+                        <!-- Image Section (Left) - PRECISION MASKING -->
                         <div style="width: 42%; position: relative; display: flex; align-items: center; justify-content: center; z-index: 5; pointer-events: none;">
                              <img src="./img/sudadera.jpg" 
                                   onerror="this.style.display='none'" 
-                                  style="width: 120%; height: 120%; object-fit: contain; transform: rotate(-5deg) scale(1.15) translateY(5px); filter: drop-shadow(0 15px 25px rgba(0,0,0,0.4));">
+                                  style="
+                                      width: 110%; 
+                                      height: 110%; 
+                                      object-fit: contain; 
+                                      transform: rotate(-3deg) translateX(-5px); 
+                                      filter: drop-shadow(0 25px 35px rgba(0,0,0,0.7)) brightness(1.05) contrast(1.1);
+                                  ">
                         </div>
 
-                        <!-- Content Section (Right) -->
-                        <div style="width: 58%; padding: 15px 15px 15px 5px; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 2; pointer-events: none;">
-                            <div style="display:flex; justify-content:flex-start; align-items:center; margin-bottom: 6px;">
-                                <div style="
-                                    background: #CCFF00; 
-                                    color: #000; 
-                                    font-size: 0.6rem; 
-                                    font-weight: 1000; 
-                                    padding: 3px 8px; 
-                                    border-radius: 6px; 
-                                    text-transform: uppercase;
-                                    letter-spacing: 0.5px;
-                                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                                ">NUEVA COLECCIÓN</div>
+                        <!-- Content Section (Right) - DARK GRADIENT FOR LEGIBILITY -->
+                        <div style="width: 60%; padding: 15px 15px 15px 10px; display: flex; flex-direction: column; justify-content: center; gap: 6px; position: relative; z-index: 10; pointer-events: none; background: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 20%, rgba(0,0,0,0.8) 100%);">
+                            
+                            <div style="background: #CCFF00; color: #000; font-size: 0.6rem; font-weight: 1000; padding: 3px 10px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; width: fit-content; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                                NUEVA COLECCIÓN
                             </div>
                             
-                            <h3 style="margin: 0; font-size: 1.1rem; color: white; font-weight: 900; line-height: 1; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                            <h3 style="margin: 0; font-size: 1.4rem; color: white; font-weight: 950; line-height: 1; text-shadow: 0 4px 15px rgba(0,0,0,0.8);">
                                 SUDADERA
                             </h3>
-                            <div style="font-size: 0.8rem; color: #e0f2fe; font-weight: 400; margin-bottom: 2px; letter-spacing: 0.5px; white-space: nowrap;">SOMOSPADEL BCN</div>
                             
-                            <!-- Price & Button Row -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; gap: 8px; pointer-events: auto;">
-                                <div style="color:white; font-weight:900; font-size:1.1rem; text-shadow:0 2px 10px rgba(0,0,0,0.3); white-space: nowrap;">
-                                    24<span style="font-size:0.6rem; vertical-align:top;">,99€</span>
-                                </div>
+                            <div style="font-size: 0.95rem; color: rgba(255,255,255,1); font-weight: 800; text-shadow: 0 2px 8px rgba(0,0,0,1);">
+                                SOMOSPADEL BCN
+                            </div>
+                            
+                            <div style="color:#CCFF00; font-weight:900; font-size: 1.5rem; text-shadow:0 3px 12px rgba(0,0,0,0.8); margin: 2px 0;">
+                                24<span style="font-size:0.85rem; vertical-align:top;">,99€</span>
+                            </div>
 
+                            <div style="pointer-events: auto; margin-top: 4px;">
                                 <div style="
                                     background: white; 
                                     color: #1e40af; 
-                                    font-size: 0.72rem; 
-                                    font-weight: 950; 
-                                    padding: 7px 14px; 
-                                    border-radius: 18px; 
-                                    box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
-                                    display: flex; 
+                                    font-size: 0.8rem; 
+                                    font-weight: 1000; 
+                                    padding: 10px 22px; 
+                                    border-radius: 14px; 
+                                    box-shadow: 0 8px 20px rgba(0,0,0,0.3); 
+                                    display: inline-flex; 
                                     align-items: center; 
-                                    gap: 5px; 
+                                    gap: 8px; 
                                     transition: all 0.2s;
-                                    transform-origin: center;
                                     cursor: pointer;
-                                    white-space: nowrap;
-                                " onmouseover="this.style.transform='scale(1.05) rotate(1deg)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.3)'" onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.2)'">
-                                    COMPRAR <i class="fas fa-shopping-cart" style="font-size: 0.7rem;"></i>
+                                " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 12px 25px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.3)'">
+                                    COMPRAR <i class="fas fa-shopping-cart" style="font-size: 0.8rem;"></i>
                                 </div>
                             </div>
                         </div>
@@ -481,35 +474,14 @@ console.log("✅ [HOTFIX] DashboardView LOADED from NEW FILE");
                     </div>
                 </div>
 
-
-
-        <style>
-            @keyframes slowTicker {
-                0% { transform: translateX(0); }
-                100% { transform: translateX(-50%); }
-            }
-            .ticker-container {
-                width: 100%;
-                overflow: hidden;
-                position: relative;
-                mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-                -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-            }
-            .ticker-content {
-                display: flex;
-                gap: 12px;
-                animation: slowTicker 25s linear infinite;
-                width: max-content;
-                padding: 10px 0;
-            }
-            .ticker-content:hover {
-                animation-play-state: paused;
-            }
-            .dashboard-v2-container ::-webkit-scrollbar { display: none; }
-        </style>
+                    .dashboard-v2-container ::-webkit-scrollbar { display: none; }
+                </style>
     `;
 
-            // 3. ASYNC LOADING OF DATA-DEPENDENT COMPONENTS
+
+
+
+            // 4. ASYNC LOADING OF DATA-DEPENDENT COMPONENTS
             try {
                 // Build context (Might take time)
                 const context = await this.buildContext(user);
