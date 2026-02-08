@@ -18,7 +18,7 @@ window.AdminViews.entrenos_mgmt = async function () {
 
     try {
         // Forzar recarga de datos saltando caché si es posible
-        if (window.CacheService) window.CacheService.remove(`all_entrenos`);
+        if (window.CacheService) window.CacheService.remove('entrenos', 'all');
 
         const entrenos = await EventService.getAll(AppConstants.EVENT_TYPES.ENTRENO);
         const sortedEntrenos = entrenos.sort((a, b) => new Date(b.date) - new Date(a.date));

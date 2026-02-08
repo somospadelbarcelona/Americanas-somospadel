@@ -547,8 +547,15 @@ const FirebaseDB = {
     // Entrenos Collection
     entrenos: {
         async getAll() {
-            const snapshot = await db.collection('entrenos').orderBy('date', 'desc').get();
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const fetchFn = async () => {
+                const snapshot = await db.collection('entrenos').orderBy('date', 'desc').get();
+                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            };
+
+            if (window.CacheService) {
+                return await window.CacheService.swr('entrenos', 'all', fetchFn);
+            }
+            return await fetchFn();
         },
         async getById(id) {
             const doc = await db.collection('entrenos').doc(id).get();
@@ -562,16 +569,21 @@ const FirebaseDB = {
                 ...data,
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
             });
+
+            if (window.CacheService) window.CacheService.remove('entrenos', 'all');
+
             const doc = await docRef.get();
             return { id: doc.id, ...doc.data() };
         },
         async update(id, data) {
             await db.collection('entrenos').doc(id).update(data);
+            if (window.CacheService) window.CacheService.remove('entrenos', 'all');
             const doc = await db.collection('entrenos').doc(id).get();
             return { id: doc.id, ...doc.data() };
         },
         async delete(id) {
             await db.collection('entrenos').doc(id).delete();
+            if (window.CacheService) window.CacheService.remove('entrenos', 'all');
         },
 
         // ========== WAITLIST MANAGEMENT ==========

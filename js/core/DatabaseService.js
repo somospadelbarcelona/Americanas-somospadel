@@ -59,7 +59,7 @@
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
             });
             // Clear cache for this collection
-            if (window.CacheService) window.CacheService.remove(`all_${this.collectionName}`);
+            if (window.CacheService) window.CacheService.remove('database', `all_${this.collectionName}`);
             return { id: docRef.id, ...data };
         }
 
@@ -68,8 +68,8 @@
             await this.collection.doc(id).update(data);
             // Clear cache
             if (window.CacheService) {
-                window.CacheService.remove(`all_${this.collectionName}`);
-                window.CacheService.remove(`doc_${this.collectionName}_${id}`);
+                window.CacheService.remove('database', `all_${this.collectionName}`);
+                window.CacheService.remove('database', `doc_${this.collectionName}_${id}`);
             }
             return { id, ...data };
         }
@@ -79,8 +79,8 @@
             await this.collection.doc(id).delete();
             // Clear cache
             if (window.CacheService) {
-                window.CacheService.remove(`all_${this.collectionName}`);
-                window.CacheService.remove(`doc_${this.collectionName}_${id}`);
+                window.CacheService.remove('database', `all_${this.collectionName}`);
+                window.CacheService.remove('database', `doc_${this.collectionName}_${id}`);
             }
         }
     }
