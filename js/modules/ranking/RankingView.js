@@ -15,6 +15,9 @@
             const container = document.getElementById('content-area');
             if (!container) return;
 
+            // 0. Process data for current view/category
+            const rankedData = this.getProcessedData();
+
             container.innerHTML = `
                 <div class="ranking-global-wrapper fade-in" style="
                     background: #000;
@@ -48,7 +51,7 @@
 
                     <!-- 2. OLYMPIC PODIUM (Top 3 Visual) -->
                     <div id="ranking-podium-root" style="position: relative; z-index: 4;">
-                        ${this.renderPodium(players)}
+                        ${this.renderPodium(rankedData)}
                     </div>
 
                     <!-- 3. MI RENDIMIENTO (High-Tech Card) -->
@@ -66,23 +69,25 @@
                     const currentUser = window.Store?.getState('currentUser');
                     if (!currentUser) return '<div style="grid-column:1/-1; text-align:center; font-size:0.8rem; color:#64748b; font-weight:700;">Inicia sesión para ver tu posición</div>';
 
-                    const userStats = players.find(p => p.id === currentUser.uid || p.id === currentUser.id);
-                    if (!userStats) return '<div style="grid-column:1/-1; text-align:center; font-size:0.8rem; color:#64748b; font-weight:700;">Sin datos en el ranking actual</div>';
+                    const userStats = rankedData.find(p => p.id === currentUser.uid || p.id === currentUser.id);
+                    if (!userStats) return '<div style="grid-column:1/-1; text-align:center; font-size:0.8rem; color:#64748b; font-weight:700;">Participa para aparecer en el ranking de esta categoría</div>';
 
                     const s = userStats.stats[this.currentView] || { played: 0, won: 0, points: 0 };
-                    const winRate = s.played > 0 ? Math.round((s.won / s.played) * 100) : 0;
-                    const pos = players.findIndex(p => p.id === userStats.id) + 1;
+                    const displayStats = this.currentCategory === 'todas' ? s : (s.categories[this.currentCategory] || { points: 0, played: 0, won: 0 });
+
+                    const winRate = displayStats.played > 0 ? Math.round((displayStats.won / displayStats.played) * 100) : 0;
+                    const pos = userStats.rank;
 
                     return `
                                         <div style="text-align: left; border-right: 1px solid rgba(255,255,255,0.05); padding-right: 15px;">
                                             <div style="font-size: 0.6rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">POSICIÓN ACTUAL</div>
                                             <div style="font-size: 2rem; font-weight: 950; color: #fff; line-height: 1.2;">#${pos}</div>
-                                            <div style="font-size: 0.7rem; color: #CCFF00; font-weight: 800;">TOP ${(pos / players.length * 100).toFixed(0)}% GLOBAL</div>
+                                            <div style="font-size: 0.7rem; color: #CCFF00; font-weight: 800;">TOP ${(pos / rankedData.length * 100).toFixed(0)}% EN ${this.currentCategory.toUpperCase()}</div>
                                         </div>
                                         <div style="text-align: left; padding-left: 5px;">
                                             <div style="font-size: 0.6rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">EFECTIVIDAD</div>
                                             <div style="font-size: 2rem; font-weight: 950; color: #fff; line-height: 1.2;">${winRate}%</div>
-                                            <div style="font-size: 0.7rem; color: #64748b; font-weight: 800;"><i class="fas fa-fire" style="color:#ef4444;"></i> ${s.won}W / ${s.played - s.won}L</div>
+                                            <div style="font-size: 0.7rem; color: #64748b; font-weight: 800;"><i class="fas fa-fire" style="color:#ef4444;"></i> ${displayStats.won}W / ${displayStats.played - displayStats.won}L</div>
                                         </div>
                                     `;
                 })()}
@@ -211,7 +216,10 @@
                                     <div style="font-weight: 950; font-size: 0.75rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 95px;" title="${p.name}">
                                         ${p.name}
                                     </div>
-                                    <div style="font-weight: 950; font-size: 0.75rem; color: ${color}; opacity: 0.9;">${(p.stats[this.currentView]?.points || 0)} <span style="font-size: 0.55rem; font-weight: 700;">PTS</span></div>
+                                    <div style="font-weight: 950; font-size: 0.75rem; color: ${color}; opacity: 0.9;">
+                                        ${this.currentCategory === 'todas' ? (p.stats[this.currentView]?.points || 0) : (p.stats[this.currentView]?.categories[this.currentCategory]?.points || 0)} 
+                                        <span style="font-size: 0.55rem; font-weight: 700;">PTS</span>
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -220,46 +228,49 @@
             `;
         }
 
-        renderRankingList(searchQuery = '') {
-            // 1. Get ALL players that have played in this view
-            let fullList = this.playersData.filter(p => {
+        /**
+         * Unified Helper to filter, sort and rank players for the current context
+         */
+        getProcessedData() {
+            if (!this.playersData) return [];
+
+            // 1. Initial Filter (Played at least 1 match in this view)
+            let filtered = this.playersData.filter(p => {
                 const s = p.stats[this.currentView];
-                return s && s.played > 0;
-            });
+                if (!s || s.played === 0) return false;
 
-            // 2. Sort them to get the GLOBAL ranking order
-            fullList.sort((a, b) => {
-                const sA = a.stats[this.currentView];
-                const sB = b.stats[this.currentView];
-                const pA = sA.points;
-                const pB = sB.points;
-                if (pB !== pA) return pB - pA;
-                return (b.level || 0) - (a.level || 0);
-            });
-
-            // 3. Assign global rank and filter by Category if not searching
-            // If searching, we skip category filter to find the player anywhere
-            const isSearching = searchQuery && searchQuery.length >= 2;
-
-            const rankedList = fullList.map((p, i) => {
-                return { ...p, globalRank: i + 1 };
-            });
-
-            let finalDisplayList = rankedList.filter(p => {
-                const s = p.stats[this.currentView];
-
-                // If searching, filter by name
-                if (isSearching) {
-                    return p.name.toLowerCase().includes(searchQuery.toLowerCase());
-                }
-
-                // If not searching, filter by category
+                // Category Filter
                 if (this.currentCategory !== 'todas') {
                     const hasCat = s.categories && s.categories[this.currentCategory] && s.categories[this.currentCategory].played > 0;
                     return hasCat;
                 }
                 return true;
             });
+
+            // 2. Sort by current context points
+            filtered.sort((a, b) => {
+                const sA = a.stats[this.currentView];
+                const sB = b.stats[this.currentView];
+
+                const pA = this.currentCategory === 'todas' ? sA.points : (sA.categories[this.currentCategory]?.points || 0);
+                const pB = this.currentCategory === 'todas' ? sB.points : (sB.categories[this.currentCategory]?.points || 0);
+
+                if (pB !== pA) return pB - pA;
+                return (b.level || 0) - (a.level || 0); // Level as tie-breaker
+            });
+
+            // 3. Map with Rank
+            return filtered.map((p, i) => ({ ...p, rank: i + 1 }));
+        }
+
+        renderRankingList(searchQuery = '') {
+            const rankedData = this.getProcessedData();
+            const isSearching = searchQuery && searchQuery.length >= 2;
+
+            let finalDisplayList = rankedData;
+            if (isSearching) {
+                finalDisplayList = rankedData.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+            }
 
             if (finalDisplayList.length === 0) {
                 return `
@@ -273,7 +284,7 @@
 
             return `
                 <div style="display: flex; flex-direction: column; gap: 12px;">
-                    ${finalDisplayList.map((p, i) => this.renderPlayerRow(p, p.globalRank, finalDisplayList[i - 1])).join('')}
+                    ${finalDisplayList.map((p, i) => this.renderPlayerRow(p, p.rank, finalDisplayList[i - 1])).join('')}
                 </div>
             `;
         }

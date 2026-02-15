@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Ranking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #2d5016;
+            border: 1px solid #4caf50;
+        }
+        .error {
+            background: #5d1616;
+            border: 1px solid #f44336;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnóstico del Módulo RANKING</h1>
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+        
+        function addResult(message, isSuccess) {
+            const div = document.createElement('div');
+            div.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            div.innerHTML = `${isSuccess ? '✅' : '❌'} ${message}`;
+            results.appendChild(div);
+        }
+
+        // Test 1: Check if scripts are loaded
+        addResult('Iniciando diagnóstico...', true);
+
+        // Test 2: Check window objects
+        setTimeout(() => {
+            if (typeof window.RankingController !== 'undefined') {
+                addResult('RankingController está definido', true);
+            } else {
+                addResult('RankingController NO está definido', false);
+            }
+
+            if (typeof window.RankingView !== 'undefined') {
+                addResult('RankingView está definido', true);
+            } else {
+                addResult('RankingView NO está definido', false);
+            }
+
+            if (typeof window.Router !== 'undefined') {
+                addResult('Router está definido', true);
+            } else {
+                addResult('Router NO está definido', false);
+            }
+
+            if (typeof window.FirebaseDB !== 'undefined') {
+                addResult('FirebaseDB está definido', true);
+            } else {
+                addResult('FirebaseDB NO está definido', false);
+            }
+
+            if (typeof window.CacheService !== 'undefined') {
+                addResult('CacheService está definido', true);
+            } else {
+                addResult('CacheService NO está definido', false);
+            }
+
+            // Test 3: Try to call init
+            if (window.RankingController && typeof window.RankingController.init === 'function') {
+                addResult('RankingController.init() es una función', true);
+                try {
+                    addResult('Intentando ejecutar RankingController.init()...', true);
+                    window.RankingController.init();
+                    addResult('RankingController.init() ejecutado sin errores', true);
+                } catch (error) {
+                    addResult(`Error al ejecutar init(): ${error.message}`, false);
+                    console.error('Error completo:', error);
+                }
+            } else {
+                addResult('RankingController.init() NO es una función', false);
+            }
+        }, 1000);
+    </script>
+
+    <!-- Load Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-init.js"></script>
+
+    <!-- Load Core Services -->
+    <script src="js/core/StateManager.js"></script>
+    <script src="js/core/CacheService.js"></script>
+    <script src="js/core/DatabaseService.js"></script>
+    <script src="js/core/Router.js"></script>
+
+    <!-- Load Ranking Module -->
+    <script src="js/modules/ranking/RankingView.js"></script>
+    <script src="js/modules/ranking/RankingController.js"></script>
+</body>
+</html>
