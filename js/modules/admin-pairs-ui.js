@@ -92,9 +92,22 @@ window.PairsUI = {
         // Sort available alphabet
         available.sort((a, b) => a.name.localeCompare(b.name));
 
-        const opts = `<option value="">Seleccionar...</option>` + available.map(p => `<option value="${p.id || p.uid}">${p.name}</option>`).join('');
+        const opts = `<option value="">Seleccionar...</option>` + available.map(p => {
+            const partnerInfo = p.partner_name ? ` (🤝 con ${p.partner_name})` : '';
+            return `<option value="${p.id || p.uid}">${p.name}${partnerInfo}</option>`;
+        }).join('');
 
-        if (s1) s1.innerHTML = opts;
+        if (s1) {
+            s1.innerHTML = opts;
+            s1.onchange = () => {
+                const p = available.find(x => String(x.id || x.uid) === s1.value);
+                if (p && p.partner_id && s2) {
+                    // Try to find if the partner exists in s2 options
+                    const exists = [...s2.options].some(opt => opt.value === String(p.partner_id));
+                    if (exists) s2.value = String(p.partner_id);
+                }
+            };
+        }
         if (s2) s2.innerHTML = opts;
     },
 

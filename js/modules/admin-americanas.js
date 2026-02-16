@@ -304,7 +304,7 @@ function renderCreateAmericanaForm() {
 
             <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:12px;">
                 <div class="form-group">
-                    <label><i class="fas fa-users"></i> MODO</label>
+                    <label><i class="fas fa-users"></i> MODO (PRO)</label>
                     <select name="pair_mode" class="pro-input">
                         <option value="fixed">🔒 POZO (Elige pareja)</option>
                         <option value="fixed_admin">👔 POZO (Admin elige)</option>

@@ -155,9 +155,171 @@ class PremiumModal {
             overlay.querySelector('#p-modal-ok').onclick = cleanup;
         });
     }
+
+    static async prompt(options = {}) {
+        this._injectStyles();
+        const {
+            title = 'ENTRADA DE DATOS',
+            message = 'Escribe a continuación:',
+            placeholder = 'Nombre del compañero...',
+            confirmText = 'ENVIAR',
+            cancelText = 'CANCELAR',
+            type = 'info'
+        } = options;
+
+        return new Promise((resolve) => {
+            const colors = {
+                warning: '#ccff00',
+                danger: '#ff3b30',
+                info: '#00d4ff',
+                success: '#00ff88'
+            };
+            const accent = colors[type] || colors.info;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'pm-overlay';
+
+            const modal = document.createElement('div');
+            modal.className = 'pm-card';
+            modal.style.setProperty('--accent-glow', accent + '40');
+
+            modal.innerHTML = `
+                <div style="height: 5px; background: linear-gradient(90deg, ${accent}00, ${accent}, ${accent}00); width: 100%;"></div>
+                <div style="padding: 35px 30px 25px;">
+                    <h3 style="color: white; font-family: 'Outfit'; font-weight: 900; margin-bottom: 8px; font-size: 1.3rem; text-align:center;">${title}</h3>
+                    <div style="color: #94a3b8; font-size: 0.9rem; line-height: 1.4; margin-bottom: 20px; text-align:center;">${message}</div>
+                    <input type="text" id="pm-prompt-input" placeholder="${placeholder}" 
+                           style="width: 100%; padding: 16px; border-radius: 16px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; font-family: 'Outfit'; font-size: 1rem; outline: none; border: 1.5px solid ${accent}40;">
+                </div>
+                <div style="display: flex; padding: 0 25px 30px; gap: 12px;">
+                    <button id="p-modal-cancel" class="pm-btn pm-btn-secondary" style="background: transparent; color: #64748b; border: 1px solid rgba(255,255,255,0.05);">${cancelText}</button>
+                    <button id="p-modal-confirm" class="pm-btn pm-btn-primary" style="background: ${accent}; color: #000;">${confirmText}</button>
+                </div>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            const cleanup = (result) => {
+                const val = overlay.querySelector('#pm-prompt-input').value;
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.remove();
+                    resolve(result ? val : null);
+                }, 200);
+            };
+
+            overlay.querySelector('#p-modal-confirm').onclick = () => cleanup(true);
+            overlay.querySelector('#p-modal-cancel').onclick = () => cleanup(false);
+
+            // Focus and enter key
+            const input = overlay.querySelector('#pm-prompt-input');
+            setTimeout(() => input.focus(), 100);
+            input.onkeydown = (e) => { if (e.key === 'Enter') cleanup(true); };
+        });
+    }
+
+    static async selector(options = {}) {
+        this._injectStyles();
+        const {
+            title = 'SELECCIONAR',
+            message = 'Elige un elemento de la lista:',
+            items = [], // Array of { id, name, sub/image }
+            placeholder = 'Buscar...',
+            cancelText = 'CANCELAR',
+            type = 'info'
+        } = options;
+
+        return new Promise((resolve) => {
+            const colors = {
+                warning: '#ccff00',
+                danger: '#ff3b30',
+                info: '#00d4ff',
+                success: '#00ff88'
+            };
+            const accent = colors[type] || colors.info;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'pm-overlay';
+
+            const modal = document.createElement('div');
+            modal.className = 'pm-card';
+            modal.style.maxWidth = '480px';
+            modal.style.setProperty('--accent-glow', accent + '40');
+
+            modal.innerHTML = `
+                <div style="height: 5px; background: linear-gradient(90deg, ${accent}00, ${accent}, ${accent}00); width: 100%;"></div>
+                <div style="padding: 25px 25px 15px;">
+                    <h3 style="color: white; font-family: 'Outfit'; font-weight: 900; margin-bottom: 5px; font-size: 1.3rem;">${title}</h3>
+                    <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 15px;">${message}</div>
+                    <div style="position: relative; margin-bottom: 15px;">
+                        <i class="fas fa-search" style="position: absolute; left: 15px; top: 18px; color: #444;"></i>
+                        <input type="text" id="pm-search-input" placeholder="${placeholder}" 
+                               style="width: 100%; padding: 16px 16px 16px 45px; border-radius: 16px; background: rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.05); color: white; font-family: 'Outfit'; font-size: 1rem; outline: none; transition: border-color 0.2s;">
+                    </div>
+                </div>
+                <div id="pm-items-container" style="max-height: 350px; overflow-y: auto; padding: 0 15px 15px; display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Items will be injected here -->
+                </div>
+                <div style="padding: 15px 25px 25px; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <button id="p-modal-cancel" class="pm-btn pm-btn-secondary" style="width: 100%; background: rgba(255,255,255,0.02); color: #64748b;">${cancelText}</button>
+                </div>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            const container = overlay.querySelector('#pm-items-container');
+            const searchInput = overlay.querySelector('#pm-search-input');
+
+            const renderItems = (filter = '') => {
+                const term = filter.toLowerCase();
+                const filtered = items.filter(it => it.name.toLowerCase().includes(term) || (it.sub && it.sub.toLowerCase().includes(term)));
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `<div style="padding: 30px; text-align: center; color: #444; font-size: 0.9rem;">No se encontraron resultados</div>`;
+                    return;
+                }
+
+                container.innerHTML = filtered.map(it => `
+                    <div class="pm-item" data-id="${it.id}" style="display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.02); cursor: pointer; transition: all 0.2s;">
+                        <div style="width: 40px; height: 40px; border-radius: 12px; background: ${it.image ? `url('${it.image}') center/cover` : accent + '20'}; border: 1px solid ${accent}30; flex-shrink: 0; display:flex; align-items:center; justify-content:center;">
+                            ${!it.image ? `<i class="fas fa-user" style="color:${accent}; font-size:0.8rem;"></i>` : ''}
+                        </div>
+                        <div style="flex: 1; overflow: hidden;">
+                            <div style="color: white; font-weight: 800; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${it.name.toUpperCase()}</div>
+                            ${it.sub ? `<div style="color: #64748b; font-size: 0.75rem; font-weight: 600;">${it.sub}</div>` : ''}
+                        </div>
+                        <i class="fas fa-chevron-right" style="color: #333; font-size: 0.7rem;"></i>
+                    </div>
+                `).join('');
+
+                // Add hover style via JS or style tag
+                container.querySelectorAll('.pm-item').forEach(el => {
+                    el.onmouseenter = () => { el.style.background = 'rgba(255,255,255,0.08)'; el.style.borderColor = accent + '40'; };
+                    el.onmouseleave = () => { el.style.background = 'rgba(255,255,255,0.03)'; el.style.borderColor = 'rgba(255,255,255,0.02)'; };
+                    el.onclick = () => {
+                        const item = items.find(i => String(i.id) === el.dataset.id);
+                        cleanup(item);
+                    };
+                });
+            };
+
+            const cleanup = (result) => {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.remove();
+                    resolve(result);
+                }, 200);
+            };
+
+            searchInput.oninput = (e) => renderItems(e.target.value);
+            overlay.querySelector('#p-modal-cancel').onclick = () => cleanup(null);
+
+            renderItems();
+            setTimeout(() => searchInput.focus(), 100);
+        });
+    }
 }
-
-window.PremiumModal = PremiumModal;
-
 
 window.PremiumModal = PremiumModal;

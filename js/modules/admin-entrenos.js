@@ -155,7 +155,7 @@ window.AdminViews.entrenos_create = async function () {
                             <input type="number" name="rounds_count" class="pro-input" value="6" min="1" style="height: 50px;">
                         </div>
                          <div class="form-group">
-                            <label>MODO DE JUEGO</label>
+                            <label>MODO DE JUEGO (PRO)</label>
                             <select name="pair_mode" class="pro-input" style="height: 50px;">
                                 <option value="fixed">🔒 PAREJA FIJA (Elige pareja)</option>
                                 <option value="fixed_admin">👔 PAREJA FIJA (Admin elige)</option>

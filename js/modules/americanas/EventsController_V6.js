@@ -1058,18 +1058,74 @@
                 window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión para inscribirte." });
                 return;
             }
-            if (await this.waitForService()) {
-                const confirmed = await window.PremiumModal.confirm({
-                    title: "🎾 INSCRIBIRSE",
-                    message: "¿Quieres apuntarte a este evento?",
-                    confirmText: "SÍ, APUNTARME"
-                });
-                if (!confirmed) return;
 
-                const res = await window.AmericanaService.addPlayer(id, this.state.currentUser, type);
+            const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
+            const evt = events.find(e => e.id === id);
+            if (!evt) return;
+
+            const mode = (evt.pair_mode || evt.format || '').toLowerCase();
+            const isFixed = mode === 'fixed' || (evt.name || '').toUpperCase().includes('FIJA');
+
+            if (await this.waitForService()) {
+                let partnerName = null;
+                let partnerId = null;
+
+                if (isFixed) {
+                    const choice = await window.PremiumModal.confirm({
+                        title: "🎾 PAREJA FIJA",
+                        message: "¿Te apuntas solo o con tu compañero habitual?",
+                        confirmText: "ELEGIR PAREJA",
+                        cancelText: "SOLO"
+                    });
+
+                    if (choice) {
+                        // 1. Fetch Players
+                        const playersSvc = window.createService('players');
+                        const allPlayers = await playersSvc.getAll();
+
+                        // Filter out current user and map for selector
+                        const currentUid = this.state.currentUser.uid || this.state.currentUser.id;
+                        const items = allPlayers
+                            .filter(p => p.id !== currentUid)
+                            .map(p => ({
+                                id: p.id,
+                                name: p.name || 'Sin nombre',
+                                sub: `Nivel: ${p.level || p.self_rate_level || '3.5'} • ${p.phone || 'SP Player'}`,
+                                image: p.photo_url || p.photo
+                            }));
+
+                        const selectedPartner = await window.PremiumModal.selector({
+                            title: "🔍 BUSCAR COMPAÑERO",
+                            message: "Selecciona a tu compañero de la base de datos:",
+                            items: items,
+                            placeholder: "Escribe nombre o teléfono..."
+                        });
+
+                        if (!selectedPartner) return;
+
+                        partnerName = selectedPartner.name;
+                        partnerId = selectedPartner.id;
+                    } else {
+                        const confirmSolo = await window.PremiumModal.confirm({
+                            title: "⚖️ APUNTARSE SOLO",
+                            message: "Te apuntarás sin pareja. El sistema o el admin te asignarán una más adelante. ¿Continuar?",
+                            confirmText: "SÍ, APUNTARME"
+                        });
+                        if (!confirmSolo) return;
+                    }
+                } else {
+                    const confirmed = await window.PremiumModal.confirm({
+                        title: "🎾 INSCRIBIRSE",
+                        message: "¿Quieres apuntarte a este evento?",
+                        confirmText: "SÍ, APUNTARME"
+                    });
+                    if (!confirmed) return;
+                }
+
+                const res = await window.AmericanaService.addPlayer(id, this.state.currentUser, type, partnerName, partnerId);
                 window.PremiumModal.alert({
                     title: res.success ? "✅ ÉXITO" : "❌ ERROR",
-                    message: res.success ? "Te has inscrito correctamente." : "Error: " + res.error,
+                    message: res.success ? (partnerName ? `Inscrito correctamente con ${partnerName}.` : "Te has inscrito correctamente.") : "Error: " + res.error,
                     type: res.success ? 'success' : 'error'
                 });
             }
@@ -1184,6 +1240,7 @@
 
                     // Priorizar el joinedAt del evento (que es el real de la inscripción)
                     pData.joinedAt = registrationMeta.joinedAt || pData.joinedAt || null;
+                    pData.partner_name = registrationMeta.partner_name || null;
                     dbPlayers.push(pData);
                 });
 
@@ -1257,6 +1314,7 @@
                                 <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;">
                                     ${teamsBadges}
                                 </div>
+                                ${p.partner_name ? `<div style="margin-top: 8px; background: rgba(204, 255, 0, 0.1); border: 1px solid #CCFF0033; color: #CCFF00; font-size: 0.65rem; font-weight: 950; padding: 4px 10px; border-radius: 8px; display: inline-block;">🤝 PAREJA: ${p.partner_name.toUpperCase()}</div>` : ''}
                             </div>
                         </div>
 

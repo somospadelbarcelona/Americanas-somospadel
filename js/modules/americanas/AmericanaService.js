@@ -91,7 +91,7 @@
             }
         }
 
-        async addPlayer(americanaId, user, type = 'americana') {
+        async addPlayer(americanaId, user, type = 'americana', partnerName = null, partnerId = null) {
             try {
                 // Determine which collection service to use
                 const service = this._getCollectionService(type);
@@ -112,11 +112,20 @@
                     throw new Error("Ya estás inscrito en este evento.");
                 }
 
+                const maxPlayers = (event.max_courts || 4) * 4;
+                const capacity = maxPlayers - players.length;
+                const wantsTwo = !!partnerName;
+
+                if (wantsTwo && capacity < 2) {
+                    throw new Error(`Solo queda 1 plaza disponible. No puedes apuntar a una pareja.`);
+                } else if (capacity < 1) {
+                    throw new Error(`No quedan plazas disponibles.`);
+                }
+
                 // GENDER VALIDATION
                 this.validateGender(event.category, user.gender);
 
                 const userGender = user.gender || 'M';
-
                 const normalizedGender = (userGender === 'M' || userGender === 'chico') ? 'chico' :
                     (userGender === 'F' || userGender === 'chica') ? 'chica' : '?';
 
@@ -130,7 +139,57 @@
                     joinedAt: new Date().toISOString()
                 };
 
+                // Add partner info to the first player
+                if (partnerName) {
+                    newPlayerData.partner_name = partnerName;
+                    if (partnerId) newPlayerData.partner_id = partnerId;
+                }
+
                 players.push(newPlayerData);
+
+                // REGISTER PARTNER AS A SEPARATE PLAYER
+                if (wantsTwo) {
+                    let partnerData = null;
+                    if (partnerId) {
+                        try {
+                            const partnerDoc = await window.db.collection('players').doc(partnerId).get();
+                            if (partnerDoc.exists) {
+                                const pd = partnerDoc.data();
+                                partnerData = {
+                                    id: partnerId,
+                                    uid: partnerId,
+                                    name: pd.name || partnerName,
+                                    level: pd.level || pd.self_rate_level || '3.5',
+                                    team_somospadel: pd.team_somospadel || pd.team || [],
+                                    gender: (pd.gender === 'F' || pd.gender === 'chica') ? 'chica' : 'chico',
+                                    joinedAt: new Date().toISOString(),
+                                    partner_name: newPlayerData.name,
+                                    partner_id: newPlayerData.id
+                                };
+                            }
+                        } catch (e) { console.error("Error fetching partner data:", e); }
+                    }
+
+                    // Fallback if no partnerId or fetch failed
+                    if (!partnerData) {
+                        partnerData = {
+                            id: partnerId || `guest_${Date.now()}`,
+                            uid: partnerId || null,
+                            name: partnerName,
+                            level: '3.5',
+                            gender: '?',
+                            joinedAt: new Date().toISOString(),
+                            partner_name: newPlayerData.name,
+                            partner_id: newPlayerData.id
+                        };
+                    }
+
+                    // Check if partner already exists in players (to avoid double entry)
+                    const partnerExists = players.find(p => (p.id === partnerData.id || (p.uid && p.uid === partnerData.uid)));
+                    if (!partnerExists) {
+                        players.push(partnerData);
+                    }
+                }
 
                 // USE THE CORRECT SERVICE (Americanas or Entrenos)
                 await service.update(americanaId, {
