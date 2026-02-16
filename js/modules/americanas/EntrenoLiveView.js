@@ -180,8 +180,9 @@
             const maxFinishedRound = finishedMatches.length > 0 ? Math.max(...finishedMatches.map(m => parseInt(m.round) || 1)) : 0;
             const nextRoundNum = maxFinishedRound + 1;
 
-            if (nextRoundNum > 6) {
-                alert("Torneo finalizado.");
+            const maxRounds = parseInt(this.eventData.rounds_count) || 6;
+            if (nextRoundNum > maxRounds) {
+                alert(`Torneo finalizado (${maxRounds} rondas jugadas).`);
                 return;
             }
 
@@ -248,7 +249,8 @@
         }
 
         _renderRoundSelector(maxRound) {
-            let roundsFn = [1, 2, 3, 4, 5, 6];
+            const totalRounds = parseInt(this.eventData.rounds_count) || 6;
+            let roundsFn = Array.from({ length: totalRounds }, (_, i) => i + 1);
             return `<div style="display:flex; gap:12px; overflow-x:auto; padding:0 20px 15px 20px;">
                 ${roundsFn.map(r => {
                 const exists = this.matches.some(m => (parseInt(m.round) || 1) === r);

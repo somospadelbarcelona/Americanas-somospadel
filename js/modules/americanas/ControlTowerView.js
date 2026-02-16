@@ -324,8 +324,8 @@
                 // Check if already prompted/dismissed for this specific max round
                 if (this.roundPromptDismissedFor === maxRound) return;
 
-                // Check if Max Rounds reached (e.g. 6)
-                const totalRounds = this.currentAmericanaDoc.rounds || 6;
+                // Check if Max Rounds reached
+                const totalRounds = parseInt(this.currentAmericanaDoc.rounds_count || this.currentAmericanaDoc.rounds) || 6;
                 if (maxRound >= totalRounds) return;
 
                 // SHOW PROMPT for the current completed round
@@ -649,7 +649,7 @@
             const maxMatchRound = this.allMatches.length > 0
                 ? Math.max(...this.allMatches.map(m => parseInt(m.round || 1)))
                 : 1;
-            const configRounds = this.currentAmericanaDoc?.rounds || 6;
+            const configRounds = parseInt(this.currentAmericanaDoc?.rounds_count || this.currentAmericanaDoc?.rounds) || 6;
             const roundsLimit = Math.max(maxMatchRound, configRounds);
 
             const roundsSchedule = Array.from({ length: roundsLimit }, (_, i) => ({ number: i + 1 }));

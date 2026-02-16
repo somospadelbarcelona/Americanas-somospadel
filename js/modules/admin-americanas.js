@@ -291,12 +291,25 @@ function renderCreateAmericanaForm() {
                 </div>
             </div>
 
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                 <div class="form-group">
+                    <label><i class="fas fa-table-tennis"></i> PISTAS</label>
+                    <input type="number" name="max_courts" class="pro-input" value="4" min="1">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-redo"></i> RONDAS</label>
+                    <input type="number" name="rounds_count" class="pro-input" value="6" min="1">
+                </div>
+            </div>
+
             <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:12px;">
                 <div class="form-group">
                     <label><i class="fas fa-users"></i> MODO</label>
                     <select name="pair_mode" class="pro-input">
+                        <option value="fixed">🔒 POZO (Elige pareja)</option>
+                        <option value="fixed_admin">👔 POZO (Admin elige)</option>
+                        <option value="fixed_auto">🤖 POZO (Automática)</option>
                         <option value="rotating">🌪️ TWISTER</option>
-                        <option value="fixed">🔒 POZO (Fijos)</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -465,6 +478,10 @@ window.openEditAmericanaModal = async (e) => {
         if (form.querySelector('[name=category]')) form.querySelector('[name=category]').value = e.category || 'open';
         if (form.querySelector('[name=location]')) form.querySelector('[name=location]').value = e.location || 'Barcelona Pádel el Prat';
         if (form.querySelector('[name=pair_mode]')) form.querySelector('[name=pair_mode]').value = e.pair_mode || 'rotating';
+        if (form.querySelector('[name=rounds_count]')) form.querySelector('[name=rounds_count]').value = e.rounds_count || 6;
+        if (form.querySelector('[name=max_courts]')) form.querySelector('[name=max_courts]').value = e.max_courts || 4;
+        if (form.querySelector('[name=price_members]')) form.querySelector('[name=price_members]').value = e.price_members || '';
+        if (form.querySelector('[name=price_external]')) form.querySelector('[name=price_external]').value = e.price_external || '';
         if (form.querySelector('[name=image_url]')) form.querySelector('[name=image_url]').value = e.image_url || '';
 
         // --- DYNAMIC VISIBILITY OF FIXED PAIRS (AMERICANA) ---
@@ -473,7 +490,8 @@ window.openEditAmericanaModal = async (e) => {
 
         const togglePairsArea = () => {
             if (pairsArea) {
-                if (pairModeSelect.value === 'fixed') {
+                const val = pairModeSelect.value;
+                if (val === 'fixed' || val === 'fixed_admin' || val === 'fixed_auto') {
                     pairsArea.style.display = 'block';
                 } else {
                     pairsArea.style.display = 'none';

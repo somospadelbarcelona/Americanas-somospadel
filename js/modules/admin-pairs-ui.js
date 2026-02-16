@@ -15,7 +15,7 @@ window.PairsUI = {
         if (!container) return;
 
         const event = await EventService.getById(eventType, eventId);
-        if (event.pair_mode !== 'fixed') {
+        if (event.pair_mode !== 'fixed' && event.pair_mode !== 'fixed_admin' && event.pair_mode !== 'fixed_auto') {
             container.style.display = 'none';
             return;
         }

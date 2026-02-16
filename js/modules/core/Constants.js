@@ -27,6 +27,8 @@ window.AppConstants = {
 
     PAIR_MODES: {
         FIXED: 'fixed',
+        FIXED_ADMIN: 'fixed_admin',
+        FIXED_AUTO: 'fixed_auto',
         ROTATING: 'rotating'
     },
 

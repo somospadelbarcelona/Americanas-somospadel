@@ -699,7 +699,9 @@
                     <div class="form-group">
                         <label><i class="fas fa-users"></i> MODO PAREJAS</label>
                         <select name="pair_mode" class="pro-input">
-                            <option value="fixed">🔒 PAREJA FIJA</option>
+                            <option value="fixed">🔒 PAREJA FIJA (Elige pareja)</option>
+                            <option value="fixed_admin">👔 PAREJA FIJA (Admin elige)</option>
+                            <option value="fixed_auto">🤖 PAREJA FIJA (Automática)</option>
                             <option value="rotating">🌪️ TWISTER</option>
                         </select>
                     </div>
@@ -898,7 +900,9 @@
                     <div class="form-group">
                         <label><i class="fas fa-users"></i> MODO PAREJAS</label>
                         <select name="pair_mode" class="pro-input">
-                            <option value="fixed">🔒 PAREJA FIJA</option>
+                            <option value="fixed">🔒 PAREJA FIJA (Elige pareja)</option>
+                            <option value="fixed_admin">👔 PAREJA FIJA (Admin elige)</option>
+                            <option value="fixed_auto">🤖 PAREJA FIJA (Automática)</option>
                             <option value="rotating">🌪️ TWISTER</option>
                         </select>
                     </div>
@@ -915,10 +919,14 @@
                 </div>
 
                 <!-- Bloque 4: Logística y Precios -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
                     <div class="form-group">
                         <label><i class="fas fa-table-tennis"></i> PISTAS</label>
                         <input type="number" name="max_courts" class="pro-input" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-redo"></i> RONDAS</label>
+                        <input type="number" name="rounds_count" class="pro-input" placeholder="6" value="6">
                     </div>
                     <div class="form-group">
                         <label><i class="fas fa-euro-sign"></i> SOCIO</label>

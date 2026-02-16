@@ -46,7 +46,8 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
 
                 try {
                     // Determine Mode
-                    const isFixedPairs = event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED;
+                    const M = APP_CONSTANTS.PAIR_MODES;
+                    const isFixedPairs = event.pair_mode === M.FIXED || event.pair_mode === M.FIXED_ADMIN || event.pair_mode === M.FIXED_AUTO;
 
                     // --- CRITICAL IDEMPOTENCY CHECK (DB Level) ---
                     const checkColl = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
@@ -174,7 +175,7 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                             let pairs = event.fixed_pairs || [];
 
                             if (pairs.length === 0) {
-                                console.log("🔒 No manual pairs found. Generating automatic fixed pairs...");
+                                console.log(`🔒 Pair generation for mode: ${event.pair_mode}`);
                                 let players = event.players || [];
                                 if (eventType === 'entreno') players = this._sortPlayersForEntreno(players);
 
@@ -183,7 +184,12 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                                     current_court: p.current_court || (Math.floor(i / 4) + 1)
                                 }));
 
-                                pairs = FixedPairsLogic.createFixedPairs(playersWithCourts, event.category, eventType === 'entreno');
+                                if (event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED_AUTO) {
+                                    pairs = FixedPairsLogic.createSmartFixedPairs(playersWithCourts, event.category);
+                                } else {
+                                    pairs = FixedPairsLogic.createFixedPairs(playersWithCourts, event.category, eventType === 'entreno');
+                                }
+
                                 await collection.update(eventId, { fixed_pairs: pairs });
                             }
                             return await this._createMatches(eventId, FixedPairsLogic.generatePozoRound(pairs, 1, effectiveCourts), eventType);

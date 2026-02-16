@@ -145,15 +145,21 @@ window.AdminViews.entrenos_create = async function () {
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 1.5rem;">
                         <div class="form-group">
                             <label>NÚMERO DE PISTAS</label>
                             <input type="number" name="max_courts" class="pro-input" value="4" min="1" style="height: 50px;">
                         </div>
+                        <div class="form-group">
+                            <label>Nº PARTIDOS (RONDAS)</label>
+                            <input type="number" name="rounds_count" class="pro-input" value="6" min="1" style="height: 50px;">
+                        </div>
                          <div class="form-group">
                             <label>MODO DE JUEGO</label>
                             <select name="pair_mode" class="pro-input" style="height: 50px;">
-                                <option value="fixed">🔒 PAREJA FIJA</option>
+                                <option value="fixed">🔒 PAREJA FIJA (Elige pareja)</option>
+                                <option value="fixed_admin">👔 PAREJA FIJA (Admin elige)</option>
+                                <option value="fixed_auto">🤖 PAREJA FIJA (Automática)</option>
                                 <option value="rotating">🌪️ TWISTER (Individual)</option>
                             </select>
                         </div>
@@ -526,6 +532,26 @@ window.openEditEntrenoModal = async (entreno) => {
 
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
+
+    // --- DYNAMIC VISIBILITY OF FIXED PAIRS (ENTRENO) ---
+    const pairModeSelect = form.querySelector('[name=pair_mode]');
+    const pairsArea = document.getElementById('entreno-fixed-pairs-area');
+
+    const togglePairsArea = () => {
+        if (pairsArea) {
+            const val = pairModeSelect.value;
+            if (val === 'fixed' || val === 'fixed_admin' || val === 'fixed_auto') {
+                pairsArea.style.display = 'block';
+            } else {
+                pairsArea.style.display = 'none';
+            }
+        }
+    };
+
+    if (pairModeSelect) {
+        pairModeSelect.onchange = togglePairsArea; // Bind change listener
+        togglePairsArea(); // Init state based on loaded value
+    }
 
     // Hook Sub-modules
     if (window.loadEntrenoParticipantsUI) window.loadEntrenoParticipantsUI(entreno.id);

@@ -51,6 +51,106 @@ const FixedPairsLogic = {
     },
 
     /**
+     * 🤖 Lógica de Emparejamiento Inteligente (Smart Auto-Pairing)
+     * Empareja a los jugadores según su equipo Somospadel, afinidad de nivel y género.
+     */
+    createSmartFixedPairs(players, category = 'open') {
+        console.log(`🤖 Iniciando Smart Auto-Pairing para ${players.length} jugadores...`);
+
+        const available = [...players];
+        const pairs = [];
+        let pairCount = 0;
+
+        // Limpiar géneros (normalizar)
+        available.forEach(p => {
+            p._gender = (p.gender || 'chico').toLowerCase();
+            p._level = parseFloat(p.level || p.self_rate_level || 3.5);
+            p._teams = Array.isArray(p.team_somospadel) ? p.team_somospadel : (p.team_somospadel ? [p.team_somospadel] : []);
+        });
+
+        const findBestMatch = (player, others) => {
+            let bestScore = -1;
+            let bestIndex = -1;
+
+            others.forEach((candidate, idx) => {
+                let score = 0;
+
+                // 1. GÉNERO (Filtro Crítico para MIXTO)
+                if (category === 'mixed') {
+                    // En mixto buscamos chico + chica
+                    if (player._gender !== candidate._gender) score += 100;
+                    else score -= 50; // Penalizar mismo género en mixto
+                }
+
+                // 2. EQUIPO (Afinidad Máxima)
+                const commonTeams = player._teams.filter(t => candidate._teams.includes(t));
+                if (commonTeams.length > 0) {
+                    score += 200; // Prioridad absoluta: juegan en el mismo equipo
+                }
+
+                // 3. NIVEL (Equilibrio)
+                const levelDiff = Math.abs(player._level - candidate._level);
+                if (levelDiff === 0) score += 50;
+                else if (levelDiff <= 0.25) score += 30;
+                else if (levelDiff <= 0.5) score += 10;
+                else score -= levelDiff * 20; // Penalizar grandes diferencias de nivel
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestIndex = idx;
+                }
+            });
+
+            return bestIndex;
+        };
+
+        // Algoritmo Greedy para emparejar
+        while (available.length >= 2) {
+            const player = available.shift(); // Sacar el primero
+            const matchIdx = findBestMatch(player, available);
+
+            if (matchIdx !== -1) {
+                const partner = available.splice(matchIdx, 1)[0];
+
+                const pair = {
+                    id: `pair_auto_${Date.now()}_${pairCount++}`,
+                    player1_id: player.id || player.uid,
+                    player2_id: partner.id || partner.uid,
+                    player1_name: player.name,
+                    player2_name: partner.name,
+                    pair_name: `${player.name} / ${partner.name}`,
+                    wins: 0,
+                    losses: 0,
+                    games_won: 0,
+                    games_lost: 0,
+                    current_court: 1, // Se asignará luego secuencialmente
+                    initial_court: 1,
+                    is_auto: true
+                };
+                pairs.push(pair);
+            }
+        }
+
+        // Ordenar las parejas finales por nivel medio para asignar pistas iniciales
+        pairs.forEach(p => {
+            const p1 = players.find(x => (x.id || x.uid) === p.player1_id);
+            const p2 = players.find(x => (x.id || x.uid) === p.player2_id);
+            p._avgLevel = ((p1?._level || 3.5) + (p2?._level || 3.5)) / 2;
+        });
+
+        pairs.sort((a, b) => b._avgLevel - a._avgLevel);
+
+        // Asignar pistas
+        pairs.forEach((p, i) => {
+            p.current_court = Math.floor(i / 2) + 1;
+            p.initial_court = p.current_court;
+        });
+
+        console.log(`✅ Smart Auto-Pairing finalizado: ${pairs.length} parejas creadas.`);
+        return pairs;
+    },
+
+    /**
      * Generar ronda con sistema Pozo (parejas fijas)
      * @param {Array} pairs - Parejas fijas
      * @param {Number} roundNumber - Número de ronda
