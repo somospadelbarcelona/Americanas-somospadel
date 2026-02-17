@@ -26,11 +26,17 @@
 
             if (scoreA === scoreB && scoreA === 0) return;
 
-            const teamA = match.team_a_ids || [];
-            const teamB = match.team_b_ids || [];
+            // --- ROBUST ID EXTRACTION (Legacy Fallback) ---
+            let teamA = match.team_a_ids || [];
+            let teamB = match.team_b_ids || [];
+
+            if (teamA.length === 0 && match.player1) {
+                teamA = [match.player1.id || match.player1, match.player2.id || match.player2].filter(x => x && typeof x === 'string');
+                teamB = [match.player3.id || match.player3, match.player4.id || match.player4].filter(x => x && typeof x === 'string');
+            }
 
             // Get player levels for difficulty calculation
-            const allPlayerIds = [...teamA, ...teamB].filter(id => id && id !== 'vacante_id');
+            const allPlayerIds = [...teamA, ...teamB].filter(id => id && id !== 'vacante_id' && !id.includes('guest'));
             if (allPlayerIds.length === 0) return;
 
             const playersSnapshot = await window.db.collection('players')
@@ -53,33 +59,33 @@
                 const didWin = myScore > myRivalScore;
                 const totalGames = myScore + myRivalScore;
 
-                // 1. PERFORMANCE (60%) - Base 0.012 (60% of ~0.02 base match target)
-                let perfDelta = didWin ? 0.012 : -0.012;
+                // 1. PERFORMANCE (60%) - Base 0.030 (Increased from 0.012 for more visibility)
+                let perfDelta = didWin ? 0.030 : -0.030;
                 if (totalGames > 0) {
                     const gamesRatio = myScore / totalGames;
-                    // extra margin boost/penalty (up to +/- 0.005)
-                    const marginMultiplier = (gamesRatio - 0.5) * 0.01;
+                    // extra margin boost/penalty (up to +/- 0.01)
+                    const marginMultiplier = (gamesRatio - 0.5) * 0.02;
                     perfDelta += marginMultiplier;
                 }
 
-                // 2. DIFFICULTY (40%) - Base 0.008 (40% of ~0.02 base)
+                // 2. DIFFICULTY (40%) - Base 0.015
                 let diffDelta = 0;
                 const levelDiff = rivalTeamAvg - myTeamAvg; // rivals - me
 
                 if (didWin) {
                     // Win against stronger: big bonus
-                    if (levelDiff > 0) diffDelta = levelDiff * 0.02;
-                    else diffDelta = 0.004; // small base for winning against weaker
+                    if (levelDiff > 0) diffDelta = levelDiff * 0.05; // Increased K-factor
+                    else diffDelta = 0.005;
                 } else {
                     // Loss against weaker: big penalty
-                    if (levelDiff < 0) diffDelta = levelDiff * 0.02;
-                    else diffDelta = -0.004; // small base for losing against stronger
+                    if (levelDiff < 0) diffDelta = levelDiff * 0.05;
+                    else diffDelta = -0.005;
                 }
 
                 const totalDelta = perfDelta + diffDelta;
 
                 const updates = uids.map(uid => {
-                    if (uid && uid !== 'vacante_id') return this.updatePlayerLevel(uid, totalDelta);
+                    if (uid && uid !== 'vacante_id' && !uid.includes('guest')) return this.updatePlayerLevel(uid, totalDelta);
                     return Promise.resolve();
                 });
                 await Promise.all(updates);
@@ -102,25 +108,22 @@
                     processed_at: new Date().toISOString()
                 });
 
-                console.log(`✅ [LevelService] Smart Pro adjustment applied & saved to match.`);
+                console.log(`✅ [LevelService] Smart Pro adjustment applied: A(${deltaA}) B(${deltaB})`);
             } catch (error) {
                 console.error("❌ [LevelService] Error in advanced calculation:", error);
             }
         }
 
-        /**
-         * Helper for local calculation without side effects
-         */
         async _calculateDelta(myScore, rivalScore, myTeamAvg, rivalTeamAvg) {
             const didWin = myScore > rivalScore;
             const totalGames = myScore + rivalScore;
-            let perfDelta = didWin ? 0.012 : -0.012;
-            if (totalGames > 0) perfDelta += ((myScore / totalGames) - 0.5) * 0.01;
+            let perfDelta = didWin ? 0.030 : -0.030;
+            if (totalGames > 0) perfDelta += ((myScore / totalGames) - 0.5) * 0.02;
 
             let diffDelta = 0;
             const levelDiff = rivalTeamAvg - myTeamAvg;
-            if (didWin) diffDelta = levelDiff > 0 ? (levelDiff * 0.02) : 0.004;
-            else diffDelta = levelDiff < 0 ? (levelDiff * 0.02) : -0.004;
+            if (didWin) diffDelta = levelDiff > 0 ? (levelDiff * 0.05) : 0.005;
+            else diffDelta = levelDiff < 0 ? (levelDiff * 0.05) : -0.005;
 
             return Math.round((perfDelta + diffDelta) * 1000) / 1000;
         }
@@ -144,12 +147,14 @@
                     newLevel = Math.max(0.0, Math.min(7.5, newLevel));
                     newLevel = Math.round(newLevel * 100) / 100; // 2 decimals for display
 
+                    console.log(`📈 [LevelService] Updating player ${userId}: ${currentLevel.toFixed(3)} -> ${newLevel.toFixed(3)} (Δ: ${delta.toFixed(3)})`);
+
                     if (newLevel !== currentLevel) {
                         transaction.update(playerRef, {
                             level: newLevel,
                             self_rate_level: newLevel,
-                            last_level_change: Math.round(delta * 1000) / 1000,
-                            last_level_update: new Date().toISOString()
+                            last_level_change: delta,
+                            last_active: window.firebase.firestore.FieldValue.serverTimestamp()
                         });
 
                         // 📈 SAVE TO HISTORY FOR CHARTING
@@ -233,14 +238,14 @@
                         const total = myS + riS;
 
                         // Performance (60%)
-                        let pDelta = win ? 0.012 : -0.012;
-                        if (total > 0) pDelta += ((myS / total) - 0.5) * 0.01;
+                        let pDelta = win ? 0.030 : -0.030;
+                        if (total > 0) pDelta += ((myS / total) - 0.5) * 0.02;
 
                         // Difficulty (40%)
                         let dDelta = 0;
                         const diff = riAvg - myAvg;
-                        if (win) dDelta = diff > 0 ? (diff * 0.02) : 0.004;
-                        else dDelta = diff < 0 ? (diff * 0.02) : -0.004;
+                        if (win) dDelta = diff > 0 ? (diff * 0.05) : 0.005;
+                        else dDelta = diff < 0 ? (diff * 0.05) : -0.005;
 
                         const totalDelta = pDelta + dDelta;
                         uids.forEach(id => {
@@ -257,8 +262,9 @@
 
                 // Batch update Firestore with final calculated levels
                 console.log("💾 Saving recalculated levels to database...");
-                const batch = window.db.batch();
-                let updateCount = 0;
+                let batch = window.db.batch();
+                let batchCount = 0;
+                let totalUpdated = 0;
 
                 for (const pid in playerLevels) {
                     const roundedLevel = Math.round(playerLevels[pid] * 100) / 100;
@@ -266,12 +272,22 @@
                         level: roundedLevel,
                         last_recalc: new Date().toISOString()
                     });
-                    updateCount++;
+
+                    batchCount++;
+                    totalUpdated++;
+
+                    if (batchCount >= 450) {
+                        await batch.commit();
+                        batch = window.db.batch();
+                        batchCount = 0;
+                        console.log(`... saved ${totalUpdated} players`);
+                    }
                 }
 
-                await batch.commit();
-                alert(`✅ Recálculo completado: ${allMatches.length} partidos procesados para ${updateCount} jugadores.`);
-                console.log(`✅ [LevelService] Global recalculation complete. ${updateCount} players updated.`);
+                if (batchCount > 0) await batch.commit();
+
+                alert(`✅ Recálculo completado: ${allMatches.length} partidos procesados para ${totalUpdated} jugadores.`);
+                console.log(`✅ [LevelService] Global recalculation complete. ${totalUpdated} players updated.`);
                 return true;
             } catch (error) {
                 console.error("❌ [LevelService] Recalculation failed:", error);

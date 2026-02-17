@@ -136,6 +136,8 @@
                     level: user.level || user.self_rate_level || '3.5',
                     team_somospadel: user.team_somospadel || user.team || [],
                     gender: normalizedGender,
+                    side_preference: user.side_preference || 'INDIFF',
+                    play_style: user.play_style || 'ESTRATEGIA',
                     joinedAt: new Date().toISOString()
                 };
 
@@ -162,6 +164,8 @@
                                     level: pd.level || pd.self_rate_level || '3.5',
                                     team_somospadel: pd.team_somospadel || pd.team || [],
                                     gender: (pd.gender === 'F' || pd.gender === 'chica') ? 'chica' : 'chico',
+                                    side_preference: pd.side_preference || 'INDIFF',
+                                    play_style: pd.play_style || 'ESTRATEGIA',
                                     joinedAt: new Date().toISOString(),
                                     partner_name: newPlayerData.name,
                                     partner_id: newPlayerData.id

@@ -268,25 +268,45 @@ class SmartAlertsService {
                 }).join('')}
                         </div>
 
-                        <button id="btn-send-signal" class="btn-primary-pro" style="width:100%; justify-content:center; background:#FFD700; color:black; border:none;">
-                            <i class="fas fa-paper-plane"></i> ENVIAR ALERTAS AHORA
-                        </button>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="btn-send-signal" class="btn-primary-pro" style="flex: 2; justify-content: center; background:#FFD700; color:black; border:none; height: 50px;">
+                                <i class="fas fa-paper-plane"></i> ENVIAR PUSH
+                            </button>
+                            <button id="btn-whatsapp-signal" class="btn-primary-pro" style="flex: 1; justify-content: center; background:#25D366; color:white; border:none; height: 50px;">
+                                <i class="fab fa-whatsapp"></i> GRP
+                            </button>
+                        </div>
                     </div>
                 `;
 
                 const service = this;
+
+                // PUSH ACTION
                 document.getElementById('btn-send-signal').onclick = async function () {
                     const btn = this;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ENVIANDO...';
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>...';
                     btn.disabled = true;
 
                     await service.sendBatSignal(candidates, event);
 
-                    btn.innerHTML = '<i class="fas fa-check"></i> ¡ENVIADO!';
+                    btn.innerHTML = '<i class="fas fa-check"></i> OK';
                     setTimeout(() => {
                         document.getElementById('batsignal-modal').remove();
                         alert(`✅ Alerta enviada a ${candidates.length} jugadores.`);
                     }, 1000);
+                };
+
+                // WHATSAPP ACTION
+                document.getElementById('btn-whatsapp-signal').onclick = () => {
+                    const maxP = (parseInt(event.max_courts || 4) * 4);
+                    const currentP = (event.players || []).length;
+                    const needed = maxP - currentP;
+
+                    if (window.WhatsAppService) {
+                        window.WhatsAppService.shareLookingFor(event, needed > 0 ? needed : 1);
+                    } else {
+                        alert("Servicio de WhatsApp no disponible.");
+                    }
                 };
             }
         } catch (e) {

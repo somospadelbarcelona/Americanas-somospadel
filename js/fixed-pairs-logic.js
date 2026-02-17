@@ -30,8 +30,8 @@ const FixedPairsLogic = {
             if (i + 1 < shuffled.length) {
                 const pair = {
                     id: `pair_${Date.now()}_${i / 2}`,
-                    player1_id: shuffled[i].id,
-                    player2_id: shuffled[i + 1].id,
+                    player1_id: shuffled[i].id || shuffled[i].uid,
+                    player2_id: shuffled[i + 1].id || shuffled[i + 1].uid,
                     player1_name: shuffled[i].name,
                     player2_name: shuffled[i + 1].name,
                     pair_name: `${shuffled[i].name} / ${shuffled[i + 1].name}`,
@@ -53,6 +53,7 @@ const FixedPairsLogic = {
     /**
      * 🤖 Lógica de Emparejamiento Inteligente (Smart Auto-Pairing)
      * Empareja a los jugadores según su equipo Somospadel, afinidad de nivel y género.
+     * Prioriza parejas que ya se eligieron al apuntarse (partner_id).
      */
     createSmartFixedPairs(players, category = 'open') {
         console.log(`🤖 Iniciando Smart Auto-Pairing para ${players.length} jugadores...`);
@@ -61,12 +62,51 @@ const FixedPairsLogic = {
         const pairs = [];
         let pairCount = 0;
 
-        // Limpiar géneros (normalizar)
+        // Limpiar géneros (normalizar) e IDs
         available.forEach(p => {
+            p._uid = String(p.id || p.uid || '');
             p._gender = (p.gender || 'chico').toLowerCase();
             p._level = parseFloat(p.level || p.self_rate_level || 3.5);
             p._teams = Array.isArray(p.team_somospadel) ? p.team_somospadel : (p.team_somospadel ? [p.team_somospadel] : []);
         });
+
+        // --- PASO 0: PAREJAS EXPLÍCITAS (partner_id) ---
+        // Buscamos jugadores que ya eligieron pareja al apuntarse
+        for (let i = 0; i < available.length; i++) {
+            const p = available[i];
+            if (p.partner_id) {
+                const partnerTargetId = String(p.partner_id);
+                const partnerIdx = available.findIndex((x, idx) => idx !== i && x._uid === partnerTargetId);
+
+                if (partnerIdx !== -1) {
+                    const partner = available[partnerIdx];
+
+                    const pair = {
+                        id: `pair_explicit_${Date.now()}_${pairCount++}`,
+                        player1_id: p._uid,
+                        player2_id: partner._uid,
+                        player1_name: p.name,
+                        player2_name: partner.name,
+                        pair_name: `${p.name} / ${partner.name}`,
+                        wins: 0,
+                        losses: 0,
+                        games_won: 0,
+                        games_lost: 0,
+                        current_court: 1,
+                        initial_court: 1,
+                        is_explicit: true
+                    };
+                    pairs.push(pair);
+
+                    // Eliminar de disponibles (orden inverso para no romper índices)
+                    const high = Math.max(i, partnerIdx);
+                    const low = Math.min(i, partnerIdx);
+                    available.splice(high, 1);
+                    available.splice(low, 1);
+                    i--; // Ajustar índice principal
+                }
+            }
+        }
 
         const findBestMatch = (player, others) => {
             let bestScore = -1;
@@ -91,9 +131,9 @@ const FixedPairsLogic = {
                 // 3. NIVEL (Equilibrio)
                 const levelDiff = Math.abs(player._level - candidate._level);
                 if (levelDiff === 0) score += 50;
-                else if (levelDiff <= 0.25) score += 30;
-                else if (levelDiff <= 0.5) score += 10;
-                else score -= levelDiff * 20; // Penalizar grandes diferencias de nivel
+                else if (levelDiff <= 0.25) score += 40;
+                else if (levelDiff <= 0.5) score += 20;
+                else score -= levelDiff * 25; // Penalizar diferencias de nivel
 
                 if (score > bestScore) {
                     bestScore = score;
@@ -104,9 +144,9 @@ const FixedPairsLogic = {
             return bestIndex;
         };
 
-        // Algoritmo Greedy para emparejar
+        // Algoritmo Greedy para emparejar el resto
         while (available.length >= 2) {
-            const player = available.shift(); // Sacar el primero
+            const player = available.shift();
             const matchIdx = findBestMatch(player, available);
 
             if (matchIdx !== -1) {
@@ -114,8 +154,8 @@ const FixedPairsLogic = {
 
                 const pair = {
                     id: `pair_auto_${Date.now()}_${pairCount++}`,
-                    player1_id: player.id || player.uid,
-                    player2_id: partner.id || partner.uid,
+                    player1_id: player._uid,
+                    player2_id: partner._uid,
                     player1_name: player.name,
                     player2_name: partner.name,
                     pair_name: `${player.name} / ${partner.name}`,
@@ -123,7 +163,7 @@ const FixedPairsLogic = {
                     losses: 0,
                     games_won: 0,
                     games_lost: 0,
-                    current_court: 1, // Se asignará luego secuencialmente
+                    current_court: 1,
                     initial_court: 1,
                     is_auto: true
                 };
@@ -133,9 +173,9 @@ const FixedPairsLogic = {
 
         // Ordenar las parejas finales por nivel medio para asignar pistas iniciales
         pairs.forEach(p => {
-            const p1 = players.find(x => (x.id || x.uid) === p.player1_id);
-            const p2 = players.find(x => (x.id || x.uid) === p.player2_id);
-            p._avgLevel = ((p1?._level || 3.5) + (p2?._level || 3.5)) / 2;
+            const p1 = players.find(x => String(x.id || x.uid) === p.player1_id);
+            const p2 = players.find(x => String(x.id || x.uid) === p.player2_id);
+            p._avgLevel = (((p1 ? parseFloat(p1.level || p1.self_rate_level || 3.5) : 3.5) + (p2 ? parseFloat(p2.level || p2.self_rate_level || 3.5) : 3.5)) / 2);
         });
 
         pairs.sort((a, b) => b._avgLevel - a._avgLevel);
@@ -245,9 +285,6 @@ const FixedPairsLogic = {
 
                 // Determinar ganador y perdedor
                 let winner, loser;
-                // Strict win (no draw handling for court movement in original?)
-                // If draw, we keep them in place or random?
-                // Logic says: winners go up. Draw -> Stick?
                 if (scoreA > scoreB) {
                     winner = pairA;
                     loser = pairB;
@@ -262,7 +299,6 @@ const FixedPairsLogic = {
                     // EMPATE / TIE
                     pairA.won_last_match = true; // Neutral
                     pairB.won_last_match = true;
-                    // No movement if tie? Or treat as status quo
                 }
 
                 // Aplicar lógica POZO: Ganador sube, Perdedor baja
@@ -274,7 +310,6 @@ const FixedPairsLogic = {
                     if (winner.current_court > 1) {
                         winner.current_court--;
                     }
-                    // Si ya está en pista 1, se mantiene en pista 1
 
                     // PERDEDOR: Baja de pista (número mayor)
                     if (loser.current_court < maxCourts) {
@@ -288,51 +323,30 @@ const FixedPairsLogic = {
             }
         });
 
-        // --- REORGANIZACIÓN INTELIGENTE DE PISTAS ---
-        // Ordenar parejas por su pista actual (las que están en pistas mejores primero)
-        // Esto respeta el movimiento arriba/abajo que acabamos de calcular
-        // --- REORGANIZACIÓN INTELIGENTE DE PISTAS ---
-        // Ordenar parejas por su pista actual, priorizando ganadores en caso de conflicto
+        // Reorganización
         pairs.sort((a, b) => {
             const courtA = a.current_court || 999;
             const courtB = b.current_court || 999;
-
-            // 1. Prioridad Absoluta: Pista Objetivo
             if (courtA !== courtB) return courtA - courtB;
-
-            // 2. Estabilidad: Ganadores primero (Evita que un perdedor desplace a un ganador en bordes)
             if (a.won_last_match && !b.won_last_match) return -1;
             if (!a.won_last_match && b.won_last_match) return 1;
-
-            // 3. Mérito: Juegos Ganados (Mayor a menor)
             return (b.games_won || 0) - (a.games_won || 0);
         });
 
-        // Reasignar pistas secuencialmente para llenar huecos
-        // 2 parejas por pista (pista 1, pista 1, pista 2, pista 2, etc.)
+        // Reasignar pistas secuencialmente
         pairs.forEach((p, index) => {
             p.current_court = Math.floor(index / 2) + 1;
         });
 
-        console.log(`✅ Rankings actualizados - Parejas redistribuidas en ${Math.ceil(pairs.length / 2)} pistas`);
-
-        // Ordenar parejas por clasificación (para mostrar en ranking)
-        const sortedPairs = [...pairs].sort((a, b) => {
-            // Primero por juegos ganados
+        return [...pairs].sort((a, b) => {
             if (b.games_won !== a.games_won) return b.games_won - a.games_won;
-            // Luego por victorias
             if (b.wins !== a.wins) return b.wins - a.wins;
-            // Finalmente por juegos perdidos (menos es mejor)
             return a.games_lost - b.games_lost;
         });
-
-        return sortedPairs;
     },
 
     /**
      * Calcular clasificación para parejas fijas
-     * @param {Array} pairs - Parejas
-     * @returns {Array} - Clasificación ordenada
      */
     calculateStandings(pairs) {
         return pairs.map((p, index) => ({
@@ -342,10 +356,9 @@ const FixedPairsLogic = {
             games: p.games_won,
             won: p.wins,
             lost: p.losses,
-            played: p.wins + p.losses,
-            // Indicador de tendencia (comparar con pista inicial)
-            trend: p.current_court < p.initial_court ? '↑' :
-                p.current_court > p.initial_court ? '↓' : '='
+            played: (p.wins || 0) + (p.losses || 0),
+            trend: p.current_court < (p.initial_court || 1) ? '↑' :
+                p.current_court > (p.initial_court || 1) ? '↓' : '='
         }));
     }
 };

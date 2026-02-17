@@ -136,6 +136,12 @@ window.AdminViews.users = async function () {
                     }
                     return '';
                 })()}
+                        
+                        <!-- SMART ATTRIBUTE ICONS -->
+                        ${u.side_preference === 'DRIVE' ? '<i class="fas fa-arrow-right" style="color: #60a5fa !important; font-size: 0.75rem;" title="Lado: Drive"></i>' : ''}
+                        ${u.side_preference === 'REVES' ? '<i class="fas fa-arrow-left" style="color: #f87171 !important; font-size: 0.75rem;" title="Lado: Revés"></i>' : ''}
+                        ${u.play_style === 'POTENCIA' ? '<i class="fas fa-bolt" style="color: #fbbf24 !important; font-size: 0.75rem;" title="Estilo: Potencia"></i>' : ''}
+                        ${u.play_style === 'CONTROL' ? '<i class="fas fa-shield-halved" style="color: #34d399 !important; font-size: 0.75rem;" title="Estilo: Control"></i>' : ''}
                     </div>
                 </td>
                 <td>
@@ -166,9 +172,13 @@ window.AdminViews.users = async function () {
                     <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
                         ${canManageUsers ? `
                             ${isPending ? `<button class="btn-primary-pro" style="padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 950; background: #00E36D; color: black; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 227, 109, 0.4);" onclick="approveUser('${u.id}')">🚀 VALIDAR</button>` : ''}
+                            <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; display: flex; align-items: center; gap: 4px;" onclick="window.showPlayerLevelChart('${u.id}', '${u.name}')">📉 <span class="hide-mobile">GRÁFICO</span></button>
                             <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick='openEditUserModal(${JSON.stringify(u).replace(/'/g, "&#39;")})'>EDITAR</button>
                             <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; color: var(--danger); border-color: var(--danger-dim);" onclick="deleteUser('${u.id}', event)">🗑️</button>
-                        ` : '<span style="color:var(--text-muted); font-size:0.7rem;">👁️ SOLO LECTURA</span>'}
+                        ` : `
+                            <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; display: flex; align-items: center; gap: 4px;" onclick="window.showPlayerLevelChart('${u.id}', '${u.name}')">📉 GRÁFICO</button>
+                            <span style="color:var(--text-muted); font-size:0.7rem;">👁️ SOLO LECTURA</span>
+                        `}
                     </div>
                 </td>
             </tr > `;
@@ -193,6 +203,10 @@ window.AdminViews.users = async function () {
                     <!-- NEW RECALC STATS BUTTON -->
                     <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #eab308; color: #eab308; background: rgba(234, 179, 8, 0.05); margin-left: auto;" onclick="recalculateMatchesPlayed()">
                         🔄 REPARAR STATS
+                    </button>
+                    <!-- NEW GLOBAL RECALC BUTTON -->
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #CCFF00; color: #CCFF00; background: rgba(204, 255, 0, 0.05);" onclick="handleGlobalLevelRecalc()">
+                        🏆 RECALCULAR NIVELES (GLOBAL)
                     </button>
 
                     <input type="text" id="global-search" placeholder="Buscar globalmente..." class="pro-input" style="width: 200px; padding: 0.5rem 1rem;" onkeyup="multiFilterUsers()">
@@ -568,7 +582,10 @@ window.AdminViews.users = async function () {
         form.elements['role'].value = user.role || 'player';
         form.elements['status'].value = user.status || 'active';
         form.elements['matches_played'].value = user.matches_played || 0;
-        form.elements['matches_played'].value = user.matches_played || 0;
+
+        // Populate Smart Attributes
+        if (form.elements['side_preference']) form.elements['side_preference'].value = user.side_preference || 'INDIFF';
+        if (form.elements['play_style']) form.elements['play_style'].value = user.play_style || 'ESTRATEGIA';
 
         const pwdInput = document.getElementById('admin-user-pwd-input');
         if (pwdInput) {
@@ -747,7 +764,9 @@ window.AdminViews.users = async function () {
                 role: formData.get('role'),
                 status: formData.get('status'),
                 matches_played: parseInt(formData.get('matches_played') || 0),
-                team_somospadel: selectedTeams.length > 0 ? selectedTeams : null // Save as Array
+                team_somospadel: selectedTeams.length > 0 ? selectedTeams : null, // Save as Array
+                side_preference: formData.get('side_preference') || 'INDIFF',
+                play_style: formData.get('play_style') || 'ESTRATEGIA'
             };
 
             const pwd = formData.get('password');
@@ -1032,5 +1051,314 @@ window.batchUpdateTeamLevels = async () => {
             type: 'error'
         });
         window.location.reload();
+    }
+};
+
+// --- GLOBAL LEVEL RECALC WRAPPER ---
+window.handleGlobalLevelRecalc = async () => {
+    const confirmed = await window.PremiumModal.confirm({
+        title: "⚠️ RECALCULO GLOBAL PRO",
+        message: "Esta acción reseteará todos los niveles y los volverá a calcular usando el historial completo de partidos con la nueva sensibilidad PRO.<br><br>¿Deseas iniciar el proceso?",
+        confirmText: "INICIAR RECALCULO",
+        confirmColor: "#CCFF00"
+    });
+
+    if (!confirmed) return;
+
+    const btn = document.querySelector('button[onclick="handleGlobalLevelRecalc()"]');
+    let originalText = "";
+    if (btn) {
+        originalText = btn.textContent;
+        btn.textContent = "Recalculando...";
+        btn.disabled = true;
+    }
+
+    try {
+        if (!window.LevelService) {
+            throw new Error("El servicio de niveles no está cargado.");
+        }
+        await window.LevelService.recalculateAllLevels();
+        window.location.reload();
+    } catch (e) {
+        console.error(e);
+        window.PremiumModal.alert({
+            title: "❌ ERROR",
+            message: "Error al recalcular: " + e.message,
+            type: 'error'
+        });
+    } finally {
+        if (btn) {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    }
+};
+
+/**
+ * Visualización WOW de la evolución del jugador
+ */
+window.showPlayerLevelChart = async (userId, userName) => {
+    console.log(`📊 Fetching history for ${userName} (${userId})...`);
+
+    try {
+        // 1. Fetch CURRENT ACTUAL LEVEL from player profile sync
+        const playerDoc = await window.db.collection('players').doc(userId).get();
+        const playerData = playerDoc.exists ? playerDoc.data() : {};
+        const currentLiveLevel = parseFloat(playerData.level || playerData.self_rate_level || 3.5);
+
+        // 2. Fetch History Log
+        const historySnap = await window.db.collection('level_history')
+            .where('userId', '==', userId)
+            .get();
+
+        if (historySnap.empty) {
+            window.PremiumModal.alert({
+                title: "SIN HISTORIAL",
+                message: `El nivel actual de **${userName}** es **${currentLiveLevel.toFixed(2)}**, pero aún no tiene partidos registrados en el log histórico para dibujar la gráfica.`,
+                type: 'info'
+            });
+            return;
+        }
+
+        let dataPoints = historySnap.docs.map((doc) => {
+            const d = doc.data();
+            return {
+                date: d.timestamp ? d.timestamp.toDate() : new Date(),
+                y: d.level,
+                delta: d.delta || 0
+            };
+        });
+
+        // Sort by date to avoid Firebase index issues
+        dataPoints.sort((a, b) => a.date - b.date);
+
+        // Map to P1, P2... sequence
+        dataPoints = dataPoints.map((p, idx) => ({ ...p, idx: idx + 1 }));
+
+        // SYNC: If the live level (3.41) is different from history (2.94), add live level as final point
+        const lastHistoryLevel = dataPoints[dataPoints.length - 1].y;
+        if (Math.abs(currentLiveLevel - lastHistoryLevel) > 0.005) {
+            dataPoints.push({
+                idx: dataPoints.length + 1,
+                date: new Date(),
+                y: currentLiveLevel,
+                delta: currentLiveLevel - lastHistoryLevel
+            });
+        }
+
+        const canvasId = `chart-${userId}`;
+
+        // Use custom modal for wide content (LANDSCAPE)
+        window.PremiumModal.custom({
+            title: `HISTORIAL PRO: ${userName.toUpperCase()}`,
+            content: `
+                <div id="chart-capture-area" style="background: linear-gradient(165deg, #1e293b 0%, #0f172a 100%); padding: 30px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <img src="img/logo_somospadel.png" style="height: 35px; filter: drop-shadow(0 0 10px var(--primary));">
+                            <div>
+                                <div style="color:white; font-weight:950; letter-spacing:1px; font-size:0.9rem;">SOMOSPADEL BCN</div>
+                                <div style="color:#64748b; font-size:0.6rem; font-weight:800; text-transform:uppercase;">Player Performance Report</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                             <div style="color: var(--primary); font-weight: 950; font-size: 1.5rem; line-height:1;">${dataPoints[dataPoints.length - 1].y.toFixed(2)}</div>
+                             <div style="color: #64748b; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; margin-top:4px;">PRO LEVEL</div>
+                        </div>
+                    </div>
+                    
+                    <div style="height: 300px; position: relative; margin-bottom: 25px;">
+                        <canvas id="${canvasId}"></canvas>
+                    </div>
+
+                    <!-- HORIZONTAL MATCH STRIP -->
+                    <div style="margin-bottom: 20px;">
+                         <div style="color: #64748b; font-size: 0.65rem; font-weight: 950; text-transform: uppercase; margin-bottom: 10px; display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-list-ul" style="font-size:0.6rem;"></i> ÚLTIMOS PARTIDOS (FLUJO HORIZONTAL)
+                         </div>
+                         <div id="match-strip-${userId}" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; -ms-overflow-style: none;">
+                            ${dataPoints.slice(-15).map(p => `
+                                <div style="flex: 0 0 auto; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 10px; text-align: center; min-width: 65px;">
+                                    <div style="font-size: 0.6rem; color: #64748b; font-weight: 800; margin-bottom: 4px;">P${p.idx}</div>
+                                    <div style="font-size: 0.85rem; font-weight: 900; color: white; margin-bottom: 4px;">${p.y.toFixed(2)}</div>
+                                    <div style="font-size: 0.65rem; font-weight: 900; color: ${p.delta >= 0 ? '#00ff88' : '#ff3b30'};">
+                                        ${p.delta >= 0 ? '+' : ''}${p.delta.toFixed(3)}
+                                    </div>
+                                </div>
+                            `).join('')}
+                         </div>
+                    </div>
+
+                    <div style="display: flex; gap: 30px; justify-content: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
+                        <div style="text-align:center;">
+                            <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform:uppercase;">Partidos</div>
+                            <div style="font-size: 1.2rem; color: white; font-weight: 950;">${dataPoints.length}</div>
+                        </div>
+                         <div style="text-align:center;">
+                            <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform:uppercase;">Nivel Inicial</div>
+                            <div style="font-size: 1.2rem; color: #64748b; font-weight: 950;">${dataPoints[0].y.toFixed(2)}</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform:uppercase;">Net Progression</div>
+                            <div style="font-size: 1.2rem; color: ${(dataPoints[dataPoints.length - 1].y - dataPoints[0].y) >= 0 ? '#00ff88' : '#ff3b30'}; font-weight: 950;">
+                                ${(dataPoints[dataPoints.length - 1].y - dataPoints[0].y) >= 0 ? '+' : ''}${(dataPoints[dataPoints.length - 1].y - dataPoints[0].y).toFixed(2)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding: 0 10px;">
+                    <button id="share-chart-btn" class="btn-primary-pro" style="width: 100%; height: 55px; background: #25D366; color: white; border: none; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 10px 20px rgba(37, 211, 102, 0.2); border-radius:18px;">
+                        <i class="fab fa-whatsapp" style="font-size: 1.4rem;"></i> COMPARTIR ANÁLISIS POR WHATSAPP
+                    </button>
+                    <p style="text-align: center; color: #444; font-size: 0.75rem; margin-top: 12px; font-weight: 600;">AL PULSAR SE GENERARÁ UNA INFOGRAFÍA PARA COMPARTIR</p>
+                </div>
+            `,
+            width: '850px'
+        });
+
+        // Initialize chart with delay to ensure DOM is ready
+        setTimeout(() => {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dataPoints.map(p => `P${p.idx}`),
+                    datasets: [{
+                        label: 'Nivel PRO',
+                        data: dataPoints.map(p => p.y),
+                        borderColor: '#ccff00',
+                        backgroundColor: (context) => {
+                            const chart = context.chart;
+                            const { ctx, chartArea } = chart;
+                            if (!chartArea) return null;
+                            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                            gradient.addColorStop(0, 'rgba(204, 255, 0, 0)');
+                            gradient.addColorStop(1, 'rgba(204, 255, 0, 0.2)');
+                            return gradient;
+                        },
+                        borderWidth: 5,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#0f172a',
+                        pointBorderColor: '#ccff00',
+                        pointBorderWidth: 3,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false, // Disable animations for reliable capture
+                    layout: { padding: { top: 10, bottom: 10, left: 10, right: 30 } },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: '#64748b',
+                                font: { family: 'Outfit', weight: '700', size: 10 }
+                            }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
+                            ticks: {
+                                color: '#64748b',
+                                font: { family: 'Outfit', weight: '700' }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleColor: '#fff',
+                            bodyColor: '#ccff00',
+                            padding: 15,
+                            cornerRadius: 12,
+                            displayColors: false,
+                            titleFont: { family: 'Outfit', size: 13, weight: 'bold' },
+                            bodyFont: { family: 'Outfit', size: 16, weight: '900' },
+                            callbacks: {
+                                label: (ctx) => `NIVEL: ${ctx.parsed.y.toFixed(3)}`
+                            }
+                        }
+                    }
+                }
+            });
+
+            // HANDLE SHARE BUTTON
+            const shareBtn = document.getElementById('share-chart-btn');
+            shareBtn.onclick = async () => {
+                shareBtn.disabled = true;
+                shareBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO IMAGEN...';
+
+                try {
+                    // Load html2canvas dynamically
+                    if (!window.html2canvas) {
+                        await new Promise((resolve, reject) => {
+                            const script = document.createElement('script');
+                            script.src = "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js";
+                            script.onload = resolve;
+                            script.onerror = reject;
+                            document.head.appendChild(script);
+                        });
+                    }
+
+                    // A small delay to let things settle
+                    await new Promise(r => setTimeout(r, 100));
+
+                    const area = document.getElementById('chart-capture-area');
+                    const canvasResult = await html2canvas(area, {
+                        backgroundColor: '#0f172a',
+                        scale: 1.5,
+                        logging: false,
+                        useCORS: true,
+                        allowTaint: true
+                    });
+
+                    canvasResult.toBlob(async (blob) => {
+                        if (!blob) throw new Error("Blob creation failed");
+
+                        const file = new File([blob], `evolucion-${userName}.png`, { type: 'image/png' });
+                        const shareText = `*ESTADÍSTICAS SOMOSPADEL BCN*\n\nJugador: *${userName.toUpperCase()}*\nNivel Actual: *${dataPoints[dataPoints.length - 1].y.toFixed(2)}*\nPartidos: ${dataPoints.length}\n\nProgreso: https://somospadelbarcelona.github.io/Americanas-somospadel/`;
+
+                        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                            try {
+                                await navigator.share({
+                                    files: [file],
+                                    title: `Evolución ${userName}`,
+                                    text: shareText
+                                });
+                            } catch (e) {
+                                // Fallback to WhatsApp link if share is cancelled or fails
+                                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
+                            }
+                        } else {
+                            // Fallback to text link if navigator.share files not supported
+                            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
+                        }
+
+                        shareBtn.disabled = false;
+                        shareBtn.innerHTML = '<i class="fab fa-whatsapp"></i> COMPARTIR ANÁLISIS POR WHATSAPP';
+                    }, 'image/png');
+
+                } catch (e) {
+                    console.error("Share Error:", e);
+                    // CRITICAL FALLBACK: Share as text only
+                    const shareText = `*ESTADÍSTICAS SOMOSPADEL BCN*\n\nJugador: *${userName.toUpperCase()}*\nNivel Actual: *${dataPoints[dataPoints.length - 1].y.toFixed(2)}*\nPartidos: ${dataPoints.length}\n\nProgreso: https://somospadelbarcelona.github.io/Americanas-somospadel/`;
+                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
+
+                    shareBtn.disabled = false;
+                    shareBtn.innerHTML = '<i class="fab fa-whatsapp"></i> COMPARTIR ANÁLISIS POR WHATSAPP';
+                }
+            };
+        }, 450);
+
+    } catch (e) {
+        console.error("Error loading chart:", e);
+        window.PremiumModal.alert({ title: "ERROR", message: e.message, type: 'danger' });
     }
 };

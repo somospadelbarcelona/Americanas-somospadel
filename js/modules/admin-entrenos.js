@@ -610,6 +610,45 @@ window.selectEntrenoImage = (url) => {
     if (input) input.value = url;
 };
 
+window.openAddPlayerToEntrenoSelector = async (eventId) => {
+    if (!window.PremiumModal) return alert("PremiumModal no disponible");
+
+    try {
+        const allPlayers = await FirebaseDB.players.getAll();
+
+        const selectorItems = allPlayers.map(p => ({
+            id: p.id || p.uid,
+            name: p.name || 'Sin nombre',
+            sub: `Nivel: ${p.level || '3.5'} • ${p.gender || '?'}`,
+            image: p.photoURL || p.photo_url || null,
+            playerObj: p
+        })).sort((a, b) => a.name.localeCompare(b.name));
+
+        const selected = await PremiumModal.selector({
+            title: 'AÑADIR JUGADOR',
+            message: 'Busca y selecciona al jugador que quieres añadir al entreno:',
+            items: selectorItems,
+            placeholder: 'Escribe nombre o apellido...',
+            type: 'success'
+        });
+
+        if (selected) {
+            console.log("➕ Adding selected player as admin:", selected.name);
+            await ParticipantService.addPlayer(eventId, 'entreno', selected.playerObj);
+
+            if (window.NotificationService) {
+                NotificationService.showToast(`${selected.name} añadido correctamente`, "success");
+            }
+
+            // Reload UI
+            window.loadEntrenoParticipantsUI(eventId);
+        }
+    } catch (e) {
+        console.error("Error in admin player selection:", e);
+        alert("Error: " + e.message);
+    }
+};
+
 window.loadEntrenoParticipantsUI = async (id) => {
     const list = document.getElementById('participants-list-entreno');
     if (!list) return;
@@ -621,62 +660,53 @@ window.loadEntrenoParticipantsUI = async (id) => {
             FirebaseDB.players.getAll()
         ]);
 
-        const players = event.players || [];
+        // Deduplicate players by ID/UID
+        const seenIds = new Set();
+        const uniquePlayers = (event.players || []).filter(p => {
+            const pid = String(p.id || p.uid || '');
+            if (!pid || seenIds.has(pid)) return false;
+            seenIds.add(pid);
+            return true;
+        });
 
-        // Integración Autocomplete (si module exists)
-        if (window.PlayerAutocomplete) {
-            const enrolledIds = new Set(players.map(p => p.id || p.uid));
-            window.PlayerAutocomplete.render(
-                'autocomplete-container-entreno',
-                users,
-                enrolledIds,
-                async (uid) => {
-                    const u = users.find(x => x.id === uid);
-                    if (u) {
-                        await ParticipantService.addPlayer(id, 'entreno', u);
-                        window.loadEntrenoParticipantsUI(id);
-                    }
-                },
-                "🔍 Buscar jugador para añadir..."
-            );
-        }
-
-        // Render List with Batseñal Button Header
+        // Render List with Header
         list.innerHTML = `
-        <div style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-             <span style="font-size:0.75rem; color:#888;">${players.length} Inscritos</span>
-             <button onclick="window.launchBatSignalEntreno('${id}')" class="btn-micro" style="background:rgba(255, 215, 0, 0.1); color:#ffd700; border:1px solid rgba(255, 215, 0, 0.3);">
-                🦇 Batseñal
+        <div style="margin-bottom:12px; display:flex; flex-direction:column; gap:8px; background:rgba(255,255,255,0.03); padding:10px; border-radius:10px;">
+             <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.8rem; font-weight:800; color:var(--primary);">${uniquePlayers.length} JUGADORES</span>
+                <div style="display:flex; gap:6px;">
+                    <button onclick="window.launchBatSignalEntreno('${id}')" class="btn-micro" style="background:#ffd700; color:#000; border:none; padding:5px 12px; font-size:0.65rem;">
+                        <i class="fas fa-bullhorn"></i> BATSEÑAL
+                    </button>
+                </div>
+             </div>
+             <button onclick="window.openAddPlayerToEntrenoSelector('${id}')" 
+                     style="width:100%; height:40px; background:rgba(204,255,0,0.1); color:#ccff00; border:1px solid rgba(204,255,0,0.2); border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <i class="fas fa-user-plus"></i> AÑADIR JUGADOR MANUAMENTE
              </button>
         </div>
-        ` + players.map(p => {
+        ` + uniquePlayers.map(p => {
             const pid = p.id || p.uid;
-            if (!pid) return ''; // Skip invalid
-
-            // Level Reliability Icon
-            let relIcon = '';
-            if (window.LevelReliabilityService) {
-                const rel = window.LevelReliabilityService.getReliability(p);
-                relIcon = `<i class="fas ${rel.icon}" style="color: ${rel.color} !important; font-size: 0.75rem;" title="${rel.label}"></i>`;
-            }
 
             return `
-             <div class="player-row" style="display:flex; justify-content:space-between; align-items:center; padding: 6px; border-bottom:1px solid rgba(255,255,255,0.05);">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    ${relIcon}
+             <div class="player-row" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid rgba(255,255,255,0.03);">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:900; color:var(--primary); border: 1px solid rgba(255,255,255,0.05);">
+                        ${p.level}
+                    </div>
                     <div style="display:flex; flex-direction:column;">
-                        <span style="font-weight:700; font-size:0.85rem;">${p.name}</span>
-                        <span style="font-size:0.65rem; color:#888;">Nivel: ${p.level}</span>
+                        <span style="font-weight:700; font-size:0.85rem; color:#fff;">${p.name.toUpperCase()}</span>
+                        ${p.partner_name ? `<span style="font-size:0.65rem; color:#ffd700;"><i class="fas fa-handshake"></i> ${p.partner_name}</span>` : ''}
                     </div>
                 </div>
-                <button onclick="window.removeEntrenoPlayer('${id}', '${pid}')" class="btn-delete-micro" title="Eliminar">🗑️</button>
+                <button onclick="window.removeEntrenoPlayer('${id}', '${pid}')" style="background:none; border:none; color:#ff4444; cursor:pointer; font-size:0.9rem; padding:5px;"><i class="fas fa-times"></i></button>
              </div>
              `;
         }).join('');
 
     } catch (e) {
         console.error("Error loading participants:", e);
-        list.innerHTML = '<div style="color:#ff4444; padding:10px;">Error loading players</div>';
+        list.innerHTML = '<div style="color:#ff4444; padding:20px; text-align:center;">Error al cargar la lista</div>';
     }
 };
 

@@ -87,14 +87,21 @@ window.PairsUI = {
             if (p.player2) pairedIds.add(String(p.player2.id || p.player2.uid));
         });
 
-        const available = players.filter(p => !pairedIds.has(String(p.id || p.uid)));
+        const seenIds = new Set();
+        const available = players.filter(p => {
+            const pid = String(p.id || p.uid || '');
+            if (!pid || pairedIds.has(pid) || seenIds.has(pid)) return false;
+            seenIds.add(pid);
+            return true;
+        });
 
         // Sort available alphabet
         available.sort((a, b) => a.name.localeCompare(b.name));
 
         const opts = `<option value="">Seleccionar...</option>` + available.map(p => {
             const partnerInfo = p.partner_name ? ` (🤝 con ${p.partner_name})` : '';
-            return `<option value="${p.id || p.uid}">${p.name}${partnerInfo}</option>`;
+            const statusIcon = p.partner_id ? '⭐ ' : '';
+            return `<option value="${p.id || p.uid}">${statusIcon}${p.name}${partnerInfo}</option>`;
         }).join('');
 
         if (s1) {
@@ -186,8 +193,14 @@ window.PairsUI = {
             else if (p.player1) { pairedIds.add(String(p.player1.id)); pairedIds.add(String(p.player2.id)); }
         });
 
-        // Filter available players
-        let available = (event.players || []).filter(p => !pairedIds.has(String(p.id || p.uid)));
+        // Filter available players (Unique)
+        const seenIds = new Set();
+        let available = (event.players || []).filter(p => {
+            const pid = String(p.id || p.uid || '');
+            if (!pid || pairedIds.has(pid) || seenIds.has(pid)) return false;
+            seenIds.add(pid);
+            return true;
+        });
 
         if (available.length < 2) return alert("No hay suficientes jugadores libres para emparejar.");
 
@@ -196,10 +209,8 @@ window.PairsUI = {
             return alert("Error: FixedPairsLogic no está cargado");
         }
 
-        // Generate new pairs
-        // We preserve order if implicit (or maybe add a checkbox later?)
-        // Default to random shuffle via logic unless specific category
-        const newPairs = FixedPairsLogic.createFixedPairs(available, event.category, false);
+        // Generate new pairs using SMART logic
+        const newPairs = FixedPairsLogic.createSmartFixedPairs(available, event.category);
 
         // Adjust courts for new pairs?
         // createFixedPairs starts at court 1. We need to offset if there are existing pairs.

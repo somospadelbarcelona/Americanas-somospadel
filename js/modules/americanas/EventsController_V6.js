@@ -1218,33 +1218,47 @@
             modal.style.display = 'block';
 
             // FETCH FRESH DATA FOR ALL REGISTERED PLAYERS
-            const registeredPlayersList = evt.players || evt.registeredPlayers || [];
-            const playerUids = registeredPlayersList.map(p => (typeof p === 'string') ? p : (p.uid || p.id));
+            const rawList = evt.players || evt.registeredPlayers || [];
+
+            // DEDUPLICATE UNIQUE IDS FIRST
+            const seenIds = new Set();
+            const uniqueRawList = rawList.filter(p => {
+                const uid = (typeof p === 'string') ? p : (p.uid || p.id);
+                if (!uid || seenIds.has(uid)) return false;
+                seenIds.add(uid);
+                return true;
+            });
 
             const dbPlayers = [];
             try {
-                const promises = playerUids.map(uid => window.db.collection('players').doc(uid).get());
+                const promises = uniqueRawList.map(p => {
+                    const uid = (typeof p === 'string') ? p : (p.uid || p.id);
+                    return window.db.collection('players').doc(uid).get();
+                });
+
                 const snapshots = await Promise.all(promises);
 
                 snapshots.forEach((snap, index) => {
-                    // Obtener metadatos de la inscripción del evento original para recuperar joinedAt
-                    const registrationMeta = (typeof registeredPlayersList[index] === 'object') ? registeredPlayersList[index] : { joinedAt: null };
+                    const registrationMeta = (typeof uniqueRawList[index] === 'object') ? uniqueRawList[index] : { joinedAt: null };
 
                     let pData = null;
                     if (snap.exists) {
                         pData = { id: snap.id, ...snap.data() };
                     } else {
-                        // Fallback al objeto que tengamos en el evento
-                        pData = (typeof registeredPlayersList[index] === 'object') ? registeredPlayersList[index] : { id: playerUids[index], name: 'Usuario' };
+                        // Fallback
+                        const fallbackUid = (typeof uniqueRawList[index] === 'string') ? uniqueRawList[index] : (uniqueRawList[index].uid || uniqueRawList[index].id);
+                        pData = (typeof uniqueRawList[index] === 'object') ? uniqueRawList[index] : { id: fallbackUid, name: 'Usuario' };
                     }
 
-                    // Priorizar el joinedAt del evento (que es el real de la inscripción)
+                    // CRITICAL: Copy event-specific partner data
                     pData.joinedAt = registrationMeta.joinedAt || pData.joinedAt || null;
-                    pData.partner_name = registrationMeta.partner_name || null;
+                    pData.partner_name = registrationMeta.partner_name || pData.partner_name || null;
+                    pData.partner_id = registrationMeta.partner_id || pData.partner_id || null;
+
                     dbPlayers.push(pData);
                 });
 
-                // ORDENAR POR ORDEN DE INSCRIPCIÓN (Antiguo -> Nuevo)
+                // ORDENAR POR ORDEN DE INSCRIPCIÓN
                 dbPlayers.sort((a, b) => {
                     const timeA = a.joinedAt ? new Date(a.joinedAt).getTime() : 0;
                     const timeB = b.joinedAt ? new Date(b.joinedAt).getTime() : 0;
@@ -1253,84 +1267,115 @@
 
             } catch (e) { console.error("Error fetching players:", e); }
 
+            // --- REDESIGN: NEON BROADCAST WITH PAIR GROUPING ---
             const maxCourts = parseInt(evt.max_courts || evt.courts || 4);
             const maxPlayers = maxCourts * 4;
 
-            const cardsHtml = dbPlayers.map((p, index) => {
-                const teams = Array.isArray(p.team_somospadel) ? p.team_somospadel : (p.team_somospadel ? [p.team_somospadel] : []);
-                const level = parseFloat(p.level || 3.0).toFixed(2);
-                const name = (p.name || 'JUGADOR').toUpperCase();
-                const photo = p.photo_url || p.photoURL || 'img/logo_somospadel.png';
+            const processedIds = new Set();
+            const finalGroups = [];
 
-                const joinedAtRaw = p.joinedAt;
-                const joinedAtStr = joinedAtRaw ? new Date(joinedAtRaw).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '--:--';
-                const joinedDateStr = joinedAtRaw ? new Date(joinedAtRaw).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : '';
+            // Robust bidirectional matching
+            const findPartner = (player, currentIdx) => {
+                const myId = (player.id || player.uid);
+                const myPartnerId = String(player.partner_id || '');
+                const myPartnerName = (player.partner_name || '').trim().toUpperCase();
 
-                const teamsBadges = teams.length > 0 ? teams.map(t => {
-                    let teamColor = '#38bdf8';
-                    let textColor = '#000';
-                    if (t.includes('4º')) teamColor = '#84cc16';
-                    if (t.includes('3º')) teamColor = '#38bdf8';
-                    if (t.includes('2º')) teamColor = '#f59e0b';
-                    if (t.toUpperCase().includes('MIXTO')) { teamColor = '#ef4444'; textColor = '#fff'; }
-                    return `<span style="background: ${teamColor}; color: ${textColor}; font-size: 0.55rem; font-weight: 950; padding: 3px 10px; border-radius: 4px; margin: 2px; display: inline-block; letter-spacing: 0.5px;">${t.toUpperCase()}</span>`;
-                }).join('') : `<span style="background: #222; color: #666; font-size: 0.55rem; font-weight: 900; padding: 3px 10px; border-radius: 4px; margin: 2px; display: inline-block;">SIN EQUIPO</span>`;
+                return dbPlayers.find((other, otherIdx) => {
+                    const otherId = (other.id || other.uid);
+                    if (otherIdx === currentIdx || processedIds.has(otherId)) return false;
 
-                const rank = index + 1;
+                    const otherPartnerId = String(other.partner_id || '');
+                    const otherPartnerName = (other.partner_name || '').trim().toUpperCase();
+                    const otherName = (other.name || '').trim().toUpperCase();
+                    const myName = (player.name || '').trim().toUpperCase();
+
+                    // Option A: Direct ID Link (either way)
+                    if (myPartnerId && myPartnerId === otherId) return true;
+                    if (otherPartnerId && otherPartnerId === myId) return true;
+
+                    // Option B: Name Match Fallback
+                    if (myPartnerName && myPartnerName === otherName) return true;
+                    if (otherPartnerName && otherPartnerName === myName) return true;
+
+                    return false;
+                });
+            };
+
+            dbPlayers.forEach((p, idx) => {
+                const pid = (p.id || p.uid);
+                if (processedIds.has(pid)) return;
+
+                const partner = findPartner(p, idx);
+
+                if (partner) {
+                    finalGroups.push({ type: 'pair', p1: p, p2: partner });
+                    processedIds.add(pid);
+                    processedIds.add(partner.id || partner.uid);
+                } else {
+                    finalGroups.push({ type: 'single', p1: p });
+                    processedIds.add(pid);
+                }
+            });
+
+            const renderNeonPlayer = (player, badgeText, badgeColor = '#CCFF00') => {
+                const photo = player.photo_url || player.photoURL || 'img/logo_somospadel.png';
+                const level = parseFloat(player.level || 3.5).toFixed(2);
+                const teams = Array.isArray(player.team_somospadel) ? player.team_somospadel : (player.team_somospadel ? [player.team_somospadel] : []);
 
                 return `
-                    <div class="cnn-player-card" style="
-                        background: linear-gradient(135deg, #0f172a 0%, #000000 100%);
-                        border: 1px solid rgba(255,255,255,0.1);
-                        border-radius: 20px;
-                        padding: 0;
-                        display: flex;
-                        flex-direction: column;
-                        position: relative;
-                        overflow: hidden;
-                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-                        height: 100%;
-                        min-height: 180px;
-                    ">
-                        <!-- Top Banner with Rank and Level -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <div style="background: #CCFF00; color: #000; font-size: 0.7rem; font-weight: 950; padding: 2px 10px; border-radius: 6px; box-shadow: 0 0 15px rgba(204,255,0,0.4);">
-                                RANK #${rank}
-                            </div>
-                            <div style="color: #CCFF00; font-size: 0.8rem; font-weight: 950; letter-spacing: 1px;">
-                                <small style="opacity: 0.7; font-size: 0.5rem; vertical-align: middle;">LVL</small> ${level}
+                    <div style="display: flex; align-items: center; gap: 15px; padding: 12px; position: relative;">
+                        <div style="width: 50px; height: 50px; border-radius: 12px; background: url('${photo}') center/cover; border: 2px solid ${badgeColor}; box-shadow: 0 0 15px ${badgeColor}44;"></div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 950; font-size: 0.95rem; color: #fff; text-transform: uppercase;">${player.name}</div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 3px;">
+                                <span style="color: ${badgeColor}; font-weight: 950; font-size: 0.75rem;">${level} <small style="opacity: 0.6;">LVL</small></span>
+                                ${teams.length > 0 ? `<span style="background: rgba(255,255,255,0.1); color: #ccc; font-size: 0.55rem; padding: 2px 6px; border-radius: 4px;">${teams[0].toUpperCase()}</span>` : ''}
                             </div>
                         </div>
-
-                        <!-- Player Section -->
-                        <div style="padding: 15px; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;">
-                            <div style="width: 50px; height: 50px; border-radius: 12px; background: url('${photo}') center/cover; border: 2px solid #CCFF00; box-shadow: 0 0 15px rgba(204,255,0,0.2);"></div>
-                            
-                            <div style="width: 100%;">
-                                <div style="font-weight: 950; font-size: 0.95rem; color: #fff; line-height: 1.1; margin-bottom: 4px; height: 2.2rem; display: flex; align-items: center; justify-content: center; overflow: hidden; text-overflow: ellipsis;">
-                                    ${name}
-                                </div>
-                                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;">
-                                    ${teamsBadges}
-                                </div>
-                                ${p.partner_name ? `<div style="margin-top: 8px; background: rgba(204, 255, 0, 0.1); border: 1px solid #CCFF0033; color: #CCFF00; font-size: 0.65rem; font-weight: 950; padding: 4px 10px; border-radius: 8px; display: inline-block;">🤝 PAREJA: ${p.partner_name.toUpperCase()}</div>` : ''}
-                            </div>
+                        <div style="text-align: right;">
+                            <div style="background: ${badgeColor}; color: #000; font-size: 0.55rem; font-weight: 950; padding: 2px 8px; border-radius: 4px;">${badgeText}</div>
                         </div>
-
-                        <!-- Bottom Broadcast Bar -->
-                        <div style="background: #CCFF0010; padding: 8px 12px; border-top: 1px solid rgba(204,255,0,0.1); display: flex; justify-content: space-between; align-items: center;">
-                            <div style="font-size: 0.6rem; color: #888; font-weight: 800;">REGS: <span style="color: #eee;">${joinedDateStr}</span></div>
-                            <div style="font-size: 0.65rem; color: #fff; font-weight: 950; display: flex; align-items: center; gap: 5px;">
-                                <div style="width: 6px; height: 6px; background: #00E36D; border-radius: 50%; box-shadow: 0 0 8px #00E36D; animation: neon-flicker 1.5s infinite;"></div>
-                                ${joinedAtStr}
-                            </div>
-                        </div>
-                        
-                        <!-- Slanted decorative element (Holographic feel) -->
-                        <div style="position: absolute; bottom: 0; right: 0; width: 40px; height: 40px; background: linear-gradient(135deg, transparent 50%, rgba(204,255,0,0.05) 50%); pointer-events: none;"></div>
                     </div>
                 `;
+            };
+
+            const cardsHtml = finalGroups.map((group, idx) => {
+                if (group.type === 'pair') {
+                    return `
+                    <div class="neon-pair-card" style="
+                        background: linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(0,0,0,1) 100%);
+                        border: 2px solid #38bdf8;
+                        border-radius: 20px;
+                        padding: 5px;
+                        position: relative;
+                        overflow: hidden;
+                        box-shadow: 0 0 25px rgba(56, 189, 248, 0.2);
+                        margin-bottom: 15px;
+                    ">
+                        <div style="position: absolute; top: 0; right: 0; background: #38bdf8; color: #000; font-size: 0.55rem; font-weight: 1000; padding: 3px 15px; border-bottom-left-radius: 12px; text-transform: uppercase; letter-spacing: 1px; z-index: 10;">EQUIPO CONFIRMADO</div>
+                        ${renderNeonPlayer(group.p1, 'JUGADOR A', '#38bdf8')}
+                        <div style="height: 1px; background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.3), transparent); margin: 0 20px;"></div>
+                        ${renderNeonPlayer(group.p2, 'JUGADOR B', '#38bdf8')}
+                    </div>
+                    `;
+                } else {
+                    return `
+                    <div class="neon-single-card" style="
+                        background: linear-gradient(135deg, rgba(20,20,20,0.9) 0%, rgba(0,0,0,1) 100%);
+                        border: 1px solid rgba(255,255,255,0.1);
+                        border-radius: 20px;
+                        padding: 5px;
+                        position: relative;
+                        overflow: hidden;
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+                        margin-bottom: 15px;
+                    ">
+                        <div style="position: absolute; top: 0; right: 0; background: rgba(255,255,255,0.1); color: #888; font-size: 0.5rem; font-weight: 900; padding: 3px 10px; border-bottom-left-radius: 10px;">SOLO</div>
+                        ${renderNeonPlayer(group.p1, `#${idx + 1}`)}
+                        ${group.p1.partner_name ? `<div style="padding: 5px 15px 10px; font-size: 0.6rem; color: #ffd700; font-weight: 800; text-transform: uppercase;"><i class="fas fa-search"></i> Buscando a: ${group.p1.partner_name}</div>` : ''}
+                    </div>
+                    `;
+                }
             }).join('');
 
             modal.style.cssText = `position: fixed; inset: 0; background: #000; z-index: 30000; overflow-y: auto; font-family: 'Outfit', sans-serif; color: white; display: flex; flex-direction: column;`;
@@ -1352,16 +1397,15 @@
                         box-shadow: 0 20px 40px rgba(0,0,0,0.4);
                         gap: 20px;
                     ">
-                        <div style="flex: 1; min-width: 250px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
-                            <div>
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                                 <span style="background: #CCFF00; color: #000; padding: 3px 12px; border-radius: 6px; font-weight: 950; font-size: 0.7rem; letter-spacing: 2px;">BROADCAST</span>
                                 <div style="display: flex; align-items: center; gap: 6px;">
                                     <div style="width: 8px; height: 8px; background: #FF2D55; border-radius: 50%; animation: pulse 1s infinite;"></div>
                                     <span style="font-size: 0.65rem; font-weight: 900; color: #FF2D55; letter-spacing: 1px;">PRE-PARTY LIVE</span>
                                 </div>
                             </div>
-                            <h1 class="hero-title" style="
+                            <h1 style="
                                 margin: 0; 
                                 font-family: 'Montserrat', sans-serif; 
                                 font-size: 2.2rem; 
@@ -1369,95 +1413,48 @@
                                 text-transform: uppercase; 
                                 letter-spacing: -1.5px; 
                                 line-height: 1;
-                                display: flex;
-                                align-items: center;
-                                flex-wrap: wrap;
-                                gap: 10px;
                             ">
-                                INSCRITOS 
-                                <span style="
-                                    background: rgba(0,0,0,0.9);
-                                    color: #CCFF00; 
-                                    font-family: 'Syncopate', sans-serif;
-                                    padding: 6px 20px;
-                                    border: 2px solid #CCFF00;
-                                    border-radius: 12px;
-                                    font-size: 0.7em;
-                                    letter-spacing: 2px;
-                                    text-shadow: 0 0 10px #CCFF00;
-                                    box-shadow: 0 0 25px rgba(204, 255, 0, 0.4), inset 0 0 10px rgba(204, 255, 0, 0.2);
-                                    animation: neonColorShift 8s infinite linear;
-                                    transform: skewX(-10deg);
-                                    display: inline-block;
-                                    white-space: nowrap;
-                                ">CONFIRMADOS</span>
+                                INSCRITOS <span style="color: #CCFF00;">BATTLE READY</span>
                             </h1>
-                            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
-                                <p style="margin: 0; color: #fff; font-weight: 900; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">${evt.name}</p>
-                                <div style="display: flex; align-items: center; gap: 15px; color: #64748b; font-size: 0.75rem; font-weight: 800; flex-wrap: wrap;">
-                                    <span style="display: flex; align-items: center; gap: 6px;"><i class="far fa-clock" style="color: #CCFF00; font-size: 1rem;"></i> ${evt.time || '17:00 - 19:00'}</span>
-                                    <span style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-map-marker-alt" style="color: #FF3B30; font-size: 1rem;"></i> ${evt.sede || evt.location || 'SomosPadel BCN'}</span>
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 5px;">
+                                <p style="margin: 0; color: #fff; font-weight: 900; font-size: 1rem; text-transform: uppercase; opacity: 0.9;">${evt.name}</p>
+                                <div style="display: flex; align-items: center; gap: 15px; color: #64748b; font-size: 0.75rem; font-weight: 800;">
+                                    <span><i class="far fa-clock" style="color: #CCFF00;"></i> ${evt.time}</span>
+                                    <span><i class="fas fa-map-marker-alt" style="color: #FF3B30;"></i> SomosPadel BCN</span>
                                 </div>
-                            </div>
-                            <div class="broadcast-logo-container" style="display: flex; align-items: center; justify-content: center;">
-                                <img src="img/logo_somospadel.png" style="
-                                    width: 110px; 
-                                    height: 110px; 
-                                    object-fit: contain; 
-                                    filter: drop-shadow(0 0 15px rgba(204,255,0,0.3)) brightness(1.1);
-                                    margin-top: -15px;
-                                " alt="Logo SomosPadel">
                             </div>
                         </div>
                         
-                        <div class="cnn-ledger-glass" style="
-                            text-align: center; 
-                            background: rgba(0,0,0,0.5); 
-                            backdrop-filter: blur(20px); 
-                            border: 2px solid #CCFF00; 
-                            padding: 15px 30px; 
-                            border-radius: 24px; 
-                            box-shadow: 0 0 30px rgba(204,255,0,0.2), inset 0 0 20px rgba(204,255,0,0.1); 
-                            position: relative; 
-                            overflow: hidden; 
-                            min-width: 140px;
-                        ">
+                        <div style="text-align: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(20px); border: 2px solid #CCFF00; padding: 15px 30px; border-radius: 20px; box-shadow: 0 0 30px rgba(204,255,0,0.2); min-width: 140px;">
                             <div style="font-size: 0.6rem; font-weight: 950; color: #CCFF00; margin-bottom: 5px; letter-spacing: 2px; text-transform: uppercase;">PLAYER COUNT</div>
                             <div style="font-size: 2.8rem; font-weight: 1000; color: #fff; text-shadow: 0 0 20px #CCFF00; line-height: 0.9;">
                                 ${dbPlayers.length}<span style="color: rgba(255,255,255,0.2); font-size: 1.4rem; font-weight: 700; margin-left: 2px;">/${maxPlayers}</span>
                             </div>
-                            <div class="led-pulse"></div>
-                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(circle at 50% 0%, rgba(204,255,0,0.1) 0%, transparent 70%);"></div>
                         </div>
                     </div>
 
                     <!-- HIGH DENSITY GRID -->
                     <div class="broadcast-grid" style="
                         display: grid; 
-                        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+                        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
                         gap: 15px; 
                         margin-bottom: 40px;
                     ">
                         ${cardsHtml}
                     </div>
 
-                    <!-- 🔗 RADAR DE SINERGIAS (PARTNER SUGGESTIONS) -->
-                    <div id="event-synergy-radar-root" style="margin-bottom: 40px;">
-                        <!-- Content loaded via JS -->
-                    </div>
-
                     <!-- FOOTER ACTIONS -->
                     <div style="display: flex; justify-content: center; gap: 20px; padding-bottom: 60px;">
                         <button onclick="document.getElementById('inscritos-modal').style.display = 'none';" 
-                                style="background: #CCFF00; color: #000; border: none; padding: 15px 40px; border-radius: 12px; font-weight: 950; cursor: pointer; text-transform: uppercase; font-size: 0.85rem; box-shadow: 0 10px 20px rgba(204,255,0,0.2);">
-                            VOLVER A LA APP
+                                style="background: transparent; color: #CCFF00; border: 2px solid #CCFF00; padding: 15px 40px; border-radius: 12px; font-weight: 950; cursor: pointer; text-transform: uppercase; font-size: 0.85rem; box-shadow: 0 0 15px rgba(204,255,0,0.2);">
+                            CERRAR VISTA
                         </button>
                     </div>
                 </div>
 
-                <div style="position: fixed; bottom: 0; left: 0; width: 100%; height: 35px; background: #CCFF00; display: flex; align-items: center; overflow: hidden; z-index: 30001;">
+                <div style="position: fixed; bottom: 0; left: 0; width: 100%; height: 35px; background: #CCFF00; display: flex; align-items: center; overflow: hidden; z-index: 30001; box-shadow: 0 -5px 20px rgba(0,0,0,0.5);">
                     <div class="scrolling-text" style="white-space: nowrap; font-weight: 950; font-size: 0.75rem; color: black; text-transform: uppercase;">
-                        ${dbPlayers.map(p => `• ${p.name} (LVL: ${p.level})`).join('  &nbsp;&nbsp;&nbsp;&nbsp;  ')} &nbsp;&nbsp;&nbsp;&nbsp; ${dbPlayers.map(p => `• ${p.name} (LVL: ${p.level})`).join('  &nbsp;&nbsp;&nbsp;&nbsp;  ')}
+                        ${dbPlayers.map(p => `• ${p.name} (LVL ${p.level})`).join('  &nbsp;&nbsp;&nbsp;&nbsp;  ')}
                     </div>
                 </div>
 
@@ -1466,66 +1463,12 @@
                     @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
                     #inscritos-modal::-webkit-scrollbar { width: 6px; }
                     #inscritos-modal::-webkit-scrollbar-thumb { background: #CCFF00; border-radius: 10px; }
-                    
-                    @media (max-width: 768px) {
-                        .broadcast-header {
-                            flex-direction: column;
-                            align-items: flex-start;
-                            padding: 15px;
-                        }
-                        .hero-title {
-                            font-size: 1.8rem !important;
-                        }
-                        .cnn-ledger-glass {
-                            width: 100%;
-                            box-sizing: border-box;
-                        }
-                        .broadcast-container {
-                            padding: 20px 10px;
-                        }
-                        .broadcast-logo-container {
-                            display: none !important;
-                        }
-                    }
-
-                    @media (max-width: 550px) {
-                        .broadcast-grid {
-                            grid-template-columns: repeat(2, 1fr) !important;
-                            gap: 10px !important;
-                        }
-                    }
-                    
-                    .neon-ledger {
-                        animation: led-glow 2s ease-in-out infinite alternate;
-                    }
-                    
-                    @keyframes led-glow {
-                        from { box-shadow: 0 0 10px rgba(204,255,0,0.2), inset 0 0 5px rgba(204,255,0,0.1); border-color: #84cc16; }
-                        to { box-shadow: 0 0 25px rgba(204,255,0,0.5), inset 0 0 15px rgba(204,255,0,0.3); border-color: #CCFF00; }
-                    }
-
-                    .led-pulse {
-                        position: absolute;
-                        top: 0; left: -100%;
-                        width: 50%; height: 100%;
-                        background: linear-gradient(to right, transparent, rgba(204,255,0,0.3), transparent);
-                        transform: skewX(-25deg);
-                        animation: sweep 3s infinite;
-                    }
-
-                    @keyframes sweep {
-                        0% { left: -100%; }
-                        50% { left: 150%; }
-                        100% { left: 150%; }
-                    }
-
-                    @keyframes neonColorShift {
-                        0%, 100% { color: #CCFF00; border-color: #CCFF00; box-shadow: 0 0 25px rgba(204, 255, 0, 0.4), inset 0 0 10px rgba(204, 255, 0, 0.2); text-shadow: 0 0 10px #CCFF00; }
-                        33% { color: #38bdf8; border-color: #38bdf8; box-shadow: 0 0 25px rgba(56, 189, 248, 0.4), inset 0 0 10px rgba(56, 189, 248, 0.2); text-shadow: 0 0 10px #38bdf8; }
-                        66% { color: #FF2D55; border-color: #FF2D55; box-shadow: 0 0 25px rgba(255, 45, 85, 0.4), inset 0 0 10px rgba(255, 45, 85, 0.2); text-shadow: 0 0 10px #FF2D55; }
-                    }
+                    .neon-pair-card, .neon-single-card { transition: transform 0.2s; }
+                    .neon-pair-card:hover, .neon-single-card:hover { transform: translateY(-3px); }
                 </style>
             `;
+
+
             modal.style.display = 'block';
 
             // Initialize Partner Synergy Radar in Modal

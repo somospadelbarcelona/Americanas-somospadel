@@ -85,6 +85,21 @@ window.AppConstants = {
         '3º Mixto': 3.5,
         '2º Femenino': 3.5,
         '4º Femenino': 3
+    },
+
+    // Player Attributes for Smart Matchmaking
+    PLAYER_ATTRIBUTES: {
+        SIDE: {
+            DRIVE: 'DRIVE',
+            REVES: 'REVÉS',
+            INDIFF: 'INDIFERENTE'
+        },
+        STYLE: {
+            CONTROL: 'CONTROL',
+            POTENCIA: 'POTENCIA',
+            MIXTO: 'HÍBRIDO / MIXTO',
+            ESTRATEGIA: 'ESTRATEGIA'
+        }
     }
 };
 

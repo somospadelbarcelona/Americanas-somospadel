@@ -320,6 +320,54 @@ class PremiumModal {
             setTimeout(() => searchInput.focus(), 100);
         });
     }
+
+    static async custom(options = {}) {
+        this._injectStyles();
+        const {
+            title = 'DETALLES',
+            content = '',
+            btnText = 'CERRAR',
+            width = '550px',
+            type = 'info'
+        } = options;
+
+        return new Promise((resolve) => {
+            const colors = { success: '#00ff88', danger: '#ff3b30', info: '#ccff00' };
+            const accent = colors[type] || colors.info;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'pm-overlay';
+
+            const modal = document.createElement('div');
+            modal.className = 'pm-card';
+            modal.style.maxWidth = width;
+            modal.style.setProperty('--accent-glow', accent + '40');
+
+            modal.innerHTML = `
+                <div style="height: 5px; background: linear-gradient(90deg, ${accent}00, ${accent}, ${accent}00); width: 100%;"></div>
+                <div style="padding: 25px;">
+                    <h3 style="color: white; font-family: 'Outfit'; font-weight: 900; margin-bottom: 20px; font-size: 1.3rem; text-align:center;">${title}</h3>
+                    <div id="pm-custom-content" style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6;">${content}</div>
+                </div>
+                <div style="padding: 0 25px 25px;">
+                    <button id="p-modal-ok" class="pm-btn pm-btn-primary" style="width: 100%; background: ${accent}; color: #000;">${btnText}</button>
+                </div>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            const cleanup = () => {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.remove();
+                    resolve();
+                }, 200);
+            };
+
+            overlay.querySelector('#p-modal-ok').onclick = cleanup;
+        });
+    }
 }
 
 window.PremiumModal = PremiumModal;

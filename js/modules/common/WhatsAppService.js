@@ -73,7 +73,12 @@ window.WhatsAppService = {
         msg += E.TIMER + " *Hora:* " + timeStr + endTimeStr + "\n";
         msg += E.TROPHY + " *Formato:* " + headerTitle + "\n";
         msg += E.DRUM + " *Tipo:* " + (event.pair_mode === 'rotating' ? 'Individual / Twister' : 'Pareja Fija') + "\n";
-        msg += E.WATER + " agua para cada jugador\n";
+
+        // Show water only in El Prat
+        const isPrat = location.toLowerCase().includes('prat');
+        if (isPrat) {
+            msg += E.WATER + " agua para cada jugador\n";
+        }
 
         if (isAmericana) {
             msg += E.GIFT + " bravas + 2 refrescos para los ganadores\n";
@@ -101,7 +106,14 @@ window.WhatsAppService = {
         msg += "*Jugadores*\n\n";
 
         const displayList = richPlayers || players;
-        displayList.forEach((p, index) => {
+        const processedIds = new Set();
+        let displayCount = 0;
+
+        displayList.forEach((p) => {
+            const pId = p.id || p.uid;
+            if (processedIds.has(pId)) return;
+
+            displayCount++;
             let pName = p.name ? p.name.trim() : 'Jugador';
             let gIcon = '👤 ';
             const g = (p.gender || '').toLowerCase();
@@ -111,8 +123,31 @@ window.WhatsAppService = {
             const lvl = p.level || p.playtomic_level || '';
             const lvlStr = lvl ? " (" + E.BOLT + "*N" + lvl + "*)" : "";
 
+            // --- PARTNER LOGIC (FIXED PAIRS) ---
+            let partnerStr = "";
+            const isFixed = event.format === 'fixed' || event.pair_mode === 'fixed' || (event.name || '').toUpperCase().includes('FIJA');
+
+            if (isFixed && p.partner_name) {
+                partnerStr = " + " + p.partner_name;
+                // If partner is also in the list, mark as processed to group them
+                if (p.partner_id) {
+                    const partner = displayList.find(x => (x.id || x.uid) === p.partner_id);
+                    if (partner) {
+                        processedIds.add(p.partner_id);
+                        // Also check partner's level to show both? (Optional, maybe keep it simple)
+                        if (partner.level && partner.level !== p.level) {
+                            partnerStr += " (N" + partner.level + ")";
+                        }
+                    }
+                } else {
+                    // Search by name if ID is missing (Weak but helpful)
+                    const partnerByName = displayList.find(x => x.name === p.partner_name && (x.id || x.uid) !== pId);
+                    if (partnerByName) processedIds.add(partnerByName.id || partnerByName.uid);
+                }
+            }
+
             // --- EQUIPO LOGIC ---
-            let teamStr = " _[EXTERNO]_";
+            let teamStr = "";
             const teams = p.teams || p.team_somospadel || p.EQUIPOS || p.equipos || p.Equipos;
             if (teams) {
                 const tArray = Array.isArray(teams) ? teams : String(teams).split(',').map(t => t.trim());
@@ -120,11 +155,13 @@ window.WhatsAppService = {
                 if (tName) teamStr = " _[" + tName.toUpperCase() + "]_";
             }
 
-            msg += (index + 1) + ". " + gIcon + pName + lvlStr + teamStr + "\n";
+            msg += displayCount + ". " + gIcon + pName + partnerStr + lvlStr + teamStr + "\n";
+            processedIds.add(pId);
         });
 
-        // Vacancies
-        for (let i = players.length; i < maxPlayers; i++) {
+        // Vacancies (Calculate based on pairs if fixed)
+        const totalItems = event.pair_mode === 'rotating' ? maxPlayers : (maxPlayers / 2);
+        for (let i = displayCount; i < totalItems; i++) {
             msg += (i + 1) + ". " + E.TENNIS + " \n";
         }
 
@@ -304,6 +341,33 @@ window.WhatsAppService = {
 
         const encodedText = encodeURIComponent(msg);
         const url = "https://api.whatsapp.com/send?text=" + encodedText;
+        if (isIOS) window.location.href = url;
+        else window.open(url, '_blank');
+    },
+
+    /**
+     * Share a "Need Players" alert
+     */
+    async shareLookingFor(event, countNeeded) {
+        const E = this.E;
+        const typeIcon = (event.type === 'entreno') ? "🏋️‍♂️" : "🏆";
+
+        let msg = E.DRUM + " *¡BUSCAMOS " + countNeeded + " JUGADORE" + (countNeeded > 1 ? 'S' : '') + "!* " + E.DRUM + "\n\n";
+        msg += typeIcon + " *" + (event.name || 'EVENTO').toUpperCase() + "*\n";
+        msg += E.CALENDAR + " " + this._formatDate(event.date) + "\n";
+        msg += E.TIMER + " " + (event.time || '10:00') + "\n";
+        msg += E.PIN + " " + (event.location || 'SomosPadel BCN') + "\n";
+        msg += "--------------------------\n\n";
+        msg += "Nos falta" + (countNeeded > 1 ? 'n ' : ' ') + "*" + countNeeded + "* para completar el cuadro. ¡Dale caña! 🔥🎾\n\n";
+
+        const baseUrl = "https://somospadelbarcelona.github.io/Americanas-somospadel";
+        const sectionHash = (event.type === 'entreno') ? "#entrenos" : "#americanas";
+        msg += E.LINK + " " + baseUrl + "/" + sectionHash + "\n";
+
+        const encodedText = encodeURIComponent(msg);
+        const url = "https://api.whatsapp.com/send?text=" + encodedText;
+
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         if (isIOS) window.location.href = url;
         else window.open(url, '_blank');
     }

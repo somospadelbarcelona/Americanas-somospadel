@@ -354,17 +354,26 @@ function renderMatchCard(match) {
     const teamB = formatTeam(match.teamB || match.team_b_names);
 
     const scoreControls = `
-        <div style="display: flex; gap: 15px; justify-content: center; align-items: center; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 16px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <button onclick="window.Actions.adjustScore('${match.id}', 'score_a', -1)" style="width:32px; height:32px; border-radius:50%; border:1px solid #444; background:#222; color:white; font-weight:900;">-</button>
-                <span id="score-a-${match.id}" style="width: 30px; text-align: center; font-weight: 950; font-size: 1.4rem; color: var(--primary);">${sA}</span>
-                <button onclick="window.Actions.adjustScore('${match.id}', 'score_a', 1)" style="width:32px; height:32px; border-radius:50%; border:1px solid var(--primary); background:#222; color:var(--primary); font-weight:900;">+</button>
-            </div>
-            <div style="font-weight: 900; color: rgba(255,255,255,0.1); font-size: 1.5rem;">VS</div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <button onclick="window.Actions.adjustScore('${match.id}', 'score_b', -1)" style="width:32px; height:32px; border-radius:50%; border:1px solid #444; background:#222; color:white; font-weight:900;">-</button>
-                <span id="score-b-${match.id}" style="width: 30px; text-align: center; font-weight: 950; font-size: 1.4rem; color: var(--primary);">${sB}</span>
-                <button onclick="window.Actions.adjustScore('${match.id}', 'score_b', 1)" style="width:32px; height:32px; border-radius:50%; border:1px solid var(--primary); background:#222; color:var(--primary); font-weight:900;">+</button>
+        <div style="position: relative; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 16px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.05);">
+            <!-- OPTIONAL OCR SCAN BUTTON (Moved to corner) -->
+            <button onclick="window.Actions.scanMatchScore('${match.id}')" title="Escanear Marcador con IA" style="position: absolute; right: 10px; top: 10px; background: rgba(204, 255, 0, 0.1); border: 1px solid var(--primary); color: var(--primary); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; z-index: 5;">
+                <i class="fas fa-camera" style="font-size: 0.9rem;"></i>
+            </button>
+
+            <div style="display: flex; gap: 15px; justify-content: center; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button onclick="window.Actions.adjustScore('${match.id}', 'score_a', -1)" style="width:32px; height:32px; border-radius:50%; border:1px solid #444; background:#222; color:white; font-weight:900;">-</button>
+                    <span id="score-a-${match.id}" onclick="const v = prompt('Puntuación Equipo A', this.innerText); if(v!==null) window.Actions.updateScore('${match.id}', 'score_a', v)" style="width: 30px; text-align: center; font-weight: 950; font-size: 1.4rem; color: var(--primary); cursor: pointer;" title="Click para editar">${sA}</span>
+                    <button onclick="window.Actions.adjustScore('${match.id}', 'score_a', 1)" style="width:32px; height:32px; border-radius:50%; border:1px solid var(--primary); background:#222; color:var(--primary); font-weight:900;">+</button>
+                </div>
+                
+                <div style="font-weight: 900; color: rgba(255,255,255,0.1); font-size: 1.5rem;">VS</div>
+                
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button onclick="window.Actions.adjustScore('${match.id}', 'score_b', -1)" style="width:32px; height:32px; border-radius:50%; border:1px solid #444; background:#222; color:white; font-weight:900;">-</button>
+                    <span id="score-b-${match.id}" onclick="const v = prompt('Puntuación Equipo B', this.innerText); if(v!==null) window.Actions.updateScore('${match.id}', 'score_b', v)" style="width: 30px; text-align: center; font-weight: 950; font-size: 1.4rem; color: var(--primary); cursor: pointer;" title="Click para editar">${sB}</span>
+                    <button onclick="window.Actions.adjustScore('${match.id}', 'score_b', 1)" style="width:32px; height:32px; border-radius:50%; border:1px solid var(--primary); background:#222; color:var(--primary); font-weight:900;">+</button>
+                </div>
             </div>
         </div>
     `;
@@ -517,6 +526,30 @@ window.Actions = {
                 window.loadResultsView(evt.type);
             }
         } catch (e) { alert(e.message); }
+    },
+
+    /**
+     * OCR Integration: Scan scoreboard from photo
+     */
+    async scanMatchScore(matchId) {
+        if (!window.OcrService) {
+            alert("Error: OCR Service no cargado.");
+            return;
+        }
+
+        window.OcrService.captureAndScan(async (scoreA, scoreB) => {
+            console.log(`📸 OCR Result for ${matchId}: ${scoreA}-${scoreB}`);
+            // Update scores in DB
+            const evt = window.AdminController.activeEvent;
+            const collection = (evt && evt.type === 'entreno') ? FirebaseDB.entrenos_matches : FirebaseDB.matches;
+
+            await collection.update(matchId, {
+                score_a: scoreA,
+                score_b: scoreB
+            });
+
+            // UI will update automatically via onSnapshot
+        });
     },
 
     async updateScore(matchId, field, value) {

@@ -61,6 +61,11 @@ window.AdminAuth = {
             // Wait for everything to be settled
             setTimeout(() => {
                 if (window.loadAdminView) window.loadAdminView('users');
+
+                // --- BATSEÑAL 2.0 (Proactive Agent) ---
+                if (window.BatSignalAgent) {
+                    window.BatSignalAgent.init();
+                }
             }, 500);
         } else {
             console.log("🔒 No active session. Waiting for PIN...");
@@ -199,6 +204,10 @@ window.loadAdminView = async function (viewName) {
         else if (viewName === 'entrenos_results') {
             if (window.loadResultsView) await window.loadResultsView('entreno');
             else throw new Error("Results Module not loaded");
+        }
+        else if (viewName === 'analytics') {
+            if (window.AdminViews.analytics) await window.AdminViews.analytics();
+            else throw new Error("Analytics Module not loaded");
         }
         else {
             // Fallback for Simulator or others not yet refactored logic

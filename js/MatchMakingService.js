@@ -206,27 +206,40 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                     // Priority 1: SAME TEAM
                     // Priority 2: Similar Level
 
+                    // Priority 1: SAME TEAM (Existing)
+                    // Priority 2: COMPLEMENTARY SIDE (DRIVE + REVES)
+                    // Priority 3: Similar Level
+
                     if (p1Team) {
-                        // Try to find a teammate
                         bestPartnerIndex = pool.findIndex(p => {
                             const p2Team = getTeam(p);
-                            return p2Team && p2Team === p1Team; // Exact match
+                            return p2Team && p2Team === p1Team;
                         });
                     }
 
-                    // If no teammate found (or p1 has no team), find closest level
+                    // Priority 2: Complementary Side Preference
+                    if (bestPartnerIndex === -1 && p1.side_preference && p1.side_preference !== 'INDIFF') {
+                        const targetSide = p1.side_preference === 'DRIVE' ? 'REVES' : 'DRIVE';
+                        bestPartnerIndex = pool.findIndex(p => p.side_preference === targetSide);
+                        if (bestPartnerIndex !== -1) {
+                            console.log(`↔️ Complementary Pairing: ${p1.name} (${p1.side_preference}) + ${pool[bestPartnerIndex].name} (${pool[bestPartnerIndex].side_preference})`);
+                        }
+                    }
+
+                    // If no special match found, find closest level (pool[0])
                     if (bestPartnerIndex === -1) {
-                        // Since pool is already sorted by level desc, the next player (index 0) 
-                        // is automatically the closest in level (or slightly lower).
-                        // We just take the next best player.
                         bestPartnerIndex = 0;
                     }
 
                     if (bestPartnerIndex !== -1) {
                         const p2 = pool.splice(bestPartnerIndex, 1)[0];
-                        // Add Pair
                         sortedList.push(p1, p2);
-                        console.log(`🤝 Paired ${p1.name} (${p1.level}) w/ ${p2.name} (${p2.level}) - Team: ${p1Team === getTeam(p2) ? p1Team : 'Mixed'}`);
+
+                        let pairReason = 'Level';
+                        if (p1Team && p1Team === getTeam(p2)) pairReason = 'Team: ' + p1Team;
+                        else if (p1.side_preference && p2.side_preference && p1.side_preference !== p2.side_preference && p1.side_preference !== 'INDIFF' && p2.side_preference !== 'INDIFF') pairReason = 'Sides';
+
+                        console.log(`🤝 Paired ${p1.name} (${p1.level}) w/ ${p2.name} (${p2.level}) - Reason: ${pairReason}`);
                     } else {
                         sortedList.push(pool.shift());
                     }
