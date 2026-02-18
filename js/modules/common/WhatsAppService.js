@@ -115,38 +115,53 @@ window.WhatsAppService = {
 
             displayCount++;
             let pName = p.name ? p.name.trim() : 'Jugador';
+
+            // Gender Icon
             let gIcon = '👤 ';
             const g = (p.gender || '').toLowerCase();
             if (['male', 'chico', 'hombre', 'masculino'].includes(g)) gIcon = E.MALE + " ";
             else if (['female', 'chica', 'mujer', 'femenino'].includes(g)) gIcon = E.FEMALE + " ";
 
+            // Level String
             const lvl = p.level || p.playtomic_level || '';
-            const lvlStr = lvl ? " (" + E.BOLT + "*N" + lvl + "*)" : "";
+            const lvlStr = lvl ? ` (N${lvl})` : "";
 
-            // --- PARTNER LOGIC (FIXED PAIRS) ---
-            let partnerStr = "";
-            const isFixed = event.format === 'fixed' || event.pair_mode === 'fixed' || (event.name || '').toUpperCase().includes('FIJA');
+            // --- FIXED PAIRS LOGIC (Professional Format) ---
+            const isFixed = event.pair_mode === 'fixed' || event.pair_mode === 'fixed_auto' || (event.name || '').toUpperCase().includes('FIJA');
 
-            if (isFixed && p.partner_name) {
-                partnerStr = " + " + p.partner_name;
-                // If partner is also in the list, mark as processed to group them
-                if (p.partner_id) {
-                    const partner = displayList.find(x => (x.id || x.uid) === p.partner_id);
-                    if (partner) {
-                        processedIds.add(p.partner_id);
-                        // Also check partner's level to show both? (Optional, maybe keep it simple)
-                        if (partner.level && partner.level !== p.level) {
-                            partnerStr += " (N" + partner.level + ")";
-                        }
+            if (isFixed) {
+                if (p.partner_name) {
+                    // --- PAIR CONFIRMED ---
+                    let partnerName = p.partner_name;
+                    let partnerLvlStr = "";
+
+                    // Find matching partner to mark as processed and get details
+                    let partnerObj = null;
+                    if (p.partner_id) {
+                        partnerObj = displayList.find(x => (x.id || x.uid) === p.partner_id);
+                    } else {
+                        partnerObj = displayList.find(x => x.name.toLowerCase() === p.partner_name.toLowerCase() && (x.id || x.uid) !== pId);
                     }
+
+                    if (partnerObj) {
+                        processedIds.add(partnerObj.id || partnerObj.uid);
+                        if (partnerObj.level) partnerLvlStr = ` (N${partnerObj.level})`;
+                    }
+
+                    // concise format: 1. 🎾 Juan (N4) & Pedro (N3.5)
+                    msg += `${displayCount}. ${E.TENNIS} *${pName}*${lvlStr} & *${partnerName}*${partnerLvlStr}\n`;
                 } else {
-                    // Search by name if ID is missing (Weak but helpful)
-                    const partnerByName = displayList.find(x => x.name === p.partner_name && (x.id || x.uid) !== pId);
-                    if (partnerByName) processedIds.add(partnerByName.id || partnerByName.uid);
+                    // --- LOOKING FOR PARTNER ---
+                    msg += `${displayCount}. ${gIcon} *${pName}*${lvlStr} - *Busca Pareja*\n`;
                 }
+
+                processedIds.add(pId);
+                return; // Continue forEach
             }
 
-            // --- EQUIPO LOGIC ---
+            // --- STANDARD LOGIC (Individual / Americana) ---
+
+            // Teams Logic
             let teamStr = "";
             const teams = p.teams || p.team_somospadel || p.EQUIPOS || p.equipos || p.Equipos;
             if (teams) {
@@ -155,7 +170,7 @@ window.WhatsAppService = {
                 if (tName) teamStr = " _[" + tName.toUpperCase() + "]_";
             }
 
-            msg += displayCount + ". " + gIcon + pName + partnerStr + lvlStr + teamStr + "\n";
+            msg += displayCount + ". " + gIcon + "*" + pName + "*" + lvlStr + teamStr + "\n";
             processedIds.add(pId);
         });
 

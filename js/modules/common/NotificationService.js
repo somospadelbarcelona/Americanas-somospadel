@@ -644,6 +644,13 @@ class NotificationService {
     }
 
     /**
+     * Alias for showInAppToast to allow cleaner calls like showToast(msg, type)
+     */
+    showToast(msg, type = 'info') {
+        this.showInAppToast(msg, type);
+    }
+
+    /**
      * Muestra un aviso visual dentro de la app con sistema de apilado (Stacking) Premium
      */
     showInAppToast(title, body) {

@@ -557,6 +557,27 @@ window.openEditEntrenoModal = async (entreno) => {
     if (window.loadEntrenoParticipantsUI) window.loadEntrenoParticipantsUI(entreno.id);
     if (window.PairsUI) window.PairsUI.load('entreno-fixed-pairs-area', entreno.id, 'entreno');
 
+    // Attach Promote Button Logic
+    const btnPromote = document.getElementById('btn-promote-waitlist-entreno');
+    if (btnPromote) {
+        // Clone to remove old listeners
+        const newBtn = btnPromote.cloneNode(true);
+        btnPromote.parentNode.replaceChild(newBtn, btnPromote);
+
+        newBtn.onclick = async () => {
+            if (!confirm("¿Promover al siguiente jugador de la reserva?")) return;
+            try {
+                const promoted = await ParticipantService.promoteNext(entreno.id, 'entreno');
+                if (promoted) {
+                    if (window.NotificationService) NotificationService.showToast(`${promoted.name} promovido correctamente`, "success");
+                    window.loadEntrenoParticipantsUI(entreno.id);
+                } else {
+                    alert("No hay jugadores en reserva o error al promover.");
+                }
+            } catch (e) { alert("Error: " + e.message); }
+        };
+    }
+
     // Attach Submit
     form.onsubmit = async (e) => {
         e.preventDefault();
@@ -634,10 +655,14 @@ window.openAddPlayerToEntrenoSelector = async (eventId) => {
 
         if (selected) {
             console.log("➕ Adding selected player as admin:", selected.name);
-            await ParticipantService.addPlayer(eventId, 'entreno', selected.playerObj);
+            const result = await ParticipantService.addPlayer(eventId, 'entreno', selected.playerObj);
 
             if (window.NotificationService) {
-                NotificationService.showToast(`${selected.name} añadido correctamente`, "success");
+                if (result.status === 'waitlist') {
+                    NotificationService.showToast(`${selected.name} añadido a LISTA DE RESERVA`, "warning");
+                } else {
+                    NotificationService.showToast(`${selected.name} añadido correctamente`, "success");
+                }
             }
 
             // Reload UI
@@ -707,6 +732,45 @@ window.loadEntrenoParticipantsUI = async (id) => {
     } catch (e) {
         console.error("Error loading participants:", e);
         list.innerHTML = '<div style="color:#ff4444; padding:20px; text-align:center;">Error al cargar la lista</div>';
+    }
+
+    // Load Waitlist as well
+    if (window.loadEntrenoWaitlistUI) window.loadEntrenoWaitlistUI(id);
+};
+
+window.loadEntrenoWaitlistUI = async (id) => {
+    const list = document.getElementById('waitlist-entreno');
+    if (!list) return;
+
+    try {
+        const waitlist = await ParticipantService.getWaitlist(id, 'entreno');
+
+        // Update header count if possible
+        // const header = document.querySelector('#waitlist-section-header');
+
+        if (!waitlist || waitlist.length === 0) {
+            list.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); font-size:0.75rem; padding:15px; font-style:italic;">Lista de reserva vacía</div>';
+            return;
+        }
+
+        list.innerHTML = waitlist.map((p, i) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid rgba(255,165,0,0.1); background:rgba(255,165,0,0.05); border-radius:6px; margin-bottom:4px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:20px; height:20px; background:#FFA500; color:black; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.7rem;">${i + 1}</div>
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="color:white; font-size:0.85rem; font-weight:700;">${p.name}</span>
+                        <span style="color:#FFA500; font-size:0.65rem;">Nivel ${p.level || '3.5'} • ${p.gender || '?'}</span>
+                    </div>
+                </div>
+                <div style="font-size:0.6rem; color:rgba(255,255,255,0.4);">
+                    ${p.joinedAt ? new Date(p.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                </div>
+            </div>
+        `).join('');
+
+    } catch (e) {
+        console.error("Waitlist error:", e);
+        list.innerHTML = '<div style="color:red; font-size:0.7rem;">Error cargando reserva</div>';
     }
 };
 
