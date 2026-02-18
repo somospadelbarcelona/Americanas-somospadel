@@ -126,6 +126,7 @@ window.ParticipantService = {
             const maxPlayers = (event.max_courts || 4) * 4;
             if (players.length < maxPlayers) {
                 promoted = waitlist.shift(); // Take first
+                if (promoted && !promoted.level) promoted.level = 3.5; // Ensure level
                 players.push(promoted);
                 console.log(`♻️ Promoted ${promoted.name} from waitlist`);
             }
@@ -172,6 +173,7 @@ window.ParticipantService = {
         if (waitlist.length === 0) return null;
 
         const promoted = waitlist.shift();
+        if (promoted && !promoted.level) promoted.level = 3.5; // Ensure level
         const players = event.players || [];
         players.push(promoted);
 

@@ -691,11 +691,11 @@ window.loadEntrenoParticipantsUI = async (id) => {
             return `
              <div class="player-row" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid rgba(255,255,255,0.03);">
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:900; color:var(--primary); border: 1px solid rgba(255,255,255,0.05);">
-                        ${p.level}
+                    <div style="width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:900; color:var(--primary); border: 1px solid rgba(255,255,255,0.05); overflow:hidden;">
+                        ${p.level || '3.5'}
                     </div>
                     <div style="display:flex; flex-direction:column;">
-                        <span style="font-weight:700; font-size:0.85rem; color:#fff;">${p.name.toUpperCase()}</span>
+                        <span style="font-weight:700; font-size:0.85rem; color:#fff;">${(p.name || 'JUGADOR').toUpperCase()}</span>
                         ${p.partner_name ? `<span style="font-size:0.65rem; color:#ffd700;"><i class="fas fa-handshake"></i> ${p.partner_name}</span>` : ''}
                     </div>
                 </div>
