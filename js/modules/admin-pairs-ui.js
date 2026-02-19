@@ -22,21 +22,21 @@ window.PairsUI = {
 
         container.style.display = 'block';
         container.innerHTML = `
-            <div style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; margin-top: 15px; border: 1px dashed #444;">
-                <h4 style="margin:0 0 10px 0; color: #CCFF00;">🔐 GESTIÓN DE PAREJAS FIJAS (POZO)</h4>
+            <div style="background: rgba(255,255,255,0.5); padding: 15px; border-radius: 12px; margin-top: 15px; border: 1px dashed #000000;">
+                <h4 style="margin:0 0 10px 0; color: #000000; font-weight:900;">🔐 GESTIÓN DE PAREJAS FIJAS (POZO)</h4>
                 
                 <div id="pairs-list-${eventId}" style="margin-bottom: 15px;"></div>
                 
                 <div style="display:flex; gap:10px;">
-                     <select id="p1-${eventId}" class="pro-input"></select>
-                     <select id="p2-${eventId}" class="pro-input"></select>
+                     <select id="p1-${eventId}" class="pro-input" style="color:#000 !important; border:1px solid #ccc !important;"></select>
+                     <select id="p2-${eventId}" class="pro-input" style="color:#000 !important; border:1px solid #ccc !important;"></select>
                      <button id="btn-add-pair-${eventId}" class="btn-primary-pro" style="padding: 0 15px;">➕</button>
                 </div>
                 
-                <button id="btn-auto-pair-${eventId}" class="btn-outline-pro" style="width:100%; margin-top:10px;">⚡ AUTO-EMPAREJAR RESTANTES</button>
+                <button id="btn-auto-pair-${eventId}" class="btn-outline-pro" style="width:100%; margin-top:10px; color:#000; border-color:#000;">⚡ AUTO-EMPAREJAR RESTANTES</button>
                 
                 <!-- REGEN BUTTON -->
-                <button id="btn-regen-${eventId}" class="btn-primary-pro" style="width:100%; margin-top:15px; background: #e67e22; border-color: #e67e22;">
+                <button id="btn-regen-${eventId}" class="btn-primary-pro" style="width:100%; margin-top:15px; background: #e67e22; border-color: #e67e22; color:#000;">
                     🎲 GUARDAR Y REGENERAR CRUCES
                 </button>
             </div>
@@ -59,7 +59,7 @@ window.PairsUI = {
 
         // 1. Render Pairs
         if (pairs.length === 0) {
-            listDiv.innerHTML = '<div style="color:#666; font-style:italic;">Sin parejas definidas</div>';
+            listDiv.innerHTML = '<div style="color:#000000; font-style:italic; font-weight:600;">Sin parejas definidas</div>';
         } else {
             listDiv.innerHTML = pairs.map((p, i) => {
                 // FALLBACK for old schema: p.player1.name
@@ -68,9 +68,9 @@ window.PairsUI = {
                 const courtInfo = p.current_court ? `<span style="font-size:0.7em; color:#888; margin-left:5px;">(Pista ${p.current_court})</span>` : '';
 
                 return `
-                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:8px; margin-bottom:5px; border-radius:6px;">
-                    <span style="color:white;">${p1Name} 🤝 ${p2Name} ${courtInfo}</span>
-                    <button onclick="window.PairsUI.removePair('${eventId}', '${eventType}', ${i})" style="color:red; background:none; border:none; cursor:pointer;">×</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.05); padding:8px; margin-bottom:5px; border-radius:6px; border:1px solid rgba(0,0,0,0.1);">
+                    <span style="color:#000000; font-weight:700;">${p1Name} 🤝 ${p2Name} ${courtInfo}</span>
+                    <button onclick="window.PairsUI.removePair('${eventId}', '${eventType}', ${i})" style="color:#ef4444; background:none; border:none; cursor:pointer; font-weight:bold;">×</button>
                 </div>
             `}).join('');
         }

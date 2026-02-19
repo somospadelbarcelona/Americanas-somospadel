@@ -24,19 +24,30 @@ window.ParticipantService = {
         const maxPlayers = (event.max_courts || 4) * 4;
         const currentPlayers = event.players || [];
 
-        // 2. Check Duplicates
-        const isDuplicate = currentPlayers.some(p => (p.id === player.id) || (p.uid === player.id));
-        if (isDuplicate) throw new Error("Player already enrolled");
+        // 2. Check Duplicates (Robust ID Check)
+        const targetId = player.id || player.uid;
+        if (!targetId) throw new Error("Player object has no ID or UID");
 
-        // 3. Prepare Player Object
+        const isDuplicate = currentPlayers.some(p => {
+            const pid = p.id || p.uid;
+            return String(pid) === String(targetId);
+        });
+        if (isDuplicate) {
+            alert(`⚠️ Este jugador ya está inscrito.`);
+            throw new Error("Player already enrolled");
+        }
+
+        // 3. Prepare Player Object (Sanitized)
         const newPlayer = {
-            id: player.id,
-            uid: player.id, // Legacy compatibility
-            name: player.name || player.displayName || 'JUGADOR',
-            level: player.level || player.playtomic_level || player.self_rate_level || 3.5,
+            id: targetId,
+            uid: targetId,
+            name: (player.name || player.displayName || 'JUGADOR').toUpperCase(),
+            level: parseFloat(player.level || player.playtomic_level || player.self_rate_level || 3.5),
             gender: player.gender || '?',
-            photoURL: player.photoURL || null,
-            joinedAt: new Date().toISOString()
+            photoURL: player.photoURL || player.photo_url || null,
+            joinedAt: new Date().toISOString(),
+            partner_id: player.partner_id || null,
+            partner_name: player.partner_name || null
         };
 
         // 4. Add to Main List or Waitlist

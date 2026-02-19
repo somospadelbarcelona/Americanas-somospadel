@@ -18,12 +18,10 @@
                 return this.renderUpcomingMatch(context);
             } else if (context.hasRecentVictory) {
                 return this.renderVictoryCelebration(context);
-            } else if (context.hasOpenTournament) {
-                return this.renderTournamentInscription(context);
             } else if (context.hasMatchThisWeek) {
                 return this.renderWeekPreview(context);
             } else {
-                return this.renderEmptyState(context);
+                return this.renderEmptyIcon(context);
             }
         }
 
@@ -41,7 +39,9 @@
                     border-left: 5px solid ${borderColor};
                     border-radius: 20px;
                     padding: 24px;
-                    margin: 20px;
+                    margin: 0;
+                    width: 100%;
+                    box-sizing: border-box;
                     box-shadow: 0 8px 24px rgba(0,0,0,0.08);
                     animation: slideInDown 0.4s ease-out;
                 ">
@@ -134,7 +134,9 @@
                     border-left: 5px solid #34C759;
                     border-radius: 20px;
                     padding: 24px;
-                    margin: 20px;
+                    margin: 0;
+                    width: 100%;
+                    box-sizing: border-box;
                     box-shadow: 0 8px 24px rgba(52,199,89,0.15);
                     position: relative;
                     overflow: hidden;
@@ -180,55 +182,82 @@
          * Inscripción a torneo abierto
          */
         static renderTournamentInscription(ctx) {
-            const spotsLeft = ctx.maxPlayers - ctx.currentPlayers;
-            const urgentInscription = spotsLeft <= 3;
+            const max = ctx.maxPlayers || 24;
+            const current = ctx.currentPlayers || 0;
+            const spotsLeft = Math.max(0, max - current);
+            const isUrgent = spotsLeft < 5;
+            const activeColor = isUrgent ? '#FF2D55' : '#CCFF00';
 
             return `
-                <div class="hero-card fade-in" style="
-                    background: white;
-                    border-left: 5px solid ${urgentInscription ? '#FF3B30' : '#007AFF'};
-                    border-radius: 20px;
-                    padding: 24px;
-                    margin: 20px;
-                    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+                <div class="hero-card fade-in" onclick="HeroCardActions.enrollTournament('${ctx.tournamentId}')" style="
+                    background: #09090b;
+                    border: 2px solid ${activeColor};
+                    border-radius: 24px;
+                    padding: 0;
+                    margin: 0;
+                    width: 100%;
+                    box-sizing: border-box;
+                    box-shadow: 0 0 20px ${activeColor}40;
+                    position: relative;
+                    overflow: hidden;
+                    cursor: pointer;
+                    animation: borderFlash 2s infinite;
                 ">
-                    <div style="text-align: center;">
-                        <div style="font-size: 3.5rem; margin-bottom: 12px;">🏆</div>
-                        <div style="font-size: 0.75rem; font-weight: 800; color: #666; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;">
-                            PRÓXIMA AMERICANA
-                        </div>
-                        <div style="font-size: 1.4rem; font-weight: 900; color: #000; margin-bottom: 4px;">
-                            ${ctx.tournamentDate} • ${ctx.tournamentTime}
-                        </div>
-                        <div style="font-size: 0.9rem; color: #666; font-weight: 600; margin-bottom: 16px;">
-                            ${ctx.tournamentName}
+                    <style>
+                        @keyframes borderFlash {
+                            0% { box-shadow: 0 0 10px ${activeColor}20; border-color: ${activeColor}80; }
+                            50% { box-shadow: 0 0 30px ${activeColor}60; border-color: ${activeColor}; transform: scale(1.005); }
+                            100% { box-shadow: 0 0 10px ${activeColor}20; border-color: ${activeColor}80; }
+                        }
+                    </style>
+
+                    <!-- Background abstract art -->
+                    <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: radial-gradient(circle, ${activeColor}20 0%, transparent 70%); filter: blur(30px);"></div>
+                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(45deg, ${activeColor}05, ${activeColor}05 10px, transparent 10px, transparent 20px);"></div>
+                    
+                    <div style="padding: 24px; position: relative; z-index: 2;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                             <div style="
+                                background: ${activeColor}; color: #000; 
+                                font-size: 0.65rem; font-weight: 950; 
+                                padding: 5px 12px; border-radius: 8px; 
+                                text-transform: uppercase; letter-spacing: 1px;
+                                box-shadow: 0 4px 15px ${activeColor}50;
+                                animation: pulse 1s infinite;
+                             ">
+                                ${isUrgent ? '🔥 ¡ÚLTIMAS PLAZAS!' : '🚀 INSCRIPCIÓN ABIERTA'}
+                             </div>
+                             <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🏆</div>
                         </div>
 
-                        ${urgentInscription ? `
-                            <div style="background: #FF3B30; color: white; display: inline-block; padding: 8px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 900; margin-bottom: 16px; animation: pulse 2s infinite;">
-                                🔥 ¡SOLO QUEDAN ${spotsLeft} PLAZAS!
-                            </div>
-                        ` : `
-                            <div style="background: #F8F9FA; color: #666; display: inline-block; padding: 8px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; margin-bottom: 16px;">
-                                ${ctx.currentPlayers}/${ctx.maxPlayers} jugadores inscritos
-                            </div>
-                        `}
+                        <h2 style="color: white; font-weight: 950; font-size: 1.6rem; margin: 0 0 5px 0; line-height: 1; text-shadow: 0 0 20px ${activeColor}80;">
+                            ${ctx.tournamentName || 'AMERICANA OPEN'}
+                        </h2>
+                         <div style="color: #94a3b8; font-size: 0.9rem; font-weight: 700; margin-bottom: 25px; display: flex; align-items: center; gap: 8px;">
+                             <i class="far fa-clock"></i> ${ctx.tournamentDate} • ${ctx.tournamentTime}
+                        </div>
 
-                        <button onclick="HeroCardActions.enrollTournament('${ctx.tournamentId}')" style="
-                            background: #CCFF00;
-                            border: none;
-                            color: black;
-                            padding: 16px 24px;
-                            border-radius: 12px;
-                            font-weight: 900;
-                            font-size: 1rem;
-                            cursor: pointer;
-                            width: 100%;
-                            box-shadow: 0 4px 12px rgba(204,255,0,0.3);
-                            text-transform: uppercase;
-                        ">
-                            INSCRIBIRME AHORA
-                        </button>
+                        <!-- Progress Bar for Spots -->
+                        <div style="background: rgba(255,255,255,0.1); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="
+                                width: ${(current / max) * 100}%; 
+                                height: 100%; 
+                                background: ${activeColor};
+                                box-shadow: 0 0 15px ${activeColor};
+                                transition: width 1s ease-out;
+                            "></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 700; color: #64748b;">
+                            <span style="color: #cbd5e1;">${current}/${max} inscritos</span>
+                            <span style="color: ${activeColor}; font-weight: 900;">Quedan ${spotsLeft}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Bottom Action Strip -->
+                    <div style="background: ${activeColor}; padding: 14px; text-align: center; margin-top: 5px;">
+                        <span style="color: #000; font-weight: 950; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase;">
+                            PULSA PARA UNIRTE <i class="fas fa-arrow-right" style="margin-left: 8px;"></i>
+                        </span>
                     </div>
                 </div>
             `;
@@ -244,7 +273,9 @@
                     border-left: 5px solid #007AFF;
                     border-radius: 20px;
                     padding: 24px;
-                    margin: 20px;
+                    margin: 0;
+                    width: 100%;
+                    box-sizing: border-box;
                     box-shadow: 0 8px 24px rgba(0,0,0,0.08);
                 ">
                     <div style="font-size: 0.75rem; font-weight: 800; color: #666; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;">
@@ -283,35 +314,33 @@
         /**
          * Estado vacío (sin eventos)
          */
-        static renderEmptyState(ctx) {
+        /**
+         * Icono Flotante de Estado (Radar)
+         * Reemplaza la tarjeta grande por un indicador discreto
+         */
+        static renderEmptyIcon(ctx) {
             return `
-                <div class="hero-card fade-in" style="
-                    background: white;
-                    border: 2px dashed #E0E0E0;
-                    border-radius: 20px;
-                    padding: 40px 24px;
-                    margin: 20px;
-                    text-align: center;
+                <div onclick="window.Router.navigate('entrenos')" style="
+                    position: fixed;
+                    bottom: 90px;
+                    right: 20px;
+                    width: 50px;
+                    height: 50px;
+                    background: rgba(15, 23, 42, 0.9);
+                    border: 1px solid rgba(59,130,246,0.3);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                    z-index: 999;
+                    backdrop-filter: blur(10px);
+                    animation: floatUp 0.5s ease-out;
+                    cursor: pointer;
                 ">
-                    <div style="font-size: 3.5rem; margin-bottom: 16px; opacity: 0.5;">🎾</div>
-                    <div style="font-size: 1.2rem; font-weight: 800; color: #333; margin-bottom: 8px;">
-                        Sin eventos próximos
-                    </div>
-                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 20px; line-height: 1.5;">
-                        Mantente atento a las próximas Americanas.<br>¡Te avisaremos cuando abran inscripciones!
-                    </div>
-                    <button onclick="Router.navigate('americanas')" style="
-                        background: #F8F9FA;
-                        border: 1px solid #E0E0E0;
-                        color: #333;
-                        padding: 12px 24px;
-                        border-radius: 12px;
-                        font-weight: 700;
-                        font-size: 0.85rem;
-                        cursor: pointer;
-                    ">
-                        Explorar Torneos
-                    </button>
+                    <div style="font-size: 1.2rem; animation: pulse 3s infinite;">📡</div>
+                    <!-- Badge Notification Dot -->
+                    <div style="position: absolute; top: 0; right: 0; width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; border: 2px solid #0f172a;"></div>
                 </div>
             `;
         }

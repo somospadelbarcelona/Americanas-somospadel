@@ -72,6 +72,12 @@
 
                     <!-- NEW CONTEXT-FIRST ARCHITECTURE -->
                     
+                    <!-- 0. HERO CARD (CONTEXT AWARE) -->
+                    <!-- 0. HERO CARD (CONTEXT AWARE) -->
+                    <div id="hero-card-root" style="animation: floatUp 0.8s ease-out forwards;">
+                        <!-- Content loaded via JS (HeroCard) -->
+                    </div>
+
                     <!-- 4. PULSE STORIES (Instagram Style) -->
                     <div id="story-feed-root" style="margin: 0 !important; animation: floatUp 0.8s ease-out forwards; padding-top: 2px;">
                         <!-- Cargado vía JS (StoryFeedWidget) -->
@@ -1103,6 +1109,8 @@
                 matchType: null
             };
 
+
+
             if (!user) return context;
 
             try {
@@ -1133,6 +1141,19 @@
                 // 4. Inscriptions & Waitlist Monitor
                 const openEvents = allEvents.filter(a => ['open', 'upcoming', 'scheduled'].includes(a.status));
                 context.activeTournaments = openEvents.length;
+                context.hasOpenTournament = openEvents.length > 0;
+
+                // Populate first available tournament for HeroCard display
+                if (context.hasOpenTournament) {
+                    const nextTournament = openEvents[0];
+                    context.tournamentName = nextTournament.name;
+                    context.tournamentDate = this.formatFriendlyDate(nextTournament.date);
+                    context.tournamentTime = nextTournament.time || '18:00';
+                    context.tournamentId = nextTournament.id;
+                    context.maxPlayers = nextTournament.max_players || 24;
+                    context.currentPlayers = (nextTournament.registeredPlayers || []).length;
+                }
+
                 // 5. STATS & ARCHIVE (Calculated silently in background)
                 if (window.RankingController) {
                     const ranked = await window.RankingController.calculateSilently();
@@ -1328,6 +1349,36 @@
 
         async loadLiveWidgetContent(context) {
             console.log("🧠 [DashboardView] loadLiveWidgetContent started");
+
+            // 0. Render Hero Card (Priority Sync)
+            try {
+                const heroRoot = document.getElementById('hero-card-root');
+                if (heroRoot && window.HeroCard) {
+                    // console.log("🃏 [DashboardView] Syncing HeroCard...");
+                    heroRoot.innerHTML = window.HeroCard.render(context);
+
+                    // POPUP ALERT: Torneo (Solo ventana emergente)
+                    if (context.hasOpenTournament && !context.isSignedUp && window.PremiumModal) {
+                        const sessionKey = `popup_tournament_${context.tournamentId}`;
+                        if (!sessionStorage.getItem(sessionKey)) {
+                            sessionStorage.setItem(sessionKey, 'true');
+                            setTimeout(() => {
+                                window.PremiumModal.confirm({
+                                    title: "INSCRIPCIÓN ABIERTA",
+                                    message: `El evento <b>${context.tournamentName}</b> está disponible.<br>¿Quieres ver los detalles y apuntarte?`,
+                                    confirmText: "VER DETALLES",
+                                    cancelText: "LUEGO",
+                                    type: 'success'
+                                }).then(res => {
+                                    if (res) window.Router.navigate('americanas');
+                                });
+                            }, 800);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("❌ HeroCard render failed:", e);
+            }
 
             // 4. Load Predictive Synergy Widget
             try {

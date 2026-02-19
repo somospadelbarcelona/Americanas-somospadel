@@ -9,18 +9,41 @@ window.AdminViews = window.AdminViews || {};
 
 // Main Management View
 // 1. GESTOR DE ENTRENOS (Listado y Filtros)
+// 1. GESTOR DE ENTRENOS (Listado y Filtros)
 window.AdminViews.entrenos_mgmt = async function () {
     const content = document.getElementById('content-area');
     const titleEl = document.getElementById('page-title');
 
     if (titleEl) titleEl.textContent = 'Gestor de Entrenos';
-    content.innerHTML = '<div class="loading-container"><div class="loader"></div><p>Cargando todos los entrenos...</p></div>';
+
+    // Diagnostic Helper
+    const updateStatus = (msg) => {
+        content.innerHTML = `<div class="loading-container"><div class="loader"></div><p>${msg}</p></div>`;
+    };
+
+    updateStatus("🚀 Iniciando Gestor...");
 
     try {
-        // Forzar recarga de datos saltando caché si es posible
+        // Dependency Checks
+        if (!window.EventService) throw new Error("EventService no cargado");
+        if (!window.AppConstants) throw new Error("AppConstants no cargado");
+        if (!window.FirebaseDB) throw new Error("FirebaseDB no cargado");
+
+        // Force reload
         if (window.CacheService) window.CacheService.remove('entrenos', 'all');
 
-        const entrenos = await EventService.getAll(AppConstants.EVENT_TYPES.ENTRENO);
+        updateStatus("📡 Conectando con Base de Datos...");
+
+        // Race Condition: 8s Timeout vs Data Fetch
+        const fetchPromise = EventService.getAll(AppConstants.EVENT_TYPES.ENTRENO);
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("⌛ Tiempo de espera agotado (8s). Revisa tu conexión.")), 8000)
+        );
+
+        const entrenos = await Promise.race([fetchPromise, timeoutPromise]);
+
+        updateStatus("✅ Datos recibidos. Procesando...");
+
         const sortedEntrenos = entrenos.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         // 📅 Get available months for filter list
@@ -91,7 +114,12 @@ window.AdminViews.entrenos_mgmt = async function () {
 
     } catch (e) {
         console.error("Error en Gestor Entrenos:", e);
-        content.innerHTML = `<div class="error-box"><h3>Error de conexión</h3><p>${e.message}</p></div>`;
+        content.innerHTML = `<div class="error-box" style="padding:40px; text-align:center;">
+            <i class="fas fa-exclamation-triangle" style="font-size:3rem; color:#ff4444; margin-bottom:20px;"></i>
+            <h3 style="color:#ff4444;">Error de Carga</h3>
+            <p style="color:#fff; font-family:monospace; background:rgba(0,0,0,0.3); padding:10px; border-radius:8px;">${e.message}</p>
+            <button onclick="loadAdminView('entrenos_mgmt')" style="margin-top:20px; padding:10px 20px; background:#fff; border:none; border-radius:6px; cursor:pointer;">REINTENTAR</button>
+        </div>`;
     }
 };
 
@@ -237,25 +265,25 @@ function renderEntrenoCard(e) {
              data-month="${month}" 
              data-status="${e.status || 'open'}" 
              data-category="${e.category || 'open'}"
-             style="margin-bottom: 1.2rem; display: flex; flex-direction: column; padding: 1.2rem; border-left: 4px solid ${statusColor}; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%); gap: 1rem;">
+             style="margin-bottom: 1.2rem; display: flex; flex-direction: column; padding: 1.2rem; border-left: 6px solid ${statusColor}; background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 12px; gap: 1rem; color: #000000;">
             
             <div style="display: flex; gap: 1.2rem; align-items: flex-start;">
-                <div class="entreno-preview-img" style="width: 60px; height: 60px; border-radius: 12px; background: url('${(e.image_url || '').replace(/ /g, '%20')}') center/cover; border: 1px solid rgba(255,255,255,0.1); position:relative; flex-shrink: 0;">
-                    <div style="position:absolute; bottom:-5px; right:-5px; background:${statusColor}; width:12px; height:12px; border-radius:50%; border:2px solid #1a1c23;"></div>
+                <div class="entreno-preview-img" style="width: 60px; height: 60px; border-radius: 12px; background: url('${(e.image_url || '').replace(/ /g, '%20')}') center/cover; border: 1px solid rgba(0,0,0,0.1); position:relative; flex-shrink: 0;">
+                    <div style="position:absolute; bottom:-5px; right:-5px; background:${statusColor}; width:12px; height:12px; border-radius:50%; border:2px solid #fff;"></div>
                 </div>
                 <div class="entreno-info-pro" style="flex: 1; min-width: 0;">
-                    <div style="font-weight: 950; font-size: 1.1rem; color: #FFFFFF; margin-bottom: 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                    <div style="font-weight: 950; font-size: 1.1rem; color: #000000; margin-bottom: 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
                         ${e.name.toUpperCase()}
                     </div>
-                    <div style="display: flex; gap: 0.8rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap; align-items: center;">
-                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-calendar-alt" style="color: #60A5FA;"></i> <span style="color:#eee; font-weight: 600;">${formatDate(e.date)}</span></span>
-                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-clock" style="color: #A78BFA;"></i> <span style="color:#eee; font-weight: 600;">${e.time || '10:00'}</span></span>
+                    <div style="display: flex; gap: 0.8rem; font-size: 0.75rem; color: #333333; flex-wrap: wrap; align-items: center;">
+                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-calendar-alt" style="color: #60A5FA;"></i> <span style="color:#333; font-weight: 600;">${formatDate(e.date)}</span></span>
+                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-clock" style="color: #A78BFA;"></i> <span style="color:#333; font-weight: 600;">${e.time || '10:00'}</span></span>
                          <span onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' style="cursor:pointer; display: flex; align-items: center; gap: 5px;" title="Gestionar participantes">
-                            <i class="fas fa-users" style="color: #34D399;"></i> <span style="color:var(--primary); font-weight:800;">${playersCount}</span><span style="opacity:0.5;">/${maxPlayers}</span>
+                            <i class="fas fa-users" style="color: #10B981;"></i> <span style="color:#000; font-weight:800;">${playersCount}</span><span style="opacity:0.5;">/${maxPlayers}</span>
                          </span>
                     </div>
                 </div>
-                <div style="background:rgba(255,255,255,0.05); padding:6px 10px; border-radius:8px; font-size:0.7rem; font-weight:900; color:var(--primary); border: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;">
+                <div style="background:rgba(0,0,0,0.05); padding:6px 12px; border-radius:8px; font-size:0.8rem; font-weight:900; color:#000; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;">
                     ${e.price_members || 15}€
                 </div>
             </div>
@@ -267,13 +295,14 @@ function renderEntrenoCard(e) {
                             style="
                                 width: 100%;
                                 appearance: none; 
-                                background: ${statusColor}15; 
-                                color: #FFFFFF; 
-                                border: 1px solid ${statusColor}; 
+                                background: ${statusColor}20; 
+                                color: #000000 !important; 
+                                -webkit-text-fill-color: #000000 !important;
+                                border: 2px solid ${statusColor}; 
                                 padding: 8px 12px; 
                                 border-radius: 8px; 
                                 font-weight: 800; 
-                                font-size: 0.65rem; 
+                                font-size: 0.7rem; 
                                 cursor: pointer; 
                                 text-transform: uppercase;
                                 outline: none;
@@ -375,7 +404,7 @@ function setupCreateForm() {
             const newEventId = await EventService.createEvent('entreno', data);
 
             // Notify
-            if (window.NotificationService) NotificationService.showToast("Entreno Creado Correctamente", "success");
+            if (window.NotificationService) window.NotificationService.showToast("Entreno Creado Correctamente", "success");
 
             // Reload
             window.loadAdminView('entrenos_mgmt');
@@ -569,7 +598,7 @@ window.openEditEntrenoModal = async (entreno) => {
             try {
                 const promoted = await ParticipantService.promoteNext(entreno.id, 'entreno');
                 if (promoted) {
-                    if (window.NotificationService) NotificationService.showToast(`${promoted.name} promovido correctamente`, "success");
+                    if (window.NotificationService) window.NotificationService.showToast(`${promoted.name} promovido correctamente`, "success");
                     window.loadEntrenoParticipantsUI(entreno.id);
                 } else {
                     alert("No hay jugadores en reserva o error al promover.");
@@ -659,9 +688,9 @@ window.openAddPlayerToEntrenoSelector = async (eventId) => {
 
             if (window.NotificationService) {
                 if (result.status === 'waitlist') {
-                    NotificationService.showToast(`${selected.name} añadido a LISTA DE RESERVA`, "warning");
+                    window.NotificationService.showToast(`${selected.name} añadido a LISTA DE RESERVA`, "warning");
                 } else {
-                    NotificationService.showToast(`${selected.name} añadido correctamente`, "success");
+                    window.NotificationService.showToast(`${selected.name} añadido correctamente`, "success");
                 }
             }
 
@@ -671,6 +700,136 @@ window.openAddPlayerToEntrenoSelector = async (eventId) => {
     } catch (e) {
         console.error("Error in admin player selection:", e);
         alert("Error: " + e.message);
+    }
+};
+
+window.openAddPairToEntrenoSelector = async (eventId) => {
+    if (!window.PremiumModal) return alert("PremiumModal no disponible");
+
+    try {
+        const allPlayers = await FirebaseDB.players.getAll();
+
+        const selectorItems = allPlayers.map(p => ({
+            id: p.id || p.uid,
+            name: p.name || 'Sin nombre',
+            sub: `Nivel: ${p.level || '3.5'} • ${p.gender || '?'}`,
+            image: p.photoURL || p.photo_url || null,
+            playerObj: p
+        })).sort((a, b) => a.name.localeCompare(b.name));
+
+        // 1. SELECT PLAYER 1
+        const selected1 = await PremiumModal.selector({
+            title: 'SELECCIONA JUGADOR 1',
+            message: 'Elige el primer miembro de la pareja:',
+            items: selectorItems,
+            placeholder: 'Busca al primer jugador...',
+            type: 'primary'
+        });
+
+        if (!selected1) return;
+
+        // 2. SELECT PLAYER 2 (Filter out P1)
+        const items2 = selectorItems.filter(p => p.id !== selected1.id);
+        const selected2 = await PremiumModal.selector({
+            title: `Pareja de ${selected1.name.split(' ')[0]}`,
+            message: `Elige quién jugará con ${selected1.name}:`,
+            items: items2,
+            placeholder: 'Busca a su pareja...',
+            type: 'success'
+        });
+
+        if (!selected2) return;
+
+        // 3. Confirm & Add Both
+        if (confirm(`¿Confirmar pareja: ${selected1.name} 🤝 ${selected2.name}?`)) {
+
+            // Link them in Objects
+            const p1 = { ...selected1.playerObj };
+            p1.partner_id = selected2.id;
+            p1.partner_name = selected2.name;
+
+            const p2 = { ...selected2.playerObj };
+            p2.partner_id = selected1.id;
+            p2.partner_name = selected1.name;
+
+            console.log("Adding Pair:", p1.name, "&", p2.name);
+
+            // Add P1
+            await ParticipantService.addPlayer(eventId, 'entreno', p1);
+            // Add P2 (Wait slightly)
+            await new Promise(r => setTimeout(r, 200));
+            await ParticipantService.addPlayer(eventId, 'entreno', p2);
+
+            if (window.NotificationService) {
+                window.NotificationService.showToast(`Pareja Creada: ${selected1.name} & ${selected2.name}`, "success");
+            }
+
+            // Reload UI
+            window.loadEntrenoParticipantsUI(eventId);
+        }
+
+    } catch (e) {
+        console.error("Error adding pair:", e);
+        alert("Error al añadir pareja: " + e.message);
+    }
+};
+
+window.linkManualPartner = async (eventId, playerId, playerName) => {
+    if (!window.PremiumModal) return alert("PremiumModal no disponible");
+
+    try {
+        const event = await EventService.getById('entreno', eventId);
+        const players = event.players || [];
+
+        // Filter candidates: Already in event, Not the current player, No partner yet
+        const candidates = players.filter(p => {
+            const pid = String(p.id || p.uid);
+            return pid !== String(playerId) && !p.partner_id;
+        }).map(p => ({
+            id: p.id || p.uid,
+            name: p.name || 'Sin nombre',
+            sub: `Nivel: ${p.level || '3.5'}`,
+            image: p.photoURL || null
+        })).sort((a, b) => a.name.localeCompare(b.name));
+
+        if (candidates.length === 0) return alert("No hay jugadores disponibles sin pareja para vincular.");
+
+        const selected = await PremiumModal.selector({
+            title: `Pareja para ${playerName}`,
+            message: `Selecciona a su pareja de la lista de inscritos:`,
+            items: candidates,
+            placeholder: 'Busca jugador...',
+            type: 'primary'
+        });
+
+        if (!selected) return;
+
+        if (confirm(`¿Vincular a ${playerName} con ${selected.name}?`)) {
+            // Update local array first
+            const p1Index = players.findIndex(p => String(p.id || p.uid) === String(playerId));
+            const p2Index = players.findIndex(p => String(p.id || p.uid) === String(selected.id));
+
+            if (p1Index === -1 || p2Index === -1) return alert("Error al encontrar jugadores.");
+
+            // Link P1
+            players[p1Index].partner_id = selected.id;
+            players[p1Index].partner_name = selected.name;
+
+            // Link P2
+            players[p2Index].partner_id = playerId;
+            players[p2Index].partner_name = playerName;
+
+            // Save to DB
+            await FirebaseDB.entrenos.update(eventId, { players: players });
+
+            if (window.NotificationService) window.NotificationService.showToast("Pareja vinculada correctamente", "success");
+
+            window.loadEntrenoParticipantsUI(eventId);
+        }
+
+    } catch (e) {
+        console.error("Error linking partner:", e);
+        alert("Error al vincular: " + e.message);
     }
 };
 
@@ -705,29 +864,119 @@ window.loadEntrenoParticipantsUI = async (id) => {
                     </button>
                 </div>
              </div>
-             <button onclick="window.openAddPlayerToEntrenoSelector('${id}')" 
-                     style="width:100%; height:40px; background:rgba(204,255,0,0.1); color:#ccff00; border:1px solid rgba(204,255,0,0.2); border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
-                <i class="fas fa-user-plus"></i> AÑADIR JUGADOR MANUAMENTE
-             </button>
-        </div>
-        ` + uniquePlayers.map(p => {
-            const pid = p.id || p.uid;
-
-            return `
-             <div class="player-row" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid rgba(255,255,255,0.03);">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:900; color:var(--primary); border: 1px solid rgba(255,255,255,0.05); overflow:hidden;">
-                        ${p.level || '3.5'}
-                    </div>
-                    <div style="display:flex; flex-direction:column;">
-                        <span style="font-weight:700; font-size:0.85rem; color:#fff;">${(p.name || 'JUGADOR').toUpperCase()}</span>
-                        ${p.partner_name ? `<span style="font-size:0.65rem; color:#ffd700;"><i class="fas fa-handshake"></i> ${p.partner_name}</span>` : ''}
-                    </div>
-                </div>
-                <button onclick="window.removeEntrenoPlayer('${id}', '${pid}')" style="background:none; border:none; color:#ff4444; cursor:pointer; font-size:0.9rem; padding:5px;"><i class="fas fa-times"></i></button>
+             <div style="display:grid; grid-template-columns: ${(event.pair_mode && event.pair_mode.includes('fixed')) ? '1fr 1fr' : '1fr'}; gap:8px;">
+                 <button onclick="window.openAddPlayerToEntrenoSelector('${id}')" 
+                         style="width:100%; height:40px; background:rgba(204,255,0,0.1); color:#000000 !important; border:1px solid rgba(204,255,0,0.2); border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <i class="fas fa-user-plus"></i> ${(event.pair_mode && event.pair_mode.includes('fixed')) ? 'JUGADOR' : 'AÑADIR JUGADOR'}
+                 </button>
+                 ${(event.pair_mode && event.pair_mode.includes('fixed')) ? `
+                 <button onclick="window.openAddPairToEntrenoSelector('${id}')" 
+                         style="width:100%; height:40px; background:rgba(59, 130, 246, 0.1); color:#000000 !important; border:1px solid rgba(59, 130, 246, 0.2); border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <i class="fas fa-user-friends"></i> AÑADIR PAREJA
+                 </button>` : ''}
              </div>
-             `;
-        }).join('');
+        </div>
+        ` + (() => {
+                const renderedIds = new Set();
+                let html = '';
+
+                // Helper for Level Color
+                const getLevelColor = (l) => {
+                    const level = parseFloat(l || '3.5');
+                    if (level < 3) return '#94a3b8'; // Beginner
+                    if (level < 3.5) return '#10b981'; // Green
+                    if (level < 4) return '#3b82f6'; // Blue
+                    if (level < 4.5) return '#f59e0b'; // Orange
+                    return '#ec4899'; // Pink/Purple (Pro)
+                };
+
+                uniquePlayers.forEach(p => {
+                    const pid = String(p.id || p.uid);
+                    if (renderedIds.has(pid)) return;
+
+                    // Try to find valid partner in the list
+                    let partner = null;
+                    if (p.partner_name) {
+                        partner = uniquePlayers.find(u =>
+                            (u.id && p.partner_id && String(u.id) === String(p.partner_id)) ||
+                            (u.name && u.name.trim().toLowerCase() === p.partner_name.trim().toLowerCase())
+                        );
+                    }
+
+                    // --- CASE 1: PAIR FOUND (Render Double Row) ---
+                    if (partner && !renderedIds.has(String(partner.id || partner.uid))) {
+                        const partnerId = String(partner.id || partner.uid);
+                        renderedIds.add(pid);
+                        renderedIds.add(partnerId);
+
+                        const c1 = getLevelColor(p.level);
+                        const c2 = getLevelColor(partner.level);
+                        const name1 = (p.name || 'JUGADOR').toUpperCase();
+                        const name2 = (partner.name || 'JUGADOR').toUpperCase();
+
+                        // Shorten names: First Name + Initial
+                        const shortName1 = name1.split(' ')[0] + (name1.split(' ')[1] ? ' ' + name1.split(' ')[1].charAt(0) + '.' : '');
+                        const shortName2 = name2.split(' ')[0] + (name2.split(' ')[1] ? ' ' + name2.split(' ')[1].charAt(0) + '.' : '');
+
+                        html += `
+                     <div class="player-row" style="display:flex; align-items:center; justify-content:space-between; padding:10px; border-bottom:1px solid #e2e8f0; background:rgba(59, 130, 246, 0.08); border-left: 4px solid #3b82f6;">
+                         <!-- PAIR CONTAINER -->
+                         <div style="display:flex; align-items:center; flex:1; flex-wrap:wrap; gap:5px;">
+                            
+                            <!-- P1 -->
+                            <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                                <div style="width:24px; height:24px; border-radius:50%; background:${c1}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${p.level || '3.5'}</div>
+                                <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName1}</span>
+                            </div>
+                            
+                            <!-- LINK ICON -->
+                            <div style="color:#3b82f6; font-size:0.75rem; margin:0 2px;"><i class="fas fa-link"></i></div>
+
+                            <!-- P2 -->
+                            <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                                <div style="width:24px; height:24px; border-radius:50%; background:${c2}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${partner.level || '3.5'}</div>
+                                <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName2}</span>
+                            </div>
+
+                         </div>
+                         
+                         <!-- ACTIONS -->
+                         <div style="display:flex; gap:2px; margin-left:8px;">
+                            <button onclick="window.removeEntrenoPlayer('${id}', '${pid}')" title="Quitar ${name1}" style="background:none; border:none; color:#ef4444; opacity:0.6; cursor:pointer; font-size:0.8rem; padding:4px;"><i class="fas fa-trash-alt"></i></button>
+                            <button onclick="window.removeEntrenoPlayer('${id}', '${partnerId}')" title="Quitar ${name2}" style="background:none; border:none; color:#ef4444; opacity:0.6; cursor:pointer; font-size:0.8rem; padding:4px;"><i class="fas fa-trash-alt"></i></button>
+                         </div>
+                     </div>
+                    `;
+                    }
+                    // --- CASE 2: SINGLE PLAYER ---
+                    else {
+                        renderedIds.add(pid);
+                        const c = getLevelColor(p.level);
+                        const hasMissingPartner = !!p.partner_name;
+                        const playerName = (p.name || 'JUGADOR').toUpperCase();
+
+                        html += `
+                     <div class="player-row" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #e2e8f0;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="width:32px; height:32px; border-radius:50%; background:${c}; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:800; color:#ffffff; border: 1px solid rgba(0,0,0,0.1); overflow:hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                ${p.level || '3.5'}
+                            </div>
+                            <div style="display:flex; flex-direction:column;">
+                                <span style="font-weight:900; font-size:0.85rem; color:#000000; text-transform:uppercase;">${playerName}</span>
+                                ${hasMissingPartner ? `<span style="font-size:0.7rem; color:#ef4444; font-weight:600;"><i class="fas fa-exclamation-triangle"></i> Pareja: ${p.partner_name} (?)</span>` : ''}
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:4px; align-items:center;">
+                            ${(event.pair_mode && event.pair_mode.includes('fixed') && !hasMissingPartner) ?
+                                `<button onclick="window.linkManualPartner('${id}', '${pid}', '${playerName}')" title="Vincular pareja manual" style="background:rgba(59, 130, 246, 0.1); border:1px solid #3b82f6; color:#3b82f6; border-radius:6px; cursor:pointer; font-size:0.8rem; padding:6px 10px;"><i class="fas fa-handshake"></i></button>` : ''}
+                            <button onclick="window.removeEntrenoPlayer('${id}', '${pid}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:0.9rem; padding:8px;"><i class="fas fa-times"></i></button>
+                        </div>
+                     </div>
+                     `;
+                    }
+                });
+                return html;
+            })();
 
     } catch (e) {
         console.error("Error loading participants:", e);
@@ -749,7 +998,7 @@ window.loadEntrenoWaitlistUI = async (id) => {
         // const header = document.querySelector('#waitlist-section-header');
 
         if (!waitlist || waitlist.length === 0) {
-            list.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); font-size:0.75rem; padding:15px; font-style:italic;">Lista de reserva vacía</div>';
+            list.innerHTML = '<div style="text-align:center; color:#333333; font-size:0.75rem; padding:15px; font-style:italic;">Lista de reserva vacía</div>';
             return;
         }
 
@@ -758,11 +1007,11 @@ window.loadEntrenoWaitlistUI = async (id) => {
                 <div style="display:flex; align-items:center; gap:10px;">
                     <div style="width:20px; height:20px; background:#FFA500; color:black; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.7rem;">${i + 1}</div>
                     <div style="display:flex; flex-direction:column;">
-                        <span style="color:white; font-size:0.85rem; font-weight:700;">${p.name}</span>
-                        <span style="color:#FFA500; font-size:0.65rem;">Nivel ${p.level || '3.5'} • ${p.gender || '?'}</span>
+                        <span style="color:black; font-size:0.85rem; font-weight:700;">${p.name}</span>
+                        <span style="color:black; font-size:0.65rem; font-weight:700;">Nivel ${p.level || '3.5'} • ${p.gender || '?'}</span>
                     </div>
                 </div>
-                <div style="font-size:0.6rem; color:rgba(255,255,255,0.4);">
+                <div style="font-size:0.6rem; color:rgba(0,0,0,0.5); font-weight:600;">
                     ${p.joinedAt ? new Date(p.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                 </div>
             </div>
