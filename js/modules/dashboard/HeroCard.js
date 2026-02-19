@@ -410,8 +410,8 @@
         enrollTournament: async (tournamentId) => {
             try {
                 console.log('Enrolling in tournament:', tournamentId);
-                // Navegar a vista de inscripción
-                Router.navigate('americanas');
+                // Navegar a vista de entrenos (reemplaza americanas por petición del usuario)
+                Router.navigate('entrenos');
             } catch (e) {
                 console.error('Error enrolling:', e);
             }

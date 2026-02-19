@@ -548,7 +548,7 @@
                         weatherHtml += `</div>`;
                     } else {
                         weatherHtml += `
-                            <div style="
+                            <div onclick="Router.navigate('entrenos')" style="
                                 text-align: center;
                                 padding: 50px 20px;
                                 background: #111;
@@ -557,6 +557,7 @@
                                 position: relative;
                                 overflow: hidden;
                                 box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+                                cursor: pointer;
                             ">
                                 <!-- Tech Radar Animation -->
                                 <div style="
@@ -787,7 +788,7 @@
                         </div>
                         <h3 style="color: var(--text-primary); font-weight: 950; font-size: 1.25rem; margin-bottom: 10px; letter-spacing: -0.5px;">SIN PLANES PRÓXIMOS</h3>
                         <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 25px; font-weight: 600; line-height: 1.5;">Apúntate a una americana para<br>empezar a sumar en el ranking.</p>
-                        <button onclick="Router.navigate('americanas')" class="btn-3d primary" style="width: auto; padding: 14px 28px;">EXPLORAR EVENTOS</button>
+                        <button onclick="Router.navigate('entrenos')" class="btn-3d primary" style="width: auto; padding: 14px 28px;">EXPLORAR EVENTOS</button>
                     </div >
                 `;
             }
@@ -1370,7 +1371,7 @@
                                     cancelText: "LUEGO",
                                     type: 'success'
                                 }).then(res => {
-                                    if (res) window.Router.navigate('americanas');
+                                    if (res) window.Router.navigate('entrenos');
                                 });
                             }, 800);
                         }

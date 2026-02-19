@@ -1,6 +1,6 @@
 /**
- * WhatsAppService.js - VERSION 7.0
- * 🛡️ ULTRA-ROBUST EMOJI ENCODING USING ASCII-ONLY SOURCE CODE.
+ * WhatsAppService.js - VERSION 8.0 PREMIUM
+ * 🛡️ ULTRA-ROBUST EMOJI ENCODING & EXPERT LAYOUT.
  * Customized layout and empty slot handling.
  */
 
@@ -33,31 +33,31 @@ window.WhatsAppService = {
     },
 
     /**
-     * Generates a formatted message for an event (Legacy Layout from Image)
+     * Generates a formatted message for an event (V8.0 Premium Edition)
+     * Optimized for high-end mobile display and instant clarity.
      */
     generateMessage(event, richPlayers = null) {
         if (!event) return '';
         const E = this.E;
 
+        const name = (event.name || 'TORNEO SOMOSPADEL').toUpperCase();
         const type = (event.category || 'open').toLowerCase();
         const isMale = type === 'male' || type === 'masculina';
         const isFemale = type === 'female' || type === 'femenina';
         const isMixed = type === 'mixed' || type === 'mixto' || type === 'mixta';
-        const isAmericana = (event.name || '').toUpperCase().includes('AMERICANA') || event.type === 'americana';
+        const isAmericana = name.includes('AMERICANA') || event.type === 'americana';
 
-        // Header
-        let headerTitle = 'ENTRENO';
-        let headerEmoji = E.TENNIS;
-        if (isMale) { headerEmoji = E.TENNIS + E.MALE; headerTitle = 'ENTRENO MASCULINO'; }
-        else if (isFemale) { headerEmoji = E.TENNIS + E.FEMALE; headerTitle = 'ENTRENO FEMENINO'; }
-        else if (isMixed) { headerEmoji = E.TENNIS + E.MIXED; headerTitle = 'ENTRENO MIXTO'; }
-
-        if (isAmericana) headerTitle = headerTitle.replace('ENTRENO', 'AMERICANA');
+        // 1. HEADER LOGIC
+        let headerTitle = isAmericana ? 'AMERICANA' : 'ENTRENO';
+        let catEmoji = E.TENNIS;
+        if (isMale) { catEmoji = E.MALE; headerTitle += ' MASCULINO'; }
+        else if (isFemale) { catEmoji = E.FEMALE; headerTitle += ' FEMENINO'; }
+        else if (isMixed) { catEmoji = E.MIXED; headerTitle += ' MIXTO'; }
 
         const dateStr = this._formatDate(event.date);
         const timeStr = event.time || '10:00';
         const endTimeStr = event.time_end ? " a " + event.time_end : '';
-        const location = event.location || 'Barcelona Padel el Prat';
+        const location = event.location || 'SomosPadel BCN';
 
         const players = event.players || [];
         const maxPlayers = (parseInt(event.max_courts) || 4) * 4;
@@ -66,44 +66,57 @@ window.WhatsAppService = {
         const pMember = event.price_members || 20;
         const pExt = event.price_external || 25;
 
-        // Build Message
-        let msg = E.SPARKLE + " " + headerEmoji + " *APP SOMOSPADEL BCN* " + headerEmoji + " " + E.SPARKLE + "\n";
-        msg += "--------------------------\n";
-        msg += E.CALENDAR + " *Fecha:* " + dateStr + "\n";
-        msg += E.TIMER + " *Hora:* " + timeStr + endTimeStr + "\n";
-        msg += E.TROPHY + " *Formato:* " + headerTitle + "\n";
-        msg += E.DRUM + " *Tipo:* " + (event.pair_mode === 'rotating' ? 'Individual / Twister' : 'Pareja Fija') + "\n";
+        // --- START MESSAGE CONSTRUCTION ---
+        let msg = `${E.SPARKLE} *${name}* ${E.SPARKLE}\n`;
+        msg += "━━━━━━━━━━━━━━━━━━\n\n";
 
-        // Show water only in El Prat
-        const isPrat = location.toLowerCase().includes('prat');
-        if (isPrat) {
-            msg += E.WATER + " agua para cada jugador\n";
+        // SECTION: LOGISTICS
+        msg += `${E.CALENDAR} *DÍA:* ${dateStr}\n`;
+        msg += `${E.TIMER} *HORA:* ${timeStr}${endTimeStr}\n`;
+        msg += `${E.PIN} *LUGAR:* ${location}\n\n`;
+
+        // SECTION: DETAILS
+        msg += `◈ *TIPO:* ${headerTitle}\n`;
+        msg += `◈ *MODO:* ${event.pair_mode === 'rotating' ? 'Individual / Twister' : 'Pareja Fija'}\n`;
+        msg += `◈ *NIVEL:* ${event.level_min || '3.5'} - ${event.level_max || '4.5'}\n\n`;
+
+        // SECTION: BENEFITS (Professional Bullet Points)
+        msg += "*INCLUYE:*\n";
+        msg += `• Pelotas Nuevas ${E.TENNIS}\n`;
+
+        // Water policy: Only in El Prat, strictly NOT in Delfos
+        const isDelfos = location.toUpperCase().includes('DELFOS');
+        const isPrat = location.toUpperCase().includes('PRAT');
+        if (isPrat && !isDelfos) {
+            msg += `• Agua para cada jugador ${E.WATER}\n`;
         }
 
-        if (isAmericana) {
-            msg += E.GIFT + " bravas + 2 refrescos para los ganadores\n";
+        if (isAmericana) msg += `• Premios para ganadores ${E.GIFT}\n`;
+        msg += `• Gestión y Cuadros automatizados a través de la app a tiempo real ${E.STAR}\n\n`;
+
+        msg += "━━━━━━━━━━━━━━━━━━\n\n";
+
+        // SECTION: AVAILABILITY
+        if (spotsLeft === 0) {
+            msg += `${E.RED} *CUADRO COMPLETO*\n\n`;
+        } else {
+            msg += `${E.BOLT} *¡ÚLTIMAS ${spotsLeft} PLAZAS!* ${E.BOLT}\n\n`;
         }
 
-        msg += E.PIN + " *Lugar:* " + location + "\n";
-        msg += E.TENNIS + " Pelotas nuevas\n";
-        msg += E.MONEY + " " + pMember + E.EURO + " jugadores - " + pExt + E.EURO + " externos\n";
-        msg += "--------------------------\n\n";
-
-        if (spotsLeft === 0) msg += E.RED + " *COMPLETO*\n\n";
-        else msg += E.STAR + " *" + spotsLeft + " PLAZAS LIBRES*\n\n";
-
+        // SECTION: BALANCE (Explicit for Mixed/Female)
         if ((isMixed || isFemale) && richPlayers) {
             const m = richPlayers.filter(p => ['male', 'chico', 'hombre', 'masculino'].includes((p.gender || '').toLowerCase())).length;
             const f = richPlayers.filter(p => ['female', 'chica', 'mujer', 'femenino'].includes((p.gender || '').toLowerCase())).length;
 
             if (isMixed && (m + f > 0)) {
-                msg += E.BALANCE + " *Balance:* " + E.MALE + " " + m + " - " + E.FEMALE + " " + f + "\n\n";
+                msg += `${E.BALANCE} *Balance:* ${E.MALE} ${m} - ${E.FEMALE} ${f}\n\n`;
             } else if (isFemale && f > 0) {
-                msg += E.BALANCE + " *Jugadoras:* " + E.FEMALE + " " + f + "\n\n";
+                msg += `${E.BALANCE} *Jugadoras:* ${E.FEMALE} ${f}\n\n`;
             }
         }
 
-        msg += "*Jugadores*\n\n";
+        // SECTION: PLAYER LIST
+        msg += "*LISTA DE INSCRITOS:*\n";
 
         const displayList = richPlayers || players;
         const processedIds = new Set();
@@ -115,32 +128,23 @@ window.WhatsAppService = {
 
             displayCount++;
             let pName = p.name ? p.name.trim() : 'Jugador';
-
-            // Gender Icon
-            let gIcon = '👤 ';
-            const g = (p.gender || '').toLowerCase();
-            if (['male', 'chico', 'hombre', 'masculino'].includes(g)) gIcon = E.MALE + " ";
-            else if (['female', 'chica', 'mujer', 'femenino'].includes(g)) gIcon = E.FEMALE + " ";
-
-            // Level String
             const lvl = p.level || p.playtomic_level || '';
             const lvlStr = lvl ? ` (N${lvl})` : "";
 
-            // --- FIXED PAIRS LOGIC (Professional Format) ---
-            const isFixed = event.pair_mode === 'fixed' || event.pair_mode === 'fixed_auto' || (event.name || '').toUpperCase().includes('FIJA');
+            // --- PAIR DETECTION & LOGIC (Professional Format) ---
+            const isFixed = event.pair_mode === 'fixed' || event.pair_mode === 'fixed_auto' || name.includes('FIJA');
+            const shouldForcePairLayout = isFixed || isMixed || (p.partner_name && String(p.partner_name).trim().length > 0);
 
-            if (isFixed) {
+            if (shouldForcePairLayout) {
                 if (p.partner_name) {
-                    // --- PAIR CONFIRMED ---
                     let partnerName = p.partner_name;
                     let partnerLvlStr = "";
 
-                    // Find matching partner to mark as processed and get details
                     let partnerObj = null;
                     if (p.partner_id) {
                         partnerObj = displayList.find(x => (x.id || x.uid) === p.partner_id);
                     } else {
-                        partnerObj = displayList.find(x => x.name.toLowerCase() === p.partner_name.toLowerCase() && (x.id || x.uid) !== pId);
+                        partnerObj = displayList.find(x => x.name && x.name.toLowerCase() === p.partner_name.toLowerCase() && (x.id || x.uid) !== pId);
                     }
 
                     if (partnerObj) {
@@ -148,45 +152,39 @@ window.WhatsAppService = {
                         if (partnerObj.level) partnerLvlStr = ` (N${partnerObj.level})`;
                     }
 
-                    // concise format: 1. 🎾 Juan (N4) & Pedro (N3.5)
                     msg += `${displayCount}. ${E.TENNIS} *${pName}*${lvlStr} & *${partnerName}*${partnerLvlStr}\n`;
                 } else {
-                    // --- LOOKING FOR PARTNER ---
-                    msg += `${displayCount}. ${gIcon} *${pName}*${lvlStr} - *Busca Pareja*\n`;
+                    msg += `${displayCount}. ${E.TENNIS} *${pName}*${lvlStr} - _(Busca Pareja)_\n`;
                 }
-
                 processedIds.add(pId);
-                return; // Continue forEach
+                return;
             }
 
-            // --- STANDARD LOGIC (Individual / Americana) ---
+            // Standard individual layout
+            let gIcon = '• ';
+            const g = (p.gender || '').toLowerCase();
+            if (['male', 'chico', 'hombre', 'masculino'].includes(g)) gIcon = E.MALE + " ";
+            else if (['female', 'chica', 'mujer', 'femenino'].includes(g)) gIcon = E.FEMALE + " ";
 
-            // Teams Logic
-            let teamStr = "";
-            const teams = p.teams || p.team_somospadel || p.EQUIPOS || p.equipos || p.Equipos;
-            if (teams) {
-                const tArray = Array.isArray(teams) ? teams : String(teams).split(',').map(t => t.trim());
-                const tName = tArray.find(t => t && t.length > 0);
-                if (tName) teamStr = " _[" + tName.toUpperCase() + "]_";
-            }
-
-            msg += displayCount + ". " + gIcon + "*" + pName + "*" + lvlStr + teamStr + "\n";
+            msg += `${displayCount}. ${gIcon} *${pName}*${lvlStr}\n`;
             processedIds.add(pId);
         });
 
-        // Vacancies (Calculate based on pairs if fixed)
-        const totalItems = event.pair_mode === 'rotating' ? maxPlayers : (maxPlayers / 2);
-        for (let i = displayCount; i < totalItems; i++) {
-            msg += (i + 1) + ". " + E.TENNIS + " \n";
+        // Vacancy lines
+        const isPairLayout = event.pair_mode === 'fixed' || event.pair_mode === 'fixed_auto' || name.includes('FIJA') || isMixed;
+        const totalRows = isPairLayout ? (maxPlayers / 2) : maxPlayers;
+        for (let i = displayCount; i < totalRows; i++) {
+            msg += `${i + 1}. ${E.TENNIS} _(Libre)_\n`;
         }
 
-        // Base URL logic
+        // SECTION: PRICES & CTA
+        msg += "\n━━━━━━━━━━━━━━━━━━\n";
+        msg += `${E.MONEY} *PRECIO:* ${pMember}${E.EURO} socios / ${pExt}${E.EURO} externos\n\n`;
+        msg += `${E.DOWN} *RESERVA TU PLAZA AQUÍ:* \n`;
+
         const baseUrl = "https://somospadelbarcelona.github.io/Americanas-somospadel";
         const sectionHash = isAmericana ? "#americanas" : "#entrenos";
-        const finalUrl = `${baseUrl}/${sectionHash}`;
-
-        msg += "\n" + E.DOWN + " *INSCRIBETE AQUI:* \n";
-        msg += E.LINK + " " + finalUrl + "\n";
+        msg += `${E.LINK} ${baseUrl}/${sectionHash}\n`;
 
         return msg;
     },
@@ -196,7 +194,7 @@ window.WhatsAppService = {
      */
     async shareStartFromAdmin(event) {
         try {
-            console.log("📤 WhatsApp Share Start (V7.0)");
+            console.log("📤 WhatsApp Share Start (V8.0 Premium)");
             let richPlayers = null;
 
             // Optimization: Fetch players only if needed and try to be fast
