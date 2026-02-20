@@ -16,80 +16,70 @@ window.ParticipantService = {
     async addPlayer(eventId, eventType, player) {
         if (!eventId || !player) throw new Error("Invalid parameters");
 
-        const collection = eventType === AppConstants.EVENT_TYPES.AMERICANA ? FirebaseDB.americanas : FirebaseDB.entrenos;
-        const event = await collection.getById(eventId);
-        if (!event) throw new Error("Event not found");
+        const collectionName = eventType === AppConstants.EVENT_TYPES.AMERICANA ? 'americanas' : 'entrenos';
+        const docRef = db.collection(collectionName).doc(eventId);
 
-        // 1. Check Capacity
-        const maxPlayers = (event.max_courts || 4) * 4;
-        const currentPlayers = event.players || [];
+        return await db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(docRef);
+            if (!doc.exists) throw new Error("Event not found");
 
-        // 2. Check Duplicates (Robust ID Check)
-        const targetId = player.id || player.uid;
-        if (!targetId) throw new Error("Player object has no ID or UID");
+            const event = doc.data();
+            const maxPlayers = (event.max_courts || 4) * 4;
+            let players = event.players || [];
+            let waitlist = event.waitlist || [];
 
-        const isDuplicate = currentPlayers.some(p => {
-            const pid = p.id || p.uid;
-            return String(pid) === String(targetId);
+            const targetId = player.id || player.uid;
+            if (!targetId) throw new Error("Player object has no ID or UID");
+
+            // Check if already in participants or waitlist
+            if (players.some(p => String(p.id || p.uid) === String(targetId))) {
+                throw new Error("Player already enrolled");
+            }
+            if (waitlist.some(p => String(p.id || p.uid) === String(targetId))) {
+                throw new Error("Player already in waitlist");
+            }
+
+            const newPlayer = {
+                id: targetId,
+                uid: targetId,
+                name: (player.name || player.displayName || 'JUGADOR').toUpperCase(),
+                level: parseFloat(player.level || player.playtomic_level || player.self_rate_level || 3.5),
+                gender: player.gender || '?',
+                photoURL: player.photoURL || player.photo_url || null,
+                joinedAt: new Date().toISOString()
+            };
+
+            if (players.length < maxPlayers) {
+                players.push(newPlayer);
+                transaction.update(docRef, {
+                    players,
+                    registeredPlayers: players
+                });
+
+                // Trigger Intelligent Substitution if live (Safe to run after transaction)
+                this._handleLiveSubstitution(eventId, eventType, event.status, newPlayer);
+
+                return { status: 'enrolled', count: players.length };
+            } else {
+                waitlist.push(newPlayer);
+                transaction.update(docRef, { waitlist });
+                return { status: 'waitlist', position: waitlist.length };
+            }
         });
-        if (isDuplicate) {
-            alert(`⚠️ Este jugador ya está inscrito.`);
-            throw new Error("Player already enrolled");
-        }
+    },
 
-        // 3. Prepare Player Object (Sanitized)
-        const newPlayer = {
-            id: targetId,
-            uid: targetId,
-            name: (player.name || player.displayName || 'JUGADOR').toUpperCase(),
-            level: parseFloat(player.level || player.playtomic_level || player.self_rate_level || 3.5),
-            gender: player.gender || '?',
-            photoURL: player.photoURL || player.photo_url || null,
-            joinedAt: new Date().toISOString(),
-            partner_id: player.partner_id || null,
-            partner_name: player.partner_name || null
-        };
-
-        // 4. Add to Main List or Waitlist
-        if (currentPlayers.length >= maxPlayers) {
-            console.log(`⚠️ Event full, adding to waitlist: ${player.name}`);
-            const waitlist = event.waitlist || [];
-            if (waitlist.some(w => w.id === player.id)) throw new Error("Player already in waitlist");
-
-            waitlist.push(newPlayer);
-            await collection.update(eventId, { waitlist });
-            return { status: 'waitlist', position: waitlist.length };
-        }
-
-        // Add to Participants
-        currentPlayers.push(newPlayer);
-        await collection.update(eventId, { players: currentPlayers, registeredPlayers: currentPlayers });
-
-        // 5. Intelligent Substitution (If event is live/has VACANTE slots)
-        if (event.status === 'live' || event.status === 'en_juego' || event.status === 'in_game') {
-            console.log("♻️ Event is LIVE. Checking for VACANTE slots to fill...");
+    // Helper to keep addPlayer clean
+    async _handleLiveSubstitution(eventId, eventType, status, newPlayer) {
+        if (['live', 'en_juego', 'in_game'].includes(status)) {
             if (window.MatchmakingService && window.MatchmakingService.substitutePlayerInMatchesRobust) {
-                // Try to fill various VACANTE aliases
                 const aliases = ['VACANT', '🔴 VACANTE', 'VACANTE'];
-                let filledTotal = 0;
                 for (const alias of aliases) {
-                    const count = await window.MatchmakingService.substitutePlayerInMatchesRobust(
-                        eventId,
-                        'vacante_id', // Target ID for Vacante
-                        alias,
-                        newPlayer.id,
-                        newPlayer.name,
-                        eventType
+                    await window.MatchmakingService.substitutePlayerInMatchesRobust(
+                        eventId, 'vacante_id', alias, newPlayer.id, newPlayer.name, eventType
                     );
-                    filledTotal += count;
-                }
-                if (filledTotal > 0) {
-                    console.log(`✅ Filled ${filledTotal} VACANTE slots with ${newPlayer.name}`);
                 }
             }
         }
-
-        return { status: 'enrolled', count: currentPlayers.length };
     },
 
     /**
@@ -97,80 +87,78 @@ window.ParticipantService = {
      * Automatically promotes from waitlist if available.
      */
     async removePlayer(eventId, eventType, playerId) {
-        const collection = eventType === AppConstants.EVENT_TYPES.AMERICANA ? FirebaseDB.americanas : FirebaseDB.entrenos;
-        const event = await collection.getById(eventId);
+        if (!eventId || !playerId) throw new Error("Invalid parameters");
 
-        let players = event.players || [];
+        const collectionName = eventType === AppConstants.EVENT_TYPES.AMERICANA ? 'americanas' : 'entrenos';
+        const docRef = db.collection(collectionName).doc(eventId);
 
-        // ROBUST FIND: Handle multiple ID fields and string comparison
-        const playerIndex = players.findIndex(p => {
-            const pId = String(p?.id || p?.uid || '');
-            return pId === String(playerId);
-        });
+        return await db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(docRef);
+            if (!doc.exists) throw new Error("Event not found");
 
-        if (playerIndex === -1) {
-            console.error('Player not found. PlayerId:', playerId, 'Players:', players);
-            throw new Error(`Player not found in event. ID: ${playerId}`);
-        }
+            const event = doc.data();
+            let players = event.players || [];
+            let waitlist = event.waitlist || [];
+            let fixedPairs = event.fixed_pairs || [];
 
-        // Remove from main list
-        const removed = players.splice(playerIndex, 1)[0];
-        console.log(`✅ Removed player: ${removed?.name || 'Unknown'} (ID: ${playerId})`);
+            const playerIndex = players.findIndex(p => String(p?.id || p?.uid || '') === String(playerId));
 
-        // Cleanup Fixed Pairs if they were in one
-        let fixedPairs = event.fixed_pairs || [];
-        if (fixedPairs.length > 0) {
+            if (playerIndex === -1) {
+                // If not in players, maybe in waitlist?
+                const wIndex = waitlist.findIndex(p => String(p?.id || p?.uid || '') === String(playerId));
+                if (wIndex !== -1) {
+                    const removed = waitlist.splice(wIndex, 1)[0];
+                    transaction.update(docRef, { waitlist });
+                    return { removed, status: 'removed_from_waitlist' };
+                }
+                throw new Error("Player not found in event");
+            }
+
+            // Remove from main list
+            const removed = players.splice(playerIndex, 1)[0];
+
+            // Cleanup Fixed Pairs
             fixedPairs = fixedPairs.filter(pair => {
-                // ROBUST: Handle missing player objects
                 const p1Id = String(pair?.player1?.id || pair?.player1?.uid || '');
                 const p2Id = String(pair?.player2?.id || pair?.player2?.uid || '');
-                const pIdStr = String(playerId);
-                return p1Id !== pIdStr && p2Id !== pIdStr;
+                return p1Id !== String(playerId) && p2Id !== String(playerId);
             });
-        }
 
-        // Promote from Waitlist
-        let promoted = null;
-        let waitlist = event.waitlist || [];
-        if (waitlist.length > 0) {
-            // Check if we actually need a refill (players count < max)
+            // Promote from Waitlist if space available
+            let promoted = null;
             const maxPlayers = (event.max_courts || 4) * 4;
-            if (players.length < maxPlayers) {
-                promoted = waitlist.shift(); // Take first
-                if (promoted && !promoted.level) promoted.level = 3.5; // Ensure level
+            if (players.length < maxPlayers && waitlist.length > 0) {
+                promoted = waitlist.shift();
+                if (promoted && !promoted.level) promoted.level = 3.5;
                 players.push(promoted);
-                console.log(`♻️ Promoted ${promoted.name} from waitlist`);
             }
-        }
 
-        await collection.update(eventId, {
-            players,
-            registeredPlayers: players,
-            fixed_pairs: fixedPairs,
-            waitlist
+            transaction.update(docRef, {
+                players,
+                registeredPlayers: players,
+                fixed_pairs: fixedPairs,
+                waitlist
+            });
+
+            // Handle real-time match substitution (post-transaction)
+            if (['live', 'en_juego', 'in_game'].includes(event.status)) {
+                this._handlePlayerExitSubstitution(eventId, eventType, removed, promoted);
+            }
+
+            return { removed, promoted };
         });
+    },
 
-        // 3. Real-time Match Substitution (If event is live/in_game)
-        if (event.status === 'live' || event.status === 'en_juego' || event.status === 'in_game') {
-            console.log("🔄 Event is LIVE. Triggering real-time match substitution...");
+    async _handlePlayerExitSubstitution(eventId, eventType, removed, promoted) {
+        if (window.MatchmakingService && window.MatchmakingService.substitutePlayerInMatchesRobust) {
             const oldUid = removed.id || removed.uid;
-            const oldName = removed.name;
             const newUid = promoted ? (promoted.id || promoted.uid) : 'vacante_id';
             const newName = promoted ? promoted.name : 'VACANTE';
 
-            if (window.MatchmakingService && window.MatchmakingService.substitutePlayerInMatchesRobust) {
-                await window.MatchmakingService.substitutePlayerInMatchesRobust(
-                    eventId,
-                    oldUid,
-                    oldName,
-                    newUid,
-                    newName,
-                    eventType
-                );
-            }
+            await window.MatchmakingService.substitutePlayerInMatchesRobust(
+                eventId, oldUid, removed.name, newUid, newName, eventType
+            );
         }
-
-        return { removed, promoted };
     },
 
     /**

@@ -91,12 +91,18 @@ window.AdminAuth = {
                 // NEW: Ensure Firebase Auth baseline even for PIN login
                 if (window.firebase && firebase.auth) {
                     try {
-                        // FORCE anonymous sign-in for admin panel to enable infrastructure writes
-                        console.log("🔐 Authenticating Admin Infrastructure (Anonymous)...");
+                        console.log("🔐 [Mission Control] Authenticating Infrastructure (Anonymous)...");
                         await firebase.auth().signInAnonymously();
-                        console.log("✅ Admin Infrastructure Authenticated:", firebase.auth().currentUser.uid);
+                        console.log("✅ [Telemetry] Infrastructure link established.");
                     } catch (authErr) {
-                        console.error("Firebase Infra Auth failed:", authErr);
+                        console.error("🛑 [CRITICAL] Firebase Infra Auth failed:", authErr);
+                        if (window.PremiumModal) {
+                            window.PremiumModal.alert({
+                                title: "⚠️ FALLO DE TELEMETRÍA",
+                                message: "El enlace con Firebase falló. No podrás realizar cambios en la base de datos (escritura bloqueada).",
+                                type: 'warning'
+                            });
+                        }
                     }
                 }
 
@@ -208,6 +214,10 @@ window.loadAdminView = async function (viewName) {
         else if (viewName === 'analytics') {
             if (window.AdminViews.analytics) await window.AdminViews.analytics();
             else throw new Error("Analytics Module not loaded");
+        }
+        else if (viewName === 'database_health') {
+            if (window.AdminViews.database_health) await window.AdminViews.database_health();
+            else throw new Error("Health Module not loaded");
         }
         else {
             // Fallback for Simulator or others not yet refactored logic

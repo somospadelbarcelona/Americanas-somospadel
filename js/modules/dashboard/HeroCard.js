@@ -91,6 +91,12 @@
                         </div>
                     </div>
 
+
+
+
+
+
+
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <button onclick="Router.navigate('live')" style="
                             background: white;

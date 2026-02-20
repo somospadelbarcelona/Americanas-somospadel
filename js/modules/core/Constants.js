@@ -100,6 +100,12 @@ window.AppConstants = {
             MIXTO: 'HÍBRIDO / MIXTO',
             ESTRATEGIA: 'ESTRATEGIA'
         }
+    },
+
+    // Headquarters Coordinates for Proximity Radar
+    LOCATIONS: {
+        PRAT: { lat: 41.325, lng: 2.088, radius: 500 }, // 500m radius
+        DELFOS: { lat: 41.353, lng: 2.067, radius: 300 }
     }
 };
 

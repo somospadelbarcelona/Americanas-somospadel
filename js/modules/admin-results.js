@@ -182,12 +182,27 @@ function renderResultsFrame(container, activeEvent, allEvents) {
 
         <div id="results-main-layout" style="display: grid; grid-template-columns: 3fr 1fr; gap: 2rem;">
             <div id="matches-grid"><div class="loader"></div></div>
-            <div id="sidebar-container" class="glass-card-enterprise">
-                <h3 style="margin:0 0 1rem 0; color:white; font-size:1rem;">CLASIFICACIÓN</h3>
-                <div id="standings-list"></div>
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <!-- PRESENCIA EN TIEMPO REAL -->
+                <div class="glass-card-enterprise" style="padding: 1.5rem; border-color: rgba(0,227,109,0.3);">
+                    <h3 style="margin:0 0 1rem 0; color:#00E36D; font-size:0.85rem; font-weight:900; letter-spacing:1px; display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-satellite-dish"></i> RADAR DE PRESENCIA
+                    </h3>
+                    <div id="presence-list">
+                        <div style="color:rgba(255,255,255,0.3); font-size:0.75rem; text-align:center; padding:10px;">Cargando presencias...</div>
+                    </div>
+                    <div style="margin-top:10px; font-size:0.6rem; color:rgba(255,255,255,0.2); text-align:center;">Actualización: cada 30s</div>
+                </div>
+                <!-- CLASIFICACIÓN -->
+                <div id="sidebar-container" class="glass-card-enterprise">
+                    <h3 style="margin:0 0 1rem 0; color:white; font-size:1rem;">CLASIFICACIÓN</h3>
+                    <div id="standings-list"></div>
+                </div>
             </div>
         </div>
     `;
+    // Start Presence Radar for admin
+    startPresenceRadar(activeEvent);
 }
 
 async function renderMatchesGrid(eventId, type, round) {
@@ -352,6 +367,15 @@ function renderMatchCard(match) {
 
     const teamA = formatTeam(match.teamA || match.team_a_names);
     const teamB = formatTeam(match.teamB || match.team_b_names);
+
+    // Presence Radar: Check if players are physically at the club
+    const presenceCache = window._presenceCache || {};
+    const teamAIds = match.team_a_ids || [];
+    const teamBIds = match.team_b_ids || [];
+    const aPresent = teamAIds.some(id => presenceCache[id]);
+    const bPresent = teamBIds.some(id => presenceCache[id]);
+    const presenceBadgeA = aPresent ? '<span title="Jugadores presentes en el club" style="font-size:0.6rem; background:rgba(0,227,109,0.2); color:#00E36D; padding:2px 6px; border-radius:4px; margin-left:6px;"><i class="fas fa-location-dot"></i> EN CLUB</span>' : '';
+    const presenceBadgeB = bPresent ? '<span title="Jugadores presentes en el club" style="font-size:0.6rem; background:rgba(0,227,109,0.2); color:#00E36D; padding:2px 6px; border-radius:4px; margin-left:6px;"><i class="fas fa-location-dot"></i> EN CLUB</span>' : '';
 
     const scoreControls = `
         <div style="position: relative; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 16px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.05);">
@@ -956,3 +980,64 @@ window.locationSelectEvent = function (id) {
 };
 
 console.log("🏆 Admin-Results Optimized Loaded");
+
+// =============================================================
+// RADAR DE PRESENCIA: Admin sees who is physically at the club
+// =============================================================
+let _presenceInterval = null;
+
+async function startPresenceRadar(activeEvent) {
+    if (_presenceInterval) clearInterval(_presenceInterval);
+
+    const fetchPresence = async () => {
+        const presenceEl = document.getElementById('presence-list');
+        if (!presenceEl) { clearInterval(_presenceInterval); return; }
+
+        try {
+            // Who is at the club? Players whose last_location was updated in the last 10 min
+            const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+            const snap = await window.db.collection('players')
+                .where('last_location.at_hq', '!=', false)
+                .get();
+
+            const atClub = [];
+            window._presenceCache = {};
+
+            snap.docs.forEach(doc => {
+                const data = doc.data();
+                const loc = data.last_location;
+                if (!loc || !loc.at_hq) return;
+                // Only count if in last 10 minutes
+                if (loc.at && loc.at > tenMinutesAgo) {
+                    atClub.push({ id: doc.id, name: data.name, hq: loc.at_hq });
+                    window._presenceCache[doc.id] = true;
+                }
+            });
+
+            // Render the presence widget
+            if (atClub.length === 0) {
+                presenceEl.innerHTML = `<div style="color:rgba(255,255,255,0.3); font-size:0.75rem; text-align:center; padding:10px;">Nadie en el club aún</div>`;
+            } else {
+                presenceEl.innerHTML = atClub.map(p => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="width:8px; height:8px; border-radius:50%; background:#00E36D; display:inline-block; box-shadow:0 0 6px #00E36D; flex-shrink:0;"></span>
+                            <span style="color:white; font-size:0.75rem; font-weight:700;">${(p.name || '').split(' ')[0]}</span>
+                        </div>
+                        <span style="font-size:0.55rem; color:#00E36D; font-weight:800; background:rgba(0,227,109,0.1); padding:2px 6px; border-radius:4px;">${p.hq}</span>
+                    </div>
+                `).join('');
+            }
+
+            // Update badge count in header
+            const countBadge = document.getElementById('presence-count-badge');
+            if (countBadge) countBadge.textContent = atClub.length;
+
+        } catch (e) {
+            console.warn("Presence Radar error:", e.message);
+        }
+    };
+
+    fetchPresence(); // Run immediately
+    _presenceInterval = setInterval(fetchPresence, 30000); // Then every 30s
+}

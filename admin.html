@@ -520,9 +520,15 @@
                     Herramientas</div>
 
                 <button class="nav-item-pro" data-view="network_pulse" onclick="loadAdminView('network_pulse')"
-                    style="border:1px solid rgba(0, 227, 109, 0.3); background:rgba(0, 227, 109, 0.05);">
+                    style="border:1px solid rgba(0, 227, 109, 0.3); background:rgba(0, 227, 109, 0.05); margin-bottom: 0.5rem;">
                     <span class="icon-box"><i class="fas fa-tower-broadcast" style="color:#00E36D;"></i></span>
                     <span class="nav-text" style="color:#00E36D; font-weight:800;">OP CENTER 🔬</span>
+                </button>
+
+                <button class="nav-item-pro" data-view="database_health" onclick="loadAdminView('database_health')"
+                    style="border:1px solid rgba(204, 255, 0, 0.3); background:rgba(204, 255, 0, 0.05);">
+                    <span class="icon-box"><i class="fas fa-ghost" style="color:#CCFF00;"></i></span>
+                    <span class="nav-text" style="color:white; font-weight:700;">Salud de la DB 🧹</span>
                 </button>
 
                 <button class="nav-item-pro nav-item-logout" style="margin-top: auto;" onclick="AdminAuth.logout()">
@@ -1218,6 +1224,7 @@
             <script src="js/modules/admin-analytics.js"></script>
             <script src="js/modules/common/WhatsAppService.js?v=7015"></script>
             <script src="js/modules/admin-entrenos.js?v=5010"></script>
+            <script src="js/modules/admin-database-health.js"></script>
 
 
             <!-- DIAGNOSTIC SCRIPT (Optional) -->

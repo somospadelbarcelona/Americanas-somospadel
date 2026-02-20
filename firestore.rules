@@ -34,10 +34,10 @@ service cloud.firestore {
       
       // SEGURIDAD CRÍTICA: 
       // 1. Los admins pueden editar todo.
-      // 2. Los usuarios solo pueden editar su perfil PERO NO pueden cambiarse el ROL ni el ESTADO (Escalada de Privilegios).
+      // 2. Los usuarios solo pueden editar su perfil PERO NO campos sensibles que alteren la integridad (Nivel, Rol, Estado).
       allow update: if isAdmin() || 
                     (isOwner(playerId) && 
-                     !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status']));
+                     !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status', 'level', 'self_rate_level']));
       
       // SOLO los admins pueden borrar jugadores.
       allow delete: if isAdmin();
@@ -76,15 +76,23 @@ service cloud.firestore {
     match /matches/{matchId} {
       allow read: if isAuthenticated();
       allow create, delete: if isAdmin();
-      // Permitimos update general por ahora (para que los capitanes/jugadores marquen resultados si la app lo permite)
-      // En una fase superior, restringiríamos esto a los IDs de los jugadores del partido.
-      allow update: if isAuthenticated();
+      allow update: if isAdmin() || 
+                    (isAuthenticated() && (
+                      request.auth.uid in resource.data.get('team_a_ids', []) || 
+                      request.auth.uid in resource.data.get('team_b_ids', []) ||
+                      request.auth.uid in resource.data.get('players', [])
+                    ));
     }
     
     match /entrenos_matches/{matchId} {
       allow read: if isAuthenticated();
       allow create, delete: if isAdmin();
-      allow update: if isAuthenticated();
+      allow update: if isAdmin() || 
+                    (isAuthenticated() && (
+                      request.auth.uid in resource.data.get('team_a_ids', []) || 
+                      request.auth.uid in resource.data.get('team_b_ids', []) ||
+                      request.auth.uid in resource.data.get('players', [])
+                    ));
     }
 
     // ==========================================

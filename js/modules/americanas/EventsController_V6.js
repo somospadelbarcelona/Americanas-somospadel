@@ -97,6 +97,9 @@
             if (this.unsubscribeEntrenosB) this.unsubscribeEntrenosB();
             if (this.autoStartInterval) clearInterval(this.autoStartInterval);
 
+            if (window.GeoService) window.GeoService.stopTracking();
+            window.removeEventListener('geo_update', this._onGeoUpdate);
+
             this.state.bgInitialized = false;
         }
 
@@ -392,6 +395,28 @@
         }
 
 
+        async loadGeoRadarWidget() {
+            try {
+                const geoRoot = document.getElementById('geo-radar-root');
+                if (geoRoot && window.GeoRadarWidget) {
+                    // Initial render (empty/waiting)
+                    geoRoot.innerHTML = window.GeoRadarWidget.render({ proximity: { distance: 0, nearHq: false } });
+
+                    // Listen for updates from GeoService
+                    window.removeEventListener('geo_update', this._onGeoUpdate);
+                    this._onGeoUpdate = (e) => {
+                        if (geoRoot) geoRoot.innerHTML = window.GeoRadarWidget.render(e.detail);
+                    };
+                    window.addEventListener('geo_update', this._onGeoUpdate);
+
+                    // Start Service if not tracking
+                    if (window.GeoService) window.GeoService.startTracking();
+                }
+            } catch (e) {
+                console.error("❌ GeoRadar render failed:", e);
+            }
+        }
+
         async loadEvents() {
             // Background service manages real-time updates now.
             // We just ensure we have data or show loader if empty.
@@ -455,7 +480,8 @@
 
             container.innerHTML = `<div class="fade-in">${navHtml}${contentHtml}</div>`;
 
-            // TRIGGER ASYNC CONTENT FOR ENTRENOS
+            // TRIGGER ASYNC CONTENT
+            this.loadGeoRadarWidget();
             if (this.state.activeTab === 'entrenos') {
                 this.loadSynergyWidget();
             }
@@ -620,8 +646,14 @@
                     ${filterBarHtml}
                     <div style="padding-bottom: 120px; padding-left:10px; padding-right:10px;">
                         ${events.length === 0 ? `<div style="padding:100px 40px; text-align:center; color:#444;"><i class="fas fa-filter" style="font-size: 4rem; opacity: 0.1;"></i><h3 style="color:#666;">SIN RESULTADOS</h3></div>` : eventsHtml}
-                        ${(this.state.activeTab === 'entrenos') ? `
                         <div style="margin-top: 25px; display: flex; flex-direction: column; align-items: center; padding-bottom: 20px; gap: 20px;">
+                            
+                            <!-- GEOLOCALIZACIÓN RADAR -->
+                            <div id="geo-radar-root" style="width: 100%; max-width: 500px; margin: 10px auto; animation: floatUp 0.8s ease-out forwards;">
+                                <!-- Cargado vía JS -->
+                            </div>
+
+                            ${(this.state.activeTab === 'entrenos') ? `
                             <button onclick="window.EventsController.renderEntrenoGuideModal()" style="background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); padding: 12px 25px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-info-circle" style="color: #CCFF00;"></i> ¿CÓMO FUNCIONAN LOS FORMATOS?
                             </button>
@@ -633,7 +665,8 @@
                                     Cargando tu compatibilidad...
                                 </div>
                             </div>
-                        </div>` : ''}
+                            ` : ''}
+                        </div>
                     </div>
                 </div>
             `;
@@ -702,6 +735,10 @@
                                     </div>
                                 </div>`;
             }).join('')}
+                            <!-- GEOLOCALIZACIÓN RADAR -->
+                            <div id="geo-radar-root" style="width: 100%; max-width: 500px; margin: 20px auto 100px; animation: floatUp 0.8s ease-out forwards;">
+                                <!-- Cargado vía JS -->
+                            </div>
                         </div>
                     `}
                 </div>

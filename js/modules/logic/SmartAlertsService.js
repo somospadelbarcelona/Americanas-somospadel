@@ -155,33 +155,48 @@ class SmartAlertsService {
     }
 
     async _getAllUsersMock() {
-        // [REAL IMPLEMENTATION] Fetching from Firestore
         try {
-            // Check if we have users in Store first (Performance)
+            // 1. Prioridad: Caché de Memoria (Store)
             if (window.Store) {
                 const storedUsers = window.Store.getState('users');
                 if (storedUsers && Object.keys(storedUsers).length > 0) {
-                    console.log("🦇 [Batseñal] Using cached users from Store");
+                    console.log("🦇 [Batseñal] Telemetría desde caché (Store).");
                     return Object.values(storedUsers);
                 }
             }
 
-            // Fallback to Firestore
-            console.log("🦇 [Batseñal] Fetching users from Firestore (players collection)...");
-            const snapshot = await window.db.collection('players').get();
-            return snapshot.docs.map(doc => {
+            // 2. Fallback: Firestore con Límite de Seguridad
+            console.log("🦇 [Batseñal] Escaneando frecuencia DB (players)...");
+            const snapshot = await window.db.collection('players')
+                .where('status', '==', 'active')
+                .limit(500) // Evitar descargas masivas innecesarias
+                .get();
+
+            const players = snapshot.docs.map(doc => {
                 const data = doc.data();
                 return {
                     uid: doc.id,
                     name: data.displayName || data.name || 'Jugador',
-                    level: parseFloat(data.level) || 0,
+                    level: parseFloat(data.level) || 3.0,
                     gender: data.gender || 'mixed',
-                    teams: data.team_somospadel || [], // Catch array or null
+                    teams: data.team_somospadel || [],
                     fcm_token: data.fcm_token
                 };
             });
+
+            // Actualizar Store si está disponible para futuras consultas
+            if (window.Store && players.length > 0) {
+                const usersObj = {};
+                players.forEach(p => usersObj[p.uid] = p);
+                window.Store.setState('users', usersObj);
+            }
+
+            return players;
         } catch (e) {
-            console.error("Error fetching users for Batseñal:", e);
+            console.error("🛑 [Batseñal ERROR] Fallo en el radar de jugadores:", e);
+            if (window.PremiumModal) {
+                window.PremiumModal.notify("Error de red: No se pudo contactar con la base de datos de jugadores.", "danger");
+            }
             return [];
         }
     }

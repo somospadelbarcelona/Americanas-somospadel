@@ -5,6 +5,8 @@
 
     class DashboardView {
         constructor() {
+            this.matchUnsub = null;
+
             // Global Navigation Helper for News
             window.dashNavigate = (route, source = 'news') => {
                 console.log(`🏁 [GLOBAL NAV] From: ${source}, Route: ${route}`);
@@ -78,12 +80,15 @@
                         <!-- Content loaded via JS (HeroCard) -->
                     </div>
 
+
+
+
+
                     <!-- 4. PULSE STORIES (Instagram Style) -->
                     <div id="story-feed-root" style="margin: 0 !important; animation: floatUp 0.8s ease-out forwards; padding-top: 2px;">
                         <!-- Cargado vía JS (StoryFeedWidget) -->
                     </div>
 
-                    <!-- (Old Quick Actions Grid removed to favor the new Floating command Center) -->
 
 
                     <!-- 6. NEWS MARQUEE (3D HOLO ENGINE) -->
@@ -480,6 +485,7 @@
                     </div>
                 </div>
 
+                <style>
                     .dashboard-v2-container ::-webkit-scrollbar { display: none; }
                 </style>
     `;
@@ -1230,6 +1236,8 @@
                 console.error("❌ [DashboardView] Error building user context:", err);
             }
 
+
+
             return context;
         }
 
@@ -1358,6 +1366,8 @@
                     // console.log("🃏 [DashboardView] Syncing HeroCard...");
                     heroRoot.innerHTML = window.HeroCard.render(context);
 
+
+
                     // POPUP ALERT: Torneo (Solo ventana emergente)
                     if (context.hasOpenTournament && !context.isSignedUp && window.PremiumModal) {
                         const sessionKey = `popup_tournament_${context.tournamentId}`;
@@ -1381,7 +1391,11 @@
                 console.error("❌ HeroCard render failed:", e);
             }
 
-            // 4. Load Predictive Synergy Widget
+
+
+
+
+
             try {
                 const synergyContainer = document.getElementById('predictive-synergy-root');
                 // Use Store OR global backup OR Firebase Auth directly as last resort
@@ -1469,6 +1483,33 @@
             }
         }
 
+        _startActiveMatchListener(context) {
+            if (this.matchUnsub) this.matchUnsub();
+
+            const collectionName = context.activeEvent?.type === 'entreno' ? 'entrenos_matches' : 'matches';
+            console.log(`📡 [Telemetry] Listening to active match: ${context.activeMatch.id}`);
+
+            this.matchUnsub = window.db.collection(collectionName).doc(context.activeMatch.id)
+                .onSnapshot(doc => {
+                    if (!doc.exists) return;
+                    const updatedMatch = doc.data();
+
+                    if (JSON.stringify(updatedMatch.score) !== JSON.stringify(context.activeMatch.score) ||
+                        updatedMatch.status !== context.activeMatch.status) {
+
+                        console.log("⚡ [Telemetry] Live update received for active match");
+                        context.activeMatch = { ...context.activeMatch, ...updatedMatch };
+
+                        const heroRoot = document.getElementById('hero-card-root');
+                        if (heroRoot && window.HeroCard) {
+                            heroRoot.innerHTML = window.HeroCard.render(context);
+                        }
+                    }
+                }, err => {
+                    console.error("🛑 [Telemetry] Active match listener failed:", err);
+                });
+        }
+
         /**
          * 2026 UPDATE: Show a one-time tip to let the user know about the new Profile capabilities.
          */
@@ -1483,6 +1524,8 @@
                 alert("💡 TIP: Desliza las historias para navegar.");
             }
         }
+
+
 
         // --- PHASE 1 HELPERS ---
 
