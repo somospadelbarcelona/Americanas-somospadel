@@ -95,6 +95,12 @@ class GeoService {
     }
 
     checkHeadquartersProximity(lat, lng) {
+        // SAFETY GUARD: Prevent crash if constants aren't loaded
+        if (!window.AppConstants || !window.AppConstants.LOCATIONS) {
+            console.warn("📡 [GeoService] AppConstants.LOCATIONS not found. Radar disabled.");
+            return { nearHq: false, hqName: null, distance: Infinity };
+        }
+
         const hq = window.AppConstants.LOCATIONS;
         let nearHq = false;
         let hqName = null;
