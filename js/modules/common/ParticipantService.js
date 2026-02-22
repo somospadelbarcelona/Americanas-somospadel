@@ -86,7 +86,7 @@ window.ParticipantService = {
      * Remove a player from an event
      * Automatically promotes from waitlist if available.
      */
-    async removePlayer(eventId, eventType, playerId) {
+    async removePlayer(eventId, eventType, playerId, skipPromotion = false) {
         if (!eventId || !playerId) throw new Error("Invalid parameters");
 
         const collectionName = eventType === AppConstants.EVENT_TYPES.AMERICANA ? 'americanas' : 'entrenos';
@@ -127,7 +127,7 @@ window.ParticipantService = {
             // Promote from Waitlist if space available
             let promoted = null;
             const maxPlayers = (event.max_courts || 4) * 4;
-            if (players.length < maxPlayers && waitlist.length > 0) {
+            if (!skipPromotion && players.length < maxPlayers && waitlist.length > 0) {
                 promoted = waitlist.shift();
                 if (promoted && !promoted.level) promoted.level = 3.5;
                 players.push(promoted);

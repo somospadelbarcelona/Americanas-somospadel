@@ -969,7 +969,7 @@ window.loadEntrenoParticipantsUI = async (id) => {
                         <div style="display:flex; gap:4px; align-items:center;">
                             ${(event.pair_mode && event.pair_mode.includes('fixed') && !hasMissingPartner) ?
                                 `<button onclick="window.linkManualPartner('${id}', '${pid}', '${playerName}')" title="Vincular pareja manual" style="background:rgba(59, 130, 246, 0.1); border:1px solid #3b82f6; color:#3b82f6; border-radius:6px; cursor:pointer; font-size:0.8rem; padding:6px 10px;"><i class="fas fa-handshake"></i></button>` : ''}
-                            <button onclick="window.removeEntrenoPlayer('${id}', '${pid}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:0.9rem; padding:8px;"><i class="fas fa-times"></i></button>
+                            <button onclick="window.removeEntrenoPlayer('${id}', '${pid}')" title="BORRAR JUGADOR (Incluso en Juego)" style="background:rgba(239, 68, 68, 0.1); border:1px solid #ef4444; color:#ef4444; border-radius:10px; cursor:pointer; font-size:0.85rem; padding:8px 12px; font-weight: 800;"><i class="fas fa-trash-alt"></i> ELIMINAR</button>
                         </div>
                      </div>
                      `;
@@ -1025,8 +1025,20 @@ window.loadEntrenoWaitlistUI = async (id) => {
 
 window.removeEntrenoPlayer = async (eid, uid) => {
     if (!confirm("¿Eliminar jugador de este entreno?")) return;
+
+    // Check if there's someone in waitlist to ask about promotion
+    let skipPromotion = false;
     try {
-        await ParticipantService.removePlayer(eid, 'entreno', uid);
+        const waitlist = await ParticipantService.getWaitlist(eid, 'entreno');
+        if (waitlist.length > 0) {
+            if (!confirm("Hay jugadores en reserva. ¿Quieres PROMOVER al siguiente jugador automáticamente?\n\n(Pulsa CANCELAR para eliminar al jugador sin que entre nadie en su lugar)")) {
+                skipPromotion = true;
+            }
+        }
+    } catch (e) { console.warn("Waitlist check skipped", e); }
+
+    try {
+        await ParticipantService.removePlayer(eid, 'entreno', uid, skipPromotion);
         window.loadEntrenoParticipantsUI(eid);
     } catch (e) { alert(e.message); }
 };

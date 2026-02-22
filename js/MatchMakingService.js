@@ -15,7 +15,7 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
              * Generar partidos para una ronda específica.
              * Maneja automáticamente la lógica de "Smart Courts" (ampliar pistas si hay más gente).
              */
-            async generateRound(eventId, eventType, roundNum) {
+            async generateRound(eventId, eventType, roundNum, force = false) {
                 console.log(`🎲 MatchMakingService: Generating Round ${roundNum} for ${eventType} ${eventId}`);
 
                 // Ensure dependencies exist
@@ -78,9 +78,11 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                     const prevRoundMatches = matches.filter(m => parseInt(m.round) === (roundNum - 1));
 
                     const unfinished = prevRoundMatches.filter(m => m.status !== 'finished');
-                    if (unfinished.length > 0) {
+                    if (unfinished.length > 0 && !force) {
                         console.warn(`⚠️ BLOCKED: R${roundNum - 1} has ${unfinished.length} unfinished matches.`);
                         throw new Error(`⚠️ Ronda ${roundNum - 1} tiene partidos sin finalizar. Termínalos antes.`);
+                    } else if (unfinished.length > 0 && force) {
+                        console.log(`⏩ FORCED: Proceeding even if R${roundNum - 1} has unfinished matches.`);
                     } else {
                         console.log(`✅ Previous round R${roundNum - 1} is fully finished. Proceeding...`);
                     }

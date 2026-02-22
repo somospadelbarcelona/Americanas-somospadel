@@ -417,6 +417,7 @@ function renderMatchCard(match) {
                     <div style="display:flex; align-items:center; gap:8px;">
                         ${isFinished && sA > sB ? '<i class="fas fa-trophy" style="color:var(--primary); font-size:0.8rem;"></i>' : ''}
                         <span id="name-a-${match.id}" style="font-weight:800; color:${isFinished && sA > sB ? 'white' : 'white'}; font-size:0.95rem; ${isFinished && sA > sB ? 'border-bottom: 3px solid var(--primary); padding-bottom: 2px;' : ''}">${teamA}</span>
+                        <button onclick="window.Actions.swapPlayerInMatch('${match.id}')" title="Sustituir jugador" style="background:none; border:none; color:rgba(255,255,255,0.2); cursor:pointer; font-size:0.7rem; padding: 2px;"><i class="fas fa-sync-alt"></i></button>
                     </div>
                     <span id="score-primary-a-${match.id}" style="font-weight:950; font-size:1.4rem; color:${isFinished && sA > sB ? 'var(--primary)' : 'rgba(255,255,255,0.3)'};">${sA}</span>
                 </div>
@@ -425,6 +426,7 @@ function renderMatchCard(match) {
                     <div style="display:flex; align-items:center; gap:8px;">
                         ${isFinished && sB > sA ? '<i class="fas fa-trophy" style="color:var(--primary); font-size:0.8rem;"></i>' : ''}
                         <span id="name-b-${match.id}" style="font-weight:800; color:${isFinished && sB > sA ? 'white' : 'white'}; font-size:0.95rem; ${isFinished && sB > sA ? 'border-bottom: 3px solid var(--primary); padding-bottom: 2px;' : ''}">${teamB}</span>
+                        <button onclick="window.Actions.swapPlayerInMatch('${match.id}')" title="Sustituir jugador" style="background:none; border:none; color:rgba(255,255,255,0.2); cursor:pointer; font-size:0.7rem; padding: 2px;"><i class="fas fa-sync-alt"></i></button>
                     </div>
                     <span id="score-primary-b-${match.id}" style="font-weight:950; font-size:1.4rem; color:${isFinished && sB > sA ? 'var(--primary)' : 'rgba(255,255,255,0.3)'};">${sB}</span>
                 </div>
@@ -519,7 +521,16 @@ window.Actions = {
         try {
             await MatchMakingService.generateRound(evt.id, evt.type, round);
             window.loadResultsView(evt.type); // Refresh
-        } catch (e) { alert(e.message); }
+        } catch (e) {
+            if (e.message.includes('sin finalizar') && confirm(e.message + "\n\n¿Quieres FORZAR la generación de la siguiente ronda?")) {
+                try {
+                    await MatchMakingService.generateRound(evt.id, evt.type, round, true);
+                    window.loadResultsView(evt.type);
+                } catch (err) { alert("Error al forzar: " + err.message); }
+            } else {
+                alert(e.message);
+            }
+        }
     },
 
     async simulateRound() {
@@ -877,6 +888,74 @@ window.Actions = {
             await window.LevelReliabilityService.runRescue1101();
         } else {
             alert("Error: LevelReliabilityService no disponible.");
+        }
+    },
+
+    async swapPlayerInMatch(matchId) {
+        if (!window.PremiumModal) return alert("PremiumModal no disponible");
+
+        const match = window.AdminController.matchesBuffer.find(m => m.id === matchId);
+        if (!match) return;
+
+        const evt = window.AdminController.activeEvent;
+        const players = evt.players || [];
+
+        try {
+            // 1. Select player in match to replace
+            const teamAIds = match.team_a_ids || [];
+            const teamBIds = match.team_b_ids || [];
+            const teamANames = Array.isArray(match.team_a_names) ? match.team_a_names : [match.team_a_names];
+            const teamBNames = Array.isArray(match.team_b_names) ? match.team_b_names : [match.team_b_names];
+
+            const matchPlayerItems = [
+                ...teamANames.map((n, i) => ({ id: teamAIds[i], name: n, sub: 'Equipo A' })),
+                ...teamBNames.map((n, i) => ({ id: teamBIds[i], name: n, sub: 'Equipo B' }))
+            ].filter(p => p.name);
+
+            const oldPlayer = await PremiumModal.selector({
+                title: '¿A quién quieres sustituir?',
+                message: 'Selecciona el jugador que NO ha venido o que quieres cambiar en el cuadro.',
+                items: matchPlayerItems,
+                type: 'warning'
+            });
+
+            if (!oldPlayer) return;
+
+            // 2. Select replacement from event players
+            const replacementItems = players.map(p => ({
+                id: p.id || p.uid,
+                name: (p.name || 'JUGADOR').toUpperCase(),
+                sub: `Nivel: ${p.level || '3.5'}`
+            })).sort((a, b) => a.name.localeCompare(b.name));
+
+            const newPlayer = await PremiumModal.selector({
+                title: 'Selecciona al sustituto',
+                message: `Elige quién ocupará el lugar de ${oldPlayer.name}:`,
+                items: replacementItems,
+                placeholder: 'Busca al nuevo jugador...',
+                type: 'success'
+            });
+
+            if (!newPlayer) return;
+
+            if (confirm(`¿Sustituir a ${oldPlayer.name} por ${newPlayer.name}?\n\nEsto actualizará todos los partidos pendientes donde aparezca ${oldPlayer.name}.`)) {
+
+                // Show loader or similar
+                const updatesCount = await MatchmakingService.substitutePlayerInMatchesRobust(
+                    evt.id, oldPlayer.id, oldPlayer.name, newPlayer.id, newPlayer.name, evt.type
+                );
+
+                if (window.NotificationService) {
+                    window.NotificationService.showToast(`Sustitución completada. ${updatesCount} partidos actualizados.`, "success");
+                } else {
+                    alert(`✓ Éxito: ${updatesCount} partidos actualizados.`);
+                }
+
+                window.loadResultsView(evt.type);
+            }
+        } catch (e) {
+            console.error("Error swapping player:", e);
+            alert("Error: " + e.message);
         }
     }
 };
