@@ -31,99 +31,103 @@
         static renderUpcomingMatch(ctx) {
             const timeUntil = this.getTimeUntil(ctx.matchTime);
             const urgencyClass = timeUntil < 60 ? 'urgent' : timeUntil < 180 ? 'soon' : 'today';
-            const borderColor = urgencyClass === 'urgent' ? '#FF3B30' : urgencyClass === 'soon' ? '#FF9500' : '#CCFF00';
+            const accentColor = urgencyClass === 'urgent' ? '#FF2D55' : urgencyClass === 'soon' ? '#FF9500' : '#CCFF00';
 
             return `
-                <div class="hero-card fade-in" style="
-                    background: white;
-                    border-left: 5px solid ${borderColor};
-                    border-radius: 20px;
-                    padding: 24px;
+                <div class="hero-card upcoming fade-in" style="
+                    background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+                    border: 1px solid rgba(255,255,255,0.08);
+                    border-left: 5px solid ${accentColor};
+                    border-radius: 24px;
+                    padding: 28px;
                     margin: 0;
                     width: 100%;
                     box-sizing: border-box;
-                    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-                    animation: slideInDown 0.4s ease-out;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px ${accentColor}20;
+                    position: relative;
+                    overflow: hidden;
                 ">
+                    <!-- Subtle Glow -->
+                    <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: radial-gradient(circle, ${accentColor}15 0%, transparent 70%); filter: blur(30px);"></div>
+
                     ${urgencyClass === 'urgent' ? `
-                        <div style="background: #FF3B30; color: white; display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 0.65rem; font-weight: 900; margin-bottom: 12px; letter-spacing: 0.5px; animation: pulse 2s infinite;">
-                            🚨 ¡TU PARTIDO EMPIEZA EN ${timeUntil} MINUTOS!
+                        <div style="background: #FF2D55; color: white; display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.65rem; font-weight: 900; margin-bottom: 20px; letter-spacing: 1px; animation: pulse 2s infinite; border: 1px solid rgba(255,255,255,0.2);">
+                            <i class="fas fa-bolt"></i> ¡ENTRAS EN PISTA EN ${timeUntil} MINUTOS!
                         </div>
-                    ` : ''}
+                    ` : `
+                        <div style="background: rgba(255,255,255,0.05); color: ${accentColor}; display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; margin-bottom: 20px; letter-spacing: 1px; border: 1px solid ${accentColor}40;">
+                            <i class="far fa-calendar-check"></i> TU PRÓXIMO PARTIDO
+                        </div>
+                    `}
                     
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
                         <div>
-                            <div style="font-size: 0.75rem; font-weight: 800; color: #666; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;">
-                                🎾 TU PRÓXIMO PARTIDO
+                            <div style="font-size: 2.2rem; font-weight: 950; color: white; line-height: 1; margin-bottom: 6px; letter-spacing: -1px;">
+                                ${ctx.matchTime}
                             </div>
-                            <div style="font-size: 1.8rem; font-weight: 900; color: #000; line-height: 1.1; margin-bottom: 4px;">
-                                ${ctx.matchDay} • ${ctx.matchTime}
-                            </div>
-                            <div style="font-size: 0.9rem; color: #666; font-weight: 600;">
-                                ${ctx.tournamentName}
+                            <div style="font-size: 1rem; color: #94a3b8; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                                <span style="color: white; opacity: 0.6;">HOY</span> • ${ctx.matchDay}
                             </div>
                         </div>
-                        <div style="background: #F8F9FA; padding: 12px; border-radius: 12px; text-align: center; min-width: 60px;">
-                            <div style="font-size: 0.65rem; color: #888; font-weight: 800; margin-bottom: 4px;">PISTA</div>
-                            <div style="font-size: 1.5rem; font-weight: 900; color: #000;">${ctx.court || '2'}</div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                            <div style="font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 2px;">PISTA</div>
+                            <div style="font-size: 1.6rem; font-weight: 950; color: ${accentColor};">${ctx.court || '?'}</div>
                         </div>
                     </div>
 
-                    <div style="background: #F8F9FA; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                            <div style="width: 36px; height: 36px; background: #CCFF00; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-                                👤
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 18px; border-radius: 18px; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div style="width: 40px; height: 40px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                🤝
                             </div>
-                            <div>
-                                <div style="font-size: 0.65rem; color: #888; font-weight: 700; text-transform: uppercase;">Compañero</div>
-                                <div style="font-size: 0.95rem; font-weight: 800; color: #000;">${ctx.partner || 'Por asignar'}</div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase;">Compañero</div>
+                                <div style="font-size: 1rem; font-weight: 800; color: white;">${ctx.partner || 'Por asignar'}</div>
                             </div>
                         </div>
-                        <div style="height: 1px; background: #E0E0E0; margin: 12px 0;"></div>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 36px; height: 36px; background: #FF3B30; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                        <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 14px 0;"></div>
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div style="width: 40px; height: 40px; background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
                                 ⚔️
                             </div>
-                            <div>
-                                <div style="font-size: 0.65rem; color: #888; font-weight: 700; text-transform: uppercase;">Rivales</div>
-                                <div style="font-size: 0.95rem; font-weight: 800; color: #000;">${ctx.opponents || 'Por asignar'}</div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase;">Rivales</div>
+                                <div style="font-size: 1rem; font-weight: 800; color: white;">${ctx.opponents || 'Por asignar'}</div>
                             </div>
                         </div>
                     </div>
 
-
-
-
-
-
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                         <button onclick="Router.navigate('live')" style="
-                            background: white;
-                            border: 2px solid #E0E0E0;
-                            color: #333;
-                            padding: 14px;
-                            border-radius: 12px;
+                            background: rgba(255,255,255,0.05);
+                            border: 1px solid rgba(255,255,255,0.1);
+                            color: white;
+                            padding: 16px;
+                            border-radius: 14px;
                             font-weight: 800;
-                            font-size: 0.85rem;
+                            font-size: 0.8rem;
                             cursor: pointer;
                             transition: all 0.2s;
-                        " onmouseover="this.style.borderColor='#CCFF00'" onmouseout="this.style.borderColor='#E0E0E0'">
-                            VER DETALLES
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                        " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                            Detalles
                         </button>
                         <button ${ctx.confirmed ? 'disabled' : ''} onclick="HeroCardActions.confirmAttendance('${ctx.matchId}', '${ctx.matchType}')" style="
-                            background: ${ctx.confirmed ? '#34C759' : '#CCFF00'};
-                            border: none;
-                            color: black;
-                            padding: 14px;
-                            border-radius: 12px;
+                            background: ${ctx.confirmed ? 'rgba(52,199,89,0.2)' : accentColor};
+                            border: ${ctx.confirmed ? '1px solid rgba(52,199,89,0.3)' : 'none'};
+                            color: ${ctx.confirmed ? '#34C759' : 'black'};
+                            padding: 16px;
+                            border-radius: 14px;
                             font-weight: 900;
-                            font-size: 0.85rem;
+                            font-size: 0.8rem;
                             cursor: ${ctx.confirmed ? 'default' : 'pointer'};
                             transition: all 0.2s;
-                            box-shadow: 0 4px 12px rgba(204,255,0,0.3);
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                            ${ctx.confirmed ? '' : `box-shadow: 0 8px 20px ${accentColor}40;`}
                         ">
-                            ${ctx.confirmed ? '✓ CONFIRMADO' : 'CONFIRMAR'}
+                            ${ctx.confirmed ? '✓ Confirmado' : 'Confirmar'}
                         </button>
                     </div>
                 </div>
@@ -135,49 +139,51 @@
          */
         static renderVictoryCelebration(ctx) {
             return `
-                <div class="hero-card fade-in" style="
-                    background: linear-gradient(135deg, #FFFFFF 0%, #F0FFF4 100%);
+                <div class="hero-card victory fade-in" style="
+                    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
                     border-left: 5px solid #34C759;
-                    border-radius: 20px;
-                    padding: 24px;
+                    border-radius: 24px;
+                    padding: 32px;
                     margin: 0;
                     width: 100%;
                     box-sizing: border-box;
-                    box-shadow: 0 8px 24px rgba(52,199,89,0.15);
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 30px rgba(52,199,89,0.2);
                     position: relative;
                     overflow: hidden;
                 ">
-                    <div style="position: absolute; top: -20px; right: -20px; font-size: 8rem; opacity: 0.1;">🏆</div>
+                    <div style="position: absolute; top: -20px; right: -20px; font-size: 10rem; opacity: 0.05; transform: rotate(15deg);">🏆</div>
                     
                     <div style="text-align: center; position: relative; z-index: 1;">
-                        <div style="font-size: 3rem; margin-bottom: 8px; animation: bounce 1s;">🎉</div>
-                        <div style="font-size: 1.8rem; font-weight: 900; color: #34C759; margin-bottom: 8px; letter-spacing: -0.5px;">
-                            ¡VICTORIA!
+                        <div style="font-size: 3.5rem; margin-bottom: 12px; animation: bounce 1s infinite alternate;">🔥</div>
+                        <div style="font-size: 1rem; font-weight: 800; color: #34C759; margin-bottom: 8px; letter-spacing: 2px; text-transform: uppercase;">
+                            ¡VICTORIA ÉPICA!
                         </div>
-                        <div style="font-size: 3rem; font-weight: 900; color: #000; margin-bottom: 4px; line-height: 1;">
-                            ${ctx.scoreA} - ${ctx.scoreB}
+                        <div style="font-size: 4rem; font-weight: 950; color: white; margin-bottom: 15px; line-height: 1; letter-spacing: -2px;">
+                            ${ctx.scoreA} <span style="font-size: 2rem; opacity: 0.3;">-</span> ${ctx.scoreB}
                         </div>
-                        <div style="font-size: 0.9rem; color: #666; margin-bottom: 16px;">
+                        <div style="font-size: 1rem; color: #94a3b8; font-weight: 700; margin-bottom: 25px;">
                             vs ${ctx.opponents}
                         </div>
                         
-                        <div style="display: inline-block; background: rgba(52,199,89,0.1); border: 1px solid #34C759; color: #34C759; padding: 8px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; margin-bottom: 20px;">
-                            +${ctx.pointsEarned || 3} puntos • Subiste al #${ctx.newRank}
+                        <div style="background: rgba(52,199,89,0.1); border: 1px solid rgba(52,199,89,0.3); color: #34C759; padding: 12px 20px; border-radius: 16px; font-size: 0.85rem; font-weight: 800; margin-bottom: 30px; display: inline-flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-arrow-up"></i> +${ctx.pointsEarned || 3} PTS • RÁNKING #${ctx.newRank}
                         </div>
 
                         <button onclick="Router.navigate('live')" style="
                             background: #34C759;
                             border: none;
-                            color: white;
-                            padding: 14px 24px;
-                            border-radius: 12px;
-                            font-weight: 800;
+                            color: black;
+                            padding: 18px 30px;
+                            border-radius: 16px;
+                            font-weight: 900;
                             font-size: 0.9rem;
                             cursor: pointer;
                             width: 100%;
-                            box-shadow: 0 4px 12px rgba(52,199,89,0.3);
+                            box-shadow: 0 10px 25px rgba(52,199,89,0.4);
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
                         ">
-                            VER ESTADÍSTICAS DEL PARTIDO
+                            Ver Análisis del Partido
                         </button>
                     </div>
                 </div>
@@ -275,51 +281,51 @@
         static renderWeekPreview(ctx) {
             return `
                 <div class="hero-card fade-in" style="
-                    background: white;
-                    border-left: 5px solid #007AFF;
-                    border-radius: 20px;
-                    padding: 24px;
+                    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                    border-left: 5px solid #3b82f6;
+                    border-radius: 24px;
+                    padding: 28px;
                     margin: 0;
                     width: 100%;
                     box-sizing: border-box;
-                    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+                    box-shadow: 0 15px 30px rgba(0,0,0,0.3);
                 ">
-                    <div style="font-size: 0.75rem; font-weight: 800; color: #666; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;">
+                    <div style="font-size: 0.7rem; font-weight: 900; color: #3b82f6; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px;">
                         📅 ESTA SEMANA
                     </div>
-                    <div style="font-size: 1.4rem; font-weight: 900; color: #000; margin-bottom: 16px;">
+                    <div style="font-size: 1.6rem; font-weight: 950; color: white; margin-bottom: 20px; letter-spacing: -0.5px;">
                         Tienes ${ctx.upcomingMatches} ${ctx.upcomingMatches === 1 ? 'partido' : 'partidos'}
                     </div>
                     
-                    <div style="background: #F8F9FA; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
-                        <div style="font-size: 0.85rem; font-weight: 700; color: #333; margin-bottom: 8px;">
-                            Próximo: ${ctx.matchDay} a las ${ctx.matchTime}
+                    <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 16px; margin-bottom: 20px;">
+                        <div style="font-size: 0.9rem; font-weight: 800; color: white; margin-bottom: 6px;">
+                            Próximo: ${ctx.matchDay}
                         </div>
-                        <div style="font-size: 0.75rem; color: #666;">
-                            ${ctx.tournamentName || ctx.eventName || 'Evento de Pádel'}
+                        <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;">
+                            A las ${ctx.matchTime} • ${ctx.tournamentName || ctx.eventName || 'Evento de Pádel'}
                         </div>
                     </div>
 
                     <button onclick="Router.navigate('agenda')" style="
-                        background: white;
-                        border: 2px solid #007AFF;
-                        color: #007AFF;
-                        padding: 14px;
-                        border-radius: 12px;
-                        font-weight: 800;
+                        background: transparent;
+                        border: 2px solid rgba(59,130,246,0.3);
+                        color: #3b82f6;
+                        padding: 16px;
+                        border-radius: 14px;
+                        font-weight: 900;
                         font-size: 0.85rem;
                         cursor: pointer;
                         width: 100%;
-                    ">
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.background='rgba(59,130,246,0.1)'" onmouseout="this.style.background='transparent'">
                         VER AGENDA COMPLETA
                     </button>
                 </div>
             `;
         }
 
-        /**
-         * Estado vacío (sin eventos)
-         */
         /**
          * Icono Flotante de Estado (Radar)
          * Reemplaza la tarjeta grande por un indicador discreto
@@ -425,5 +431,5 @@
     };
 
     window.HeroCard = HeroCard;
-    console.log('🎯 HeroCard Component Loaded');
+    console.log('🎯 HeroCard Premium Component Loaded');
 })();

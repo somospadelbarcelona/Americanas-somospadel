@@ -1,10 +1,23 @@
-// Service Worker para PWA - Somospadel BCN
+// 🛡️ ANTI-GRAVITY SERVICE WORKER v5.0 (PREMIUM PERFORMANCE)
+// Optimizado para carga instantánea y gestión de notificaciones persistentes.
+
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
 
-// Inicializar Firebase en el SW (usando la misma config que en la app, pero hardcodeada aquí o importada)
-// Nota: Para simplificar, hardcodeamos la config básica requerida para messaging.
-// La misma que en firebase-config.js
+const CACHE_NAME = 'somospadel-ultra-cache-v3';
+
+// Recursos críticos para el "App Shell"
+const CORE_ASSETS = [
+    './',
+    './index.html',
+    './manifest.json',
+    './css/theme-playtomic.css?v=800',
+    './img/logo_somospadel.png',
+    './js/app.js?v=3000',
+    './js/core/AuthService.js?v=12.1'
+];
+
+// Initialize Firebase Messaging
 try {
     firebase.initializeApp({
         apiKey: "AIzaSyBCy8nN4wKL2Cqvxp_mkmYpsA923N1g5iE",
@@ -18,130 +31,100 @@ try {
     const messaging = firebase.messaging();
 
     messaging.onBackgroundMessage((payload) => {
-        console.log('[SW] Received background message ', payload);
-
-        const notificationTitle = payload.notification.title;
-        const notificationOptions = {
-            body: payload.notification.body,
+        const { title, body } = payload.notification;
+        const options = {
+            body,
             icon: '/img/logo_somospadel.png',
             badge: '/img/logo_somospadel.png',
-            tag: payload.data?.tag || 'somospadel-general', // Ayuda a agrupar y gestionar borrado
-            renotify: true,
-            data: payload.data
+            vibrate: [100, 50, 100],
+            data: payload.data,
+            tag: payload.data?.tag || 'general-match-alert',
+            renotify: true
         };
-
-        return self.registration.showNotification(notificationTitle, notificationOptions);
+        return self.registration.showNotification(title, options);
     });
-} catch (e) { console.error("[SW] Firebase init error", e); }
+} catch (e) { console.error("[SW] Messaging init failed", e); }
 
-// Evento: Click en Notificación (SOLUCIONA que no se borren)
-self.addEventListener('notificationclick', (event) => {
-    console.log('[SW] Notification click Received.');
-
-    // 1. Cerrar la notificación inmediatamente
-    event.notification.close();
-
-    // 2. Definir URL de destino
-    const urlToOpen = event.notification.data?.url || '/';
-
-    // 3. Abrir o enfocar ventana
-    event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-            // Si ya hay una ventana abierta, enfocarla y navegar
-            for (let i = 0; i < windowClients.length; i++) {
-                const client = windowClients[i];
-                if ('focus' in client) {
-                    return client.focus().then(c => {
-                        if (urlToOpen !== '/') c.navigate(urlToOpen);
-                    });
-                }
-            }
-            // Si no hay ventana, abrir una nueva
-            if (clients.openWindow) {
-                return clients.openWindow(urlToOpen);
-            }
-        })
-    );
-});
-
-// Evento: Cierre manual por el usuario (swipe)
-self.addEventListener('notificationclose', (event) => {
-    console.log('[SW] Notification was closed/swiped away', event.notification.tag);
-});
-
-// Forzar actualización inmediata si el usuario lo pide desde la UI
-self.addEventListener('message', (event) => {
-    if (event.data === 'skipWaiting') {
-        self.skipWaiting();
-    }
-});
-
-const CACHE_NAME = 'somospadel-pro-v45';
-const STATIC_RESOURCES = [
-    './',
-    './index.html',
-    './manifest.json',
-    './css/theme-playtomic.css?v=701',
-    './js/app.js?v=2026',
-    './js/core/AuthService.js?v=12.1',
-    './js/modules/auth/AuthController.js?v=12.1',
-    './img/logo_somospadel.png',
-    'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&display=swap',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'
-];
-
-// Install: Cache Shell
+// INSTALL: Pre-cache core assets
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_RESOURCES))
+        caches.open(CACHE_NAME).then(cache => cache.addAll(CORE_ASSETS))
     );
     self.skipWaiting();
 });
 
-// Activate: Cleanup
+// ACTIVATE: Cleanup old caches
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then(keys => Promise.all(
-            keys.map(key => { if (key !== CACHE_NAME) return caches.delete(key); })
+            keys.map(key => {
+                if (key !== CACHE_NAME) return caches.delete(key);
+            })
         ))
     );
     return self.clients.claim();
 });
 
-// Fetch Strategy: Stale-While-Revalidate for Static, Network-First for others
+// FETCH: Advanced Strategy (Cache-First for Modules, Network-First for Data)
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    // Skip Firebase calls and cross-origin analytics
-    if (url.origin.includes('firestore.googleapis.com') || url.origin.includes('firebasestorage')) {
+    // Ignorar APIs externas y Firebase
+    if (url.origin.includes('firestore.googleapis.com') ||
+        url.origin.includes('firebasestorage') ||
+        url.origin.includes('google-analytics')) {
         return;
     }
 
-    // Static Assets: Stale-While-Revalidate
-    if (STATIC_RESOURCES.some(res => event.request.url.includes(res)) || event.request.destination === 'image') {
+    // Estrategia para Módulos JS e Imágenes (Cache First con Update en segundo plano)
+    const isModule = url.pathname.includes('/js/modules/') || url.pathname.endsWith('.js');
+    const isImage = event.request.destination === 'image';
+
+    if (isModule || isImage) {
         event.respondWith(
-            caches.match(event.request).then(cachedResponse => {
+            caches.match(event.request).then(response => {
                 const fetchPromise = fetch(event.request).then(networkResponse => {
-                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResponse.clone()));
+                    // Solo cachear si la respuesta es válida
+                    if (networkResponse && networkResponse.status === 200) {
+                        caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResponse.clone()));
+                    }
                     return networkResponse;
-                });
-                return cachedResponse || fetchPromise;
+                }).catch(() => null);
+
+                // Devolver del cache si existe, si no, esperar al fetch
+                return response || fetchPromise;
             })
         );
         return;
     }
 
-    // Others (Data): Network First
+    // Estrategia para Documentos y otros (Stale-While-Revalidate)
     event.respondWith(
-        fetch(event.request)
-            .catch(() => caches.match(event.request))
-            .then(res => {
-                if (res) return res;
-                // Only return index.html for navigation or HTML requests
-                if (event.request.mode === 'navigate' || (event.request.headers.get('accept') || '').includes('text/html')) {
+        fetch(event.request).catch(() => {
+            return caches.match(event.request).then(cached => {
+                if (cached) return cached;
+                // Si falla todo, devolver el index.html (SPA routing support)
+                if (event.request.mode === 'navigate') {
                     return caches.match('./index.html');
                 }
-                return null;
-            })
+            });
+        })
+    );
+});
+
+// GESTIÓN DE NOTIFICACIONES
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    const urlToOpen = event.notification.data?.url || '/';
+
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+            for (let client of windowClients) {
+                if (client.url.includes(urlToOpen) && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            if (clients.openWindow) return clients.openWindow(urlToOpen);
+        })
     );
 });

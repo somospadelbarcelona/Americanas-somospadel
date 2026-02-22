@@ -93,113 +93,113 @@
 
         async addPlayer(americanaId, user, type = 'americana', partnerName = null, partnerId = null) {
             try {
-                // Determine which collection service to use
-                const service = this._getCollectionService(type);
-                if (!service) throw new Error("Servicio de base de datos no disponible");
+                const db = window.db;
+                const collectionName = (type === 'entreno') ? 'entrenos' : 'americanas';
+                const eventRef = db.collection(collectionName).doc(americanaId);
 
-                const event = await service.getById(americanaId);
-                if (!event) throw new Error("Evento no encontrado (" + type + ")");
+                await db.runTransaction(async (transaction) => {
+                    const doc = await transaction.get(eventRef);
+                    if (!doc.exists) throw new Error("Evento no encontrado (" + type + ")");
 
-                // Check BOTH arrays for legacy/current compatibility
-                const players = event.players || [];
-                const regPlayers = event.registeredPlayers || [];
+                    const event = doc.data();
+                    const players = event.players || [];
+                    const regPlayers = event.registeredPlayers || [];
 
-                // Unified check for existing UID
-                const exists = (players.find(p => p.uid === user.uid || p.id === user.uid)) ||
-                    (regPlayers.find(p => p.uid === user.uid || p.id === user.uid));
+                    // Comprobación unificada de UID
+                    const exists = (players.find(p => p.uid === user.uid || p.id === user.uid)) ||
+                        (regPlayers.find(p => p.uid === user.uid || p.id === user.uid));
 
-                if (exists) {
-                    throw new Error("Ya estás inscrito en este evento.");
-                }
-
-                const maxPlayers = (event.max_courts || 4) * 4;
-                const capacity = maxPlayers - players.length;
-                const wantsTwo = !!partnerName;
-
-                if (wantsTwo && capacity < 2) {
-                    throw new Error(`Solo queda 1 plaza disponible. No puedes apuntar a una pareja.`);
-                } else if (capacity < 1) {
-                    throw new Error(`No quedan plazas disponibles.`);
-                }
-
-                // GENDER VALIDATION
-                this.validateGender(event.category, user.gender);
-
-                const userGender = user.gender || 'M';
-                const normalizedGender = (userGender === 'M' || userGender === 'chico') ? 'chico' :
-                    (userGender === 'F' || userGender === 'chica') ? 'chica' : '?';
-
-                const newPlayerData = {
-                    id: user.uid,
-                    uid: user.uid,
-                    name: user.name || user.displayName || user.email || 'Jugador',
-                    level: user.level || user.self_rate_level || '3.5',
-                    team_somospadel: user.team_somospadel || user.team || [],
-                    gender: normalizedGender,
-                    side_preference: user.side_preference || 'INDIFF',
-                    play_style: user.play_style || 'ESTRATEGIA',
-                    joinedAt: new Date().toISOString()
-                };
-
-                // Add partner info to the first player
-                if (partnerName) {
-                    newPlayerData.partner_name = partnerName;
-                    if (partnerId) newPlayerData.partner_id = partnerId;
-                }
-
-                players.push(newPlayerData);
-
-                // REGISTER PARTNER AS A SEPARATE PLAYER
-                if (wantsTwo) {
-                    let partnerData = null;
-                    if (partnerId) {
-                        try {
-                            const partnerDoc = await window.db.collection('players').doc(partnerId).get();
-                            if (partnerDoc.exists) {
-                                const pd = partnerDoc.data();
-                                partnerData = {
-                                    id: partnerId,
-                                    uid: partnerId,
-                                    name: pd.name || partnerName,
-                                    level: pd.level || pd.self_rate_level || '3.5',
-                                    team_somospadel: pd.team_somospadel || pd.team || [],
-                                    gender: (pd.gender === 'F' || pd.gender === 'chica') ? 'chica' : 'chico',
-                                    side_preference: pd.side_preference || 'INDIFF',
-                                    play_style: pd.play_style || 'ESTRATEGIA',
-                                    joinedAt: new Date().toISOString(),
-                                    partner_name: newPlayerData.name,
-                                    partner_id: newPlayerData.id
-                                };
-                            }
-                        } catch (e) { console.error("Error fetching partner data:", e); }
+                    if (exists) {
+                        throw new Error("Ya estás inscrito en este evento.");
                     }
 
-                    // Fallback if no partnerId or fetch failed
-                    if (!partnerData) {
-                        partnerData = {
-                            id: partnerId || `guest_${Date.now()}`,
-                            uid: partnerId || null,
-                            name: partnerName,
-                            level: '3.5',
-                            gender: '?',
-                            joinedAt: new Date().toISOString(),
-                            partner_name: newPlayerData.name,
-                            partner_id: newPlayerData.id
-                        };
+                    const maxPlayers = (event.max_courts || 4) * 4;
+                    const capacity = maxPlayers - players.length;
+                    const wantsTwo = !!partnerName;
+
+                    if (wantsTwo && capacity < 2) {
+                        throw new Error(`Solo queda 1 plaza disponible. No puedes apuntar a una pareja.`);
+                    } else if (capacity < 1) {
+                        throw new Error(`No quedan plazas disponibles.`);
                     }
 
-                    // Check if partner already exists in players (to avoid double entry)
-                    const partnerExists = players.find(p => (p.id === partnerData.id || (p.uid && p.uid === partnerData.uid)));
-                    if (!partnerExists) {
-                        players.push(partnerData);
-                    }
-                }
+                    // VALIDACIÓN DE GÉNERO
+                    this.validateGender(event.category, user.gender);
 
-                // USE THE CORRECT SERVICE (Americanas or Entrenos)
-                await service.update(americanaId, {
-                    players: players,
-                    registeredPlayers: players // Sync both
+                    const userGender = user.gender || 'M';
+                    const normalizedGender = (userGender === 'M' || userGender === 'chico') ? 'chico' :
+                        (userGender === 'F' || userGender === 'chica') ? 'chica' : '?';
+
+                    const newPlayerData = {
+                        id: user.uid,
+                        uid: user.uid,
+                        name: user.name || user.displayName || user.email || 'Jugador',
+                        level: user.level || user.self_rate_level || '3.5',
+                        team_somospadel: user.team_somospadel || user.team || [],
+                        gender: normalizedGender,
+                        side_preference: user.side_preference || 'INDIFF',
+                        play_style: user.play_style || 'ESTRATEGIA',
+                        joinedAt: new Date().toISOString()
+                    };
+
+                    if (partnerName) {
+                        newPlayerData.partner_name = partnerName;
+                        if (partnerId) newPlayerData.partner_id = partnerId;
+                    }
+
+                    players.push(newPlayerData);
+
+                    // REGISTRO DE PAREJA
+                    if (wantsTwo) {
+                        let partnerData = null;
+                        if (partnerId) {
+                            try {
+                                const partnerDocRef = db.collection('players').doc(partnerId);
+                                const partnerDoc = await transaction.get(partnerDocRef);
+                                if (partnerDoc.exists) {
+                                    const pd = partnerDoc.data();
+                                    partnerData = {
+                                        id: partnerId,
+                                        uid: partnerId,
+                                        name: pd.name || partnerName,
+                                        level: pd.level || pd.self_rate_level || '3.5',
+                                        team_somospadel: pd.team_somospadel || pd.team || [],
+                                        gender: (pd.gender === 'F' || pd.gender === 'chica') ? 'chica' : 'chico',
+                                        side_preference: pd.side_preference || 'INDIFF',
+                                        play_style: pd.play_style || 'ESTRATEGIA',
+                                        joinedAt: new Date().toISOString(),
+                                        partner_name: newPlayerData.name,
+                                        partner_id: newPlayerData.id
+                                    };
+                                }
+                            } catch (e) { console.error("Error fetching partner in transaction:", e); }
+                        }
+
+                        if (!partnerData) {
+                            partnerData = {
+                                id: partnerId || `guest_${Date.now()}`,
+                                uid: partnerId || null,
+                                name: partnerName,
+                                level: '3.5',
+                                gender: '?',
+                                joinedAt: new Date().toISOString(),
+                                partner_name: newPlayerData.name,
+                                partner_id: newPlayerData.id
+                            };
+                        }
+
+                        const partnerExists = players.find(p => (p.id === partnerData.id || (p.uid && p.uid === partnerData.uid)));
+                        if (!partnerExists) {
+                            players.push(partnerData);
+                        }
+                    }
+
+                    transaction.update(eventRef, {
+                        players: players,
+                        registeredPlayers: players
+                    });
                 });
+
 
                 // --- AUTO-FILL VACANCIES IN MATCHES (Global Fix) ---
                 // If the event has active matches with VACANT spots, fill them immediately.
