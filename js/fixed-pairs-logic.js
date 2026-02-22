@@ -323,26 +323,29 @@ const FixedPairsLogic = {
             }
         });
 
-        // Reorganización
+        // --- CONSOLIDAR PISTAS ---
+        // Pueden haber conflictos (2 parejas con misma pista tras movimiento).
+        // Ordenamos por pista actual, y luego reasignamos de forma que 
+        // el ganador quede en la pista correcta respetando su movimiento.
+
+        // Paso 1: Ordenar por pista actual (primero ganadores, empates después)
         pairs.sort((a, b) => {
-            const courtA = a.current_court || 999;
-            const courtB = b.current_court || 999;
-            if (courtA !== courtB) return courtA - courtB;
+            if (a.current_court !== b.current_court) return a.current_court - b.current_court;
+            // En la misma pista, el ganador va primero (se queda arriba)
             if (a.won_last_match && !b.won_last_match) return -1;
             if (!a.won_last_match && b.won_last_match) return 1;
             return (b.games_won || 0) - (a.games_won || 0);
         });
 
-        // Reasignar pistas secuencialmente
+        // Paso 2: Reasignar pistas de 2 en 2 respetando el orden ganador→arriba
         pairs.forEach((p, index) => {
             p.current_court = Math.floor(index / 2) + 1;
         });
 
-        return [...pairs].sort((a, b) => {
-            if (b.games_won !== a.games_won) return b.games_won - a.games_won;
-            if (b.wins !== a.wins) return b.wins - a.wins;
-            return a.games_lost - b.games_lost;
-        });
+        console.log(`✅ Pistas actualizadas:`, pairs.map(p => `${p.pair_name} → Pista ${p.current_court}`).join(', '));
+
+        // Devolver ordenado por pista (para que generatePozoRound empareje correctamente)
+        return [...pairs].sort((a, b) => a.current_court - b.current_court);
     },
 
     /**

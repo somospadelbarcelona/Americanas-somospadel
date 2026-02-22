@@ -47,8 +47,8 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
 
                 if (isFixedPairs) {
                     const pairsCount = (event.fixed_pairs || []).length;
-                    const needed = Math.floor(pairsCount / 2);
-                    if (needed > effectiveCourts) {
+                    const needed = Math.ceil(pairsCount / 2); // e.g. 10 pairs → 5 courts
+                    if (needed !== effectiveCourts && needed > 0) {
                         effectiveCourts = needed;
                         courtsUpdated = true;
                     }
@@ -150,6 +150,19 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                         } else {
                             console.log(`🔒 Using ${pairs.length} existing fixed pairs.`);
                         }
+
+                        // ✅ RESET: Restore initial courts before Round 1
+                        // Without this, pairs retain courts from previous rounds
+                        pairs = pairs.map((p, i) => ({
+                            ...p,
+                            current_court: p.initial_court || (Math.floor(i / 2) + 1),
+                            wins: 0,
+                            losses: 0,
+                            games_won: 0,
+                            games_lost: 0,
+                            won_last_match: false
+                        }));
+                        await collection.update(eventId, { fixed_pairs: pairs });
 
                         return this._createMatches(eventId, FixedPairsLogic.generatePozoRound(pairs, 1, effectiveCourts), eventType);
                     } else {
