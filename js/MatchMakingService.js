@@ -33,7 +33,8 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                 if (!event) throw new Error("Event not found");
 
                 // Determine Mode
-                let isFixedPairs = event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED;
+                let isFixedPairs = (event.pair_mode === APP_CONSTANTS.PAIR_MODES.FIXED) ||
+                    (event.fixed_pairs && event.fixed_pairs.length > 0);
 
                 // HEURISTIC: Force Fixed Pairs if name contains "FIJA" or "FIJO" (Case Insensitive)
                 if (!isFixedPairs && event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO'))) {
@@ -47,15 +48,15 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
 
                 if (isFixedPairs) {
                     const pairsCount = (event.fixed_pairs || []).length;
-                    const needed = Math.ceil(pairsCount / 2); // e.g. 10 pairs → 5 courts
+                    const needed = Math.ceil(pairsCount / 2);
                     if (needed !== effectiveCourts && needed > 0) {
                         effectiveCourts = needed;
                         courtsUpdated = true;
                     }
                 } else {
                     const playersCount = (event.players || []).length;
-                    const needed = Math.floor(playersCount / 4);
-                    if (needed > effectiveCourts) {
+                    const needed = Math.ceil(playersCount / 4);
+                    if (needed !== effectiveCourts && needed > 0) {
                         effectiveCourts = needed;
                         courtsUpdated = true;
                     }

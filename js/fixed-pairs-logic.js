@@ -198,33 +198,59 @@ const FixedPairsLogic = {
      * @returns {Array} - Partidos generados
      */
     generatePozoRound(pairs, roundNumber, maxCourts) {
-        console.log(`🎾 Generando ronda ${roundNumber} con sistema Pozo...`);
+        console.log(`🎾 Generando ronda ${roundNumber} con sistema Pozo... (${pairs.length} parejas, ${maxCourts} pistas)`);
 
-        // Ordenar parejas por pista actual
-        const sortedPairs = [...pairs].sort((a, b) => a.current_court - b.current_court);
+        // Normalizar pistas: independientemente de current_court, asignar 1,1,2,2,...
+        const sortedPairs = [...pairs].sort((a, b) => (a.current_court || 1) - (b.current_court || 1));
+
+        // Reasignar courts secuencialmente para garantizar pistas correctas
+        sortedPairs.forEach((p, i) => {
+            p._assignedCourt = Math.floor(i / 2) + 1;
+        });
 
         const matches = [];
 
-        // Emparejar: las 2 primeras parejas juegan en pista 1, las siguientes 2 en pista 2, etc.
         for (let i = 0; i < sortedPairs.length; i += 2) {
             if (i + 1 < sortedPairs.length) {
                 const pairA = sortedPairs[i];
                 const pairB = sortedPairs[i + 1];
+                const courtNum = pairA._assignedCourt;
 
                 matches.push({
                     round: roundNumber,
-                    court: pairA.current_court,
+                    court: courtNum,
                     pair_a_id: pairA.id,
                     pair_b_id: pairB.id,
                     team_a_ids: [pairA.player1_id, pairA.player2_id],
                     team_b_ids: [pairB.player1_id, pairB.player2_id],
                     team_a_names: [pairA.player1_name, pairA.player2_name],
                     team_b_names: [pairB.player1_name, pairB.player2_name],
-                    teamA: pairA.pair_name, // Redundant field for UI
-                    teamB: pairB.pair_name, // Redundant field for UI
+                    teamA: pairA.pair_name,
+                    teamB: pairB.pair_name,
                     status: 'scheduled',
                     score_a: 0,
                     score_b: 0
+                });
+            } else {
+                // ⚡ NÚMERO IMPAR: última pareja recibe BYE (victoria automática)
+                const lonePair = sortedPairs[i];
+                const courtNum = lonePair._assignedCourt;
+                console.log(`🎯 BYE: ${lonePair.pair_name} descansa en Pista ${courtNum}`);
+                matches.push({
+                    round: roundNumber,
+                    court: courtNum,
+                    pair_a_id: lonePair.id,
+                    pair_b_id: 'bye',
+                    team_a_ids: [lonePair.player1_id, lonePair.player2_id],
+                    team_b_ids: [],
+                    team_a_names: [lonePair.player1_name, lonePair.player2_name],
+                    team_b_names: ['BYE', ''],
+                    teamA: lonePair.pair_name,
+                    teamB: 'BYE (Descansa)',
+                    status: 'finished',   // Auto-finish: no juegan, ganan automáticamente
+                    score_a: 6,
+                    score_b: 0,
+                    is_bye: true
                 });
             }
         }
@@ -233,13 +259,14 @@ const FixedPairsLogic = {
         return matches;
     },
 
+
     /**
-     * Actualizar rankings de parejas después de una ronda (lógica Pozo)
-     * @param {Array} pairs - Parejas actuales
-     * @param {Array} lastRoundMatches - Partidos de la última ronda
-     * @param {Number} maxCourts - Número máximo de pistas
-     * @returns {Array} - Parejas actualizadas
-     */
+ * Actualizar rankings de parejas después de una ronda (lógica Pozo)
+ * @param {Array} pairs - Parejas actuales
+ * @param {Array} lastRoundMatches - Partidos de la última ronda
+ * @param {Number} maxCourts - Número máximo de pistas
+ * @returns {Array} - Parejas actualizadas
+ */
     updatePozoRankings(pairs, lastRoundMatches, maxCourts) {
         console.log(`📊 Actualizando rankings Pozo (Parejas Fijas)...`);
 

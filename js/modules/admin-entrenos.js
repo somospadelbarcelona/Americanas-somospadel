@@ -940,6 +940,14 @@ window.loadEntrenoParticipantsUI = async (id) => {
 
                          </div>
                          
+                         <!-- COURT SELECTOR (MANUAL) -->
+                         <div style="margin: 0 10px;">
+                            <select onchange="window.setPairCourt('${id}', '${pid}', '${partnerId}', this.value)" style="padding: 4px 8px; border-radius: 8px; background: #fff; border: 1px solid #3b82f6; font-size: 0.75rem; font-weight: 800; color: #3b82f6; cursor: pointer;">
+                                <option value="">PISTA ?</option>
+                                ${[1, 2, 3, 4, 5, 6].map(num => `<option value="${num}" ${(p.current_court == num) ? 'selected' : ''}>PISTA ${num}</option>`).join('')}
+                            </select>
+                         </div>
+
                          <!-- ACTIONS -->
                          <div style="display:flex; gap:2px; margin-left:8px;">
                             <button onclick="window.removeEntrenoPlayer('${id}', '${pid}')" title="Quitar ${name1}" style="background:none; border:none; color:#ef4444; opacity:0.6; cursor:pointer; font-size:0.8rem; padding:4px;"><i class="fas fa-trash-alt"></i></button>
@@ -1041,6 +1049,33 @@ window.removeEntrenoPlayer = async (eid, uid) => {
         await ParticipantService.removePlayer(eid, 'entreno', uid, skipPromotion);
         window.loadEntrenoParticipantsUI(eid);
     } catch (e) { alert(e.message); }
+};
+
+window.setPairCourt = async (eventId, p1Id, p2Id, courtNum) => {
+    try {
+        console.log(`🎯 Setting Court ${courtNum} for pair ${p1Id} + ${p2Id}`);
+        const event = await window.EventService.getById('entreno', eventId);
+        if (!event) return;
+
+        let pairs = event.fixed_pairs || [];
+        const court = parseInt(courtNum);
+
+        // Update pair in list
+        pairs = pairs.map(p => {
+            const isMatch = (String(p.player1_id) === String(p1Id) || String(p.player2_id) === String(p1Id)) &&
+                (String(p.player1_id) === String(p2Id) || String(p.player2_id) === String(p2Id));
+            if (isMatch) {
+                return { ...p, current_court: court, initial_court: court };
+            }
+            return p;
+        });
+
+        await window.EventService.updateEvent('entreno', eventId, { fixed_pairs: pairs });
+        console.log("✅ Court updated in DB");
+    } catch (e) {
+        console.error("Error updating court:", e);
+        alert("Error: " + e.message);
+    }
 };
 
 window.launchBatSignalEntreno = async (eventId) => {
