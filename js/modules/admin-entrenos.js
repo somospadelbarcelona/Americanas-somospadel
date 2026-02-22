@@ -853,6 +853,11 @@ window.loadEntrenoParticipantsUI = async (id) => {
             return true;
         });
 
+        // 🧠 Smart Mode Detection (Consistent with MatchMakingService)
+        let isFixedMode = (event.pair_mode && event.pair_mode.includes('fixed')) ||
+            (event.fixed_pairs && event.fixed_pairs.length > 0) ||
+            (event.name && (event.name.toUpperCase().includes('FIJA') || event.name.toUpperCase().includes('FIJO')));
+
         // Render List with Header
         list.innerHTML = `
         <div style="margin-bottom:12px; display:flex; flex-direction:column; gap:8px; background:rgba(255,255,255,0.03); padding:10px; border-radius:10px;">
@@ -864,12 +869,12 @@ window.loadEntrenoParticipantsUI = async (id) => {
                     </button>
                 </div>
              </div>
-             <div style="display:grid; grid-template-columns: ${(event.pair_mode && event.pair_mode.includes('fixed')) ? '1fr 1fr' : '1fr'}; gap:8px;">
+             <div style="display:grid; grid-template-columns: ${isFixedMode ? '1fr 1fr' : '1fr'}; gap:8px;">
                  <button onclick="window.openAddPlayerToEntrenoSelector('${id}')" 
                          style="width:100%; height:40px; background:rgba(204,255,0,0.1); color:#000000 !important; border:1px solid rgba(204,255,0,0.2); border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
-                    <i class="fas fa-user-plus"></i> ${(event.pair_mode && event.pair_mode.includes('fixed')) ? 'JUGADOR' : 'AÑADIR JUGADOR'}
+                    <i class="fas fa-user-plus"></i> ${isFixedMode ? 'JUGADOR' : 'AÑADIR JUGADOR'}
                  </button>
-                 ${(event.pair_mode && event.pair_mode.includes('fixed')) ? `
+                 ${isFixedMode ? `
                  <button onclick="window.openAddPairToEntrenoSelector('${id}')" 
                          style="width:100%; height:40px; background:rgba(59, 130, 246, 0.1); color:#000000 !important; border:1px solid rgba(59, 130, 246, 0.2); border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
                     <i class="fas fa-user-friends"></i> AÑADIR PAREJA
@@ -942,10 +947,19 @@ window.loadEntrenoParticipantsUI = async (id) => {
                          
                          <!-- COURT SELECTOR (MANUAL) -->
                          <div style="margin: 0 10px;">
+                            ${isFixedMode ? `
                             <select onchange="window.setPairCourt('${id}', '${pid}', '${partnerId}', this.value)" style="padding: 4px 8px; border-radius: 8px; background: #fff; border: 1px solid #3b82f6; font-size: 0.75rem; font-weight: 800; color: #3b82f6; cursor: pointer;">
                                 <option value="">PISTA ?</option>
-                                ${[1, 2, 3, 4, 5, 6].map(num => `<option value="${num}" ${(p.current_court == num) ? 'selected' : ''}>PISTA ${num}</option>`).join('')}
+                                ${[1, 2, 3, 4, 5, 6].map(num => {
+                            // Try to find current court in fixed_pairs
+                            const currentPair = (event.fixed_pairs || []).find(fp =>
+                                (String(fp.player1_id) === pid || String(fp.player2_id) === pid)
+                            );
+                            const assigned = currentPair ? currentPair.current_court : '';
+                            return `<option value="${num}" ${(assigned == num) ? 'selected' : ''}>PISTA ${num}</option>`;
+                        }).join('')}
                             </select>
+                            ` : ''}
                          </div>
 
                          <!-- ACTIONS -->
