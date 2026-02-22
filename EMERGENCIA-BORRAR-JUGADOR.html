@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>🚨 EMERGENCIA – Borrar Jugador</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: #eee;
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #CCFF00;
+        }
+
+        button {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 800;
+            margin: 6px;
+        }
+
+        button.green {
+            background: #22c55e;
+        }
+
+        button.blue {
+            background: #3b82f6;
+        }
+
+        .card {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 12px 0;
+        }
+
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        .player-name {
+            font-weight: 800;
+            font-size: 1rem;
+        }
+
+        input {
+            background: #222;
+            border: 1px solid #555;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            margin: 6px 0;
+            font-size: 1rem;
+        }
+
+        #log {
+            background: #000;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+            color: #0f0;
+        }
+
+        .error {
+            color: #ef4444;
+        }
+
+        .ok {
+            color: #22c55e;
+        }
+
+        #step2,
+        #step3 {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🚨 EMERGENCIA – Borrar Jugador</h1>
+    <p style="color:#aaa;">Usa las mismas credenciales que usas para entrar al panel admin.</p>
+
+    <!-- PASO 1: LOGIN -->
+    <div class="card" id="step1">
+        <h3 style="color:#CCFF00; margin-top:0;">Paso 1 – Iniciar Sesión</h3>
+        <input type="email" id="email" placeholder="Tu email de admin" />
+        <input type="password" id="password" placeholder="Tu contraseña" />
+        <button class="blue" onclick="login()">🔐 ENTRAR</button>
+        <div id="login-error" style="color:#ef4444; margin-top:8px;"></div>
+    </div>
+
+    <!-- PASO 2: SELECCIONAR ENTRENO -->
+    <div class="card" id="step2">
+        <h3 style="color:#CCFF00; margin-top:0;">Paso 2 – Selecciona el Entreno</h3>
+        <button class="blue" onclick="cargarEntrenos()">📋 CARGAR ENTRENOS RECIENTES</button>
+        <div id="lista-entrenos" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- PASO 3: JUGADORES -->
+    <div class="card" id="step3">
+        <h3 style="color:#CCFF00; margin-top:0;">Paso 3 – Selecciona al jugador a borrar</h3>
+        <div id="lista-jugadores"></div>
+    </div>
+
+    <div class="card">
+        <div id="log">Esperando...</div>
+    </div>
+
+    <script>
+        const PROJECT_ID = "americanas-somospadel";
+        const API_KEY = "AIzaSyBCy8nN4wKL2Cqvxp_mkmYpsA923N1g5iE";
+        const FIRESTORE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
+        const AUTH_URL = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`;
+
+        let idToken = null;
+        let selectedEntrenoId = null;
+
+        function log(msg, type = '') {
+            const el = document.getElementById('log');
+            el.innerHTML += `<div class="${type}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+            el.scrollTop = el.scrollHeight;
+        }
+
+        // =====================
+        // PASO 1: LOGIN
+        // =====================
+        async function login() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            document.getElementById('login-error').textContent = '';
+
+            if (!email || !password) {
+                document.getElementById('login-error').textContent = 'Introduce email y contraseña.';
+                return;
+            }
+
+            log(`Iniciando sesión como ${email}...`);
+
+            try {
+                const res = await fetch(AUTH_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, returnSecureToken: true })
+                });
+                const data = await res.json();
+
+                if (data.error) throw new Error(data.error.message);
+
+                idToken = data.idToken;
+                log(`✅ Sesión iniciada correctamente como ${email}`, 'ok');
+
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'block';
+
+                // Auto-load entrenos
+                cargarEntrenos();
+
+            } catch (e) {
+                document.getElementById('login-error').textContent = '❌ Error: ' + e.message;
+                log('❌ Login fallido: ' + e.message, 'error');
+            }
+        }
+
+        // Convert Firestore value to JS
+        function fromFS(val) {
+            if (!val) return null;
+            if ('stringValue' in val) return val.stringValue;
+            if ('integerValue' in val) return parseInt(val.integerValue);
+            if ('doubleValue' in val) return parseFloat(val.doubleValue);
+            if ('booleanValue' in val) return val.booleanValue;
+            if ('nullValue' in val) return null;
+            if ('arrayValue' in val) return (val.arrayValue.values || []).map(fromFS);
+            if ('mapValue' in val) {
+                const obj = {};
+                for (const [k, v] of Object.entries(val.mapValue.fields || {})) obj[k] = fromFS(v);
+                return obj;
+            }
+            return null;
+        }
+
+        // Convert JS to Firestore value
+        function toFS(val) {
+            if (val === null || val === undefined) return { nullValue: null };
+            if (typeof val === 'string') return { stringValue: val };
+            if (typeof val === 'boolean') return { booleanValue: val };
+            if (typeof val === 'number') return Number.isInteger(val) ? { integerValue: String(val) } : { doubleValue: val };
+            if (Array.isArray(val)) return { arrayValue: { values: val.map(toFS) } };
+            if (typeof val === 'object') {
+                const fields = {};
+                for (const [k, v] of Object.entries(val)) fields[k] = toFS(v);
+                return { mapValue: { fields } };
+            }
+            return { nullValue: null };
+        }
+
+        async function fsGet(path) {
+            const res = await fetch(`${FIRESTORE_URL}/${path}`, {
+                headers: { 'Authorization': `Bearer ${idToken}` }
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+            return res.json();
+        }
+
+        // =====================
+        // PASO 2: CARGAR ENTRENOS
+        // =====================
+        async function cargarEntrenos() {
+            log('Cargando entrenos...');
+            document.getElementById('lista-entrenos').innerHTML = '<p style="color:#aaa;">Cargando...</p>';
+
+            try {
+                const res = await fetch(`${FIRESTORE_URL}/entrenos?pageSize=30`, {
+                    headers: { 'Authorization': `Bearer ${idToken}` }
+                });
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+                const data = await res.json();
+
+                if (!data.documents || data.documents.length === 0) {
+                    document.getElementById('lista-entrenos').innerHTML = '<p class="error">No se encontraron entrenos.</p>';
+                    return;
+                }
+
+                log(`✅ ${data.documents.length} entrenos cargados`, 'ok');
+
+                // Sort by date desc
+                const docs = data.documents.sort((a, b) => {
+                    const da = fromFS(a.fields?.date) || '';
+                    const db2 = fromFS(b.fields?.date) || '';
+                    return db2.localeCompare(da);
+                });
+
+                let html = '';
+                docs.forEach(doc => {
+                    const id = doc.name.split('/').pop();
+                    const f = doc.fields || {};
+                    const name = fromFS(f.name) || id;
+                    const date = fromFS(f.date) || '';
+                    const status = fromFS(f.status) || '';
+                    const players = fromFS(f.players) || [];
+                    const statusColor = status === 'live' || status === 'en_juego' ? '#22c55e' : '#888';
+
+                    html += `
+        <div class="player-item">
+          <div>
+            <div class="player-name">${name}</div>
+            <div style="font-size:0.8rem; color:#888;">${date} &nbsp;|&nbsp; <span style="color:${statusColor};">⬤ ${status}</span> &nbsp;|&nbsp; ${players.length} jugadores</div>
+          </div>
+          <button class="blue" onclick="seleccionarEntreno('${id}')">ABRIR</button>
+        </div>`;
+                });
+
+                document.getElementById('lista-entrenos').innerHTML = html;
+
+            } catch (e) {
+                log('❌ Error: ' + e.message, 'error');
+                document.getElementById('lista-entrenos').innerHTML = `<p class="error">❌ Error: ${e.message}</p>`;
+            }
+        }
+
+        // =====================
+        // PASO 3: VER JUGADORES
+        // =====================
+        async function seleccionarEntreno(id) {
+            log(`Cargando jugadores del entreno ${id}...`);
+            selectedEntrenoId = id;
+
+            try {
+                const doc = await fsGet(`entrenos/${id}`);
+                const f = doc.fields || {};
+                const players = fromFS(f.players) || [];
+                const name = fromFS(f.name) || id;
+
+                log(`✅ Entreno "${name}" – ${players.length} jugadores`, 'ok');
+
+                let html = `<p style="color:#aaa;"><strong>${name}</strong> – ${players.length} jugadores.<br>Haz clic en BORRAR junto al jugador que quieres eliminar:</p>`;
+                players.forEach((p, i) => {
+                    const pname = (p.name || `Jugador ${i + 1}`).toUpperCase();
+                    const level = p.level || '?';
+                    html += `
+        <div class="player-item" id="prow-${i}">
+          <div>
+            <div class="player-name">${pname}</div>
+            <div style="font-size:0.8rem; color:#888;">Nivel: ${level}</div>
+          </div>
+          <button onclick="borrarJugador(${i}, '${pname.replace(/'/g, "\\'")}')">🗑️ BORRAR</button>
+        </div>`;
+                });
+
+                document.getElementById('lista-jugadores').innerHTML = html;
+                document.getElementById('step3').style.display = 'block';
+                document.getElementById('step3').scrollIntoView({ behavior: 'smooth' });
+
+            } catch (e) {
+                log('❌ Error: ' + e.message, 'error');
+            }
+        }
+
+        // =====================
+        // BORRAR JUGADOR
+        // =====================
+        async function borrarJugador(index, name) {
+            if (!confirm(`¿Borrar a ${name} del entreno?\n\nEsta acción NO se puede deshacer.`)) return;
+
+            log(`⏳ Borrando a ${name} (posición ${index})...`);
+
+            try {
+                // Fresh read to get current state
+                const doc = await fsGet(`entrenos/${selectedEntrenoId}`);
+                const f = doc.fields || {};
+                let players = fromFS(f.players) || [];
+
+                const removed = players.splice(index, 1)[0];
+                log(`Eliminando a: ${removed?.name || name}. Quedan ${players.length} jugadores.`);
+
+                const patchUrl = `${FIRESTORE_URL}/entrenos/${selectedEntrenoId}?updateMask.fieldPaths=players&updateMask.fieldPaths=registeredPlayers`;
+                const body = { fields: { players: toFS(players), registeredPlayers: toFS(players) } };
+
+                const res = await fetch(patchUrl, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+
+                log(`✅ ¡${name} borrado! Ahora hay ${players.length} jugadores.`, 'ok');
+                document.getElementById(`prow-${index}`)?.remove();
+
+                alert(`✅ ¡HECHO!\n\n${name} ha sido eliminado.\nAhora hay ${players.length} jugadores.\n\nRecarga el admin para ver los cambios.`);
+
+            } catch (e) {
+                log('❌ Error al borrar: ' + e.message, 'error');
+                alert('❌ Error: ' + e.message);
+            }
+        }
+
+        // Enter key on password field triggers login
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('password').addEventListener('keydown', e => {
+                if (e.key === 'Enter') login();
+            });
+        });
+    </script>
+</body>
+
+</html>

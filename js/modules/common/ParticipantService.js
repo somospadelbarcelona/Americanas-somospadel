@@ -83,8 +83,8 @@ window.ParticipantService = {
     },
 
     /**
-     * Remove a player from an event
-     * Automatically promotes from waitlist if available.
+     * Remove a player from an event.
+     * Uses a direct get+update (2 ops) instead of a transaction to avoid Quota Exceeded errors.
      */
     async removePlayer(eventId, eventType, playerId, skipPromotion = false) {
         if (!eventId || !playerId) throw new Error("Invalid parameters");
@@ -92,61 +92,75 @@ window.ParticipantService = {
         const collectionName = eventType === AppConstants.EVENT_TYPES.AMERICANA ? 'americanas' : 'entrenos';
         const docRef = db.collection(collectionName).doc(eventId);
 
-        return await db.runTransaction(async (transaction) => {
-            const doc = await transaction.get(docRef);
-            if (!doc.exists) throw new Error("Event not found");
+        // --- DIRECT READ (1 op) ---
+        const doc = await docRef.get();
+        if (!doc.exists) throw new Error("Event not found");
 
-            const event = doc.data();
-            let players = event.players || [];
-            let waitlist = event.waitlist || [];
-            let fixedPairs = event.fixed_pairs || [];
+        const event = doc.data();
+        let players = [...(event.players || [])];
+        let waitlist = [...(event.waitlist || [])];
+        let fixedPairs = [...(event.fixed_pairs || [])];
 
-            const playerIndex = players.findIndex(p => String(p?.id || p?.uid || '') === String(playerId));
+        const playerIndex = players.findIndex(p => String(p?.id || p?.uid || '') === String(playerId));
 
-            if (playerIndex === -1) {
-                // If not in players, maybe in waitlist?
-                const wIndex = waitlist.findIndex(p => String(p?.id || p?.uid || '') === String(playerId));
-                if (wIndex !== -1) {
-                    const removed = waitlist.splice(wIndex, 1)[0];
-                    transaction.update(docRef, { waitlist });
-                    return { removed, status: 'removed_from_waitlist' };
-                }
-                throw new Error("Player not found in event");
+        let removed = null;
+
+        if (playerIndex === -1) {
+            // Not in main list — check waitlist
+            const wIndex = waitlist.findIndex(p => String(p?.id || p?.uid || '') === String(playerId));
+            if (wIndex !== -1) {
+                removed = waitlist.splice(wIndex, 1)[0];
+                // --- DIRECT WRITE (1 op) ---
+                await docRef.update({ waitlist });
+                return { removed, status: 'removed_from_waitlist' };
             }
+            throw new Error("Jugador no encontrado en el evento");
+        }
 
-            // Remove from main list
-            const removed = players.splice(playerIndex, 1)[0];
+        // Remove from main list
+        removed = players.splice(playerIndex, 1)[0];
 
-            // Cleanup Fixed Pairs
-            fixedPairs = fixedPairs.filter(pair => {
-                const p1Id = String(pair?.player1?.id || pair?.player1?.uid || '');
-                const p2Id = String(pair?.player2?.id || pair?.player2?.uid || '');
-                return p1Id !== String(playerId) && p2Id !== String(playerId);
-            });
-
-            // Promote from Waitlist if space available
-            let promoted = null;
-            const maxPlayers = (event.max_courts || 4) * 4;
-            if (!skipPromotion && players.length < maxPlayers && waitlist.length > 0) {
-                promoted = waitlist.shift();
-                if (promoted && !promoted.level) promoted.level = 3.5;
-                players.push(promoted);
-            }
-
-            transaction.update(docRef, {
-                players,
-                registeredPlayers: players,
-                fixed_pairs: fixedPairs,
-                waitlist
-            });
-
-            // Handle real-time match substitution (post-transaction)
-            if (['live', 'en_juego', 'in_game'].includes(event.status)) {
-                this._handlePlayerExitSubstitution(eventId, eventType, removed, promoted);
-            }
-
-            return { removed, promoted };
+        // Cleanup Fixed Pairs referencing this player
+        fixedPairs = fixedPairs.filter(pair => {
+            const p1Id = String(pair?.player1?.id || pair?.player1?.uid || '');
+            const p2Id = String(pair?.player2?.id || pair?.player2?.uid || '');
+            return p1Id !== String(playerId) && p2Id !== String(playerId);
         });
+
+        // Also clean partner_id/partner_name from remaining players
+        players = players.map(p => {
+            if (String(p.partner_id) === String(playerId)) {
+                const updated = { ...p };
+                delete updated.partner_id;
+                delete updated.partner_name;
+                return updated;
+            }
+            return p;
+        });
+
+        // Promote from waitlist (optional)
+        let promoted = null;
+        const maxPlayers = (event.max_courts || 4) * 4;
+        if (!skipPromotion && players.length < maxPlayers && waitlist.length > 0) {
+            promoted = waitlist.shift();
+            if (promoted && !promoted.level) promoted.level = 3.5;
+            players.push(promoted);
+        }
+
+        // --- DIRECT WRITE (1 op) ---
+        await docRef.update({
+            players,
+            registeredPlayers: players,
+            fixed_pairs: fixedPairs,
+            waitlist
+        });
+
+        // Post-write: substitute in live matches (async, non-blocking)
+        if (['live', 'en_juego', 'in_game'].includes(event.status)) {
+            this._handlePlayerExitSubstitution(eventId, eventType, removed, promoted);
+        }
+
+        return { removed, promoted };
     },
 
     async _handlePlayerExitSubstitution(eventId, eventType, removed, promoted) {

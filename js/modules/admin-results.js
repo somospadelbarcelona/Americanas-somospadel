@@ -405,7 +405,10 @@ function renderMatchCard(match) {
     return `
         <div id="card-${match.id}" class="glass-card-enterprise match-card" style="padding:0; overflow:hidden; border: 1px solid ${isFinished ? '#333' : 'var(--primary-glow)'}; transition: all 0.3s; position:relative;">
             <div style="background: rgba(255,255,255,0.03); padding: 12px 20px; display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.05); align-items:center;">
-                <span style="font-weight:900; color:var(--primary); font-size:0.75rem; letter-spacing:1px;">PISTA ${match.court}</span>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-weight:900; color:var(--primary); font-size:0.75rem; letter-spacing:1px;">PISTA ${match.court}</span>
+                    <button onclick="window.Actions.deleteMatch('${match.id}')" title="Eliminar este partido" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.5); color:#ef4444; border-radius:6px; cursor:pointer; font-size:0.7rem; padding:3px 8px; font-weight:800; line-height:1;">🗑 BORRAR</button>
+                </div>
                 <div id="status-${match.id}">
                     ${isFinished ?
             '<span style="font-size:0.65rem; background:#00ff64; color:black; padding:3px 8px; border-radius:6px; font-weight:950;">FINALIZADO</span>' :
@@ -880,6 +883,37 @@ window.Actions = {
         } catch (e) {
             console.error("❌ Error al finalizar evento:", e);
             alert(`❌ Error: ${e.message}`);
+        }
+    },
+
+    async deleteMatch(matchId) {
+        if (!confirm('🗑️ ¿Eliminar este partido?\n\nSe borrará completamente. Esto no se puede deshacer.')) return;
+
+        try {
+            const evt = window.AdminController.activeEvent;
+            const collection = (evt && evt.type === 'entreno') ? 'entrenos_matches' : 'matches';
+
+            // Single DELETE operation — mínima cuota Firebase
+            await db.collection(collection).doc(matchId).delete();
+
+            // Remove card from UI immediately
+            const card = document.getElementById(`card-${matchId}`);
+            if (card) {
+                card.style.transition = 'all 0.3s';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(() => card.remove(), 300);
+            }
+
+            // Update local buffer
+            if (window.AdminController.matchesBuffer) {
+                window.AdminController.matchesBuffer = window.AdminController.matchesBuffer.filter(m => m.id !== matchId);
+            }
+
+            console.log(`✅ Partido ${matchId} eliminado`);
+        } catch (e) {
+            console.error('Error eliminando partido:', e);
+            alert('❌ Error al eliminar: ' + e.message);
         }
     },
 
