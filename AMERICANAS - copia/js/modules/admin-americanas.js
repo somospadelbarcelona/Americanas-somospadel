@@ -585,7 +585,7 @@ window.loadAmericanaParticipantsUI = async (id) => {
 
     const [event, users] = await Promise.all([
         EventService.getById('americana', id),
-        FirebaseDB.players.getAll(true) // Force fresh to see newly created players
+        FirebaseDB.players.getAll()
     ]);
 
     // AUTO-REPAIR: Fix players without IDs
@@ -629,22 +629,7 @@ window.loadAmericanaParticipantsUI = async (id) => {
                 try {
                     const user = users.find(u => u.id === uid);
                     if (!user) return;
-                    const result = await ParticipantService.addPlayer(id, 'americana', user);
-                    
-                    if (window.NotificationService && window.NotificationService.showToast) {
-                        if (result.status === 'waitlist') {
-                            window.NotificationService.showToast(`${user.name} añadido a LISTA DE ESPERA (Reserva #${result.position})`, "warning");
-                        } else {
-                            window.NotificationService.showToast(`${user.name} añadido correctamente`, "success");
-                        }
-                    } else {
-                        if (result.status === 'waitlist') {
-                            alert(`ℹ️ Evento COMPLETO. ${user.name} ha sido añadido a la LISTA DE ESPERA (Posición ${result.position}).`);
-                        } else {
-                            // Silently refresh if enrolled, toast preferred if available
-                        }
-                    }
-                    
+                    await ParticipantService.addPlayer(id, 'americana', user);
                     window.loadAmericanaParticipantsUI(id);
                 } catch (e) { alert(e.message); }
             },
@@ -693,26 +678,6 @@ window.loadAmericanaParticipantsUI = async (id) => {
             </div>
         `;
     }).join('');
-
-    // RENDER WAITLIST SECTION IF EXISTS
-    const waitlist = event.waitlist || [];
-    if (waitlist.length > 0) {
-        list.innerHTML += `
-            <div style="margin: 20px 0 10px 0; border-top: 1px dashed rgba(255,255,255,0.5); padding-top: 15px;">
-                <h4 style="font-size: 0.75rem; color: #ff9800; text-transform: uppercase; font-weight: 900; letter-spacing: 1px;">
-                    <i class="fas fa-clock"></i> LISTA DE RESERVA (${waitlist.length})
-                </h4>
-            </div>
-        ` + waitlist.map((p, i) => `
-            <div class="player-row" style="display:flex; justify-content:space-between; align-items:center; opacity: 0.85; background: rgba(255, 152, 0, 0.08); padding: 8px 10px; border-radius: 8px; margin-bottom: 4px; border: 1px solid rgba(255, 152, 0, 0.1);">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="font-size: 0.7rem; color: #ff9800; font-weight: 900;">#${i + 1}</span>
-                    <span style="font-weight:700; color: #000000 !important;">${(p.name || 'JUGADOR').toUpperCase()}</span>
-                </div>
-                <button onclick="window.removeAmericanaPlayer('${id}', '${p.id || p.uid}')" class="btn-delete-micro" style="color: #ef4444 !important; background: transparent; border: none; cursor: pointer;">🗑️</button>
-            </div>
-        `).join('');
-    }
 };
 
 window.launchBatSignal = async (eventId) => {

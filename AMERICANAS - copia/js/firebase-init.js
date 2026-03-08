@@ -115,24 +115,22 @@ if (typeof firebase === 'undefined') {
 const FirebaseDB = {
     // Players Collection
     players: {
-        async getAll(force = false) {
+        async getAll() {
             if (!db) throw new Error("Firebase DB not initialized yet");
 
             const fetchFn = async () => {
                 const snapshot = await db.collection('players').get();
                 return snapshot.docs.map(doc => {
                     const data = doc.data();
-                    return { ...data, id: doc.id, uid: data.uid || doc.id };
+                    return { ...data, id: doc.id, uid: doc.uid || data.uid || doc.id };
                 });
             };
 
-            // Turbo Cache: Instant load with SWR (unless forced)
-            if (window.CacheService && !force) {
+            // Turbo Cache: Instant load with SWR
+            if (window.CacheService) {
                 return await window.CacheService.swr('players', 'all', fetchFn);
             }
-            const fresh = await fetchFn();
-            if (window.CacheService) window.CacheService.set('players', 'all', fresh);
-            return fresh;
+            return await fetchFn();
         },
 
         async getById(id) {

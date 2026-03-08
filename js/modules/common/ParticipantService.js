@@ -13,59 +13,68 @@ window.ParticipantService = {
      * @param {object} player - User object from DB
      * @returns {Promise<object>} Updated player list result
      */
+    /**
+     * Add a player to an event.
+     * Uses a direct get+update (2 ops) instead of a transaction to avoid Quota Exceeded errors.
+     */
     async addPlayer(eventId, eventType, player) {
         if (!eventId || !player) throw new Error("Invalid parameters");
 
         const collectionName = eventType === AppConstants.EVENT_TYPES.AMERICANA ? 'americanas' : 'entrenos';
         const docRef = db.collection(collectionName).doc(eventId);
 
-        return await db.runTransaction(async (transaction) => {
-            const doc = await transaction.get(docRef);
-            if (!doc.exists) throw new Error("Event not found");
+        // --- DIRECT READ (1 op) ---
+        const doc = await docRef.get();
+        if (!doc.exists) throw new Error("Event not found");
 
-            const event = doc.data();
-            const maxPlayers = (event.max_courts || 4) * 4;
-            let players = event.players || [];
-            let waitlist = event.waitlist || [];
+        const event = doc.data();
+        const maxPlayers = (event.max_courts || 4) * 4;
+        let players = [...(event.players || [])];
+        let waitlist = [...(event.waitlist || [])];
 
-            const targetId = player.id || player.uid;
-            if (!targetId) throw new Error("Player object has no ID or UID");
+        const targetId = player.id || player.uid;
+        if (!targetId) throw new Error("Player object has no ID or UID");
 
-            // Check if already in participants or waitlist
-            if (players.some(p => String(p.id || p.uid) === String(targetId))) {
-                throw new Error("Player already enrolled");
-            }
-            if (waitlist.some(p => String(p.id || p.uid) === String(targetId))) {
-                throw new Error("Player already in waitlist");
-            }
+        // Check if already in participants or waitlist
+        if (players.some(p => String(p.id || p.uid) === String(targetId))) {
+            throw new Error("Player already enrolled");
+        }
+        if (waitlist.some(p => String(p.id || p.uid) === String(targetId))) {
+            throw new Error("Player already in waitlist");
+        }
 
-            const newPlayer = {
-                id: targetId,
-                uid: targetId,
-                name: (player.name || player.displayName || 'JUGADOR').toUpperCase(),
-                level: parseFloat(player.level || player.playtomic_level || player.self_rate_level || 3.5),
-                gender: player.gender || '?',
-                photoURL: player.photoURL || player.photo_url || null,
-                joinedAt: new Date().toISOString()
-            };
+        const newPlayer = {
+            id: targetId,
+            uid: targetId,
+            name: (player.name || player.displayName || 'JUGADOR').toUpperCase(),
+            level: parseFloat(player.level || player.playtomic_level || player.self_rate_level || 3.5),
+            gender: player.gender || '?',
+            photoURL: player.photoURL || player.photo_url || null,
+            joinedAt: new Date().toISOString()
+        };
 
-            if (players.length < maxPlayers) {
-                players.push(newPlayer);
-                transaction.update(docRef, {
-                    players,
-                    registeredPlayers: players
-                });
+        if (players.length < maxPlayers) {
+            players.push(newPlayer);
+            
+            // Use FirebaseDB wrapper to ensure Cache Invalidation
+            const collection = eventType === AppConstants.EVENT_TYPES.AMERICANA ? window.FirebaseDB.americanas : window.FirebaseDB.entrenos;
+            await collection.update(eventId, {
+                players,
+                registeredPlayers: players
+            });
 
-                // Trigger Intelligent Substitution if live (Safe to run after transaction)
-                this._handleLiveSubstitution(eventId, eventType, event.status, newPlayer);
+            // Trigger Intelligent Substitution if live (async, non-blocking)
+            this._handleLiveSubstitution(eventId, eventType, event.status, newPlayer);
 
-                return { status: 'enrolled', count: players.length };
-            } else {
-                waitlist.push(newPlayer);
-                transaction.update(docRef, { waitlist });
-                return { status: 'waitlist', position: waitlist.length };
-            }
-        });
+            return { status: 'enrolled', count: players.length };
+        } else {
+            waitlist.push(newPlayer);
+            
+            const collection = eventType === AppConstants.EVENT_TYPES.AMERICANA ? window.FirebaseDB.americanas : window.FirebaseDB.entrenos;
+            await collection.update(eventId, { waitlist });
+            
+            return { status: 'waitlist', position: waitlist.length };
+        }
     },
 
     // Helper to keep addPlayer clean
@@ -147,8 +156,9 @@ window.ParticipantService = {
             players.push(promoted);
         }
 
-        // --- DIRECT WRITE (1 op) ---
-        await docRef.update({
+        // --- PERSIST CHANGES ---
+        const collection = eventType === AppConstants.EVENT_TYPES.AMERICANA ? window.FirebaseDB.americanas : window.FirebaseDB.entrenos;
+        await collection.update(eventId, {
             players,
             registeredPlayers: players,
             fixed_pairs: fixedPairs,

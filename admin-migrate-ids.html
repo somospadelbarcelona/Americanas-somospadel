@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rescatar Partidos Huérfanos - Administrador</title>
+    <!-- Configuración e Inicialización Omitidas (Usaremos REST API Directa) -->
+    <script src="js/firebase-init.js"></script>
+    
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        h1 {
+            color: #CCFF00;
+            margin-top: 0;
+            text-align: center;
+        }
+        p {
+            line-height: 1.5;
+            color: #8b949e;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: white;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #CCFF00;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #b3e600;
+        }
+        button:disabled {
+            background: #30363d;
+            color: #8b949e;
+            cursor: not-allowed;
+        }
+        #terminal {
+            background: #000;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            color: #00E36D;
+            display: none;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            background: rgba(220, 38, 38, 0.1);
+            border: 1px solid rgba(220, 38, 38, 0.4);
+            color: #ff7b72;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🔧 Migración de IDs</h1>
+    <p style="text-align: center;">Herramienta para vincular partidos históricos de <strong>u_telefono</strong> a los nuevos <strong>Firebase UID</strong>.</p>
+    
+    <div id="login-section">
+        <div class="alert">
+            Por favor, inicia sesión con tu cuenta de Super Administrador para procesar los datos con permisos de escritura.
+        </div>
+        <div class="form-group">
+            <input type="text" id="email" placeholder="Teléfono del Admin (Ej: 649219350)">
+        </div>
+        <div class="form-group">
+            <input type="password" id="password" placeholder="Contraseña">
+        </div>
+        <button id="btnLogin" onclick="login()">1. Iniciar Sesión</button>
+        <p id="login-error" style="color: #ff7b72; text-align: center; display: none;"></p>
+    </div>
+
+    <div id="dashboard-section" style="display: none;">
+        <p style="text-align: center; color: #00E36D; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            ✅ <span>Sesión iniciada correctamente.</span>
+        </p>
+        <button id="btnMigrate" onclick="ejecutarMigracion()">2. INICIAR MIGACIÓN DE PARTIDOS</button>
+        <div id="terminal"></div>
+    </div>
+</div>
+
+<script>
+    function log(message, color = "#00E36D") {
+        const terminal = document.getElementById('terminal');
+        terminal.style.display = 'block';
+        const p = document.createElement('div');
+        p.style.color = color;
+        p.innerText = `[${new Date().toLocaleTimeString()}] ${message}`;
+        terminal.appendChild(p);
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    const PROJECT_ID = "americanas-somospadel";
+    const API_KEY = "AIzaSyBCy8nN4wKL2Cqvxp_mkmYpsA923N1g5iE";
+    const FIRESTORE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
+    const AUTH_URL = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`;
+    
+    let idToken = null;
+
+    async function login() {
+        let email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const errorEl = document.getElementById('login-error');
+        const btn = document.getElementById('btnLogin');
+        
+        if (!email || !password) {
+            errorEl.innerText = "Introduce teléfono y contraseña.";
+            errorEl.style.display = "block";
+            return;
+        }
+        
+        // Si no lleva @ asumimos que es un telefono y lo convertimos a formato de Firebase Auth de Somospadel
+        if (!email.includes('@')) {
+            email = email + "@somospadel.com";
+        }
+
+        btn.disabled = true;
+        btn.innerText = "Autenticando...";
+        errorEl.style.display = "none";
+
+        try {
+            const res = await fetch(AUTH_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, returnSecureToken: true })
+            });
+            const data = await res.json();
+
+            if (data.error) throw new Error(data.error.message);
+
+            idToken = data.idToken;
+            
+            document.getElementById('login-section').style.display = "none";
+            document.getElementById('dashboard-section').style.display = "block";
+            log("Autenticación exitosa. Listo para migrar.", "#CCFF00");
+        } catch (error) {
+            errorEl.innerText = error.message;
+            errorEl.style.display = "block";
+            btn.disabled = false;
+            btn.innerText = "1. Iniciar Sesión";
+        }
+    }
+
+    // Convert Firebase MapValue to JS
+    function fromFS(val) {
+        if (!val) return null;
+        if ('stringValue' in val) return val.stringValue;
+        if ('integerValue' in val) return parseInt(val.integerValue);
+        if ('doubleValue' in val) return parseFloat(val.doubleValue);
+        if ('booleanValue' in val) return val.booleanValue;
+        if ('nullValue' in val) return null;
+        if ('arrayValue' in val) return (val.arrayValue.values || []).map(fromFS);
+        if ('mapValue' in val) {
+            const obj = {};
+            for (const [k, v] of Object.entries(val.mapValue.fields || {})) obj[k] = fromFS(v);
+            return obj;
+        }
+        return null;
+    }
+
+    // Convert JS to Firebase MapValue
+    function toFS(val) {
+        if (val === null || val === undefined) return { nullValue: null };
+        if (typeof val === 'string') return { stringValue: val };
+        if (typeof val === 'boolean') return { booleanValue: val };
+        if (typeof val === 'number') return Number.isInteger(val) ? { integerValue: String(val) } : { doubleValue: val };
+        if (Array.isArray(val)) return { arrayValue: { values: val.map(toFS) } };
+        if (typeof val === 'object') {
+            const fields = {};
+            for (const [k, v] of Object.entries(val)) fields[k] = toFS(v);
+            return { mapValue: { fields } };
+        }
+        return { nullValue: null };
+    }
+
+    async function fsGet(path) {
+        const res = await fetch(`${FIRESTORE_URL}/${path}`, {
+            headers: { 'Authorization': `Bearer ${idToken}` }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+        return res.json();
+    }
+
+    async function fsPatch(path, payload, maskPaths = []) {
+        let url = `${FIRESTORE_URL}/${path}`;
+        if (maskPaths.length > 0) {
+            url += '?' + maskPaths.map(p => `updateMask.fieldPaths=${p}`).join('&');
+        }
+        const res = await fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify({ fields: payload })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+        return res.json();
+    }
+
+    async function ejecutarMigracion() {
+        const btn = document.getElementById('btnMigrate');
+        btn.disabled = true;
+        btn.innerText = "Procesando DB. No cierres la ventana...";
+
+        try {
+            log("1. Extrayendo base de datos de jugadores...");
+            
+            // 1. Obtener todos los jugadores y construir el mapa teléfono -> nuevo UID
+            const playersRaw = await fsGet('players?pageSize=400');
+            const playersDocs = playersRaw.documents || [];
+            
+            const mapPlayers = {};
+            let countPlayers = 0;
+
+            playersDocs.forEach(doc => {
+                const id = doc.name.split('/').pop();
+                const data = doc.fields || {};
+                
+                if (data.phone) {
+                    let phoneStr = data.phone.stringValue;
+                    if(!phoneStr && data.phone.integerValue) phoneStr = data.phone.integerValue;
+                    
+                    if (phoneStr) {
+                        let phone = phoneStr.replace(/\D/g, '');
+                        if(phone.startsWith('34') && phone.length === 11) phone = phone.substring(2);
+                        mapPlayers[phone] = id;
+                        countPlayers++;
+                    }
+                }
+            });
+
+            log(`Mapeados ${countPlayers} jugadores activos.`, "#58a6ff");
+
+            // Función recursiva para buscar y reemplazar IDs 'u_telefono' a 'uid'
+            const migrateArray = (arr) => {
+                let changed = false;
+                const newArr = (arr || []).map(id => {
+                    if (typeof id === 'string' && id.startsWith('u_')) {
+                        const phone = id.replace('u_', '');
+                        if (mapPlayers[phone]) {
+                            changed = true;
+                            return mapPlayers[phone]; // Lo reemplaza por el UID moderno
+                        }
+                    }
+                    return id;
+                });
+                return { changed, newArr };
+            };
+
+            const processCollection = async (collectionName) => {
+                log(`2. Escaneando colección: ${collectionName}...`);
+                const rawData = await fsGet(`${collectionName}?pageSize=400`);
+                const docs = rawData.documents || [];
+                
+                let docsUpdated = 0;
+
+                for(const doc of docs) {
+                    const id = doc.name.split('/').pop();
+                    const data = doc.fields || {};
+                    let jsData = {};
+                    for (const [k, v] of Object.entries(data)) {
+                        jsData[k] = fromFS(v);
+                    }
+                    
+                    let payload = {};
+                    let maskPaths = [];
+                    let needsUpdate = false;
+
+                    // Arreglar `team_a_ids`
+                    const tA = migrateArray(jsData.team_a_ids);
+                    if (tA.changed) { payload.team_a_ids = toFS(tA.newArr); maskPaths.push('team_a_ids'); needsUpdate = true; }
+
+                    // Arreglar `team_b_ids`
+                    const tB = migrateArray(jsData.team_b_ids);
+                    if (tB.changed) { payload.team_b_ids = toFS(tB.newArr); maskPaths.push('team_b_ids'); needsUpdate = true; }
+
+                    // Arreglar `players`
+                    const pl = migrateArray(jsData.players);
+                    if (pl.changed) { payload.players = toFS(pl.newArr); maskPaths.push('players'); needsUpdate = true; }
+
+                    // Arreglar player individuales (por si estaban sueltos)
+                    ['player1', 'player2', 'player3', 'player4'].forEach(f => {
+                        if (jsData[f] && typeof jsData[f] === 'string' && jsData[f].startsWith('u_')) {
+                            const p = jsData[f].replace('u_', '');
+                            if (mapPlayers[p]) {
+                                payload[f] = toFS(mapPlayers[p]);
+                                maskPaths.push(f);
+                                needsUpdate = true;
+                            }
+                        }
+                    });
+
+                    if (needsUpdate) {
+                        await fsPatch(`${collectionName}/${id}`, payload, maskPaths);
+                        docsUpdated++;
+                        log(`Partido corregido: ${id}`);
+                    }
+                }
+
+                log(`✅ ${collectionName}: ${docsUpdated} partidos huérfanos rescatados.`, "#CCFF00");
+                return docsUpdated;
+            };
+
+            const am = await processCollection('matches');
+            const en = await processCollection('entrenos_matches');
+
+            log(`🎉 MIGRACIÓN COMPLETADA. Total rescatados: ${am + en}`, "#CCFF00");
+            btn.innerText = "Operación Finalizada";
+
+            if (am + en > 0) {
+                log("ATENCIÓN: Cierra esta ventana y ve a Admin -> BBDD JUGADORES -> REPARAR STATS para recalcular todo.", "#ff7b72");
+            }
+
+        } catch (error) {
+            log(`❌ ERROR CRÍTICO: ${error.message}`, "#ff7b72");
+            console.error(error);
+            btn.disabled = false;
+            btn.innerText = "2. INICIAR MIGACIÓN DE PARTIDOS";
+        }
+    }
+</script>
+</body>
+</html>

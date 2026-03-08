@@ -105,7 +105,7 @@
     <!-- PASO 1: LOGIN -->
     <div class="card" id="step1">
         <h3 style="color:#CCFF00; margin-top:0;">Paso 1 – Iniciar Sesión</h3>
-        <input type="email" id="email" placeholder="Tu email de admin" />
+        <input type="text" id="email" placeholder="Tu número de teléfono" />
         <input type="password" id="password" placeholder="Tu contraseña" />
         <button class="blue" onclick="login()">🔐 ENTRAR</button>
         <div id="login-error" style="color:#ef4444; margin-top:8px;"></div>
@@ -147,13 +147,17 @@
         // PASO 1: LOGIN
         // =====================
         async function login() {
-            const email = document.getElementById('email').value.trim();
+            let email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             document.getElementById('login-error').textContent = '';
 
             if (!email || !password) {
-                document.getElementById('login-error').textContent = 'Introduce email y contraseña.';
+                document.getElementById('login-error').textContent = 'Introduce teléfono y contraseña.';
                 return;
+            }
+            
+            if (!email.includes('@')) {
+                email = email + "@somospadel.com";
             }
 
             log(`Iniciando sesión como ${email}...`);
