@@ -36,6 +36,20 @@
         }
 
         /**
+         * Normaliza fechas de DD/MM/YYYY a YYYY-MM-DD para comparaciones/sorting
+         */
+        _normalizeDate(d) {
+            if (!d) return '9999-99-99';
+            if (d.includes('/')) {
+                const parts = d.split('/');
+                if (parts[2]?.length === 4) { // DD/MM/YYYY
+                    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                }
+            }
+            return d; // Asumimos YYYY-MM-DD
+        }
+
+        /**
          * Helper to get the correct collection service (Admin vs Public)
          */
         _getCollectionService(type) {
@@ -53,8 +67,12 @@
                 const all = await this.db.getAll();
                 const today = new Date().toISOString().split('T')[0];
                 return all
-                    .filter(a => a.status !== 'finished' && (a.date >= today || a.status === 'live'))
-                    .sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
+                    .filter(a => a.status !== 'finished' && (this._normalizeDate(a.date) >= today || a.status === 'live'))
+                    .sort((a, b) => {
+                        const dateA = this._normalizeDate(a.date);
+                        const dateB = this._normalizeDate(b.date);
+                        return new Date(dateA + 'T' + (a.time || '00:00')) - new Date(dateB + 'T' + (b.time || '00:00'));
+                    });
             } catch (error) {
                 console.error("Error fetching active americanas:", error);
                 return [];
@@ -80,11 +98,13 @@
 
                 const today = new Date().toISOString().split('T')[0];
 
-                // Filtramos por estado Y fecha para evitar que eventos antiguos olvidados "ensucien" el Dashboard
-                // Excepción: Eventos 'live' (por si alguno se alarga o el admin lo tiene activo)
                 return all
-                    .filter(e => e.status !== 'finished' && (e.date >= today || e.status === 'live'))
-                    .sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
+                    .filter(e => e.status !== 'finished' && (this._normalizeDate(e.date) >= today || e.status === 'live'))
+                    .sort((a, b) => {
+                        const dateA = this._normalizeDate(a.date);
+                        const dateB = this._normalizeDate(b.date);
+                        return new Date(dateA + 'T' + (a.time || '00:00')) - new Date(dateB + 'T' + (b.time || '00:00'));
+                    });
             } catch (error) {
                 console.error("Error fetching all active events:", error);
                 return [];

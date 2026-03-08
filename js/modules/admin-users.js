@@ -18,7 +18,7 @@ window.AdminViews.users = async function () {
         console.log("🔍 Fetching players from Firebase...");
         // Add a timeout of 15s for the fetch to be safe
         users = await Promise.race([
-            FirebaseDB.players.getAll(),
+            FirebaseDB.players.getAll(true),
             new Promise((_, reject) => setTimeout(() => reject(new Error("La base de datos Firebase no responde (Timeout 15s)")), 15000))
         ]);
 
@@ -743,14 +743,18 @@ window.AdminViews.users = async function () {
 
             if (isNaN(submittedLevel)) submittedLevel = 3.5;
 
-            // If teams enforce a level, use it? Or only if > current?
-            // "quiero que lo detecte automaticamente y lo cambie"
-            // Usually, if a team decides level, we should set it.
-            // But if user manually set 4.5 and team is 3.5?
-            // Let's assume team level is the baseline. 
-            // If autoLevel is found, overwrite the form value IF it's likely the intention.
-            // Safe bet: if autoLevel exists, update it.
-            if (autoLevel !== null) {
+            // NEW: Only auto-assign level if the user hasn't explicitly set one 
+            // OR if they just added a team and we want to "suggest" it.
+            // But if the Admin typed a specific number, WE MUST RESPECT IT.
+            const originalUser = window.allUsersCache.find(u => u.id === id);
+            const originalLevel = originalUser ? parseFloat(originalUser.level || originalUser.self_rate_level || 3.5) : 3.5;
+
+            // If the user changed the level in the form, we respect that change.
+            // If they didn't change it, but added a team, we might want to auto-scale.
+            const hasManualChange = Math.abs(submittedLevel - originalLevel) > 0.001;
+
+            if (autoLevel !== null && !hasManualChange) {
+                // Only overwrite if there was no manual attempt to change it
                 submittedLevel = autoLevel;
             }
 

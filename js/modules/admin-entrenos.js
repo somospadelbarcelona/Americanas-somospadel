@@ -664,7 +664,8 @@ window.openAddPlayerToEntrenoSelector = async (eventId) => {
     if (!window.PremiumModal) return alert("PremiumModal no disponible");
 
     try {
-        const allPlayers = await FirebaseDB.players.getAll();
+        // Forzamos bypass de caché para ver jugadores recién creados
+        const allPlayers = await FirebaseDB.players.getAll(true);
 
         const selectorItems = allPlayers.map(p => ({
             id: p.id || p.uid,
@@ -707,7 +708,8 @@ window.openAddPairToEntrenoSelector = async (eventId) => {
     if (!window.PremiumModal) return alert("PremiumModal no disponible");
 
     try {
-        const allPlayers = await FirebaseDB.players.getAll();
+        // Forzamos bypass de caché para ver jugadores recién creados
+        const allPlayers = await FirebaseDB.players.getAll(true);
 
         const selectorItems = allPlayers.map(p => ({
             id: p.id || p.uid,
@@ -1129,7 +1131,7 @@ window.launchBatSignalEntreno = async (eventId) => {
 if (window.adminAutoInterval) clearInterval(window.adminAutoInterval);
 if (window.api && window.api.runAutomation) {
     window.api.runAutomation();
-    window.adminAutoInterval = setInterval(window.api.runAutomation, 30000);
+    window.adminAutoInterval = setInterval(window.api.runAutomation, 60000); // Check every 60s to save quota
 }
 
 console.log("✅ Admin Entrenos Module v3.5 - Splitted & Optimized");

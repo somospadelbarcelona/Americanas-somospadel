@@ -128,7 +128,7 @@ const FirebaseDB = {
 
             // Turbo Cache: Instant load with SWR (unless forced)
             if (window.CacheService && !force) {
-                return await window.CacheService.swr('players', 'all', fetchFn);
+                return await window.CacheService.swr('players', 'all', fetchFn, null, 1000 * 60 * 15); // Revalidate every 15 mins
             }
             const fresh = await fetchFn();
             if (window.CacheService) window.CacheService.set('players', 'all', fresh);

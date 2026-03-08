@@ -56,6 +56,7 @@
 
                 const entry = {
                     val: data,
+                    time: Date.now(),
                     expires: Date.now() + (ttl || this.TTL)
                 };
 
@@ -69,6 +70,14 @@
          * Get data from cache
          */
         async get(storeName, key) {
+            const entry = await this.getEntry(storeName, key);
+            return entry ? entry.val : null;
+        }
+
+        /**
+         * Get full entry from cache (including metadata)
+         */
+        async getEntry(storeName, key) {
             const db = await this._getDB();
             return new Promise((resolve) => {
                 const transaction = db.transaction([storeName], 'readonly');
@@ -83,7 +92,7 @@
                         this.remove(storeName, key);
                         return resolve(null);
                     }
-                    resolve(entry.val);
+                    resolve(entry);
                 };
                 request.onerror = () => resolve(null);
             });
@@ -104,23 +113,33 @@
          * 2. Runs fetchFn in background and updates cache.
          * 3. Calls onUpdate callback if fresh data is different.
          */
-        async swr(storeName, key, fetchFn, onUpdate = null, ttl = null) {
-            const cached = await this.get(storeName, key);
+        async swr(storeName, key, fetchFn, onUpdate = null, staleThreshold = 1000 * 60 * 5) {
+            const entry = await this.getEntry(storeName, key);
+            const cachedValue = entry ? entry.val : null;
+
+            // Check if we REALLY need to hit the network
+            const now = Date.now();
+            const isStale = !entry || (now - entry.time > staleThreshold);
+
+            if (!isStale) {
+                console.log(`📡 [Cache] Data for ${storeName}:${key} is FRESH (< ${staleThreshold / 60000}min). Skipping revalidation.`);
+                return cachedValue;
+            }
+
+            console.log(`🔄 [Cache] Data for ${storeName}:${key} is STALE. Revalidating...`);
 
             // Background fetch
             const promiseFresh = fetchFn().then(fresh => {
                 if (fresh) {
-                    // Optimized: only notify and update if data changed (deep comparison if needed)
-                    // For now, simplicity: always update cache
-                    this.set(storeName, key, fresh, ttl);
-                    if (onUpdate && JSON.stringify(cached) !== JSON.stringify(fresh)) {
+                    this.set(storeName, key, fresh);
+                    if (onUpdate && JSON.stringify(cachedValue) !== JSON.stringify(fresh)) {
                         onUpdate(fresh);
                     }
                 }
                 return fresh;
             });
 
-            return cached || await promiseFresh;
+            return cachedValue || await promiseFresh;
         }
 
         async clearStore(storeName) {

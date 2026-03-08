@@ -1194,36 +1194,46 @@
                 context.hasMatchThisWeek = context.upcomingMatches > 0;
 
                 // 6. DEEP DIVE: Current/Next Match Details
-                const myActiveEvent = context.myEvents.find(e => !['finished', 'closed'].includes(e.status));
+                const myActiveEvent = context.myEvents.find(e => !['finished', 'closed', 'cancelled'].includes(e.status));
 
                 if (myActiveEvent) {
                     const isTodayMatch = this.isToday(myActiveEvent.date);
-                    const isLive = myActiveEvent.status === 'live' || myActiveEvent.status === 'in_progress';
+                    const isLive = myActiveEvent.status === 'live' || myActiveEvent.status === 'in_progress' || myActiveEvent.status === 'pairing';
 
-                    if (isTodayMatch || isLive) {
-                        context.hasMatchToday = true;
+                    // FETCH REAL MATCH DATA (Court, Partner, Opponents)
+                    // Intentamos obtener detalles independientemente de si es hoy, por si el admin ya generó cruces
+                    const matchData = await this.fetchMatchDetails(userId, myActiveEvent.id, myActiveEvent.type, myActiveEvent.status);
+                    
+                    if (matchData) {
+                        context.hasMatchToday = true; // Lo marcamos como "Today" para que HeroCard use renderUpcomingMatch
                         context.status = isLive ? 'LIVE_MATCH' : 'UPCOMING_EVENT';
                         context.eventName = myActiveEvent.name;
                         context.matchTime = myActiveEvent.time || '18:00';
-                        context.matchDay = 'HOY';
+                        context.matchDay = isTodayMatch ? (myActiveEvent.type === 'entreno' ? 'Entreno (Pozo)' : 'Americana') : this.formatFriendlyDate(myActiveEvent.date);
                         context.tournamentName = myActiveEvent.type === 'entreno' ? 'Entreno (Pozo)' : 'Americana';
                         context.eventDateRaw = myActiveEvent.date;
                         context.matchType = myActiveEvent.type;
-
-                        // FETCH REAL MATCH DATA (Court, Partner, Opponents)
-                        const matchData = await this.fetchMatchDetails(userId, myActiveEvent.id, myActiveEvent.type);
-                        if (matchData) {
-                            context.matchId = matchData.id;
-                            context.court = matchData.court || '?';
-                            context.partner = matchData.partnerName || 'Asignando...';
-                            context.opponents = matchData.opponentsNames || 'Asignando...';
-                            context.confirmed = matchData.confirmations ? !!matchData.confirmations[userId] : false;
-                        }
+                        
+                        context.matchId = matchData.id;
+                        context.court = matchData.court || '?';
+                        context.partner = matchData.partnerName || 'Asignando...';
+                        context.opponents = matchData.opponentsNames || 'Asignando...';
+                        context.confirmed = matchData.confirmations ? !!matchData.confirmations[userId] : false;
+                        context.round = matchData.round;
                     } else {
-                        context.status = 'UPCOMING_EVENT';
-                        context.eventName = myActiveEvent.name;
-                        context.matchTime = myActiveEvent.time || '18:00';
-                        context.matchDay = this.formatFriendlyDate(myActiveEvent.date);
+                        // Si no hay partidos pero el evento es hoy o está en vivo, mostramos info general
+                        if (isTodayMatch || isLive) {
+                            context.hasMatchToday = true;
+                            context.status = isLive ? 'LIVE_MATCH' : 'UPCOMING_EVENT';
+                            context.eventName = myActiveEvent.name;
+                            context.matchTime = myActiveEvent.time || '18:00';
+                            context.matchDay = myActiveEvent.type === 'entreno' ? 'Entreno (Pozo)' : 'Americana';
+                        } else {
+                            context.status = 'UPCOMING_EVENT';
+                            context.eventName = myActiveEvent.name;
+                            context.matchTime = myActiveEvent.time || '18:00';
+                            context.matchDay = this.formatFriendlyDate(myActiveEvent.date);
+                        }
                     }
                 } else if (context.hasRecentVictory) {
                     context.status = 'VICTORY';
@@ -1243,58 +1253,128 @@
 
         // --- PHASE 1 HELPERS ---
 
+        _normalizeDate(d) {
+            if (!d) return '9999-99-99';
+            if (String(d).includes('/')) {
+                const parts = String(d).split('/');
+                if (parts[2] && parts[2].length === 4) {
+                    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                }
+            }
+            return d;
+        }
+
         isToday(dateStr) {
             if (!dateStr) return false;
+            const norm = this._normalizeDate(dateStr);
             const today = new Date().toISOString().split('T')[0];
-            return dateStr === today;
+            return norm === today;
         }
 
         formatFriendlyDate(dateStr) {
             if (!dateStr) return '';
-            const d = new Date(dateStr);
+            const norm = this._normalizeDate(dateStr);
+            const d = new Date(norm + 'T12:00:00'); // Use noon to avoid TZ issues
+            if (isNaN(d.getTime())) return dateStr;
             const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
             return `${days[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`;
         }
 
-        async fetchMatchDetails(userId, eventId, type) {
+        async fetchMatchDetails(userId, eventId, type, status = 'scheduled') {
             try {
                 const collectionName = (type === 'entreno') ? 'entrenos_matches' : 'matches';
+                
+                // Para eventos programados/recientes, preferimos el primer partido (ASC).
+                // Para eventos en vivo, preferimos el último generado (DESC).
+                const sortOrder = (status === 'live' || status === 'in_progress') ? 'desc' : 'asc';
+
                 // We fetch matches for this event where the user participates
-                const snapshot = await window.db.collection(collectionName)
+                // Removed .orderBy('round') because it requires a composite index in Firestore
+                // which causes the query to fail silently if it doesn't exist
+                let snapshot = await window.db.collection(collectionName)
                     .where('americana_id', '==', eventId)
-                    .orderBy('round', 'desc')
-                    .limit(10)
                     .get();
+
+                // FALLBACK: Sometimes entreno matches get saved to 'matches' collection or vice-versa
+                if (snapshot.empty) {
+                    const fallbackCollection = (collectionName === 'entrenos_matches') ? 'matches' : 'entrenos_matches';
+                    snapshot = await window.db.collection(fallbackCollection)
+                        .where('americana_id', '==', eventId)
+                        .get();
+                }
 
                 if (snapshot.empty) return null;
 
-                const userMatch = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-                    .find(m => {
-                        const ids = [...(m.team_a_ids || []), ...(m.team_b_ids || [])];
-                        return ids.includes(userId);
-                    });
+                const allMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                if (!userMatch) return null;
+                const currentUserObj = window.Store ? window.Store.getState('currentUser') : null;
+                const userIdStr = String(userId);
+                const userNameLower = currentUserObj && currentUserObj.name ? currentUserObj.name.toLowerCase() : '';
 
-                const isTeamA = (userMatch.team_a_ids || []).includes(userId);
+                // Filter matches involving the user (By ID or By Name as fallback)
+                const userMatches = allMatches.filter(m => {
+                    const ids = [...(m.team_a_ids || []), ...(m.team_b_ids || [])];
+                    if (ids.some(id => String(id) === userIdStr)) return true;
+
+                    // Fallback: Check if user's name is in the team names
+                    if (userNameLower) {
+                        const allNames = [];
+                        if (Array.isArray(m.team_a_names)) allNames.push(...m.team_a_names);
+                        else if (typeof m.team_a_names === 'string') allNames.push(...m.team_a_names.split(' / '));
+
+                        if (Array.isArray(m.team_b_names)) allNames.push(...m.team_b_names);
+                        else if (typeof m.team_b_names === 'string') allNames.push(...m.team_b_names.split(' / '));
+
+                        return allNames.some(n => n && n.toLowerCase().includes(userNameLower));
+                    }
+                    return false;
+                });
+
+                if (userMatches.length === 0) return null;
+
+                // Sort client-side
+                userMatches.sort((a, b) => {
+                    const rA = parseInt(a.round) || 1;
+                    const rB = parseInt(b.round) || 1;
+                    return sortOrder === 'asc' ? rA - rB : rB - rA;
+                });
+
+                // Pick the most relevant match based on sorting
+                const userMatch = userMatches[0];
+
+                // Determine if user is in Team A (By ID or Name)
+                let isTeamA = false;
+                if ((userMatch.team_a_ids || []).some(id => String(id) === userIdStr)) {
+                    isTeamA = true;
+                } else if (userNameLower) {
+                    const allNamesA = [];
+                    if (Array.isArray(userMatch.team_a_names)) allNamesA.push(...userMatch.team_a_names);
+                    else if (typeof userMatch.team_a_names === 'string') allNamesA.push(...userMatch.team_a_names.split(' / '));
+                    
+                    isTeamA = allNamesA.some(n => n && n.toLowerCase().includes(userNameLower));
+                }
+
                 const myTeamIds = isTeamA ? userMatch.team_a_ids : userMatch.team_b_ids;
                 const opponentNamesRaw = isTeamA ? userMatch.team_b_names : userMatch.team_a_names;
                 const myTeamNamesRaw = isTeamA ? userMatch.team_a_names : userMatch.team_b_names;
 
-                const pId = myTeamIds.find(id => id !== userId);
+                // Extraer el nombre de la pareja de forma robusta
                 let partnerName = 'Solo';
-                if (pId && myTeamNamesRaw) {
-                    // Extract name from namesRaw "Name 1 / Name 2"
-                    const names = myTeamNamesRaw.split(' / ');
-                    const user = window.Store.getState('currentUser');
-                    partnerName = names.find(n => !n.toLowerCase().includes(user.name.toLowerCase())) || names[1] || names[0];
+                const myNamesList = Array.isArray(myTeamNamesRaw) ? myTeamNamesRaw : (myTeamNamesRaw ? String(myTeamNamesRaw).split(' / ') : []);
+                
+                if (myNamesList.length > 0) {
+                    const currentUser = window.Store ? window.Store.getState('currentUser') : null;
+                    const myName = currentUser ? (currentUser.name || "").toLowerCase() : "";
+                    
+                    // Buscamos el nombre que NO sea el del usuario actual
+                    partnerName = myNamesList.find(n => n && !n.toLowerCase().includes(myName)) || myNamesList[1] || myNamesList[0];
                 }
 
                 return {
                     id: userMatch.id,
                     court: userMatch.court,
                     partnerName: partnerName,
-                    opponentsNames: opponentNamesRaw,
+                    opponentsNames: Array.isArray(opponentNamesRaw) ? opponentNamesRaw.join(' / ') : (opponentNamesRaw || 'Por asignar'),
                     confirmations: userMatch.confirmations || {},
                     round: userMatch.round
                 };
