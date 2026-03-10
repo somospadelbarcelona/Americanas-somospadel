@@ -96,7 +96,7 @@ window.PairsUI = {
         });
 
         // Sort available alphabet
-        available.sort((a, b) => a.name.localeCompare(b.name));
+        available.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
 
         const opts = `<option value="">Seleccionar...</option>` + available.map(p => {
             const partnerInfo = p.partner_name ? ` (🤝 con ${p.partner_name})` : '';

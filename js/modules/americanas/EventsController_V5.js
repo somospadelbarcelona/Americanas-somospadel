@@ -115,7 +115,7 @@
             return all.sort((a, b) => {
                 if (!a.date || !b.date) return 0;
                 if (a.date === b.date) return (a.time || '').localeCompare(b.time || '');
-                return a.date.localeCompare(b.date);
+                return (a.date || '').localeCompare(b.date || '');
             });
         }
 

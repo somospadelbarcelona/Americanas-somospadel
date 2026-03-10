@@ -36,7 +36,7 @@ window.AdminViews.americanas_mgmt = async function () {
                         return `${p[2]}-${p[1].padStart(2, '0')}`;
                     }
                     return null;
-                }))].filter(Boolean).sort((a, b) => b.localeCompare(a));
+                }))].filter(Boolean).sort((a, b) => String(b).localeCompare(String(a)));
 
                 const monthNames = { '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril', '05': 'Mayo', '06': 'Junio', '07': 'Julio', '08': 'Agosto', '09': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre' };
                 const monthOptions = availableMonths.map(m => {

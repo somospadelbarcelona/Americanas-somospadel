@@ -327,7 +327,7 @@
                 }
             });
 
-            const sortedReports = Array.from(uniqueEvents.values()).sort((a, b) => a.eventDate.localeCompare(b.eventDate));
+            const sortedReports = Array.from(uniqueEvents.values()).sort((a, b) => (a.eventDate || '').localeCompare(b.eventDate || ''));
 
             sortedReports.forEach(r => {
                 const summary = r.insights?.find(ins => ins.type === 'event_summary');

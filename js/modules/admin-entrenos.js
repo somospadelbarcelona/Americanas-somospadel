@@ -55,7 +55,7 @@ window.AdminViews.entrenos_mgmt = async function () {
                 return `${p[2]}-${p[0].padStart(2, '0')}`;
             }
             return null;
-        }))].filter(Boolean).sort((a, b) => b.localeCompare(a));
+        }))].filter(Boolean).sort((a, b) => String(b).localeCompare(String(a)));
 
         const monthNames = { '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril', '05': 'Mayo', '06': 'Junio', '07': 'Julio', '08': 'Agosto', '09': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre' };
         const monthOptions = availableMonths.map(m => {
@@ -673,7 +673,7 @@ window.openAddPlayerToEntrenoSelector = async (eventId) => {
             sub: `Nivel: ${p.level || '3.5'} • ${p.gender || '?'}`,
             image: p.photoURL || p.photo_url || null,
             playerObj: p
-        })).sort((a, b) => a.name.localeCompare(b.name));
+        })).sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
 
         const selected = await PremiumModal.selector({
             title: 'AÑADIR JUGADOR',
@@ -717,7 +717,7 @@ window.openAddPairToEntrenoSelector = async (eventId) => {
             sub: `Nivel: ${p.level || '3.5'} • ${p.gender || '?'}`,
             image: p.photoURL || p.photo_url || null,
             playerObj: p
-        })).sort((a, b) => a.name.localeCompare(b.name));
+        })).sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
 
         // 1. SELECT PLAYER 1
         const selected1 = await PremiumModal.selector({
@@ -792,7 +792,7 @@ window.linkManualPartner = async (eventId, playerId, playerName) => {
             name: p.name || 'Sin nombre',
             sub: `Nivel: ${p.level || '3.5'}`,
             image: p.photoURL || null
-        })).sort((a, b) => a.name.localeCompare(b.name));
+        })).sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
 
         if (candidates.length === 0) return alert("No hay jugadores disponibles sin pareja para vincular.");
 

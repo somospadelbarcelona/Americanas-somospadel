@@ -95,8 +95,8 @@
             // If date is "2024-10-30", then DESC will show 2025 before 2024.
             // Let's replicate strict string comparison sort.
             return all.sort((a, b) => {
-                if (a.date === b.date) return a.time.localeCompare(b.time);
-                return a.date.localeCompare(b.date); // ASC: Nearest date first seems more logical for a calendar
+                if (a.date === b.date) return (a.time || '').localeCompare(b.time || '');
+                return (a.date || '').localeCompare(b.date || ''); // ASC: Nearest date first seems more logical for a calendar
             });
             // Re-reading: The previous code had orderBy('date', 'desc'). If the user enters dates like "2024-05-20", descending means "2024-05-21" comes BEFORE "2024-05-20".
             // That sounds like "Latest News" order, not "Calendar" order. 

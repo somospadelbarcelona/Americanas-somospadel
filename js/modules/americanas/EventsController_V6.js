@@ -224,7 +224,7 @@
 
             return all.sort((a, b) => {
                 if (a.normDate === b.normDate) return (a.time || '').localeCompare(b.time || '');
-                return a.normDate.localeCompare(b.normDate);
+                return (a.normDate || '').localeCompare(b.normDate || '');
             });
         }
 

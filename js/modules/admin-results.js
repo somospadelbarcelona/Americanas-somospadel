@@ -960,7 +960,7 @@ window.Actions = {
                 id: p.id || p.uid,
                 name: (p.name || 'JUGADOR').toUpperCase(),
                 sub: `Nivel: ${p.level || '3.5'}`
-            })).sort((a, b) => a.name.localeCompare(b.name));
+            })).sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
 
             const newPlayer = await PremiumModal.selector({
                 title: 'Selecciona al sustituto',

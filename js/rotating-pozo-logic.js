@@ -74,15 +74,15 @@ const RotatingPozoLogic = {
         let allPlayers = Object.values(playerMap);
 
         if (category === 'mixed') {
-            const males = allPlayers.filter(p => p.gender === 'chico').sort((a, b) => a.current_court - b.current_court || a.id.localeCompare(b.id));
-            const females = allPlayers.filter(p => p.gender === 'chica').sort((a, b) => a.current_court - b.current_court || a.id.localeCompare(b.id));
+            const males = allPlayers.filter(p => p.gender === 'chico').sort((a, b) => a.current_court - b.current_court || String(a.id || a.uid || "").localeCompare(String(b.id || b.uid || "")));
+            const females = allPlayers.filter(p => p.gender === 'chica').sort((a, b) => a.current_court - b.current_court || String(a.id || a.uid || "").localeCompare(String(b.id || b.uid || "")));
 
             males.forEach((p, i) => { p.current_court = Math.floor(i / 2) + 1; });
             females.forEach((p, i) => { p.current_court = Math.floor(i / 2) + 1; });
 
             return [...males, ...females];
         } else {
-            allPlayers.sort((a, b) => a.current_court - b.current_court || a.id.localeCompare(b.id));
+            allPlayers.sort((a, b) => a.current_court - b.current_court || String(a.id || a.uid || "").localeCompare(String(b.id || b.uid || "")));
             allPlayers.forEach((p, i) => { p.current_court = Math.floor(i / 4) + 1; });
             return allPlayers;
         }
@@ -98,7 +98,7 @@ const RotatingPozoLogic = {
         const sorted = [...players].sort((a, b) => {
             const levelA = parseFloat(a.level || 0);
             const levelB = parseFloat(b.level || 0);
-            return levelB - levelA || a.id.localeCompare(b.id);
+            return levelB - levelA || String(a.id || a.uid || "").localeCompare(String(b.id || b.uid || ""));
         });
 
         // 2. Assign Courts based on sorted position
@@ -198,7 +198,7 @@ const RotatingPozoLogic = {
             return players.slice(0, 2);
         }
 
-        const sortedPlayers = [...players].sort((a, b) => a.id.localeCompare(b.id));
+        const sortedPlayers = [...players].sort((a, b) => String(a.id || a.uid || "").localeCompare(String(b.id || b.uid || "")));
         const [P0, P1, P2, P3] = sortedPlayers;
 
         const rotationCycle = (roundNumber - 1) % 3;
