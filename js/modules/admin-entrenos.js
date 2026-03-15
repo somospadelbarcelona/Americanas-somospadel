@@ -925,24 +925,34 @@ window.loadEntrenoParticipantsUI = async (id) => {
                         const shortName1 = name1.split(' ')[0] + (name1.split(' ')[1] ? ' ' + name1.split(' ')[1].charAt(0) + '.' : '');
                         const shortName2 = name2.split(' ')[0] + (name2.split(' ')[1] ? ' ' + name2.split(' ')[1].charAt(0) + '.' : '');
 
+                        // Get registration times
+                        const time1 = p.joinedAt ? new Date(p.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                        const time2 = partner.joinedAt ? new Date(partner.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
                         html += `
                      <div class="player-row" style="display:flex; align-items:center; justify-content:space-between; padding:10px; border-bottom:1px solid #e2e8f0; background:rgba(59, 130, 246, 0.08); border-left: 4px solid #3b82f6;">
                          <!-- PAIR CONTAINER -->
                          <div style="display:flex; align-items:center; flex:1; flex-wrap:wrap; gap:5px;">
                             
                             <!-- P1 -->
-                            <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-                                <div style="width:24px; height:24px; border-radius:50%; background:${c1}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${p.level || '3.5'}</div>
-                                <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName1}</span>
+                            <div style="display:flex; flex-direction:column; gap:2px;">
+                                <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                                    <div style="width:24px; height:24px; border-radius:50%; background:${c1}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${p.level || '3.5'}</div>
+                                    <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName1}</span>
+                                </div>
+                                ${time1 ? `<span style="font-size:0.6rem; color:#64748b; font-weight:700; padding-left:8px;">🕒 ${time1}</span>` : ''}
                             </div>
                             
                             <!-- LINK ICON -->
                             <div style="color:#3b82f6; font-size:0.75rem; margin:0 2px;"><i class="fas fa-link"></i></div>
 
                             <!-- P2 -->
-                            <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-                                <div style="width:24px; height:24px; border-radius:50%; background:${c2}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${partner.level || '3.5'}</div>
-                                <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName2}</span>
+                            <div style="display:flex; flex-direction:column; gap:2px;">
+                                <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                                    <div style="width:24px; height:24px; border-radius:50%; background:${c2}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${partner.level || '3.5'}</div>
+                                    <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName2}</span>
+                                </div>
+                                ${time2 ? `<span style="font-size:0.6rem; color:#64748b; font-weight:700; padding-left:8px;">🕒 ${time2}</span>` : ''}
                             </div>
 
                          </div>
@@ -978,6 +988,7 @@ window.loadEntrenoParticipantsUI = async (id) => {
                         const c = getLevelColor(p.level);
                         const hasMissingPartner = !!p.partner_name;
                         const playerName = (p.name || 'JUGADOR').toUpperCase();
+                        const time = p.joinedAt ? new Date(p.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
                         html += `
                      <div class="player-row" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #e2e8f0;">
@@ -986,7 +997,10 @@ window.loadEntrenoParticipantsUI = async (id) => {
                                 ${p.level || '3.5'}
                             </div>
                             <div style="display:flex; flex-direction:column;">
-                                <span style="font-weight:900; font-size:0.85rem; color:#000000; text-transform:uppercase;">${playerName}</span>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span style="font-weight:900; font-size:0.85rem; color:#000000; text-transform:uppercase;">${playerName}</span>
+                                    ${time ? `<span style="font-size:0.65rem; color:#64748b; font-weight:700; background:rgba(0,0,0,0.05); padding:2px 6px; border-radius:4px;">🕒 ${time}</span>` : ''}
+                                </div>
                                 ${hasMissingPartner ? `<span style="font-size:0.7rem; color:#ef4444; font-weight:600;"><i class="fas fa-exclamation-triangle"></i> Pareja: ${p.partner_name} (?)</span>` : ''}
                             </div>
                         </div>
