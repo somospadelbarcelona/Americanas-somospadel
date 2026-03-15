@@ -108,9 +108,12 @@
         }
 
         updateNavUI(route) {
-            // 1. Bottom Nav Dock
-            document.querySelectorAll('.p-nav-item').forEach(btn => {
-                const isActive = btn.dataset.view === route;
+            // 1. Bottom Nav Dock (New System)
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                // Determine if this nav-item corresponds to the current route
+                // We check if the ID contains the route name or if it's a direct match
+                const navRoute = btn.id.replace('nav-', '');
+                const isActive = navRoute === route;
                 btn.classList.toggle('active', isActive);
 
                 if (isActive && window.navigator.vibrate) {
@@ -118,7 +121,13 @@
                 }
             });
 
-            // 2. Top Header Tabs (Smart selection)
+            // 2. Legacy Bottom Nav Dock (Support for other views if any)
+            document.querySelectorAll('.p-nav-item').forEach(btn => {
+                const isActive = btn.dataset.view === route;
+                btn.classList.toggle('active', isActive);
+            });
+
+            // 3. Top Header Tabs (Smart selection)
             document.querySelectorAll('.header-tab').forEach(tab => {
                 const onclickAttr = tab.getAttribute('onclick') || '';
                 const match = onclickAttr.match(/'([^']+)'/);

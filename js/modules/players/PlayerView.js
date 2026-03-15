@@ -80,8 +80,54 @@
                             </div>
                             
                             <h2 style="font-weight: 950; font-size: 2rem; margin: 0; text-transform: uppercase; letter-spacing: -1px; color: #fff; line-height:1;">${user.name}</h2>
-                            <div style="display: flex; gap: 10px; align-items: center; margin-top: 15px;">
-                                <span style="background: rgba(204,255,0,0.1); color: #CCFF00; padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 950; border: 1px solid rgba(204,255,0,0.3); letter-spacing:1px;">NIVEL ${parseFloat(user.level || 3.5).toFixed(2)}</span>
+                            
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 15px;">
+                                ${(() => {
+                    const badge = window.RankingController?.getLevelBadge(user.level || 3.5) || { stars: 3, label: 'GOLD', color: '#FFD700', shadow: 'none' };
+                    const starsHtml = Array(5).fill(0).map((_, i) => 
+                        `<i class="fas fa-star" style="font-size: 0.9rem; color: ${i < badge.stars ? badge.color : 'rgba(255,255,255,0.1)'}; margin-right: 2px; ${i < badge.stars ? 'text-shadow: 0 0 10px ' + badge.color : ''}"></i>`
+                    ).join('');
+                    return `
+                                        <div style="font-size: 0.75rem; font-weight: 950; padding: 4px 16px; border-radius: 20px; background: ${badge.color}22; color: ${badge.color}; border: 1px solid ${badge.color}44; text-transform: uppercase; letter-spacing: 2px; box-shadow: ${badge.shadow};">
+                                            RANGO ${badge.label}
+                                        </div>
+                                        <div style="display: flex; gap: 4px;">${starsHtml}</div>
+                                        <span style="color: #64748b; font-size: 0.7rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px;">NIVEL ${parseFloat(user.level || 3.5).toFixed(2)}</span>
+                                    `;
+                })()}
+                            </div>
+
+                            <!-- PROGRESS TO NEXT STAR -->
+                            <div style="margin-top: 25px; width: 100%; max-width: 320px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 20px; position: relative; overflow: hidden;">
+                                ${(() => {
+                                    const currentLvl = parseFloat(user.level || 3.5);
+                                    const nextThreshold = (Math.floor(currentLvl * 2) + 1) / 2;
+                                    const prevThreshold = nextThreshold - 0.5;
+                                    const diff = (nextThreshold - currentLvl).toFixed(2);
+                                    const progress = Math.min(100, Math.max(0, ((currentLvl - prevThreshold) / 0.5) * 100));
+                                    const nextBadge = window.RankingController?.getLevelBadge(nextThreshold) || { label: 'PRO' };
+                                    
+                                    return `
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px;">
+                                            <div style="text-align: left;">
+                                                <div style="color: #64748b; font-size: 0.55rem; font-weight: 950; text-transform: uppercase; letter-spacing: 1.5px;">SIGUIENTE OBJETIVO</div>
+                                                <div style="color: #fff; font-weight: 900; font-size: 0.85rem; margin-top: 2px;">RANGO ${nextBadge.label}</div>
+                                            </div>
+                                            <div style="text-align: right;">
+                                                <div style="color: #CCFF00; font-weight: 950; font-size: 1rem; line-height: 1;">-${diff}</div>
+                                                <div style="color: #64748b; font-size: 0.5rem; font-weight: 800; text-transform: uppercase;">PARA SUBIR</div>
+                                            </div>
+                                        </div>
+                                        <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; position: relative; overflow: hidden;">
+                                            <div style="position: absolute; top: 0; left: 0; height: 100%; width: ${progress}%; background: linear-gradient(90deg, #CCFF00, #00E36D); box-shadow: 0 0 10px rgba(204,255,0,0.3); border-radius: 10px; transition: width 1s;"></div>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.55rem; font-weight: 900; color: #444;">
+                                            <span>LVL ${prevThreshold.toFixed(1)}</span>
+                                            <span style="color: #64748b; letter-spacing: 0.5px;">${Math.round(progress)}% COMPLETADO</span>
+                                            <span>LVL ${nextThreshold.toFixed(1)}</span>
+                                        </div>
+                                    `;
+                                })()}
                             </div>
                             
                             <div style="margin-top: 15px; background: linear-gradient(90deg, #CCFF00, #00E36D); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 950; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; display: flex; align-items: center; gap: 8px; justify-content: center;">

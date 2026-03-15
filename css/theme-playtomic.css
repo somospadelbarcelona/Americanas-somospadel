@@ -54,7 +54,7 @@ body {
     font-family: var(--font-body);
     margin: 0;
     -webkit-font-smoothing: antialiased;
-    padding-bottom: 100px;
+    padding-bottom: 90px;
     /* Space for bottom nav */
 }
 
@@ -129,16 +129,15 @@ body {
 
 /* --- FIXED HEADER ARCHITECTURE (Added for Mobile Optimization) --- */
 .dashboard-fixed-header {
-    position: fixed;
+    position: fixed; /* Fixed as requested */
     top: 0;
     left: 0;
     width: 100%;
     z-index: 10000;
-    /* Extremely high to stay above everything */
-    background: var(--brand-navy);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    background: #000;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .dashboard-fixed-header .ticker-container {

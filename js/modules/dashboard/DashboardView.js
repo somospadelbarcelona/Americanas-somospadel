@@ -50,9 +50,9 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             container.innerHTML = `
                 <!-- MAIN DASHBOARD SCROLL CONTENT -->
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
-                    background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.08) 0%, transparent 70%);
+                    background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.04) 0%, transparent 70%);
                     min-height: 100vh;
-                    padding-top: 10px !important;
+                    padding-top: 0px !important;
                 ">
 
                     <!-- NEW CONTEXT-FIRST ARCHITECTURE -->
@@ -67,8 +67,8 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     <div id="registration-widget-root" style="
                         background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000 100%);
                         border-radius: 28px;
-                        margin: 2px 15px 12px !important;  
-                        padding: 20px 0 !important; 
+                        margin: 2px 15px 8px !important;  
+                        padding: 12px 0 !important; 
                         box-shadow: 0 20px 50px rgba(0,0,0,0.6);
                         border: 1px solid rgba(255,255,255,0.1);
                         z-index: 10;
@@ -197,7 +197,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
 
                     <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - CLEAN INTERACTIVE -->
                     <div id="merch-widget-root" onclick="window.open('https://wa.me/34649219350?text=Hola!%20Me%20interesa%20la%20sudadera%20de%20Somos%20Padel%20BCN', '_blank')" style="
-                        margin: 2px 15px 12px !important; 
+                        margin: 2px 15px 8px !important; 
                         background: radial-gradient(circle at 10% 20%, #60a5fa 0%, #1e40af 100%);
                         border-radius: 24px;
                         padding: 0;
@@ -272,7 +272,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     </div>
 
                     <!-- 3. NEW WEATHER WIDGET -->
-                    <div id="weather-widget-root" style="margin: 2px 15px !important; animation: floatUp 0.8s ease-out forwards;">
+                    <div id="weather-widget-root" style="margin: 2px 15px 8px !important; animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS -->
                     </div>
 
@@ -284,7 +284,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         backdrop-filter: blur(20px);
                         border: 1px solid rgba(0, 227, 109, 0.2);
                         border-radius: 20px;
-                        margin: 2px 15px !important;
+                        margin: 2px 15px 8px !important;
                         padding: 12px !important;
                         box-shadow: 0 15px 35px rgba(0,0,0,0.5);
                         animation: floatUp 0.85s ease-out forwards;
@@ -401,7 +401,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     </div>
 
                     <!-- 5. PREDICTIVE SYNERGY (MOVED TO LAST POSITION) -->
-                    <div id="predictive-synergy-root" style="margin: 12px 15px 40px !important; position: relative; z-index: 50; display: block !important; min-height: 100px;">
+                    <div id="predictive-synergy-root" style="margin: 8px 15px 20px !important; position: relative; z-index: 50; display: block !important; min-height: 100px;">
                         <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.3); font-weight: 800; background: rgba(0,0,0,0.2); border-radius: 24px;">
                             <i class="fas fa-brain fa-spin" style="margin-bottom: 10px; font-size: 1.5rem; color: #CCFF00;"></i><br>
                             Sincronizando Inteligencia Predictiva...

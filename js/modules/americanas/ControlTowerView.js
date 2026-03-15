@@ -849,11 +849,11 @@
                     </div>
                 </div>
 
-                <div class="tour-sub-nav" style="background: rgba(255,255,255,0.9); backdrop-filter: blur(20px); padding: 14px; display: flex; gap: 10px; border-bottom: 2px solid ${theme.accent}; position: sticky; top: 62px; z-index: 1001; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
-                    <button class="tour-menu-item ${this.activeTab === 'results' ? 'active' : ''}" style="flex:1; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'results' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'results' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'results' ? '0 8px 20px ' + theme.glow : 'none'}; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);" onclick="window.ControlTowerView.switchTab('results')">PARTIDOS</button>
-                    <button class="tour-menu-item ${this.activeTab === 'standings' ? 'active' : ''}" style="flex:1; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'standings' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'standings' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'standings' ? '0 8px 20px ' + theme.glow : 'none'}; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);" onclick="window.ControlTowerView.switchTab('standings')">POSICIONES</button>
-                    <button class="tour-menu-item ${this.activeTab === 'summary' ? 'active' : ''}" style="flex:1; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'summary' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'summary' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'summary' ? '0 8px 20px ' + theme.glow : 'none'}; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);" onclick="window.ControlTowerView.switchTab('summary')">STATS</button>
-                    <button class="tour-menu-item ${this.activeTab === 'report' ? 'active' : ''}" style="flex:1; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'report' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'report' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'report' ? '0 8px 20px ' + theme.glow : 'none'}; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);" onclick="window.ControlTowerView.switchTab('report')">INFORME</button>
+                <div class="tour-sub-nav" style="background: rgba(255,255,255,0.9); backdrop-filter: blur(20px); padding: 14px; display: flex; gap: 8px; border-bottom: 2px solid ${theme.accent}; position: sticky; top: 62px; z-index: 1001; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow-x: auto;">
+                    <button class="tour-menu-item ${this.activeTab === 'results' ? 'active' : ''}" style="flex:1; min-width: 90px; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'results' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'results' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'results' ? '0 8px 15px ' + theme.glow : 'none'}; transition: all 0.3s;" onclick="window.ControlTowerView.switchTab('results')">CALENDARIO</button>
+                    <button class="tour-menu-item ${this.activeTab === 'standings' ? 'active' : ''}" style="flex:1; min-width: 90px; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'standings' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'standings' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'standings' ? '0 8px 15px ' + theme.glow : 'none'}; transition: all 0.3s;" onclick="window.ControlTowerView.switchTab('standings')">POSICIONES</button>
+                    <button class="tour-menu-item ${this.activeTab === 'brackets' ? 'active' : ''}" style="flex:1; min-width: 90px; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'brackets' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'brackets' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'brackets' ? '0 8px 15px ' + theme.glow : 'none'}; transition: all 0.3s;" onclick="window.ControlTowerView.switchTab('brackets')">CUADROS</button>
+                    <button class="tour-menu-item ${this.activeTab === 'summary' ? 'active' : ''}" style="flex:1; min-width: 70px; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'summary' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'summary' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'summary' ? '0 8px 15px ' + theme.glow : 'none'}; transition: all 0.3s;" onclick="window.ControlTowerView.switchTab('summary')">STATS</button>
                 </div>
 
                 ${this.renderActiveContent(data, roundData)}
@@ -865,6 +865,7 @@
 
             switch (this.activeTab) {
                 case 'standings': return this.renderStandingsView();
+                case 'brackets': return this.renderBracketsView();
                 case 'summary': return this.renderSummaryView();
                 case 'report': return this.renderReportView();
                 default:
@@ -1124,6 +1125,11 @@
         renderStandingsView() {
             if (!window.ControlTowerStandings) return '<div style="padding:40px; text-align:center;">Cargando...</div>';
             return window.ControlTowerStandings.render(this.allMatches, this.currentAmericanaDoc);
+        }
+
+        renderBracketsView() {
+            if (!window.ControlTowerBrackets) return '<div style="padding:40px; text-align:center; color:white;">Cargando cuadros...</div>';
+            return window.ControlTowerBrackets.render(this.allMatches, this.currentAmericanaDoc);
         }
 
         renderSummaryView() {

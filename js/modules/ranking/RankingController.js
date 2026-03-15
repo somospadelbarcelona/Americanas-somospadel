@@ -20,6 +20,19 @@
         }
 
         /**
+         * Get Level Range Template
+         * Maps numeric level to Star Rating and Category Name
+         */
+        getLevelBadge(level) {
+            const l = parseFloat(level || 3.5);
+            if (l >= 4.5) return { stars: 5, label: 'ELITE', color: '#CCFF00', shadow: '0 0 15px #CCFF00' };
+            if (l >= 4.0) return { stars: 4, label: 'PLATINUM', color: '#E5E4E2', shadow: '0 0 10px rgba(255,255,255,0.5)' };
+            if (l >= 3.5) return { stars: 3, label: 'GOLD', color: '#FFD700', shadow: '0 0 10px rgba(255,215,0,0.5)' };
+            if (l >= 3.0) return { stars: 2, label: 'SILVER', color: '#C0C0C0', shadow: 'none' };
+            return { stars: 1, label: 'BRONZE', color: '#CD7F32', shadow: 'none' };
+        }
+
+        /**
          * Standard entry point for the "Ranking" tab.
          * Shows the loader and renders the full list.
          */
@@ -259,7 +272,8 @@
                         level: parseFloat(p.level || p.self_rate_level || 3.5),
                         gender: p.gender || 'chico',
                         photo_url: p.photo_url || null,
-                        stats: ps.stats
+                        stats: ps.stats,
+                        badge: this.getLevelBadge(p.level || p.self_rate_level || 3.5)
                     };
                 })
                     .sort((a, b) => {

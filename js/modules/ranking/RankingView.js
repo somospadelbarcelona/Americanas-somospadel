@@ -8,6 +8,7 @@
             this.currentView = 'entrenos'; // americanas | entrenos
             this.currentCategory = 'todas'; // todas | male | female | mixed
             this.playersData = [];
+            this.isSearching = false;
         }
 
         render(players) {
@@ -95,61 +96,67 @@
                         </div>
                     </div>
 
-                    <!-- Main Navigation Tabs -->
-                    <div style="display: flex; justify-content: center; padding: 0 25px; position: sticky; top: 15px; z-index: 100;">
-                        <div style="background: rgba(20, 20, 20, 0.85); backdrop-filter: blur(15px); padding: 6px; border-radius: 24px; display: flex; box-shadow: 0 15px 35px rgba(0,0,0,0.5); width: 100%; border: 1px solid rgba(255,255,255,0.1);">
-                            <button onclick="window.RankingView.switchView('americanas')" id="tab-americanas" 
-                                style="flex: 1; padding: 14px; border-radius: 18px; border: none; font-weight: 950; transition: all 0.3s; cursor: pointer; background: ${this.currentView === 'americanas' ? '#CCFF00' : 'transparent'}; color: ${this.currentView === 'americanas' ? 'black' : '#666'}; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px;">
+                    <!-- STICKY HEADER: TABS + SEARCH -->
+                    <div style="position: sticky; top: 154px; z-index: 1001; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 15px 25px 20px;">
+                        
+                        <!-- Navigation Tabs -->
+                        <div style="background: rgba(255, 255, 255, 0.03); padding: 5px; border-radius: 20px; display: flex; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 15px;">
+                            <button onclick="window.RankingView.switchView('americanas')" 
+                                style="flex: 1; padding: 12px; border-radius: 16px; border: none; font-weight: 950; transition: 0.3s; cursor: pointer; background: ${this.currentView === 'americanas' ? '#CCFF00' : 'transparent'}; color: ${this.currentView === 'americanas' ? 'black' : '#64748b'}; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px;">
                                 AMERICANAS
                             </button>
-                            <button onclick="window.RankingView.switchView('entrenos')" id="tab-entrenos" 
-                                style="flex: 1; padding: 14px; border-radius: 18px; border: none; font-weight: 950; transition: all 0.3s; cursor: pointer; background: ${this.currentView === 'entrenos' ? '#CCFF00' : 'transparent'}; color: ${this.currentView === 'entrenos' ? 'black' : '#666'}; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px;">
+                            <button onclick="window.RankingView.switchView('entrenos')" 
+                                style="flex: 1; padding: 12px; border-radius: 16px; border: none; font-weight: 950; transition: 0.3s; cursor: pointer; background: ${this.currentView === 'entrenos' ? '#CCFF00' : 'transparent'}; color: ${this.currentView === 'entrenos' ? 'black' : '#64748b'}; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px;">
                                 ENTRENOS
                             </button>
                         </div>
-                    </div>
 
-                    <!-- Category Filters & Search -->
-                    <div style="padding: 0 25px 15px; position: relative; z-index: 4;">
-                        <!-- SEARCH BAR -->
-                        <div style="margin-bottom: 20px; position: relative;">
-                            <div style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #64748b;">
+                        <!-- SEARCH BAR PREMIUM INVERTED -->
+                        <div style="position: relative; margin-bottom: 15px;">
+                            <div style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #000; font-size: 0.9rem; z-index: 2;">
                                 <i class="fas fa-search"></i>
                             </div>
                             <input type="text" 
                                 id="ranking-search-input" 
-                                placeholder="Buscar jugador por nombre..." 
+                                placeholder="Buscar amigo o rival..." 
                                 onkeyup="window.RankingView.handleSearch(this.value)"
                                 style="
                                     width: 100%; 
-                                    background: rgba(255, 255, 255, 0.03); 
-                                    border: 1px solid rgba(255, 255, 255, 0.08); 
+                                    background: #CCFF00; 
+                                    border: 2px solid #CCFF00; 
                                     border-radius: 18px; 
-                                    padding: 14px 14px 14px 48px; 
-                                    color: white; 
+                                    padding: 14px 14px 14px 50px; 
+                                    color: #000; 
                                     font-family: 'Outfit'; 
-                                    font-weight: 600; 
-                                    font-size: 0.9rem; 
+                                    font-weight: 800; 
+                                    font-size: 0.95rem; 
                                     outline: none; 
-                                    transition: all 0.3s;
+                                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                                     box-sizing: border-box;
+                                    box-shadow: 0 10px 30px rgba(204, 255, 0, 0.2);
                                 "
-                                onfocus="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(204,255,0,0.3)';"
-                                onblur="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.08)';"
+                                onfocus="this.style.boxShadow='0 0 40px rgba(204,255,0,0.4)';"
+                                onblur="this.style.boxShadow='0 10px 30px rgba(204, 255, 0, 0.2)';"
                             >
+                            ${this.isSearching ? `
+                                <div onclick="document.getElementById('ranking-search-input').value=''; window.RankingView.handleSearch('');" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #000; cursor: pointer; padding: 5px; opacity: 0.6; z-index: 2;">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                            ` : ''}
                         </div>
 
-                        <div style="display: flex; gap: 8px; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; align-items: center;">
+                        <!-- CATEGORIES HORIZONTAL -->
+                        <div style="display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; align-items: center; padding-bottom: 5px;">
                             ${['todas', 'male', 'female', 'mixed'].map(cat => `
                                 <button onclick="window.RankingView.filterByCategory('${cat}')" 
-                                    style="white-space: nowrap; padding: 10px 20px; border-radius: 14px; border: 1px solid ${this.currentCategory === cat ? '#CCFF00' : 'rgba(255,255,255,0.05)'}; background: ${this.currentCategory === cat ? '#CCFF00' : 'rgba(255,255,255,0.03)'}; color: ${this.currentCategory === cat ? 'black' : '#64748b'}; font-weight: 950; font-size: 0.65rem; transition: all 0.2s; text-transform: uppercase;">
+                                    style="white-space: nowrap; padding: 8px 18px; border-radius: 12px; border: 1px solid ${this.currentCategory === cat ? '#CCFF00' : 'rgba(255,255,255,0.08)'}; background: ${this.currentCategory === cat ? 'rgba(204,255,0,0.1)' : 'transparent'}; color: ${this.currentCategory === cat ? '#CCFF00' : '#64748b'}; font-weight: 950; font-size: 0.6rem; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px;">
                                     ${cat === 'todas' ? 'GLOBAL' : (cat === 'male' ? 'MASC.' : (cat === 'female' ? 'FEM.' : 'MIXTA'))}
                                 </button>
                             `).join('')}
                             
                             <button onclick="window.RankingView.shareCurrentRanking()" 
-                                style="margin-left: auto; background: #25D366; color: white; border: none; padding: 10px 18px; border-radius: 14px; font-weight: 950; font-size: 0.65rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 5px 20px rgba(37, 211, 102, 0.2);">
-                                <i class="fab fa-whatsapp" style="font-size: 0.9rem;"></i>
+                                style="margin-left: auto; background: #25D366; color: white; border: none; padding: 8px 15px; border-radius: 12px; font-weight: 950; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.2);">
+                                <i class="fab fa-whatsapp" style="font-size: 0.8rem;"></i>
                             </button>
                         </div>
                     </div>
@@ -297,10 +304,15 @@
             const rankColor = rank === 1 ? '#FFD700' : (rank === 2 ? '#C0C0C0' : (rank === 3 ? '#CD7F32' : '#64748b'));
             const index = rank - 1;
 
+            // Gamification Badge
+            const badge = p.badge || { stars: 3, label: 'GOLD', color: '#FFD700', shadow: 'none' };
+            const starsHtml = Array(5).fill(0).map((_, i) => 
+                `<i class="fas fa-star" style="font-size: 0.55rem; color: ${i < badge.stars ? badge.color : 'rgba(255,255,255,0.05)'}; margin-right: 1px; ${i < badge.stars ? 'text-shadow:' + badge.shadow : ''}"></i>`
+            ).join('');
+
             // Note: pointsToNext logic will be slightly inaccurate when filtered but UX is better this way
             const pointsToNext = prevPlayer ? (prevPlayer.stats[this.currentView].points - pStats.points) : 0;
 
-            // Trend (Simulated for UX/UI demo - can be bound to real delta in next update)
             const trend = (index < 5 && Math.random() > 0.6) ? 'up' : (index > 10 && Math.random() > 0.8 ? 'down' : 'stable');
             const trendIcon = trend === 'up' ? '<i class="fas fa-caret-up" style="color:#84cc16;"></i>' : (trend === 'down' ? '<i class="fas fa-caret-down" style="color:#ef4444;"></i>' : '');
 
@@ -314,9 +326,11 @@
                     gap: 12px;
                     border: 1px solid rgba(255, 255, 255, 0.04);
                     animation: floatUp ${0.3 + (index * 0.05)}s ease-out both;
+                    position: relative;
+                    overflow: hidden;
                 ">
                     <!-- Rank & Trend -->
-                    <div style="width: 35px; text-align: center;">
+                    <div style="width: 35px; text-align: center; z-index: 2;">
                         <div style="font-weight: 950; font-size: ${isTop3 ? '1.2rem' : '0.9rem'}; color: ${rankColor}; line-height: 1;">
                             ${rank}
                         </div>
@@ -324,7 +338,7 @@
                     </div>
 
                     <!-- Avatar Card -->
-                    <div style="position: relative;">
+                    <div style="position: relative; z-index: 2;">
                         <div style="
                             width: 52px; height: 52px; 
                             border-radius: 16px; 
@@ -340,31 +354,36 @@
                     </div>
 
                     <!-- Info Area -->
-                    <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 950; font-size: 0.95rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            ${p.name}
+                    <div style="flex: 1; min-width: 0; z-index: 2;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="font-weight: 950; font-size: 0.95rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${p.name}
+                            </div>
+                            <div style="font-size: 0.5rem; font-weight: 950; padding: 1px 6px; border-radius: 4px; background: ${badge.color}22; color: ${badge.color}; border: 1px solid ${badge.color}44; text-transform: uppercase; letter-spacing: 0.5px;">
+                                ${badge.label}
+                            </div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
-                            <span style="font-size: 0.55rem; font-weight: 900; background: rgba(255,255,255,0.05); color: #84cc16; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">
+                        
+                        <div style="margin-top: 4px; display: flex; align-items: center; gap: 8px;">
+                            <div style="display: flex;">${starsHtml}</div>
+                            <span style="font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase;">
                                 LVL ${p.level.toFixed(2)}
                             </span>
-                            <span style="font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase;">
-                                ${pStats.played} PART. • ${(pStats.won / pStats.played * 100 || 0).toFixed(0)}% WR
-                            </span>
                         </div>
+
                         ${pointsToNext > 0 && pointsToNext < 15 ? `
-                            <div style="font-size: 0.55rem; color: #84cc16; font-weight: 900; margin-top: 4px; letter-spacing: 0.3px;">
-                                <i class="fas fa-fire"></i> A ${pointsToNext} PTS DEL PROX. RANGO
+                            <div style="font-size: 0.55rem; color: #CCFF00; font-weight: 900; margin-top: 4px; letter-spacing: 0.3px;">
+                                <i class="fas fa-fire"></i> A ${pointsToNext} PTS DEL PROX. PUESTO
                             </div>
                         ` : ''}
                     </div>
 
                     <!-- Score Card -->
-                    <div style="text-align: right; background: ${isTop3 ? 'rgba(204, 255, 0, 0.08)' : 'rgba(255,255,255,0.02)'}; padding: 8px 14px; border-radius: 12px; min-width: 70px; border: 1px solid ${isTop3 ? 'rgba(204,255,0,0.1)' : 'transparent'};">
+                    <div style="text-align: right; background: ${isTop3 ? 'rgba(204, 255, 0, 0.08)' : 'rgba(255,255,255,0.02)'}; padding: 8px 14px; border-radius: 12px; min-width: 70px; border: 1px solid ${isTop3 ? 'rgba(204,255,0,0.1)' : 'transparent'}; z-index: 2;">
                         <div style="font-weight: 950; font-size: 1.2rem; color: #fff; line-height: 1;">
                             ${pStats.points}
                         </div>
-                        <div style="font-size: 0.55rem; color: #84cc16; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 4px; opacity: 0.8;">
+                        <div style="font-size: 0.55rem; color: #CCFF00; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 4px; opacity: 0.8;">
                             PUNTOS
                         </div>
                     </div>
@@ -388,8 +407,9 @@
         handleSearch(query) {
             const listContainer = document.getElementById('ranking-list-body');
             const podiumRow = document.getElementById('ranking-podium-root');
+            this.isSearching = query.length >= 2;
 
-            if (query.length >= 2) {
+            if (this.isSearching) {
                 if (podiumRow) podiumRow.style.display = 'none';
                 if (listContainer) listContainer.innerHTML = this.renderRankingList(query);
             } else {

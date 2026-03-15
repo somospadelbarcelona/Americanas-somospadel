@@ -45,20 +45,20 @@ window.GeoRadarWidget = {
                 }
             </style>
             
-            <div class="glass-card-enterprise animate-fade-in" style="padding: 15px; display: flex; align-items: center; gap: 15px; border-color: ${statusColor}80; background: rgba(255,255,255,0.95); box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 20px; border: 1px solid ${statusColor}40;">
+            <div class="glass-card-enterprise animate-fade-in" style="padding: 12px 15px; display: flex; align-items: center; gap: 15px; border-color: ${statusColor}80; background: rgba(255,255,255,0.95); box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 20px; border: 1px solid ${statusColor}40;">
                 <div class="radar-circle" style="background: rgba(0,0,0,0.05); border-color: ${statusColor};">
                     <div class="radar-dot" style="background: ${statusColor};"></div>
                     <i class="fas fa-location-crosshairs" style="color: ${nearHq ? '#00E36D' : '#000000'}; font-size: 0.9rem; transform: rotate(0deg) !important; animation: none;"></i>
                 </div>
                 
                 <div style="flex: 1;">
-                    <div style="font-size: 0.65rem; font-weight: 800; color: rgba(0,0,0,0.5); letter-spacing: 1px; text-transform: uppercase;">
+                    <div style="font-size: 0.6rem; font-weight: 800; color: rgba(0,0,0,0.5); letter-spacing: 1px; text-transform: uppercase;">
                         Radar de Proximidad
                     </div>
-                    <div style="font-size: 0.85rem; font-weight: 900; color: ${nearHq ? '#00E36D' : '#000000'}; margin-top: 2px;">
+                    <div style="font-size: 0.8rem; font-weight: 950; color: ${nearHq ? '#00E36D' : '#000000'}; margin-top: 1px;">
                         ${statusText}
                     </div>
-                    <div style="font-size: 0.7rem; color: rgba(0,0,0,0.7); font-weight: 600; margin-top: 2px;">
+                    <div style="font-size: 0.65rem; color: rgba(0,0,0,0.7); font-weight: 600; margin-top: 1px;">
                         ${nearHq ? 'Check-in automático activado' : `Distancia: ${(distance / 1000).toFixed(1)} km`}
                     </div>
                 </div>

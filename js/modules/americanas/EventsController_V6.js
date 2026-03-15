@@ -71,7 +71,9 @@
                 filters: {
                     month: 'all',
                     category: 'all'
-                }
+                },
+                eventTabs: {},
+                matchCache: {} // { eventId: { matches: [], lastFetch: timestamp } }
             };
             this.unsubscribeEvents = null;
             this.unsubscribeEntrenos = null;
@@ -394,6 +396,41 @@
             }
         }
 
+        async setEventTab(eventId, tab) {
+            console.log(` [EventsController] Changing sub-tab for ${eventId} to ${tab}`);
+            this.state.eventTabs[eventId] = tab;
+            
+            // Si es Rank o Draws, cargar partidos si no están en caché
+            if ((tab === 'rank' || tab === 'draws') && !this.state.matchCache[eventId]) {
+                await this.loadEventMatches(eventId);
+            }
+            
+            this.render();
+        }
+
+        async loadEventMatches(eventId) {
+            console.log(`📡 [EventsController] Loading matches for event: ${eventId}`);
+            try {
+                // Buscar tipo de evento
+                const all = this.getAllSortedEvents();
+                const evt = all.find(e => e.id === eventId);
+                const type = evt ? evt.type : 'americana';
+                const coll = type === 'entreno' ? 'entrenos_matches' : 'matches';
+
+                const snap = await window.db.collection(coll).where('americanaId', '==', eventId).get();
+                const matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                
+                this.state.matchCache[eventId] = {
+                    matches: matches,
+                    lastFetch: Date.now()
+                };
+                console.log(`✅ Loaded ${matches.length} matches for ${eventId}`);
+            } catch (e) {
+                console.error("Error loading event matches:", e);
+                this.state.matchCache[eventId] = { matches: [], lastFetch: Date.now() };
+            }
+        }
+
 
         async loadGeoRadarWidget() {
             try {
@@ -441,7 +478,7 @@
             ];
 
             const navHtml = `
-                <div class="events-submenu-container" style="background: #232a32; padding: 10px 4px; border-bottom: 2px solid #CCFF00; margin-bottom: 0px; display: flex; justify-content: space-around; box-shadow: 0 8px 32px rgba(0,0,0,0.5); position: sticky; top: 148px; z-index: 12000; backdrop-filter: blur(10px);">
+                <div class="events-submenu-container" style="background: #232a32; padding: 10px 4px; border-bottom: 2px solid #CCFF00; margin-bottom: 0px; display: flex; justify-content: space-around; box-shadow: 0 8px 32px rgba(0,0,0,0.5); position: sticky; top: 154px; z-index: 12000; backdrop-filter: blur(10px);">
                     ${tabs.map(tab => {
                 const isActive = this.state.activeTab === tab.id;
                 const isPadelBall = tab.id === 'agenda';
@@ -644,12 +681,12 @@
                         <div style="background: #000; padding: 6px 14px; border-radius: 14px; border: 1.5px solid #00E36D; color: white; font-weight: 950;"><i class="fas fa-bolt" style="color: #00E36D;"></i> ${events.length}</div>
                     </div>
                     ${filterBarHtml}
-                    <div style="padding-bottom: 120px; padding-left:10px; padding-right:10px;">
+                    <div style="padding-bottom: 80px; padding-left:10px; padding-right:10px;">
                         ${events.length === 0 ? `<div style="padding:100px 40px; text-align:center; color:#444;"><i class="fas fa-filter" style="font-size: 4rem; opacity: 0.1;"></i><h3 style="color:#666;">SIN RESULTADOS</h3></div>` : eventsHtml}
                         <div style="margin-top: 25px; display: flex; flex-direction: column; align-items: center; padding-bottom: 20px; gap: 20px;">
                             
                             <!-- GEOLOCALIZACIÓN RADAR -->
-                            <div id="geo-radar-root" style="width: 100%; max-width: 500px; margin: 10px auto; animation: floatUp 0.8s ease-out forwards;">
+                            <div id="geo-radar-root" style="width: 100%; max-width: 500px; margin: 5px auto; animation: floatUp 0.8s ease-out forwards;">
                                 <!-- Cargado vía JS -->
                             </div>
 
@@ -960,7 +997,7 @@
             }
 
             return `
-                <div onclick="${cardAction}" style="background: #000; border-radius: 28px; overflow: hidden; margin-bottom: 25px; border: 1px solid #222; box-shadow: 0 15px 35px rgba(0,0,0,0.4); font-family: 'Outfit', sans-serif; cursor: pointer;">
+                <div onclick="${cardAction}" style="background: #000; border-radius: 28px; overflow: hidden; margin-bottom: 12px; border: 1px solid #222; box-shadow: 0 15px 35px rgba(0,0,0,0.4); font-family: 'Outfit', sans-serif; cursor: pointer;">
                     <!-- TOP IMAGE AREA -->
                     <div style="height: 200px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative;">
                         <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.3), transparent, rgba(0,0,0,0.8));"></div>
@@ -1060,6 +1097,19 @@
                                 ${isLive ? '🔴 EN JUEGO' : (isCancelled ? '⛔ ANULADO' : (isPairing ? '🔀 EMPAREJAMIENTO' : (isFinished ? '🏁 FINALIZADA' : '🟢 ABIERTA')))}
                             </div>
                         </div>
+
+                        <!-- EVENT SUB-TABS (Summa Style) -->
+                        <div style="margin-top: 25px; background: rgba(255,255,255,0.03); border-radius: 12px; padding: 4px; display: flex; gap: 4px;">
+                            ${this._renderEventTabHeader(evt.id, 'info', 'INFO', 'fa-info-circle')}
+                            ${this._renderEventTabHeader(evt.id, 'rank', 'RANK', 'fa-list-ol')}
+                            ${this._renderEventTabHeader(evt.id, 'draws', 'CUADROS', 'fa-sitemap')}
+                        </div>
+
+                        <!-- SUB-TAB CONTENT -->
+                        <div style="margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px;">
+                            ${this._renderEventTabContent(evt)}
+                        </div>
+                    </div>
                     </div>
                     
                     <!-- BOTTOM PROGRESS BAR -->
@@ -1520,6 +1570,98 @@
                     }).catch(e => console.error('Synergy widget failed:', e));
                 }, 100);
             }
+        }
+
+        _renderEventTabHeader(eventId, tabId, label, icon) {
+            const activeTab = this.state.eventTabs[eventId] || 'info';
+            const isActive = activeTab === tabId;
+            return `
+                <button onclick="event.stopPropagation(); window.EventsController.setEventTab('${eventId}', '${tabId}')" 
+                        style="flex:1; background: ${isActive ? 'rgba(204,255,0,0.1)' : 'transparent'}; border: 1.5px solid ${isActive ? '#CCFF00' : 'transparent'}; color: ${isActive ? '#CCFF00' : '#888'}; padding: 8px 5px; border-radius: 10px; font-size: 0.65rem; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s;">
+                    <i class="fas ${icon}" style="font-size: 0.8rem;"></i> ${label}
+                </button>
+            `;
+        }
+
+        _renderEventTabContent(evt) {
+            const activeTab = this.state.eventTabs[evt.id] || 'info';
+
+            // Precios reales
+            const priceSoc = evt.price_members || evt.price_socio || evt.price_member || '18';
+            const priceExt = evt.price_external || evt.price_externo || evt.price_externa || '22';
+
+            if (activeTab === 'info') {
+                return `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.8rem; color: #ccc;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-calendar-check" style="color: #84cc16;"></i>
+                            <span>${(evt.players || evt.registeredPlayers || []).length} Apuntados</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-euro-sign" style="color: #eab308;"></i>
+                            <span>Precios: ${priceSoc}€ / ${priceExt}€</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const cache = this.state.matchCache[evt.id];
+
+            if (activeTab === 'rank') {
+                if (!cache) {
+                    return `<div style="text-align:center; padding:15px; color:#888;"><i class="fas fa-spinner fa-spin"></i> Cargando Ranking...</div>`;
+                }
+
+                let rankData = [];
+                if (window.StandingsService) {
+                    rankData = window.StandingsService.calculate(cache.matches).slice(0, 3);
+                }
+
+                if (rankData.length === 0) {
+                    return `<div style="text-align:center; padding:15px; color:#666; font-size:0.75rem;">No hay partidos finalizados todavía.</div>`;
+                }
+
+                return `
+                    <div style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 10px; font-size: 0.75rem;">
+                         <div style="display:flex; justify-content:space-between; margin-bottom: 8px; color: #CCFF00; font-weight: 900; font-size: 0.6rem; text-transform: uppercase; letter-spacing:1px;">
+                            <span>TOP 3 JUGADORES</span>
+                            <span>PTS</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${rankData.map((p, idx) => `
+                                <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,0.03); padding: 5px 10px; border-radius: 8px;">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <span style="color:#888; font-weight:900; width:15px;">${idx + 1}.</span>
+                                        <span style="color:#fff; font-weight:700;">${p.name.split(' ')[0]}</span>
+                                    </div>
+                                    <span style="color:#CCFF00; font-weight:900;">${p.points}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (activeTab === 'draws') {
+                if (!cache) {
+                    return `<div style="text-align:center; padding:15px; color:#888;"><i class="fas fa-spinner fa-spin"></i> Cargando Cuadros...</div>`;
+                }
+
+                const totalRounds = new Set(cache.matches.map(m => m.round)).size;
+                const totalMatches = cache.matches.length;
+
+                return `
+                    <div style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="text-align: left;">
+                            <div style="color: #fff; font-weight: 900; font-size: 0.8rem; margin-bottom: 2px;">ESTADO TORNEO</div>
+                            <div style="color: #888; font-size: 0.65rem;">${totalRounds} Rondas • ${totalMatches} Partidos</div>
+                        </div>
+                        <i class="fas fa-sitemap" style="font-size: 1.5rem; color: #CCFF00; opacity: 0.8;"></i>
+                    </div>
+                `;
+            }
+
+            return '';
         }
     }
 
