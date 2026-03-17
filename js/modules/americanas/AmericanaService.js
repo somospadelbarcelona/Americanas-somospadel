@@ -112,28 +112,46 @@
         }
 
         async addPlayer(americanaId, user, type = 'americana', partnerName = null, partnerId = null) {
+            console.log(`🚀 [AmericanaService] addPlayer init: id=${americanaId}, type=${type}`, { user, partnerName, partnerId });
+            
             try {
+                if (!user) {
+                    console.error("❌ [AmericanaService] CRITICAL: user is undefined");
+                    return { success: false, error: "Identificación de usuario fallida. Recarga la página." };
+                }
+
                 const db = window.db;
                 const collectionName = (type === 'entreno') ? 'entrenos' : 'americanas';
                 const eventRef = db.collection(collectionName).doc(americanaId);
+
+                let event = null;
+                let players = [];
 
                 await db.runTransaction(async (transaction) => {
                     const doc = await transaction.get(eventRef);
                     if (!doc.exists) throw new Error("Evento no encontrado (" + type + ")");
 
-                    const event = doc.data();
-                    const players = event.players || [];
+                    event = doc.data() || {};
+                    players = event.players || [];
                     const regPlayers = event.registeredPlayers || [];
 
+                    console.log(`🔍 [Transaction] Event data loaded: ${event.name || 'Unnamed'}`);
+
                     // Comprobación unificada de UID
-                    const exists = (players.find(p => p.uid === user.uid || p.id === user.uid)) ||
-                        (regPlayers.find(p => p.uid === user.uid || p.id === user.uid));
+                    const userUid = user.uid || user.id;
+                    if (!userUid) {
+                        console.warn("⚠️ [Transaction] User has no UID:", user);
+                        throw new Error("Tu perfil de usuario está incompleto (falta UID).");
+                    }
+
+                    const exists = (players.find(p => p && (p.uid === userUid || p.id === userUid))) ||
+                        (regPlayers.find(p => p && (p.uid === userUid || p.id === userUid)));
 
                     if (exists) {
                         throw new Error("Ya estás inscrito en este evento.");
                     }
 
-                    const maxPlayers = (event.max_courts || 4) * 4;
+                    const maxPlayers = (parseInt(event.max_courts) || 4) * 4;
                     const capacity = maxPlayers - players.length;
                     const wantsTwo = !!partnerName;
 
@@ -151,9 +169,9 @@
                         (userGender === 'F' || userGender === 'chica') ? 'chica' : '?';
 
                     const newPlayerData = {
-                        id: user.uid,
-                        uid: user.uid,
-                        name: user.name || user.displayName || user.email || 'Jugador',
+                        id: userUid,
+                        uid: userUid,
+                        name: (user.name || user.displayName || user.email || 'Jugador').toUpperCase(),
                         level: user.level || user.self_rate_level || '3.5',
                         team_somospadel: user.team_somospadel || user.team || [],
                         gender: normalizedGender,
@@ -222,47 +240,44 @@
 
 
                 // --- AUTO-FILL VACANCIES IN MATCHES (Global Fix) ---
-                // If the event has active matches with VACANT spots, fill them immediately.
-                if (window.MatchMakingService) {
+                if (window.MatchMakingService && event) {
                     const matchColl = (type === 'entreno') ? 'entrenos_matches' : 'matches';
                     const hasMatches = await window.db.collection(matchColl).where('americana_id', '==', americanaId).limit(1).get();
 
                     if (!hasMatches.empty) {
-                        console.log(`🔍 [Service] New player ${user.name} joined active event. Checking for vacancies...`);
-                        // Try standard variants of VACANT
-                        await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', '🔴 VACANTE', user.uid, user.name);
-                        await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', 'VACANTE', user.uid, user.name);
-                        await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', 'VACANT', user.uid, user.name);
+                        const userName = user.name || user.displayName || 'Jugador';
+                        const userUid = user.uid || user.id;
+                        console.log(`🔍 [Service] New player ${userName} joined active event. Checking for vacancies...`);
+                        await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', '🔴 VACANTE', userUid, userName);
+                        await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', 'VACANTE', userUid, userName);
                     }
                 }
 
                 // --- NOTIFICATIONS ---
-                if (window.NotificationService) {
+                if (window.NotificationService && event && user) {
                     const evtName = event.name || type.toUpperCase();
+                    const userName = user.name || user.displayName || 'Jugador';
+                    const userUid = user.uid || user.id;
                     const evtLink = { url: 'live', eventId: americanaId };
 
                     // 1. Notify the user who joined
                     window.NotificationService.sendNotificationToUser(
-                        user.uid,
+                        userUid,
                         "Inscripción Confirmada",
                         `Te has apuntado a ${evtName}. ¡A darlo todo!`,
                         evtLink
                     );
 
                     // 2. Notify other players (Peer-to-Peer)
-                    // We iterate EXISTING players (before push) to notify them.
-                    // Wait, 'players' array already has the new player pushed in line 124.
-                    // So we filter out the current user.
-                    const others = players.filter(p => (p.uid || p.id) !== user.uid);
+                    const others = players.filter(p => p && (p.uid || p.id) && (p.uid || p.id) !== userUid);
 
-                    // Limit broadcast to avoid timeout/spam issues
                     if (others.length < 50) {
                         others.forEach(p => {
                             const pid = p.uid || p.id;
                             window.NotificationService.sendNotificationToUser(
                                 pid,
                                 "Nuevo Jugador",
-                                `${user.name} se ha unido a ${evtName}`,
+                                `${userName} se ha unido a ${evtName}`,
                                 evtLink
                             ).catch(e => console.warn("Failed to notify peer", pid));
                         });

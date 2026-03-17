@@ -174,13 +174,15 @@ window.ParticipantService = {
     },
 
     async _handlePlayerExitSubstitution(eventId, eventType, removed, promoted) {
+        if (!removed) return;
         if (window.MatchmakingService && window.MatchmakingService.substitutePlayerInMatchesRobust) {
             const oldUid = removed.id || removed.uid;
+            const oldName = removed.name || 'Jugador';
             const newUid = promoted ? (promoted.id || promoted.uid) : 'vacante_id';
             const newName = promoted ? promoted.name : 'VACANTE';
 
             await window.MatchmakingService.substitutePlayerInMatchesRobust(
-                eventId, oldUid, removed.name, newUid, newName, eventType
+                eventId, oldUid, oldName, newUid, newName, eventType
             );
         }
     },
