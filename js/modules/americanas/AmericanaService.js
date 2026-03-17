@@ -127,129 +127,132 @@
                 let event = null;
                 let players = [];
 
-                await db.runTransaction(async (transaction) => {
-                    const doc = await transaction.get(eventRef);
-                    if (!doc.exists) throw new Error("Evento no encontrado (" + type + ")");
+                // --- REEMPLAZO DE TRANSACTION POR GET+UPDATE (Direct Op) PARA EVITAR ERROR HTTP 429 QUOTA EXHAUSTED ---
+                const doc = await eventRef.get();
+                if (!doc.exists) throw new Error("Evento no encontrado (" + type + ")");
 
-                    event = doc.data() || {};
-                    players = event.players || [];
-                    const regPlayers = event.registeredPlayers || [];
+                event = doc.data() || {};
+                players = event.players || [];
+                const regPlayers = event.registeredPlayers || [];
 
-                    console.log(`🔍 [Transaction] Event data loaded: ${event.name || 'Unnamed'}`);
+                console.log(`🔍 [Service] Event data loaded: ${event.name || 'Unnamed'}`);
 
-                    // Comprobación unificada de UID
-                    const userUid = user.uid || user.id;
-                    if (!userUid) {
-                        console.warn("⚠️ [Transaction] User has no UID:", user);
-                        throw new Error("Tu perfil de usuario está incompleto (falta UID).");
+                // Comprobación unificada de UID
+                const userUid = user.uid || user.id;
+                if (!userUid) {
+                    console.warn("⚠️ [Service] User has no UID:", user);
+                    throw new Error("Tu perfil de usuario está incompleto (falta UID).");
+                }
+
+                const exists = (players.find(p => p && (p.uid === userUid || p.id === userUid))) ||
+                    (regPlayers.find(p => p && (p.uid === userUid || p.id === userUid)));
+
+                if (exists) {
+                    throw new Error("Ya estás inscrito en este evento.");
+                }
+
+                const maxPlayers = (parseInt(event.max_courts) || 4) * 4;
+                const capacity = maxPlayers - players.length;
+                const wantsTwo = !!partnerName;
+
+                if (wantsTwo && capacity < 2) {
+                    throw new Error(`Solo queda 1 plaza disponible. No puedes apuntar a una pareja.`);
+                } else if (capacity < 1) {
+                    throw new Error(`No quedan plazas disponibles.`);
+                }
+
+                // VALIDACIÓN DE GÉNERO
+                this.validateGender(event.category, user.gender);
+
+                const userGender = user.gender || 'M';
+                const normalizedGender = (userGender === 'M' || userGender === 'chico') ? 'chico' :
+                    (userGender === 'F' || userGender === 'chica') ? 'chica' : '?';
+
+                const newPlayerData = {
+                    id: userUid,
+                    uid: userUid,
+                    name: (user.name || user.displayName || user.email || 'Jugador').toUpperCase(),
+                    level: user.level || user.self_rate_level || '3.5',
+                    team_somospadel: user.team_somospadel || user.team || [],
+                    gender: normalizedGender,
+                    side_preference: user.side_preference || 'INDIFF',
+                    play_style: user.play_style || 'ESTRATEGIA',
+                    joinedAt: new Date().toISOString()
+                };
+
+                if (partnerName) {
+                    newPlayerData.partner_name = partnerName;
+                    if (partnerId) newPlayerData.partner_id = partnerId;
+                }
+
+                players.push(newPlayerData);
+
+                // REGISTRO DE PAREJA
+                if (wantsTwo) {
+                    let partnerData = null;
+                    if (partnerId) {
+                        try {
+                            const partnerDocRef = db.collection('players').doc(partnerId);
+                            const partnerDoc = await partnerDocRef.get();
+                            if (partnerDoc.exists) {
+                                const pd = partnerDoc.data();
+                                partnerData = {
+                                    id: partnerId,
+                                    uid: partnerId,
+                                    name: pd.name || partnerName,
+                                    level: pd.level || pd.self_rate_level || '3.5',
+                                    team_somospadel: pd.team_somospadel || pd.team || [],
+                                    gender: (pd.gender === 'F' || pd.gender === 'chica') ? 'chica' : 'chico',
+                                    side_preference: pd.side_preference || 'INDIFF',
+                                    play_style: pd.play_style || 'ESTRATEGIA',
+                                    joinedAt: new Date().toISOString(),
+                                    partner_name: newPlayerData.name,
+                                    partner_id: newPlayerData.id
+                                };
+                            }
+                        } catch (e) { console.error("Error fetching partner:", e); }
                     }
 
-                    const exists = (players.find(p => p && (p.uid === userUid || p.id === userUid))) ||
-                        (regPlayers.find(p => p && (p.uid === userUid || p.id === userUid)));
-
-                    if (exists) {
-                        throw new Error("Ya estás inscrito en este evento.");
+                    if (!partnerData) {
+                        partnerData = {
+                            id: partnerId || `guest_${Date.now()}`,
+                            uid: partnerId || null,
+                            name: partnerName,
+                            level: '3.5',
+                            gender: '?',
+                            joinedAt: new Date().toISOString(),
+                            partner_name: newPlayerData.name,
+                            partner_id: newPlayerData.id
+                        };
                     }
 
-                    const maxPlayers = (parseInt(event.max_courts) || 4) * 4;
-                    const capacity = maxPlayers - players.length;
-                    const wantsTwo = !!partnerName;
-
-                    if (wantsTwo && capacity < 2) {
-                        throw new Error(`Solo queda 1 plaza disponible. No puedes apuntar a una pareja.`);
-                    } else if (capacity < 1) {
-                        throw new Error(`No quedan plazas disponibles.`);
+                    const partnerExists = players.find(p => (p.id === partnerData.id || (p.uid && p.uid === partnerData.uid)));
+                    if (!partnerExists) {
+                        players.push(partnerData);
                     }
+                }
 
-                    // VALIDACIÓN DE GÉNERO
-                    this.validateGender(event.category, user.gender);
-
-                    const userGender = user.gender || 'M';
-                    const normalizedGender = (userGender === 'M' || userGender === 'chico') ? 'chico' :
-                        (userGender === 'F' || userGender === 'chica') ? 'chica' : '?';
-
-                    const newPlayerData = {
-                        id: userUid,
-                        uid: userUid,
-                        name: (user.name || user.displayName || user.email || 'Jugador').toUpperCase(),
-                        level: user.level || user.self_rate_level || '3.5',
-                        team_somospadel: user.team_somospadel || user.team || [],
-                        gender: normalizedGender,
-                        side_preference: user.side_preference || 'INDIFF',
-                        play_style: user.play_style || 'ESTRATEGIA',
-                        joinedAt: new Date().toISOString()
-                    };
-
-                    if (partnerName) {
-                        newPlayerData.partner_name = partnerName;
-                        if (partnerId) newPlayerData.partner_id = partnerId;
-                    }
-
-                    players.push(newPlayerData);
-
-                    // REGISTRO DE PAREJA
-                    if (wantsTwo) {
-                        let partnerData = null;
-                        if (partnerId) {
-                            try {
-                                const partnerDocRef = db.collection('players').doc(partnerId);
-                                const partnerDoc = await transaction.get(partnerDocRef);
-                                if (partnerDoc.exists) {
-                                    const pd = partnerDoc.data();
-                                    partnerData = {
-                                        id: partnerId,
-                                        uid: partnerId,
-                                        name: pd.name || partnerName,
-                                        level: pd.level || pd.self_rate_level || '3.5',
-                                        team_somospadel: pd.team_somospadel || pd.team || [],
-                                        gender: (pd.gender === 'F' || pd.gender === 'chica') ? 'chica' : 'chico',
-                                        side_preference: pd.side_preference || 'INDIFF',
-                                        play_style: pd.play_style || 'ESTRATEGIA',
-                                        joinedAt: new Date().toISOString(),
-                                        partner_name: newPlayerData.name,
-                                        partner_id: newPlayerData.id
-                                    };
-                                }
-                            } catch (e) { console.error("Error fetching partner in transaction:", e); }
-                        }
-
-                        if (!partnerData) {
-                            partnerData = {
-                                id: partnerId || `guest_${Date.now()}`,
-                                uid: partnerId || null,
-                                name: partnerName,
-                                level: '3.5',
-                                gender: '?',
-                                joinedAt: new Date().toISOString(),
-                                partner_name: newPlayerData.name,
-                                partner_id: newPlayerData.id
-                            };
-                        }
-
-                        const partnerExists = players.find(p => (p.id === partnerData.id || (p.uid && p.uid === partnerData.uid)));
-                        if (!partnerExists) {
-                            players.push(partnerData);
-                        }
-                    }
-
-                    transaction.update(eventRef, {
-                        players: players,
-                        registeredPlayers: players
-                    });
+                await eventRef.update({
+                    players: players,
+                    registeredPlayers: players
                 });
 
 
                 // --- AUTO-FILL VACANCIES IN MATCHES (Global Fix) ---
                 if (window.MatchMakingService && event) {
-                    const matchColl = (type === 'entreno') ? 'entrenos_matches' : 'matches';
-                    const hasMatches = await window.db.collection(matchColl).where('americana_id', '==', americanaId).limit(1).get();
+                    try {
+                        const matchColl = (type === 'entreno') ? 'entrenos_matches' : 'matches';
+                        const hasMatches = await window.db.collection(matchColl).where('americana_id', '==', americanaId).limit(1).get();
 
-                    if (!hasMatches.empty) {
-                        const userName = user.name || user.displayName || 'Jugador';
-                        const userUid = user.uid || user.id;
-                        console.log(`🔍 [Service] New player ${userName} joined active event. Checking for vacancies...`);
-                        await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', '🔴 VACANTE', userUid, userName);
-                        await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', 'VACANTE', userUid, userName);
+                        if (!hasMatches.empty) {
+                            const userName = user.name || user.displayName || 'Jugador';
+                            const userUid = user.uid || user.id;
+                            console.log(`🔍 [Service] New player ${userName} joined active event. Checking for vacancies...`);
+                            await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', '🔴 VACANTE', userUid, userName, type);
+                            await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', 'VACANTE', userUid, userName, type);
+                        }
+                    } catch (e) {
+                        console.error("[AmericanaService] Error in MatchMaking Auto-Fill (non-fatal):", e);
                     }
                 }
 
