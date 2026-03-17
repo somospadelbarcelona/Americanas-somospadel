@@ -478,26 +478,83 @@
             ];
 
             const navHtml = `
-                <div class="events-submenu-container" style="background: #232a32; padding: 10px 4px; border-bottom: 2px solid #CCFF00; margin-bottom: 0px; display: flex; justify-content: space-around; box-shadow: 0 8px 32px rgba(0,0,0,0.5); position: sticky; top: 154px; z-index: 12000; backdrop-filter: blur(10px);">
+                <style>
+                    @keyframes esm-ripple {
+                        0%   { transform: translate(-50%,-50%) scale(0); opacity: 0.5; }
+                        100% { transform: translate(-50%,-50%) scale(4); opacity: 0; }
+                    }
+                    @keyframes esm-bounce {
+                        0%   { transform: scale(1); }
+                        30%  { transform: scale(0.82); }
+                        60%  { transform: scale(1.12); }
+                        80%  { transform: scale(0.96); }
+                        100% { transform: scale(1); }
+                    }
+                    @keyframes esm-label-pop {
+                        0%   { letter-spacing:0.3px; }
+                        50%  { letter-spacing:2px; }
+                        100% { letter-spacing:0.3px; }
+                    }
+                    .esm-btn { position:relative; overflow:hidden; }
+                    .esm-btn:active .esm-icon-box { animation: esm-bounce 0.42s cubic-bezier(0.22,1,0.36,1); }
+                    .esm-ripple-el {
+                        position:absolute; width:50px; height:50px;
+                        background:rgba(0,0,0,0.18); border-radius:50%;
+                        pointer-events:none;
+                        animation: esm-ripple 0.55s ease-out forwards;
+                    }
+                </style>
+                <div class="events-submenu-container" style="
+                    background: #CCFF00;
+                    padding: 8px 4px 6px;
+                    border-bottom: 3px solid rgba(0,0,0,0.12);
+                    margin-bottom: 0;
+                    display: flex;
+                    justify-content: space-around;
+                    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+                    position: sticky;
+                    top: 108px;
+                    z-index: 9500;
+                ">
                     ${tabs.map(tab => {
                 const isActive = this.state.activeTab === tab.id;
                 const isPadelBall = tab.id === 'agenda';
 
                 return `
-                <button onclick="window.EventsController.setTab('${tab.id}')" 
-                                style="background: transparent; border: none; display: flex; flex-direction: column; align-items: center; gap: 8px; color: ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.4)'}; font-weight: 800; padding: 8px 4px; font-size: 0.55rem; cursor: pointer; transition: all 0.2s ease; flex: 1; letter-spacing: 0.3px; position: relative; min-width: 0;">
-                            <div style="width: 44px; height: 44px; border-radius: 14px; background: ${isActive ? 'rgba(204,255,0,0.1)' : 'rgba(255,255,255,0.05)'}; display: flex; align-items: center; justify-content: center; border: 1.5px solid ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.1)'}; transition: all 0.3s; box-shadow: ${isActive ? '0 0 15px rgba(204,255,0,0.3)' : 'none'}; margin-bottom: 2px;">
-                                ${isPadelBall ?
-                        `<div style="width: 22px; height: 22px; background: ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.5)'}; border-radius: 50%; position: relative; border: 2px solid ${isActive ? '#000' : 'transparent'};">
-                                        <div style="position:absolute; top:20%; left:10%; width:80%; height:60%; border:1.5px solid rgba(0,0,0,0.2); border-radius:50%; border-top:none; border-bottom:none;"></div>
-                                    </div>` :
-                        `<i class="fas ${tab.icon}" style="font-size: 1.1rem; color: ${isActive ? '#CCFF00' : '#888'};"></i>`
+                <button class="esm-btn"
+                    onclick="(function(btn){
+                        var r=document.createElement('span');
+                        r.className='esm-ripple-el';
+                        r.style.left='50%'; r.style.top='50%';
+                        btn.appendChild(r);
+                        setTimeout(()=>r.remove(),600);
+                        window.EventsController.setTab('${tab.id}');
+                    })(this)"
+                    style="background: transparent; border: none; display: flex; flex-direction: column; align-items: center; gap: 5px; color: ${isActive ? '#000' : 'rgba(0,0,0,0.45)'}; font-weight: 900; padding: 6px 4px 4px; font-size: 0.52rem; cursor: pointer; transition: color 0.18s; flex: 1; letter-spacing: 0.3px; min-width: 0;">
+
+                    <div class="esm-icon-box" style="
+                        width: 40px; height: 40px; border-radius: 12px;
+                        background: ${isActive ? '#000' : 'rgba(0,0,0,0.08)'};
+                        display: flex; align-items: center; justify-content: center;
+                        border: none;
+                        transition: background 0.2s, transform 0.2s;
+                        margin-bottom: 1px;
+                    ">
+                        ${isPadelBall ?
+                        `<div style="width:20px;height:20px;background:${isActive?'#CCFF00':'rgba(0,0,0,0.55)'};border-radius:50%;position:relative;border:2px solid ${isActive?'#000':'transparent'};">
+                            <div style="position:absolute;top:20%;left:10%;width:80%;height:60%;border:1.5px solid rgba(0,0,0,0.25);border-radius:50%;border-top:none;border-bottom:none;"></div>
+                         </div>` :
+                        `<i class="fas ${tab.icon}" style="font-size: 1rem; color: ${isActive ? '#CCFF00' : 'rgba(0,0,0,0.6)'};"></i>`
                     }
-                            </div>
-                            <span style="text-transform: uppercase; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${tab.label}</span>
-                            ${isActive ? `<div style="width: 16px; height: 3px; background: #CCFF00; border-radius: 10px; margin-top: 4px; box-shadow: 0 0 10px #CCFF00;"></div>` : ''}
-                        </button>
-                    `}).join('')}
+                    </div>
+
+                    <span style="text-transform:uppercase;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;
+                        ${isActive ? 'animation: esm-label-pop 0.4s ease;' : ''}">
+                        ${tab.label}
+                    </span>
+                    ${isActive ? `<div style="width:18px;height:3px;background:#000;border-radius:10px;margin-top:1px;"></div>` : ''}
+                </button>
+                `}).join('')}
                 </div>
             `;
 

@@ -55,6 +55,9 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     padding-top: 0px !important;
                 ">
 
+                    <!-- 🏓 PADEL PULSE — Personalized live widget (TOP POSITION) -->
+                    <div id="padel-pulse-widget-root" style="animation: floatUp 0.5s ease-out forwards;"></div>
+
                     <!-- NEW CONTEXT-FIRST ARCHITECTURE -->
                     
                     <!-- 4. PULSE STORIES (Instagram Style) -->
@@ -635,6 +638,11 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             // 5. FORCE LOAD NETWORK PULSE & STORIES
             if (window.StoryFeedWidget) {
                 window.StoryFeedWidget.render('story-feed-root');
+            }
+
+            // 🏓 PADEL PULSE — Personalized top widget
+            if (window.PadelPulse) {
+                window.PadelPulse.render('padel-pulse-widget-root');
             }
 
 

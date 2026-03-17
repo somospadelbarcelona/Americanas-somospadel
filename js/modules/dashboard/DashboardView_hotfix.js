@@ -69,39 +69,32 @@
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
                     background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.08) 0%, transparent 70%);
                     min-height: 100vh;
-                    padding-top: 10px !important;
+                    padding-top: 4px !important;
                 ">
 
-                    <!-- NEW CONTEXT-FIRST ARCHITECTURE -->
-                    
+                    <!-- 🏓 PADEL PULSE — Widget personalizado en tiempo real -->
+                    <div id="padel-pulse-widget-root" style="animation: floatUp 0.5s ease-out forwards;"></div>
+
                     <!-- 0. HERO CARD (CONTEXT AWARE) -->
-                    <!-- 0. HERO CARD (CONTEXT AWARE) -->
-                    <div id="hero-card-root" style="animation: floatUp 0.8s ease-out forwards;">
+                    <div id="hero-card-root" style="animation: floatUp 0.8s ease-out forwards; margin-top: -4px;">
                         <!-- Content loaded via JS (HeroCard) -->
                     </div>
 
-
-
-
-
                     <!-- 4. PULSE STORIES (Instagram Style) -->
-                    <div id="story-feed-root" style="margin: 0 !important; animation: floatUp 0.8s ease-out forwards; padding-top: 2px;">
+                    <div id="story-feed-root" style="margin: 0 !important; animation: floatUp 0.8s ease-out forwards; padding-top: 0;">
                         <!-- Cargado vía JS (StoryFeedWidget) -->
                     </div>
 
-
-
-                    <!-- 6. NEWS MARQUEE (3D HOLO ENGINE) -->
+                    <!-- 6. NEWS MARQUEE -->
                     <div id="registration-widget-root" style="
                         background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000 100%);
-                        border-radius: 28px;
-                        margin: 2px 15px 12px !important;  
-                        padding: 20px 0 !important; 
+                        border-radius: 24px;
+                        margin: 0 15px 8px !important;
+                        padding: 14px 0 !important;
                         box-shadow: 0 20px 50px rgba(0,0,0,0.6);
                         border: 1px solid rgba(255,255,255,0.1);
                         z-index: 10;
                         animation: floatUp 0.8s ease-out forwards;
-                        perspective: 1200px;
                         overflow: hidden;
                     ">
 
@@ -274,7 +267,7 @@
 
                     <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - FINAL MOBILE FIX -->
                     <div id="merch-widget-root" onclick="window.open('https://wa.me/34649219350?text=Hola!%20Me%20interesa%20la%20sudadera%20de%20Somos%20Padel%20BCN', '_blank')" style="
-                        margin: 2px 15px 12px !important; 
+                        margin: 0 15px 8px !important;
                         background: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
                         border-radius: 24px;
                         padding: 0;
@@ -345,8 +338,8 @@
                         </div>
                     </div>
 
-                    <!-- 3. NEW WEATHER WIDGET -->
-                    <div id="weather-widget-root" style="margin: 2px 15px !important; animation: floatUp 0.8s ease-out forwards;">
+                    <!-- 3. WEATHER WIDGET -->
+                    <div id="weather-widget-root" style="margin: 0 15px 8px !important; animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS -->
                     </div>
 
@@ -358,7 +351,7 @@
                         backdrop-filter: blur(20px);
                         border: 1px solid rgba(0, 227, 109, 0.2);
                         border-radius: 20px;
-                        margin: 2px 15px !important;
+                        margin: 0 15px 8px !important;
                         padding: 12px !important;
                         box-shadow: 0 15px 35px rgba(0,0,0,0.5);
                         animation: floatUp 0.85s ease-out forwards;
@@ -378,13 +371,13 @@
 
 
 
-                    <!-- 4. TECH HUB & NEWS (PREMIUM GLASS ENGINE) -->
-                    <div id="noticias-banner-root" style="padding: 1px 15px !important; animation: floatUp 0.85s ease-out forwards; margin-bottom: 40px; margin-top: 2px;">
+                    <!-- 4. TECH HUB & NEWS -->
+                    <div id="noticias-banner-root" style="padding: 0 15px !important; animation: floatUp 0.85s ease-out forwards; margin-bottom: 30px; margin-top: 0;">
                         <div class="noticias-banner-premium" style="
                             background: rgba(15, 23, 42, 0.8); 
                             backdrop-filter: blur(20px);
-                            border-radius: 32px; 
-                            padding: 25px !important; 
+                            border-radius: 24px;
+                            padding: 18px !important;
                             color: #fff; 
                             position: relative; 
                             overflow: hidden; 
@@ -690,6 +683,11 @@
             // 5. FORCE LOAD NETWORK PULSE & STORIES
             if (window.StoryFeedWidget) {
                 window.StoryFeedWidget.render('story-feed-root');
+            }
+
+            // 🏓 PADEL PULSE — Widget personalizado
+            if (window.PadelPulse) {
+                window.PadelPulse.render('padel-pulse-widget-root');
             }
 
 

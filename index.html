@@ -229,29 +229,84 @@
                 </div>
             </div>
 
-            <!-- NAVIGATION TABS -->
-            <div class="header-tabs glass-card" style="display: flex; justify-content: space-around; align-items: center; height: 48px; background: rgba(204, 255, 0, 0.8) !important; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-bottom: 2px solid rgba(0, 0, 0, 0.1); border-radius: 0; border-left:none; border-right:none; position: relative; width: 100%; z-index: 1002;">
-                <div class="header-tab active haptic-feedback" onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('dashboard')"
-                    style="flex:1; text-align:center; font-weight:900; font-size:0.75rem; color:#000; cursor:pointer; height:100%; display:flex; align-items:center; justify-content:center; position:relative;">
-                    INICIO
+            <!-- NAVIGATION TABS (collapsible) -->
+            <style>
+                .nav-tabs-wrapper {
+                    position: relative; width: 100%;
+                    overflow: hidden;
+                    transition: height 0.32s cubic-bezier(0.22,1,0.36,1);
+                    height: 4px;          /* collapsed = just the green line */
+                    z-index: 1002;
+                    background: transparent;
+                }
+                .nav-tabs-wrapper.expanded { height: 48px; }
+                .nav-tabs-handle {
+                    position: absolute; bottom: 0; left: 0; right: 0;
+                    height: 4px; background: #CCFF00;
+                    border-radius: 0; cursor: pointer;
+                }
+                .nav-tabs-wrapper.expanded .nav-tabs-handle { display: none; }
+                .header-tabs-inner {
+                    display: flex; justify-content: space-around; align-items: center;
+                    height: 48px;
+                    background: rgba(204,255,0,0.95) !important;
+                    border: none !important;
+                    border-radius: 0 !important;
+                    box-shadow: none !important;
+                    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+                    width: 100%;
+                    opacity: 0; transform: translateY(-48px);
+                    transition: opacity 0.28s, transform 0.28s cubic-bezier(0.22,1,0.36,1);
+                    pointer-events: none;
+                }
+                .nav-tabs-wrapper.expanded .header-tabs-inner {
+                    opacity: 1; transform: translateY(0); pointer-events: auto;
+                }
+            </style>
+            <script>
+                window._toggleNavTabs = function(e) {
+                    var w = document.getElementById('nav-tabs-wrapper');
+                    if (w) w.classList.toggle('expanded');
+                    if (e) e.stopPropagation();
+                };
+                window._navAndCollapse = function(route) {
+                    if (window.Router) window.Router.navigate(route);
+                    setTimeout(function() {
+                        var w = document.getElementById('nav-tabs-wrapper');
+                        if (w) w.classList.remove('expanded');
+                    }, 200);
+                };
+            </script>
+            <div class="nav-tabs-wrapper" id="nav-tabs-wrapper"
+                 onclick="if(!this.classList.contains('expanded')) window._toggleNavTabs(event)">
+                <div class="header-tabs-inner glass-card">
+                    <div class="header-tab active haptic-feedback"
+                         onclick="window.PlayerView?.haptic?.(20); window._navAndCollapse('dashboard')"
+                         style="flex:1;text-align:center;font-weight:900;font-size:0.75rem;color:#000;cursor:pointer;height:100%;display:flex;align-items:center;justify-content:center;">
+                        INICIO
+                    </div>
+                    <div class="header-tab haptic-feedback"
+                         onclick="window.PlayerView?.haptic?.(20); window._navAndCollapse('entrenos')"
+                         style="flex:1;text-align:center;font-weight:700;font-size:0.75rem;color:rgba(0,0,0,0.55);cursor:pointer;height:100%;display:flex;align-items:center;justify-content:center;">
+                        EVENTOS
+                    </div>
+                    <div class="header-tab haptic-feedback"
+                         onclick="window.PlayerView?.haptic?.(20); window._navAndCollapse('ranking')"
+                         style="flex:1;text-align:center;font-weight:700;font-size:0.75rem;color:rgba(0,0,0,0.55);cursor:pointer;height:100%;display:flex;align-items:center;justify-content:center;">
+                        RANKING
+                    </div>
+                    <div class="header-tab haptic-feedback"
+                         onclick="window.PlayerView?.haptic?.(20); window._navAndCollapse('records')"
+                         style="flex:1;text-align:center;font-weight:700;font-size:0.75rem;color:rgba(0,0,0,0.55);cursor:pointer;height:100%;display:flex;align-items:center;justify-content:center;">
+                        RÉCORDS
+                    </div>
+                    <div class="header-tab haptic-feedback"
+                         onclick="window.PlayerView?.haptic?.(20); window._navAndCollapse('profile')"
+                         style="flex:1;text-align:center;font-weight:700;font-size:0.75rem;color:rgba(0,0,0,0.55);cursor:pointer;height:100%;display:flex;align-items:center;justify-content:center;">
+                        PERFIL
+                    </div>
                 </div>
-                <div class="header-tab haptic-feedback" onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('entrenos')"
-                    style="flex:1; text-align:center; font-weight:700; font-size:0.75rem; color:rgba(0,0,0,0.5); cursor:pointer; height:100%; display:flex; align-items:center; justify-content:center; position:relative;">
-                    EVENTOS
-                </div>
-                <div class="header-tab haptic-feedback" onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('ranking')"
-                    style="flex:1; text-align:center; font-weight:700; font-size:0.75rem; color:rgba(0,0,0,0.5); cursor:pointer; height:100%; display:flex; align-items:center; justify-content:center; position:relative;">
-                    RANKING
-                </div>
-                <!-- HALL OF FAME TAB -->
-                <div class="header-tab haptic-feedback" onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('records')"
-                    style="flex:1; text-align:center; font-weight:700; font-size:0.75rem; color:rgba(0,0,0,0.5); cursor:pointer; height:100%; display:flex; align-items:center; justify-content:center; position:relative;">
-                    RÉCORDS
-                </div>
-                <div class="header-tab haptic-feedback" onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('profile')"
-                    style="flex:1; text-align:center; font-weight:700; font-size:0.75rem; color:rgba(0,0,0,0.5); cursor:pointer; height:100%; display:flex; align-items:center; justify-content:center; position:relative;">
-                    PERFIL
-                </div>
+                <div class="nav-tabs-handle" onclick="window._toggleNavTabs(event)"></div>
             </div>
         </div>
 
@@ -282,7 +337,7 @@
 
         <!-- Main Content Area (Scrollable) -->
         <!-- Added pt-130 class logic conceptually via CSS .full-width-mobile applied to children or logic -->
-        <main id="content-area" style="min-height: 100vh; padding-top: 154px;">
+        <main id="content-area" style="min-height: 100vh; padding-top: 108px;">
             <!-- Loading Skeleton -->
             <div class="dashboard-v2-container" style="padding-top: 40px; text-align: center;">
                 <div class="loader"></div>
@@ -662,7 +717,8 @@
 
     <script src="js/modules/dashboard/GeoRadarWidget.js"></script>
     <script src="js/modules/dashboard/StoryFeedWidget.js?v=6"></script>
-    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=NO_FAB_CLEAN_V1"></script>
+    <script src="js/modules/dashboard/PadelPulse.js?v=6.0"></script>
+    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=COMPACT_V1"></script>
     <script src="js/modules/dashboard/DashboardController.js"></script>
     <script src="js/modules/players/PlayerView.js?v=400"></script>
     <script src="js/modules/players/PlayerController.js?v=400"></script>
@@ -675,7 +731,7 @@
     <script src="js/modules/chat/ChatService.js?v=1.1"></script>
     <script src="js/modules/chat/ChatView.js?v=1.1"></script>
     <script src="js/modules/americanas/EntrenoLiveView.js"></script>
-    <script src="js/modules/americanas/EventsController_V6.js?v=9.4"></script>
+    <script src="js/modules/americanas/EventsController_V6.js?v=9.8"></script>
     <script src="js/modules/common/SocialShareService.js"></script>
     <script src="js/modules/admin/SocialShareView.js"></script>
 
@@ -705,7 +761,7 @@
     <script src="js/modules/agenda/AgendaController.js"></script>
 
     <!-- Match Story Card (Post-Match Shareable) -->
-    <script src="js/modules/players/MatchStoryCard.js?v=1.3"></script>
+    <script src="js/modules/players/MatchStoryCard.js?v=1.4"></script>
 
     <!-- Entry Point -->
     <script src="js/app.js?v=3000"></script>

@@ -238,7 +238,20 @@
                             <span>📤</span> Compartir
                         </button>
                     </div>
-                    <p style="text-align:center; color: rgba(255,255,255,0.2); font-size: 0.55rem; margin-top: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+
+                    <!-- VOLVER button — prominente y fácil de pulsar -->
+                    <button onclick="document.getElementById('story-card-overlay').remove()" style="
+                        display: block; width: 100%; max-width: 376px; margin: 12px auto 4px;
+                        background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+                        color: rgba(255,255,255,0.6); padding: 14px; border-radius: 16px;
+                        font-weight: 900; font-size: 0.85rem; text-transform: uppercase;
+                        letter-spacing: 1px; cursor: pointer;
+                        display: flex; align-items: center; justify-content: center; gap: 8px;
+                    ">
+                        ← VOLVER
+                    </button>
+
+                    <p style="text-align:center; color: rgba(255,255,255,0.15); font-size: 0.55rem; margin-top: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
                         Mantén pulsado la imagen para guardar en iOS
                     </p>
                 </div>
