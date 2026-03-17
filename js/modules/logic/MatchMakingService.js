@@ -62,73 +62,21 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                         return existingRoundMatches;
                     }
 
-                    // --- SMART SCALING LOGIC (ENHANCED WITH DURATION) ---
+                    // --- SMART SCALING LOGIC (DISABLED AUTO-UPGRADE) ---
                     let effectiveCourts = parseInt(event.max_courts || 4);
-                    let courtsUpdated = false;
-
+                    
+                    /* 
+                       ⚠️ [Audit Fix] Disabled automatic court scaling. 
+                       Users reported courts duplicating unexpectedly (e.g. going from 3 to 6).
+                       We keep 'effectiveCourts' anchored to what the Admin defined.
+                    */
                     const playersCount = (event.players || []).length;
                     const maxPossibleCourts = Math.floor(playersCount / 4);
 
-                    // NEW: Calculate courts based on duration and rounds
-                    const calculateCourtsFromDuration = () => {
-                        if (!event.time || !event.time_end) return null;
-
-                        try {
-                            const [startH, startM] = event.time.split(':').map(Number);
-                            const [endH, endM] = event.time_end.split(':').map(Number);
-                            const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
-
-                            if (durationMinutes <= 0) return null;
-
-                            const roundsCount = parseInt(event.rounds_count) || 6;
-                            const playersCount = (event.players || []).length;
-
-                            // Each match takes ~15 minutes + 3 minutes transition
-                            const timePerRound = 18;
-
-                            // Total matches that need to be played in total across all rounds
-                            const totalMatchSets = roundsCount * Math.ceil(playersCount / 4);
-
-                            // Max rounds that can fit sequentially in the duration
-                            const maxSequentialRounds = Math.floor(durationMinutes / timePerRound);
-
-                            if (maxSequentialRounds <= 0) return Math.floor(playersCount / 4);
-
-                            // Required parallelism: how many courts do we need to hit the target?
-                            const courtsNeeded = Math.ceil(totalMatchSets / maxSequentialRounds);
-
-                            return Math.max(courtsNeeded, 2);
-                        } catch (err) {
-                            console.warn('Error calculating courts from duration:', err);
-                            return null;
-                        }
-                    };
-
-                    const durationBasedCourts = calculateCourtsFromDuration();
-
-                    if (durationBasedCourts) {
-                        if (durationBasedCourts > effectiveCourts) {
-                            effectiveCourts = durationBasedCourts;
-                            courtsUpdated = true;
-                            console.log(`🧠 AI Duration Scaling: Needs ${durationBasedCourts} courts to finish on time.`);
-                        }
-                    } else {
-                        // Fallback to player-based scaling
-                        if (maxPossibleCourts > effectiveCourts) {
-                            effectiveCourts = maxPossibleCourts;
-                            courtsUpdated = true;
-                        }
-                    }
-
-                    // CAP: Never exceed player capacity
+                    // CAP: Never exceed player capacity, but also don't auto-grow
                     if (effectiveCourts > maxPossibleCourts) {
                         console.log(`⚠️ AI Scaling CAP: Reducing from ${effectiveCourts} to ${maxPossibleCourts} (Player Limit)`);
                         effectiveCourts = maxPossibleCourts;
-                        courtsUpdated = (effectiveCourts !== parseInt(event.max_courts || 4));
-                    }
-
-                    if (courtsUpdated && effectiveCourts > 0) {
-                        console.log(`🤖 AI Scaling: Upgrading to ${effectiveCourts} courts.`);
                         await collection.update(eventId, { max_courts: effectiveCourts });
                         event.max_courts = effectiveCourts;
                     }
