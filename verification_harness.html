@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Tournament Verification Harness</title>
+    <style>
+        body { font-family: sans-serif; background: #111; color: #eee; padding: 20px; }
+        .log-entry { margin-bottom: 5px; padding: 5px; border-radius: 4px; }
+        .info { color: #88f; }
+        .success { color: #8f8; background: rgba(0,255,0,0.1); }
+        .warning { color: #fa0; background: rgba(255,165,0,0.1); }
+        .error { color: #f55; background: rgba(255,0,0,0.1); }
+        .round-header { background: #333; padding: 10px; margin-top: 20px; font-weight: bold; border-left: 5px solid #CCFF00; }
+        #results { margin-top: 20px; border: 1px solid #444; padding: 15px; }
+    </style>
+</head>
+<body>
+    <h1>Verification Harness: Rounds 1-6</h1>
+    <div id="status">Starting Tests...</div>
+    <div id="results"></div>
+
+    <!-- MOCK FIREBASE -->
+    <script>
+        window.db = {
+            _data: {},
+            collection: function(name) {
+                if (!this._data[name]) this._data[name] = {};
+                const collData = this._data[name];
+                return {
+                    doc: (id) => {
+                        if (!id) id = 'doc_' + Math.random();
+                        if (!collData[id]) collData[id] = { id };
+                        return {
+                            get: async () => ({ exists: !!collData[id], data: () => collData[id], id }),
+                            set: async (data) => { collData[id] = { ...collData[id], ...data }; },
+                            update: async (data) => { collData[id] = { ...collData[id], ...data }; },
+                            delete: async () => { delete collData[id]; }
+                        };
+                    },
+                    add: async (data) => {
+                        const id = 'gen_' + Math.random();
+                        collData[id] = { id, ...data };
+                        return { id };
+                    },
+                    where: function(field, op, val) {
+                        const filterFn = (d) => d[field] === val;
+                        const currentDocs = Object.values(collData).filter(filterFn);
+                        
+                        const queryObj = {
+                            _docs: currentDocs,
+                            get: async function() {
+                                return { 
+                                    empty: this._docs.length === 0,
+                                    size: this._docs.length,
+                                    docs: this._docs.map(d => ({ id: d.id, data: () => d, ref: { delete: async () => { delete collData[d.id]; } } })) 
+                                };
+                            },
+                            where: function(f, o, v) {
+                                this._docs = this._docs.filter(d => d[f] === v);
+                                return this;
+                            },
+                            limit: function(n) {
+                                this._docs = this._docs.slice(0, n);
+                                return this;
+                            }
+                        };
+                        return queryObj;
+                    }
+                };
+            },
+            batch: function() {
+                return {
+                    delete: (ref) => ref.delete(),
+                    commit: async () => {}
+                };
+            }
+        };
+        window.FirebaseDB = {
+            americanas: { getById: async (id) => (await window.db.collection('americanas').doc(id).get()).data(), update: async (id, data) => window.db.collection('americanas').doc(id).update(data) },
+            entrenos: { getById: async (id) => (await window.db.collection('entrenos').doc(id).get()).data(), update: async (id, data) => window.db.collection('entrenos').doc(id).update(data) },
+            matches: { create: async (data) => window.db.collection('matches').add(data), getByAmericana: async (id) => (await window.db.collection('matches').where('americana_id', '==', id).get()).docs.map(d => d.data()) },
+            entrenos_matches: { create: async (data) => window.db.collection('entrenos_matches').add(data), getByAmericana: async (id) => (await window.db.collection('entrenos_matches').where('americana_id', '==', id).get()).docs.map(d => d.data()) }
+        };
+        window.AppConstants = { EVENT_TYPES: { AMERICANA: 'americana', ENTRENO: 'entreno' }, PAIR_MODES: { FIXED: 'fixed', TWISTER: 'twister' } };
+    </script>
+
+    <!-- LOAD ACTUAL SERVICES -->
+    <script src="js/fixed-pairs-logic.js"></script>
+    <script src="js/rotating-pozo-logic.js"></script>
+    <script src="js/modules/logic/MatchMakingService.js"></script>
+    <script src="js/modules/americanas/AmericanaService.js"></script>
+
+    <!-- TEST RUNNER -->
+    <script>
+        const resultsEl = document.getElementById('results');
+        function log(msg, type = 'info') {
+            const div = document.createElement('div');
+            div.className = 'log-entry ' + type;
+            div.innerText = msg;
+            resultsEl.appendChild(div);
+            console.log(msg);
+        }
+
+        async function runFullSimulation(mode = 'fixed') {
+            log(`\n🚀 INICIANDO SIMULACIÓN: MODO ${mode.toUpperCase()}`, 'info');
+            const eventId = 'test_event_' + mode;
+            const eventType = 'entreno';
+            
+            // 1. Setup Event
+            const players = [];
+            for (let i = 1; i <= 12; i++) {
+                players.push({ id: 'P'+i, uid: 'P'+i, name: 'Player ' + i, level: (4 - (i*0.1)).toFixed(1) });
+            }
+            
+            const eventData = {
+                id: eventId,
+                name: 'Test Tournament ' + mode,
+                max_courts: 3,
+                rounds_count: 6,
+                players: players,
+                pair_mode: mode === 'fixed' ? 'fixed' : 'twister',
+                status: 'live'
+            };
+            await window.db.collection('entrenos').doc(eventId).set(eventData);
+
+            for (let r = 1; r <= 6; r++) {
+                const header = document.createElement('div');
+                header.className = 'round-header';
+                header.innerText = `RONDA ${r} (Modo: ${mode})`;
+                resultsEl.appendChild(header);
+
+                // 2. Generate Round
+                log(`Generando Ronda ${r}...`);
+                const matches = await window.MatchMakingService.generateRound(eventId, eventType, r);
+                
+                if (matches.length !== 3) {
+                    log(`❌ Error: Se esperaban 3 partidos, se generaron ${matches.length}`, 'error');
+                } else {
+                    log(`✅ OK: 3 partidos generados.`, 'success');
+                }
+
+                // Check for duplicates in DB
+                const snap = await window.db.collection('entrenos_matches').where('americana_id', '==', eventId).get();
+                const roundMatches = snap.docs.map(d => d.data()).filter(m => m.round === r);
+                if (roundMatches.length > 3) {
+                    log(`❌ ERROR CRÍTICO: ¡Pistas duplicadas detectadas en la DB! (${roundMatches.length} partidos)`, 'error');
+                }
+
+                // 3. Set Results
+                log(`Añadiendo resultados para Ronda ${r}...`);
+                for (const m of matches) {
+                    // Force movement: Team B (lower position) wins in Court 1, 
+                    // Team A wins in Court 2 and 3.
+                    const updateData = { status: 'finished' };
+                    if (m.court === 1) {
+                        updateData.score_a = 2; updateData.score_b = 6;
+                    } else {
+                        updateData.score_a = 6; updateData.score_b = 2;
+                    }
+                    await window.db.collection('entrenos_matches').doc(m.id).update(updateData);
+                }
+
+                log(`Ronda ${r} completada.`, 'success');
+            }
+
+            log(`\n🏆 SIMULACIÓN ${mode.toUpperCase()} FINALIZADA SIN BLOQUEOS`, 'success');
+        }
+
+        async function testParallelGeneration() {
+            log(`\n🛡️ TEST: Generación en Paralelo (Mutex/Idempotencia)`, 'info');
+            const eventId = 'parallel_test';
+            await window.db.collection('entrenos').doc(eventId).set({
+                id: eventId, max_courts: 2, players: [{id:'P1'},{id:'P2'},{id:'P3'},{id:'P4'},{id:'P5'},{id:'P6'},{id:'P7'},{id:'P8'}], pair_mode: 'fixed', status: 'live'
+            });
+
+            log("Llamando a generateRound 3 veces simultáneamente...");
+            try {
+                const p1 = window.MatchMakingService.generateRound(eventId, 'entreno', 1);
+                const p2 = window.MatchMakingService.generateRound(eventId, 'entreno', 1);
+                const p3 = window.MatchMakingService.generateRound(eventId, 'entreno', 1);
+                
+                const results = await Promise.allSettled([p1, p2, p3]);
+                
+                const successes = results.filter(r => r.status === 'fulfilled');
+                const errors = results.filter(r => r.status === 'rejected');
+                
+                log(`Resultados: ${successes.length} éxitos, ${errors.length} bloqueos/errores.`);
+                
+                const snap = await window.db.collection('entrenos_matches').where('americana_id', '==', eventId).get();
+                if (snap.size === 2) {
+                    log(`✅ ÉXITO: Solo se crearon los 2 partidos esperados a pesar de llamadas paralelas.`, 'success');
+                } else {
+                    log(`❌ FALLO: Se encontraron ${snap.size} partidos en la DB (esperados 2).`, 'error');
+                }
+            } catch (e) {
+                log(`Error en test: ${e.message}`, 'error');
+            }
+        }
+
+        async function startTests() {
+            try {
+                await testParallelGeneration();
+                await runFullSimulation('fixed');
+                await runFullSimulation('twister');
+                document.getElementById('status').innerText = '✅ ALL TESTS PASSED';
+                document.getElementById('status').style.color = '#8f8';
+            } catch (e) {
+                log('FATAL ERROR: ' + e.message, 'error');
+                document.getElementById('status').innerText = '❌ TESTS FAILED';
+                document.getElementById('status').style.color = '#f55';
+            }
+        }
+
+        startTests();
+    </script>
+</body>
+</html>

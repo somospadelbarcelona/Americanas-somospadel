@@ -278,6 +278,9 @@ const FixedPairsLogic = {
             p.won_last_match = false;
         });
 
+        // Initialize/Reset deduplication guard for this ranking cycle
+        window._processedCourtsInRanking = new Set();
+
         // Procesar resultados de la última ronda
         lastRoundMatches.forEach(match => {
             if (match.status === 'finished') {
@@ -300,6 +303,17 @@ const FixedPairsLogic = {
                     console.warn(`⚠️ Pareja no encontrada en match ${match.id} (Ronda ${match.round})`);
                     return;
                 }
+
+                // --- 🛡️ DEDUPLICATION GUARD ---
+                // If we already processed this court in this round, ignore extra copies
+                const courtNum = parseInt(match.court || 0);
+                const dedupKey = `R${match.round}_C${courtNum}`;
+                if (window._processedCourtsInRanking?.has(dedupKey)) {
+                    console.warn(`🛑 Skipping duplicate result for ${dedupKey} to prevent jump glitches.`);
+                    return;
+                }
+                window._processedCourtsInRanking = window._processedCourtsInRanking || new Set();
+                window._processedCourtsInRanking.add(dedupKey);
 
                 const scoreA = parseInt(match.score_a || 0);
                 const scoreB = parseInt(match.score_b || 0);
@@ -350,26 +364,108 @@ const FixedPairsLogic = {
             }
         });
 
-        // --- CONSOLIDAR PISTAS ---
-        // Pueden haber conflictos (2 parejas con misma pista tras movimiento).
-        // Ordenamos por pista actual, y luego reasignamos de forma que 
-        // el ganador quede en la pista correcta respetando su movimiento.
+        // --- CONSOLIDAR PISTAS: Lógica Pozo Correcta ---
+        // El sistema Pozo funciona así entre rondas:
+        //   Pista N ganador → Pista N-1 (sube, número menor es mejor)
+        //   Pista N perdedor → Pista N+1 (baja)
+        //   Ronda siguiente: Pista N tiene al ganador de Pista N+1 vs perdedor de Pista N-1
+        //
+        // Para garantizar esto sin conflictos, reconstruimos el orden
+        // desde los resultados del partido directamente.
+        //
+        // Ordenamos por: pista que ocupaban ANTES del movimiento (match.court) para
+        // reconstruir el bracket de la siguiente ronda.
+        // El orden de pistas para la próxima ronda es:
+        //   - Posición 1 (Pista 1): ganador de Pista 1 original
+        //   - Posición 2 (Pista 1): ganador de Pista 2 original (sube)
+        //   - Posición 3 (Pista 2): perdedor de Pista 1 original (baja)
+        //   - Posición 4 (Pista 2): ganador de Pista 3 original (sube)
+        //   - ... etc.
 
-        // Paso 1: Ordenar por pista actual (primero ganadores, empates después)
-        pairs.sort((a, b) => {
-            if (a.current_court !== b.current_court) return a.current_court - b.current_court;
-            // En la misma pista, el ganador va primero (se queda arriba)
-            if (a.won_last_match && !b.won_last_match) return -1;
-            if (!a.won_last_match && b.won_last_match) return 1;
-            return (b.games_won || 0) - (a.games_won || 0);
-        });
+        // Reconstruimos el orden a partir de los propios partidos de la ronda
+        // en lugar de depender de current_court (que puede tener colisiones).
+        const matchesByCourtSorted = [...lastRoundMatches]
+            .filter(m => m.status === 'finished')
+            .sort((a, b) => parseInt(a.court) - parseInt(b.court));
 
-        // Paso 2: Reasignar pistas de 2 en 2 respetando el orden ganador→arriba
-        pairs.forEach((p, index) => {
-            p.current_court = Math.floor(index / 2) + 1;
-        });
+        if (matchesByCourtSorted.length > 0) {
+            // Rebuild court assignments top-down based on Pozo bracket
+            // For each court c (1..N):
+            //   winner of court c → target court c-1 (minimum 1)
+            //   loser of court c → target court c+1 (maximum maxCourts)
+            // Then: next round Court 1 has [winner of c1, winner of c2]
+            //        Court 2 has [loser of c1, winner of c3], etc.
 
-        console.log(`✅ Pistas actualizadas:`, pairs.map(p => `${p.pair_name} → Pista ${p.current_court}`).join(', '));
+            // Step 1: Build winner/loser arrays sorted by original court
+            const courtResults = matchesByCourtSorted.map(match => {
+                const teamAIds = Array.isArray(match.team_a_ids) ? match.team_a_ids.map(String) : [];
+                const teamBIds = Array.isArray(match.team_b_ids) ? match.team_b_ids.map(String) : [];
+
+                let pairA = pairMap[match.pair_a_id];
+                let pairB = pairMap[match.pair_b_id];
+                if (!pairA) pairA = pairs.find(p => teamAIds.includes(String(p.player1_id)) || teamAIds.includes(String(p.player2_id)));
+                if (!pairB) pairB = pairs.find(p => teamBIds.includes(String(p.player1_id)) || teamBIds.includes(String(p.player2_id)));
+
+                if (!pairA || !pairB) return null;
+
+                const scoreA = parseInt(match.score_a || 0);
+                const scoreB = parseInt(match.score_b || 0);
+                const winner = scoreA >= scoreB ? pairA : pairB;
+                const loser = scoreA >= scoreB ? pairB : pairA;
+                return { court: parseInt(match.court), winner, loser };
+            }).filter(Boolean);
+
+            // Step 2: Assign courts for next round using the standard Pozo bracket:
+            //   Sort order for Court N next round:
+            //     - winners climb, losers fall
+            //     - Court k will have: winner from court k PLUS loser from court k-1
+            //     - (for k=1: only the winner of court 1 stays, joined by winner of court 2)
+            //     - (for k=maxCourts: loser of court maxCourts stays, joined by loser of court maxCourts-1)
+
+            // Build the ordered list for next round:
+            //   [winner_c1, winner_c2, loser_c1, winner_c3, loser_c2, winner_c4, loser_c3, loser_c4-1..., loser_cN]
+            // Simpler canonical form: interleave winners (descending court) and losers (ascending court)
+            // winners sorted ascending by court (best court first), losers sorted ascending by court
+            const winners = courtResults.map(r => r.winner);   // winner of court 1, 2, 3...
+            const losers  = courtResults.map(r => r.loser);    // loser of court 1, 2, 3...
+
+            // Next round bracket order (canonical Pozo):
+            // Pos 0,1 → Court 1: [winner_c1,  winner_c2]  ← the two best pairs
+            // Pos 2,3 → Court 2: [loser_c1, winner_c3]
+            // Pos 4,5 → Court 3: [loser_c2, loser_c3]
+            // General pattern for N courts:
+            //   Court k (1-indexed) contains: winner[k-1] and loser[k-2] (if they exist)
+            // Build sequence: winners[0], winners[1], losers[0], winners[2], losers[1], winners[3], losers[2]...
+            // = interleave: for each court position k, take winners[k] then losers[k-1]
+            const nextRoundOrder = [];
+            for (let k = 0; k < maxCourts; k++) {
+                if (winners[k]) nextRoundOrder.push(winners[k]);
+                if (losers[k - 1] !== undefined && losers[k - 1] !== null) nextRoundOrder.push(losers[k - 1]);
+            }
+            // Add last loser if not already in
+            const lastLoser = losers[losers.length - 1];
+            if (lastLoser && !nextRoundOrder.includes(lastLoser)) {
+                nextRoundOrder.push(lastLoser);
+            }
+
+            // Assign courts: every 2 pairs share a court
+            nextRoundOrder.forEach((pair, index) => {
+                if (pair) pair.current_court = Math.floor(index / 2) + 1;
+            });
+
+            // Assign any pairs that didn't play (BYE) to the last court
+            pairs.forEach(p => {
+                if (!nextRoundOrder.includes(p)) {
+                    p.current_court = maxCourts;
+                }
+            });
+
+            console.log(`✅ Pistas Pozo actualizadas:`, pairs.map(p => `${p.pair_name || p.id} → Pista ${p.current_court}`).join(', '));
+        } else {
+            // Fallback: stable sort if no finished matches
+            pairs.sort((a, b) => a.current_court - b.current_court || (b.wins || 0) - (a.wins || 0));
+            pairs.forEach((p, index) => { p.current_court = Math.floor(index / 2) + 1; });
+        }
 
         // Devolver ordenado por pista (para que generatePozoRound empareje correctamente)
         return [...pairs].sort((a, b) => a.current_court - b.current_court);

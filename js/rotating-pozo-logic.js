@@ -17,6 +17,9 @@ const RotatingPozoLogic = {
     updatePlayerCourts(players, matches, maxCourts, category = 'open') {
         console.log(`📈 Calculando Ascensos/Descensos individuales (${category})...`);
 
+        // Initialize/Reset deduplication guard for this ranking cycle
+        window._processedCourtsInRanking = new Set();
+
         // 1. Identificar jugadores y su estado actual
         const playerMap = {};
         players.forEach(p => {
@@ -32,6 +35,15 @@ const RotatingPozoLogic = {
         if (matches && matches.length > 0) {
             matches.forEach(m => {
                 if (m.status === 'finished') {
+                    // --- 🛡️ DEDUPLICATION GUARD ---
+                    const courtNum = parseInt(m.court || 0);
+                    const dedupKey = `R${m.round}_C${courtNum}`;
+                    if (window._processedCourtsInRanking?.has(dedupKey)) {
+                        console.warn(`🛑 Skipping duplicate result for ${dedupKey} to prevent player jump glitches.`);
+                        return;
+                    }
+                    window._processedCourtsInRanking.add(dedupKey);
+
                     const sA = parseInt(m.score_a || 0);
                     const sB = parseInt(m.score_b || 0);
                     const teamA = (m.team_a_ids || []).map(String);
