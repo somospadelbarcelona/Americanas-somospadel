@@ -53,10 +53,53 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.04) 0%, transparent 70%);
                     min-height: 100vh;
                     padding-top: 0px !important;
-                ">
-
                     <!-- 🏓 PADEL PULSE — Personalized live widget (TOP POSITION) -->
                     <div id="padel-pulse-widget-root" style="animation: floatUp 0.5s ease-out forwards;"></div>
+
+                    <!-- 🚀 PLAYER PROGRESS HUB (Wow Redesign) -->
+                    <div id="player-progress-hub" class="premium-glass-card animate-float" style="margin: 0 15px 15px; border-left: 4px solid var(--neon-green);">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <div class="neon-badge"><i class="fas fa-bolt"></i> PLAYER STATUS</div>
+                                <h1 class="wow-title" style="font-size: 1.8rem; margin-top: 8px;">${user ? user.name.toUpperCase() : 'INVITADO'}</h1>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:0.6rem; color:#888; font-weight:900;">LEVEL</div>
+                                <div class="stat-highlight" style="color:var(--neon-green);">${userLevel}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+                            <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
+                                <div style="font-size:0.55rem; color:#888; font-weight:800;">GLOBAL RANKING</div>
+                                <div style="font-size:1.4rem; font-weight:900; color:#fff;">#${user ? (user.ranking_pos || '120') : '--'}</div>
+                            </div>
+                            <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
+                                <div style="font-size:0.55rem; color:#888; font-weight:800;">PARTIDAS TOTALES</div>
+                                <div style="font-size:1.4rem; font-weight:900; color:#fff;">${user ? (user.total_matches || '24') : '0'}</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 10px; font-size: 0.7rem; color: #94a3b8; font-weight: 600;">
+                            <i class="fas fa-info-circle" style="color:var(--neon-green);"></i> Siguiente nivel: <span style="color:#fff;">${(parseFloat(userLevel) + 0.1).toFixed(1)}</span> — Necesitas <span style="color:#fff;">3 victorias</span> más.
+                        </div>
+                    </div>
+
+                    <!-- 🏆 MVP SPOTLIGHT & TRENDING PLAYERS -->
+                    <div id="ranking-spotlight-root" style="margin: 0 15px 15px; animation: floatUp 0.8s ease-out forwards;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 5px;">
+                            <div style="font-weight:950; font-size:0.75rem; color:white; letter-spacing:1px; text-transform:uppercase;">🏆 RANKING ELITE (TOP 10)</div>
+                            <div style="font-size:0.65rem; color:var(--neon-green); font-weight:900; cursor:pointer;" onclick="window.Router.navigate('ranking')">VER TODOS <i class="fas fa-chevron-right"></i></div>
+                        </div>
+
+                        <!-- MVP SPOTLIGHT CARD -->
+                        <div id="mvp-spotlight-container" style="margin-bottom: 12px;"></div>
+
+                        <div id="trending-players-list" style="display:flex; gap:12px; overflow-x:auto; padding-bottom:10px; scrollbar-width:none;">
+                            <!-- Cargado dinámicamente -->
+                            <div class="loader-mini" style="margin:20px auto;"></div>
+                        </div>
+                    </div>
 
                     <!-- NEW CONTEXT-FIRST ARCHITECTURE -->
                     
@@ -1378,8 +1421,78 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         console.error("Activity Feed failed", e);
                     });
                 }
+                // 4. Load Trending Players
+                this.renderTrendingPlayers();
             } catch (e) {
                 console.error('❌ [DashboardView] Error in core widget loading:', e);
+            }
+        }
+
+        async renderTrendingPlayers() {
+            const root = document.getElementById('trending-players-list');
+            const mvpRoot = document.getElementById('mvp-spotlight-container');
+            if (!root) return;
+
+            try {
+                // Obtenemos los datos del Ranking real
+                const players = await (window.RankingController ? window.RankingController.calculateSilently() : []);
+                
+                // --- 1. MVP SPOTLIGHT (Top 1) ---
+                if (mvpRoot && players.length > 0) {
+                    const mvp = players[0];
+                    mvpRoot.innerHTML = `
+                        <div class="premium-glass-card animate-float" style="padding: 20px; border: 1px solid var(--neon-green); box-shadow: 0 0 20px rgba(204,255,0,0.1) inset;">
+                            <div style="display:flex; align-items:center; gap:20px;">
+                                <div style="position:relative;">
+                                    <div style="width:80px; height:80px; border-radius:50%; border:3px solid var(--neon-green); overflow:hidden; background:#1a1a1a;">
+                                        <div style="width:100%; height:100%; background: ${mvp.photo_url ? `url('${mvp.photo_url}') center/cover` : 'transparent'}; display:flex; align-items:center; justify-content:center;">
+                                            ${!mvp.photo_url ? `<span style="font-size:1.8rem; font-weight:900; color:#444;">${mvp.name.charAt(0)}</span>` : ''}
+                                        </div>
+                                    </div>
+                                    <div style="position:absolute; top:-10px; right:-10px; font-size:1.8rem; filter: drop-shadow(0 0 10px #CCFF00);">👑</div>
+                                </div>
+                                <div style="flex:1;">
+                                    <div class="neon-badge" style="background:var(--neon-green); color:#000; display:inline-block; font-size:0.55rem; padding:2px 8px; margin-bottom:8px;">JUGADOR ELITE</div>
+                                    <h2 style="font-size:1.4rem; font-weight:1000; color:#fff; margin:0; line-height:1;">${mvp.name.toUpperCase()}</h2>
+                                    <div style="display:flex; align-items:center; gap:10px; margin-top:5px;">
+                                        <div class="stat-highlight" style="font-size:1.2rem; color:var(--neon-green);">${mvp.points || 0} <span style="font-size:0.6rem; color:#888;">PTS</span></div>
+                                        <div style="font-size:0.7rem; color:#94a3b8; font-weight:900;">• ACTUAL #1 GLOBAL</div>
+                                    </div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <i class="fas fa-trophy" style="font-size:2rem; color: #CCFF00; opacity:0.3; filter:blur(1px);"></i>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // --- 2. TRENDING PLAYERS (Next 9) ---
+                const topPlayers = players.slice(1, 10); // Rest of Top 10
+
+                if (topPlayers.length === 0) {
+                    root.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.3); font-size:0.7rem;">Sincronizando racha...</div>`;
+                    return;
+                }
+
+                root.innerHTML = topPlayers.map(p => `
+                    <div class="premium-glass-card" style="min-width: 140px; padding: 15px; text-align: center; flex-shrink: 0; background: rgba(255,255,255,0.03);">
+                        <div style="position:relative; width:60px; height:60px; margin:0 auto 10px;">
+                            <div style="width:100%; height:100%; border-radius:50%; border:2px solid var(--neon-green); background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#1a1a1a'}; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                                ${!p.photo_url ? `<span style="font-weight:900; color:#444;">${p.name.charAt(0)}</span>` : ''}
+                            </div>
+                            <div style="position:absolute; bottom:-5px; right:-5px; background:var(--neon-green); color:#000; font-size:0.55rem; font-weight:950; padding:2px 6px; border-radius:12px; border:2px solid #000;">
+                                #${p.ranking_pos || '?'}
+                            </div>
+                        </div>
+                        <div style="font-size: 0.75rem; font-weight: 1000; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom:4px;">${p.name.split(' ')[0]}</div>
+                        <div style="font-size: 0.65rem; color: var(--neon-green); font-weight: 900;">${p.points || 0} PTS</div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                console.error("Error rendering trending players:", err);
+                if (root) root.innerHTML = "⚠️ Error sync";
             }
         }
 

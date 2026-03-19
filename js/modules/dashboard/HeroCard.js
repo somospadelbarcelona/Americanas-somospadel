@@ -34,65 +34,61 @@
             const accentColor = urgencyClass === 'urgent' ? '#FF2D55' : urgencyClass === 'soon' ? '#FF9500' : '#CCFF00';
 
             return `
-                <div class="hero-card upcoming fade-in" style="
-                    background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
-                    border: 1px solid rgba(255,255,255,0.08);
+                <div class="premium-glass-card upcoming fade-in" style="
                     border-left: 5px solid ${accentColor};
-                    border-radius: 24px;
                     padding: 28px;
-                    margin: 0;
-                    width: 100%;
-                    box-sizing: border-box;
+                    margin: 0 0 20px 0;
                     box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px ${accentColor}20;
                     position: relative;
                     overflow: hidden;
+                    animation: floatUp 0.6s ease-out;
                 ">
                     <!-- Subtle Glow -->
                     <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: radial-gradient(circle, ${accentColor}15 0%, transparent 70%); filter: blur(30px);"></div>
 
                     ${urgencyClass === 'urgent' ? `
-                        <div style="background: #FF2D55; color: white; display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.65rem; font-weight: 900; margin-bottom: 20px; letter-spacing: 1px; animation: pulse 2s infinite; border: 1px solid rgba(255,255,255,0.2);">
+                        <div class="neon-badge" style="background: #FF2D55; color: white; animation: pulse 2s infinite;">
                             <i class="fas fa-bolt"></i> ¡ENTRAS EN PISTA EN ${timeUntil} MINUTOS!
                         </div>
                     ` : `
-                        <div style="background: rgba(255,255,255,0.05); color: ${accentColor}; display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; margin-bottom: 20px; letter-spacing: 1px; border: 1px solid ${accentColor}40;">
+                        <div class="neon-badge" style="color: ${accentColor}; border: 1px solid ${accentColor}40;">
                             <i class="far fa-calendar-check"></i> TU PRÓXIMO PARTIDO
                         </div>
                     `}
                     
                     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
                         <div>
-                            <div style="font-size: 2.2rem; font-weight: 950; color: white; line-height: 1; margin-bottom: 6px; letter-spacing: -1px;">
+                            <div class="wow-title" style="font-size: 2.8rem; line-height: 1; margin-bottom: 6px; text-shadow: 0 0 15px ${accentColor}40;">
                                 ${ctx.matchTime}
                             </div>
                             <div style="font-size: 1rem; color: #94a3b8; font-weight: 700; display: flex; align-items: center; gap: 6px;">
                                 <span style="color: white; opacity: 0.6;">HOY</span> • ${ctx.matchDay}
                             </div>
                         </div>
-                        <div style="background: rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                        <div style="background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); text-align: center;">
                             <div style="font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 2px;">PISTA</div>
-                            <div style="font-size: 1.6rem; font-weight: 950; color: ${accentColor};">${ctx.court || '?'}</div>
+                            <div class="stat-highlight" style="color: ${accentColor}; font-size: 2rem;">${ctx.court || '?'}</div>
                         </div>
                     </div>
 
-                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 18px; border-radius: 18px; margin-bottom: 24px;">
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 18px; border-radius: 20px; margin-bottom: 24px;">
                         <div style="display: flex; align-items: center; gap: 14px;">
-                            <div style="width: 40px; height: 40px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                            <div style="width: 44px; height: 44px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
                                 🤝
                             </div>
                             <div style="flex: 1;">
                                 <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase;">Compañero</div>
-                                <div style="font-size: 1rem; font-weight: 800; color: white;">${ctx.partner || 'Por asignar'}</div>
+                                <div style="font-size: 1.1rem; font-weight: 950; color: white;">${ctx.partner || 'Por asignar'}</div>
                             </div>
                         </div>
-                        <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 14px 0;"></div>
+                        <div style="height: 1px; background: rgba(255,255,255,0.04); margin: 14px 0;"></div>
                         <div style="display: flex; align-items: center; gap: 14px;">
-                            <div style="width: 40px; height: 40px; background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                            <div style="width: 44px; height: 44px; background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.2); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
                                 ⚔️
                             </div>
                             <div style="flex: 1;">
                                 <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase;">Rivales</div>
-                                <div style="font-size: 1rem; font-weight: 800; color: white;">${ctx.opponents || 'Por asignar'}</div>
+                                <div style="font-size: 1.1rem; font-weight: 950; color: white;">${ctx.opponents || 'Por asignar'}</div>
                             </div>
                         </div>
                     </div>
@@ -103,14 +99,14 @@
                             border: 1px solid rgba(255,255,255,0.1);
                             color: white;
                             padding: 16px;
-                            border-radius: 14px;
-                            font-weight: 800;
+                            border-radius: 18px;
+                            font-weight: 900;
                             font-size: 0.8rem;
                             cursor: pointer;
-                            transition: all 0.2s;
+                            transition: all 0.3s;
                             text-transform: uppercase;
-                            letter-spacing: 0.5px;
-                        " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                            letter-spacing: 1px;
+                        " onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.transform='translateY(-3px)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.transform='translateY(0)'">
                             Detalles
                         </button>
                         <button ${ctx.confirmed ? 'disabled' : ''} onclick="HeroCardActions.confirmAttendance('${ctx.matchId}', '${ctx.matchType}')" style="
@@ -118,15 +114,15 @@
                             border: ${ctx.confirmed ? '1px solid rgba(52,199,89,0.3)' : 'none'};
                             color: ${ctx.confirmed ? '#34C759' : 'black'};
                             padding: 16px;
-                            border-radius: 14px;
-                            font-weight: 900;
+                            border-radius: 18px;
+                            font-weight: 950;
                             font-size: 0.8rem;
                             cursor: ${ctx.confirmed ? 'default' : 'pointer'};
-                            transition: all 0.2s;
+                            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                             text-transform: uppercase;
-                            letter-spacing: 0.5px;
-                            ${ctx.confirmed ? '' : `box-shadow: 0 8px 20px ${accentColor}40;`}
-                        ">
+                            letter-spacing: 1px;
+                            ${ctx.confirmed ? '' : `box-shadow: 0 10px 25px ${accentColor}60;`}
+                        " onmouseover="${ctx.confirmed ? '' : `this.style.transform='scale(1.05) translateY(-3px)'; this.style.boxShadow='0 15px 30px \${accentColor}80'`}" onmouseout="${ctx.confirmed ? '' : `this.style.transform='scale(1) translateY(0)'; this.style.boxShadow='0 10px 25px \${accentColor}60'`}">
                             ${ctx.confirmed ? '✓ Confirmado' : 'Confirmar'}
                         </button>
                     </div>

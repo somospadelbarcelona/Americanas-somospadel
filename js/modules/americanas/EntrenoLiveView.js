@@ -224,12 +224,14 @@
                         <h1 style="color:#000; margin:0; font-size:1.1rem; font-weight:950; text-transform:uppercase;">${this.eventData.name || 'Entreno'}</h1>
                         <div style="width:30px;"></div>
                     </div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap:6px; padding:0 15px; margin-bottom:15px; overflow-x: auto;">
-                        ${this._renderTabBtn('matches', 'CALENDARIO')}
-                        ${this._renderTabBtn('standings', 'POSICIONES')}
-                        ${this._renderTabBtn('brackets', 'CUADROS')}
-                        ${this._renderTabBtn('stats', 'STATS')}
-                        ${this._renderTabBtn('report', 'INFORME')}
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap:6px; padding:0 15px; margin-bottom:15px; overflow-x: auto;">
+                        ${this._renderTabBtn('matches', 'PARTIDOS')}
+                        ${this.eventData?.status !== 'scheduled' ? `
+                            ${this._renderTabBtn('standings', 'RANKING')}
+                            ${this.eventData?.type !== 'entreno' ? this._renderTabBtn('brackets', 'CUADROS') : ''}
+                            ${this._renderTabBtn('stats', 'STATS')}
+                        ` : ''}
+                        ${this.eventData?.status === 'finished' ? this._renderTabBtn('report', 'INFORME') : ''}
                     </div>
                     ${this.viewState.tab === 'matches' ? this._renderRoundSelector(maxRound) : ''}
                 </div>

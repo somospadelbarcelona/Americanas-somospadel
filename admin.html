@@ -526,9 +526,15 @@
                 </button>
 
                 <button class="nav-item-pro" data-view="database_health" onclick="loadAdminView('database_health')"
-                    style="border:1px solid rgba(204, 255, 0, 0.3); background:rgba(204, 255, 0, 0.05);">
+                    style="border:1px solid rgba(204, 255, 0, 0.3); background:rgba(204, 255, 0, 0.05); margin-bottom: 0.5rem;">
                     <span class="icon-box"><i class="fas fa-ghost" style="color:#CCFF00;"></i></span>
                     <span class="nav-text" style="color:white; font-weight:700;">Salud de la DB 🧹</span>
+                </button>
+
+                <button class="nav-item-pro" data-view="fix_players" onclick="loadAdminView('fix_players')"
+                    style="border:1px solid rgba(255, 100, 0, 0.3); background:rgba(255, 100, 0, 0.05);">
+                    <span class="icon-box"><i class="fas fa-user-gear" style="color:#FF6400;"></i></span>
+                    <span class="nav-text" style="color:white; font-weight:700;">Reparar Jugadores 🔧</span>
                 </button>
 
                 <button class="nav-item-pro nav-item-logout" style="margin-top: auto;" onclick="AdminAuth.logout()">
@@ -1225,6 +1231,7 @@
             <script src="js/modules/common/WhatsAppService.js?v=7015"></script>
             <script src="js/modules/admin-entrenos.js?v=5010"></script>
             <script src="js/modules/admin-database-health.js"></script>
+            <script src="js/modules/admin-fix-players.js"></script>
 
 
             <!-- DIAGNOSTIC SCRIPT (Optional) -->
@@ -1900,22 +1907,11 @@
             <script src="js/modules/logic/MatchMakingService.js"></script>
             <script src="js/modules/americanas/AmericanaLogic.js"></script>
             <script src="js/modules/americanas/AmericanaService.js"></script>
+            <script src="js/app-init.js"></script>
 
             <!-- ADMIN AUTOMATION -->
             <script src="js/modules/logic/AutomationService.js"></script>
-            <script>
-                // Initialize Automation Service (Auto-Generate 4h before)
-                document.addEventListener('DOMContentLoaded', () => {
-                    setTimeout(() => {
-                        if (window.AutomationService) {
-                            console.log("🤖 Starting Automation Service (Auto-Pairing 4h before)...");
-                            window.AutomationService.init();
-                        } else {
-                            console.error("❌ AutomationService not loaded!");
-                        }
-                    }, 3000);
-                });
-            </script>
+            <!-- Automation handled by AppInit -->
             <style>
                 /* --- 🏳️ WHITE THEME: ENTRENO MODAL OVERRIDE (PURE BLACK EDITION) --- */
                 #admin-entreno-modal .modal-content {

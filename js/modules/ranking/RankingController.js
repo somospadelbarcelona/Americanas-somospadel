@@ -328,6 +328,6 @@
         }
     }
 
-    window.RankingController = new RankingController();
-    console.log("🎮 RankingController v2 Initialized");
+    window.RankingControllerClass = RankingController;
+    console.log("📊 RankingController Module Loaded (Class definition)");
 })();

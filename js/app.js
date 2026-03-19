@@ -252,9 +252,9 @@
     }
 
     // Init App when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => window.AppInstance = new App());
-    } else {
+    // Sync with AppInit Controller
+    document.addEventListener('AppReady', () => {
+        console.log("🎾 [App] AppReady signal received. Launching Core App...");
         window.AppInstance = new App();
-    }
+    });
 })();

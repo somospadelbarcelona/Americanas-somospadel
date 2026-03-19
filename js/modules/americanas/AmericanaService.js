@@ -2,19 +2,10 @@
  * AmericanaService.js (Global Version)
  */
 (function () {
-    class AmericanaService {
+    window.AmericanaServiceClass = class AmericanaService {
         constructor() {
-            // Initial assignment
+            // Centralized loading via AppInit guarantees dependencies are ready.
             this.db = this._getCollectionService('americana');
-
-            // Re-check periodically if not initialised
-            if (!this.db) {
-                let attempts = 0;
-                const interval = setInterval(() => {
-                    this.db = this._getCollectionService('americana');
-                    if (this.db || attempts++ > 10) clearInterval(interval);
-                }, 200);
-            }
         }
 
         validateGender(category, userGender) {
@@ -113,7 +104,7 @@
 
         async addPlayer(americanaId, user, type = 'americana', partnerName = null, partnerId = null) {
             console.log(`🚀 [AmericanaService] addPlayer init: id=${americanaId}, type=${type}`, { user, partnerName, partnerId });
-            
+
             try {
                 if (!user) {
                     console.error("❌ [AmericanaService] CRITICAL: user is undefined");
@@ -525,27 +516,6 @@
                 throw err; // RETHROW to let Controller handle it
             }
         }
-    }
-
-    // Initialize immediately if possible, otherwise retry
-    if (window.db && (window.createService || window.FirebaseDB)) {
-        window.AmericanaService = new AmericanaService();
-        console.log("🏆 AmericanaService Global Loaded & Ready");
-    } else {
-        // Retry with longer timeout for file:// protocol
-        let attempts = 0;
-        const maxAttempts = 50; // 10 seconds total
-        const checkInterval = setInterval(() => {
-            attempts++;
-            if (window.db && (window.createService || window.FirebaseDB)) {
-                window.AmericanaService = new AmericanaService();
-                console.log("🏆 AmericanaService Global Loaded & Ready (attempt " + attempts + ")");
-                clearInterval(checkInterval);
-            } else if (attempts >= maxAttempts) {
-                console.error("❌ AmericanaService failed to initialize after", maxAttempts, "attempts");
-                console.error("Make sure Firebase is properly configured and loaded");
-                clearInterval(checkInterval);
-            }
-        }, 200);
-    }
+    // Ready to be initialized by AppInit
+    console.log("📦 [AmericanaServiceClass] Clase de Servicio de Americanas registrada.");
 })();
