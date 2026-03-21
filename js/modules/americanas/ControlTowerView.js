@@ -736,7 +736,15 @@
             const isLive = this.currentAmericanaDoc?.status === 'live';
             
             return `
-                ${window.EventHeader.render(this.currentAmericanaDoc, this.activeTab, isLive, isPlayingHere)}
+                ${window.EventHeader.render(this.currentAmericanaDoc, { 
+                    activeTab: this.activeTab, 
+                    isPlayingHere, 
+                    theme: {
+                        grad: 'linear-gradient(135deg, #CCFF00 0%, #00E36D 100%)',
+                        accent: '#CCFF00',
+                        text: '#000'
+                    }
+                })}
                 ${this.renderActiveContent(data, roundData)}
             `;
         }
@@ -994,9 +1002,17 @@
         }
 
         renderTournamentCard(match, options = {}) {
-            return window.MatchCard.renderTournamentCard(match, {
+            const user = window.Store ? window.Store.getState('currentUser') : null;
+            return window.MatchCard.render(match, {
                 ...options,
-                currentAmericanaDoc: this.currentAmericanaDoc
+                currentUser: user,
+                isEntreno: this.currentAmericanaDoc?.isEntreno,
+                eventStatus: this.currentAmericanaDoc?.status,
+                theme: {
+                    grad: 'linear-gradient(135deg, #CCFF00 0%, #00E36D 100%)',
+                    accent: '#CCFF00',
+                    text: '#000'
+                }
             });
         }
 

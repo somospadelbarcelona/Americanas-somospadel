@@ -64,6 +64,34 @@
                     ` : ''}
                 </div>
             `;
+        },
+
+        renderRoundTabs(rounds, currentNum, americanaDoc, allMatches) {
+            return `
+                <div class="round-tabs-container" style="display:flex; gap:10px; align-items: center; padding: 5px 2px;">
+                    ${rounds.map(r => {
+                        const isSel = parseInt(r.number) === parseInt(currentNum);
+                        // Check if round is finished (all matches in this round are finished)
+                        const roundMatches = allMatches.filter(m => parseInt(m.round) === parseInt(r.number));
+                        const isFinished = roundMatches.length > 0 && roundMatches.every(m => m.status === 'finished');
+
+                        return `
+                            <button type="button" 
+                                    class="round-tab ${isSel ? 'active' : ''}" 
+                                    onclick="window.ControlTowerView.goToRound(${r.number}, event)"
+                                    style="background: ${isSel ? 'linear-gradient(135deg, #CCFF00 0%, #00E36D 100%)' : 'rgba(255,255,255,0.05)'}; 
+                                           color: ${isSel ? 'black' : '#fff'}; 
+                                           border: 1px solid ${isSel ? '#CCFF00' : 'rgba(255,255,255,0.1)'};
+                                           padding: 12px 20px; border-radius: 16px; font-weight: 1000; cursor: pointer; transition: all 0.4s; min-width: 65px;
+                                           box-shadow: ${isSel ? '0 8px 25px rgba(204,255,0,0.3)' : 'none'};
+                                           position: relative; font-size: 0.8rem;">
+                                ${r.number}º
+                                ${isFinished ? '<span style="position:absolute; top:-5px; right:-5px; background:#25D366; color:white; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.6rem; border:2px solid #050505;">✓</span>' : ''}
+                            </button>
+                        `;
+                    }).join('')}
+                </div>
+            `;
         }
     };
 })();
