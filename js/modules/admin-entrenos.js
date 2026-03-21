@@ -848,12 +848,32 @@ window.loadEntrenoParticipantsUI = async (id) => {
 
         // Deduplicate players by ID/UID
         const seenIds = new Set();
-        const uniquePlayers = (event.players || []).filter(p => {
-            const pid = String(p.id || p.uid || '');
-            if (!pid || seenIds.has(pid)) return false;
-            seenIds.add(pid);
-            return true;
-        });
+        const uniquePlayers = (event.players || [])
+            .filter(p => {
+                const pid = String(p.id || p.uid || '');
+                if (!pid || seenIds.has(pid)) return false;
+                seenIds.add(pid);
+                return true;
+            })
+            .sort((a, b) => {
+                const parse = (d) => {
+                    if (!d) return 0;
+                    if (typeof d === 'number') return d;
+                    const ds = String(d);
+                    if (ds.includes('/')) {
+                        const parts = ds.split(' ');
+                        const dateParts = parts[0].split('/');
+                        const timePart = parts[1] || '00:00:00';
+                        // DD/MM/YYYY or DD/MM
+                        const day = dateParts[0];
+                        const month = dateParts[1];
+                        const year = dateParts[2] || new Date().getFullYear();
+                        return new Date(`${year}-${month}-${day}T${timePart}`).getTime() || 0;
+                    }
+                    return new Date(d).getTime() || 0;
+                };
+                return parse(a.joinedAt) - parse(b.joinedAt);
+            });
 
         // 🧠 Smart Mode Detection (Consistent with MatchMakingService)
         let isFixedMode = (event.pair_mode && event.pair_mode.includes('fixed')) ||
@@ -886,6 +906,21 @@ window.loadEntrenoParticipantsUI = async (id) => {
         ` + (() => {
                 const renderedIds = new Set();
                 let html = '';
+
+                // Pre-calculate signup order to ensure #1 is ALWAYS the first who joined, regardless of rendering order
+                const signupOrderMap = new Map();
+                uniquePlayers.forEach((p, idx) => {
+                    signupOrderMap.set(String(p.id || p.uid), idx + 1);
+                });
+
+                const formatJoinDate = (d) => {
+                    if (!d) return '';
+                    const date = new Date(d);
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    return `${day}/${month} ${time}`;
+                };
 
                 // Helper for Level Color
                 const getLevelColor = (l) => {
@@ -926,8 +961,11 @@ window.loadEntrenoParticipantsUI = async (id) => {
                         const shortName2 = name2.split(' ')[0] + (name2.split(' ')[1] ? ' ' + name2.split(' ')[1].charAt(0) + '.' : '');
 
                         // Get registration times
-                        const time1 = p.joinedAt ? new Date(p.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-                        const time2 = partner.joinedAt ? new Date(partner.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                        const time1 = formatJoinDate(p.joinedAt);
+                        const time2 = formatJoinDate(partner.joinedAt);
+
+                        const num1 = signupOrderMap.get(pid);
+                        const num2 = signupOrderMap.get(partnerId);
 
                         html += `
                      <div class="player-row" style="display:flex; align-items:center; justify-content:space-between; padding:10px; border-bottom:1px solid #e2e8f0; background:rgba(59, 130, 246, 0.08); border-left: 4px solid #3b82f6;">
@@ -937,6 +975,7 @@ window.loadEntrenoParticipantsUI = async (id) => {
                             <!-- P1 -->
                             <div style="display:flex; flex-direction:column; gap:2px;">
                                 <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                                     <div style="width:20px; height:20px; border-radius:50%; background:#CCFF00 !important; color:#000 !important; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:900; margin-right:2px; border:1px solid rgba(0,0,0,0.1); box-shadow:0 1px 3px rgba(0,0,0,0.2);">#${num1}</div>
                                     <div style="width:24px; height:24px; border-radius:50%; background:${c1}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${p.level || '3.5'}</div>
                                     <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName1}</span>
                                 </div>
@@ -949,6 +988,7 @@ window.loadEntrenoParticipantsUI = async (id) => {
                             <!-- P2 -->
                             <div style="display:flex; flex-direction:column; gap:2px;">
                                 <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                                     <div style="width:20px; height:20px; border-radius:50%; background:#CCFF00 !important; color:#000 !important; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:900; margin-right:2px; border:1px solid rgba(0,0,0,0.1); box-shadow:0 1px 3px rgba(0,0,0,0.2);">#${num2}</div>
                                     <div style="width:24px; height:24px; border-radius:50%; background:${c2}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${partner.level || '3.5'}</div>
                                     <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName2}</span>
                                 </div>
@@ -988,11 +1028,14 @@ window.loadEntrenoParticipantsUI = async (id) => {
                         const c = getLevelColor(p.level);
                         const hasMissingPartner = !!p.partner_name;
                         const playerName = (p.name || 'JUGADOR').toUpperCase();
-                        const time = p.joinedAt ? new Date(p.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                        const time = formatJoinDate(p.joinedAt);
+
+                        const num = signupOrderMap.get(pid);
 
                         html += `
                      <div class="player-row" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #e2e8f0;">
                         <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="width:24px; height:24px; border-radius:50%; background:#CCFF00 !important; color:#000 !important; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:900; border:1px solid rgba(0,0,0,0.2); box-shadow: 0 2px 5px rgba(0,0,0,0.2);">${num}</div>
                             <div style="width:32px; height:32px; border-radius:50%; background:${c}; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:800; color:#ffffff; border: 1px solid rgba(0,0,0,0.1); overflow:hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 ${p.level || '3.5'}
                             </div>
