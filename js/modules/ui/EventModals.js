@@ -68,21 +68,8 @@
                 || (americanaDoc?.name || '').toUpperCase().includes('FIJA');
 
             let rankingItems = (window.StandingsService && matches.length > 0)
-                ? window.StandingsService.calculate(matches, 'entreno', isFixedPairs)
+                ? window.StandingsService.calculate(matches, 'entreno', isFixedPairs, americanaDoc?.players || [])
                 : [];
-
-            rankingItems.forEach(p => {
-                if (!p.played) {
-                    let count = 0;
-                    matches.forEach(m => {
-                        if (m.status !== 'finished') return;
-                        if ((m.team_a_ids || []).includes(p.uid) || (m.team_b_ids || []).includes(p.uid) || (m.team_a_names || []).includes(p.name) || (m.team_b_names || []).includes(p.name)) {
-                            count++;
-                        }
-                    });
-                    p.played = count || parseInt(americanaDoc?.rounds_count) || 0;
-                }
-            });
 
             const medals = ['🏆', '🥈', '🥉'];
             const podiumColors = [

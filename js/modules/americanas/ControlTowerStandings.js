@@ -10,7 +10,7 @@
 
             const isEntreno = eventDoc?.isEntreno;
             const isFixedPairs = eventDoc?.is_fija || (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventDoc?.name || '').toUpperCase().includes('FIJA');
-            const ranking = window.StandingsService.calculate(matches, isEntreno ? 'entreno' : 'americana', isFixedPairs);
+            const ranking = window.StandingsService.calculate(matches, isEntreno ? 'entreno' : 'americana', isFixedPairs, eventDoc?.players || []);
             window.ControlTowerStandings.lastRankingData = ranking;
 
             return `

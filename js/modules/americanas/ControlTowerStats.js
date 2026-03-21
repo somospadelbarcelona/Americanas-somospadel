@@ -22,7 +22,7 @@
 
             const isEntreno = eventDoc?.isEntreno;
             const isFija = eventDoc?.is_fija || (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventDoc?.name || '').toUpperCase().includes('FIJA');
-            const ranking = window.StandingsService.calculate(matches, isEntreno ? 'entreno' : 'americana', isFija);
+            const ranking = window.StandingsService.calculate(matches, isEntreno ? 'entreno' : 'americana', isFija, eventDoc?.players || []);
             window.ControlTowerStats.lastRankingData = ranking;
 
             // Find Top Scorer (Goles a favor)
@@ -62,7 +62,7 @@
                     <!-- PERFORMANCE GRID -->
                     <h3 style="color: #111; font-weight: 900; font-size: 1.1rem; margin-bottom: 20px;">Eficiencia Individual</h3>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
-                        ${ranking.slice(0, 12).map((p, i) => {
+                        ${ranking.slice(0, 32).map((p, i) => {
                 const winRate = Math.round((p.won / (p.played || 1)) * 100);
                 return `
                                 <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #fafafa; border-radius: 16px; border: 1px solid #f0f0f0;">
