@@ -1218,23 +1218,23 @@
                             <div style="text-align:center; margin-bottom:15px;">
                                 <span style="font-size:0.6rem; font-weight:950; color:var(--brand-neon); letter-spacing:2px; text-transform:uppercase;">INTRODUCIR RESULTADO</span>
                             </div>
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                            <div style="display:flex; gap:8px; justify-content:space-between; width:100%;">
                                 <!-- TEAM A CONTROLS -->
-                                <div style="display:flex; flex-direction:column; align-items:center; gap:10px; background:rgba(255,255,255,0.02); padding:15px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
-                                    <div style="font-size:0.6rem; color:#888; font-weight:900; text-transform:uppercase;">EQ. ARRIBA</div>
-                                    <div style="display:flex; align-items:center; gap:12px;">
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', -1)" style="width:40px; height:40px; border-radius:50%; border:none; background:#333; color:white; font-size:1.5rem; display:flex; align-items:center; justify-content:center;">-</button>
-                                        <span id="score-a-val-${match.id}" style="font-size:2rem; font-weight:950; color:white; min-width:40px; text-align:center;">${sA}</span>
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', 1)" style="width:40px; height:40px; border-radius:50%; border:none; background:var(--brand-neon); color:black; font-size:1.5rem; display:flex; align-items:center; justify-content:center;">+</button>
+                                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; background:rgba(255,255,255,0.02); padding:12px 5px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
+                                    <div style="font-size:0.55rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:0.5px;">EQ. ARRIBA</div>
+                                    <div style="display:flex; align-items:center; gap:6px; justify-content:center;">
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', -1)" style="width:36px; height:36px; padding:0; border-radius:50%; border:none; background:#333; color:white; font-size:1.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 4px 10px rgba(0,0,0,0.3);">-</button>
+                                        <span id="score-a-val-${match.id}" style="font-size:1.8rem; font-weight:950; color:white; text-align:center; min-width:32px;">${sA}</span>
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', 1)" style="width:36px; height:36px; padding:0; border-radius:50%; border:none; background:var(--brand-neon); color:black; font-size:1.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 4px 10px rgba(204,255,0,0.2);">+</button>
                                     </div>
                                 </div>
                                 <!-- TEAM B CONTROLS -->
-                                <div style="display:flex; flex-direction:column; align-items:center; gap:10px; background:rgba(255,255,255,0.02); padding:15px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
-                                    <div style="font-size:0.6rem; color:#888; font-weight:900; text-transform:uppercase;">EQ. ABAJO</div>
-                                    <div style="display:flex; align-items:center; gap:12px;">
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', -1)" style="width:40px; height:40px; border-radius:50%; border:none; background:#333; color:white; font-size:1.5rem; display:flex; align-items:center; justify-content:center;">-</button>
-                                        <span id="score-b-val-${match.id}" style="font-size:2rem; font-weight:950; color:white; min-width:40px; text-align:center;">${sB}</span>
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', 1)" style="width:40px; height:40px; border-radius:50%; border:none; background:var(--brand-neon); color:black; font-size:1.5rem; display:flex; align-items:center; justify-content:center;">+</button>
+                                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; background:rgba(255,255,255,0.02); padding:12px 5px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
+                                    <div style="font-size:0.55rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:0.5px;">EQ. ABAJO</div>
+                                    <div style="display:flex; align-items:center; gap:6px; justify-content:center;">
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', -1)" style="width:36px; height:36px; padding:0; border-radius:50%; border:none; background:#333; color:white; font-size:1.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 4px 10px rgba(0,0,0,0.3);">-</button>
+                                        <span id="score-b-val-${match.id}" style="font-size:1.8rem; font-weight:950; color:white; text-align:center; min-width:32px;">${sB}</span>
+                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', 1)" style="width:36px; height:36px; padding:0; border-radius:50%; border:none; background:var(--brand-neon); color:black; font-size:1.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 4px 10px rgba(204,255,0,0.2);">+</button>
                                     </div>
                                 </div>
                             </div>
@@ -1272,7 +1272,7 @@
                         </div>
                         
                         <!-- TEAMS & SCORES -->
-                        <div style="padding: 24px;">
+                        <div style="padding: 16px 15px;">
                             <!-- TEAM A -->
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                                 <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
