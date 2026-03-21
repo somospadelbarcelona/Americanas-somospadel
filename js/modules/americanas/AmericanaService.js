@@ -9,18 +9,18 @@
         }
 
         validateGender(category, userGender) {
-            const cat = category || 'open';
+            const cat = (category || 'open').toLowerCase();
             const g = (userGender || '').toLowerCase();
-            const isChico = g === 'm' || g === 'chico';
-            const isChica = g === 'f' || g === 'chica';
+            const isChico = g === 'm' || g === 'chico' || g === 'male';
+            const isChica = g === 'f' || g === 'chica' || g === 'female';
 
-            if (cat === 'male' && !isChico) {
+            if (cat === 'masculina' && !isChico) {
                 throw new Error("⛔ Categoría MASCULINA: Solo permitida para chicos.");
             }
-            if (cat === 'female' && !isChica) {
+            if (cat === 'femenina' && !isChica) {
                 throw new Error("⛔ Categoría FEMENINA: Solo permitida para chicas.");
             }
-            if (cat === 'mixed' && !isChico && !isChica) {
+            if (cat === 'mixta' && !isChico && !isChica) {
                 throw new Error("⛔ Categoría MIXTA: Debes definir tu género en el perfil.");
             }
             return true;
@@ -223,7 +223,8 @@
                     }
                 }
 
-                await eventRef.update({
+                const service = this._getCollectionService(type);
+                await service.update(americanaId, {
                     players: players,
                     registeredPlayers: players
                 });
@@ -380,20 +381,40 @@
                 const service = this._getCollectionService(type);
                 const event = await service.getById(eventId);
                 const waitlist = event.waitlist || [];
-                if (waitlist.find(p => p.uid === user.uid)) throw new Error("Ya estás en lista de espera.");
+                const currentUid = user.uid || user.id;
+
+                if (waitlist.find(p => (p.uid || p.id) === currentUid)) throw new Error("Ya estás en lista de espera.");
 
                 // GENDER VALIDATION
                 this.validateGender(event.category, user.gender);
 
                 waitlist.push({
-                    uid: user.uid,
-                    name: user.name,
+                    uid: currentUid,
+                    id: currentUid,
+                    name: (user.name || user.displayName || 'Jugador').toUpperCase(),
                     gender: user.gender || 'M',
                     joinedAt: new Date().toISOString()
                 });
                 await service.update(eventId, { waitlist });
                 return { success: true };
             } catch (err) { return { success: false, error: err.message }; }
+        }
+
+        async leaveWaitlist(eventId, userId, type = 'americana') {
+            try {
+                const service = this._getCollectionService(type);
+                const event = await service.getById(eventId);
+                if (!event) throw new Error("Evento no encontrado");
+
+                const currentWaitlist = event.waitlist || [];
+                const newWaitlist = currentWaitlist.filter(p => (p.uid || p.id) !== userId);
+
+                await service.update(eventId, { waitlist: newWaitlist });
+                return { success: true };
+            } catch (err) {
+                console.error("Error leaving waitlist:", err);
+                return { success: false, error: err.message };
+            }
         }
 
         async confirmWaitlist(eventId, userId, type = 'americana') {
@@ -516,6 +537,7 @@
                 throw err; // RETHROW to let Controller handle it
             }
         }
+    };
     // Ready to be initialized by AppInit
     console.log("📦 [AmericanaServiceClass] Clase de Servicio de Americanas registrada.");
 })();

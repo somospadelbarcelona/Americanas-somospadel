@@ -1190,160 +1190,212 @@
         }
 
         async waitForService() {
-            for (let i = 0; i < 10; i++) {
-                if (window.AmericanaService && window.AmericanaService.db) return true;
+            if (window.AmericanaService && (window.AmericanaService.db || window.AmericanaService._getCollectionService)) return true;
+            
+            console.log("⏳ [EventsController] Waiting for AmericanaService...");
+            for (let i = 0; i < 15; i++) {
+                if (window.AmericanaService && (window.AmericanaService.db || window.AmericanaService._getCollectionService)) {
+                    console.log("✅ [EventsController] AmericanaService ready.");
+                    return true;
+                }
                 await new Promise(r => setTimeout(r, 200));
             }
+            console.error("❌ [EventsController] AmericanaService TIMEOUT. Check AppInit.");
+            window.PremiumModal.alert({
+                title: "⚠️ TIEMPO AGOTADO",
+                message: "Los servicios de inscripción no están respondiendo. Por favor, recarga la página.",
+                type: 'danger'
+            });
             return false;
         }
 
         async joinEvent(id, type = 'americana') {
-            if (!this.state.currentUser) {
-                window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión para inscribirte." });
-                return;
-            }
-
-            const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
-            const evt = events.find(e => e.id === id);
-            if (!evt) return;
-
-            const mode = (evt.pair_mode || evt.format || '').toLowerCase();
-            const isFixed = mode === 'fixed' || (evt.name || '').toUpperCase().includes('FIJA');
-
-            if (await this.waitForService()) {
-                let partnerName = null;
-                let partnerId = null;
-
-                if (isFixed) {
-                    const choice = await window.PremiumModal.confirm({
-                        title: "🎾 PAREJA FIJA",
-                        message: "¿Te apuntas solo o con tu compañero habitual?",
-                        confirmText: "ELEGIR PAREJA",
-                        cancelText: "SOLO"
-                    });
-
-                    if (choice) {
-                        // 1. Fetch Players
-                        const playersSvc = window.createService('players');
-                        const allPlayers = await playersSvc.getAll();
-
-                        // Filter out current user and map for selector
-                        const currentUid = this.state.currentUser.uid || this.state.currentUser.id;
-                        const items = allPlayers
-                            .filter(p => p.id !== currentUid)
-                            .map(p => ({
-                                id: p.id,
-                                name: p.name || 'Sin nombre',
-                                sub: `Nivel: ${p.level || p.self_rate_level || '3.5'} • ${p.phone || 'SP Player'}`,
-                                image: p.photo_url || p.photo
-                            }));
-
-                        const selectedPartner = await window.PremiumModal.selector({
-                            title: "🔍 BUSCAR COMPAÑERO",
-                            message: "Selecciona a tu compañero de la base de datos:",
-                            items: items,
-                            placeholder: "Escribe nombre o teléfono..."
-                        });
-
-                        if (!selectedPartner) return;
-
-                        partnerName = selectedPartner.name;
-                        partnerId = selectedPartner.id;
-                    } else {
-                        const confirmSolo = await window.PremiumModal.confirm({
-                            title: "⚖️ APUNTARSE SOLO",
-                            message: "Te apuntarás sin pareja. El sistema o el admin te asignarán una más adelante. ¿Continuar?",
-                            confirmText: "SÍ, APUNTARME"
-                        });
-                        if (!confirmSolo) return;
-                    }
-                } else {
-                    const confirmed = await window.PremiumModal.confirm({
-                        title: "🎾 INSCRIBIRSE",
-                        message: "¿Quieres apuntarte a este evento?",
-                        confirmText: "SÍ, APUNTARME"
-                    });
-                    if (!confirmed) return;
+            try {
+                if (!this.state.currentUser) {
+                    window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión para inscribirte." });
+                    return;
                 }
 
-                const res = await window.AmericanaService.addPlayer(id, this.state.currentUser, type, partnerName, partnerId);
-                window.PremiumModal.alert({
-                    title: res.success ? "✅ ÉXITO" : "❌ ERROR",
-                    message: res.success ? (partnerName ? `Inscrito correctamente con ${partnerName}.` : "Te has inscrito correctamente.") : "Error: " + res.error,
-                    type: res.success ? 'success' : 'error'
-                });
+                const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
+                const evt = events.find(e => e.id === id);
+                if (!evt) return;
+
+                const mode = (evt.pair_mode || evt.format || '').toLowerCase();
+                const isFixed = mode === 'fixed' || (evt.name || '').toUpperCase().includes('FIJA');
+
+                if (await this.waitForService()) {
+                    let partnerName = null;
+                    let partnerId = null;
+
+                    if (isFixed) {
+                        const choice = await window.PremiumModal.confirm({
+                            title: "🎾 PAREJA FIJA",
+                            message: "¿Te apuntas solo o con tu compañero habitual?",
+                            confirmText: "ELEGIR PAREJA",
+                            cancelText: "SOLO"
+                        });
+
+                        if (choice) {
+                            const playersSvc = window.createService('players');
+                            const allPlayers = await playersSvc.getAll();
+                            const currentUid = this.state.currentUser.uid || this.state.currentUser.id;
+                            const items = allPlayers
+                                .filter(p => p.id !== currentUid)
+                                .map(p => ({
+                                    id: p.id,
+                                    name: p.name || 'Sin nombre',
+                                    sub: `Nivel: ${p.level || p.self_rate_level || '3.5'} • ${p.phone || 'SP Player'}`,
+                                    image: p.photo_url || p.photo
+                                }));
+
+                            const selectedPartner = await window.PremiumModal.selector({
+                                title: "🔍 BUSCAR COMPAÑERO",
+                                message: "Selecciona a tu compañero de la base de datos:",
+                                items: items,
+                                placeholder: "Escribe nombre o teléfono..."
+                            });
+
+                            if (!selectedPartner) return;
+                            partnerName = selectedPartner.name;
+                            partnerId = selectedPartner.id;
+                        } else {
+                            const confirmSolo = await window.PremiumModal.confirm({
+                                title: "⚖️ APUNTARSE SOLO",
+                                message: "Te apuntarás sin pareja. El sistema o el admin te asignarán una más adelante. ¿Continuar?",
+                                confirmText: "SÍ, APUNTARME"
+                            });
+                            if (!confirmSolo) return;
+                        }
+                    } else {
+                        const confirmed = await window.PremiumModal.confirm({
+                            title: "🎾 INSCRIBIRSE",
+                            message: "¿Quieres apuntarte a este evento?",
+                            confirmText: "SÍ, APUNTARME"
+                        });
+                        if (!confirmed) return;
+                    }
+
+                    const userToJoin = {
+                        ...this.state.currentUser,
+                        uid: this.state.currentUser.uid || this.state.currentUser.id,
+                        id: this.state.currentUser.uid || this.state.currentUser.id
+                    };
+
+                    const res = await window.AmericanaService.addPlayer(id, userToJoin, type, partnerName, partnerId);
+                    window.PremiumModal.alert({
+                        title: res.success ? "✅ ÉXITO" : "❌ ERROR",
+                        message: res.success ? (partnerName ? `Inscrito correctamente con ${partnerName}.` : "Te has inscrito correctamente.") : "Error: " + res.error,
+                        type: res.success ? 'success' : 'error'
+                    });
+                }
+            } catch (err) {
+                console.error("Error joining event:", err);
+                window.PremiumModal.alert({ title: "❌ ERROR", message: "Error crítico al intentar apuntarse: " + err.message, type: 'error' });
             }
         }
 
         async leaveEvent(id, type = 'americana') {
-            if (!this.state.currentUser) {
-                window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión." });
-                return;
-            }
-            if (await this.waitForService()) {
-                const confirmed = await window.PremiumModal.confirm({
-                    title: "👋 DARSE DE BAJA",
-                    message: "¿Seguro que quieres borrarte del evento?",
-                    confirmText: "SÍ, BORRARME",
-                    confirmColor: "#FF3B30"
-                });
-                if (!confirmed) return;
+            try {
+                if (!this.state.currentUser) {
+                    window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión." });
+                    return;
+                }
+                if (await this.waitForService()) {
+                    const confirmed = await window.PremiumModal.confirm({
+                        title: "👋 DARSE DE BAJA",
+                        message: "¿Seguro que quieres borrarte del evento?",
+                        confirmText: "SÍ, BORRARME",
+                        confirmColor: "#FF3B30",
+                        type: 'danger'
+                    });
+                    if (!confirmed) return;
 
-                const res = await window.AmericanaService.removePlayer(id, this.state.currentUser.uid, type);
-                window.PremiumModal.alert({
-                    title: res.success ? "✅ TRÁMITE REALIZADO" : "❌ ERROR",
-                    message: res.success ? "Baja tramitada correctamente." : "Error: " + res.error,
-                    type: res.success ? 'success' : 'error'
-                });
+                    const userUid = this.state.currentUser.uid || this.state.currentUser.id;
+                    const res = await window.AmericanaService.removePlayer(id, userUid, type);
+                    
+                    window.PremiumModal.alert({
+                        title: res.success ? "✅ TRÁMITE REALIZADO" : "❌ ERROR",
+                        message: res.success ? "Baja tramitada correctamente." : "Error: " + res.error,
+                        type: res.success ? 'success' : 'error'
+                    });
+                }
+            } catch (err) {
+                console.error("Error leaving event:", err);
+                window.PremiumModal.alert({ title: "❌ ERROR", message: "Error al tramitar la baja: " + err.message, type: 'error' });
             }
         }
 
         async joinWaitlist(id, type = 'americana') {
-            if (!this.state.currentUser) {
-                window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión." });
-                return;
-            }
-            const confirmed = await window.PremiumModal.confirm({
-                title: "⏳ LISTA DE ESPERA",
-                message: "El evento está lleno. ¿Quieres entrar en lista de espera? Te avisaremos si queda una plaza libre.",
-                confirmText: "ENTRAR EN ESPERA"
-            });
-            if (confirmed) {
-                const res = await window.AmericanaService.addToWaitlist(id, this.state.currentUser, type);
-                window.PremiumModal.alert({
-                    title: res.success ? "✅ REGISTRADO" : "❌ ERROR",
-                    message: res.success ? "Estás en lista de espera. ¡Suerte!" : "Error: " + res.error,
-                    type: res.success ? 'success' : 'error'
+            try {
+                if (!this.state.currentUser) {
+                    window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión." });
+                    return;
+                }
+                const confirmed = await window.PremiumModal.confirm({
+                    title: "⏳ LISTA DE ESPERA",
+                    message: "El evento está lleno. ¿Quieres entrar en lista de espera? Te avisaremos si queda una plaza libre.",
+                    confirmText: "ENTRAR EN ESPERA",
+                    type: 'warning'
                 });
+                if (confirmed) {
+                    const userToJoin = {
+                        ...this.state.currentUser,
+                        uid: this.state.currentUser.uid || this.state.currentUser.id
+                    };
+                    const res = await window.AmericanaService.addToWaitlist(id, userToJoin, type);
+                    window.PremiumModal.alert({
+                        title: res.success ? "✅ REGISTRADO" : "❌ ERROR",
+                        message: res.success ? "Estás en lista de espera. ¡Suerte!" : "Error: " + res.error,
+                        type: res.success ? 'success' : 'error'
+                    });
+                }
+            } catch (err) {
+                window.PremiumModal.alert({ title: "❌ ERROR", message: err.message, type: 'error' });
             }
         }
 
         async confirmWaitlist(id, type = 'americana') {
-            if (!this.state.currentUser) {
-                window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión." });
-                return;
-            }
-            const confirmed = await window.PremiumModal.confirm({
-                title: "✨ CONFIRMAR PLAZA",
-                message: "¡Ha quedado una plaza libre para ti! ¿Confirmas tu asistencia ahora?",
-                confirmText: "SÍ, CONFIRMAR YA"
-            });
-            if (confirmed) {
-                const res = await window.AmericanaService.confirmWaitlist(id, this.state.currentUser.uid, type);
-                window.PremiumModal.alert({
-                    title: res.success ? "🎾 ¡DENTRO!" : "❌ ERROR",
-                    message: res.success ? "¡Bienvenido al evento!" : "Error: " + res.error,
-                    type: res.success ? 'success' : 'error'
+            try {
+                if (!this.state.currentUser) return;
+                const confirmed = await window.PremiumModal.confirm({
+                    title: "✨ CONFIRMAR PLAZA",
+                    message: "¡Ha quedado una plaza libre para ti! ¿Confirmas tu asistencia ahora?",
+                    confirmText: "SÍ, CONFIRMAR YA",
+                    type: 'success'
                 });
+                if (confirmed) {
+                    const userUid = this.state.currentUser.uid || this.state.currentUser.id;
+                    const res = await window.AmericanaService.confirmWaitlist(id, userUid, type);
+                    window.PremiumModal.alert({
+                        title: res.success ? "🎾 ¡DENTRO!" : "❌ ERROR",
+                        message: res.success ? "¡Bienvenido al evento!" : "Error: " + res.error,
+                        type: res.success ? 'success' : 'error'
+                    });
+                }
+            } catch (err) {
+                window.PremiumModal.alert({ title: "❌ ERROR", message: err.message, type: 'error' });
             }
         }
 
         async leaveWaitlist(id, type = 'americana') {
-            const service = window.AmericanaService._getCollectionService(type);
-            const event = await service.getById(id);
-            const newWaitlist = (event.waitlist || []).filter(p => p.uid !== this.state.currentUser.uid);
-            await service.update(id, { waitlist: newWaitlist });
-            window.PremiumModal.alert({ title: "ℹ️ INFO", message: "Has salido de la lista de espera." });
+            try {
+                if (!this.state.currentUser) return;
+                const confirmed = await window.PremiumModal.confirm({
+                    title: "⏳ SALIR DE ESPERA",
+                    message: "¿Seguro que quieres salir de la lista de espera?",
+                    type: 'warning'
+                });
+                if (!confirmed) return;
+
+                const userUid = this.state.currentUser.uid || this.state.currentUser.id;
+                const res = await window.AmericanaService.leaveWaitlist(id, userUid, type);
+                window.PremiumModal.alert({
+                    title: "ℹ️ INFO",
+                    message: res.success ? "Has salido de la lista de espera." : "Error: " + res.error
+                });
+            } catch (err) {
+                console.error("Error leaving waitlist:", err);
+            }
         }
 
         async showInscritosModal(id, type) {
