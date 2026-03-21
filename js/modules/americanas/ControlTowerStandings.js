@@ -9,7 +9,8 @@
             if (!window.StandingsService) return '<div style="padding:40px; text-align:center; color:white;">Cargando servicio de posiciones...</div>';
 
             const isEntreno = eventDoc?.isEntreno;
-            const ranking = window.StandingsService.calculate(matches, isEntreno ? 'entreno' : 'americana');
+            const isFixedPairs = eventDoc?.is_fija || (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventDoc?.name || '').toUpperCase().includes('FIJA');
+            const ranking = window.StandingsService.calculate(matches, isEntreno ? 'entreno' : 'americana', isFixedPairs);
             window.ControlTowerStandings.lastRankingData = ranking;
 
             return `
@@ -50,7 +51,7 @@
                             <button onclick="window.ControlTowerView.switchTab('results')" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: #ccc; padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
                                 <i class="fas fa-arrow-left"></i> VOLVER
                             </button>
-                            <button onclick="window.ShareModal.open('ranking', window.ControlTowerStandings.lastRankingData, window.ControlTowerView?.currentAmericanaDoc)" 
+                            <button onclick="window.ControlTowerStandings.shareStandings(window.ControlTowerStandings.lastRankingData, window.ControlTowerView?.currentAmericanaDoc)" 
                                     style="background: linear-gradient(135deg, #CCFF00 0%, #B8E600 100%); color: black; border: none; padding: 6px 14px; border-radius: 10px; font-size: 0.7rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 0 15px rgba(204,255,0,0.4);">
                                 <i class="fas fa-camera"></i> COMPARTIR
                             </button>
@@ -113,6 +114,42 @@
                     </div>
                 </div>
             `;
+        }
+
+        static async shareStandings(rankingData, eventDoc) {
+            try {
+                const eventName = eventDoc?.name || 'Entreno / Americana';
+                const eventDate = eventDoc?.date || 'Hoy';
+                const isFixedPairs = (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventName).toUpperCase().includes('FIJA');
+
+                let shareText = `🏆 CLASIFICACIÓN: ${eventName}\n📅 ${eventDate}\n\n`;
+
+                if (isFixedPairs) {
+                     // Need to calculate pairs just like in end of training modal
+                     const medals = ['🥇', '🥈', '🥉'];
+                     rankingData.slice(0, 10).forEach((p, i) => {
+                         const prefix = i < 3 ? medals[i] : `${i + 1}.`;
+                         shareText += `${prefix} ${p.name} — ${p.won} V\n`;
+                     });
+                } else {
+                     const medals = ['🥇', '🥈', '🥉'];
+                     rankingData.slice(0, 10).forEach((p, i) => {
+                         const prefix = i < 3 ? medals[i] : `${i + 1}.`;
+                         shareText += `${prefix} ${p.name} — ${p.points} pts\n`;
+                     });
+                }
+                
+                shareText += `\n🎾 ¡Sigue todos los resultados en SomosPadel!`;
+
+                if (navigator.share) {
+                    await navigator.share({ title: `Clasificación ${eventName}`, text: shareText });
+                } else {
+                    await navigator.clipboard.writeText(shareText);
+                    window.PremiumModal.alert({ title: '✅ COPIADO', message: 'Clasificación copiada al portapapeles.' });
+                }
+            } catch (err) {
+                console.error("Error sharing standings:", err);
+            }
         }
     }
     window.ControlTowerStandings = ControlTowerStandings;

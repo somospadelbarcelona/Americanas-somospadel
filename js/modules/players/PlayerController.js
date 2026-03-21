@@ -644,6 +644,14 @@
 
             return { atk, def, tec, fis, levelText: level.toFixed(2) };
         }
+
+        destroy() {
+            console.log("🧹 [PlayerController] Cleaning up listeners...");
+            if (this.unsubMatches) { this.unsubMatches(); this.unsubMatches = null; }
+            if (this.unsubMatchesB) { this.unsubMatchesB(); this.unsubMatchesB = null; }
+            if (this.unsubEntrenos) { this.unsubEntrenos(); this.unsubEntrenos = null; }
+            if (this.unsubEntrenosB) { this.unsubEntrenosB(); this.unsubEntrenosB = null; }
+        }
     }
 
     window.PlayerController = new PlayerController();

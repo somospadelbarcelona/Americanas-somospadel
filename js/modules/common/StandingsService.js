@@ -12,7 +12,7 @@
          * Calculates standings from a list of matches.
          * Optimized for Pozo, Americanas, and Entrenos.
          */
-        calculate(matches, type = 'americana') {
+        calculate(matches, type = 'americana', isFixedPairs = false) {
             const stats = {};
 
             matches.forEach(m => {
@@ -24,10 +24,15 @@
                 const court = parseInt(m.court || 99);
                 const roundNum = parseInt(m.round || 0);
 
-                // Process Team A
-                this._processTeam(stats, m.team_a_ids, m.team_a_names, scoreA, scoreB, court, roundNum);
-                // Process Team B
-                this._processTeam(stats, m.team_b_ids, m.team_b_names, scoreB, scoreA, court, roundNum);
+                if (isFixedPairs) {
+                    this._processFixedPairTeam(stats, m.team_a_ids, m.team_a_names, scoreA, scoreB, court, roundNum);
+                    this._processFixedPairTeam(stats, m.team_b_ids, m.team_b_names, scoreB, scoreA, court, roundNum);
+                } else {
+                    // Process Team A
+                    this._processTeam(stats, m.team_a_ids, m.team_a_names, scoreA, scoreB, court, roundNum);
+                    // Process Team B
+                    this._processTeam(stats, m.team_b_ids, m.team_b_names, scoreB, scoreA, court, roundNum);
+                }
             });
 
             return Object.values(stats).sort((a, b) => {
@@ -53,6 +58,26 @@
             });
         }
 
+        _processFixedPairTeam(stats, ids, namesRaw, scoreSelf, scoreOther, court, roundNum) {
+            let sortedIds = [...(ids || [])].sort();
+            let key = sortedIds.join('|');
+            let namesArray = [];
+            if (Array.isArray(namesRaw)) {
+                namesArray = namesRaw;
+            } else if (typeof namesRaw === 'string') {
+                namesArray = namesRaw.split(' / ').map(s => s.trim());
+            }
+            if (!key) key = namesArray.join('|');
+            if (!key) return; // Cannot identify team
+
+            const displayName = namesArray.length > 0 
+                ? namesArray.map(n => (n || '').split(' ')[0]).join(' & ') 
+                : key;
+
+            this._ensurePlayer(stats, key, displayName);
+            this._updatePlayerStats(stats[key], scoreSelf, scoreOther, court, roundNum);
+        }
+
         _processTeam(stats, ids, namesRaw, scoreSelf, scoreOther, court, roundNum) {
             if (!ids || !Array.isArray(ids)) {
                 // Handle case where ids is missing but names might exist
@@ -75,7 +100,7 @@
             }
 
             ids.forEach((uid, idx) => {
-                const pName = namesArray[idx] || `Jugador \${idx + 1}`;
+                const pName = namesArray[idx] || `Jugador ${idx + 1}`;
                 this._ensurePlayer(stats, uid, pName);
                 this._updatePlayerStats(stats[uid], scoreSelf, scoreOther, court, roundNum);
             });

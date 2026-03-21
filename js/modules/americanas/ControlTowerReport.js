@@ -165,7 +165,7 @@
                             <button onclick="window.ControlTowerView.switchTab('results')" style="flex: 1; background: #111; border: 1px solid #111; color: white; padding: 10px; border-radius: 12px; font-weight: 800; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
                                 <i class="fas fa-arrow-left"></i> VOLVER
                             </button>
-                            <button onclick="window.ShareModal.open('report', window.ControlTowerReport.lastSubject, { subjectName: window.ControlTowerReport.lastSubjectName, eventDoc: window.ControlTowerView?.currentAmericanaDoc })" 
+                            <button onclick="window.ControlTowerReport.shareReport(window.ControlTowerReport.lastSubject, window.ControlTowerView?.currentAmericanaDoc)" 
                                     style="flex: 2; background: linear-gradient(135deg, #CCFF00 0%, #B8E600 100%); color: black; border: none; padding: 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 950; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(204,255,0,0.3);">
                                 <i class="fas fa-share-alt"></i> COMPARTIR INFORME
                             </button>
@@ -275,7 +275,28 @@
                             </div>
                         </div>
                     </div>
+                    </div>
                 </div>`;
+        }
+
+        static async shareReport(subject, eventDoc) {
+            try {
+                const eventName = eventDoc?.name || 'Entreno / Americana';
+                const eventDate = eventDoc?.date || 'Hoy';
+                const wp = Math.round((subject.wins / (subject.matches || 1)) * 100);
+                const diff = subject.games - subject.oppGames;
+
+                const shareText = `🎾 INFORME INDIVIDUAL: ${subject.name}\n🏆 Torneo: ${eventName} (${eventDate})\n\n📈 EFECTIVIDAD: ${wp}%\n⚔️ VICTORIAS: ${subject.wins} de ${subject.matches}\n⚖️ BALANCE: ${diff >= 0 ? '+' : ''}${diff} juegos\n🔥 CLUTCH POINTS: ${subject.clutchPoints}\n\n¡Sigue el rendimiento completo en SomosPadel!`;
+
+                if (navigator.share) {
+                    await navigator.share({ title: `Informe de ${subject.name}`, text: shareText });
+                } else {
+                    await navigator.clipboard.writeText(shareText);
+                    window.PremiumModal.alert({ title: '✅ COPIADO', message: 'Informe copiado al portapapeles.' });
+                }
+            } catch (err) {
+                console.error("Error sharing report:", err);
+            }
         }
 
         static _initCharts(dataPoints) {

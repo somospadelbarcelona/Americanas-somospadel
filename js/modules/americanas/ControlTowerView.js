@@ -81,6 +81,7 @@
             this.currentAmericanaId = eventId;
             this.selectedRound = 1;
             this.mainSection = 'playing'; // Ensure we show the game area
+            this._trainingFinishedShown = false; // Reset end-of-training modal flag
 
             // Show loading
             this.render({ status: 'LOADING' });
@@ -326,7 +327,15 @@
 
                 // Check if Max Rounds reached
                 const totalRounds = parseInt(this.currentAmericanaDoc.rounds_count || this.currentAmericanaDoc.rounds) || 6;
-                if (maxRound >= totalRounds) return;
+                if (maxRound >= totalRounds) {
+                    // LAST ROUND COMPLETE → Show Final Training Results Modal
+                    if (!this._trainingFinishedShown) {
+                        this._trainingFinishedShown = true;
+                        this.roundPromptDismissedFor = maxRound;
+                        this.showTrainingFinishedModal(maxRound);
+                    }
+                    return;
+                }
 
                 // SHOW PROMPT for the current completed round
                 this.showRoundFinishedModal(maxRound);
@@ -340,70 +349,46 @@
         }
 
         showRoundFinishedModal(round) {
-            if (document.getElementById('round-finished-modal')) return;
-
-            const modal = document.createElement('div');
-            modal.id = 'round-finished-modal';
-            modal.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: rgba(0,0,0,0.85); z-index: 13000;
-                display: flex; align-items: center; justify-content: center;
-                backdrop-filter: blur(5px); animation: fadeIn 0.3s ease;
-            `;
-
-            modal.innerHTML = `
-                <div style="background: linear-gradient(135deg, #111 0%, #0a0a0a 100%); width: 90%; max-width: 400px; padding: 30px; border-radius: 24px; border: 2px solid #CCFF00; text-align: center; box-shadow: 0 0 50px rgba(204,255,0,0.2); position: relative;">
-                    <div style="width: 60px; height: 60px; background: #CCFF00; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 0 20px rgba(204,255,0,0.6);">
-                        <i class="fas fa-flag-checkered" style="font-size: 1.8rem; color: black;"></i>
-                    </div>
-                    <h2 style="color: white; font-weight: 950; font-size: 1.5rem; margin: 0 0 10px 0;">RONDA ${round} FINALIZADA</h2>
-                    <p style="color: #bbb; font-size: 0.9rem; margin-bottom: 25px;">Todos los partidos han terminado. ¿Qué quieres hacer?</p>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <button id="btn-next-round" style="background: #CCFF00; color: black; border: none; padding: 16px; border-radius: 14px; font-weight: 900; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 5px 15px rgba(204,255,0,0.3);">
-                            ✅ SÍ, SIGUIENTE RONDA
-                        </button>
-                        <button id="btn-edit-round" style="background: transparent; color: white; border: 2px solid #333; padding: 14px; border-radius: 14px; font-weight: 800; font-size: 0.9rem; cursor: pointer;">
-                            ❌ NO, QUIERO EDITAR
-                        </button>
-                    </div>
-                </div>
-            `;
-
-            document.body.appendChild(modal);
-
-            // Bind Actions
-            document.getElementById('btn-next-round').onclick = async () => {
-                const btn = document.getElementById('btn-next-round');
-                btn.innerHTML = '<div class="loader-spinner"></div> GENERANDO...';
-                try {
+            window.EventModals.showRoundFinishedModal(
+                round, 
+                this.currentAmericanaDoc,
+                async () => {
                     const isEntreno = this.currentAmericanaDoc?.isEntreno;
-                    // Trigger Generation
                     if (window.AmericanaService) {
-                        await window.AmericanaService.generateNextRound(this.currentAmericanaDoc.id, round, isEntreno ? 'entreno' : 'americana');
-                        // Dismiss modal 
-                        this.roundPromptDismissedFor = null; // Reset for next
-                        this.closeRoundFinishedModal();
+                        try {
+                            await window.AmericanaService.generateNextRound(this.currentAmericanaDoc.id, round, isEntreno ? 'entreno' : 'americana');
+                            window.EventModals.closeRoundFinishedModal();
+                            this.roundPromptDismissedFor = null;
+                        } catch (e) {
+                            window.PremiumModal.alert({ title: "❌ ERROR", message: e.message, type: 'error' });
+                        }
                     }
-                } catch (e) {
-                    window.PremiumModal.alert({
-                        title: "❌ ERROR",
-                        message: "No se pudo generar la siguiente ronda: " + e.message,
-                        type: 'error'
-                    });
-                    btn.innerHTML = '✅ SÍ, SIGUIENTE RONDA';
-                }
-            };
-
-            document.getElementById('btn-edit-round').onclick = () => {
-                this.roundPromptDismissedFor = round;
-                this.closeRoundFinishedModal();
-            };
+                },
+                () => { this.roundPromptDismissedFor = round; }
+            );
         }
 
         closeRoundFinishedModal() {
-            const el = document.getElementById('round-finished-modal');
-            if (el) el.remove();
+            window.EventModals.closeRoundFinishedModal();
+        }
+
+        showTrainingFinishedModal(finalRound) {
+            window.EventModals.showTrainingFinishedModal(
+                finalRound,
+                this.allMatches,
+                this.currentAmericanaDoc,
+                (rankingItems, isFixedPairs) => {
+                    const eventDate = this.currentAmericanaDoc?.date || '';
+                    const medals = ['🏆', '🥈', '🥉'];
+                    const shareText = rankingItems.slice(0, 3)
+                        .map((p, i) => `${medals[i]} ${p.name} — ${isFixedPairs ? p.won + ' V' : p.points + ' pts'}`)
+                        .join('\n');
+                    const fullText = `🎾 FIN DEL ENTRENO\n📅 ${eventDate}\n\n${shareText}\n\n¡Hasta la próxima! 🏆`;
+                    if (window.WhatsAppService) window.WhatsAppService.shareText(fullText);
+                },
+                (tab) => { this.switchTab(tab); document.getElementById('training-finished-modal')?.remove(); },
+                () => { window.Router.navigate('dashboard'); }
+            );
         }
 
         async loadHistory() {
@@ -747,117 +732,11 @@
             if (this.mainSection === 'help') return this.renderHelpContent();
             if (this.mainSection === 'history') return this.renderHistoryContent();
 
-            // --- PREMIUM CATEGORY ENGINE ---
-            const category = this.currentAmericanaDoc?.category || 'pro';
-            const isFemale = category === 'female';
-            const isMixed = category === 'mixed';
-            const isMale = category === 'male';
-
-            let theme = {
-                grad: 'linear-gradient(135deg, #CCFF00 0%, #00E36D 100%)',
-                accent: '#CCFF00',
-                glow: 'rgba(204, 255, 0, 0.4)',
-                text: '#000',
-                border: '#00E36D'
-            };
-
-            if (isFemale) {
-                theme = {
-                    grad: 'linear-gradient(135deg, #FF2D55 0%, #FF5E7B 100%)',
-                    accent: '#FF2D55',
-                    glow: 'rgba(255, 45, 85, 0.4)',
-                    text: '#fff',
-                    border: '#FF2D55'
-                };
-            } else if (isMixed) {
-                theme = {
-                    grad: 'linear-gradient(135deg, #FFD700 0%, #FF9500 100%)',
-                    accent: '#FFD700',
-                    glow: 'rgba(255, 215, 0, 0.4)',
-                    text: '#000',
-                    border: '#FF9500'
-                };
-            } else if (isMale) {
-                theme = {
-                    grad: 'linear-gradient(135deg, #00C4FF 0%, #0072FF 100%)',
-                    accent: '#00C4FF',
-                    glow: 'rgba(0, 196, 255, 0.4)',
-                    text: '#fff',
-                    border: '#0072FF'
-                };
-            }
-
             const roundData = data?.currentRound || { matches: [] };
-            const amName = this.currentAmericanaDoc ? this.currentAmericanaDoc.name : "Americana Activa";
-
+            const isLive = this.currentAmericanaDoc?.status === 'live';
+            
             return `
-                <div class="tour-header-context" style="background: ${theme.grad}; padding: 45px 20px 35px; text-align: center; border-bottom: 2px solid rgba(0,0,0,0.05); position: relative; overflow: hidden;">
-                    <!-- AMBIENT GLOW -->
-                    <div style="position: absolute; top: -50px; left: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.2); filter: blur(60px); border-radius: 50%;"></div>
-                    
-                    <!-- ACTION BUTTONS -->
-                    <div style="position:absolute; top:20px; right:20px; display:flex; gap:12px; z-index:10; flex-wrap: wrap; justify-content: flex-end;">
-                         <div onclick="window.ControlTowerView.replayShuffleAnimation()" 
-                               style="background:rgba(0,0,0,0.7); color:${theme.accent}; padding:8px 16px; border-radius:12px; font-weight:950; font-size:0.65rem; cursor:pointer; backdrop-filter: blur(10px); border: 1px solid ${theme.accent}40; letter-spacing: 1px;">
-                             <i class="fas fa-random"></i> SORTEO
-                         </div>
-                         <div onclick="window.ChatView.init('${this.currentAmericanaDoc?.id}', '${amName}')" 
-                               style="background:rgba(0,0,0,0.7); color:white; padding:8px 16px; border-radius:12px; font-weight:950; font-size:0.65rem; cursor:pointer; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); letter-spacing: 1px;">
-                             <i class="fas fa-comment-dots"></i> CHAT
-                         </div>
-                         <div onclick="window.openTVMode('${this.currentAmericanaDoc?.id}', '${this.currentAmericanaDoc?.isEntreno ? 'entreno' : 'americana'}')" 
-                               style="background:rgba(0,0,0,0.7); color:${theme.accent}; padding:8px 16px; border-radius:12px; font-weight:950; font-size:0.65rem; cursor:pointer; backdrop-filter: blur(10px); border: 1px solid ${theme.accent}40;">
-                             <i class="fas fa-tv"></i> TV
-                         </div>
-                    </div>
-
-                    ${isPlayingHere ? `
-                        <div style="background: rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.1); color: ${theme.text}; display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.65rem; font-weight: 950; margin-bottom: 20px; letter-spacing: 1px; text-transform: uppercase;">
-                           PARTICIPANDO EN VIVO ✅
-                        </div>
-                    ` : ''}
-                    
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; position: relative; z-index: 2;">
-                        <div style="position: relative;">
-                            <img src="${this.currentAmericanaDoc?.image_url || 'img/logo_somospadel.png'}" 
-                                 style="width: 85px; height: 85px; border-radius: 50%; border: 4px solid white; box-shadow: 0 15px 35px rgba(0,0,0,0.3);"
-                                 onerror="this.src='img/logo_somospadel.png'">
-                            <div style="position: absolute; bottom: -5px; right: -5px; background: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
-                                <span style="font-size: 1.1rem;">${isFemale ? '♀️' : isMale ? '♂️' : '🎾'}</span>
-                            </div>
-                        </div>
-                        <h1 style="color: ${theme.text}; margin: 0; font-family: 'Outfit'; font-weight: 1000; font-size: 1.8rem; letter-spacing: -1px; line-height: 0.9;">${amName.toUpperCase()}</h1>
-                    </div>
-                    
-                    <div style="color: ${theme.text}; opacity: 0.7; font-size: 0.85rem; margin-top: 15px; font-weight: 900; letter-spacing: 0.5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                        <div style="background: rgba(0,0,0,0.05); padding: 4px 12px; border-radius: 8px;">
-                            ${this.currentAmericanaDoc?.date || ''} • ${(isMale ? 'MASCULINA' : isFemale ? 'FEMENINA' : isMixed ? 'MIXTA' : 'CATEGORÍA PRO')}
-                        </div>
-                        
-                        ${(() => {
-                    const mode = (this.currentAmericanaDoc?.pair_mode || this.currentAmericanaDoc?.format || '').toLowerCase();
-                    const nameUpper = (this.currentAmericanaDoc?.name || '').toUpperCase();
-                    let label = 'PAREJA FIJA';
-                    let modeColor = '#000';
-
-                    if (nameUpper.includes('TWISTER') || mode.includes('twister') || nameUpper.includes('ROTATIVO') || mode.includes('rotating') || mode.includes('rotativo')) {
-                        label = 'MODO TWISTER';
-                    }
-
-                    return `<div style="background: rgba(255,255,255,0.2); color: ${theme.text}; border: 1.5px solid rgba(255,255,255,0.3); padding: 5px 15px; border-radius: 12px; font-size: 0.7rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">${label}</div>`;
-                })()}
-                    </div>
-                </div>
-
-                <div class="tour-sub-nav" style="background: rgba(255,255,255,0.9); backdrop-filter: blur(20px); padding: 14px; display: flex; gap: 8px; border-bottom: 2px solid ${theme.accent}; position: sticky; top: 62px; z-index: 1001; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow-x: auto;">
-                    <button class="tour-menu-item ${this.activeTab === 'results' ? 'active' : ''}" style="flex:1; min-width: 90px; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'results' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'results' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'results' ? '0 8px 15px ' + theme.glow : 'none'}; transition: all 0.3s;" onclick="window.ControlTowerView.switchTab('results')">CALENDARIO</button>
-                    ${this.currentAmericanaDoc?.status !== 'scheduled' ? `
-                        <button class="tour-menu-item ${this.activeTab === 'standings' ? 'active' : ''}" style="flex:1; min-width: 90px; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'standings' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'standings' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'standings' ? '0 8px 15px ' + theme.glow : 'none'}; transition: all 0.3s;" onclick="window.ControlTowerView.switchTab('standings')">POSICIONES</button>
-                        <button class="tour-menu-item ${this.activeTab === 'brackets' ? 'active' : ''}" style="flex:1; min-width: 90px; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'brackets' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'brackets' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'brackets' ? '0 8px 15px ' + theme.glow : 'none'}; transition: all 0.3s;" onclick="window.ControlTowerView.switchTab('brackets')">CUADROS</button>
-                        <button class="tour-menu-item ${this.activeTab === 'summary' ? 'active' : ''}" style="flex:1; min-width: 70px; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'summary' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'summary' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'summary' ? '0 8px 15px ' + theme.glow : 'none'}; transition: all 0.3s;" onclick="window.ControlTowerView.switchTab('summary')">STATS</button>
-                    ` : ''}
-                </div>
-
+                ${window.EventHeader.render(this.currentAmericanaDoc, this.activeTab, isLive, isPlayingHere)}
                 ${this.renderActiveContent(data, roundData)}
             `;
         }
@@ -918,13 +797,31 @@
 
                 if (el) {
                     // --- UPDATE EXISTING CARD ---
-                    // 1. Status Badge
+                    // 1. Status Badge & Card Container Styles
                     const statusArea = el.querySelector('.status-area');
                     const isFinished = match.isFinished;
-                    const isLive = this.currentAmericanaDoc?.status === 'live' && !isFinished;
+                    const evtStatus = this.currentAmericanaDoc?.status;
+                    const isLive = evtStatus === 'live' && !isFinished;
+
+                    // SYNC CARD CONTAINER STYLES (Zero-Latency)
+                    let cardStyle = 'border: 1px solid var(--border-subtle); opacity: 1; filter: none; transform: none;';
+                    let cardBg = '#0f172a';
+                    const user = window.Store ? window.Store.getState('currentUser') : null;
+                    const uid = user ? user.uid : '-';
+                    const isMyMatch = (match.team_a_ids || []).includes(uid) || (match.team_b_ids || []).includes(uid);
+
+                    if (isFinished) {
+                        cardStyle = 'border: 1px solid rgba(255,255,255,0.05); opacity: 0.5; filter: grayscale(100%); z-index: 1;';
+                        cardBg = '#050a0f';
+                    } else if (isMyMatch && isLive) {
+                        cardStyle = 'border: 3px solid #CCFF00; box-shadow: 0 0 35px rgba(204, 255, 0, 0.4); transform: scale(1.03); z-index: 10;';
+                    }
+                    el.style.cssText += cardStyle;
+                    el.style.background = cardBg;
+
                     const newStatusHTML = isFinished ?
-                        '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">FINALIZADO</span>' :
-                        (isLive ? '<span class="status-badge-live">⚡ EN JUEGO</span>' : '<span style="color:#BBB;">ESPERANDO</span>');
+                        '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 950; font-size: 0.6rem; letter-spacing: 0.5px; text-transform:uppercase;">FINALIZADO</span>' :
+                        (isLive ? '<span class="status-badge-live" style="animation: pulse 1s infinite alternate;">⚡ EN JUEGO</span>' : '<span style="background: rgba(255,255,255,0.1); color: #888; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">PROGRAMADO</span>');
 
                     if (statusArea && statusArea.innerHTML !== newStatusHTML) statusArea.innerHTML = newStatusHTML;
 
@@ -981,6 +878,11 @@
                                 scoreBEl.style.boxShadow = (sB > sA) ? 'var(--shadow-neon)' : 'inset 0 2px 4px rgba(0,0,0,0.05)';
                             }
                         }
+
+                        // ACTION AREA SYNC: If it just finished, we might need a full re-render of this card's internals
+                        // to show the "Share" button instead of the "+/-" controls.
+                        // For simplicity, if isFinished and doesn't have the share button, we return false to trigger full render of this view.
+                        if (!el.querySelector('.fa-instagram')) return false;
                     }
 
                 } else {
@@ -1073,55 +975,7 @@
         }
 
         renderRoundTabs(rounds, currentNum) {
-            const category = this.currentAmericanaDoc?.category || 'pro';
-
-            let activeColor = '#CCFF00';
-            if (category === 'female') activeColor = '#FF2D55';
-            else if (category === 'mixed') activeColor = '#FFD700';
-            else if (category === 'male') activeColor = '#00C4FF';
-
-            let replayButtonHtml = '';
-            if (this.allMatches && this.allMatches.some(m => parseInt(m.round) === parseInt(currentNum))) {
-                replayButtonHtml = `
-                    <div style="width: 1px; height: 30px; background: rgba(0,0,0,0.1); margin: 0 5px;"></div>
-                    <button onclick="window.ControlTowerView.replayShuffleAnimation()" 
-                        style="background: #111; color: #CCFF00; border: 1px solid #CCFF00; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 10px rgba(204,255,0,0.3);"
-                        title="Ver Sorteo Animado">
-                        <i class="fas fa-play"></i>
-                    </button>
-                 `;
-            }
-
-            return `
-                <style>
-                    @keyframes neonPulse {
-                        0% { box-shadow: 0 0 5px var(--active-color), 0 0 10px var(--active-color); transform: scale(1); }
-                        50% { box-shadow: 0 0 20px var(--active-color), 0 0 30px var(--active-color); transform: scale(1.05); }
-                        100% { box-shadow: 0 0 5px var(--active-color), 0 0 10px var(--active-color); transform: scale(1); }
-                    }
-                </style>
-                <div class="round-tabs-container" style="display:flex; gap:8px; align-items: center; overflow-x: auto; padding: 5px 0;">
-                    ${rounds.map(r => {
-                const isSel = parseInt(r.number) === parseInt(currentNum);
-                // Use a dedicated active class or inline style with custom property for animation
-                return `
-                        <button type="button" 
-                                class="round-tab ${isSel ? 'active' : ''}" 
-                                onclick="window.ControlTowerView.goToRound(${r.number}, event)"
-                                style="--active-color: ${activeColor};
-                                       background: ${isSel ? activeColor : 'rgba(255,255,255,0.05)'}; 
-                                       color: ${isSel ? '#000' : '#999'}; 
-                                       border: 1px solid ${isSel ? activeColor : 'rgba(255,255,255,0.1)'};
-                                       padding: 12px 20px; border-radius: 14px; font-weight: 950; cursor: pointer; transition: 0.4s; min-width: 65px;
-                                       box-shadow: ${isSel ? `0 0 20px ${activeColor}` : 'none'}; 
-                                       animation: ${isSel ? 'neonPulse 2s infinite' : 'none'};
-                                       text-transform: uppercase; font-size: 0.8rem;">
-                            ${r.number}º
-                        </button>
-                    `}).join('')}
-                    ${replayButtonHtml}
-                </div>
-            `;
+            return window.EventHeader.renderRoundTabs(rounds, currentNum, this.currentAmericanaDoc, this.allMatches);
         }
 
         renderStandingsView() {
@@ -1139,192 +993,11 @@
             return window.ControlTowerStats.render(this.allMatches, this.currentAmericanaDoc);
         }
 
-        renderTournamentCard(match) {
-            try {
-                const user = window.Store ? window.Store.getState('currentUser') : null;
-                const isEntreno = this.currentAmericanaDoc?.isEntreno;
-                const colorClass = `border-${(match.court % 4) + 1}`;
-
-                // --- 1. USER CONTEXT & PERMISSIONS ---
-                const getTeamName = (namesArr, teamStr) => {
-                    if (teamStr && typeof teamStr === 'string' && teamStr.length > 0) return teamStr;
-                    if (Array.isArray(namesArr)) return namesArr.join(' / ');
-                    return String(namesArr || '');
-                };
-
-                const safeTeamA = getTeamName(match.team_a_names, match.teamA) || 'EQUIPO A';
-                const safeTeamB = getTeamName(match.team_b_names, match.teamB) || 'EQUIPO B';
-
-                const isPartA = user && (match.team_a_ids?.includes(user.uid) || safeTeamA.toLowerCase().includes((user.name || '').toLowerCase()));
-                const isPartB = user && (match.team_b_ids?.includes(user.uid) || safeTeamB.toLowerCase().includes((user.name || '').toLowerCase()));
-                const isMyMatch = isPartA || isPartB;
-                const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain'].includes((user?.role || '').toLowerCase());
-
-                // --- 2. STATUS & THEME ---
-                const evtStatus = this.currentAmericanaDoc?.status;
-                const isFinished = match.isFinished || match.status === 'finished';
-                const isLive = evtStatus === 'live' && !isFinished;
-
-                let statusBadge = '';
-                if (isFinished) {
-                    statusBadge = '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 950; font-size: 0.6rem; letter-spacing: 0.5px; text-transform:uppercase;">FINALIZADO</span>';
-                } else if (isLive) {
-                    statusBadge = '<span class="status-badge-live" style="animation: pulse 1s infinite alternate;">⚡ EN JUEGO</span>';
-                } else {
-                    statusBadge = '<span style="background: rgba(255,255,255,0.1); color: #888; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">PROGRAMADO</span>';
-                }
-
-                const sA = parseInt(match.score_a || 0);
-                const sB = parseInt(match.score_b || 0);
-
-                const timeLabel = (window.calculateMatchTime && typeof window.calculateMatchTime === 'function')
-                    ? window.calculateMatchTime(this.currentAmericanaDoc?.time || "10:00", parseInt(match.round) || 1)
-                    : "Seguido";
-
-                // --- 3. DYNAMIC STYLES ---
-                const cardStyle = isMyMatch && isLive
-                    ? 'border: 3px solid #CCFF00; box-shadow: 0 0 35px rgba(204, 255, 0, 0.4); transform: scale(1.03); z-index: 10;'
-                    : 'border: 1px solid var(--border-subtle);';
-
-                const winnerA = isFinished && sA > sB;
-                const winnerB = isFinished && sB > sA;
-
-                // --- 4. ACTION AREA (UX REVOLUTION) ---
-                const canEdit = (evtStatus === 'live' || evtStatus === 'adjusting') && user;
-                let actionArea = '';
-
-                if (isFinished) {
-                    const userDelta = isPartA ? (match.delta_a || 0) : (match.delta_b || 0);
-                    if (!window._matchRegistry) window._matchRegistry = {};
-                    window._matchRegistry[match.id] = match;
-
-                    actionArea = `
-                        <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
-                            <button onclick="shareVictory('${match.id}', ${userDelta})"
-                                    style="background: linear-gradient(135deg, #CCFF00 0%, #00E36D 100%); color: black; border: none; padding: 14px; border-radius: 16px; font-size: 0.8rem; cursor: pointer; font-weight: 950; box-shadow: 0 4px 15px rgba(204,255,0,0.3); display: flex; align-items: center; gap: 10px; justify-content: center; text-transform: uppercase; width: 100%;">
-                                <i class="fab fa-instagram" style="font-size: 1.1rem;"></i> COMPARTIR VICTORIA
-                            </button>
-                            ${isAdmin ? `
-                                <button onclick="window.ControlTowerView.unlockMatch('${match.id}')" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #666; padding: 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 700;">
-                                    <i class="fas fa-lock-open"></i> DESBLOQUEAR PARA EDITAR
-                                </button>
-                            ` : ''}
-                        </div>
-                    `;
-                } else if (canEdit) {
-                    // NEW HIGH-INTERACTION PAD FOR PLAYERS
-                    actionArea = `
-                        <div style="margin-top:20px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.05);">
-                            <div style="text-align:center; margin-bottom:15px;">
-                                <span style="font-size:0.6rem; font-weight:950; color:var(--brand-neon); letter-spacing:2px; text-transform:uppercase;">INTRODUCIR RESULTADO</span>
-                            </div>
-                            <div style="display:flex; gap:8px; justify-content:space-between; width:100%;">
-                                <!-- TEAM A CONTROLS -->
-                                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; background:rgba(255,255,255,0.02); padding:12px 5px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
-                                    <div style="font-size:0.55rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:0.5px;">EQ. ARRIBA</div>
-                                    <div style="display:flex; align-items:center; gap:6px; justify-content:center;">
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', -1)" style="width:36px; height:36px; padding:0; border-radius:50%; border:none; background:#333; color:white; font-size:1.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 4px 10px rgba(0,0,0,0.3);">-</button>
-                                        <span id="score-a-val-${match.id}" style="font-size:1.8rem; font-weight:950; color:white; text-align:center; min-width:32px;">${sA}</span>
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', 1)" style="width:36px; height:36px; padding:0; border-radius:50%; border:none; background:var(--brand-neon); color:black; font-size:1.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 4px 10px rgba(204,255,0,0.2);">+</button>
-                                    </div>
-                                </div>
-                                <!-- TEAM B CONTROLS -->
-                                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; background:rgba(255,255,255,0.02); padding:12px 5px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
-                                    <div style="font-size:0.55rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:0.5px;">EQ. ABAJO</div>
-                                    <div style="display:flex; align-items:center; gap:6px; justify-content:center;">
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', -1)" style="width:36px; height:36px; padding:0; border-radius:50%; border:none; background:#333; color:white; font-size:1.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 4px 10px rgba(0,0,0,0.3);">-</button>
-                                        <span id="score-b-val-${match.id}" style="font-size:1.8rem; font-weight:950; color:white; text-align:center; min-width:32px;">${sB}</span>
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', 1)" style="width:36px; height:36px; padding:0; border-radius:50%; border:none; background:var(--brand-neon); color:black; font-size:1.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 4px 10px rgba(204,255,0,0.2);">+</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <button onclick="window.ControlTowerView.finishMatch('${match.id}')" 
-                                    style="width:100%; margin-top:20px; padding:18px; background:var(--brand-neon); color:black; font-weight:950; font-size:1rem; border:none; border-radius:20px; box-shadow: 0 10px 25px rgba(204,255,0,0.3); display:flex; align-items:center; justify-content:center; gap:12px; transition:0.3s;"
-                                    onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                                <i class="fas fa-check-circle" style="font-size:1.2rem;"></i> FINALIZAR PARTIDO
-                            </button>
-                        </div>
-                    `;
-                } else if (!isFinished && !canEdit) {
-                    actionArea = `
-                        <div style="margin-top:15px; padding:12px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:12px; text-align:center;">
-                            <span style="font-size:0.7rem; color:#666; font-weight:700;">MODO ESPECTADOR • SOLO LECTURA</span>
-                        </div>
-                    `;
-                }
-
-                return `
-                    <div id="tour-match-${match.id}" class="tour-match-card ${colorClass}" style="
-                        background: #0f172a; 
-                        border-radius: 32px; 
-                        overflow: hidden; 
-                        box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-                        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                        ${cardStyle}
-                    ">
-                        <!-- CARD HEADER -->
-                        <div style="padding: 16px 24px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03);">
-                            <span style="font-size: 0.65rem; font-weight: 900; color: rgba(255,255,255,0.5); letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px;">
-                                <div style="width: 8px; height: 8px; background: var(--brand-neon); border-radius: 50%; box-shadow: 0 0 10px var(--brand-neon);"></div>
-                                PISTA ${match.court} • P${match.round} • ${timeLabel}
-                            </span>
-                            <div class="status-area">${statusBadge}</div>
-                        </div>
-                        
-                        <!-- TEAMS & SCORES -->
-                        <div style="padding: 16px 15px;">
-                            <!-- TEAM A -->
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-                                    <div style="font-size: 1.05rem; color: #fff; font-weight: 900; line-height: 1.2; text-transform: uppercase; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px;">
-                                        ${winnerA ? '<i class="fas fa-trophy" style="color: var(--brand-neon); font-size: 0.9rem;"></i>' : ''}
-                                        <span style="${winnerA ? 'border-bottom: 2px solid var(--brand-neon);' : ''}">${safeTeamA}</span>
-                                    </div>
-                                    ${isPartA ? '<span style="color: var(--brand-neon); font-size: 0.6rem; font-weight: 950; letter-spacing: 1px;">TU EQUIPO ★</span>' : ''}
-                                </div>
-                                <div id="match-score-a-${match.id}" style="
-                                    background: ${winnerA ? 'var(--brand-neon)' : 'rgba(255,255,255,0.05)'}; 
-                                    color: ${winnerA ? 'black' : 'white'}; 
-                                    min-width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; 
-                                    font-weight: 950; font-size: 1.6rem; border: 1px solid ${winnerA ? 'var(--brand-neon)' : 'rgba(255,255,255,0.1)'};
-                                    box-shadow: ${winnerA ? '0 0 20px rgba(204,255,0,0.3)' : 'none'};
-                                    transition: all 0.3s;
-                                ">${sA}</div>
-                            </div>
-                            
-                            <!-- DIVIDER -->
-                            <div style="height: 1px; background: linear-gradient(to right, rgba(204,255,0,0.4), transparent); margin-bottom: 20px; position: relative;">
-                                <div style="position: absolute; left: 0; top: -1px; width: 40px; height: 3px; background: var(--brand-neon); border-radius: 10px;"></div>
-                            </div>
-                            
-                            <!-- TEAM B -->
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-                                    <div style="font-size: 1.05rem; color: #fff; font-weight: 900; line-height: 1.2; text-transform: uppercase; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px;">
-                                        ${winnerB ? '<i class="fas fa-trophy" style="color: var(--brand-neon); font-size: 0.9rem;"></i>' : ''}
-                                        <span style="${winnerB ? 'border-bottom: 2px solid var(--brand-neon);' : ''}">${safeTeamB}</span>
-                                    </div>
-                                    ${isPartB ? '<span style="color: var(--brand-neon); font-size: 0.6rem; font-weight: 950; letter-spacing: 1px;">TU EQUIPO ★</span>' : ''}
-                                </div>
-                                <div id="match-score-b-${match.id}" style="
-                                    background: ${winnerB ? 'var(--brand-neon)' : 'rgba(255,255,255,0.05)'}; 
-                                    color: ${winnerB ? 'black' : 'white'}; 
-                                    min-width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; 
-                                    font-weight: 950; font-size: 1.6rem; border: 1px solid ${winnerB ? 'var(--brand-neon)' : 'rgba(255,255,255,0.1)'};
-                                    box-shadow: ${winnerB ? '0 0 20px rgba(204,255,0,0.3)' : 'none'};
-                                    transition: all 0.3s;
-                                ">${sB}</div>
-                            </div>
-                            
-                            <!-- ACTION AREA -->
-                            ${actionArea}
-                        </div>
-                    </div>
-                `;
-            } catch (err) {
-                console.error("Match Render Error:", err, match);
-                return `<div style="padding:20px; color:red; font-size:0.7rem;">Error al cargar tarjeta de partido: ${err.message}</div>`;
-            }
+        renderTournamentCard(match, options = {}) {
+            return window.MatchCard.renderTournamentCard(match, {
+                ...options,
+                currentAmericanaDoc: this.currentAmericanaDoc
+            });
         }
 
         async adjustScore(matchId, field, delta) {
@@ -1337,40 +1010,112 @@
             const newVal = Math.max(0, currentVal + delta);
             match[field] = newVal;
 
-            // 2. TRIGGER UI SYNC IMMEDIATELY
-            // This will call recalc() -> render() -> smartUpdateResults()
-            // Since we updated match[field], the UI will reflect it instantly.
-            this.recalc();
+            // 2a. LIVE TIE-WARNING UPDATE (Entreno only — instant DOM feedback)
+            if (this.currentAmericanaDoc?.isEntreno) {
+                const updatedSA = parseInt(match.score_a || 0);
+                const updatedSB = parseInt(match.score_b || 0);
+                const isTie = updatedSA === updatedSB;
+                const tieDiv = document.getElementById(`tie-warning-${matchId}`);
+                const finishBtn = document.getElementById(`finish-btn-${matchId}`);
+                if (tieDiv) tieDiv.style.display = isTie && (updatedSA > 0 || updatedSB > 0) ? 'flex' : 'none';
+                if (finishBtn) {
+                    finishBtn.style.background = isTie ? 'rgba(255,160,0,0.2)' : 'var(--brand-neon)';
+                    finishBtn.style.color = isTie ? '#FFA000' : 'black';
+                    finishBtn.style.border = isTie ? '2px solid rgba(255,160,0,0.5)' : 'none';
+                    finishBtn.style.boxShadow = isTie ? 'none' : '0 10px 25px rgba(204,255,0,0.3)';
+                    finishBtn.innerHTML = `<i class="fas ${isTie ? 'fa-exclamation-triangle' : 'fa-check-circle'}" style="font-size:1.2rem;margin-right:10px;"></i>${isTie ? 'EMPATE — CORRIGE EL MARCADOR' : 'FINALIZAR PARTIDO'}`;
+                }
+            }
+
+            // 2b. DOM DIRECT UPDATE (Massive Performance Boost)
+            // Instead of rebuilding the entire view with this.recalc(), we surgically update the UI
+            const lblSmall = document.getElementById(`score-${field === 'score_a' ? 'a' : 'b'}-val-${matchId}`);
+            if (lblSmall) lblSmall.innerText = newVal;
+
+            const lblLarge = document.getElementById(`match-score-${field === 'score_a' ? 'a' : 'b'}-${matchId}`);
+            if (lblLarge) lblLarge.innerText = newVal;
+
+            // Highlight instantaneous winner styles
+            const sA = parseInt(match.score_a || 0);
+            const sB = parseInt(match.score_b || 0);
+            ['a', 'b'].forEach(side => {
+                const box = document.getElementById(`match-score-${side}-${matchId}`);
+                if (box) {
+                    const myScore = side === 'a' ? sA : sB;
+                    const otherScore = side === 'a' ? sB : sA;
+                    const isWinner = myScore > otherScore;
+                    box.style.background = isWinner ? 'var(--brand-neon)' : 'rgba(255,255,255,0.05)';
+                    box.style.color = isWinner ? 'black' : 'white';
+                    box.style.border = `1px solid ${isWinner ? 'var(--brand-neon)' : 'rgba(255,255,255,0.1)'}`;
+                    box.style.boxShadow = isWinner ? '0 0 20px rgba(204,255,0,0.3)' : 'none';
+                }
+            });
 
             // 3. HAPTIC FEEDBACK
             if (window.navigator?.vibrate) window.navigator.vibrate(20);
 
-            // 4. PERSIST TO FIREBASE
+            // 4. DEBOUNCED PERSIST TO FIREBASE (Stops HTTP 429 & UI Blocking)
             const isEntreno = this.currentAmericanaDoc?.isEntreno;
             const collection = isEntreno ? 'entrenos_matches' : 'matches';
 
-            try {
-                await window.db.collection(collection).doc(matchId).update({
-                    [field]: newVal
-                });
-                console.log(`✅ Score synced to cloud: ${field} = ${newVal}`);
-            } catch (e) {
-                console.error("❌ Firebase update failed:", e);
-                // On failure, the next snapshot will naturally roll back the UI
-                window.PremiumModal.alert({
-                    title: "❌ ERROR AL GUARDAR",
-                    message: e.message.includes('permission') ? "No tienes permisos para editar este resultado." : e.message,
-                    type: 'error'
-                });
+            if (!window._scoreDebounceMap) window._scoreDebounceMap = {};
+            const debounceKey = `${matchId}_${field}`;
+            
+            if (window._scoreDebounceMap[debounceKey]) {
+                clearTimeout(window._scoreDebounceMap[debounceKey]);
             }
+
+            window._scoreDebounceMap[debounceKey] = setTimeout(async () => {
+                try {
+                    await window.db.collection(collection).doc(matchId).update({
+                        [field]: newVal
+                    });
+                    console.log(`✅ Score synced (debounced): ${field} = ${newVal}`);
+                } catch (e) {
+                    console.error("❌ Firebase debounced update failed:", e);
+                    window.PremiumModal.alert({
+                        title: "❌ ERROR AL GUARDAR",
+                        message: e.message.includes('permission') ? "No tienes permisos para editar." : e.message,
+                        type: 'error'
+                    });
+                }
+            }, 800);
         }
 
         async finishMatch(matchId) {
             const isEntreno = this.currentAmericanaDoc?.isEntreno;
             const collection = isEntreno ? 'entrenos_matches' : 'matches';
 
+            // ⛔ ANTI-EMPATE: En entrenos no se permiten empates (bloquean la lógica de avance)
+            if (isEntreno) {
+                const match = this.allMatches.find(m => m.id === matchId);
+                if (match) {
+                    const sA = parseInt(match.score_a || 0);
+                    const sB = parseInt(match.score_b || 0);
+                    if (sA === sB) {
+                        if (window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
+                        window.PremiumModal.alert({
+                            title: '⚠️ EMPATE NO PERMITIDO',
+                            message: `El resultado está igualado (${sA}-${sB}). En los entrenos debe haber un ganador claro. Ajusta el marcador antes de finalizar.`,
+                            type: 'warning'
+                        });
+                        return; // Block finalization
+                    }
+                }
+            }
+
             // Haptic feedback
             if (window.navigator?.vibrate) window.navigator.vibrate([30, 50, 30]);
+
+            // OPTIMISTIC UI: Instant visual feedback to the user before Firebase responds
+            const matchCardEl = document.getElementById(`tour-match-${matchId}`);
+            if (matchCardEl) {
+                matchCardEl.style.transition = 'all 0.3s ease-out';
+                matchCardEl.style.opacity = '0.5';
+                matchCardEl.style.filter = 'grayscale(100%)';
+                matchCardEl.style.transform = 'scale(0.98)';
+                matchCardEl.style.pointerEvents = 'none'; // Lock interaction momentarily
+            }
 
             try {
                 await window.db.collection(collection).doc(matchId).update({
@@ -1389,6 +1134,7 @@
                 console.error("Finish match failed:", e);
             }
         }
+
 
         async unlockMatch(matchId) {
             const confirmed = await window.PremiumModal.confirm({

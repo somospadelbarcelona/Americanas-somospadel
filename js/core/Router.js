@@ -91,9 +91,14 @@
 
         cleanupPreviousRoute() {
             const controllersToCleanup = [
+                { name: 'DashboardView', routes: ['dashboard'] },
+                { name: 'DashboardController', routes: ['dashboard'] },
                 { name: 'EventsController', routes: ['events', 'americanas', 'results', 'agenda', 'entrenos'] },
                 { name: 'ControlTowerView', routes: ['live'] },
-                { name: 'TVView', routes: ['tv'] }
+                { name: 'TVView', routes: ['tv'] },
+                { name: 'PlayerController', routes: ['profile'] },
+                { name: 'RecordsController', routes: ['records'] },
+                { name: 'RankingController', routes: ['ranking'] }
             ];
 
             controllersToCleanup.forEach(ctrl => {

@@ -24,7 +24,7 @@
             };
 
             if (window.Store) {
-                window.Store.subscribe('dashboardData', (data) => {
+                this.unsubDashboard = window.Store.subscribe('dashboardData', (data) => {
                     if (window.Router && window.Router.currentRoute === 'dashboard') {
                         this.render(data);
                     }
@@ -41,7 +41,7 @@
 
             // USER SYNC MOTOR: Ensure widgets refresh when user data arrives
             if (window.Store) {
-                window.Store.subscribe('currentUser', (user) => {
+                this.unsubUser = window.Store.subscribe('currentUser', (user) => {
                     if (user && window.Router && window.Router.currentRoute === 'dashboard') {
                         console.log("👤 [DashboardView] User synced, refreshing live content...");
                         this.buildContext(user).then(context => this.loadLiveWidgetContent(context));
@@ -2369,6 +2369,30 @@
                 const isVisible = grip.style.display === 'block';
                 grip.style.display = isVisible ? 'none' : 'block';
                 bounce.style.display = isVisible ? 'none' : 'block';
+            }
+        }
+
+        /**
+         * Cleans up all active listeners and intervals for the Dashboard.
+         * Crucial for Point 2 of the Audit: Preventing Memory Leaks.
+         */
+        destroy() {
+            console.log("🧹 [DashboardView] Cleaning up resources...");
+            if (this.matchUnsub) {
+                this.matchUnsub();
+                this.matchUnsub = null;
+            }
+            if (this.refreshInterval) {
+                clearInterval(this.refreshInterval);
+                this.refreshInterval = null;
+            }
+            if (this.unsubDashboard) {
+                this.unsubDashboard();
+                this.unsubDashboard = null;
+            }
+            if (this.unsubUser) {
+                this.unsubUser();
+                this.unsubUser = null;
             }
         }
     }

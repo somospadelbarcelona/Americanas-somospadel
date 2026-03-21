@@ -103,7 +103,7 @@
         }
 
         async addPlayer(americanaId, user, type = 'americana', partnerName = null, partnerId = null) {
-            console.log(`🚀 [AmericanaService] addPlayer init: id=${americanaId}, type=${type}`, { user, partnerName, partnerId });
+            console.log(`🚀 [AmericanaService] addPlayer (Atomic): id=${americanaId}, type=${type}`, { partnerName });
 
             try {
                 if (!user) {
@@ -115,238 +115,212 @@
                 const collectionName = (type === 'entreno') ? 'entrenos' : 'americanas';
                 const eventRef = db.collection(collectionName).doc(americanaId);
 
-                let event = null;
-                let players = [];
-
-                // --- REEMPLAZO DE TRANSACTION POR GET+UPDATE (Direct Op) PARA EVITAR ERROR HTTP 429 QUOTA EXHAUSTED ---
-                const doc = await eventRef.get();
-                if (!doc.exists) throw new Error("Evento no encontrado (" + type + ")");
-
-                event = doc.data() || {};
-                players = event.players || [];
-                const regPlayers = event.registeredPlayers || [];
-
-                console.log(`🔍 [Service] Event data loaded: ${event.name || 'Unnamed'}`);
-
-                // Comprobación unificada de UID
-                const userUid = user.uid || user.id;
-                if (!userUid) {
-                    console.warn("⚠️ [Service] User has no UID:", user);
-                    throw new Error("Tu perfil de usuario está incompleto (falta UID).");
+                // 1. Pre-fetch partner if needed (outside transaction)
+                let partnerDataDB = null;
+                if (partnerName && partnerId) {
+                    try {
+                        const pDoc = await db.collection('players').doc(partnerId).get();
+                        if (pDoc.exists) partnerDataDB = pDoc.data();
+                    } catch (e) { console.error("Error pre-fetching partner:", e); }
                 }
 
-                const exists = (players.find(p => p && (p.uid === userUid || p.id === userUid))) ||
-                    (regPlayers.find(p => p && (p.uid === userUid || p.id === userUid)));
+                // 2. Atomic Transaction
+                const result = await db.runTransaction(async (transaction) => {
+                    const doc = await transaction.get(eventRef);
+                    if (!doc.exists) throw new Error("Evento no encontrado (" + type + ")");
 
-                if (exists) {
-                    throw new Error("Ya estás inscrito en este evento.");
-                }
+                    const event = doc.data() || {};
+                    const players = event.players || [];
+                    const regPlayers = event.registeredPlayers || [];
+                    const userUid = user.uid || user.id;
 
-                const maxPlayers = (parseInt(event.max_courts) || 4) * 4;
-                const capacity = maxPlayers - players.length;
-                const wantsTwo = !!partnerName;
+                    if (!userUid) throw new Error("Tu perfil de usuario está incompleto (falta UID).");
 
-                if (wantsTwo && capacity < 2) {
-                    throw new Error(`Solo queda 1 plaza disponible. No puedes apuntar a una pareja.`);
-                } else if (capacity < 1) {
-                    throw new Error(`No quedan plazas disponibles.`);
-                }
+                    const exists = (players.find(p => p && (p.uid === userUid || p.id === userUid))) ||
+                        (regPlayers.find(p => p && (p.uid === userUid || p.id === userUid)));
 
-                // VALIDACIÓN DE GÉNERO
-                this.validateGender(event.category, user.gender);
+                    if (exists) throw new Error("Ya estás inscrito en este evento.");
 
-                const userGender = user.gender || 'M';
-                const normalizedGender = (userGender === 'M' || userGender === 'chico') ? 'chico' :
-                    (userGender === 'F' || userGender === 'chica') ? 'chica' : '?';
+                    const maxPlayers = (parseInt(event.max_courts) || 4) * 4;
+                    const capacity = maxPlayers - players.length;
+                    const wantsTwo = !!partnerName;
 
-                const newPlayerData = {
-                    id: userUid,
-                    uid: userUid,
-                    name: (user.name || user.displayName || user.email || 'Jugador').toUpperCase(),
-                    level: user.level || user.self_rate_level || '3.5',
-                    team_somospadel: user.team_somospadel || user.team || [],
-                    gender: normalizedGender,
-                    side_preference: user.side_preference || 'INDIFF',
-                    play_style: user.play_style || 'ESTRATEGIA',
-                    joinedAt: new Date().toISOString()
-                };
-
-                if (partnerName) {
-                    newPlayerData.partner_name = partnerName;
-                    if (partnerId) newPlayerData.partner_id = partnerId;
-                }
-
-                players.push(newPlayerData);
-
-                // REGISTRO DE PAREJA
-                if (wantsTwo) {
-                    let partnerData = null;
-                    if (partnerId) {
-                        try {
-                            const partnerDocRef = db.collection('players').doc(partnerId);
-                            const partnerDoc = await partnerDocRef.get();
-                            if (partnerDoc.exists) {
-                                const pd = partnerDoc.data();
-                                partnerData = {
-                                    id: partnerId,
-                                    uid: partnerId,
-                                    name: pd.name || partnerName,
-                                    level: pd.level || pd.self_rate_level || '3.5',
-                                    team_somospadel: pd.team_somospadel || pd.team || [],
-                                    gender: (pd.gender === 'F' || pd.gender === 'chica') ? 'chica' : 'chico',
-                                    side_preference: pd.side_preference || 'INDIFF',
-                                    play_style: pd.play_style || 'ESTRATEGIA',
-                                    joinedAt: new Date().toISOString(),
-                                    partner_name: newPlayerData.name,
-                                    partner_id: newPlayerData.id
-                                };
-                            }
-                        } catch (e) { console.error("Error fetching partner:", e); }
+                    if (wantsTwo && capacity < 2) {
+                        throw new Error(`Solo queda 1 plaza disponible. No puedes apuntar a una pareja.`);
+                    } else if (capacity < 1) {
+                        throw new Error(`No quedan plazas disponibles.`);
                     }
 
-                    if (!partnerData) {
-                        partnerData = {
-                            id: partnerId || `guest_${Date.now()}`,
-                            uid: partnerId || null,
-                            name: partnerName,
-                            level: '3.5',
-                            gender: '?',
-                            joinedAt: new Date().toISOString(),
-                            partner_name: newPlayerData.name,
-                            partner_id: newPlayerData.id
-                        };
+                    // VALIDACIÓN DE GÉNERO
+                    this.validateGender(event.category, user.gender);
+
+                    const userGender = user.gender || 'M';
+                    const normalizedGender = (userGender === 'M' || userGender === 'chico') ? 'chico' :
+                        (userGender === 'F' || userGender === 'chica') ? 'chica' : '?';
+
+                    const newPlayerData = {
+                        id: userUid,
+                        uid: userUid,
+                        name: (user.name || user.displayName || user.email || 'Jugador').toUpperCase(),
+                        level: user.level || user.self_rate_level || '3.5',
+                        team_somospadel: user.team_somospadel || user.team || [],
+                        gender: normalizedGender,
+                        side_preference: user.side_preference || 'INDIFF',
+                        play_style: user.play_style || 'ESTRATEGIA',
+                        joinedAt: new Date().toISOString()
+                    };
+
+                    if (partnerName) {
+                        newPlayerData.partner_name = partnerName;
+                        if (partnerId) newPlayerData.partner_id = partnerId;
                     }
 
-                    const partnerExists = players.find(p => (p.id === partnerData.id || (p.uid && p.uid === partnerData.uid)));
-                    if (!partnerExists) {
-                        players.push(partnerData);
-                    }
-                }
+                    const updatedPlayers = [...players, newPlayerData];
 
-                const service = this._getCollectionService(type);
-                await service.update(americanaId, {
-                    players: players,
-                    registeredPlayers: players
+                    // Process Partner (if wantsTwo)
+                    if (wantsTwo) {
+                        let partnerData = null;
+                        if (partnerId && partnerDataDB) {
+                            partnerData = {
+                                id: partnerId,
+                                uid: partnerId,
+                                name: partnerDataDB.name || partnerName,
+                                level: partnerDataDB.level || partnerDataDB.self_rate_level || '3.5',
+                                team_somospadel: partnerDataDB.team_somospadel || partnerDataDB.team || [],
+                                gender: (partnerDataDB.gender === 'F' || partnerDataDB.gender === 'chica') ? 'chica' : 'chico',
+                                side_preference: partnerDataDB.side_preference || 'INDIFF',
+                                play_style: partnerDataDB.play_style || 'ESTRATEGIA',
+                                joinedAt: new Date().toISOString(),
+                                partner_name: newPlayerData.name,
+                                partner_id: newPlayerData.id
+                            };
+                        } else {
+                            partnerData = {
+                                id: partnerId || `guest_${Date.now()}`,
+                                uid: partnerId || null,
+                                name: partnerName,
+                                level: '3.5',
+                                gender: '?',
+                                joinedAt: new Date().toISOString(),
+                                partner_name: newPlayerData.name,
+                                partner_id: newPlayerData.id
+                            };
+                        }
+
+                        const partnerExists = updatedPlayers.find(p => p && (p.id === partnerData.id || (p.uid && p.uid === partnerData.uid)));
+                        if (!partnerExists) {
+                            updatedPlayers.push(partnerData);
+                        }
+                    }
+
+                    transaction.update(eventRef, {
+                        players: updatedPlayers,
+                        registeredPlayers: updatedPlayers
+                    });
+
+                    return { success: true, event: event, players: updatedPlayers };
                 });
 
-
-                // --- AUTO-FILL VACANCIES IN MATCHES (Global Fix) ---
-                if (window.MatchMakingService && event) {
-                    try {
-                        const matchColl = (type === 'entreno') ? 'entrenos_matches' : 'matches';
-                        const hasMatches = await window.db.collection(matchColl).where('americana_id', '==', americanaId).limit(1).get();
-
-                        if (!hasMatches.empty) {
-                            const userName = user.name || user.displayName || 'Jugador';
-                            const userUid = user.uid || user.id;
-                            console.log(`🔍 [Service] New player ${userName} joined active event. Checking for vacancies...`);
-                            await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', '🔴 VACANTE', userUid, userName, type);
-                            await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', 'VACANTE', userUid, userName, type);
-                        }
-                    } catch (e) {
-                        console.error("[AmericanaService] Error in MatchMaking Auto-Fill (non-fatal):", e);
-                    }
-                }
-
-                // --- NOTIFICATIONS ---
-                if (window.NotificationService && event && user) {
-                    const evtName = event.name || type.toUpperCase();
-                    const userName = user.name || user.displayName || 'Jugador';
+                if (result.success) {
+                    const event = result.event;
+                    const players = result.players;
                     const userUid = user.uid || user.id;
-                    const evtLink = { url: 'live', eventId: americanaId };
 
-                    // 1. Notify the user who joined
-                    window.NotificationService.sendNotificationToUser(
-                        userUid,
-                        "Inscripción Confirmada",
-                        `Te has apuntado a ${evtName}. ¡A darlo todo!`,
-                        evtLink
-                    );
+                    // --- AUTO-FILL VACANCIES IN MATCHES ---
+                    if (window.MatchMakingService && event) {
+                        try {
+                            const matchColl = (type === 'entreno') ? 'entrenos_matches' : 'matches';
+                            const hasMatches = await window.db.collection(matchColl).where('americana_id', '==', americanaId).limit(1).get();
 
-                    // 2. Notify other players (Peer-to-Peer)
-                    const others = players.filter(p => p && (p.uid || p.id) && (p.uid || p.id) !== userUid);
-
-                    if (others.length < 50) {
-                        others.forEach(p => {
-                            const pid = p.uid || p.id;
-                            window.NotificationService.sendNotificationToUser(
-                                pid,
-                                "Nuevo Jugador",
-                                `${userName} se ha unido a ${evtName}`,
-                                evtLink
-                            ).catch(e => console.warn("Failed to notify peer", pid));
-                        });
+                            if (!hasMatches.empty) {
+                                const userName = user.name || user.displayName || 'Jugador';
+                                console.log(`🔍 [Service] Joined active event. Checking for vacancies...`);
+                                await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', '🔴 VACANTE', userUid, userName, type);
+                                await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', 'VACANTE', userUid, userName, type);
+                            }
+                        } catch (e) {
+                            console.error("[AmericanaService] Error in MatchMaking Auto-Fill (non-fatal):", e);
+                        }
                     }
+
+                    // --- NOTIFICATIONS ---
+                    if (window.NotificationService && event && user) {
+                        const evtName = event.name || type.toUpperCase();
+                        const userName = user.name || user.displayName || 'Jugador';
+                        const evtLink = { url: 'live', eventId: americanaId };
+
+                        window.NotificationService.sendNotificationToUser(userUid, "Inscripción Confirmada", `Te has apuntado a ${evtName}. ¡A darlo todo!`, evtLink);
+
+                        const others = players.filter(p => p && (p.uid || p.id) && (p.uid || p.id) !== userUid);
+                        if (others.length < 50) {
+                            others.forEach(p => {
+                                window.NotificationService.sendNotificationToUser(p.uid || p.id, "Nuevo Jugador", `${userName} se ha unido a ${evtName}`, evtLink).catch(()=>{});
+                            });
+                        }
+                    }
+
+                    return { success: true };
                 }
-
-                // this.notifyAdminOfRegistration(event, user);
-
-                return { success: true };
             } catch (err) {
+                console.error("Error in addPlayer (Transaction):", err);
                 return { success: false, error: err.message };
             }
         }
 
         notifyAdminOfRegistration(evt, user) {
-            // "cuando el jugador se apunta a la americana necesito que automaticamente me llege un mensaje de confirmación al admin"
-            const adminPhone = "34649219350"; // Based on admin.js master user
+            const adminPhone = "34649219350";
             const msg = `🎾 *NUEVA INSCRIPCIÓN* %0A%0A👤 Jugador: ${user.name} %0A🏆 Evento: ${evt.name} %0A📅 Fecha: ${evt.date} ${evt.time}`;
-
-            // "y al jugaror que le llege tambien una notificacion de que se ha apuntado por whats app"
-            // To automate this from client side without user clicking is hard, but we can open one for the ADMIN to see.
-            // Ideally, the user sees a "Success" screen with a button "RECIBIR CONFIRMACIÓN" to chat with self or bot.
-
-            // For now, we attempt to open the Admin notification in background or new tab if allowed, 
-            // OR allow the user to send it.
-            // Since the user asked for "automatic", and we are client-side:
             console.log("🔔 Notifying Admin via WA Link generation...");
-
-            // We can't auto-send. We can only prep result.
-            // Let's rely on the Admin Panel 'CHAT' buttons for manual follow up if needed, 
-            // BUT here we can try `window.open` if context allows, though it might be blocked.
-
             const waLink = `https://wa.me/${adminPhone}?text=${msg}`;
-
-            // Hack: Trigger a tiny popup or just console log if we can't force it.
-            // A clearer UX is alerting the user "Inscripción Correcta. Avisando al admin..."
-            // const win = window.open(waLink, '_blank');
         }
 
         async removePlayer(americanaId, userId, type = 'americana') {
             try {
-                const service = this._getCollectionService(type);
-                if (!service) throw new Error("Servicio de base de datos no disponible");
+                const db = window.db;
+                const collectionName = (type === 'entreno') ? 'entrenos' : 'americanas';
+                const eventRef = db.collection(collectionName).doc(americanaId);
 
-                const event = await service.getById(americanaId);
-                if (!event) throw new Error("Evento no encontrado");
+                let eventData = null;
 
-                const currentPlayers = event.players || event.registeredPlayers || [];
-                const newPlayers = currentPlayers.filter(p => {
-                    const id = (typeof p === 'string') ? p : (p.uid || p.id);
-                    return id !== userId;
+                const result = await db.runTransaction(async (transaction) => {
+                    const doc = await transaction.get(eventRef);
+                    if (!doc.exists) throw new Error("Evento no encontrado");
+
+                    const event = doc.data();
+                    eventData = event;
+                    const currentPlayers = event.players || event.registeredPlayers || [];
+                    const newPlayers = currentPlayers.filter(p => (p.uid || p.id) !== userId);
+
+                    const updates = {
+                        registeredPlayers: newPlayers,
+                        players: newPlayers
+                    };
+
+                    const maxPlayers = (event.max_courts || 4) * 4;
+                    if (event.status === 'live' && newPlayers.length < maxPlayers) {
+                        updates.status = 'open';
+                    }
+
+                    transaction.update(eventRef, updates);
+                    return { success: true, wasLive: (event.status === 'live' && newPlayers.length < maxPlayers) };
                 });
 
-                const updates = {
-                    registeredPlayers: newPlayers,
-                    players: newPlayers
-                };
+                if (result.success) {
+                    if (result.wasLive) {
+                        await this.purgeMatches(americanaId, type);
+                    }
 
-                const maxPlayers = (event.max_courts || 4) * 4;
-                if (event.status === 'live' && newPlayers.length < maxPlayers) {
-                    updates.status = 'open';
-                    await this.purgeMatches(americanaId, type);
-                }
+                    const maxPlayers = (eventData.max_courts || 4) * 4;
+                    const currentPlayersCount = (eventData.players || []).length;
+                    
+                    if (currentPlayersCount < maxPlayers) {
+                         await this.triggerNextInWaitlist(americanaId, type);
+                    }
 
-                await service.update(americanaId, updates);
-
-                // --- SMART WAITLIST LOGIC ---
-                if (newPlayers.length < maxPlayers) {
-                    await this.triggerNextInWaitlist(americanaId, type);
-                }
-
-                if (window.NotificationService) {
-                    const evtName = event.name || type.toUpperCase();
-                    window.NotificationService.sendNotificationToUser(userId, "Baja Confirmada", `Te has dado de baja de ${evtName}.`, { url: 'americanas' });
+                    if (window.NotificationService) {
+                        const evtName = eventData.name || type.toUpperCase();
+                        window.NotificationService.sendNotificationToUser(userId, "Baja Confirmada", `Te has dado de baja de ${evtName}.`, { url: 'americanas' });
+                    }
                 }
 
                 return { success: true };
@@ -378,43 +352,49 @@
 
         async addToWaitlist(eventId, user, type = 'americana') {
             try {
-                const service = this._getCollectionService(type);
-                const event = await service.getById(eventId);
-                const waitlist = event.waitlist || [];
-                const currentUid = user.uid || user.id;
+                const db = window.db;
+                const collectionName = (type === 'entreno') ? 'entrenos' : 'americanas';
+                const eventRef = db.collection(collectionName).doc(eventId);
 
-                if (waitlist.find(p => (p.uid || p.id) === currentUid)) throw new Error("Ya estás en lista de espera.");
+                return await db.runTransaction(async (transaction) => {
+                    const doc = await transaction.get(eventRef);
+                    if (!doc.exists) throw new Error("Evento no encontrado");
+                    const event = doc.data();
+                    const waitlist = event.waitlist || [];
+                    const currentUid = user.uid || user.id;
 
-                // GENDER VALIDATION
-                this.validateGender(event.category, user.gender);
+                    if (waitlist.find(p => (p.uid || p.id) === currentUid)) throw new Error("Ya estás en lista de espera.");
 
-                waitlist.push({
-                    uid: currentUid,
-                    id: currentUid,
-                    name: (user.name || user.displayName || 'Jugador').toUpperCase(),
-                    gender: user.gender || 'M',
-                    joinedAt: new Date().toISOString()
+                    this.validateGender(event.category, user.gender);
+
+                    waitlist.push({
+                        uid: currentUid, id: currentUid,
+                        name: (user.name || 'Jugador').toUpperCase(),
+                        gender: user.gender || 'M',
+                        joinedAt: new Date().toISOString()
+                    });
+                    transaction.update(eventRef, { waitlist });
+                    return { success: true };
                 });
-                await service.update(eventId, { waitlist });
-                return { success: true };
             } catch (err) { return { success: false, error: err.message }; }
         }
 
         async leaveWaitlist(eventId, userId, type = 'americana') {
             try {
-                const service = this._getCollectionService(type);
-                const event = await service.getById(eventId);
-                if (!event) throw new Error("Evento no encontrado");
+                const db = window.db;
+                const collectionName = (type === 'entreno') ? 'entrenos' : 'americanas';
+                const eventRef = db.collection(collectionName).doc(eventId);
 
-                const currentWaitlist = event.waitlist || [];
-                const newWaitlist = currentWaitlist.filter(p => (p.uid || p.id) !== userId);
-
-                await service.update(eventId, { waitlist: newWaitlist });
-                return { success: true };
-            } catch (err) {
-                console.error("Error leaving waitlist:", err);
-                return { success: false, error: err.message };
-            }
+                return await db.runTransaction(async (transaction) => {
+                    const doc = await transaction.get(eventRef);
+                    if (!doc.exists) throw new Error("Evento no encontrado");
+                    const event = doc.data();
+                    const currentWaitlist = event.waitlist || [];
+                    const newWaitlist = currentWaitlist.filter(p => (p.uid || p.id) !== userId);
+                    transaction.update(eventRef, { waitlist: newWaitlist });
+                    return { success: true };
+                });
+            } catch (err) { return { success: false, error: err.message }; }
         }
 
         async confirmWaitlist(eventId, userId, type = 'americana') {

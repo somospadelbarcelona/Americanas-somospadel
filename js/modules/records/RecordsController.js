@@ -21,7 +21,7 @@
                 const db = window.FirebaseDB || window.db;
                 if (!db || !db.matches) {
                     console.warn("⏳ Records: waiting for DB...");
-                    setTimeout(() => this.calculateRecords(), 500);
+                    this.retryTimeout = setTimeout(() => this.calculateRecords(), 500);
                     return;
                 }
 
@@ -251,6 +251,13 @@
 
         parseDate(d) { if (!d) return new Date(0); if (d.toDate) return d.toDate(); return new Date(d); }
         getRecords() { return this.state.records; }
+
+        destroy() {
+            if (this.retryTimeout) {
+                clearTimeout(this.retryTimeout);
+                this.retryTimeout = null;
+            }
+        }
     }
     window.RecordsController = new RecordsController();
 })();

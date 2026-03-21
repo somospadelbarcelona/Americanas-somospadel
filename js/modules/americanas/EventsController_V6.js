@@ -469,6 +469,25 @@
             const container = document.getElementById('content-area');
             if (!container) return;
 
+            // --- ZERO-LATENCY SMART PATCHING (Audit Point 1) ---
+            const currentTab = this.state.activeTab;
+            if (!this.state.loading && (currentTab === 'events' || currentTab === 'entrenos')) {
+                const todayStr = this.getTodayStr();
+                const events = this.getAllSortedEvents().filter(e => {
+                    const isCorrectType = (currentTab === 'entrenos' ? e.type === 'entreno' : e.type === 'americana');
+                    if (e.status === 'finished' || e.status === 'cancelled') return false;
+                    return isCorrectType && (e.status === 'live' || e.normDate >= todayStr);
+                });
+
+                // Check if we already have the grid rendered
+                if (document.getElementById(`event-card-${events[0]?.id}`)) {
+                    if (this.smartUpdate(events)) {
+                        console.log("⚡ [EventsController] Zero-Latency Update Applied.");
+                        return; // Successfully updated DOM without full re-render
+                    }
+                }
+            }
+
             const tabs = [
                 { id: 'entrenos', label: 'ENTRENOS', icon: 'fa-user-ninja' },
                 { id: 'events', label: 'AMERICANAS', icon: 'fa-trophy' },
@@ -1054,7 +1073,7 @@
             }
 
             return `
-                <div onclick="${cardAction}" style="background: #000; border-radius: 28px; overflow: hidden; margin-bottom: 12px; border: 1px solid #222; box-shadow: 0 15px 35px rgba(0,0,0,0.4); font-family: 'Outfit', sans-serif; cursor: pointer;">
+                <div id="event-card-${evt.id}" onclick="${cardAction}" style="background: #000; border-radius: 28px; overflow: hidden; margin-bottom: 12px; border: 1px solid #222; box-shadow: 0 15px 35px rgba(0,0,0,0.4); font-family: 'Outfit', sans-serif; cursor: pointer;">
                     <!-- TOP IMAGE AREA -->
                     <div style="height: 200px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative;">
                         <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.3), transparent, rgba(0,0,0,0.8));"></div>
@@ -1092,9 +1111,9 @@
                         </div>
 
                         <!-- MAIN FLOATING ACTION BUTTON -->
-                        <div onclick="event.stopPropagation(); ${fabAction}" style="position: absolute; top: 65px; right: 15px; width: 70px; height: 70px; background: ${btnColor === '#fff' ? '#CCFF00' : (btnColor === '#CCFF00' ? '#38bdf8' : btnColor)}; color: ${btnColor === '#CCFF00' ? '#fff' : (btnColor === '#fff' ? '#000' : 'white')}; border-radius: 50%; border: 4px solid #000; box-shadow: 0 5px 20px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transition: transform 0.2s;">
-                            <i class="fas ${btnIcon}" style="font-size: 1.1rem; margin-bottom: 3px;"></i>
-                            <span style="font-size: 0.5rem; font-weight: 950; text-align: center; line-height: 1;">${btnLabel}</span>
+                        <div id="event-fab-${evt.id}" onclick="event.stopPropagation(); ${fabAction}" style="position: absolute; top: 65px; right: 15px; width: 70px; height: 70px; background: ${btnColor === '#fff' ? '#CCFF00' : (btnColor === '#CCFF00' ? '#38bdf8' : btnColor)}; color: ${btnColor === '#CCFF00' ? '#fff' : (btnColor === '#fff' ? '#000' : 'white')}; border-radius: 50%; border: 4px solid #000; box-shadow: 0 5px 20px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transition: transform 0.2s;">
+                            <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 1.1rem; margin-bottom: 3px;"></i>
+                            <span id="event-fab-label-${evt.id}" style="font-size: 0.5rem; font-weight: 950; text-align: center; line-height: 1;">${btnLabel}</span>
                         </div>
 
                         <!-- SECONDARY CHAT FAB (PINK) -->
@@ -1122,10 +1141,10 @@
                                 <i class="fas fa-th-large" style="color: #38bdf8; font-size: 1.3rem;"></i>
                                 <span style="font-weight: 700; color: #ccc;">${maxCourts} Pistas</span>
                             </div>
-                            <div onclick="event.stopPropagation(); window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')" style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-                                <i class="fas fa-users" style="color: ${isFull ? '#FF3B30' : '#84cc16'}; font-size: 1.3rem;"></i>
-                                <span style="font-weight: 800; color: ${isFull ? '#FF3B30' : '#fff'}; text-decoration: underline; text-underline-offset: 4px;">${playerCount} / ${maxPlayers} Plazas</span>
-                                ${waitlist.length > 0 ? `<small style="color:#eab308; margin-left:5px;">(+${waitlist.length} en espera)</small>` : ''}
+                            <div id="event-players-container-${evt.id}" onclick="event.stopPropagation(); window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')" style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                                <i id="event-players-icon-${evt.id}" class="fas fa-users" style="color: ${isFull ? '#FF3B30' : '#84cc16'}; font-size: 1.3rem;"></i>
+                                <span id="event-players-label-${evt.id}" style="font-weight: 800; color: ${isFull ? '#FF3B30' : '#fff'}; text-decoration: underline; text-underline-offset: 4px;">${playerCount} / ${maxPlayers} Plazas</span>
+                                <span id="event-waitlist-label-${evt.id}">${waitlist.length > 0 ? `<small style="color:#eab308; margin-left:5px;">(+${waitlist.length} en espera)</small>` : ''}</span>
                             </div>
                         </div>
 
@@ -1140,7 +1159,7 @@
                             <div style="flex:1;">
                                 <i class="fas fa-map-marker-alt" style="color: #FF3B30;"></i> Sede: ${evt.sede || evt.location || 'Barcelona Pádel el Prat'}
                             </div>
-                            <div style="
+                            <div id="event-status-badge-${evt.id}" style="
                                 background: ${isLive ? '#FF2D55' : (isCancelled ? '#ef4444' : (isPairing ? '#38bdf8' : (isFinished ? '#64748b' : '#84cc16')))};
                                 color: ${isLive || isCancelled || isPairing || isFinished ? '#fff' : '#000'};
                                 padding: 4px 10px;
@@ -1771,6 +1790,112 @@
             }
 
             return '';
+        }
+
+        smartUpdate(events) {
+            const user = this.state.currentUser;
+            const uid = user ? user.uid : '-';
+
+            let updatedCount = 0;
+            events.forEach(evt => {
+                const card = document.getElementById(`event-card-${evt.id}`);
+                if (!card) return;
+
+                // 1. Update Player Count
+                const players = evt.players || evt.registeredPlayers || [];
+                const playerCount = players.length;
+                const maxCourts = parseInt(evt.max_courts || evt.courts || 4);
+                const maxPlayers = maxCourts * 4;
+                const isFull = playerCount >= maxPlayers;
+                const waitlist = evt.waitlist || [];
+
+                const playersLabel = document.getElementById(`event-players-label-${evt.id}`);
+                if (playersLabel) {
+                    const newText = `${playerCount} / ${maxPlayers} Plazas`;
+                    if (playersLabel.innerText !== newText) {
+                        playersLabel.innerText = newText;
+                        playersLabel.style.color = isFull ? '#FF3B30' : '#fff';
+                        const icon = document.getElementById(`event-players-icon-${evt.id}`);
+                        if (icon) icon.style.color = isFull ? '#FF3B30' : '#84cc16';
+                    }
+                }
+                const wlLabel = document.getElementById(`event-waitlist-label-${evt.id}`);
+                if (wlLabel) {
+                    const newWl = waitlist.length > 0 ? `<small style="color:#eab308; margin-left:5px;">(+${waitlist.length} en espera)</small>` : '';
+                    if (wlLabel.innerHTML !== newWl) wlLabel.innerHTML = newWl;
+                }
+
+                // 2. Update FAB (Join Button)
+                const isJoined = players.some(p => p.uid === uid || p.id === uid);
+                const hasStarted = this.hasEventStarted(evt.date, evt.time);
+                const isLive = evt.status === 'live' || (evt.status === 'open' && hasStarted);
+                const isFinished = evt.status === 'finished';
+                const isCancelled = evt.status === 'cancelled';
+                const isWaitlistPending = evt.waitlist_pending_user && (evt.waitlist_pending_user.uid === uid);
+                const isInWaitlist = waitlist.some(p => p.uid === uid);
+                const waitlistPos = waitlist.findIndex(p => p.uid === uid) + 1;
+
+                let btnLabel = 'ENTRAR';
+                let btnIcon = 'fa-play';
+                let btnColor = '#CCFF00';
+                let fabAction = `window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}')`;
+
+                if (isCancelled) {
+                    btnLabel = 'ANULADO'; btnIcon = 'fa-ban'; btnColor = '#ef4444';
+                    fabAction = "window.PremiumModal.alert({ title: '⛔ ANULADO', message: 'Este evento ha sido cancelado por la organización.', type: 'error' })";
+                } else if (isFinished) {
+                    btnLabel = 'VER'; btnIcon = 'fa-history'; btnColor = '#64748b';
+                    fabAction = `window.openResultsView('${evt.id}', '${evt.type || 'americana'}')`;
+                } else if (isLive) {
+                    btnLabel = 'LIVE'; btnIcon = 'fa-broadcast-tower'; btnColor = '#FF2D55';
+                } else if (isWaitlistPending) {
+                    btnLabel = '¡NUEVA PLAZA! CONFIRMAR'; btnIcon = 'fa-star'; btnColor = '#CCFF00';
+                    fabAction = `window.EventsController.confirmWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
+                } else if (isInWaitlist) {
+                    btnLabel = `ESPERA (Pos ${waitlistPos})`; btnIcon = 'fa-hourglass-half'; btnColor = '#94a3b8';
+                    fabAction = `window.EventsController.leaveWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
+                } else if (isFull && !isJoined) {
+                    btnLabel = 'LISTA ESPERA'; btnIcon = 'fa-clock'; btnColor = '#eab308';
+                    fabAction = `window.EventsController.joinWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
+                } else if (!isJoined && !isFull) {
+                    btnLabel = 'APUNTARME'; btnIcon = 'fa-plus'; btnColor = '#CCFF00';
+                    fabAction = `window.EventsController.joinEvent('${evt.id}', '${evt.type || 'americana'}')`;
+                } else if (isJoined) {
+                    btnLabel = 'DENTRO'; btnIcon = 'fa-check'; btnColor = '#fff';
+                    fabAction = `window.EventsController.leaveEvent('${evt.id}', '${evt.type || 'americana'}')`;
+                }
+
+                const fab = document.getElementById(`event-fab-${evt.id}`);
+                const fabLabel = document.getElementById(`event-fab-label-${evt.id}`);
+                const fabIcon = document.getElementById(`event-fab-icon-${evt.id}`);
+
+                if (fab && fabLabel) {
+                    if (fabLabel.innerText !== btnLabel) {
+                        fabLabel.innerText = btnLabel;
+                        fab.setAttribute('onclick', `event.stopPropagation(); ${fabAction}`);
+                        fab.style.background = btnColor === '#fff' ? '#CCFF00' : (btnColor === '#CCFF00' ? '#38bdf8' : btnColor);
+                        fab.style.color = btnColor === '#CCFF00' ? '#fff' : (btnColor === '#fff' ? '#000' : 'white');
+                        if (fabIcon) {
+                            fabIcon.className = `fas ${btnIcon}`;
+                        }
+                    }
+                }
+
+                // 3. Update Status Badge
+                const statusBadge = document.getElementById(`event-status-badge-${evt.id}`);
+                if (statusBadge) {
+                    const newBadgeText = isLive ? '🔴 EN JUEGO' : (isCancelled ? '⛔ ANULADO' : (evt.status === 'pairing' ? '🔀 EMPAREJAMIENTO' : (isFinished ? '🏁 FINALIZADA' : '🟢 ABIERTA')));
+                    if (statusBadge.innerText.trim() !== newBadgeText) {
+                        statusBadge.innerText = newBadgeText;
+                        statusBadge.style.background = isLive ? '#FF2D55' : (isCancelled ? '#ef4444' : (evt.status === 'pairing' ? '#38bdf8' : (isFinished ? '#64748b' : '#84cc16')));
+                        statusBadge.style.color = isLive || isCancelled || evt.status === 'pairing' || isFinished ? '#fff' : '#000';
+                    }
+                }
+
+                updatedCount++;
+            });
+
+            return updatedCount > 0 && updatedCount === events.length;
         }
     }
 

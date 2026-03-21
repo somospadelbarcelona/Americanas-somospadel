@@ -21,8 +21,8 @@
             }
 
             const isEntreno = eventDoc?.isEntreno;
-            const isFija = eventDoc?.is_fija || false;
-            const ranking = window.StandingsService.calculate(matches, isEntreno ? 'entreno' : 'americana');
+            const isFija = eventDoc?.is_fija || (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventDoc?.name || '').toUpperCase().includes('FIJA');
+            const ranking = window.StandingsService.calculate(matches, isEntreno ? 'entreno' : 'americana', isFija);
             window.ControlTowerStats.lastRankingData = ranking;
 
             // Find Top Scorer (Goles a favor)
@@ -41,7 +41,7 @@
                         <button onclick="window.ControlTowerView.switchTab('results')" style="background: #111; border: 1px solid #111; color: white; padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
                             <i class="fas fa-arrow-left"></i> VOLVER
                         </button>
-                        <button onclick="window.ShareModal.open('stats', window.ControlTowerStats.lastRankingData, window.ControlTowerView?.currentAmericanaDoc)" 
+                        <button onclick="window.ControlTowerStats.shareStats(window.ControlTowerStats.lastRankingData, window.ControlTowerView?.currentAmericanaDoc)" 
                                 style="background: linear-gradient(135deg, #CCFF00 0%, #B8E600 100%); color: black; border: none; padding: 8px 16px; border-radius: 12px; font-size: 0.75rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(204,255,0,0.3);">
                             <i class="fas fa-bolt"></i> COMPARTIR STATS
                         </button>
@@ -82,6 +82,46 @@
                     </div>
                 </div>
             `;
+        }
+
+        static async shareStats(rankingData, eventDoc) {
+            try {
+                const eventName = eventDoc?.name || 'Entreno / Americana';
+                const eventDate = eventDoc?.date || 'Hoy';
+                const isFixedPairs = (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventName).toUpperCase().includes('FIJA');
+
+                let shareText = `📊 ESTADÍSTICAS: ${eventName}\n📅 ${eventDate}\n\n`;
+
+                const topScorer = [...rankingData].sort((a, b) => b.points - a.points)[0];
+                const topWins = [...rankingData].sort((a, b) => b.won - a.won)[0];
+
+                shareText += `🎯 Top Juegos: ${topScorer?.points || 0} (${topScorer?.name || '-'}) \n`;
+                if (!isFixedPairs) {
+                    shareText += `👑 Más Victorias: ${topWins?.won || 0} (${topWins?.name || '-'}) \n\n`;
+                    shareText += `🔥 TOP EFICIENCIA:\n`;
+                    rankingData.slice(0, 5).forEach((p, i) => {
+                        const winRate = Math.round((p.won / (p.played || 1)) * 100);
+                        shareText += `${i + 1}. ${p.name} — ${winRate}% WR\n`;
+                    });
+                } else {
+                    shareText += `👑 Mejores Parejas:\n`;
+                    const medals = ['🥇', '🥈', '🥉'];
+                    rankingData.slice(0, 3).forEach((p, i) => {
+                        shareText += `${medals[i]} ${p.name} — ${p.won} V\n`;
+                    });
+                }
+
+                shareText += `\n🎾 ¡Sigue todos los resultados en SomosPadel!`;
+
+                if (navigator.share) {
+                    await navigator.share({ title: `Estadísticas ${eventName}`, text: shareText });
+                } else {
+                    await navigator.clipboard.writeText(shareText);
+                    window.PremiumModal.alert({ title: '✅ COPIADO', message: 'Estadísticas copiadas al portapapeles.' });
+                }
+            } catch (err) {
+                console.error("Error sharing stats:", err);
+            }
         }
     }
     window.ControlTowerStats = ControlTowerStats;
