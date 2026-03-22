@@ -126,57 +126,52 @@
 
                 // A. Render Side Menu (Hamburger) - STATIC
                 if (menuContainer) {
-                    // NEW MENU STRUCTURE
+                    // NEW MENU STRUCTURE (COLORFUL EDITION)
                     menuContainer.innerHTML = `
-                        <!-- BRANDING HEADER IN MENU -->
-                        <div style="padding: 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
-                            <img src="img/logo_somospadel.png" style="width: 60px; height: auto; margin-bottom: 10px; filter: drop-shadow(0 0 8px rgba(204,255,0,0.4));">
-                            <div style="font-weight: 900; color: white; letter-spacing: 1px; font-size: 1.1rem;">SOMOS<span style="color: #CCFF00;">PADEL</span></div>
-                            <div style="font-size: 0.6rem; color: #888; font-weight: 700; letter-spacing: 2px;">BARCELONA</div>
+                        <!-- BRANDING HEADER -->
+                        <div class="drawer-brand">
+                            <img src="img/logo_somospadel.png" style="width: 70px; height: auto; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(204,255,0,0.5));">
+                            <div style="font-weight: 900; color: white; letter-spacing: 1.5px; font-size: 1.2rem; font-family: 'Outfit';">SOMOS<span style="color: #CCFF00;">PADEL</span></div>
+                            <div style="font-size: 0.65rem; color: #666; font-weight: 800; letter-spacing: 3px; margin-top: 2px;">BARCELONA</div>
                         </div>
 
-                        <!-- 1. MAIN NAVIGATION -->
-                        <div style="padding: 0 10px; margin-bottom: 15px;">
-                            <div style="color: #666; font-size: 0.65rem; font-weight: 800; padding: 5px 15px; letter-spacing: 1px; text-transform:uppercase;">Accesos Directos</div>
-                            
-                            <div class="drawer-item" onclick="window.smartNavigate('dashboard', null)">
-                                <i class="fas fa-home" style="color: #CCFF00;"></i>
-                                <span style="font-weight: 700;">INICIO</span>
-                            </div>
-
-                            <div class="drawer-item" onclick="window.smartNavigate('americanas', 'events')">
-                                <i class="fas fa-trophy" style="color: #CCFF00;"></i>
-                                <span style="font-weight: 700;">AMERICANAS DISPONIBLES</span>
-                            </div>
+                        <!-- 1. EXPLORACIÓN -->
+                        <div class="drawer-section-header">EXPLORAR</div>
+                        
+                        <div class="drawer-item" onclick="window.smartNavigate('dashboard', null)">
+                            <i class="fas fa-th-large" style="color: #00E36D; text-shadow: 0 0 10px rgba(0,227,109,0.3);"></i>
+                            <span style="font-weight: 800;">INICIO</span>
                         </div>
 
-                        <!-- 2. PLAYER ZONE -->
-                        <div style="padding: 0 10px; margin-bottom: 15px;">
-                            <div style="color: #666; font-size: 0.65rem; font-weight: 800; padding: 5px 15px; letter-spacing: 1px; text-transform:uppercase;">Zona Jugador</div>
-
-                            <div class="drawer-item" onclick="window.smartNavigate('americanas', 'results')">
-                                <i class="fas fa-chart-pie" style="color: #0ea5e9;"></i>
-                                <span>MIS RESULTADOS</span>
-                            </div>
-
-                            <div class="drawer-item" onclick="window.smartNavigate('ranking', null)">
-                                <i class="fas fa-medal" style="color: #f59e0b;"></i>
-                                <span>RANKING</span>
-                            </div>
-
-                            <div class="drawer-item" onclick="window.smartNavigate('profile', null)">
-                                <i class="fas fa-user-circle" style="color: #ec4899;"></i>
-                                <span>MI PERFIL</span>
-                            </div>
+                        <div class="drawer-item" onclick="window.smartNavigate('entrenos', null)">
+                            <i class="fas fa-calendar-check" style="color: #CCFF00; text-shadow: 0 0 10px rgba(204,255,0,0.3);"></i>
+                            <span style="font-weight: 800;">ENTRENOS</span>
                         </div>
 
-                        <!-- 3. SYSTEMS -->
+                        <!-- 2. COMPETICIÓN -->
+                        <div class="drawer-section-header">COMPETICIÓN</div>
+
+                        <div class="drawer-item" onclick="window.smartNavigate('ranking', null)">
+                            <i class="fas fa-trophy" style="color: #FFD700; text-shadow: 0 0 10px rgba(255,215,0,0.3);"></i>
+                            <span style="font-weight: 700;">RANKING</span>
+                        </div>
+
+                        <div class="drawer-item" onclick="window.smartNavigate('records', null)">
+                            <i class="fas fa-award" style="color: #FF2D55; text-shadow: 0 0 10px rgba(255,45,85,0.3);"></i>
+                            <span style="font-weight: 700;">RÉCORDS</span>
+                        </div>
+
+                        <div class="drawer-item" onclick="window.smartNavigate('profile', null)">
+                            <i class="fas fa-user-astronaut" style="color: #3b82f6; text-shadow: 0 0 10px rgba(59,130,246,0.3);"></i>
+                            <span style="font-weight: 700;">MI PERFIL</span>
+                        </div>
+
+                        <!-- 3. SISTEMAS -->
                         ${isAdmin ? `
-                        <div style="padding: 0 10px;">
-                            <div class="drawer-item" onclick="window.location.href='admin.html'" style="opacity: 0.8;">
-                                <i class="fas fa-user-shield" style="color: #ccc;"></i>
-                                <span>PANEL ADMIN</span>
-                            </div>
+                        <div class="drawer-section-header">SISTEMA</div>
+                        <div class="drawer-item" onclick="window.location.href='admin.html'" style="background: rgba(255,255,255,0.02); margin-top: 10px;">
+                            <i class="fas fa-user-shield" style="color: #94a3b8;"></i>
+                            <span style="font-size: 0.8rem; font-weight: 600; opacity: 0.7;">PANEL ADMIN</span>
                         </div>
                         ` : ''}
                     `;

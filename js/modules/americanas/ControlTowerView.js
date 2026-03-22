@@ -387,7 +387,7 @@
                     if (window.WhatsAppService) window.WhatsAppService.shareText(fullText);
                 },
                 (tab) => { this.switchTab(tab); document.getElementById('training-finished-modal')?.remove(); },
-                () => { window.Router.navigate('dashboard'); }
+                () => { document.getElementById('training-finished-modal')?.remove(); window.Router.navigate('dashboard'); }
             );
         }
 

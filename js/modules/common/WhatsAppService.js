@@ -386,6 +386,41 @@ window.WhatsAppService = {
     },
 
     /**
+     * Generic text sharer (V8.5+)
+     * Uses native share if available, otherwise falls back to WhatsApp link.
+     */
+    async shareText(text, title = 'Somospadel') {
+        if (!text) return;
+        
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || isIOS;
+
+        console.log("📤 WhatsAppService.shareText triggered", { isMobile, hasNativeShare: !!navigator.share });
+
+        if (isMobile && navigator.share) {
+            try {
+                await navigator.share({
+                    title: title,
+                    text: text
+                });
+                return;
+            } catch (e) { 
+                console.warn("Native share failed, falling back to WhatsApp link", e); 
+            }
+        }
+
+        // Fallback to WhatsApp Web/App link
+        const encodedText = encodeURIComponent(text);
+        const url = "https://api.whatsapp.com/send?text=" + encodedText;
+
+        if (isIOS) {
+            window.location.href = url;
+        } else {
+            window.open(url, '_blank');
+        }
+    },
+
+    /**
      * Integración Nativa Automatizada (Concepto API Twilio/Cloud)
      * Envía una notificación sin intervención del usuario a través de un Webhook.
      * @param {string} phone - Formato internacional (ej: 34600000000)

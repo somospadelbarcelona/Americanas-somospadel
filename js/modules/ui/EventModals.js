@@ -164,10 +164,10 @@
             document.body.appendChild(overlay);
 
             document.getElementById('btn-tf-share').onclick = () => onShare(rankingItems, isFixedPairs);
-            document.getElementById('btn-tf-tab-pos').onclick = () => onTabChange('standings');
-            document.getElementById('btn-tf-tab-cuadros').onclick = () => onTabChange('brackets');
-            document.getElementById('btn-tf-tab-stats').onclick = () => onTabChange('summary');
-            document.getElementById('btn-tf-menu').onclick = () => onMenu();
+            document.getElementById('btn-tf-tab-pos').onclick = () => { overlay.remove(); onTabChange('standings'); };
+            document.getElementById('btn-tf-tab-cuadros').onclick = () => { overlay.remove(); onTabChange('brackets'); };
+            document.getElementById('btn-tf-tab-stats').onclick = () => { overlay.remove(); onTabChange('summary'); };
+            document.getElementById('btn-tf-menu').onclick = () => { overlay.remove(); onMenu(); };
         }
     };
 })();
