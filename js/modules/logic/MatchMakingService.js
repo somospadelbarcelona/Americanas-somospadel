@@ -90,9 +90,41 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
 
                         const prevRoundMatches = matches.filter(m => parseInt(m.round) === (roundNum - 1));
 
-                        const unfinished = prevRoundMatches.filter(m => m.status !== 'finished');
+                        // 🛡️ [DIAGNOSTIC & SELF-HEALING]
+                        const finishedMatches = prevRoundMatches.filter(m => m.status === 'finished');
+                        let unfinished = prevRoundMatches.filter(m => m.status !== 'finished');
+
                         if (unfinished.length > 0) {
-                            throw new Error(`⚠️ Ronda ${roundNum - 1} tiene partidos sin finalizar. Termínalos antes.`);
+                            // Check for "Ghost Duplicates": If an unfinished match has a finished counterpart on the same court/round, it's a ghost from a previous bug.
+                            const ghostIds = [];
+                            const realUnfinished = [];
+
+                            unfinished.forEach(unf => {
+                                const isGhost = finishedMatches.some(f => 
+                                    parseInt(f.court) === parseInt(unf.court) && 
+                                    parseInt(f.round) === parseInt(unf.round)
+                                );
+                                if (isGhost) ghostIds.push(unf.id);
+                                else realUnfinished.push(unf);
+                            });
+
+                            if (ghostIds.length > 0) {
+                                console.log(`🧹 [MatchMaking] Detectados ${ghostIds.length} partidos fantasma duplicados en R${roundNum-1}. Limpiando...`);
+                                const collName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                                for (const id of ghostIds) {
+                                    try { await window.db.collection(collName).doc(id).delete(); } catch(e) {}
+                                }
+                                unfinished = realUnfinished;
+                            }
+                        }
+
+                        if (unfinished.length > 0) {
+                            const pendingCourts = [...new Set(unfinished.map(m => m.court))].sort((a,b) => a-b);
+                            throw new Error(`⚠️ La Ronda ${roundNum - 1} tiene partidos sin finalizar en: Pista ${pendingCourts.join(', Pista ')}. Por favor, introduce los resultados.`);
+                        }
+
+                        if (roundNum === 3) {
+                            console.log(`🌀 [MatchMaking] Iniciando generación de Ronda 3 para ${eventType}. Verificando rotación...`);
                         }
 
                         if (isFixedPairs) {
@@ -449,6 +481,54 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                     console.error("Error in purgeSubsequentRounds:", error);
                     throw error;
                 }
+            },
+            /**
+             * [NEW] Sanitize Round: Removes duplicate or unfinished matches for a specific round 
+             * if finished counterparts exist.
+             */
+            async sanitizeRound(eventId, eventType, roundNum) {
+                console.log(`🧹 [MatchMaking] Saneando Ronda ${roundNum} para ${eventId}...`);
+                const collName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                const snap = await window.db.collection(collName)
+                    .where('americana_id', '==', eventId)
+                    .where('round', '==', parseInt(roundNum))
+                    .get();
+
+                if (snap.empty) return { deleted: 0 };
+
+                const matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const finished = matches.filter(m => m.status === 'finished');
+                const unfinished = matches.filter(m => m.status !== 'finished');
+                
+                const toDelete = [];
+
+                // 1. Unfinished matches that have a finished counterpart on the same court
+                unfinished.forEach(unf => {
+                    if (finished.some(f => parseInt(f.court) === parseInt(unf.court))) {
+                        toDelete.push(unf.id);
+                    }
+                });
+
+                // 2. Exact duplicates (same court, same teams - even if both finished)
+                // (Keep the first one found)
+                const seen = new Set();
+                matches.forEach(m => {
+                    const teamA = Array.isArray(m.team_a_names) ? m.team_a_names.sort().join('|') : m.team_a_names;
+                    const teamB = Array.isArray(m.team_b_names) ? m.team_b_names.sort().join('|') : m.team_b_names;
+                    const sig = `${m.court}-${teamA}-${teamB}`;
+                    if (seen.has(sig)) {
+                        if (!toDelete.includes(m.id)) toDelete.push(m.id);
+                    } else {
+                        seen.add(sig);
+                    }
+                });
+
+                for (const id of toDelete) {
+                    await window.db.collection(collName).doc(id).delete();
+                }
+
+                console.log(`✅ [MatchMaking] Saneamiento completado. Borrados: ${toDelete.length}`);
+                return { deleted: toDelete.length };
             }
         };
 

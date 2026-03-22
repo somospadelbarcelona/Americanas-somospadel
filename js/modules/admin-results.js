@@ -142,6 +142,7 @@ function renderResultsFrame(container, activeEvent, allEvents) {
                 
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="btn-primary-pro" onclick="window.Actions.generateRound()" style="background: #3498db; color:white;">⚡ GENERAR RONDA</button>
+                    <button class="btn-outline-pro" onclick="window.Actions.sanitizeCurrentRound()" style="border-color: #f1c40f; color:#f1c40f; font-weight:800;">🧹 SANEAR RONDA</button>
                     <button class="btn-primary-pro" onclick="window.Actions.simulateRound()" style="background: #e67e22; color:white;">🎲 SIMULACIÓN</button>
                     <button class="btn-primary-pro" onclick="window.Actions.finishEvent()" style="background: #27ae60; color:white;">🏁 FINALIZAR</button>
                     <button class="btn-primary-pro" onclick="window.Actions.recalculateLevels()" style="background: #9b59b6; color:white;">⚖️ RECALCULAR NIVELES</button>
@@ -533,6 +534,20 @@ window.Actions = {
             } else {
                 alert(e.message);
             }
+        }
+    },
+    
+    async sanitizeCurrentRound() {
+        const evt = window.AdminController.activeEvent;
+        const round = window.AdminController.currentRound;
+        if (!confirm(`⚠️ ¿Deseas sanear la Ronda ${round}?\n\nSe eliminarán:\n- Partidos duplicados (misma pista/par)\n- Partidos fantasma sin finalizar si ya existe uno finalizado.`)) return;
+
+        try {
+            const res = await MatchMakingService.sanitizeRound(evt.id, evt.type, round);
+            alert(`✅ Saneamiento completado.\n\nRegistros eliminados: ${res.deleted}`);
+            window.loadResultsView(evt.type);
+        } catch (e) {
+            alert("❌ Error: " + e.message);
         }
     },
 

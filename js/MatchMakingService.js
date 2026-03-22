@@ -284,39 +284,93 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
             },
 
 
-            /**
-             * Helper to batch create matches
-             */
             async _createMatches(eventId, matchesData, eventType = 'americana') {
                 const created = [];
-                // Check if FirebaseDB.entrenos_matches exists
-                let collection = (eventType === 'entreno') ? window.FirebaseDB?.entrenos_matches : window.FirebaseDB?.matches;
+                const colName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                const dbCol = window.db.collection(colName);
 
-                if (!collection) {
-                    const colName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
-                    console.log(`⚠️ MatchMakingService: Wrapper for ${colName} missing. Using raw DB.`);
-                    collection = {
-                        create: async (data) => {
-                            const ref = await window.db.collection(colName).add(data);
-                            return { id: ref.id, ...data };
-                        }
-                    };
-                }
+                // --- DUPLICATE PROTECTION ---
+                // Fetch existing matches for this round to avoid double creation
+                const roundNum = matchesData.length > 0 ? parseInt(matchesData[0].round) : 0;
+                const existingSnap = await dbCol.where('americana_id', '==', eventId).where('round', '==', roundNum).get();
+                const existingCourts = new Set(existingSnap.docs.map(doc => parseInt(doc.data().court)));
 
                 for (const m of matchesData) {
+                    const court = parseInt(m.court);
+                    if (existingCourts.has(court)) {
+                        console.warn(`⚠️ Skipping duplicate creation for Round ${roundNum} Pista ${court}`);
+                        continue;
+                    }
+
                     const payload = {
                         ...m,
                         americana_id: eventId,
-                        round: parseInt(m.round),
+                        round: roundNum,
                         status: 'scheduled',
                         score_a: 0,
                         score_b: 0,
                         createdAt: new Date().toISOString()
                     };
-                    const result = await collection.create(payload);
-                    created.push(result);
+                    const result = await dbCol.add(payload);
+                    created.push({ id: result.id, ...payload });
                 }
                 return created;
+            },
+
+            /**
+             * Clean up duplicated matches in a round
+             */
+            async sanitizeRound(eventId, eventType, round) {
+                const colName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                const dbCol = window.db.collection(colName);
+                const snap = await dbCol.where('americana_id', '==', eventId).where('round', '==', parseInt(round)).get();
+                
+                const matches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const courtMap = {};
+                let deleted = 0;
+
+                for (const m of matches) {
+                    const court = parseInt(m.court);
+                    if (!courtMap[court]) {
+                        courtMap[court] = m;
+                    } else {
+                        // Conflict! Keep the finished one or the first one
+                        const existing = courtMap[court];
+                        let toDelete;
+                        if (m.status === 'finished' && existing.status !== 'finished') {
+                            toDelete = existing.id;
+                            courtMap[court] = m;
+                        } else {
+                            toDelete = m.id;
+                        }
+                        await dbCol.doc(toDelete).delete();
+                        deleted++;
+                    }
+                }
+                return { deleted };
+            },
+
+            /**
+             * Delete all rounds after a specific point (Re-generation tool)
+             */
+            async purgeSubsequentRounds(eventId, roundNum, eventType) {
+                const colName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                const dbCol = window.db.collection(colName);
+                const snap = await dbCol.where('americana_id', '==', eventId).get();
+                
+                const batch = window.db.batch();
+                let count = 0;
+                snap.docs.forEach(doc => {
+                    const data = doc.data();
+                    if (parseInt(data.round) > parseInt(roundNum)) {
+                        batch.delete(doc.ref);
+                        count++;
+                    }
+                });
+
+                if (count > 0) await batch.commit();
+                console.log(`🧹 Purged ${count} matches from rounds > ${roundNum}`);
+                return count;
             },
 
             /**
