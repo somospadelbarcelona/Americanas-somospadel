@@ -1,0 +1,120 @@
+/* 
+ * MOBILE HEADER OPTIMIZATION - SOMOSPADEL BCN
+ * Solves overlap issues on small screens and improves legibility.
+ */
+
+/* 1. Header structural fixes */
+@media (max-width: 480px) {
+    .cmd-bar {
+        padding: 0 10px !important; /* Less padding on sides */
+        height: 65px !important; /* Slightly more compact */
+        gap: 5px !important;
+    }
+
+    /* Burger button reduction */
+    .header-burger-btn {
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 1.1rem !important;
+        border-radius: 10px !important;
+    }
+
+    /* Brand / Logo reduction */
+    .cmd-brand {
+        gap: 8px !important;
+        flex-shrink: 0 !important; /* El logo NO se encoge */
+        min-width: fit-content !important;
+    }
+
+    .cmd-brand img {
+        height: 32px !important;
+    }
+
+    .cmd-brand div[style*="width: 2px"] {
+        height: 20px !important; /* Shorter separator */
+    }
+
+    .cmd-brand span[style*="font-size: 1.1rem"] {
+        font-size: 0.85rem !important; /* Smaller title */
+    }
+
+    /* Hide the slogan on mobile to save space */
+    .cmd-brand span[style*="font-size: 0.6rem"] {
+        display: none !important;
+    }
+
+    /* ELO badge */
+    #header-user-level {
+        padding: 6px 12px !important;
+        font-size: 0.85rem !important;
+        border-radius: 10px !important;
+        background: #CCFF00 !important;
+        color: #0a192f !important;
+        box-shadow: 0 0 15px rgba(204, 255, 0, 0.2) !important;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* User Container / Avatar section */
+    .cmd-avatar-container {
+        padding: 4px 4px 4px 8px !important;
+        gap: 6px !important;
+        border-radius: 12px !important;
+        flex-shrink: 1 !important; /* Allow it to shrink if needed */
+        min-width: 0 !important; /* Critical for ellipsis to work */
+        margin-left: auto !important; /* Push to the right */
+    }
+
+    .cmd-avatar-container > div:first-child {
+        min-width: 0 !important;
+        flex-shrink: 1 !important;
+    }
+
+    #header-user-name {
+        font-size: 0.75rem !important;
+        font-weight: 900 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 80px !important; /* Limits name length in header */
+        display: block !important;
+    }
+
+    /* Hide redundant elements on very small screens */
+    @media (max-width: 380px) {
+        .cmd-avatar-container div div[style*="justify-content: flex-end"] {
+            display: none !important; /* Hide 🔥 and 🏆 badges on tiny screens */
+        }
+        
+        #header-user-name {
+            max-width: 60px !important;
+        }
+        
+        .cmd-brand span[style*="font-size: 1.1rem"] {
+            font-size: 0.8rem !important;
+        }
+    }
+}
+
+/* Ensure the ticker doesn't hide content */
+.dashboard-fixed-header {
+    height: auto !important;
+}
+
+/* Fix for ultra-small screens */
+@media (max-width: 360px) {
+    .cmd-brand span[style*="font-size: 0.85rem"] {
+        display: none; /* Only show logo on tiny screens */
+    }
+    
+    .cmd-brand div[style*="width: 2px"] {
+        display: none;
+    }
+}
+
+/* Content Area Fix - Ensure enough space for the fixed header */
+main#content-area {
+    padding-top: 115px !important; /* Adjust based on ticker + cmd-bar */
+}
