@@ -220,21 +220,26 @@
         updateGlobalHeader(user) {
             const headerName = document.getElementById('header-user-name');
             const headerAvatar = document.getElementById('header-user-avatar');
+            const headerAvatarMenu = document.getElementById('header-user-avatar-menu');
             const headerLevel = document.getElementById('header-user-level');
             const headerStreak = document.getElementById('header-user-streak');
             const headerRank = document.getElementById('header-user-rank');
+            const headerMatches = document.getElementById('header-user-matches');
+            const headerWinRate = document.getElementById('header-user-winrate');
+
+            const stats = window.Store ? window.Store.getState('playerStats') : null;
 
             if (headerName) {
-                // Prioritize user.name from DB, then displayName from Auth, then placeholder
                 const rawName = user ? (user.name || user.displayName || "Jugador") : "Invitado";
                 const roleIcon = user?.role === 'super_admin' ? ' 👑' : '';
                 headerName.innerHTML = `${rawName.split(' ')[0].toUpperCase()}${roleIcon}`;
             }
 
-            if (headerLevel) {
-                const level = user ? (user.level || 3.5).toFixed(2) : "--";
-                headerLevel.innerText = level;
-            }
+            const level = user ? (user.level || 3.5).toFixed(2) : "--";
+            if (headerLevel) headerLevel.innerText = level;
+            
+            const headerLevelMenu = document.getElementById('header-user-level-menu');
+            if (headerLevelMenu) headerLevelMenu.innerText = `LVL ${level}`;
 
             if (headerStreak) {
                 const streak = user ? (user.streak || 0) : 0;
@@ -246,15 +251,29 @@
                 headerRank.innerText = `🏆 #${rank}`;
             }
 
-            if (headerAvatar) {
-                if (user && user.photoURL) {
-                    headerAvatar.innerHTML = `<img src="${user.photoURL}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+            if (headerMatches) {
+                const matches = user ? (user.matches_played || (stats?.stats?.matches) || 0) : 0;
+                headerMatches.innerText = matches;
+            }
+
+            if (headerWinRate) {
+                const wr = stats?.stats?.winRate || (user?.win_rate) || "--";
+                headerWinRate.innerText = wr !== "--" ? `${wr}%` : "--";
+            }
+
+            const updateAvatar = (el) => {
+                if (!el) return;
+                if (user && (user.photo_url || user.photoURL)) {
+                    el.innerHTML = `<img src="${user.photo_url || user.photoURL}" style="width:100%; height:100%; border-radius:inherit; object-fit:cover;">`;
                 } else {
                     const rawName = user ? (user.name || user.displayName || "J") : "I";
                     const initials = rawName.substring(0, 2).toUpperCase();
-                    headerAvatar.innerHTML = initials;
+                    el.innerHTML = initials;
                 }
-            }
+            };
+
+            updateAvatar(headerAvatar);
+            updateAvatar(headerAvatarMenu);
         }
 
         setupNavigation() {

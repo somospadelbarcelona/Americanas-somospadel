@@ -302,30 +302,83 @@
                     </div>
                 </div>
 
-                <div class="cmd-avatar-container haptic-feedback" 
-                    onclick="window.Router && window.Router.navigate('profile')"
-                    style="display: flex; align-items: center; gap: 10px; background: #0a192f; padding: 4px 4px 4px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer;">
-                    <div style="text-align: right; line-height: 1.1;">
-                        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 5px; margin-bottom: 2px;">
-                            <span id="header-user-streak" style="font-size: 0.55rem; color: #ffffff; font-weight: 900; background: #ff4757; padding: 1px 6px; border-radius: 4px;">🔥 --</span>
-                            <span id="header-user-rank" style="font-size: 0.55rem; color: #0a192f; font-weight: 900; background: #00d2ff; padding: 1px 6px; border-radius: 4px;">🏆 --</span>
+                <div class="user-dropdown-container" id="user-dropdown-container">
+                    <div class="user-dropdown-trigger haptic-feedback" onclick="window._toggleUserDropdown(event)">
+                        <div id="header-user-level" style="background: #CCFF00; color: #0a192f; padding: 4px 8px; border-radius: 8px; font-weight: 950; font-size: 0.85rem; border: 1px solid #ffffff; box-shadow: 0 0 10px rgba(204,255,0,0.3);">
+                            --
                         </div>
-                        <div style="font-size: 0.9rem; font-weight: 950; color: #ffffff !important; letter-spacing: -0.2px; text-transform: uppercase;" id="header-user-name">ALEJANDRO COSCOLÍN</div>
+                        <div class="cmd-avatar" id="header-user-avatar"
+                            style="width: 38px; height: 38px; border-radius: 10px; background: #ffffff; color: #0a192f !important; font-weight: 950; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.2);">
+                            --
+                        </div>
                     </div>
-                    <div id="header-user-level" style="background: #CCFF00; color: #0a192f; padding: 6px 10px; border-radius: 8px; font-weight: 950; font-size: 0.95rem; border: 1px solid #ffffff;">
-                        3.46
-                    </div>
-                    <div class="cmd-avatar haptic-feedback" id="header-user-avatar"
-                        style="width: 38px; height: 38px; border-radius: 8px; background: #ffffff; color: #0a192f !important; font-weight: 950; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0;">
-                        AC
-                    </div>
-                    <!-- Logout Button Integrated -->
-                    <div onclick="event.stopPropagation(); window.AuthController && window.AuthController.handleLogout()" 
-                         style="background: rgba(255, 71, 87, 0.15); color: #ff4757; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; border: 1px solid rgba(255, 71, 87, 0.3); cursor: pointer; transition: all 0.2s;"
-                         title="Cerrar Sesión" class="haptic-feedback">
-                        <i class="fas fa-power-off"></i>
+                    
+                    <div class="user-dropdown-menu">
+                        <div class="user-dropdown-header">
+                            <div style="width: 50px; height: 50px; border-radius: 14px; background: #CCFF00; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 950; color: #0a192f; border: 2px solid #ffffff;" id="header-user-avatar-menu">
+                                --
+                            </div>
+                            <div class="user-dropdown-name-container">
+                                <div class="user-dropdown-name" id="header-user-name">--</div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div class="user-dropdown-role">EXECUTIVE PLAYER</div>
+                                    <div id="header-user-level-menu" style="font-size: 0.65rem; background: rgba(255,255,255,0.1); color: #fff; padding: 1px 6px; border-radius: 4px; font-weight: 900;">--</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="user-dropdown-stats-grid">
+                            <div class="user-dropdown-stat-card">
+                                <div class="user-dropdown-stat-label">Racha</div>
+                                <div id="header-user-streak" class="user-dropdown-stat-value" style="color: #ff4757;">🔥 --</div>
+                            </div>
+                            <div class="user-dropdown-stat-card">
+                                <div class="user-dropdown-stat-label">Ranking</div>
+                                <div id="header-user-rank" class="user-dropdown-stat-value" style="color: #00d2ff;">🏆 --</div>
+                            </div>
+                            <div class="user-dropdown-stat-card">
+                                <div class="user-dropdown-stat-label">Partidos</div>
+                                <div id="header-user-matches" class="user-dropdown-stat-value">--</div>
+                            </div>
+                            <div class="user-dropdown-stat-card">
+                                <div class="user-dropdown-stat-label">Victorias</div>
+                                <div id="header-user-winrate" class="user-dropdown-stat-value" style="color: #CCFF00;">--%</div>
+                            </div>
+                        </div>
+
+                        <div class="user-dropdown-footer">
+                            <div class="user-dropdown-btn user-dropdown-btn-profile haptic-feedback" onclick="window.Router && window.Router.navigate('profile'); window._toggleUserDropdown()">
+                                <i class="fas fa-user-circle"></i> Mi Perfil Pro
+                            </div>
+                            <div class="user-dropdown-btn user-dropdown-btn-logout haptic-feedback" onclick="window.AuthController && window.AuthController.handleLogout()">
+                                <i class="fas fa-power-off"></i> Cerrar Sesión
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <script>
+                    window._toggleUserDropdown = function(e) {
+                        if (e) e.stopPropagation();
+                        const container = document.getElementById('user-dropdown-container');
+                        if (container) {
+                            container.classList.toggle('open');
+                            if (container.classList.contains('open')) {
+                                window.PlayerView?.haptic?.(20);
+                                // Close other menus if any
+                                document.getElementById('side-drawer-container')?.classList.remove('open');
+                            }
+                        }
+                    };
+
+                    // Close on click outside
+                    document.addEventListener('click', function(e) {
+                        const container = document.getElementById('user-dropdown-container');
+                        if (container && !container.contains(e.target)) {
+                            container.classList.remove('open');
+                        }
+                    });
+                </script>
             </div>
 
             <!-- NAVIGATION TABS (collapsible) -->
