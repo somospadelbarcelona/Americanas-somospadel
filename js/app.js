@@ -221,6 +221,8 @@
             const headerName = document.getElementById('header-user-name');
             const headerAvatar = document.getElementById('header-user-avatar');
             const headerLevel = document.getElementById('header-user-level');
+            const headerStreak = document.getElementById('header-user-streak');
+            const headerRank = document.getElementById('header-user-rank');
 
             if (headerName) {
                 // Prioritize user.name from DB, then displayName from Auth, then placeholder
@@ -232,6 +234,16 @@
             if (headerLevel) {
                 const level = user ? (user.level || 3.5).toFixed(2) : "--";
                 headerLevel.innerText = level;
+            }
+
+            if (headerStreak) {
+                const streak = user ? (user.streak || 0) : 0;
+                headerStreak.innerText = `🔥 ${streak}`;
+            }
+
+            if (headerRank) {
+                const rank = user ? (user.ranking_pos || '--') : '--';
+                headerRank.innerText = `🏆 #${rank}`;
             }
 
             if (headerAvatar) {

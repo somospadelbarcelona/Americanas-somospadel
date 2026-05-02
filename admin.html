@@ -552,6 +552,13 @@
                     <span class="nav-text" style="color:white; font-weight:700;">Reparar Jugadores 🔧</span>
                 </button>
 
+                <!-- NEW: SYNC EVERYTHING BUTTON -->
+                <button class="nav-item-pro" onclick="window.LevelAdjustmentService && window.LevelAdjustmentService.recalculateAllLevels()"
+                    style="border:1px solid rgba(0, 212, 255, 0.4); background:rgba(0, 212, 255, 0.1); margin-top: 15px; border-radius: 14px; padding: 12px 15px;">
+                    <span class="icon-box"><i class="fas fa-sync-alt fa-spin" style="color:#00d4ff;"></i></span>
+                    <span class="nav-text" style="color:white; font-weight:950; letter-spacing: 0.5px;">SINCRONIZAR TODO 🔄</span>
+                </button>
+
                 <button class="nav-item-pro nav-item-logout" style="margin-top: auto;" onclick="AdminAuth.logout()">
                     <span class="icon-box"><i class="fas fa-power-off"></i></span>
                     <span class="nav-text">Cerrar Sesión</span>
@@ -1934,6 +1941,7 @@
             <script src="js/modules/core/Constants.js"></script>
             <script src="js/modules/common/EventService.js"></script>
             <script src="js/modules/logic/MatchMakingService.js"></script>
+            <script src="js/modules/logic/LevelAdjustmentService.js"></script>
             <script src="js/modules/americanas/AmericanaLogic.js"></script>
             <script src="js/modules/americanas/AmericanaService.js"></script>
             <script src="js/app-init.js"></script>

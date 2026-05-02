@@ -298,15 +298,17 @@
                     <div style="height: 30px; width: 2px; background: #e1e8f0;"></div>
                     <div style="display: flex; flex-direction: column; line-height: 1.1;">
                         <span style="font-size: 1.1rem; font-weight: 900; color: #0a192f !important; letter-spacing: -0.5px;">SOMOSPADEL <span style="color: #99cc00;">BCN</span></span>
-                        <span style="font-size: 0.6rem; color: #555 !important; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">COMPITE Y DISFRUTA</span>
+                        <span style="font-size: 0.6rem; color: #555 !important; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">GANA Y COMPARTE</span>
                     </div>
                 </div>
 
-                <div class="cmd-avatar-container" style="display: flex; align-items: center; gap: 10px; background: #0a192f; padding: 4px 4px 4px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                <div class="cmd-avatar-container haptic-feedback" 
+                    onclick="window.Router && window.Router.navigate('profile')"
+                    style="display: flex; align-items: center; gap: 10px; background: #0a192f; padding: 4px 4px 4px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer;">
                     <div style="text-align: right; line-height: 1.1;">
                         <div style="display: flex; align-items: center; justify-content: flex-end; gap: 5px; margin-bottom: 2px;">
-                            <span style="font-size: 0.55rem; color: #ffffff; font-weight: 900; background: #ff4757; padding: 1px 6px; border-radius: 4px;">🔥 18</span>
-                            <span style="font-size: 0.55rem; color: #0a192f; font-weight: 900; background: #00d2ff; padding: 1px 6px; border-radius: 4px;">🏆 #5</span>
+                            <span id="header-user-streak" style="font-size: 0.55rem; color: #ffffff; font-weight: 900; background: #ff4757; padding: 1px 6px; border-radius: 4px;">🔥 --</span>
+                            <span id="header-user-rank" style="font-size: 0.55rem; color: #0a192f; font-weight: 900; background: #00d2ff; padding: 1px 6px; border-radius: 4px;">🏆 --</span>
                         </div>
                         <div style="font-size: 0.9rem; font-weight: 950; color: #ffffff !important; letter-spacing: -0.2px; text-transform: uppercase;" id="header-user-name">ALEJANDRO COSCOLÍN</div>
                     </div>
@@ -314,8 +316,14 @@
                         3.46
                     </div>
                     <div class="cmd-avatar haptic-feedback" id="header-user-avatar"
-                        style="width: 38px; height: 38px; border-radius: 8px; background: #ffffff; color: #0a192f !important; font-weight: 950; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">
+                        style="width: 38px; height: 38px; border-radius: 8px; background: #ffffff; color: #0a192f !important; font-weight: 950; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0;">
                         AC
+                    </div>
+                    <!-- Logout Button Integrated -->
+                    <div onclick="event.stopPropagation(); window.AuthController && window.AuthController.handleLogout()" 
+                         style="background: rgba(255, 71, 87, 0.15); color: #ff4757; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; border: 1px solid rgba(255, 71, 87, 0.3); cursor: pointer; transition: all 0.2s;"
+                         title="Cerrar Sesión" class="haptic-feedback">
+                        <i class="fas fa-power-off"></i>
                     </div>
                 </div>
             </div>

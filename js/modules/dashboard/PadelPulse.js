@@ -29,9 +29,10 @@
             const hour = new Date().getHours();
             const greeting = hour < 13 ? 'Buenos días' : hour < 20 ? 'Buenas tardes' : 'Buenas noches';
 
-            const [eventsSnap, matchesSnap] = await Promise.all([
+            const [eventsSnap, entrenoMatchesSnap, officialMatchesSnap] = await Promise.all([
                 window.db.collection('entrenos').limit(20).get().catch(() => null),
-                window.db.collection('entrenos_matches').get().catch(() => null)
+                window.db.collection('entrenos_matches').get().catch(() => null),
+                window.db.collection('matches').get().catch(() => null)
             ]);
 
             let nextEvent = null;
@@ -65,8 +66,12 @@
             let streak = 0, streakType = null;
             const recentForm = [];
 
-            if (matchesSnap && !matchesSnap.empty) {
-                const allMatches = matchesSnap.docs.map(d => d.data()).filter(m => m.status === 'finished');
+            if ((entrenoMatchesSnap && !entrenoMatchesSnap.empty) || (officialMatchesSnap && !officialMatchesSnap.empty)) {
+                const allMatches = [
+                    ...(entrenoMatchesSnap?.docs || []).map(d => ({ ...d.data(), id: d.id })),
+                    ...(officialMatchesSnap?.docs || []).map(d => ({ ...d.data(), id: d.id }))
+                ].filter(m => m.status === 'finished' || m.estado === 'finalizado' || m.status === 'completado');
+
                 const allPlayers = {};
                 allMatches.forEach(m => {
                     const aIds = (m.team_a_ids||[]).map(String), bIds = (m.team_b_ids||[]).map(String);
@@ -83,17 +88,95 @@
                     myRank = myIdx + 1; wins = ranked[myIdx].wins; losses = ranked[myIdx].losses;
                     if (myIdx > 0) rivalName = ranked[myIdx-1].name || `#${myIdx}`;
                 }
+                const parseMatchDate = (m) => {
+                    // 1. Try Firestore Timestamp
+                    if (m.createdAt && m.createdAt.toDate) return m.createdAt.toDate().getTime();
+                    if (m.timestamp && m.timestamp.toDate) return m.timestamp.toDate().getTime();
+                    
+                    // 2. Try manual date/time strings
+                    if (m.date) {
+                        try {
+                            // Support DD/MM/YYYY, D/M/YYYY, DD-MM-YYYY, etc.
+                            const cleanDate = m.date.replace(/-/g, '/');
+                            const parts = cleanDate.split('/');
+                            if (parts.length === 3) {
+                                let d = parseInt(parts[0]);
+                                let mo = parseInt(parts[1]);
+                                let y = parseInt(parts[2]);
+                                if (y < 100) y += 2000; // Handle 26 -> 2026
+                                
+                                const [h, mi] = (m.time || '00:00').split(':');
+                                return new Date(y, mo - 1, d, parseInt(h) || 0, parseInt(mi) || 0).getTime();
+                            }
+                        } catch(e) { console.warn("Date parse error", e); }
+                    }
+                    
+                    // 3. Fallback to a very old date if unknown
+                    return 0;
+                };
+
                 const myMatches = allMatches.filter(m => {
-                    const a=(m.team_a_ids||[]).map(String),b=(m.team_b_ids||[]).map(String);
-                    return a.includes(uid)||b.includes(uid);
-                }).sort((a,b)=>parseInt(b.round||0)-parseInt(a.round||0));
-                myMatches.forEach((m,i) => {
-                    const isA=(m.team_a_ids||[]).map(String).includes(uid);
-                    const won=(parseInt(isA?m.score_a:m.score_b)||0)>(parseInt(isA?m.score_b:m.score_a)||0);
-                    if(i<5) recentForm.push(won?'W':'L');
-                    if(streakType===null){streakType=won?'W':'L';streak=1;}
-                    else if((won?'W':'L')===streakType) streak++;
+                    const a = (m.team_a_ids || []).map(String), b = (m.team_b_ids || []).map(String);
+                    return a.includes(uid) || b.includes(uid);
+                }).sort((a, b) => {
+                    const timeA = parseMatchDate(a);
+                    const timeB = parseMatchDate(b);
+                    if (timeA !== timeB) return timeB - timeA;
+                    
+                    // Desempate por número de partido (prioridad absoluta a lo que el usuario ve)
+                    const numA = parseInt(a.numero_partido || a.matchNumber || a.match_index || a.round || 0);
+                    const numB = parseInt(b.numero_partido || b.matchNumber || b.match_index || b.round || 0);
+                    return numB - numA;
                 });
+
+                let calculatedStreak = 0;
+                let currentStreakBroken = false;
+                
+                console.log(`🎾 Auditoría de Racha para ${uid}:`);
+
+                for (let i = 0; i < myMatches.length; i++) {
+                    const m = myMatches[i];
+                    const teamA = (m.team_a_ids || []).map(id => String(id));
+                    const teamB = (m.team_b_ids || []).map(id => String(id));
+                    const isA = teamA.includes(String(uid));
+                    const isB = teamB.includes(String(uid));
+                    
+                    if (!isA && !isB) continue;
+
+                    const sA = parseInt(m.score_a) || 0;
+                    const sB = parseInt(m.score_b) || 0;
+                    
+                    let won = false;
+                    if (isA) won = sA > sB;
+                    if (isB) won = sB > sA;
+                    
+                    const result = won ? 'W' : 'L';
+                    if (i < 5) recentForm.push(result);
+                    
+                    if (!currentStreakBroken) {
+                        if (calculatedStreak === 0 && result === 'W') {
+                            calculatedStreak = 1;
+                        } else if (result === 'W') {
+                            calculatedStreak++;
+                        } else if (result === 'L') {
+                            currentStreakBroken = true;
+                        }
+                    }
+                }
+                
+                // USAR EL VALOR OFICIAL DEL USUARIO (El que sale en el header y es correcto)
+                const stProfile = (window.Store?.getState('playerStats') || {}).stats || {};
+                if (stProfile.streak !== undefined) {
+                    streak = stProfile.streak;
+                } else {
+                    streak = calculatedStreak;
+                }
+                
+                console.log(`📊 Auditoría: Calculado=${calculatedStreak} | Oficial=${stProfile.streak} -> Usando ${streak}`);
+                
+                // Forzar tipo racha
+                streakType = (streak > 0) ? 'W' : 'L';
+
                 if(wins===0&&losses===0) myMatches.forEach(m=>{const isA=(m.team_a_ids||[]).map(String).includes(uid);if((parseInt(isA?m.score_a:m.score_b)||0)>(parseInt(isA?m.score_b:m.score_a)||0))wins++;else losses++;});
             }
             const st=(window.Store?.getState('playerStats')||{}).stats||{};
@@ -232,7 +315,7 @@
                         font-size: 0.6rem; font-weight: 800; letter-spacing:0.5px;">
                         LVL ${level}
                     </span>
-                    ${streak >= 3 ? `
+                    ${streak >= 1 ? `
                     <span style="
                         background: linear-gradient(90deg, rgba(255,120,0,0.2), rgba(255,200,0,0.2));
                         border: 1px solid rgba(255,150,0,0.4);

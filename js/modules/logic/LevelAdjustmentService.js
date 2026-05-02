@@ -112,11 +112,26 @@
 
             const oldLevel = parseFloat(currentData.level || 3.5);
             const newLevel = parseFloat((oldLevel + delta).toFixed(2));
+            const isWin = delta > 0;
+
+            // Stats Update logic
+            const wins = (currentData.wins || 0) + (isWin ? 1 : 0);
+            const losses = (currentData.losses || 0) + (isWin ? 0 : 1);
+            let streak = currentData.streak || 0;
+            if (isWin) {
+                streak = streak >= 0 ? streak + 1 : 1;
+            } else {
+                streak = 0; // Streak breaks on loss
+            }
 
             const playerRef = window.db.collection('players').doc(uid);
             batch.update(playerRef, {
                 level: newLevel,
-                lastLevelUpdate: date
+                lastLevelUpdate: date,
+                wins: wins,
+                losses: losses,
+                streak: streak,
+                total_matches: wins + losses
             });
 
             // Registrar en historial
@@ -204,7 +219,10 @@
                     players[doc.id] = {
                         ...data,
                         id: doc.id,
-                        level: parseFloat(data.self_rate_level || 3.50)
+                        level: parseFloat(data.self_rate_level || 3.50),
+                        wins: 0,
+                        losses: 0,
+                        streak: 0
                     };
                 });
 
@@ -276,6 +294,16 @@
                         const oldLvl = players[id].level;
                         players[id].level = parseFloat((oldLvl + delta).toFixed(2));
                         players[id].lastUpdate = dateStr;
+                        
+                        // Sync Stats
+                        const isWin = delta > 0;
+                        if (isWin) {
+                            players[id].wins++;
+                            players[id].streak++;
+                        } else {
+                            players[id].losses++;
+                            players[id].streak = 0;
+                        }
 
                         const hRef = window.db.collection('level_history').doc();
                         opBatch.set(hRef, {
@@ -306,7 +334,11 @@
                     const pRef = window.db.collection('players').doc(id);
                     opBatch.update(pRef, {
                         level: players[id].level,
-                        lastLevelUpdate: players[id].lastUpdate || new Date().toISOString()
+                        lastLevelUpdate: players[id].lastUpdate || new Date().toISOString(),
+                        wins: players[id].wins,
+                        losses: players[id].losses,
+                        streak: players[id].streak,
+                        total_matches: players[id].wins + players[id].losses
                     });
                     opCount++;
                     if (opCount >= 450) {

@@ -8,7 +8,7 @@
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    overflow: hidden !important;
+    overflow: visible !important; /* Allow icons to pop out */
     gap: 10px;
     width: 100% !important;
     box-sizing: border-box !important;
@@ -52,9 +52,12 @@
         gap: 8px !important;
     }
 
-    /* Hide slogan to save space */
+    /* Show slogan with ultra-compact font */
     .cmd-brand span[style*="font-size: 0.6rem"] {
-        display: none !important;
+        display: block !important;
+        font-size: 0.45rem !important; /* Smaller but visible */
+        letter-spacing: 1px !important;
+        white-space: nowrap !important;
     }
 
     /* Reduce brand text size */
@@ -85,6 +88,14 @@
         width: 32px !important;
         height: 32px !important;
         font-size: 0.7rem !important;
+    }
+
+    /* Logout Button Compact */
+    .cmd-avatar-container div[style*="background: rgba(255, 71, 87, 0.15)"] {
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 0.85rem !important;
+        border-radius: 8px !important;
     }
 }
 
@@ -120,8 +131,13 @@
 
 /* ULTRA TINY SCREENS (iPhone SE, etc.) */
 @media (max-width: 340px) {
-    .cmd-brand span {
-        display: none !important; /* Only logo remains */
+    .cmd-brand span[style*="font-size: 1.1rem"] {
+        display: none !important; /* Hide "SOMOSPADEL BCN" on tiny screens to fit slogan */
+    }
+    
+    .cmd-brand span[style*="font-size: 0.6rem"] {
+        display: block !important;
+        font-size: 0.4rem !important;
     }
     
     #header-user-name {
