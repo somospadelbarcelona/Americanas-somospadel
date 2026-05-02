@@ -1,10 +1,10 @@
-// 🛡️ ANTI-GRAVITY SERVICE WORKER v5.0 (PREMIUM PERFORMANCE)
+// 🛡️ ANTI-GRAVITY SERVICE WORKER v7.0 [AUTONOMOUS UPGRADE]
 // Optimizado para carga instantánea y gestión de notificaciones persistentes.
 
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
 
-const CACHE_NAME = 'somospadel-ultra-cache-v3';
+const CACHE_NAME = 'somospadel-ultra-cache-v700';
 
 // Recursos críticos para el "App Shell"
 const CORE_ASSETS = [
@@ -13,8 +13,9 @@ const CORE_ASSETS = [
     './manifest.json',
     './css/theme-playtomic.css?v=800',
     './img/logo_somospadel.png',
-    './js/app.js?v=3000',
-    './js/core/AuthService.js?v=12.1'
+    './js/app.js?v=3003',
+    './js/core/AuthService.js?v=12.1',
+    './js/modules/admin/AICopilot_v4.js?v=4.0'
 ];
 
 // Initialize Firebase Messaging

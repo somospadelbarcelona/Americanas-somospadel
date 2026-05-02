@@ -7,12 +7,12 @@
 (function () {
     const LevelAdjustmentService = {
 
-        // Configuración de sensibilidad (AUMENTADA v2)
+        // Configuración de sensibilidad (AUMENTADA v3 - MÁS DINÁMICO)
         CONFIG: {
-            BASE_GAIN: 0.010,    // (Antes 0.005) Ganancia estándar
-            MAX_ADJUST: 0.025,   // (Antes 0.010) Máximo por partido
-            MIN_ADJUST: 0.005,   // Mínimo
-            LEVEL_K_FACTOR: 0.01 // (Antes 0.005) Más sensible a ganar a gente mejor
+            BASE_GAIN: 0.05,     // (Antes 0.010) Ganancia estándar mucho más visible
+            MAX_ADJUST: 0.10,    // (Antes 0.025) Máximo por partido
+            MIN_ADJUST: 0.02,    // (Antes 0.005) Mínimo garantizado
+            LEVEL_K_FACTOR: 0.05 // (Antes 0.01) Mayor impacto al ganar a gente superior
         },
 
         /**
@@ -96,9 +96,9 @@
             // 1. Bonus por dificultad (Diferencial de ELO)
             delta += (levelDiff * this.CONFIG.LEVEL_K_FACTOR);
 
-            // 2. Bonus por marcador (Cada juego de diferencia suma 0.0005 al ajuste)
+            // 2. Bonus por marcador (Cada juego de diferencia suma 0.005 al ajuste)
             // Esto cumple con: "si ganas/pierdes por más juegos, que suba (la magnitud) algo más"
-            delta += (Math.abs(diffGames || 0) * 0.0005);
+            delta += (Math.abs(diffGames || 0) * 0.005);
 
             // 3. Asegurar límites (Rango solicitado: 0.05 - 0.10)
             delta = Math.max(this.CONFIG.MIN_ADJUST, Math.min(this.CONFIG.MAX_ADJUST, delta));

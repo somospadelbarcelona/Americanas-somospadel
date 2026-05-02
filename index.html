@@ -59,6 +59,42 @@
             box-sizing: border-box;
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #e1e8f0 !important;
+            background-attachment: fixed !important;
+            color: #0a192f;
+            font-family: 'Outfit', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* 🎾 CRYSTAL CLEAR LIGHT THEME CORE */
+        .glass-card {
+            background: #ffffff !important;
+            backdrop-filter: none !important;
+            border: 1px solid #e1e8f0 !important;
+            box-shadow: 0 4px 15px rgba(10, 25, 47, 0.05) !important;
+            border-radius: 20px !important;
+        }
+
+        .dashboard-stat-card {
+            background: #ffffff !important;
+            border: 1px solid #e1e8f0 !important;
+            border-radius: 16px !important;
+            padding: 15px !important;
+            text-align: center !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02) !important;
+        }
+
+        .text-navy { color: #0a192f !important; }
+        .text-muted-navy { color: #556677 !important; }
+
         @keyframes loginBallLife {
             0% {
                 transform: translateY(0) scale(1) rotate(0deg);
@@ -235,57 +271,50 @@
     <div id="app-shell" class="flex-col hidden">
 
         <!-- GLOBAL FIXED HEADER (Ticker + Command Bar) -->
-        <div class="dashboard-fixed-header">
-            <!-- TOP TICKER (Running Text) -->
+        <div class="dashboard-fixed-header" style="background: #ffffff !important; box-shadow: 0 4px 25px rgba(10,25,47,0.12) !important; z-index: 10001;">
+            <!-- TOP TICKER - LIGHT COURT BLUE -->
             <div class="ticker-container" onclick="window.Router && window.Router.navigate('entrenos')"
-                style="cursor: pointer;">
+                style="cursor: pointer; background: #00d2ff !important; height: 40px; display: flex; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05);">
                 <div class="ticker-track" id="ticker-track">
-                    <div class="ticker-item"><span>🔴 EN JUEGO:</span> Pista 1 (Tie-Break)</div>
-                    <div class="ticker-item"><span>🏆 TORNEO:</span> Final "Rey de la Pista" 20:00h</div>
-                    <div class="ticker-item"><span>🚀 RANKING:</span> ¡Alejandro ha subido a 4.2!</div>
-                    <div class="ticker-item"><span>🔥 CLUB:</span> 120 Jugadores en pista ahora</div>
+                    <div class="ticker-item" style="color: #ffffff !important; font-weight: 800; font-size: 0.75rem;"><span style="background: #CCFF00; color: #000; padding: 2px 8px; border-radius: 5px; margin-right: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">V.2.9</span> ¡Pistas Centrales abiertas! Reserva tu Americano Pro.</div>
+                    <div class="ticker-item" style="color: #ffffff !important; font-weight: 800; font-size: 0.75rem;"><span style="color: #CCFF00; margin-right: 5px;">🏆</span> Alejandro lidera el ranking de esta semana.</div>
                 </div>
             </div>
 
-            <!-- COMMAND BAR -->
-            <div class="cmd-bar glass-card"
-                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; height: 60px; box-sizing: border-box; border-radius: 0 0 20px 20px; border-top:none; background: rgba(0,0,0,0.4);">
-                <!-- LEFT HAMBURGER TRIGGER -->
-                <div class="header-burger-btn haptic-feedback" style="flex-shrink: 0;"
+            <!-- COMMAND BAR - LIGHT MODE PRO (STRICT WHITE) -->
+            <div class="cmd-bar"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px; height: 72px; background: #ffffff !important; border-bottom: 1px solid #e1e8f0;">
+                
+                <div class="header-burger-btn haptic-feedback" 
+                    style="color: #0a192f !important; font-size: 1.3rem; cursor: pointer; background: #f0f4f8; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid #d1d9e0;"
                     onclick="window.PlayerView?.haptic?.(20); document.getElementById('side-drawer-container').classList.add('open'); document.getElementById('side-drawer-menu').classList.add('open');">
                     <i class="fas fa-bars"></i>
                 </div>
 
-                <div class="cmd-brand"
-                    style="display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; overflow: hidden;">
-                    <img src="img/logo_somospadel.png" alt="Somos Padel"
-                        style="height: 32px; width: auto; flex-shrink: 0; filter: none !important;">
-                    <div
-                        style="line-height:1.1; display:flex; flex-direction:column; justify-content:center; white-space: nowrap;">
-                        <span
-                            style="font-size:0.8rem; font-weight: 900; letter-spacing:-0.5px; color: white;">SOMOSPADEL<span
-                                style="color:var(--brand-neon)"> BCN</span></span>
-                        <span style="font-size:0.5rem; color:#888; letter-spacing:1px; font-weight:700;">COMPITE Y
-                            DISFRUTA</span>
+                <div class="cmd-brand" style="display: flex; align-items: center; gap: 14px;">
+                    <img src="img/logo_somospadel.png?v=60.1" 
+                        style="height: 44px; display: block; object-fit: contain; filter: drop-shadow(0px 0px 0.5px rgba(0,0,0,0.8));">
+                    <div style="height: 30px; width: 2px; background: #e1e8f0;"></div>
+                    <div style="display: flex; flex-direction: column; line-height: 1.1;">
+                        <span style="font-size: 1.1rem; font-weight: 900; color: #0a192f !important; letter-spacing: -0.5px;">SOMOSPADEL <span style="color: #99cc00;">BCN</span></span>
+                        <span style="font-size: 0.6rem; color: #555 !important; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">COMPITE Y DISFRUTA</span>
                     </div>
                 </div>
 
-                <div class="cmd-avatar-container" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                    <div style="text-align:right; display:flex; flex-direction:column; line-height: 1;"
-                        onclick="window.Router && window.Router.navigate('profile')">
-                        <span style="font-size:0.5rem; color:#bbb; font-weight:700;">HOLA,</span>
-                        <span
-                            style="font-size:0.75rem; font-weight:800; color:white; max-width: 60px; overflow: hidden; text-overflow: ellipsis;"
-                            id="header-user-name">ALEX</span>
+                <div class="cmd-avatar-container" style="display: flex; align-items: center; gap: 10px; background: #0a192f; padding: 4px 4px 4px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                    <div style="text-align: right; line-height: 1.1;">
+                        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 5px; margin-bottom: 2px;">
+                            <span style="font-size: 0.55rem; color: #ffffff; font-weight: 900; background: #ff4757; padding: 1px 6px; border-radius: 4px;">🔥 18</span>
+                            <span style="font-size: 0.55rem; color: #0a192f; font-weight: 900; background: #00d2ff; padding: 1px 6px; border-radius: 4px;">🏆 #5</span>
+                        </div>
+                        <div style="font-size: 0.9rem; font-weight: 950; color: #ffffff !important; letter-spacing: -0.2px; text-transform: uppercase;" id="header-user-name">ALEJANDRO COSCOLÍN</div>
                     </div>
-                    <div class="cmd-avatar" id="header-user-avatar"
-                        style="width: 32px; height: 32px; font-size: 0.8rem;"
-                        onclick="window.Router && window.Router.navigate('profile')">
-                        AL
+                    <div style="background: #CCFF00; color: #0a192f; padding: 6px 10px; border-radius: 8px; font-weight: 950; font-size: 0.95rem; border: 1px solid #ffffff;">
+                        3.46
                     </div>
-                    <div onclick="window.AuthController && window.AuthController.handleLogout()"
-                        style="color: rgba(255,255,255,0.4); padding: 5px; cursor: pointer; font-size: 1rem;">
-                        <i class="fas fa-sign-out-alt"></i>
+                    <div class="cmd-avatar haptic-feedback" id="header-user-avatar"
+                        style="width: 38px; height: 38px; border-radius: 8px; background: #ffffff; color: #0a192f !important; font-weight: 950; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">
+                        AC
                     </div>
                 </div>
             </div>
@@ -405,26 +434,55 @@
             </div>
         </main>
 
-        <!-- Navigation Dock (Bottom Nav) -->
+        <!-- Navigation Dock - LIGHT COURT BLUE STYLE -->
+        <style>
+            .bottom-nav-bar {
+                position: fixed;
+                bottom: 0; left: 0; width: 100%;
+                height: 75px;
+                background: #ffffff !important;
+                border-top: 1px solid rgba(10, 25, 47, 0.05);
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                z-index: 10000;
+                padding-bottom: env(safe-area-inset-bottom);
+                box-shadow: 0 -10px 30px rgba(10,25,47,0.05);
+            }
+            .nav-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 5px;
+                color: #8892b0;
+                transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                text-decoration: none;
+            }
+            .nav-item.active { color: #0a192f; }
+            .nav-item i { font-size: 1.3rem; }
+            .nav-item span { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+            .nav-item.active i { color: #99cc00; transform: translateY(-3px); filter: drop-shadow(0 4px 10px rgba(153,204,0,0.3)); }
+            .nav-item.active span { color: #0a192f; }
+        </style>
         <nav class="bottom-nav-bar">
-            <div class="nav-item active" onclick="window.Router && window.Router.navigate('dashboard')" id="nav-dashboard">
-                <i class="fas fa-home"></i>
+            <div class="nav-item active haptic-feedback" onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('dashboard')" id="nav-dashboard">
+                <i class="fas fa-th-large"></i>
                 <span>Inicio</span>
             </div>
-            <div class="nav-item" onclick="window.Router && window.Router.navigate('entrenos')" id="nav-entrenos">
-                <i class="fas fa-calendar-alt"></i>
+            <div class="nav-item haptic-feedback" onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('entrenos')" id="nav-entrenos">
+                <i class="fas fa-calendar-check"></i>
                 <span>Eventos</span>
             </div>
-            <div class="nav-item" onclick="window.Router && window.Router.navigate('ranking')" id="nav-ranking">
+            <div class="nav-item haptic-feedback" onclick="window.Router && window.Router.navigate('ranking')" id="nav-ranking">
                 <i class="fas fa-trophy"></i>
                 <span>Ranking</span>
             </div>
-            <div class="nav-item" onclick="window.Router && window.Router.navigate('records')" id="nav-records">
+            <div class="nav-item haptic-feedback" onclick="window.Router && window.Router.navigate('records')" id="nav-records">
                 <i class="fas fa-award"></i>
                 <span>Récords</span>
             </div>
-            <div class="nav-item" onclick="window.Router && window.Router.navigate('profile')" id="nav-profile">
-                <i class="fas fa-user-circle"></i>
+            <div class="nav-item haptic-feedback" onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('profile')" id="nav-profile">
+                <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </div>
         </nav>
@@ -447,284 +505,167 @@
     </script>
 
     <div id="auth-modal" class="modal-overlay auth-overlay-enterprise"
-        style="backdrop-filter: blur(30px); background: radial-gradient(circle at center, #1a3a1a 0%, #0d1f2d 30%, #0a0f1a 60%, #000000 100%); display: flex !important; z-index: 2147483647 !important; align-items: center; justify-content: center; position: fixed; inset: 0;">
+        style="backdrop-filter: blur(35px); background: radial-gradient(circle at center, #1a3a1a 0%, #0d1f2d 30%, #050a0f 60%, #000000 100%); display: flex !important; z-index: 2147483647 !important; align-items: center; justify-content: center; position: fixed; inset: 0;">
 
-        <!-- ANIMATIONS CSS -->
+        <!-- 🚀 NEURAL LOGIN V2.0 ENGINE -->
         <style>
-            /* Card Entrance */
-            .card-enter {
-                animation: cardSlideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-                opacity: 0;
-                /* Animación maneja la entrada, pero aseguramos forwards */
-                transform: translateY(20px);
+            .auth-overlay-enterprise {
+                background: radial-gradient(circle at 50% 50%, #1a3a1a, #050a0f, #000000) !important;
+                background-size: 200% 200% !important;
+                animation: auraFlow 15s ease infinite !important;
             }
 
-            @keyframes cardSlideUp {
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
+            @keyframes auraFlow {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
             }
 
-            /* ESTILO "BRILLI BRILLI" NEÓN INTENSO */
-            .card-super-led {
-                border: 2px solid #CCFF00;
-                /* La animación se maneja en combinación con card-enter abajo */
-            }
-
-            /* NUEVA CLASE MÁGICA DE COLORES INTENSA */
-            .card-magic-border {
-                border: 3px solid #CCFF00;
-                /* Animación compuesta: Entrada + Glow Infinito */
-                animation:
-                    cardSlideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards,
-                    magicColors 3s linear infinite;
-            }
-
-            @keyframes magicColors {
-                0% {
-                    border-color: #ffe600;
-                    /* Amarillo Brillante */
-                    box-shadow: 0 0 30px rgba(255, 230, 0, 0.7), 0 0 60px rgba(255, 230, 0, 0.3);
-                }
-
-                25% {
-                    border-color: #ff00ff;
-                    /* Magenta Neón */
-                    box-shadow: 0 0 30px rgba(255, 0, 255, 0.7), 0 0 60px rgba(255, 0, 255, 0.3);
-                }
-
-                50% {
-                    border-color: #00ffff;
-                    /* Cyan Eléctrico */
-                    box-shadow: 0 0 30px rgba(0, 255, 255, 0.7), 0 0 60px rgba(0, 255, 255, 0.3);
-                }
-
-                75% {
-                    border-color: #ff5500;
-                    /* Naranja Lava */
-                    box-shadow: 0 0 30px rgba(255, 85, 0, 0.7), 0 0 60px rgba(255, 85, 0, 0.3);
-                }
-
-                100% {
-                    border-color: #ffe600;
-                    /* Vuelta al inicio */
-                    box-shadow: 0 0 30px rgba(255, 230, 0, 0.7), 0 0 60px rgba(255, 230, 0, 0.3);
-                }
-            }
-
-            /* Logo Live Physics */
-            .logo-live {
-                animation: floatBallLive 4s ease-in-out infinite;
-                transform-origin: bottom center;
-            }
-
-            @keyframes floatBallLive {
-
-                0%,
-                100% {
-                    transform: translateY(0) scale(1) rotate(0deg);
-                    filter: drop-shadow(0 0 20px rgba(204, 255, 0, 0.5));
-                }
-
-                50% {
-                    transform: translateY(-12px) scale(1.05) rotate(5deg);
-                    filter: drop-shadow(0 15px 30px rgba(204, 255, 0, 0.3));
-                }
-            }
-
-            /* Input Focus */
-            .clean-input {
-                box-sizing: border-box;
-            }
-
-            .clean-input:focus {
-                outline: none;
-                border: 2px solid #CCFF00 !important;
-                box-shadow: 0 0 0 4px rgba(204, 255, 0, 0.1);
-            }
-
-            /* Button Hover */
-            .neon-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 25px rgba(204, 255, 0, 0.4);
-            }
-
-            /* Checkbox Custom */
-            .custom-checkbox {
-                appearance: none;
-                width: 20px;
-                height: 20px;
-                border: 2px solid rgba(255, 255, 255, 0.3);
-                border-radius: 4px;
-                background: transparent;
-                cursor: pointer;
+            .glass-card-pro {
+                background: rgba(10, 10, 15, 0.75) !important;
+                backdrop-filter: blur(25px) saturate(150%) !important;
+                -webkit-backdrop-filter: blur(25px) saturate(150%) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
                 position: relative;
-                transition: all 0.2s;
+                overflow: hidden;
             }
 
-            .custom-checkbox:checked {
-                background: #CCFF00;
-                border-color: #CCFF00;
-            }
-
-            .custom-checkbox:checked::after {
-                content: '✓';
+            .glass-card-pro::before {
+                content: '';
                 position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                color: black;
-                font-weight: bold;
-                font-size: 14px;
+                top: -50%; left: -50%;
+                width: 200%; height: 200%;
+                background: conic-gradient(from 0deg, transparent, rgba(204, 255, 0, 0.1), transparent 30%);
+                animation: rotateGlow 10s linear infinite;
+                pointer-events: none;
             }
 
-            /* Mobile Responsive Grid for Register */
-            @media (max-width: 400px) {
-                .register-grid {
-                    grid-template-columns: 1fr !important;
-                }
+            @keyframes rotateGlow {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+
+            .logo-float {
+                animation: premiumFloat 5s ease-in-out infinite;
+                filter: drop-shadow(0 0 20px rgba(204, 255, 0, 0.4));
+            }
+
+            @keyframes premiumFloat {
+                0%, 100% { transform: translateY(0) rotate(0deg); }
+                50% { transform: translateY(-15px) rotate(5deg); }
+            }
+
+            .neon-input {
+                background: rgba(255, 255, 255, 0.05) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                color: white !important;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .neon-input:focus {
+                background: rgba(255, 255, 255, 0.08) !important;
+                border-color: #CCFF00 !important;
+                box-shadow: 0 0 20px rgba(204, 255, 0, 0.15);
+                transform: translateY(-1px);
+            }
+
+            .shimmer-btn {
+                position: relative;
+                overflow: hidden;
+            }
+
+            .shimmer-btn::after {
+                content: '';
+                position: absolute;
+                top: -50%; left: -50%;
+                width: 200%; height: 200%;
+                background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent);
+                transform: rotate(30deg);
+                animation: shimmer 3s infinite;
+            }
+
+            @keyframes shimmer {
+                0% { left: -150%; }
+                100% { left: 150%; }
+            }
+
+            .tech-badge {
+                font-size: 0.6rem;
+                font-weight: 900;
+                color: #CCFF00;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                padding: 4px 10px;
+                border: 1px solid rgba(204, 255, 0, 0.3);
+                border-radius: 20px;
+                display: inline-block;
+                margin-bottom: 20px;
             }
         </style>
 
-        <!-- The Card -->
-        <div class="modal-content admin-login-card card-enter card-magic-border"
-            style="margin: 40px auto; background: #0a0a0a; border-radius: 24px; position: relative; max-width: 360px; width: 100%; padding: 40px 30px; overflow: visible !important;">
+        <div class="glass-card-pro card-enter"
+            style="margin: 40px auto; border-radius: 32px; max-width: 400px; width: 90%; padding: 50px 40px; text-align: center;">
 
-            <!-- Logo with Glow -->
-            <div style="text-align: center; margin-bottom: 30px;">
-                <img src="img/logo_somospadel.png" class="logo-live" style="height: 80px; margin-bottom: 25px;"
-                    alt="Somos Padel">
+            <div class="tech-badge">@SOMOSPADELBARCELONA_</div>
 
-                <h1
-                    style="color: white; font-weight: 900; font-size: 1.4rem; margin: 0 0 5px 0; font-family: 'Outfit', sans-serif; letter-spacing: 0.5px;">
-                    ACCESO JUGADORES
+            <div style="margin-bottom: 40px;">
+                <img src="img/logo_somospadel.png" class="logo-float" style="height: 100px; margin-bottom: 20px;" alt="Somos Padel">
+                <h1 style="color: white; font-weight: 900; font-size: 1.6rem; letter-spacing: -0.5px; margin: 0; font-family: 'Outfit';">
+                    ACCESO <span style="color: #CCFF00;">JUGADORES</span>
                 </h1>
-                <p
-                    style="color: #CCFF00; font-size: 0.75rem; font-weight: 800; margin: 0; letter-spacing: 1px; text-transform: uppercase;">
-                    App Somospadel BCN
-                </p>
+                <p style="color: rgba(255,255,255,0.4); font-size: 0.8rem; font-weight: 600; margin-top: 5px;">SOMOSPADEL BCN 2026</p>
             </div>
 
-            <!-- Login Form -->
-            <form id="login-form" style="width: 100%;">
-
-                <!-- Phone Input -->
-                <div style="margin-bottom: 20px;">
-                    <label
-                        style="display: block; color: rgba(255,255,255,0.7); font-size: 0.7rem; font-weight: 800; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
-                        Teléfono de acceso
-                    </label>
-                    <input type="text" name="phone" placeholder="Tu usuario o Teléfono" class="clean-input" required
-                        autocomplete="username"
-                        style="width: 100%; height: 50px; background: #eff6ff; border: 2px solid transparent; border-radius: 12px; color: #0f172a; padding: 0 18px; font-weight: 600; font-size: 0.95rem; transition: all 0.3s; font-family: 'Outfit';">
+            <form id="login-form">
+                <div style="margin-bottom: 20px; text-align: left;">
+                    <label style="color: rgba(255,255,255,0.5); font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; margin-left: 5px; margin-bottom: 8px; display: block;">Identificación</label>
+                    <input type="text" name="phone" placeholder="Usuario o Teléfono" class="neon-input" required
+                        style="width: 100%; height: 56px; border-radius: 16px; padding: 0 20px; font-weight: 600; font-family: 'Outfit'; font-size: 1rem;">
                 </div>
 
-                <!-- Password Input -->
-                <div style="margin-bottom: 16px;">
-                    <label
-                        style="display: block; color: rgba(255,255,255,0.7); font-size: 0.7rem; font-weight: 800; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
-                        Clave de seguridad
-                    </label>
+                <div style="margin-bottom: 25px; text-align: left;">
+                    <label style="color: rgba(255,255,255,0.5); font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; margin-left: 5px; margin-bottom: 8px; display: block;">Clave Encriptada</label>
                     <div style="position: relative;">
-                        <input type="password" name="password" id="login-password-input" placeholder="•••••"
-                            class="clean-input" required autocomplete="current-password"
-                            style="width: 100%; height: 50px; background: #eff6ff; border: 2px solid transparent; border-radius: 12px; color: #0f172a; padding: 0 50px 0 18px; font-weight: 600; font-size: 0.95rem; transition: all 0.3s; font-family: 'Outfit';">
-                        <i class="fas fa-eye" id="toggle-password"
-                            onclick="const i=document.getElementById('login-password-input'); const isPassword = i.type==='password'; i.type = isPassword ? 'text' : 'password'; this.classList.toggle('fa-eye'); this.classList.toggle('fa-eye-slash');"
-                            style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: #64748b; cursor: pointer; font-size: 1.1rem;"></i>
+                        <input type="password" name="password" id="login-password-input" placeholder="••••••••" class="neon-input" required
+                            style="width: 100%; height: 56px; border-radius: 16px; padding: 0 55px 0 20px; font-weight: 600; font-family: 'Outfit'; font-size: 1rem;">
+                        <i class="fas fa-eye" id="toggle-password" onclick="const i=document.getElementById('login-password-input'); i.type = i.type==='password'?'text':'password'; this.classList.toggle('fa-eye'); this.classList.toggle('fa-eye-slash');"
+                            style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3); cursor: pointer;"></i>
                     </div>
                 </div>
 
-                <!-- Show Password Checkbox -->
-                <div style="margin-bottom: 30px; display: flex; align-items: center; gap: 10px;">
-                    <input type="checkbox" id="show-password-check" class="custom-checkbox"
-                        onclick="const pwd = document.getElementById('login-password-input'); const icon = document.getElementById('toggle-password'); const isChecked = this.checked; pwd.type = isChecked ? 'text' : 'password'; icon.className = isChecked ? 'fas fa-eye-slash' : 'fas fa-eye';">
-                    <label for="show-password-check"
-                        style="color: rgba(255,255,255,0.6); font-size: 0.85rem; cursor: pointer; user-select: none; font-weight: 600;">
-                        Mostrar contraseña
-                    </label>
-                </div>
-
-                <!-- Main CTA Button -->
-                <button type="submit" class="neon-btn"
-                    style="width: 100%; height: 56px; background: #CCFF00; color: #0a0a0a; border: none; border-radius: 14px; font-weight: 950; font-size: 1.1rem; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(204, 255, 0, 0.2); display: flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Outfit';">
-                    ENTRAR A LA APP 🚀
+                <button type="submit" class="shimmer-btn"
+                    style="width: 100%; height: 60px; background: #CCFF00; color: #000; border: none; border-radius: 18px; font-weight: 900; font-size: 1.1rem; cursor: pointer; box-shadow: 0 10px 30px rgba(204, 255, 0, 0.3); text-transform: uppercase; letter-spacing: 1px; font-family: 'Montserrat'; transition: 0.3s;">
+                    INICIAR SESIÓN 🎾
                 </button>
 
-                <!-- Footer Links -->
-                <div style="margin-top: 35px; text-align: center;">
-                    <a href="presentation.html" target="_blank"
-                        style="color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; border: 1px solid rgba(255,255,255,0.2); border-radius: 30px; background: rgba(255,255,255,0.05); transition: all 0.2s;">
-                        <i class="fas fa-microchip"></i> Conoce nuestra tecnología
+                <div style="margin-top: 40px; display: flex; flex-direction: column; gap: 15px;">
+                    <a href="#" style="color: #CCFF00; font-weight: 800; text-decoration: none; font-size: 0.9rem;" onclick="toggleAuthMode('register')">
+                        ¿No tienes cuenta? Regístrate aquí
                     </a>
-                </div>
-
-                <div style="text-align: center; margin-top: 25px;">
-                    <span style="color: rgba(255,255,255,0.5); font-size: 0.9rem; font-weight: 500;">¿Eres nuevo?</span>
-                    <a href="#" class="auth-switch-link"
-                        style="color: #CCFF00; font-weight: 800; text-decoration: none; margin-left: 5px; font-size: 0.9rem;"
-                        onclick="toggleAuthMode('register')">
-                        Crear cuenta pro
+                    <a href="presentation.html" target="_blank" style="color: rgba(255,255,255,0.3); text-decoration: none; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <i class="fas fa-shield-halved"></i> Seguridad Biométrica Activa
                     </a>
                 </div>
             </form>
 
             <!-- Register Form (Hidden) -->
-            <form id="register-form" class="hidden" style="width: 100%; animation: fadeInUp 0.4s;">
-                <h2
-                    style="color: white; text-align: center; margin-bottom: 25px; font-weight: 800; font-size: 1.3rem; font-family: 'Outfit';">
-                    REGISTRO JUGADOR
-                </h2>
-
-                <div style="margin-bottom: 15px;">
-                    <input type="text" name="name" placeholder="Nombre Completo" class="clean-input" required
-                        style="width: 100%; height: 50px; background: white; border: 2px solid transparent; border-radius: 12px; color: #0a0a0a; padding: 0 18px; font-weight: 500;">
-                </div>
-
-                <div class="register-grid"
-                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
-                    <input type="text" name="phone" placeholder="Móvil" class="clean-input" required
-                        style="width: 100%; height: 50px; background: white; border: 2px solid transparent; border-radius: 12px; color: #0a0a0a; padding: 0 18px; font-weight: 500;">
-                    <input type="password" name="password" placeholder="Clave" class="clean-input" required
-                        style="width: 100%; height: 50px; background: white; border: 2px solid transparent; border-radius: 12px; color: #0a0a0a; padding: 0 18px; font-weight: 500;">
-                </div>
-
-                <div
-                    style="margin-bottom: 20px; display: flex; align-items: flex-start; gap: 10px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
-                    <input type="checkbox" id="gdpr-check" class="custom-checkbox" required style="margin-top: 3px;">
-                    <label for="gdpr-check"
-                        style="color: rgba(255,255,255,0.6); font-size: 0.7rem; line-height: 1.4; cursor: pointer; user-select: none;">
-                        Acepto que mis datos se utilicen para la gestión de las americanas y entrenos conforme al <a
-                            href="#" onclick="openPrivacyPolicy(event)"
-                            style="color: #CCFF00; font-weight: 700; text-decoration: underline;">Reglamento General de
-                            Protección de Datos (RGPD)</a>.
-                    </label>
-                </div>
-
-                <button type="submit" class="neon-btn"
-                    style="width: 100%; height: 56px; background: #CCFF00; color: #0a0a0a; border: none; border-radius: 14px; font-weight: 800; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(204, 255, 0, 0.3); text-transform: uppercase; letter-spacing: 0.5px;">
-                    EMPEZAR A JUGAR
-                </button>
-
-
-                <div style="margin-top: 25px; text-align: center;">
-                    <a href="#" style="color: rgba(255,255,255,0.6); font-size: 0.85rem; text-decoration: none;"
-                        onclick="toggleAuthMode('login')">
-                        <i class="fas fa-chevron-left" style="margin-right: 5px;"></i> Volver
+            <form id="register-form" class="hidden" style="width: 100%;">
+                <h2 style="color: white; margin-bottom: 25px; font-weight: 800; font-family: 'Outfit';">NUEVO REGISTRO</h2>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <input type="text" name="name" placeholder="Nombre Completo" class="neon-input" required style="width: 100%; height: 50px; border-radius: 14px; padding: 0 15px;">
+                    <input type="text" name="phone" placeholder="Teléfono" class="neon-input" required style="width: 100%; height: 50px; border-radius: 14px; padding: 0 15px;">
+                    <input type="password" name="password" placeholder="Clave Elegida" class="neon-input" required style="width: 100%; height: 50px; border-radius: 14px; padding: 0 15px;">
+                    
+                    <button type="submit" class="shimmer-btn" style="width: 100%; height: 56px; background: #CCFF00; color: #000; border: none; border-radius: 16px; font-weight: 900; margin-top: 10px;">
+                        CREAR CUENTA PRO
+                    </button>
+                    
+                    <a href="#" style="color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.85rem; margin-top: 10px;" onclick="toggleAuthMode('login')">
+                        <i class="fas fa-arrow-left"></i> Volver al inicio
                     </a>
                 </div>
             </form>
-
-            <!-- Brand Signature -->
-            <div
-                style="text-align: center; margin-top: 35px; padding-top: 25px; border-top: 1px solid rgba(255,255,255,0.1);">
-                <span
-                    style="font-family: 'Montserrat', sans-serif; font-weight: 400; font-size: 0.7rem; letter-spacing: 1px; color: rgba(255,255,255,0.4);">Somospadel
-                    BCN</span>
-                <span
-                    style="font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 0.7rem; letter-spacing: 1px; color: #CCFF00; margin-left: 3px;">2026</span>
-            </div>
         </div>
     </div>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -829,7 +770,9 @@
     <script src="js/modules/players/MatchStoryCard.js?v=1.4"></script>
 
     <!-- Entry Point -->
-    <script src="js/app.js?v=3000"></script>
+    <script src="js/modules/admin/AICopilot_v4.js?v=4.0"></script>
+    <script src="js/app.js?v=3003"></script>
+</body>
 
     <!-- PWA Service Worker AUTO-CLEAN PROTOCOL -->
     <script>
@@ -912,6 +855,9 @@
             }
         }
     </script>
+    <!-- AI Copilot v4 (Autonomous Engine) -->
+    <script src="js/modules/admin/AICopilot_v4.js"></script>
+    <script src="js/modules/admin/NeuralAgent_v6.js"></script>
 </body>
 
 </html>

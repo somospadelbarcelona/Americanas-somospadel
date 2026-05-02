@@ -541,8 +541,8 @@
 
                 <button class="nav-item-pro" data-view="database_health" onclick="loadAdminView('database_health')"
                     style="border:1px solid rgba(204, 255, 0, 0.3); background:rgba(204, 255, 0, 0.05); margin-bottom: 0.5rem;">
-                    <span class="icon-box"><i class="fas fa-ghost" style="color:#CCFF00;"></i></span>
-                    <span class="nav-text" style="color:white; font-weight:700;">Salud de la DB 🧹</span>
+                    <span class="icon-box"><i class="fas fa-microscope" style="color:#CCFF00;"></i></span>
+                    <span class="nav-text" style="color:white; font-weight:700;">Diagnóstico & Limpieza 🔬</span>
                 </button>
 
                 <button class="nav-item-pro" data-view="fix_players" onclick="loadAdminView('fix_players')"
@@ -572,7 +572,11 @@
                 <button id="mobile-menu-toggle" class="btn-micro mobile-only"
                     style="margin-right: 15px; background: transparent; border: none; font-size: 1.5rem; color: white;">☰</button>
                 <div class="top-title" id="page-title">CONSOLA DE ADMINISTRACIÓN</div>
-                <div class="top-actions">
+                <div class="top-actions" style="display:flex; align-items:center; gap:15px;">
+                    <img src="C:/Users/acoscolin/.gemini/antigravity/brain/98319fa2-90ca-4f13-a003-bff232fc3974/corporate_elite_ai_logo_somospadel_1777754306402.png" 
+                        class="ai-pulse-trigger haptic-feedback" 
+                        onclick="window.AICopilot && window.AICopilot.open()"
+                        style="width: 30px; height: 30px; border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px rgba(255,255,255,0.2); animation: aiPulseGlow 5s infinite; object-fit: cover;">
                     <div class="conn-status">
                         <span class="dot online"></span> CLOUD ACTIVE
                     </div>
@@ -1237,16 +1241,20 @@
             <!-- Admin Modules (Lazy Loaded Logic) -->
             <script src="js/modules/logic/LevelReliabilityService.js"></script>
             <script src="js/modules/logic/SmartAlertsService.js"></script>
-            <script src="js/modules/admin/AutopilotView.js"></script>
+            <script src="js/modules/admin/AICopilot_v4.js"></script>
+            <script src="js/modules/admin/NeuralAgent_v6.js"></script>
             <script src="js/modules/admin/BatSignalAgent.js"></script>
+
+            <script src="js/modules/admin-users.js"></script>
+            <script src="js/modules/admin-americanas.js"></script>
+            <script src="js/modules/admin-matches.js"></script>
+            <script src="js/modules/admin-results.js"></script>
 
             <script src="js/admin-simulator.js?v=5000"></script>
             <script src="js/modules/admin-simulator-view.js?v=5000"></script>
             <script src="js/modules/logic/TwisterSimulation.js?v=1"></script>
             <script src="js/modules/admin-pairs-ui.js?v=2000"></script>
-            <script src="js/modules/admin-results.js?v=4009"></script>
-            <script src="js/modules/admin-users.js?v=1106"></script>
-            <script src="js/modules/admin-americanas.js?v=4007"></script>
+            <script src="js/modules/admin-dashboard.js"></script>
             <script src="js/modules/admin-analytics.js"></script>
             <script src="js/modules/common/WhatsAppService.js?v=7015"></script>
             <script src="js/modules/admin-entrenos.js?v=5010"></script>
@@ -1350,7 +1358,7 @@
                 /* Mobile & Tablet Responsive - Premium Menu Fixed */
                 /* Mobile & Tablet Responsive - Full Viewport Width Force */
                 /* Mobile & Tablet Responsive - Full Viewport Width Force (Stacking Context Fix) */
-                @media (max-width: 1024px) {
+                @media (max-width: 768px) {
                     :root {
                         --admin-sticky-top: 110px !important;
                     }
@@ -1537,7 +1545,7 @@
                     }
 
                     /* Contenido Principal */
-                    .main-content-pro {
+                    .main-wrapper {
                         margin-left: 0 !important;
                         margin-top: 100px !important;
                         width: 100% !important;

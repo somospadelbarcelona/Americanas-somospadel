@@ -1,0 +1,106 @@
+/* ==========================================================================
+   GLOBAL LUXURY LIGHT FIX (FINAL EXPERT OVERRIDE)
+   Garantiza legibilidad y estética premium en toda la App
+   ========================================================================== */
+
+/* 1. RESET GLOBAL DE COLORES (FORZADO PARA CLARIDAD) */
+:root {
+    --fix-bg: #f4f7fa;
+    --fix-text: #111827;
+    --fix-text-muted: #6b7280;
+    --fix-card: #ffffff;
+    --fix-neon: #ccff00;
+}
+
+/* Forzar fondo claro en toda la app */
+html, body, #app-shell, .app-shell, .main-wrapper, .workspace-area, #content-area {
+    background-color: var(--fix-bg) !important;
+    color: var(--fix-text) !important;
+}
+
+/* 2. ASEGURAR QUE TODAS LAS LETRAS SE VEAN (Contraste alto) */
+p, span, h1, h2, h3, h4, h5, h6, label, td, th, div {
+    color: inherit !important; /* Hereda del padre que ya forzamos a var(--fix-text) */
+}
+
+/* Excepción para cuando el fondo es oscuro (ej: botones negros) */
+.btn-primary-pro, .neon-btn, .btn-3d.primary, .btn-3d.navy, .nav-item-pro.active, .badge-live, .badge-status, .ticker-brand-badge {
+    color: var(--fix-neon) !important;
+}
+
+.btn-primary-pro *, .neon-btn *, .nav-item-pro.active * {
+    color: inherit !important;
+}
+
+/* 3. ARREGLO DE TARJETAS Y CONTENEDORES */
+.glass-card, .glass-card-enterprise, .americana-card, .event-card, .dashboard-card, .premium-glass-card, .crystal-card, .modal-content, .card-magic-border {
+    background-color: var(--fix-card) !important;
+    background-image: none !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important;
+    color: var(--fix-text) !important;
+}
+
+/* 4. ARREGLO DE INPUTS Y FORMULARIOS */
+input, select, textarea, .pro-input, .clean-input {
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #111827 !important;
+    -webkit-text-fill-color: #111827 !important; /* Fix para Chrome Mobile */
+}
+
+input::placeholder, textarea::placeholder {
+    color: #94a3b8 !important;
+    -webkit-text-fill-color: #94a3b8 !important;
+}
+
+/* 5. NAVEGACIÓN (TOP & BOTTOM) */
+.top-bar, .dashboard-fixed-header, .cmd-bar, .bottom-nav-bar, .playtomic-bottom-nav, .header-tabs, .nav-tabs-wrapper {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+.nav-item, .nav-item-pro {
+    color: var(--fix-text-muted) !important;
+}
+
+.nav-item.active, .nav-item-pro.active {
+    color: #000000 !important;
+}
+
+/* 6. SIDEBAR ADMIN */
+.sidebar-pro {
+    background-color: #ffffff !important;
+    border-right: 1px solid #e2e8f0 !important;
+}
+
+/* 7. ELEMENTOS ESPECÍFICOS DE MARCADORES Y TABLAS */
+.player-row, .user-row, .match-row {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+/* 8. FIX PARA EL TICKER (Debe ser legible) */
+.ticker-container {
+    background: #000000 !important; /* El ticker lo mantenemos negro para impacto */
+}
+.ticker-item, .ticker-item span {
+    color: #ffffff !important;
+}
+
+/* 9. MODALES Y OVERLAYS */
+.modal-overlay, .side-drawer-overlay {
+    background-color: rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(8px) !important;
+}
+
+/* 10. TEXTO NEÓN (Para que resalte pero sea legible) */
+.text-neon {
+    color: #000000 !important;
+    background-color: var(--fix-neon) !important;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 800;
+}

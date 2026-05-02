@@ -50,46 +50,47 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             container.innerHTML = `
                 <!-- MAIN DASHBOARD SCROLL CONTENT -->
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
-                    background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.04) 0%, transparent 70%);
+                    background: #f0f4f8 !important;
                     min-height: 100vh;
-                    padding-top: 0px !important;
+                    padding-top: 0px !important;">
+                    
                     <!-- 🏓 PADEL PULSE — Personalized live widget (TOP POSITION) -->
                     <div id="padel-pulse-widget-root" style="animation: floatUp 0.5s ease-out forwards;"></div>
 
-                    <!-- 🚀 PLAYER PROGRESS HUB (Wow Redesign) -->
-                    <div id="player-progress-hub" class="premium-glass-card animate-float" style="margin: 0 15px 15px; border-left: 4px solid var(--neon-green);">
+                    <!-- 🚀 PLAYER PROGRESS HUB (Light & Sharp Redesign) -->
+                    <div id="player-progress-hub" class="glass-card animate-float" style="margin: 0 15px 15px; border-left: 5px solid #99cc00; padding: 25px;">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                             <div>
-                                <div class="neon-badge"><i class="fas fa-bolt"></i> PLAYER STATUS</div>
-                                <h1 class="wow-title" style="font-size: 1.8rem; margin-top: 8px;">${user ? user.name.toUpperCase() : 'INVITADO'}</h1>
+                                <div style="display: inline-block; background: #0a192f; color: #fff; padding: 4px 12px; border-radius: 8px; font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;"><i class="fas fa-bolt"></i> ESTADO DEL JUGADOR</div>
+                                <h1 style="font-size: 1.8rem; margin-top: 12px; font-weight: 950; color: #0a192f; letter-spacing: -1px;">${user ? user.name.toUpperCase() : 'INVITADO'}</h1>
                             </div>
                             <div style="text-align:right;">
-                                <div style="font-size:0.6rem; color:#888; font-weight:900;">LEVEL</div>
-                                <div class="stat-highlight" style="color:var(--neon-green);">${userLevel}</div>
+                                <div style="font-size:0.65rem; color:#64748b; font-weight:900; text-transform: uppercase; letter-spacing: 1px;">Nivel Actual</div>
+                                <div style="font-size: 2.2rem; font-weight: 950; color: #0a192f; line-height: 1;">${userLevel}</div>
                             </div>
                         </div>
                         
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
-                            <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
-                                <div style="font-size:0.55rem; color:#888; font-weight:800;">GLOBAL RANKING</div>
-                                <div style="font-size:1.4rem; font-weight:900; color:#fff;">#${user ? (user.ranking_pos || '120') : '--'}</div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px;">
+                            <div style="background:#f8fafc; padding:18px; border-radius:20px; border:1px solid #e2e8f0;">
+                                <div style="font-size:0.6rem; color:#64748b; font-weight:900; text-transform: uppercase; letter-spacing: 1px;">Ranking Global</div>
+                                <div style="font-size:1.6rem; font-weight:950; color:#0a192f; margin-top: 4px;">#${user ? (user.ranking_pos || '120') : '--'}</div>
                             </div>
-                            <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
-                                <div style="font-size:0.55rem; color:#888; font-weight:800;">PARTIDAS TOTALES</div>
-                                <div style="font-size:1.4rem; font-weight:900; color:#fff;">${user ? (user.total_matches || '24') : '0'}</div>
+                            <div style="background:#f8fafc; padding:18px; border-radius:20px; border:1px solid #e2e8f0;">
+                                <div style="font-size:0.6rem; color:#64748b; font-weight:900; text-transform: uppercase; letter-spacing: 1px;">Partidas Totales</div>
+                                <div style="font-size:1.6rem; font-weight:950; color:#0a192f; margin-top: 4px;">${user ? (user.total_matches || '24') : '0'}</div>
                             </div>
                         </div>
 
-                        <div style="margin-top: 15px; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 10px; font-size: 0.7rem; color: #94a3b8; font-weight: 600;">
-                            <i class="fas fa-info-circle" style="color:var(--neon-green);"></i> Siguiente nivel: <span style="color:#fff;">${(parseFloat(userLevel) + 0.1).toFixed(1)}</span> — Necesitas <span style="color:#fff;">3 victorias</span> más.
+                        <div style="margin-top: 18px; background: rgba(153, 204, 0, 0.1); border-radius: 12px; padding: 12px 18px; font-size: 0.75rem; color: #0a192f; font-weight: 700; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(153, 204, 0, 0.2);">
+                            <i class="fas fa-info-circle" style="color:#72a800;"></i> Siguiente nivel: <span style="font-weight: 900;">${(parseFloat(userLevel) + 0.1).toFixed(1)}</span> — Necesitas <span style="font-weight: 900;">3 victorias</span> más.
                         </div>
                     </div>
 
-                    <!-- 🏆 MVP SPOTLIGHT & TRENDING PLAYERS -->
+                    <!-- 🏆 MVP SPOTLIGHT & TRENDING PLAYERS (Light & Sharp) -->
                     <div id="ranking-spotlight-root" style="margin: 0 15px 15px; animation: floatUp 0.8s ease-out forwards;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 5px;">
-                            <div style="font-weight:950; font-size:0.75rem; color:white; letter-spacing:1px; text-transform:uppercase;">🏆 RANKING ELITE (TOP 10)</div>
-                            <div style="font-size:0.65rem; color:var(--neon-green); font-weight:900; cursor:pointer;" onclick="window.Router.navigate('ranking')">VER TODOS <i class="fas fa-chevron-right"></i></div>
+                            <div style="font-weight:950; font-size:0.8rem; color:#0a192f; letter-spacing:0.5px; text-transform:uppercase;">🏆 RANKING ELITE (TOP 10)</div>
+                            <div style="font-size:0.7rem; color:#00d2ff; font-weight:900; cursor:pointer;" onclick="window.Router.navigate('ranking')">VER TODOS <i class="fas fa-chevron-right"></i></div>
                         </div>
 
                         <!-- MVP SPOTLIGHT CARD -->
@@ -109,14 +110,14 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     </div>
 
 
-                    <!-- 6. NEWS MARQUEE (3D HOLO ENGINE) -->
+                    <!-- 6. NEWS MARQUEE (LIGHT CRYSTAL ENGINE) -->
                     <div id="registration-widget-root" style="
-                        background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000 100%);
+                        background: #ffffff;
                         border-radius: 28px;
-                        margin: 2px 15px 8px !important;  
-                        padding: 12px 0 !important; 
-                        box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-                        border: 1px solid rgba(255,255,255,0.1);
+                        margin: 2px 15px 15px !important;  
+                        padding: 20px 0 !important; 
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+                        border: 1px solid #e1e8f0;
                         z-index: 10;
                         animation: floatUp 0.8s ease-out forwards;
                         perspective: 1200px;
@@ -126,19 +127,19 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         <div class="live-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px !important; padding: 0 20px; position:relative; z-index:20;">
                             <div style="display:flex; align-items:center; gap:10px;">
                                 <div style="
-                                    background: linear-gradient(90deg, #00E36D, #00ff9d); 
-                                    color: #000; 
+                                    background: #0a192f; 
+                                    color: #fff; 
                                     padding: 6px 16px; 
                                     border-radius: 12px; 
                                     font-size: 0.75rem; 
                                     font-weight: 950; 
                                     letter-spacing: 1px;
-                                    box-shadow: 0 0 20px rgba(0,227,109,0.4);
                                     text-transform: uppercase;
                                     display:flex; align-items:center; gap:6px;
                                 ">
                                     <i class="fas fa-cube"></i> NOTICIAS
                                 </div>
+                                <span style="font-size: 0.75rem; font-weight: 900; color: #0a192f; letter-spacing: 1px;">SOMOSPADEL <span style="color:#99cc00;">BCN</span></span>
                             </div>
                         </div>
                         
@@ -220,18 +221,17 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                 }
                             </style>
                             <div id="live-scroller-inner" class="infinite-scroll-wrapper" style="transform-style: preserve-3d; padding-left: 20px;">
-                                <!-- SKELETON 3D LOADER -->
+                                <!-- SKELETON LOADER -->
                                 ${Array(4).fill(0).map((_, i) => `
                                     <div style="
-                                        min-width: 280px; height: 180px; 
-                                        background: rgba(255,255,255,0.02); 
+                                        min-width: 280px; height: 160px; 
+                                        background: #f8fafc; 
                                         border-radius: 24px; 
-                                        border: 1px solid rgba(255,255,255,0.05); 
+                                        border: 1px solid #e2e8f0; 
                                         margin-right: 25px;
-                                        transform: rotateY(10deg);
                                         display: flex; align-items: center; justify-content: center;
                                     ">
-                                        <i class="fas fa-cube fa-spin" style="color:rgba(255,255,255,0.1); font-size:2rem;"></i>
+                                        <i class="fas fa-cube fa-spin" style="color:#e2e8f0; font-size:2rem;"></i>
                                     </div>
                                 `).join('')}
                             </div>
@@ -324,21 +324,20 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
 
                     <!-- (Old Partner Synergy root removed to favor the new Predictive AI Engine) -->
 
-                    <!-- 4. ACTIVIDAD RECIENTE -->
+                    <!-- 4. ACTIVIDAD RECIENTE (CRYSTAL LIGHT) -->
                     <div id="activity-feed-root" style="
-                        background: rgba(10, 10, 20, 0.9);
-                        backdrop-filter: blur(20px);
-                        border: 1px solid rgba(0, 227, 109, 0.2);
-                        border-radius: 20px;
-                        margin: 2px 15px 8px !important;
-                        padding: 12px !important;
-                        box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+                        background: #ffffff;
+                        border: 1px solid #e1e8f0;
+                        border-radius: 28px;
+                        margin: 2px 15px 15px !important;
+                        padding: 20px !important;
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
                         animation: floatUp 0.85s ease-out forwards;
                     ">
-                        <div style="font-weight:950; font-size:0.85rem; color:white; letter-spacing:-0.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
-                            <i class="fas fa-rss" style="color: #00E36D; font-size: 1rem;"></i> ACTIVIDAD RECIENTE
+                        <div style="font-weight:950; font-size:0.9rem; color:#0a192f; letter-spacing:-0.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+                            <i class="fas fa-rss" style="color: #99cc00; font-size: 1.1rem;"></i> ACTIVIDAD RECIENTE
                         </div>
-                        <div id="activity-feed-content" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div id="activity-feed-content" style="display: flex; flex-direction: column; gap: 12px;">
                             <!-- Content loaded via JS -->
                         </div>
                     </div>
@@ -700,30 +699,17 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
         renderWeatherCard(city, temp, icon, details = {}, isPropitious = true) {
             const intel = details.intel || { score: 100, ballSpeed: '--', recommendation: 'Sincronizando meteorología...', gripStatus: '--' };
             const statusLabel = isPropitious ? 'ÓPTIMO' : 'ADVERSO';
-            const statusColor = isPropitious ? '#00E36D' : '#FF2D55';
+            const statusColor = isPropitious ? '#72a800' : '#ef4444';
             const rainProb = parseInt(details.rain) || 0;
             const isRaining = rainProb > 30;
 
-            let cardBg = 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)';
+            let cardBg = '#ffffff';
             let weatherOverlay = '';
 
             if (isRaining) {
-                cardBg = 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)';
-                weatherOverlay = `
-                <div style="position: absolute; inset: 0; pointer-events: none; opacity: 0.4;">
-                    <div style="
-                            position: absolute; inset: -100% 0 0 0;
-                            background-image: linear-gradient(to bottom, rgba(59,130,246,0) 0%, rgba(59,130,246,0.4) 50%, rgba(59,130,246,0) 100%);
-                            background-size: 2px 50px;
-                            animation: rainFall 0.6s linear infinite;
-                        "></div>
-                    </div>
-                `;
+                cardBg = 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)';
             } else if (isPropitious) {
-                cardBg = 'linear-gradient(135deg, #3f6212 0%, #022c22 100%)';
-                weatherOverlay = `<div style="position: absolute; top: -60px; right: -60px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(253, 224, 71, 0.15) 0%, transparent 70%); filter: blur(20px); animation: sunPulse 6s ease-in-out infinite; pointer-events: none;"></div>`;
-            } else {
-                cardBg = 'linear-gradient(135deg, #334155 0%, #0f172a 100%)';
+                cardBg = 'linear-gradient(135deg, #ffffff 0%, #f7fee7 100%)';
             }
 
             return `
@@ -733,47 +719,46 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     @keyframes textSlideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
                 </style>
                 <div style="
-                    background: ${cardBg}; background-size: 200% 200%; animation: cardShine 10s ease infinite;
-                    border: 1px solid rgba(255,255,255,0.1); border-radius: 32px; padding: 24px 20px;
-                    display: flex; flex-direction: column; gap: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+                    background: ${cardBg}; 
+                    border: 1px solid #e1e8f0; border-radius: 28px; padding: 24px 20px;
+                    display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.03);
                     position: relative; overflow: hidden; min-height: 280px;
                 ">
-                    ${weatherOverlay}
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 2;">
-                        <div style="font-size: 3.5rem; line-height: 1; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3)); animation: weatherFloat 5s ease-in-out infinite;">${icon}</div>
+                        <div style="font-size: 3.5rem; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));">${icon}</div>
                         <div style="text-align: right;">
-                            <div style="background: rgba(0,0,0,0.3); color: ${statusColor}; padding: 6px 14px; border-radius: 12px; font-size: 0.65rem; font-weight: 950; border: 1px solid ${statusColor}40; margin-bottom: 6px; box-shadow: 0 0 15px ${statusColor}20; backdrop-filter: blur(4px);">${statusLabel}</div>
-                            <div style="font-size: 0.6rem; color: white; opacity: 0.6; font-weight: 800; letter-spacing: 1px;">SCORE ${intel.score}%</div>
+                            <div style="background: ${isPropitious ? 'rgba(114, 168, 0, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; color: ${statusColor}; padding: 5px 12px; border-radius: 10px; font-size: 0.65rem; font-weight: 950; border: 1px solid ${statusColor}30; margin-bottom: 6px; text-transform: uppercase;">${statusLabel}</div>
+                            <div style="font-size: 0.65rem; color: #64748b; font-weight: 900; letter-spacing: 0.5px;">SCORE ${intel.score}%</div>
                         </div>
                     </div>
                     <div style="position: relative; z-index: 2; margin-top: 10px; animation: textSlideIn 0.5s ease-out;">
-                        <div style="color: white; font-weight: 950; font-size: 2.8rem; line-height: 0.9; letter-spacing: -2px; text-shadow: 0 5px 10px rgba(0,0,0,0.5);">${temp}</div>
-                        <div style="color: rgba(255,255,255,0.7); font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px;">${city}</div>
+                        <div style="color: #0a192f; font-weight: 950; font-size: 2.8rem; line-height: 0.9; letter-spacing: -1.5px;">${temp}</div>
+                        <div style="color: #64748b; font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px;">${city}</div>
                     </div>
-                    <div style="margin-top: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 10px; position: relative; z-index: 2; backdrop-filter: blur(5px); animation: textSlideIn 0.7s ease-out;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-bolt" style="color:#fbbf24;"></i> VELOCIDAD BOLA</span>
-                            <span style="font-size: 0.7rem; color: #fbbf24; font-weight: 950; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);">${intel.ballSpeed}</span>
+                    <div style="margin-top: 15px; background: #f8fafc; border-radius: 18px; padding: 15px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px; position: relative; z-index: 2;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #edf2f7; padding-bottom: 8px;">
+                            <span style="font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-bolt" style="color:#eab308;"></i> VELOCIDAD BOLA</span>
+                            <span style="font-size: 0.75rem; color: #0a192f; font-weight: 950;">${intel.ballSpeed}</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-wind" style="color:#0ea5e9;"></i> VIENTO</span>
-                            <span style="font-size: 0.7rem; color: white; font-weight: 900;">${details.wind || '--'}</span>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #edf2f7; padding-bottom: 8px;">
+                            <span style="font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-wind" style="color:#0ea5e9;"></i> VIENTO</span>
+                            <span style="font-size: 0.75rem; color: #0a192f; font-weight: 900;">${details.wind || '--'}</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-tint" style="color:#38bdf8;"></i> HUMEDAD</span>
-                            <span style="font-size: 0.7rem; color: white; font-weight: 900;">${details.hum || '--'}</span>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #edf2f7; padding-bottom: 8px;">
+                            <span style="font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-tint" style="color:#38bdf8;"></i> HUMEDAD</span>
+                            <span style="font-size: 0.75rem; color: #0a192f; font-weight: 900;">${details.hum || '--'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-hand-rock" style="color:#00E36D;"></i> AGARRE PISTA</span>
-                            <span style="font-size: 0.7rem; color: #00E36D; font-weight: 950;">${intel.gripStatus || 'ÓPTIMO'}</span>
+                            <span style="font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-hand-rock" style="color:#72a800;"></i> AGARRE PISTA</span>
+                            <span style="font-size: 0.75rem; color: #72a800; font-weight: 950;">${intel.gripStatus || 'ÓPTIMO'}</span>
                         </div>
                     </div>
-                    <div style="margin-top: 12px; padding: 12px 14px; background: rgba(0,0,0,0.2); border-radius: 16px; border-left: 3px solid ${statusColor}; animation: textSlideIn 0.8s ease-out;">
-                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 5px;">
-                            <i class="fas fa-brain" style="font-size: 0.65rem; color: ${statusColor}; opacity: 0.9;"></i>
-                            <span style="font-size: 0.55rem; font-weight: 950; color: ${statusColor}; letter-spacing: 0.5px; text-transform: uppercase;">INSIGHT TÁCTICO</span>
+                    <div style="margin-top: 10px; padding: 12px 14px; background: rgba(0,0,0,0.02); border-radius: 16px; border-left: 4px solid ${statusColor};">
+                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                            <i class="fas fa-brain" style="font-size: 0.7rem; color: ${statusColor};"></i>
+                            <span style="font-size: 0.6rem; font-weight: 950; color: ${statusColor}; letter-spacing: 0.5px; text-transform: uppercase;">INSIGHT TÁCTICO</span>
                         </div>
-                        <p style="margin: 0; font-size: 0.7rem; color: rgba(255,255,255,0.7); font-weight: 600; line-height: 1.4;">
+                        <p style="margin: 0; font-size: 0.75rem; color: #475569; font-weight: 600; line-height: 1.4;">
                             ${intel.recommendation.replace('la IA', 'el sistema').replace('predictivo', 'estimado')}
                         </p>
                     </div>

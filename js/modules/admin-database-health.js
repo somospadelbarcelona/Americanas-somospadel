@@ -18,8 +18,11 @@ window.AdminViews.database_health = async function () {
                     <p style="color: rgba(255,255,255,0.5); font-size: 0.9rem; margin-top: 5px;">Misión Ghost Buster: Integridad Atómica de Datos</p>
                 </div>
                 <div style="display: flex; gap: 10px;">
-                    <button onclick="window.HealthTools.runScan()" class="btn-primary-pro" style="background: #00E36D; color: #000;">
-                        <i class="fas fa-search"></i> INICIAR ESCANEO 360º
+                    <button onclick="window.HealthTools.runScan()" class="btn-primary-pro" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1);">
+                        <i class="fas fa-search"></i> ESCANEAR
+                    </button>
+                    <button onclick="window.HealthTools.nuclearCleanup()" class="btn-primary-pro" style="background: #ff4757; color: #fff; border: none; box-shadow: 0 0 15px rgba(255, 71, 87, 0.3);">
+                        <i class="fas fa-radiation"></i> LIMPIEZA TOTAL 🚀
                     </button>
                 </div>
             </div>
@@ -37,6 +40,10 @@ window.AdminViews.database_health = async function () {
                 <div class="glass-card-enterprise" style="padding: 1.5rem; opacity: 0.3; text-align: center;">
                     <i class="fas fa-id-badge" style="font-size: 2rem; margin-bottom: 10px;"></i>
                     <div>LEGACY IDs</div>
+                </div>
+                <div class="glass-card-enterprise" style="padding: 1.5rem; opacity: 0.3; text-align: center;">
+                    <i class="fas fa-lock" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                    <div>NIVELES</div>
                 </div>
             </div>
 
@@ -186,6 +193,44 @@ window.HealthTools = {
                 "window.HealthTools.purgeTestData()");
         }
 
+        // --- ALWAYS SHOW LEVEL CONSOLIDATION OPTION ---
+        html += `
+            <div class="glass-card-enterprise" style="margin-top: 2rem; border-left: 4px solid var(--primary); padding: 1.5rem; background: rgba(204, 255, 0, 0.03);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="flex: 1; padding-right: 20px;">
+                        <h4 style="margin: 0; color: var(--primary); display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-lock"></i> Consolidación de Niveles
+                        </h4>
+                        <p style="margin-top: 8px; color: #aaa; font-size: 0.8rem; line-height: 1.4;">
+                            Esta herramienta establece el <strong>Nivel Actual</strong> como el nuevo <strong>Nivel Inicial</strong> de cada jugador. 
+                            Úsala antes de borrar partidos de prueba para que los niveles no vuelvan atrás si decides recalcular en el futuro.
+                        </p>
+                    </div>
+                    <button onclick="window.HealthTools.lockCurrentLevels()" class="btn-primary-pro" style="background: var(--primary); color: #000; border: none; white-space: nowrap;">
+                        FIJAR NIVELES 🔒
+                    </button>
+                </div>
+            </div>
+
+            <!-- ⚡ NEW: GLOBAL RANKING RECALCULATION TOOL -->
+            <div class="glass-card-enterprise" style="margin-top: 1rem; border-left: 4px solid #00d2ff; padding: 1.5rem; background: rgba(0, 210, 255, 0.03);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="flex: 1; padding-right: 20px;">
+                        <h4 style="margin: 0; color: #00d2ff; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-calculator"></i> Sincronización Maestra de Ranking
+                        </h4>
+                        <p style="margin-top: 8px; color: #aaa; font-size: 0.8rem; line-height: 1.4;">
+                            <strong>RECALCULAR TODO:</strong> Borra el historial antiguo y analiza TODOS los partidos con el nuevo algoritmo de <strong>Alta Sensibilidad</strong>. 
+                            Ideal para que el nivel de Alejandro y todos los jugadores se ajuste a su realidad actual de victorias/derrotas.
+                        </p>
+                    </div>
+                    <button onclick="window.LevelAdjustmentService.recalculateAllLevels()" class="btn-primary-pro" style="background: #00d2ff; color: #000; border: none; white-space: nowrap;">
+                        RECALCULAR RANKING ⚡
+                    </button>
+                </div>
+            </div>
+        `;
+
         if (html === '') {
             html = '<div style="text-align:center; padding:3rem; color:#00E36D;">✅ Base de datos 100% íntegra. No se requieren acciones.</div>';
         }
@@ -227,8 +272,10 @@ window.HealthTools = {
         output.scrollTop = output.scrollHeight;
     },
 
-    async purgeOrphans() {
-        if (!confirm("Esto eliminará físicamente los partidos que no pertenecen a ningún evento. ¿Continuar?")) return;
+    async purgeOrphans(silent = false) {
+        if (!silent) {
+            if (!confirm("Esto eliminará físicamente los partidos que no pertenecen a ningún evento. ¿Continuar?")) return;
+        }
         this.logTerminal("Iniciando purga de partidos huérfanos...");
 
         let deleted = 0;
@@ -272,6 +319,120 @@ window.HealthTools = {
     async fixDuplicates() {
         this.logTerminal("ADVERTENCIA: La fusión de duplicados requiere intervención manual por ahora para evitar pérdida de datos.", true);
         this.logTerminal("Se recomienda contactar con soporte técnico para unificar las cuentas: " + this.results.duplicates.map(d => d.name).join(', '));
+    },
+
+    async lockCurrentLevels(silent = false) {
+        if (!silent) {
+            const confirmed = await window.PremiumModal.confirm({
+                title: "🔒 CONSOLIDAR NIVELES",
+                message: "¿Deseas fijar el nivel actual de todos los jugadores como su nuevo nivel de partida?<br><br>Esto te permitirá borrar partidos antiguos sin que su nivel cambie en futuros recálculos.",
+                confirmText: "FIJAR NIVELES AHORA",
+                type: 'warning'
+            });
+            if (!confirmed) return;
+        }
+
+        this.logTerminal("Iniciando consolidación de niveles...");
+        
+        try {
+            const playersSnap = await window.db.collection('players').get();
+            let count = 0;
+            let batch = window.db.batch();
+            
+            for(const doc of playersSnap.docs) {
+                const data = doc.data();
+                const currentLevel = data.level || data.self_rate_level || 3.5;
+                
+                batch.update(doc.ref, {
+                    self_rate_level: parseFloat(currentLevel)
+                });
+                
+                count++;
+                if (count % 450 === 0) {
+                    await batch.commit();
+                    batch = window.db.batch();
+                    this.logTerminal(`... procesados ${count} jugadores`);
+                }
+            }
+            
+            await batch.commit();
+            this.logTerminal(`✅ ÉXITO: Se han consolidado los niveles de ${count} jugadores.`);
+            
+            window.PremiumModal.alert({
+                title: "NIVELES FIJADOS",
+                message: "Ahora puedes borrar cualquier evento o partido de prueba. Los niveles de los jugadores no se verán afectados.",
+                type: 'success'
+            });
+            
+        } catch (e) {
+            this.logTerminal("❌ Error: " + e.message, true);
+        }
+    },
+
+    async nuclearCleanup() {
+        const confirmed = await window.PremiumModal.confirm({
+            title: "☢️ LIMPIEZA NUCLEAR (TOTAL)",
+            message: "Esta acción hará 3 cosas en orden:<br>1. <b>Fijará los niveles</b> actuales como definitivos.<br>2. <b>Borrará todos</b> los partidos huérfanos.<br>3. <b>Borrará todos</b> los eventos de prueba.<br><br>¿Estás seguro de resetear el sistema para uso real?",
+            confirmText: "SÍ, LIMPIAR TODO",
+            type: 'danger'
+        });
+
+        if (!confirmed) return;
+
+        this.logTerminal("Iniciando Limpieza Nuclear...");
+        
+        try {
+            // 1. Lock Levels
+            await this.lockCurrentLevels(true); // silent mode
+            this.logTerminal("✅ Niveles consolidados.");
+
+            // 2. Scan for orphans/test data
+            await this.runScan();
+            
+            // 3. Purge Orphans
+            if(this.results.orphans.length > 0) {
+                await this.purgeOrphans(true); // silent mode
+                this.logTerminal(`✅ ${this.results.orphans.length} partidos huérfanos purgados.`);
+            }
+
+            // 4. Purge Test Events (Wait, I need to implement purgeTestEvents)
+            await this.purgeTestEvents();
+
+            this.logTerminal("🏁 LIMPIEZA TOTAL COMPLETADA CON ÉXITO.");
+            
+            window.PremiumModal.alert({
+                title: "SISTEMA LIMPIO",
+                message: "Se han consolidado los niveles y se ha eliminado toda la basura de las pruebas. ¡Listo para jugar!",
+                type: 'success'
+            });
+            
+        } catch (e) {
+            this.logTerminal("❌ Error en limpieza nuclear: " + e.message, true);
+        }
+    },
+
+    async purgeTestEvents() {
+        this.logTerminal("Buscando eventos de prueba para eliminar...");
+        const collections = ['americanas', 'entrenos'];
+        let deleted = 0;
+
+        for (const col of collections) {
+            const snap = await window.db.collection(col).get();
+            for (const doc of snap.docs) {
+                const data = doc.data();
+                const name = (data.name || "").toLowerCase();
+                const isTest = this.isTestData({ name }); // Reuse isTestData logic
+
+                if (isTest) {
+                    this.logTerminal(`Purgando evento: ${data.name}...`);
+                    // Use the FirebaseDB delete method which also kills matches
+                    const type = col === 'americanas' ? 'americana' : 'entreno';
+                    await window.EventService.deleteEvent(type, doc.id);
+                    deleted++;
+                }
+            }
+        }
+        this.logTerminal(`✅ ${deleted} eventos de prueba eliminados.`);
     }
 };
 
