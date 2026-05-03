@@ -273,17 +273,29 @@
                         if (isNewRoundDetected && currentMatches.length > 0 && isMainArea) {
                             // Debounce: Wait a bit for all matches of the round to arrive before animating
                             if (this._animTimeout) clearTimeout(this._animTimeout);
-                            this._animTimeout = setTimeout(() => {
+                            this._animTimeout = setTimeout(async () => {
                                 // RE-FETCH to get latest matches after delay
                                 const finalMatches = this.allMatches.filter(m => parseInt(m.round) === maxRound);
                                 const isStillPending = finalMatches.every(m => !m.score_a && m.status !== 'finished');
 
                                 if (isStillPending) {
                                     console.log(`🎬 [Tower] Auto-starting animation for Round ${maxRound}`);
+                                    
+                                    // CRITICAL: Fetch ALL player data for robust animation lookup
+                                    let freshPlayers = [];
+                                    try {
+                                        console.log("📡 [Tower] Fetching comprehensive player pool for animation...");
+                                        freshPlayers = await window.FirebaseDB.players.getAll();
+                                        console.log(`✅ [Tower] Pool ready with ${freshPlayers.length} players.`);
+                                    } catch (e) {
+                                        console.warn("⚠️ [Tower] Could not fetch fresh players pool", e);
+                                        freshPlayers = this.currentAmericanaDoc?.players || [];
+                                    }
+
                                     this._lastAnimatedRound = maxRound;
                                     window.ShuffleAnimator.animate({
                                         round: maxRound,
-                                        players: this.currentAmericanaDoc?.players || [],
+                                        players: freshPlayers,
                                         courts: this.currentAmericanaDoc?.max_courts || 4,
                                         matches: finalMatches
                                     }, () => {
