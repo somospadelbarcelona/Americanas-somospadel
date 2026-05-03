@@ -147,6 +147,7 @@ function renderResultsFrame(container, activeEvent, allEvents) {
                     <button class="btn-primary-pro" onclick="window.Actions.finishEvent()" style="background: #27ae60; color:white;">🏁 FINALIZAR</button>
                     <button class="btn-primary-pro" onclick="window.Actions.recalculateLevels()" style="background: #9b59b6; color:white;">⚖️ RECALCULAR NIVELES</button>
                     <button class="btn-primary-pro" onclick="window.Actions.resetEvent()" style="background: #e74c3c; color:white;">🗑️ REINICIAR</button>
+                    ${activeEvent.pair_mode === 'rotating' || activeEvent.type === 'entreno' ? `<button class="btn-primary-pro" onclick="window.Actions.resetEvent(true)" style="background: #f39c12; color:white;">🎲 REINICIAR AL AZAR</button>` : ''}
                 </div>
             </div>
 
@@ -762,8 +763,14 @@ window.Actions = {
         alert("Pistas actualizadas");
     },
 
-    async resetEvent() {
-        if (!confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsta acción es irreversible:\n1. Borrará TODOS los partidos y resultados.\n2. Reiniciará el evento a estado 'Live'.\n3. Generará automáticamente la Ronda 1.\n\n¿Continuar?")) return;
+    async resetEvent(randomize = false) {
+        let msg = randomize 
+            ? "⚠️ ¿ESTÁS SEGURO?\n\nSe borrarán TODOS los partidos y se generará la Ronda 1 con PAREJAS TOTALMENTE NUEVAS (Modo Aleatorio).\n\n¿Continuar?"
+            : "⚠️ ¿ESTÁS SEGURO?\n\nEsta acción es irreversible:\n1. Borrará TODOS los partidos y resultados.\n2. Reiniciará el evento a estado 'Live'.\n3. Generará automáticamente la Ronda 1.\n\n¿Continuar?";
+        
+        if (!confirm(msg)) return;
+
+        if (randomize) console.log("🎲 Reinicio aleatorio solicitado...");
 
         const evt = window.AdminController.activeEvent;
         if (!evt || !evt.id) {
@@ -826,10 +833,14 @@ window.Actions = {
                 throw new Error("MatchMakingService no está disponible");
             }
 
-            await MatchMakingService.generateRound(evt.id, evt.type, 1);
+            await MatchMakingService.generateRound(evt.id, evt.type, 1, false, randomize);
             console.log("✅ Round 1 generated successfully");
 
-            alert("✅ Evento reiniciado y Ronda 1 generada automáticamente.");
+            if (window.NotificationService) {
+                window.NotificationService.showToast(randomize ? "🎲 Reiniciado con Nuevas Parejas" : "✅ Evento Reiniciado", "success");
+            } else {
+                alert(randomize ? "🎲 Reiniciado con éxito (Nuevas Parejas)" : "✅ Evento reiniciado y Ronda 1 generada.");
+            }
 
             // Reload view
             if (window.loadResultsView) {

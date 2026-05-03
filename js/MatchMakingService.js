@@ -15,7 +15,7 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
              * Generar partidos para una ronda específica.
              * Maneja automáticamente la lógica de "Smart Courts" (ampliar pistas si hay más gente).
              */
-            async generateRound(eventId, eventType, roundNum, force = false) {
+            async generateRound(eventId, eventType, roundNum, force = false, randomize = false) {
                 console.log(`🎲 MatchMakingService: Generating Round ${roundNum} for ${eventType} ${eventId}`);
 
                 // Ensure dependencies exist
@@ -132,18 +132,31 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
 
                         let pairs = event.fixed_pairs || [];
 
+                        if (randomize && pairs.length > 0) {
+                            console.log("🎲 Randomize requested: Clearing existing fixed pairs to force new random couples!");
+                            pairs = [];
+                        }
+
                         if (pairs.length === 0) {
                             console.log("🔒 No manual pairs found. Generating automatic fixed pairs...");
                             let players = event.players || [];
 
                             if (eventType === 'entreno') {
-                                players = this._sortPlayersForEntreno(players);
+                                players = this._sortPlayersForEntreno(players, randomize);
+                            } else if (randomize) {
+                                console.log("🎲 Randomizing pairs (forcing shuffle)...");
+                                for (let i = players.length - 1; i > 0; i--) {
+                                    const j = Math.floor(Math.random() * (i + 1));
+                                    [players[i], players[j]] = [players[j], players[i]];
+                                }
                             }
 
-                            // Ensure they have initial courts
+                            // Ensure they have initial courts — ALWAYS recalculate from position
+                            // (never reuse stale current_court from previous rounds)
                             const playersWithCourts = players.map((p, i) => ({
                                 ...p,
-                                current_court: p.current_court || (Math.floor(i / 4) + 1)
+                                current_court: Math.floor(i / 4) + 1,
+                                last_partner: null  // Clear last_partner so SmartPairs doesn't repeat
                             }));
 
                             pairs = FixedPairsLogic.createFixedPairs(playersWithCourts, event.category, eventType === 'entreno');
@@ -173,13 +186,25 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                         let players = event.players || [];
 
                         if (eventType === 'entreno') {
-                            players = this._sortPlayersForEntreno(players);
+                            players = this._sortPlayersForEntreno(players, randomize);
+                        } else if (randomize) {
+                            console.log("🎲 Randomizing players (forcing shuffle)...");
+                            for (let i = players.length - 1; i > 0; i--) {
+                                const j = Math.floor(Math.random() * (i + 1));
+                                [players[i], players[j]] = [players[j], players[i]];
+                            }
                         }
 
-                        players.forEach((p, i) => p.current_court = Math.floor(i / 4) + 1);
+                        // ALWAYS recalculate courts from scratch (never reuse stale values)
+                        players.forEach((p, i) => {
+                            p.current_court = Math.floor(i / 4) + 1;
+                            if (randomize) p.last_partner = null; // Clear last_partner so SmartPairs generates fresh
+                        });
                         await collection.update(eventId, { players });
 
-                        return this._createMatches(eventId, RotatingPozoLogic.generateRound(players, 1, effectiveCourts, event.category), eventType);
+                        // FIX: For entrenos, always use 'entreno' category so _createEntrenoPairs is used
+                        const genCat = eventType === 'entreno' ? 'entreno' : event.category;
+                        return this._createMatches(eventId, RotatingPozoLogic.generateRound(players, 1, effectiveCourts, genCat), eventType);
                     }
                 }
             },
@@ -188,13 +213,26 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
              * Helper: Sort players by Level (Desc) AND Pre-Pair by Team
              * for "Entreno" seeding.
              */
-            _sortPlayersForEntreno(players) {
-                console.log("📊 Sorting players with Smart Pairing (Level + Team) for Entreno...");
+            _sortPlayersForEntreno(players, randomize = false) {
+                console.log("📊 Sorting players with Smart Pairing (Level + Team) for Entreno... Randomize:", randomize);
 
                 // 1. Initial Sort by Level Descending
-                let pool = [...players].sort((a, b) => {
-                    const lA = parseFloat(a.level || a.self_rate_level || 0);
-                    const lB = parseFloat(b.level || b.self_rate_level || 0);
+                let pool = [...players];
+                
+                if (randomize) {
+                    // Small shuffle first so players with exact same level swap positions
+                    for (let i = pool.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [pool[i], pool[j]] = [pool[j], pool[i]];
+                    }
+                }
+
+                pool.sort((a, b) => {
+                    // Jitter level when randomizing to swap players on same court boundaries (+/- 0.07)
+                    const jitterA = randomize ? (Math.random() * 0.15 - 0.075) : 0;
+                    const jitterB = randomize ? (Math.random() * 0.15 - 0.075) : 0;
+                    const lA = parseFloat(a.level || a.self_rate_level || 0) + jitterA;
+                    const lB = parseFloat(b.level || b.self_rate_level || 0) + jitterB;
                     return lB - lA;
                 });
 
@@ -213,58 +251,72 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                     let bestPartnerIndex = -1;
 
                     const getTeam = (p) => {
-                        const t = p.team_somospadel || p.team || ''; // Handle various field names
+                        const t = p.team_somospadel || p.team || ''; 
                         return Array.isArray(t) ? t[0] : t;
                     };
 
                     const p1Team = getTeam(p1);
+                    const p1Level = parseFloat(p1.level || p1.self_rate_level || 0);
 
-                    // Priority 1: SAME TEAM
-                    // Priority 2: Similar Level
-
-                    // Priority 1: SAME TEAM (Existing)
-                    // Priority 2: COMPLEMENTARY SIDE (DRIVE + REVES)
-                    // Priority 3: Similar Level
-
+                    // 1. Priority 1: SAME TEAM (within 0.65 level diff max)
+                    let teamCandidates = [];
                     if (p1Team) {
-                        bestPartnerIndex = pool.findIndex(p => {
-                            const p2Team = getTeam(p);
-                            return p2Team && p2Team === p1Team;
-                        });
-                    }
-
-                    // Priority 2: Complementary Side Preference
-                    if (bestPartnerIndex === -1 && p1.side_preference && p1.side_preference !== 'INDIFF') {
-                        const targetSide = p1.side_preference === 'DRIVE' ? 'REVES' : 'DRIVE';
-                        bestPartnerIndex = pool.findIndex(p => p.side_preference === targetSide);
-                        if (bestPartnerIndex !== -1) {
-                            console.log(`↔️ Complementary Pairing: ${p1.name} (${p1.side_preference}) + ${pool[bestPartnerIndex].name} (${pool[bestPartnerIndex].side_preference})`);
+                        for (let i = 0; i < pool.length; i++) {
+                            if (getTeam(pool[i]) === p1Team) {
+                                const p2Level = parseFloat(pool[i].level || pool[i].self_rate_level || 0);
+                                if (Math.abs(p1Level - p2Level) <= 0.65) {
+                                    teamCandidates.push(i);
+                                }
+                            }
                         }
                     }
 
-                    // If no special match found, find closest level (pool[0])
+                    // RANDOMIZATION TWEAK: When randomize=true, we don't ALWAYS pick the teammate if we want variety.
+                    if (teamCandidates.length > 0) {
+                        const forceTeam = !randomize || Math.random() > 0.35;
+                        if (forceTeam) {
+                            bestPartnerIndex = randomize ? teamCandidates[Math.floor(Math.random() * teamCandidates.length)] : teamCandidates[0];
+                            console.log(`🎲 [Matchmaking] Teammate selected (Chance: ${forceTeam}).`);
+                        } else {
+                            console.log("🎲 [Matchmaking] Randomly skipping teammate to increase variety.");
+                        }
+                    }
+
+                    // 2. Priority 2: CLOSEST LEVEL (within 0.4 diff)
                     if (bestPartnerIndex === -1) {
-                        bestPartnerIndex = 0;
+                        let levelCandidates = [];
+                        for (let i = 0; i < pool.length; i++) {
+                            const p2Level = parseFloat(pool[i].level || pool[i].self_rate_level || 0);
+                            if (Math.abs(p1Level - p2Level) <= 0.4) {
+                                levelCandidates.push(i);
+                            }
+                        }
+                        if (levelCandidates.length > 0) {
+                            bestPartnerIndex = randomize ? levelCandidates[Math.floor(Math.random() * levelCandidates.length)] : levelCandidates[0];
+                        }
+                    }
+
+                    // 3. Priority 3: BEST REMAINING (Closest level)
+                    if (bestPartnerIndex === -1 && pool.length > 0) {
+                        if (randomize) {
+                            // Pick from top 4 closest to introduce variety
+                            const lookahead = Math.min(4, pool.length);
+                            bestPartnerIndex = Math.floor(Math.random() * lookahead);
+                        } else {
+                            bestPartnerIndex = 0;
+                        }
                     }
 
                     if (bestPartnerIndex !== -1) {
                         const p2 = pool.splice(bestPartnerIndex, 1)[0];
                         sortedList.push(p1, p2);
-
-                        let pairReason = 'Level';
-                        if (p1Team && p1Team === getTeam(p2)) pairReason = 'Team: ' + p1Team;
-                        else if (p1.side_preference && p2.side_preference && p1.side_preference !== p2.side_preference && p1.side_preference !== 'INDIFF' && p2.side_preference !== 'INDIFF') pairReason = 'Sides';
-
-                        console.log(`🤝 Paired ${p1.name} (${p1.level}) w/ ${p2.name} (${p2.level}) - Reason: ${pairReason}`);
+                        console.log(`🤝 Paired ${p1.name} (${p1.level}) w/ ${p2.name} (${p2.level})`);
                     } else {
                         sortedList.push(pool.shift());
                     }
                 }
 
                 // Final verify: Sort the PAIRS by their combined level to ensure Court 1 gets the best pairs
-                // sortedList is [P1a, P1b, P2a, P2b...]
-                // We want to group them 2 by 2, check average level, sort groups, flatten.
-
                 const pairs = [];
                 for (let i = 0; i < sortedList.length; i += 2) {
                     if (i + 1 < sortedList.length) {

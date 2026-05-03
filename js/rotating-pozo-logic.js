@@ -236,56 +236,66 @@ const RotatingPozoLogic = {
 
     /**
      * Creates pairs for Entreno trying to maximize teammate HEAD-TO-HEAD rivalries.
-     * Logic: Find the combination where teammates play AGAINST each other.
+     * Scores every possible combination and picks the best one.
+     * Also penalizes repeating the same partner from last round.
      */
     _createEntrenoPairs(players) {
         if (players.length < 4) return { teamA: players.slice(0, 2), teamB: players.slice(2, 4) };
 
         const p = players;
-        // The 3 pairing options
         const options = [
             { teamA: [p[0], p[1]], teamB: [p[2], p[3]], id: 0 },
             { teamA: [p[0], p[2]], teamB: [p[1], p[3]], id: 1 },
             { teamA: [p[0], p[3]], teamB: [p[1], p[2]], id: 2 }
         ];
 
-        // Evaluate each option
-        let bestOption = options[1]; // Default mix
-        let maxScore = -1;
+        let bestOption = null;
+        let maxScore = -Infinity;
+        let tiedOptions = [];
 
         options.forEach(opt => {
             let score = 0;
-            // Check conflicts (Teammates playing against each other is GOOD +1)
             const teamA1 = opt.teamA[0].team || opt.teamA[0].team_somospadel;
             const teamA2 = opt.teamA[1].team || opt.teamA[1].team_somospadel;
             const teamB1 = opt.teamB[0].team || opt.teamB[0].team_somospadel;
             const teamB2 = opt.teamB[1].team || opt.teamB[1].team_somospadel;
 
             const checkRival = (t1, t2) => (t1 && t2 && t1 === t2) ? 1 : 0;
-
-            // Rivalries: A1 vs B1, A1 vs B2, A2 vs B1, A2 vs B2
             score += checkRival(teamA1, teamB1);
             score += checkRival(teamA1, teamB2);
             score += checkRival(teamA2, teamB1);
             score += checkRival(teamA2, teamB2);
 
-            // Avoid same-team partners if possible (Teammates playing TOGETHER is BAD -1? Or just neutral? Maybe avoid.)
             if (teamA1 && teamA2 && teamA1 === teamA2) score -= 2;
             if (teamB1 && teamB2 && teamB1 === teamB2) score -= 2;
+
+            // Penalize repeating last_partner (null last_partner = no penalty)
+            const penalizeRepeat = (player, partner) => {
+                if (player.last_partner && String(player.last_partner) === String(partner.id)) return -3;
+                return 0;
+            };
+            score += penalizeRepeat(opt.teamA[0], opt.teamA[1]);
+            score += penalizeRepeat(opt.teamA[1], opt.teamA[0]);
+            score += penalizeRepeat(opt.teamB[0], opt.teamB[1]);
+            score += penalizeRepeat(opt.teamB[1], opt.teamB[0]);
 
             if (score > maxScore) {
                 maxScore = score;
                 bestOption = opt;
+                tiedOptions = [opt];
+            } else if (score === maxScore) {
+                tiedOptions.push(opt);
             }
         });
 
-        // Fallback: If no team logic applies (score 0), use SmartPairs to avoid repeats
-        if (maxScore === 0) {
-            return this._createSmartPairs(players);
+        // Pick randomly among tied options for maximum variety
+        if (tiedOptions.length > 1) {
+            bestOption = tiedOptions[Math.floor(Math.random() * tiedOptions.length)];
+            console.log(`🎲 Picked from ${tiedOptions.length} tied options (Score ${maxScore})`);
         }
 
-        console.log(`⚔️ Entreno Matchup Selected (Score ${maxScore}):`, bestOption);
-        return bestOption;
+        console.log(`⚔️ Entreno Matchup Selected:`, bestOption);
+        return bestOption || options[1];
     },
 
     /**
@@ -301,20 +311,17 @@ const RotatingPozoLogic = {
             { teamA: [p[0], p[3]], teamB: [p[1], p[2]] }
         ];
 
-        // Filter out options where ANY pair existed previously
+        // Filter out options where ANY pair repeated (null last_partner = no block)
         const validOptions = options.filter(opt => {
-            const pair1 = opt.teamA;
-            const pair2 = opt.teamB;
-            // Check Repeats (Robust String comparison)
-            if (String(pair1[0].last_partner) === String(pair1[1].id)) return false;
-            if (String(pair2[0].last_partner) === String(pair2[1].id)) return false;
+            if (opt.teamA[0].last_partner && String(opt.teamA[0].last_partner) === String(opt.teamA[1].id)) return false;
+            if (opt.teamB[0].last_partner && String(opt.teamB[0].last_partner) === String(opt.teamB[1].id)) return false;
             return true;
         });
 
         if (validOptions.length > 0) {
-            return validOptions[0];
+            return validOptions[Math.floor(Math.random() * validOptions.length)];
         } else {
-            return options[1]; // Default fallback
+            return options[Math.floor(Math.random() * options.length)]; // Random fallback
         }
     }
 
