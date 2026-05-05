@@ -42,7 +42,7 @@ window.AdminAuth = {
     hasAdminRole(role) {
         if (!role) return false;
         const r = role.toString().toLowerCase().trim();
-        return ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain', 'capitan', 'capitanes'].includes(r);
+        return ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain', 'capitan', 'capitanes', 'organizador', 'organizadores'].includes(r);
     },
 
     async init() {

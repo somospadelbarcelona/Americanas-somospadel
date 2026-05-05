@@ -14,6 +14,7 @@
                 'live': () => window.ControlTowerView?.handleLiveRoute(),
                 'live-entreno': () => window.EntrenoLiveView?.handleRoute(),
                 'ranking': () => window.RankingController?.init(),
+                'equipos': () => window.TeamController?.init(),
                 'agenda': () => this.handleControllerTab('EventsController', 'agenda'),
                 'results': () => this.handleControllerTab('EventsController', 'results'),
                 'entrenos': () => this.handleControllerTab('EventsController', 'entrenos'),

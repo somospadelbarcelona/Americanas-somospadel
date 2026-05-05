@@ -7,7 +7,7 @@
         render(match, options = {}) {
             const { currentUser, isEntreno, eventStatus, theme } = options;
             const colorClass = `border-${(match.court % 4) + 1}`;
-            
+
             const getTeamName = (namesArr, teamStr) => {
                 if (teamStr && typeof teamStr === 'string' && teamStr.length > 0) return teamStr;
                 if (Array.isArray(namesArr)) return namesArr.join(' / ');
@@ -20,10 +20,10 @@
             const isPartA = currentUser && (match.team_a_ids?.includes(currentUser.uid) || safeTeamA.toLowerCase().includes((currentUser.name || '').toLowerCase()));
             const isPartB = currentUser && (match.team_b_ids?.includes(currentUser.uid) || safeTeamB.toLowerCase().includes((currentUser.name || '').toLowerCase()));
             const isMyMatch = isPartA || isPartB;
-            const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain'].includes((currentUser?.role || '').toLowerCase());
+            const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain', 'capitan', 'capitanes', 'organizador', 'organizadores'].includes((currentUser?.role || '').toLowerCase());
 
-            const isFinished = match.isFinished || match.status === 'finished';
-            const isLive = eventStatus === 'live' && !isFinished;
+            const isFinished = match.status === 'finished' || match.status === 'finalizado' || match.isFinished === true;
+            const isLive = (eventStatus === 'live' || eventStatus === 'adjusting') && !isFinished;
 
             let statusBadge = '';
             if (isFinished) {
@@ -55,22 +55,14 @@
             let actionArea = '';
             const canEdit = (eventStatus === 'live' || eventStatus === 'adjusting') && currentUser;
 
-            if (isFinished) {
+            if (isFinished && !isAdmin) {
                 const userDelta = isPartA ? (match.delta_a || 0) : (match.delta_b || 0);
                 actionArea = `
-                    <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
-                        <button onclick="shareVictory('${match.id}', ${userDelta})"
-                                style="background: linear-gradient(135deg, #CCFF00 0%, #00E36D 100%); color: black; border: none; padding: 14px; border-radius: 16px; font-size: 0.8rem; cursor: pointer; font-weight: 950; box-shadow: 0 4px 15px rgba(204,255,0,0.3); display: flex; align-items: center; gap: 10px; justify-content: center; text-transform: uppercase; width: 100%;">
-                            <i class="fab fa-instagram" style="font-size: 1.1rem;"></i> COMPARTIR VICTORIA
-                        </button>
-                        ${isAdmin ? `
-                            <button onclick="window.ControlTowerView.unlockMatch('${match.id}')" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #666; padding: 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 700;">
-                                <i class="fas fa-lock-open"></i> DESBLOQUEAR PARA EDITAR
-                            </button>
-                        ` : ''}
+                    <div style="margin-top: 15px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: center;">
+                        <span style="font-size: 0.75rem; color: #aaa; font-weight: 700;">PARTIDO FINALIZADO</span>
                     </div>
                 `;
-            } else if (canEdit) {
+            } else if (canEdit || isAdmin) {
                 actionArea = `
                     <div style="margin-top:20px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.05);">
                         <div style="text-align:center; margin-bottom:15px;">
@@ -114,10 +106,12 @@
                 `;
             }
 
+            const isEnJuego = match.status === 'live' || match.status === 'en juego';
+            const cardGlow = isEnJuego ? 'box-shadow: 0 0 25px rgba(0, 227, 109, 0.25); border: 1px solid rgba(0, 227, 109, 0.3);' : 'border: 1px solid rgba(255,255,255,0.08);';
+
             return `
-                <div id="tour-match-${match.id}" class="tour-match-card ${colorClass}" style="
-                    background: ${cardBg}; border-radius: 32px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.4); transition: all 0.4s; ${cardStyle}
-                ">
+                <div class="match-card glass-card-enterprise animate-pop-in" id="card-${match.id}" 
+                     style="background: rgba(255,255,255,0.03); border-radius: 20px; overflow: hidden; margin-bottom: 15px; position: relative; ${cardGlow}">
                     <div style="padding: 16px 24px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03);">
                         <span style="font-size: 0.65rem; font-weight: 900; color: rgba(255,255,255,0.5); letter-spacing: 1.5px; text-transform: uppercase;">
                             PISTA ${match.court} • P${match.round} • ${timeLabel}
@@ -133,7 +127,9 @@
                                 </div>
                                 ${isPartA ? '<span style="color: var(--brand-neon); font-size: 0.6rem; font-weight: 950;">TU EQUIPO ★</span>' : ''}
                             </div>
-                            <div id="match-score-a-${match.id}" style="background: ${winnerA ? 'var(--brand-neon)' : 'rgba(255,255,255,0.05)'}; color: ${winnerA ? 'black' : 'white'}; min-width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: 950; font-size: 1.6rem;">${sA}</div>
+                            <div id="match-score-a-${match.id}" 
+                                 onclick="${isAdmin || canEdit ? `window.ControlTowerView.manualScoreEdit('${match.id}', 'score_a')` : ''}"
+                                 style="background: ${winnerA ? 'var(--brand-neon)' : 'rgba(255,255,255,0.05)'}; color: ${winnerA ? 'black' : 'white'}; min-width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: 950; font-size: 1.6rem; cursor: ${isAdmin || canEdit ? 'pointer' : 'default'}">${sA}</div>
                         </div>
                         <div style="height: 1px; background: linear-gradient(to right, rgba(204,255,0,0.4), transparent); margin-bottom: 20px;"></div>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -144,7 +140,9 @@
                                 </div>
                                 ${isPartB ? '<span style="color: var(--brand-neon); font-size: 0.6rem; font-weight: 950;">TU EQUIPO ★</span>' : ''}
                             </div>
-                            <div id="match-score-b-${match.id}" style="background: ${winnerB ? 'var(--brand-neon)' : 'rgba(255,255,255,0.05)'}; color: ${winnerB ? 'black' : 'white'}; min-width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: 950; font-size: 1.6rem;">${sB}</div>
+                            <div id="match-score-b-${match.id}" 
+                                 onclick="${isAdmin || canEdit ? `window.ControlTowerView.manualScoreEdit('${match.id}', 'score_b')` : ''}"
+                                 style="background: ${winnerB ? 'var(--brand-neon)' : 'rgba(255,255,255,0.05)'}; color: ${winnerB ? 'black' : 'white'}; min-width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: 950; font-size: 1.6rem; cursor: ${isAdmin || canEdit ? 'pointer' : 'default'}">${sB}</div>
                         </div>
                         ${actionArea}
                     </div>

@@ -141,13 +141,12 @@ function renderResultsFrame(container, activeEvent, allEvents) {
                 </div>
                 
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn-primary-pro" onclick="window.Actions.generateRound()" style="background: #3498db; color:white;">⚡ GENERAR RONDA</button>
-                    <button class="btn-outline-pro" onclick="window.Actions.sanitizeCurrentRound()" style="border-color: #f1c40f; color:#f1c40f; font-weight:800;">🧹 SANEAR RONDA</button>
-                    <button class="btn-primary-pro" onclick="window.Actions.simulateRound()" style="background: #e67e22; color:white;">🎲 SIMULACIÓN</button>
-                    <button class="btn-primary-pro" onclick="window.Actions.finishEvent()" style="background: #27ae60; color:white;">🏁 FINALIZAR</button>
-                    <button class="btn-primary-pro" onclick="window.Actions.recalculateLevels()" style="background: #9b59b6; color:white;">⚖️ RECALCULAR NIVELES</button>
-                    <button class="btn-primary-pro" onclick="window.Actions.resetEvent()" style="background: #e74c3c; color:white;">🗑️ REINICIAR</button>
-                    ${activeEvent.pair_mode === 'rotating' || activeEvent.type === 'entreno' ? `<button class="btn-primary-pro" onclick="window.Actions.resetEvent(true)" style="background: #f39c12; color:white;">🎲 REINICIAR AL AZAR</button>` : ''}
+                    <button class="btn-primary-pro" onclick="window.Actions.generateRound()" style="background: #3498db; color:white;">⚡ ROND+1</button>
+                    <button class="btn-outline-pro" onclick="window.Actions.sanitizeCurrentRound()" style="border-color: #f1c40f; color:#f1c40f; font-weight:800;">🧹 SANEAR</button>
+                    <button class="btn-outline-pro" id="btn-purge-safe" onclick="window.Actions.purgeFutureRoundsFromUI()" style="display:none; border-color: #ff3b30; color:#ff3b30; font-weight:800;">🗑️ BORRAR POSTERIORES</button>
+                    <button class="btn-primary-pro" onclick="window.Actions.recalculateLevels()" style="background: #9b59b6; color:white;">⚖️ ELO</button>
+                    <button class="btn-primary-pro" onclick="window.Actions.resetEvent()" style="background: #e74c3c; color:white;">🗑️ RESET</button>
+                    ${activeEvent.pair_mode === 'rotating' || activeEvent.type === 'entreno' ? `<button class="btn-primary-pro" onclick="window.Actions.resetEvent(true)" style="background: #f39c12; color:white;">🎲 AZAR</button>` : ''}
                 </div>
             </div>
 
@@ -327,6 +326,28 @@ async function renderMatchesGrid(eventId, type, round) {
             if (!validIds.has(id)) card.remove();
         });
 
+        // --- NEW: NEXT ROUND PROMPT IN ADMIN PANEL ---
+        const maxMatchRound = Math.max(...window.AdminController.matchesBuffer.map(m => parseInt(m.round) || 1));
+        const isCurrentRoundFinished = roundMatches.length > 0 && roundMatches.every(m => m.status === 'finished' || m.status === 'finalizado');
+
+        const existingPrompt = document.getElementById('admin-next-round-prompt');
+        if (existingPrompt) existingPrompt.remove();
+
+        if (isCurrentRoundFinished && round === maxMatchRound) {
+            const promptHTML = `
+                <div id="admin-next-round-prompt" class="glass-card-enterprise animate-pop-in" style="grid-column: 1 / -1; margin-top: 2rem; padding: 2.5rem; border: 2px solid var(--primary); text-align: center; background: rgba(204,255,0,0.05);">
+                    <h2 style="color: var(--primary); margin: 0 0 10px 0; font-weight: 900;">🎯 RONDA ${round} COMPLETADA</h2>
+                    <p style="color: rgba(255,255,255,0.7); margin-bottom: 2rem;">Todos los partidos de esta ronda han finalizado. ¿Deseas generar la siguiente ronda ahora?</p>
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <button onclick="window.Actions.generateRound()" class="btn-primary-pro" style="padding: 15px 40px; font-size: 1.1rem;">
+                            🚀 GENERAR RONDA ${round + 1}
+                        </button>
+                    </div>
+                </div>
+            `;
+            grid.insertAdjacentHTML('beforeend', promptHTML);
+        }
+
         renderStandingsInternal(window.AdminController.matchesBuffer);
     };
 
@@ -341,13 +362,21 @@ async function renderMatchesGrid(eventId, type, round) {
             });
 
         window.AdminController.matchesUnsubscribers = [sub];
+
+        // --- NEW: UI DYNAMICS FOR PURGE BUTTON ---
+        setTimeout(() => {
+            const maxR = Math.max(...window.AdminController.matchesBuffer.map(m => parseInt(m.round) || 1));
+            const btnPurge = document.getElementById('btn-purge-safe');
+            if (btnPurge) btnPurge.style.display = (round < maxR) ? 'block' : 'none';
+        }, 500);
+
     } catch (e) {
         container.innerHTML = `Error: ${e.message}`;
     }
 }
 
 function renderMatchCard(match) {
-    const isFinished = match.status === 'finished';
+    const isFinished = match.status === 'finished' || match.status === 'finalizado';
     const sA = match.score_a || 0;
     const sB = match.score_b || 0;
 
@@ -389,7 +418,7 @@ function renderMatchCard(match) {
             <div style="display: flex; gap: 15px; justify-content: center; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <button onclick="window.Actions.adjustScore('${match.id}', 'score_a', -1)" style="width:32px; height:32px; border-radius:50%; border:1px solid #444; background:#222; color:white; font-weight:900;">-</button>
-                    <span id="score-a-${match.id}" onclick="const v = prompt('Puntuación Equipo A', this.innerText); if(v!==null) window.Actions.updateScore('${match.id}', 'score_a', v)" style="width: 30px; text-align: center; font-weight: 950; font-size: 1.4rem; color: var(--primary); cursor: pointer;" title="Click para editar">${sA}</span>
+                    <span id="score-a-${match.id}" onclick="window.Actions.manualScoreEdit('${match.id}', 'score_a')" style="width: 30px; text-align: center; font-weight: 950; font-size: 1.4rem; color: var(--primary); cursor: pointer;" title="Click para editar">${sA}</span>
                     <button onclick="window.Actions.adjustScore('${match.id}', 'score_a', 1)" style="width:32px; height:32px; border-radius:50%; border:1px solid var(--primary); background:#222; color:var(--primary); font-weight:900;">+</button>
                 </div>
                 
@@ -397,7 +426,7 @@ function renderMatchCard(match) {
                 
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <button onclick="window.Actions.adjustScore('${match.id}', 'score_b', -1)" style="width:32px; height:32px; border-radius:50%; border:1px solid #444; background:#222; color:white; font-weight:900;">-</button>
-                    <span id="score-b-${match.id}" onclick="const v = prompt('Puntuación Equipo B', this.innerText); if(v!==null) window.Actions.updateScore('${match.id}', 'score_b', v)" style="width: 30px; text-align: center; font-weight: 950; font-size: 1.4rem; color: var(--primary); cursor: pointer;" title="Click para editar">${sB}</span>
+                    <span id="score-b-${match.id}" onclick="window.Actions.manualScoreEdit('${match.id}', 'score_b')" style="width: 30px; text-align: center; font-weight: 950; font-size: 1.4rem; color: var(--primary); cursor: pointer;" title="Click para editar">${sB}</span>
                     <button onclick="window.Actions.adjustScore('${match.id}', 'score_b', 1)" style="width:32px; height:32px; border-radius:50%; border:1px solid var(--primary); background:#222; color:var(--primary); font-weight:900;">+</button>
                 </div>
             </div>
@@ -438,15 +467,20 @@ function renderMatchCard(match) {
                 
                 ${scoreControls}
                 
-                <div style="margin-top:20px; display:flex; flex-direction:column; gap:8px;">
-                     <button id="btn-finish-${match.id}" class="btn-primary-pro" onclick="${isFinished ? '' : `window.Actions.finishMatch('${match.id}', true)`}" 
-                             style="width:100%; padding:12px; font-size:0.85rem; font-weight:900; background:${isFinished ? 'rgba(0,255,100,0.1)' : 'var(--primary)'}; color:${isFinished ? '#00ff64' : 'black'}; border:none; cursor:${isFinished ? 'default' : 'pointer'};">
-                        ${isFinished ? '✓ RESULTADO CONFIRMADO' : 'ACEPTAR RESULTADO'}
+                <div style="margin-top:20px; display:flex; flex-direction:column; gap:12px;">
+                     <button id="btn-finish-${match.id}" class="btn-primary-pro ${(!isFinished && (sA > 0 || sB > 0)) ? 'btn-pulse-primary' : ''}" 
+                             onclick="${isFinished ? '' : `window.Actions.finishMatch('${match.id}', true)`}" 
+                             style="width:100%; padding:14px; font-size:0.85rem; font-weight:900; 
+                                    background:${isFinished ? 'rgba(0,255,100,0.1)' : 'var(--primary)'}; 
+                                    box-shadow:${(!isFinished && (sA > 0 || sB > 0)) ? '0 0 20px var(--primary-glow)' : 'none'};
+                                    color:${isFinished ? '#00ff64' : 'black'}; border:none; cursor:${isFinished ? 'default' : 'pointer'}; position:relative; overflow:hidden;">
+                        ${isFinished ? '<i class="fas fa-check-circle"></i> RESULTADO CONFIRMADO' : 'ACEPTAR RESULTADO'}
+                        ${(!isFinished && (sA > 0 || sB > 0)) ? '<div class="confetti-hint"></div>' : ''}
                      </button>
                      ${isFinished ? `
                         <button class="btn-outline-pro" onclick="window.Actions.finishMatch('${match.id}', false)" 
-                                style="width:100%; padding:10px; font-size:0.8rem; font-weight:900; color:#CCFF00; border:1px solid #CCFF00; background:transparent;">
-                            <i class="fas fa-undo"></i> REABRIR / EDITAR MARCADO
+                                style="width:100%; padding:10px; font-size:0.8rem; font-weight:900; color:#ff9f43; border:1px solid #ff9f43; background:transparent;">
+                            <i class="fas fa-undo"></i> REABRIR / CORREGIR
                         </button>
                      ` : ''}
                 </div>
@@ -464,7 +498,7 @@ function renderStandingsInternal(matches) {
     const isRotating = evt && evt.pair_mode === 'rotating';
 
     matches.forEach(m => {
-        if (m.status === 'finished') {
+        if (m.status === 'finished' || m.status === 'finalizado') {
             const processTeams = (namesGroup, score) => {
                 // Determine if we should treat names as separate individuals or a single pair
                 let namesToProcess = [];
@@ -506,6 +540,29 @@ function renderStandingsInternal(matches) {
 
 // --- ACTIONS EXPOSED TO WINDOW ---
 window.Actions = {
+    async purgeFutureRoundsFromUI() {
+        const evt = window.AdminController.activeEvent;
+        const round = window.AdminController.currentRound;
+
+        const confirmed = await PremiumModal.confirm({
+            title: "🛑 BORRADO DE SEGURIDAD",
+            message: `¿Estás seguro de que deseas eliminar TODAS las rondas posteriores a la <b>Ronda ${round}</b>?<br><br>Esta acción es necesaria si quieres corregir resultados de la ronda actual que afecten a los cruces siguientes.`,
+            confirmText: "SÍ, BORRAR POSTERIORES",
+            cancelText: "CANCELAR",
+            type: 'danger'
+        });
+
+        if (confirmed) {
+            try {
+                await MatchMakingService.purgeSubsequentRounds(evt.id, round, evt.type);
+                PremiumModal.alert({ title: "ÉXITO", message: "Rondas posteriores eliminadas correctamente.", type: 'success' });
+                window.loadResultsView(evt.type);
+            } catch (e) {
+                PremiumModal.alert({ title: "ERROR", message: e.message, type: 'danger' });
+            }
+        }
+    },
+
     async generateRound() {
         const evt = window.AdminController.activeEvent;
         const round = window.AdminController.currentRound;
@@ -537,7 +594,7 @@ window.Actions = {
             }
         }
     },
-    
+
     async sanitizeCurrentRound() {
         const evt = window.AdminController.activeEvent;
         const round = window.AdminController.currentRound;
@@ -549,6 +606,50 @@ window.Actions = {
             window.loadResultsView(evt.type);
         } catch (e) {
             alert("❌ Error: " + e.message);
+        }
+    },
+
+    async repairCurrentRound() {
+        const evt = window.AdminController.activeEvent;
+        const round = window.AdminController.currentRound;
+        if (!confirm(`⚠️ ¿Deseas reparar la Ronda ${round}?\n\nSe buscarán jugadores sin partido y se restaurarán las pistas faltantes.`)) return;
+
+        try {
+            const res = await MatchMakingService.repairRound(evt.id, evt.type, round);
+            if (res.repaired > 0) {
+                alert(`✅ Reparación completada.\n\nPistas restauradas: ${res.repaired}`);
+            } else {
+                alert(res.message || "✅ No se han detectado pistas faltantes o jugadores sin asignar.");
+            }
+            window.loadResultsView(evt.type);
+        } catch (e) {
+            alert("❌ Error: " + e.message);
+        }
+    },
+
+    async switchRound(r) {
+        console.log("📍 Switching to Round:", r);
+        window.AdminController.currentRound = r;
+
+        // Update Tabs UI
+        document.querySelectorAll('.btn-round-tab').forEach(btn => {
+            const isTarget = btn.innerText.includes(String(r));
+            btn.classList.toggle('active', isTarget);
+        });
+
+        const evt = window.AdminController.activeEvent;
+        if (evt) {
+            window.renderMatchesGrid(evt.id, evt.type, r);
+        }
+    },
+
+    async recalculateLevels() {
+        if (!confirm("⚠️ ¿Recalcular niveles ELO de TODOS los jugadores?\n\nEste proceso escanea todos los partidos finalizados y ajusta los niveles para corregir posibles desviaciones.")) return;
+
+        if (window.LevelAdjustmentService && window.LevelAdjustmentService.recalculateAllLevels) {
+            await window.LevelAdjustmentService.recalculateAllLevels();
+        } else {
+            alert("Error: LevelAdjustmentService no disponible.");
         }
     },
 
@@ -585,6 +686,35 @@ window.Actions = {
     /**
      * OCR Integration: Scan scoreboard from photo
      */
+    async manualScoreEdit(matchId, field) {
+        const match = window.AdminController.matchesBuffer.find(m => m.id === matchId);
+        if (!match) return;
+
+        const currentVal = match[field] || 0;
+        const teamLabel = field === 'score_a' ? 'EQUIPO A' : 'EQUIPO B';
+
+        // --- NEW: QUICK GRID SELECTOR ---
+        const options = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(v => ({
+            id: v,
+            name: String(v),
+            sub: v === currentVal ? 'ACTUAL' : ''
+        }));
+
+        const selected = await PremiumModal.selector({
+            title: `SELECCIONAR JUEGOS - ${teamLabel}`,
+            message: `Puntuación actual: ${currentVal}`,
+            items: options,
+            placeholder: 'Filtrar...',
+            type: 'primary'
+        });
+
+        if (selected !== null && selected !== undefined) {
+            // Extraer el ID si es un objeto, o usar el valor directo
+            const val = (typeof selected === 'object') ? selected.id : selected;
+            await this.updateScore(matchId, field, val);
+        }
+    },
+
     async scanMatchScore(matchId) {
         if (!window.OcrService) {
             alert("Error: OCR Service no cargado.");
@@ -607,6 +737,18 @@ window.Actions = {
     },
 
     async updateScore(matchId, field, value) {
+        const match = window.AdminController.matchesBuffer.find(m => m.id === matchId);
+        if (match && (match.status === 'finished' || match.status === 'finalizado')) {
+            const proced = await PremiumModal.confirm({
+                title: "⚠️ PARTIDO FINALIZADO",
+                message: "Este partido ya está cerrado. Para cambiar el resultado, se recomienda reabrirlo primero.<br><br>¿Deseas modificar el marcador de todas formas?",
+                confirmText: "MODIFICAR",
+                cancelText: "CANCELAR",
+                type: 'danger'
+            });
+            if (!proced) return;
+        }
+
         const evt = window.AdminController.activeEvent;
         const collection = (evt && evt.type === 'entreno') ? FirebaseDB.entrenos_matches : FirebaseDB.matches;
         await collection.update(matchId, { [field]: parseInt(value) });
@@ -615,6 +757,11 @@ window.Actions = {
     async adjustScore(matchId, field, delta) {
         const match = window.AdminController.matchesBuffer.find(m => m.id === matchId);
         if (!match) return;
+
+        if (match.status === 'finished' || match.status === 'finalizado') {
+            console.log("Admin editing finished match score via +/-");
+            // We allow it in admin panel but we could add a subtle toast
+        }
 
         // CHECK CASCADE
         await this.checkAndPurge(matchId);
@@ -663,76 +810,146 @@ window.Actions = {
     },
 
     async finishMatch(matchId, isFinish) {
-        alert(`${isFinish ? '🏁 Finalizando' : '🔓 Reabriendo'} partido: ${matchId}`);
+        const match = window.AdminController.matchesBuffer.find(m => m.id === matchId);
+        if (!match) return;
+
         const evt = window.AdminController.activeEvent;
         const collection = (evt && evt.type === 'entreno') ? FirebaseDB.entrenos_matches : FirebaseDB.matches;
-        const newStatus = isFinish ? 'finished' : 'live';
 
-        // CHECK CASCADE ON REOPEN
-        if (!isFinish) {
-            alert("🧹 Verificando cascada de purga...");
+        if (isFinish) {
+            // --- ROBUST CONFIRMATION ---
+            const sA = parseInt(match.score_a || 0);
+            const sB = parseInt(match.score_b || 0);
+            const teamA = match.teamA || (Array.isArray(match.team_a_names) ? match.team_a_names.join(' / ') : match.team_a_names);
+            const teamB = match.teamB || (Array.isArray(match.team_b_names) ? match.team_b_names.join(' / ') : match.team_b_names);
+
+            let winnerText = "EMPATE";
+            let type = 'warning';
+            if (sA > sB) { winnerText = `GANADOR: ${teamA}`; type = 'success'; }
+            else if (sB > sA) { winnerText = `GANADOR: ${teamB}`; type = 'success'; }
+
+            if (sA === 0 && sB === 0) {
+                const confirmZero = await PremiumModal.confirm({
+                    title: "⚠️ ¿MARCADOR 0 - 0?",
+                    message: `Has introducido un 0-0. ¿Es este el resultado real o un error?`,
+                    confirmText: "ES CORRECTO (0-0)",
+                    cancelText: "VOLVER A EDITAR",
+                    type: 'danger'
+                });
+                if (!confirmZero) return;
+            }
+
+            const confirmed = await PremiumModal.confirm({
+                title: "✅ CONFIRMAR RESULTADO",
+                message: `
+                    <div style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 20px; margin: 15px 0; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="font-weight: 800; color: white;">${teamA}</span>
+                            <span style="font-size: 1.5rem; font-weight: 950; color: var(--primary);">${sA}</span>
+                        </div>
+                        <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 10px 0;"></div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 800; color: white;">${teamB}</span>
+                            <span style="font-size: 1.5rem; font-weight: 950; color: var(--primary);">${sB}</span>
+                        </div>
+                    </div>
+                    <div style="font-weight: 900; color: ${type === 'success' ? '#00ff88' : '#ccff00'}; letter-spacing: 1px; font-size: 0.8rem;">${winnerText.toUpperCase()}</div>
+                    <p style="margin-top: 15px; font-size: 0.85rem; color: #94a3b8;">Al confirmar, se actualizarán los niveles ELO de los jugadores.</p>
+                `,
+                confirmText: "ACEPTAR Y FINALIZAR",
+                cancelText: "REVISAR",
+                type: type
+            });
+
+            if (!confirmed) return;
+        } else {
+            // --- REOPENING LOGIC WITH AUTO-ROLLBACK ---
+            const confirmedValue = await PremiumModal.confirm({
+                title: "🔓 REABRIR PARTIDO",
+                message: "¿Estás seguro de que quieres reabrir este partido?<br><br><b>SISTEMA DE SEGURIDAD:</b> Al reabrir, se <u>deshacerán automáticamente</u> los ajustes de nivel ELO realizados previamente para este partido.",
+                confirmText: "SÍ, REABRIR Y REVERTIR",
+                cancelText: "CANCELAR",
+                type: 'warning'
+            });
+            if (!confirmedValue) return;
+
+            // 1. Rollback ELO Results
+            if (window.LevelAdjustmentService) {
+                try { await LevelAdjustmentService.rollbackMatchResults(matchId); }
+                catch (e) { console.error("Error en rollback:", e); }
+            }
+
+            // 2. CHECK CASCADE (Purge subsequent if user changes rank-critical results later)
             await this.checkAndPurge(matchId);
         }
 
         try {
+            const newStatus = isFinish ? 'finished' : 'live';
             await collection.update(matchId, { status: newStatus });
 
-            // --- NEW: AJUSTE DE NIVEL AUTOMÁTICO Y FIABILIDAD ---
             if (isFinish) {
-                const updatedMatch = window.AdminController.matchesBuffer.find(m => m.id === matchId);
-                if (updatedMatch) {
-                    // 1. Ajuste de nivel (Pro Smart)
-                    if (window.LevelAdjustmentService) {
-                        LevelAdjustmentService.processMatchResults(updatedMatch).catch(e => {
-                            console.error("Error ajustando nivel:", e);
-                        });
-                    }
+                // Ajuste de nivel (Pro Smart)
+                if (window.LevelAdjustmentService) {
+                    LevelAdjustmentService.processMatchResults(match).catch(e => {
+                        console.error("Error ajustando nivel:", e);
+                    });
+                }
 
-                    // 2. Actualizar fecha de actividad (Semáforo)
-                    if (window.LevelReliabilityService) {
-                        const playerIds = [
-                            ...(updatedMatch.team_a_ids || []),
-                            ...(updatedMatch.team_b_ids || [])
-                        ];
-                        window.LevelReliabilityService.updateLastMatchDate(playerIds).catch(e => {
-                            console.error("Error actualizando fiabilidad:", e);
-                        });
-                    }
+                // Actualizar fecha de actividad
+                if (window.LevelReliabilityService) {
+                    const playerIds = [...(match.team_a_ids || []), ...(match.team_b_ids || [])];
+                    window.LevelReliabilityService.updateLastMatchDate(playerIds).catch(e => {
+                        console.error("Error actualizando fiabilidad:", e);
+                    });
                 }
             }
 
             console.log("✅ Estado actualizado en DB.");
-        } catch (e) {
-            alert("❌ Error DB: " + e.message);
-        }
 
-        if (isFinish) {
-            setTimeout(async () => {
-                const round = window.AdminController.currentRound;
-                const roundMatches = window.AdminController.matchesBuffer.filter(m => parseInt(m.round) === round);
-                const pending = roundMatches.filter(m => m.status !== 'finished');
+            if (isFinish) {
+                // Check for round completion
+                setTimeout(async () => {
+                    const round = window.AdminController.currentRound;
+                    // We need to re-fetch or use buffer but buffer might be old. 
+                    // Better to check the latest buffer
+                    const roundMatches = window.AdminController.matchesBuffer.filter(m => parseInt(m.round) == round);
+                    const pending = roundMatches.filter(m => m.status !== 'finished');
 
-                if (pending.length === 0 && roundMatches.length > 0) {
-                    // LIMIT TO 6 ROUNDS
-                    if (round >= 6) {
-                        alert("🏁 ENTRENO FINALIZADO\n(6 rondas completadas con éxito)");
-                        return;
-                    }
+                    if (pending.length === 0 && roundMatches.length > 0) {
+                        if (round >= 6) {
+                            await PremiumModal.alert({
+                                title: "🏁 EVENTO COMPLETADO",
+                                message: "Se han completado las 6 rondas oficiales con éxito.",
+                                type: 'success'
+                            });
+                            return;
+                        }
 
-                    const nextRound = round + 1;
-                    const autoGenerate = evt.is_simulation;
+                        const nextRound = round + 1;
+                        const autoGenerate = evt.is_simulation;
 
-                    if (autoGenerate || confirm(`Ronda ${round} finalizada. ¿Generar Ronda ${nextRound}?`)) {
-                        try {
-                            await MatchMakingService.generateRound(evt.id, evt.type, nextRound);
-                            if (autoGenerate) {
-                                await MatchMakingService.simulateRound(evt.id, nextRound, evt.type);
+                        if (autoGenerate || await PremiumModal.confirm({
+                            title: `🚀 RONDA ${round} FINALIZADA`,
+                            message: `Todos los partidos de la Ronda ${round} han terminado.<br><br>¿Quieres generar los cruces de la <b>Ronda ${nextRound}</b> ahora?`,
+                            confirmText: "GENERAR SIGUIENTE RONDA",
+                            cancelText: "LO HARÉ LUEGO",
+                            type: 'success'
+                        })) {
+                            try {
+                                await MatchMakingService.generateRound(evt.id, evt.type, nextRound);
+                                if (autoGenerate) {
+                                    await MatchMakingService.simulateRound(evt.id, nextRound, evt.type);
+                                }
+                                window.Actions.switchRound(nextRound);
+                            } catch (e) {
+                                PremiumModal.alert({ title: "ERROR AL GENERAR", message: e.message, type: 'danger' });
                             }
-                            window.Actions.switchRound(nextRound);
-                        } catch (e) { alert(e.message); }
+                        }
                     }
-                }
-            }, 500);
+                }, 800);
+            }
+        } catch (e) {
+            PremiumModal.alert({ title: "ERROR DB", message: e.message, type: 'danger' });
         }
     },
 
@@ -764,10 +981,10 @@ window.Actions = {
     },
 
     async resetEvent(randomize = false) {
-        let msg = randomize 
+        let msg = randomize
             ? "⚠️ ¿ESTÁS SEGURO?\n\nSe borrarán TODOS los partidos y se generará la Ronda 1 con PAREJAS TOTALMENTE NUEVAS (Modo Aleatorio).\n\n¿Continuar?"
             : "⚠️ ¿ESTÁS SEGURO?\n\nEsta acción es irreversible:\n1. Borrará TODOS los partidos y resultados.\n2. Reiniciará el evento a estado 'Live'.\n3. Generará automáticamente la Ronda 1.\n\n¿Continuar?";
-        
+
         if (!confirm(msg)) return;
 
         if (randomize) console.log("🎲 Reinicio aleatorio solicitado...");

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🆘 RECUPERACIÓN MAESTRA | SOMOSPADEL BCN</title>
+    <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-firestore-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #050505;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 3rem;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 600px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        h1 { font-weight: 900; font-size: 2.5rem; margin-bottom: 1rem; color: #CCFF00; }
+        p { color: rgba(255,255,255,0.6); line-height: 1.6; }
+        .btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 1.5rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 900;
+            border-radius: 15px;
+            cursor: pointer;
+            margin-top: 2rem;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(255, 71, 87, 0.3);
+            text-transform: uppercase;
+        }
+        .btn:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(255, 71, 87, 0.5); }
+        .btn:disabled { background: #333; cursor: not-allowed; box-shadow: none; }
+        #log {
+            margin-top: 2rem;
+            text-align: left;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #888;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.2);
+            padding: 1rem;
+            border-radius: 10px;
+        }
+        .success { color: #00E36D; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <img src="img/logo_somospadel.png" style="width: 80px; margin-bottom: 1rem;">
+        <h1>OPERACIÓN RESCATE</h1>
+        <p>Esta herramienta buscará en el historial de niveles los partidos perdidos de hoy (03/05) y los restaurará automáticamente en el sistema.</p>
+        
+        <button id="btn-rescue" class="btn">🚀 RESCATAR RESULTADOS AHORA</button>
+        
+        <div id="log">Esperando instrucciones...</div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBCy8nN4wKL2Cqvxp_mkmYpsA923N1g5iE",
+            authDomain: "americanas-somospadel.firebaseapp.com",
+            projectId: "americanas-somospadel",
+            storageBucket: "americanas-somospadel.firebasestorage.app",
+            messagingSenderId: "638578709472",
+            appId: "1:638578709472:web:bf99bbb7688a947b4bd185"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const btn = document.getElementById('btn-rescue');
+        const logEl = document.getElementById('log');
+
+        function log(msg, type = '') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = `> ${msg}`;
+            logEl.appendChild(div);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        btn.onclick = async () => {
+            btn.disabled = true;
+            log("Iniciando conexión con Firebase...");
+            
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                log(`Buscando historial de niveles desde ${today}...`);
+                
+                const historySnap = await db.collection('level_history')
+                    .where('date', '>=', today)
+                    .get();
+
+                if (historySnap.empty) {
+                    log("❌ No se encontró historial de niveles para hoy.", "error");
+                    alert("No se han encontrado rastros de partidos terminados hoy en el servidor.");
+                    btn.disabled = false;
+                    return;
+                }
+
+                log(`🔍 Encontrados ${historySnap.size} registros. Identificando cruces y tiempos...`);
+
+                const groups = {};
+                historySnap.forEach(doc => {
+                    const d = doc.data();
+                    const mId = d.matchId || d.date;
+                    if (!groups[mId]) groups[mId] = [];
+                    groups[mId].push({ ...d, id: doc.id });
+                });
+
+                // Ordenar grupos por tiempo
+                const sortedMatchIds = Object.keys(groups).sort((a, b) => {
+                    const timeA = new Date(groups[a][0].date).getTime();
+                    const timeB = new Date(groups[b][0].date).getTime();
+                    return timeA - timeB;
+                });
+
+                log("Buscando el evento 'ENTRENO MASCULINO 03/05'...");
+                const entSnap = await db.collection('entrenos').get();
+                let event = null;
+                entSnap.forEach(d => {
+                    if (d.data().name.includes('03/05')) event = { id: d.id, ...d.data() };
+                });
+
+                if (!event) {
+                    log("⚠️ No se encontró por nombre, usando el más reciente...");
+                    const latestSnap = await db.collection('entrenos').orderBy('createdAt', 'desc').limit(1).get();
+                    if (!latestSnap.empty) event = { id: latestSnap.docs[0].id, ...latestSnap.docs[0].data() };
+                }
+
+                const pSnap = await db.collection('players').get();
+                const pMap = {};
+                pSnap.forEach(d => pMap[d.id] = d.data());
+
+                let recoveredCount = 0;
+                
+                // Limpiar partidos recuperados anteriores para no duplicar
+                const oldRecovered = await db.collection('entrenos_matches')
+                    .where('americana_id', '==', event.id)
+                    .where('recovered', '==', true)
+                    .get();
+                
+                if (!oldRecovered.empty) {
+                    log(`🧹 Limpiando ${oldRecovered.size} intentos de recuperación previos...`);
+                    const batch = db.batch();
+                    oldRecovered.forEach(d => batch.delete(d.ref));
+                    await batch.commit();
+                }
+
+                // Asignación de rondas por orden cronológico (4 pistas por ronda típicamente)
+                for (let i = 0; i < sortedMatchIds.length; i++) {
+                    const mId = sortedMatchIds[i];
+                    const logs = groups[mId];
+                    if (logs.length < 4) continue;
+
+                    const winners = logs.filter(l => l.delta > 0);
+                    const losers = logs.filter(l => l.delta < 0);
+
+                    if (winners.length >= 2 && losers.length >= 2) {
+                        const teamA = winners.slice(0, 2);
+                        const teamB = losers.slice(0, 2);
+
+                        // Estimación de ronda: Si hay 4 pistas, cada 4 partidos es una ronda nueva
+                        // Pero mejor por franjas de tiempo si es posible. 
+                        // Usaremos un contador simple: 1-4 -> R1, 5-8 -> R2, etc.
+                        const estimatedRound = Math.floor(recoveredCount / 4) + 1;
+
+                        await db.collection('entrenos_matches').add({
+                            americana_id: event.id,
+                            round: estimatedRound, 
+                            court: (recoveredCount % 4) + 1,
+                            status: 'finished',
+                            score_a: 6, score_b: 3,
+                            createdAt: logs[0].date,
+                            team_a_ids: teamA.map(l => l.userId),
+                            team_a_names: teamA.map(l => pMap[l.userId]?.name || "Jugador"),
+                            team_b_ids: teamB.map(l => l.userId),
+                            team_b_names: teamB.map(l => pMap[l.userId]?.name || "Jugador"),
+                            teamA: teamA.map(l => pMap[l.userId]?.name || "Jugador").join(' / '),
+                            teamB: teamB.map(l => pMap[l.userId]?.name || "Jugador").join(' / '),
+                            recovered: true,
+                            recoveredAt: new Date().toISOString()
+                        });
+                        recoveredCount++;
+                        log(`✅ [R${estimatedRound}] Rescatado: ${teamA.map(l => pMap[l.userId]?.name).join(' / ')}`, "success");
+                    }
+                }
+
+                log(`🏁 FASE 1 (Historial) COMPLETADA. Partidos: ${recoveredCount}`, "success");
+
+                // FASE 2: ESCÁNER DE FANTASMAS (Partidos huérfanos)
+                log("🔍 INICIANDO FASE 2: Escáner de Partidos Fantasma...");
+                
+                const collections = ['entrenos_matches', 'matches'];
+                let ghostCount = 0;
+
+                for (const coll of collections) {
+                    log(`Buscando en colección '${coll}'...`);
+                    const orphanSnap = await db.collection(coll)
+                        .where('recovered', '==', false)
+                        .get();
+                    
+                    for (const doc of orphanSnap.docs) {
+                        const d = doc.data();
+                        // Verificamos si es de hoy (formato ISO o DD/MM/YYYY)
+                        const isToday = d.createdAt?.includes(today) || d.date?.includes('03/05');
+                        
+                        if (isToday && (d.americana_id !== event.id)) {
+                            await db.collection(coll).doc(doc.id).update({
+                                americana_id: event.id,
+                                recovered: true,
+                                recoveredAt: new Date().toISOString()
+                            });
+                            ghostCount++;
+                            log(`👻 [${coll}] Rescatado: ${d.teamA || d.player1?.name} vs ${d.teamB || d.player3?.name}`, "success");
+                        }
+                    }
+                }
+
+                log(`🏁 FASE 2 COMPLETADA. Fantasmas rescatados: ${ghostCount}`, "success");
+                
+                const total = recoveredCount + ghostCount;
+                alert(`¡OPERACIÓN COMPLETADA!\n\nSe han recuperado ${total} partidos en total (${recoveredCount} por niveles + ${ghostCount} fantasmas).\n\nYa puedes volver al Administrador y refrescar.`);
+                
+            } catch (e) {
+                log("❌ ERROR CRÍTICO: " + e.message, "error");
+                console.error(e);
+            }
+        };
+    </script>
+</body>
+</html>

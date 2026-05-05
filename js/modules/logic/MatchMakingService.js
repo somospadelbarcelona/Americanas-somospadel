@@ -529,6 +529,111 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
 
                 console.log(`✅ [MatchMaking] Saneamiento completado. Borrados: ${toDelete.length}`);
                 return { deleted: toDelete.length };
+            },
+
+            /**
+             * [NEW] Repair Round: Detects missing courts in a round and re-creates them using 
+             * the unassigned players.
+             */
+            async repairRound(eventId, eventType, roundNum) {
+                console.log(`🔧 [MatchMaking] Reparación Robusta Ronda ${roundNum} para ${eventId}...`);
+                const collName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                const eventColl = (eventType === 'entreno') ? 'entrenos' : 'americanas';
+                
+                const eventDoc = await window.db.collection(eventColl).doc(eventId).get();
+                if (!eventDoc.exists) throw new Error("Evento no encontrado");
+                
+                const eventData = eventDoc.data();
+                const players = eventData.players || [];
+                const maxCourts = parseInt(eventData.max_courts || 4);
+
+                // --- ROBUST FETCH: Get ALL matches and filter in JS to avoid Number/String mismatch ---
+                const snap = await window.db.collection(collName)
+                    .where('americana_id', '==', eventId)
+                    .get();
+
+                const roundMatches = snap.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(m => parseInt(m.round) === parseInt(roundNum));
+
+                console.log(`🔍 Encontrados ${roundMatches.length} partidos existentes en Ronda ${roundNum}`);
+
+                const assignedPlayerIds = new Set();
+                const existingCourts = new Set();
+
+                roundMatches.forEach(m => {
+                    (m.team_a_ids || []).forEach(id => assignedPlayerIds.add(String(id)));
+                    (m.team_b_ids || []).forEach(id => assignedPlayerIds.add(String(id)));
+                    existingCourts.add(parseInt(m.court));
+                });
+
+                const missingCourts = [];
+                for (let i = 1; i <= maxCourts; i++) {
+                    if (!existingCourts.has(i)) missingCourts.push(i);
+                }
+
+                if (missingCourts.length === 0) {
+                    return { repaired: 0, message: "✅ No faltan pistas en esta ronda (todas están presentes)." };
+                }
+
+                // Identify unassigned players
+                const unassignedPlayers = players.filter(p => !assignedPlayerIds.has(String(p.id || p.uid)));
+
+                if (unassignedPlayers.length === 0) {
+                     return { repaired: 0, message: "❌ No hay jugadores libres. ¿Quizás están asignados a pistas duplicadas? Usa 'SANEAR' primero." };
+                }
+
+                console.log(`⚠️ Faltan pistas: ${missingCourts.join(', ')}. Jugadores sin asignar: ${unassignedPlayers.length}`);
+
+                let repairedCount = 0;
+                let pool = [...unassignedPlayers];
+
+                for (const courtNum of missingCourts) {
+                    // Try to find players for THIS court first
+                    let courtPlayers = pool.filter(p => parseInt(p.current_court) === courtNum);
+                    
+                    // FALLBACK: If not exactly 4, but we only have one court missing and 4 players left, just take them
+                    if (courtPlayers.length !== 4 && missingCourts.length === 1 && pool.length === 4) {
+                        console.log("💡 Fallback: Usando todos los jugadores restantes para la única pista que falta.");
+                        courtPlayers = [...pool];
+                    }
+
+                    if (courtPlayers.length === 4) {
+                        const teamA = courtPlayers.slice(0, 2);
+                        const teamB = courtPlayers.slice(2, 4);
+
+                        const payload = {
+                            americana_id: eventId,
+                            round: parseInt(roundNum),
+                            court: courtNum,
+                            status: 'scheduled',
+                            score_a: 0,
+                            score_b: 0,
+                            createdAt: new Date().toISOString(),
+                            team_a_ids: teamA.map(p => p.id || p.uid),
+                            team_a_names: teamA.map(p => p.name),
+                            teamA: teamA.map(p => p.name).join(' / '),
+                            team_b_ids: teamB.map(p => p.id || p.uid),
+                            team_b_names: teamB.map(p => p.name),
+                            teamB: teamB.map(p => p.name).join(' / ')
+                        };
+
+                        await window.db.collection(collName).add(payload);
+                        repairedCount++;
+                        
+                        // Remove from pool
+                        const usedIds = new Set(courtPlayers.map(p => String(p.id || p.uid)));
+                        pool = pool.filter(p => !usedIds.has(String(p.id || p.uid)));
+                    } else {
+                        console.warn(`Could not repair court ${courtNum}: Found ${courtPlayers.length} candidates.`);
+                    }
+                }
+
+                if (repairedCount === 0) {
+                    return { repaired: 0, message: `❌ No se pudo reparar automáticamente. Se encontraron ${unassignedPlayers.length} jugadores libres pero no cuadran con las pistas faltantes.` };
+                }
+
+                return { repaired: repairedCount };
             }
         };
 

@@ -212,20 +212,19 @@ window.HealthTools = {
                 </div>
             </div>
 
-            <!-- ⚡ NEW: GLOBAL RANKING RECALCULATION TOOL -->
-            <div class="glass-card-enterprise" style="margin-top: 1rem; border-left: 4px solid #00d2ff; padding: 1.5rem; background: rgba(0, 210, 255, 0.03);">
+            <!-- ⚡ EMERGENCY: RECOVERY TOOL -->
+            <div class="glass-card-enterprise" style="margin-top: 1rem; border-left: 4px solid #ff4757; padding: 1.5rem; background: rgba(255, 71, 87, 0.05);">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div style="flex: 1; padding-right: 20px;">
-                        <h4 style="margin: 0; color: #00d2ff; display: flex; align-items: center; gap: 10px;">
-                            <i class="fas fa-calculator"></i> Sincronización Maestra de Ranking
+                        <h4 style="margin: 0; color: #ff4757; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-life-ring"></i> RECUPERACIÓN DE EMERGENCIA (03/05)
                         </h4>
                         <p style="margin-top: 8px; color: #aaa; font-size: 0.8rem; line-height: 1.4;">
-                            <strong>RECALCULAR TODO:</strong> Borra el historial antiguo y analiza TODOS los partidos con el nuevo algoritmo de <strong>Alta Sensibilidad</strong>. 
-                            Ideal para que el nivel de Alejandro y todos los jugadores se ajuste a su realidad actual de victorias/derrotas.
+                            <strong>¡HE LIADO UNA!:</strong> Esta herramienta busca partidos en la base de datos que hayan quedado "sueltos" o huérfanos con fecha de hoy y los intenta re-asignar al evento actual. Úsala si has borrado el evento o reiniciado por error.
                         </p>
                     </div>
-                    <button onclick="window.LevelAdjustmentService.recalculateAllLevels()" class="btn-primary-pro" style="background: #00d2ff; color: #000; border: none; white-space: nowrap;">
-                        RECALCULAR RANKING ⚡
+                    <button onclick="window.HealthTools.emergencyRecovery()" class="btn-primary-pro" style="background: #ff4757; color: #fff; border: none; white-space: nowrap;">
+                        RESCATAR RESULTADOS 🆘
                     </button>
                 </div>
             </div>
@@ -433,6 +432,100 @@ window.HealthTools = {
             }
         }
         this.logTerminal(`✅ ${deleted} eventos de prueba eliminados.`);
+    },
+
+    async emergencyRecovery() {
+        const activeEvent = window.AdminController ? window.AdminController.activeEvent : null;
+        if (!activeEvent) {
+            alert("❌ Primero selecciona un evento en el panel de Resultados.");
+            return;
+        }
+
+        const confirmed = await window.PremiumModal.confirm({
+            title: "🆘 OPERACIÓN RESCATE AVANZADA",
+            message: `¿Intentar reconstruir los partidos de <b>${activeEvent.name}</b> usando el historial de niveles?<br><br>Esta herramienta buscará los cambios de nivel de hoy y re-creará los partidos perdidos.`,
+            confirmText: "INICIAR RECONSTRUCCIÓN",
+            type: 'warning'
+        });
+        if (!confirmed) return;
+
+        this.logTerminal("🆘 Iniciando escaneo forense de niveles...");
+        
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const historySnap = await window.db.collection('level_history')
+                .where('date', '>=', today)
+                .get();
+
+            if (historySnap.empty) {
+                this.logTerminal("❌ No se encontró historial de niveles para hoy.", true);
+                alert("No se han encontrado rastros de partidos terminados hoy en el historial de niveles.");
+                return;
+            }
+
+            this.logTerminal(`🔍 Encontrados ${historySnap.size} registros de niveles hoy. Agrupando...`);
+
+            // Group by MatchId
+            const matchGroups = {};
+            historySnap.forEach(doc => {
+                const d = doc.data();
+                const mId = d.matchId || d.date; // Use date as fallback if matchId missing
+                if (!matchGroups[mId]) matchGroups[mId] = [];
+                matchGroups[mId].push({ ...d, id: doc.id });
+            });
+
+            const playersSnap = await window.db.collection('players').get();
+            const playerMap = {};
+            playersSnap.forEach(d => playerMap[d.id] = d.data());
+
+            let recoveredCount = 0;
+            for (const mId in matchGroups) {
+                const logs = matchGroups[mId];
+                if (logs.length < 4) continue; // Need at least 4 players for a match
+
+                // Identify winners (delta > 0) and losers (delta < 0)
+                const winners = logs.filter(l => l.delta > 0);
+                const losers = logs.filter(l => l.delta < 0);
+
+                if (winners.length >= 2 && losers.length >= 2) {
+                    const teamA = winners.slice(0, 2);
+                    const teamB = losers.slice(0, 2);
+
+                    // Re-create match!
+                    const payload = {
+                        americana_id: activeEvent.id,
+                        round: 1, // We'll put them in Round 1 and you can move them
+                        court: recoveredCount + 1,
+                        status: 'finished',
+                        score_a: 6,
+                        score_b: 3,
+                        createdAt: logs[0].date,
+                        team_a_ids: teamA.map(l => l.userId),
+                        team_a_names: teamA.map(l => playerMap[l.userId]?.name || "Desconocido"),
+                        team_b_ids: teamB.map(l => l.userId),
+                        team_b_names: teamB.map(l => playerMap[l.userId]?.name || "Desconocido"),
+                        teamA: teamA.map(l => playerMap[l.userId]?.name || "Desconocido").join(' / '),
+                        teamB: teamB.map(l => playerMap[l.userId]?.name || "Desconocido").join(' / '),
+                        recovered: true
+                    };
+
+                    const coll = activeEvent.type === 'entreno' ? 'entrenos_matches' : 'matches';
+                    await window.db.collection(coll).add(payload);
+                    recoveredCount++;
+                    this.logTerminal(`✅ Rescatado partido: ${payload.teamA} vs ${payload.teamB}`);
+                }
+            }
+
+            if (recoveredCount === 0) {
+                this.logTerminal("❌ No se pudieron reconstruir grupos de 4 jugadores válidos.", true);
+            } else {
+                this.logTerminal(`🏁 RESCATE COMPLETADO: ${recoveredCount} partidos restaurados.`);
+                alert(`✅ Se han reconstruido ${recoveredCount} partidos.\n\nAparecerán en la RONDA 1. Puedes entrar en cada uno y ajustar el resultado real y la ronda si lo necesitas.`);
+            }
+
+        } catch (e) {
+            this.logTerminal("❌ Error crítico en rescate: " + e.message, true);
+        }
     }
 };
 

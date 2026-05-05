@@ -94,8 +94,28 @@ const RotatingPozoLogic = {
 
             return [...males, ...females];
         } else {
-            allPlayers.sort((a, b) => a.current_court - b.current_court || String(a.id || a.uid || "").localeCompare(String(b.id || b.uid || "")));
-            allPlayers.forEach((p, i) => { p.current_court = Math.floor(i / 4) + 1; });
+            // 💡 [STABILITY FIX] Sort by:
+            // 1. current_court (primary)
+            // 2. whether they won (secondary - winners of the same court should stay together in the list)
+            // 3. name/id (tertiary - deterministic fallback)
+            allPlayers.sort((a, b) => {
+                const cA = parseInt(a.current_court || maxCourts);
+                const cB = parseInt(b.current_court || maxCourts);
+                if (cA !== cB) return cA - cB;
+                if (a.won !== b.won) return a.won ? -1 : 1;
+                return String(a.name || "").localeCompare(String(b.name || ""));
+            });
+
+            console.log("🏃 [Movement Audit] Re-calculating final court assignments:");
+            allPlayers.forEach((p, i) => { 
+                const oldCourt = p.current_court;
+                p.current_court = Math.floor(i / 4) + 1; 
+                if (oldCourt !== p.current_court) {
+                    console.log(`   - ${p.name}: Pista ${oldCourt} -> Pista ${p.current_court} (${p.won ? 'Gano' : 'Perdio'})`);
+                } else {
+                    console.log(`   - ${p.name}: Se mantiene en Pista ${p.current_court}`);
+                }
+            });
             return allPlayers;
         }
     },
@@ -269,9 +289,9 @@ const RotatingPozoLogic = {
             if (teamA1 && teamA2 && teamA1 === teamA2) score -= 2;
             if (teamB1 && teamB2 && teamB1 === teamB2) score -= 2;
 
-            // Penalize repeating last_partner (null last_partner = no penalty)
+            // 🛡️ CRITICAL: Penalize repeating last_partner (Absolute priority over rivalry)
             const penalizeRepeat = (player, partner) => {
-                if (player.last_partner && String(player.last_partner) === String(partner.id)) return -3;
+                if (player.last_partner && String(player.last_partner) === String(partner.id)) return -500; // Massively prohibitive
                 return 0;
             };
             score += penalizeRepeat(opt.teamA[0], opt.teamA[1]);
@@ -319,9 +339,11 @@ const RotatingPozoLogic = {
         });
 
         if (validOptions.length > 0) {
+            // Pick a random valid option
             return validOptions[Math.floor(Math.random() * validOptions.length)];
         } else {
-            return options[Math.floor(Math.random() * options.length)]; // Random fallback
+            console.warn("⚠️ No perfect separation possible. Forcing best available.");
+            return options[0]; // Fallback to first option (at least it's deterministic)
         }
     }
 

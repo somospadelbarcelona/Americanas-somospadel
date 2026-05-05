@@ -280,7 +280,7 @@
 
                                 if (isStillPending) {
                                     console.log(`🎬 [Tower] Auto-starting animation for Round ${maxRound}`);
-                                    
+
                                     // CRITICAL: Fetch ALL player data for robust animation lookup
                                     let freshPlayers = [];
                                     try {
@@ -362,7 +362,7 @@
 
         showRoundFinishedModal(round) {
             window.EventModals.showRoundFinishedModal(
-                round, 
+                round,
                 this.currentAmericanaDoc,
                 async () => {
                     const isEntreno = this.currentAmericanaDoc?.isEntreno;
@@ -635,8 +635,8 @@
                         teamB: namesB,
                         scoreA: m.score_a,
                         scoreB: m.score_b,
-                        isFinished: m.status === 'finished',
-                        isLive: m.status === 'live',
+                        isFinished: m.status === 'finished' || m.status === 'finalizado',
+                        isLive: (m.status === 'live' || m.status === 'en juego'),
                         level_avg: m.level_avg || '3.5',
                         ...m
                     };
@@ -746,17 +746,17 @@
 
             const roundData = data?.currentRound || { matches: [] };
             const isLive = this.currentAmericanaDoc?.status === 'live';
-            
+
             return `
-                ${window.EventHeader.render(this.currentAmericanaDoc, { 
-                    activeTab: this.activeTab, 
-                    isPlayingHere, 
-                    theme: {
-                        grad: 'linear-gradient(135deg, #CCFF00 0%, #00E36D 100%)',
-                        accent: '#CCFF00',
-                        text: '#000'
-                    }
-                })}
+                ${window.EventHeader.render(this.currentAmericanaDoc, {
+                activeTab: this.activeTab,
+                isPlayingHere,
+                theme: {
+                    grad: 'linear-gradient(135deg, #CCFF00 0%, #00E36D 100%)',
+                    accent: '#CCFF00',
+                    text: '#000'
+                }
+            })}
                 ${this.renderActiveContent(data, roundData)}
             `;
         }
@@ -812,14 +812,14 @@
 
             // 2. Insert / Update Logic
             matches.forEach((match, index) => {
-                const cardId = `tour-match-${match.id}`;
+                const cardId = `card-${match.id}`;
                 let el = document.getElementById(cardId);
 
                 if (el) {
                     // --- UPDATE EXISTING CARD ---
                     // 1. Status Badge & Card Container Styles
                     const statusArea = el.querySelector('.status-area');
-                    const isFinished = match.isFinished;
+                    const isFinished = match.status === 'finished' || match.status === 'finalizado';
                     const evtStatus = this.currentAmericanaDoc?.status;
                     const isLive = evtStatus === 'live' && !isFinished;
 
@@ -917,10 +917,10 @@
             });
 
             // 3. REMOVE STALE CARDS (The fix for the user)
-            const allCards = Array.from(grid.querySelectorAll('.tour-match-card'));
+            const allCards = Array.from(grid.querySelectorAll('.match-card'));
             allCards.forEach(card => {
-                // Extract ID from e.g. "tour-match-abc1234"
-                const id = card.id.replace('tour-match-', '');
+                // Extract ID from e.g. "card-abc1234"
+                const id = card.id.replace('card-', '');
                 if (!validIds.has(id)) {
                     console.log("[SmartUpdate] Removing stale card:", id);
                     card.remove();
@@ -982,15 +982,72 @@
                 '<div style="display:flex; justify-content:center; padding:40px;"><div class="loader"></div></div>' :
                 'Selecciona una ronda válida...';
 
+            const user = window.Store ? window.Store.getState('currentUser') : null;
+            const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain', 'capitan', 'capitanes', 'organizador', 'organizadores'].includes((user?.role || '').toLowerCase());
+
+            let adminNextRoundBtn = '';
+
+            if (isAdmin && this.currentAmericanaDoc?.status === 'live') {
+                adminNextRoundBtn = `
+                    <div style="flex-shrink:0; padding-left: 10px;">
+                        <button onclick="window.ControlTowerView.triggerNextRound(${maxRound})" 
+                                style="background: #000; color: #CCFF00; border: 1px solid #CCFF00; padding: 10px 15px; border-radius: 12px; font-weight: 950; font-size: 0.7rem; letter-spacing: 0.5px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 5px 15px rgba(204,255,0,0.1);">
+                            🚀 SIG. RONDA
+                        </button>
+                    </div>
+                `;
+            }
+
             return `
-                <div class="tour-filter-bar" style="background:#F8F9FA; padding: 12px; overflow-x: auto;">
-                   ${tabs}
+                <div class="tour-filter-bar" style="position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.9); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+                   <div style="flex: 1; overflow-x: auto; display: flex; align-items: center; scrollbar-width: none; -ms-overflow-style: none;">
+                       <style>
+                           .tour-filter-bar div::-webkit-scrollbar { display: none; }
+                           @keyframes scorePing {
+                               0% { transform: scale(1); box-shadow: 0 0 0 rgba(204,255,0,0.5); }
+                               50% { transform: scale(1.1); box-shadow: 0 0 25px rgba(204,255,0,0.8); }
+                               100% { transform: scale(1); box-shadow: 0 0 0 rgba(204,255,0,0); }
+                           }
+                           .score-updated-ping { animation: scorePing 0.5s ease-out; }
+                           
+                           @keyframes pulseLive {
+                               0% { transform: scale(1); opacity: 1; }
+                               50% { transform: scale(1.5); opacity: 0.5; }
+                               100% { transform: scale(1); opacity: 1; }
+                           }
+                           .live-pulse-dot { width: 8px; height: 8px; background: #00E36D; border-radius: 50%; display: inline-block; margin-right: 8px; animation: pulseLive 2s infinite; }
+                       </style>
+                       ${tabs}
+                   </div>
+                   <div style="display:flex; align-items:center; gap:10px;">
+                       <span style="font-size: 0.65rem; color: #666; font-weight: 700; background: #eee; padding: 4px 8px; border-radius: 10px; display: flex; align-items: center;">
+                           <span class="live-pulse-dot"></span> VIVO
+                       </span>
+                       ${adminNextRoundBtn}
+                   </div>
                 </div>
                 <div class="tour-grid-container" style="padding: 16px; display: grid; gap: 16px; padding-bottom: 100px;">
                     ${roundData.matches.length ? '' : `<div style="color:#999; width:100%; text-align:center; padding:80px; font-weight:700; line-height:1.5;">${emptyMessage}</div>`}
                     ${roundData.matches.map(match => this.renderTournamentCard(match)).join('')}
                     ${nextRoundUI}
                 </div>
+                <script>
+                    if (typeof window._rollbackCheckedRounds === 'undefined') window._rollbackCheckedRounds = new Set();
+                    if (${isAdmin && parseInt(roundData.number) < maxRound} && !window._rollbackCheckedRounds.has(${roundData.number})) {
+                        window._rollbackCheckedRounds.add(${roundData.number});
+                        setTimeout(() => {
+                            window.PremiumModal.confirm({
+                                title: "⚠️ MODO CORRECCIÓN DETECTADO",
+                                message: "Estás viendo una ronda anterior. Cualquier cambio en estos marcadores requiere reiniciar las rondas posteriores.<br><br>¿Deseas activar el modo corrección ahora?",
+                                confirmText: "SÍ, ACTIVAR",
+                                cancelText: "SÓLO MIRAR",
+                                type: 'danger'
+                            }).then(ok => {
+                                if(ok) window.ControlTowerView.rollbackTournament(${roundData.number});
+                            });
+                        }, 500);
+                    }
+                </script>
             `;
         }
 
@@ -1068,6 +1125,8 @@
             const sB = parseInt(match.score_b || 0);
             ['a', 'b'].forEach(side => {
                 const box = document.getElementById(`match-score-${side}-${matchId}`);
+                const pingEl = document.getElementById(`score-${side}-val-${matchId}`)?.parentElement?.parentElement;
+
                 if (box) {
                     const myScore = side === 'a' ? sA : sB;
                     const otherScore = side === 'a' ? sB : sA;
@@ -1076,6 +1135,13 @@
                     box.style.color = isWinner ? 'black' : 'white';
                     box.style.border = `1px solid ${isWinner ? 'var(--brand-neon)' : 'rgba(255,255,255,0.1)'}`;
                     box.style.boxShadow = isWinner ? '0 0 20px rgba(204,255,0,0.3)' : 'none';
+
+                    // Add Ping Animation
+                    if (delta !== 0 && field === `score_${side}`) {
+                        box.classList.remove('score-updated-ping');
+                        void box.offsetWidth; // Trigger reflow
+                        box.classList.add('score-updated-ping');
+                    }
                 }
             });
 
@@ -1088,7 +1154,7 @@
 
             if (!window._scoreDebounceMap) window._scoreDebounceMap = {};
             const debounceKey = `${matchId}_${field}`;
-            
+
             if (window._scoreDebounceMap[debounceKey]) {
                 clearTimeout(window._scoreDebounceMap[debounceKey]);
             }
@@ -1110,7 +1176,64 @@
             }, 800);
         }
 
+        async manualScoreEdit(matchId, field) {
+            const match = this.allMatches.find(m => m.id === matchId);
+            if (!match) return;
+
+            const user = window.Store ? window.Store.getState('currentUser') : null;
+            const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain'].includes((user?.role || '').toLowerCase());
+
+            // Check if restricted (Optional: add extra safety if needed)
+
+            const currentVal = parseInt(match[field] || 0);
+            const teamLabel = field === 'score_a' ? 'EQUIPO ARRIBA' : 'EQUIPO ABAJO';
+
+            const options = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(v => ({
+                id: v,
+                name: String(v),
+                sub: v === currentVal ? 'ACTUAL' : ''
+            }));
+
+            const selected = await window.PremiumModal.selector({
+                title: `MARCADOR - ${teamLabel}`,
+                message: `Puntuación actual: ${currentVal}`,
+                items: options,
+                type: 'primary'
+            });
+
+            if (selected !== null && selected !== undefined) {
+                const val = (typeof selected === 'object') ? selected.id : selected;
+
+                // If match is finished, check for confirmation
+                if (match.status === 'finished' || match.status === 'finalizado') {
+                    const confirmed = await window.PremiumModal.confirm({
+                        title: "⚠️ PARTIDO FINALIZADO",
+                        message: "¿Deseas corregir el marcador de este partido ya terminado? Esto sincronizará el resultado y avisará al sistema.",
+                        confirmText: "CORREGIR",
+                        cancelText: "CANCELAR"
+                    });
+                    if (!confirmed) return;
+                }
+
+                // Call adjustScore with a direct set logic (we can modify adjustScore or do direct update)
+                // For directness:
+                const diff = val - currentVal;
+                if (diff !== 0) {
+                    await this.adjustScore(matchId, field, diff);
+                }
+            }
+        }
+
         async finishMatch(matchId) {
+            const confirmed = await window.PremiumModal.confirm({
+                title: "🏁 FINALIZAR PARTIDO",
+                message: "¿Deseas cerrar este partido con el resultado actual? Esta acción actualizará los niveles de los jugadores.",
+                confirmText: "SÍ, FINALIZAR",
+                cancelText: "CANCELAR"
+            });
+
+            if (!confirmed) return;
+
             const isEntreno = this.currentAmericanaDoc?.isEntreno;
             const collection = isEntreno ? 'entrenos_matches' : 'matches';
 
@@ -1136,7 +1259,7 @@
             if (window.navigator?.vibrate) window.navigator.vibrate([30, 50, 30]);
 
             // OPTIMISTIC UI: Instant visual feedback to the user before Firebase responds
-            const matchCardEl = document.getElementById(`tour-match-${matchId}`);
+            const matchCardEl = document.getElementById(`card-${matchId}`);
             if (matchCardEl) {
                 matchCardEl.style.transition = 'all 0.3s ease-out';
                 matchCardEl.style.opacity = '0.5';
@@ -1163,6 +1286,58 @@
             }
         }
 
+
+        async rollbackTournament(fromRound) {
+            const confirmed = await window.PremiumModal.confirm({
+                title: "⚠️ REINICIAR TORNEO",
+                message: `¿Estás SEGURO de querer reiniciar desde la RONDA ${fromRound}?<br><br>Se BORRARÁN todos los partidos de la Ronda ${fromRound + 1} en adelante. Esta acción no se puede deshacer.`,
+                confirmText: "SÍ, REINICIAR",
+                cancelText: "CANCELAR",
+                type: 'danger'
+            });
+
+            if (!confirmed) return;
+
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const type = isEntreno ? 'entreno' : 'americana';
+
+            try {
+                // 1. Purge all subsequent rounds
+                // We use a safe loop to prevent orphans
+                const nextRound = fromRound + 1;
+                const maxR = Math.max(...this.allMatches.map(m => parseInt(m.round) || 1));
+
+                for (let r = nextRound; r <= maxR; r++) {
+                    console.log(`🗑️ Purging round ${r}...`);
+                    await window.AmericanaService.deleteRound(this.currentAmericanaDoc.id, r, type);
+                }
+
+                // 2. Unlock current round matches (Optional but helpful)
+                const currentMatches = this.allMatches.filter(m => parseInt(m.round) === fromRound);
+                const collection = isEntreno ? 'entrenos_matches' : 'matches';
+
+                const batch = window.db.batch();
+                currentMatches.forEach(m => {
+                    batch.update(window.db.collection(collection).doc(m.id), { status: 'live' });
+                });
+                await batch.commit();
+
+                window.PremiumModal.alert({
+                    title: "✅ TORNEO REINICIADO",
+                    message: `Se han eliminado las rondas posteriores. Ahora puedes corregir los resultados de la Ronda ${fromRound} y generar la siguiente cuando estés listo.`,
+                    type: 'success'
+                });
+
+                this.recalc();
+            } catch (e) {
+                console.error("Rollback failed:", e);
+                window.PremiumModal.alert({
+                    title: "❌ ERROR AL REINICIAR",
+                    message: e.message,
+                    type: 'error'
+                });
+            }
+        }
 
         async unlockMatch(matchId) {
             const confirmed = await window.PremiumModal.confirm({

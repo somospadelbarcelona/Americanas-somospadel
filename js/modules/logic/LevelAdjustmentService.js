@@ -80,12 +80,76 @@
 
             // 4. Feedback Visual
             if (window.NotificationService) {
-                const winnerNames = wonA ? namesA : namesB;
                 const deltaWin = wonA ? adjustA : adjustB;
                 window.NotificationService.showInAppToast(`🏆 NIVEL ACTUALIZADO`, `Ganadores: +${deltaWin.toFixed(3)} | Perdedores: -${deltaWin.toFixed(3)}`);
-            } else {
-                // Fallback alert (console only to avoid annoying popups)
-                // console.log(`Alert: Niveles actualizados`);
+            }
+        },
+
+        /**
+         * Realiza un Rollback de los ajustes de nivel para un partido específico
+         */
+        async rollbackMatchResults(matchId) {
+            console.log(`🧹 LevelAdjustmentService: Revirtiendo ajustes del partido ${matchId}`);
+
+            try {
+                // 1. Buscar entradas en level_history asociadas a este matchId
+                const historySnap = await window.db.collection('level_history')
+                    .where('matchId', '==', matchId)
+                    .get();
+
+                if (historySnap.empty) {
+                    console.log("ℹ️ No se encontraron registros históricos para revertir.");
+                    return;
+                }
+
+                const batch = window.db.batch();
+                const now = new Date().toISOString();
+
+                // 2. Para cada registro, revertir en el jugador
+                for (const doc of historySnap.docs) {
+                    const entry = doc.data();
+                    const uid = entry.userId;
+                    const delta = entry.delta || 0;
+                    const isWin = delta > 0;
+
+                    // Obtener datos actuales del jugador
+                    const playerDoc = await window.db.collection('players').doc(uid).get();
+                    if (playerDoc.exists) {
+                        const pData = playerDoc.data();
+
+                        // Calculamos reversión lenta pero segura
+                        const currentLvl = parseFloat(pData.level || 3.5);
+                        const rolledLvl = parseFloat((currentLvl - delta).toFixed(2));
+
+                        const wins = Math.max(0, (pData.wins || 0) - (isWin ? 1 : 0));
+                        const losses = Math.max(0, (pData.losses || 0) - (isWin ? 0 : 1));
+
+                        // No podemos revertir el streak fácilmente sin saber el historial completo,
+                        // pero podemos ponerlo a 0 si era una victoria o dejarlo si era derrota (aproximación).
+                        // El Recalcular lo arreglará todo al final si es necesario.
+
+                        batch.update(window.db.collection('players').doc(uid), {
+                            level: rolledLvl,
+                            wins: wins,
+                            losses: losses,
+                            total_matches: wins + losses,
+                            lastLevelUpdate: now
+                        });
+                    }
+
+                    // 3. Borrar la entrada del historial
+                    batch.delete(doc.ref);
+                }
+
+                await batch.commit();
+                console.log(`✅ Rollback completado para ${historySnap.size} registros.`);
+
+                if (window.NotificationService) {
+                    window.NotificationService.showInAppToast(`🧹 AJUSTE REVERTIDO`, `Se han desecho los cambios de nivel del partido reabierto.`);
+                }
+            } catch (e) {
+                console.error("❌ Error en rollbackMatchResults:", e);
+                throw e;
             }
         },
 
@@ -294,7 +358,7 @@
                         const oldLvl = players[id].level;
                         players[id].level = parseFloat((oldLvl + delta).toFixed(2));
                         players[id].lastUpdate = dateStr;
-                        
+
                         // Sync Stats
                         const isWin = delta > 0;
                         if (isWin) {
