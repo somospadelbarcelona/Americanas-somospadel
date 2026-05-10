@@ -38,6 +38,13 @@
                 const newLoginForm = loginForm.cloneNode(true);
                 loginForm.parentNode.replaceChild(newLoginForm, loginForm);
 
+                // 🧠 [PRO] MEMORIA DE USUARIO: Recuperar teléfono guardado
+                const savedPhone = localStorage.getItem('remembered_phone');
+                if (savedPhone && newLoginForm.phone) {
+                    console.log("📲 [Auth] Recuperando teléfono memorizado...");
+                    newLoginForm.phone.value = savedPhone;
+                }
+
                 newLoginForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -64,6 +71,11 @@
                             if (btn) btn.textContent = originalText;
                         } else {
                             console.log("✅ Login Success!");
+
+                            // 🧠 [PRO] MEMORIA DE USUARIO: Guardar para la próxima vez
+                            if (phone) {
+                                localStorage.setItem('remembered_phone', phone);
+                            }
 
                             // Hide Modal & Show App
                             const authModal = document.getElementById('auth-modal');

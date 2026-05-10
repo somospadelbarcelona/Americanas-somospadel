@@ -29,6 +29,22 @@ class PremiumModal {
                 box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255,255,255,0.05);
                 overflow: hidden; animation: pm-scale-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
             }
+            .pm-card.pm-light {
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            }
+            .pm-card.pm-light h3 { color: #0f172a !important; }
+            .pm-card.pm-light .pm-msg { color: #64748b !important; }
+            .pm-content-scroll {
+                max-height: 60vh;
+                overflow-y: auto;
+                scrollbar-width: thin;
+            }
+            .pm-content-scroll::-webkit-scrollbar { width: 5px; }
+            .pm-content-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+            .pm-light .pm-content-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); }
+            .pm-card:not(.pm-light) .pm-content-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
             .pm-btn {
                 flex: 1; padding: 14px; border-radius: 16px; border: none;
                 font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 0.95rem;
@@ -117,22 +133,31 @@ class PremiumModal {
                 info: '#ccff00'
             };
             const accent = colors[type] || colors.info;
+            const logoUrl = options.logo || null;
 
             const overlay = document.createElement('div');
             overlay.className = 'pm-overlay';
 
             const modal = document.createElement('div');
-            modal.className = 'pm-card';
+            modal.className = 'pm-card' + (options.theme === 'light' ? ' pm-light' : '');
             modal.style.setProperty('--accent-glow', accent + '40');
 
             modal.innerHTML = `
                 <div style="height: 5px; background: linear-gradient(90deg, ${accent}00, ${accent}, ${accent}00); width: 100%;"></div>
-                <div style="padding: 35px 30px 25px; text-align: center;">
-                    <div style="width: 64px; height: 64px; border-radius: 20px; background: ${accent}12; color: ${accent}; display: flex; align-items: center; justify-content: center; margin: 0 auto 22px; font-size: 1.6rem; border: 1px solid ${accent}25;">
-                        <i class="fas fa-${type === 'danger' ? 'shield-alt' : (type === 'success' ? 'check-double' : 'bell')}"></i>
+                <div class="pm-content-scroll">
+                    <div style="padding: 35px 30px 10px; text-align: center;">
+                        <div style="width: 64px; height: 64px; border-radius: 20px; background: ${accent}12; color: ${accent}; display: flex; align-items: center; justify-content: center; margin: 0 auto 22px; font-size: 1.6rem; border: 1px solid ${accent}25; overflow: hidden; position: relative;">
+                            ${logoUrl ? `<img src="${logoUrl}" style="width: 100%; height: 100%; object-fit: contain; padding: 10px; display: block;" 
+                                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                          <div style="display:none; width:100%; height:100%; align-items:center; justify-content:center; color:${accent};">
+                                            <i class="fas fa-trophy"></i>
+                                          </div>` : `
+                            <i class="fas fa-${type === 'danger' ? 'shield-alt' : (type === 'success' ? 'check-double' : 'bell')}"></i>
+                            `}
+                        </div>
+                        <h3 style="color: white; font-family: 'Outfit'; font-weight: 900; margin-bottom: 12px; font-size: 1.3rem;">${title}</h3>
+                        <div class="pm-msg" style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6;">${message}</div>
                     </div>
-                    <h3 style="color: white; font-family: 'Outfit'; font-weight: 900; margin-bottom: 12px; font-size: 1.3rem;">${title}</h3>
-                    <div style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6;">${message}</div>
                 </div>
                 <div style="padding: 0 25px 30px;">
                     <button id="p-modal-ok" class="pm-btn pm-btn-primary" style="width: 100%; background: ${accent}; color: ${type === 'danger' ? '#fff' : '#000'};">${btnText}</button>

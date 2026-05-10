@@ -454,7 +454,7 @@
                 <div class="ai-v4-top-area">
                     <div class="ai-v4-header">
                         <div style="display:flex; align-items:center; gap:12px;">
-                            <img src="C:/Users/acoscolin/.gemini/antigravity/brain/98319fa2-90ca-4f13-a003-bff232fc3974/corporate_elite_ai_logo_somospadel_1777754306402.png" style="width:28px; height:28px; border-radius:50%;">
+                            <img src="img/logo_somospadel.png" style="width:28px; height:28px; border-radius:50%;">
                             <div>
                                 <div style="font-weight:900; letter-spacing:1px; font-size:0.75rem; color:#fff;">NEURAL COMMAND CENTER</div>
                                 <div style="font-size:0.5rem; color:var(--ai-neon); font-weight:800; letter-spacing:1px;">SOMOSPADEL BCN ELITE</div>

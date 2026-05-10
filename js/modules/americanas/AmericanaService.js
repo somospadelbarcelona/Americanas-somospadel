@@ -103,167 +103,82 @@
         }
 
         async addPlayer(americanaId, user, type = 'americana', partnerName = null, partnerId = null) {
-            console.log(`🚀 [AmericanaService] addPlayer (Atomic): id=${americanaId}, type=${type}`, { partnerName });
+            const logId = `[QUICK-JOIN-${americanaId.substring(0,5)}]`;
+            console.log(`⚡ ${logId} Iniciando inscripción ultra-rápida...`);
 
             try {
-                if (!user) {
-                    console.error("❌ [AmericanaService] CRITICAL: user is undefined");
-                    return { success: false, error: "Identificación de usuario fallida. Recarga la página." };
-                }
+                if (!user) return { success: false, error: "Sesión expirada. Recarga la página." };
 
                 const db = window.db;
                 const collectionName = (type === 'entreno') ? 'entrenos' : 'americanas';
                 const eventRef = db.collection(collectionName).doc(americanaId);
 
-                // 1. Pre-fetch partner if needed (outside transaction)
-                let partnerDataDB = null;
-                if (partnerName && partnerId) {
-                    try {
-                        const pDoc = await db.collection('players').doc(partnerId).get();
-                        if (pDoc.exists) partnerDataDB = pDoc.data();
-                    } catch (e) { console.error("Error pre-fetching partner:", e); }
+                // 1. LECTURA RÁPIDA (Pre-validación)
+                const doc = await eventRef.get();
+                if (!doc.exists) throw new Error("Evento no encontrado.");
+
+                const event = doc.data();
+                const players = event.players || [];
+                const userUid = user.uid || user.id;
+
+                // Verificar si ya está dentro
+                if (players.find(p => p.uid === userUid || p.id === userUid)) {
+                    return { success: true, alreadyIn: true }; // Ya estaba, éxito silencioso
                 }
 
-                // 2. Atomic Transaction
-                const result = await db.runTransaction(async (transaction) => {
-                    const doc = await transaction.get(eventRef);
-                    if (!doc.exists) throw new Error("Evento no encontrado (" + type + ")");
+                // Verificar capacidad (permitimos un margen de 1-2 por seguridad de concurrencia)
+                const maxPlayers = (parseInt(event.max_courts) || 4) * 4;
+                if (players.length >= maxPlayers + 2) {
+                    throw new Error("El evento se ha llenado hace unos instantes.");
+                }
 
-                    const event = doc.data() || {};
-                    const players = event.players || [];
-                    const regPlayers = event.registeredPlayers || [];
-                    const userUid = user.uid || user.id;
+                this.validateGender(event.category, user.gender);
 
-                    if (!userUid) throw new Error("Tu perfil de usuario está incompleto (falta UID).");
+                // 2. PREPARAR DATOS
+                const newPlayerData = {
+                    id: userUid, uid: userUid,
+                    name: (user.name || 'Jugador').toUpperCase(),
+                    level: user.level || '3.5',
+                    team_somospadel: user.team_somospadel || [],
+                    gender: (user.gender === 'F' || user.gender === 'chica') ? 'chica' : 'chico',
+                    joinedAt: new Date().toISOString()
+                };
 
-                    const exists = (players.find(p => p && (p.uid === userUid || p.id === userUid))) ||
-                        (regPlayers.find(p => p && (p.uid === userUid || p.id === userUid)));
+                const updates = {
+                    players: firebase.firestore.FieldValue.arrayUnion(newPlayerData),
+                    registeredPlayers: firebase.firestore.FieldValue.arrayUnion(newPlayerData),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp() // 🚀 FORZAR NOTIFICACIÓN
+                };
 
-                    if (exists) throw new Error("Ya estás inscrito en este evento.");
-
-                    const maxPlayers = (parseInt(event.max_courts) || 4) * 4;
-                    const capacity = maxPlayers - players.length;
-                    const wantsTwo = !!partnerName;
-
-                    if (wantsTwo && capacity < 2) {
-                        throw new Error(`Solo queda 1 plaza disponible. No puedes apuntar a una pareja.`);
-                    } else if (capacity < 1) {
-                        throw new Error(`No quedan plazas disponibles.`);
-                    }
-
-                    // VALIDACIÓN DE GÉNERO
-                    this.validateGender(event.category, user.gender);
-
-                    const userGender = user.gender || 'M';
-                    const normalizedGender = (userGender === 'M' || userGender === 'chico') ? 'chico' :
-                        (userGender === 'F' || userGender === 'chica') ? 'chica' : '?';
-
-                    const newPlayerData = {
-                        id: userUid,
-                        uid: userUid,
-                        name: (user.name || user.displayName || user.email || 'Jugador').toUpperCase(),
-                        level: user.level || user.self_rate_level || '3.5',
-                        team_somospadel: user.team_somospadel || user.team || [],
-                        gender: normalizedGender,
-                        side_preference: user.side_preference || 'INDIFF',
-                        play_style: user.play_style || 'ESTRATEGIA',
-                        joinedAt: new Date().toISOString()
+                // 3. GESTIÓN DE PAREJA (Si aplica)
+                if (partnerName) {
+                    const partnerData = {
+                        id: partnerId || `guest_${Date.now()}`, uid: partnerId || null,
+                        name: partnerName.toUpperCase(), level: '3.5', gender: '?',
+                        joinedAt: new Date().toISOString(),
+                        partner_name: newPlayerData.name, partner_id: newPlayerData.id
                     };
-
-                    if (partnerName) {
-                        newPlayerData.partner_name = partnerName;
-                        if (partnerId) newPlayerData.partner_id = partnerId;
-                    }
-
-                    const updatedPlayers = [...players, newPlayerData];
-
-                    // Process Partner (if wantsTwo)
-                    if (wantsTwo) {
-                        let partnerData = null;
-                        if (partnerId && partnerDataDB) {
-                            partnerData = {
-                                id: partnerId,
-                                uid: partnerId,
-                                name: partnerDataDB.name || partnerName,
-                                level: partnerDataDB.level || partnerDataDB.self_rate_level || '3.5',
-                                team_somospadel: partnerDataDB.team_somospadel || partnerDataDB.team || [],
-                                gender: (partnerDataDB.gender === 'F' || partnerDataDB.gender === 'chica') ? 'chica' : 'chico',
-                                side_preference: partnerDataDB.side_preference || 'INDIFF',
-                                play_style: partnerDataDB.play_style || 'ESTRATEGIA',
-                                joinedAt: new Date().toISOString(),
-                                partner_name: newPlayerData.name,
-                                partner_id: newPlayerData.id
-                            };
-                        } else {
-                            partnerData = {
-                                id: partnerId || `guest_${Date.now()}`,
-                                uid: partnerId || null,
-                                name: partnerName,
-                                level: '3.5',
-                                gender: '?',
-                                joinedAt: new Date().toISOString(),
-                                partner_name: newPlayerData.name,
-                                partner_id: newPlayerData.id
-                            };
-                        }
-
-                        const partnerExists = updatedPlayers.find(p => p && (p.id === partnerData.id || (p.uid && p.uid === partnerData.uid)));
-                        if (!partnerExists) {
-                            updatedPlayers.push(partnerData);
-                        }
-                    }
-
-                    transaction.update(eventRef, {
-                        players: updatedPlayers,
-                        registeredPlayers: updatedPlayers
-                    });
-
-                    return { success: true, event: event, players: updatedPlayers };
-                });
-
-                if (result.success) {
-                    const event = result.event;
-                    const players = result.players;
-                    const userUid = user.uid || user.id;
-
-                    // --- AUTO-FILL VACANCIES IN MATCHES ---
-                    if (window.MatchMakingService && event) {
-                        try {
-                            const matchColl = (type === 'entreno') ? 'entrenos_matches' : 'matches';
-                            const hasMatches = await window.db.collection(matchColl).where('americana_id', '==', americanaId).limit(1).get();
-
-                            if (!hasMatches.empty) {
-                                const userName = user.name || user.displayName || 'Jugador';
-                                console.log(`🔍 [Service] Joined active event. Checking for vacancies...`);
-                                await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', '🔴 VACANTE', userUid, userName, type);
-                                await window.MatchMakingService.substitutePlayerInMatchesRobust(americanaId, 'VACANT', 'VACANTE', userUid, userName, type);
-                            }
-                        } catch (e) {
-                            console.error("[AmericanaService] Error in MatchMaking Auto-Fill (non-fatal):", e);
-                        }
-                    }
-
-                    // --- NOTIFICATIONS ---
-                    if (window.NotificationService && event && user) {
-                        const evtName = event.name || type.toUpperCase();
-                        const userName = user.name || user.displayName || 'Jugador';
-                        const evtLink = { url: 'live', eventId: americanaId };
-
-                        window.NotificationService.sendNotificationToUser(userUid, "Inscripción Confirmada", `Te has apuntado a ${evtName}. ¡A darlo todo!`, evtLink);
-
-                        const others = players.filter(p => p && (p.uid || p.id) && (p.uid || p.id) !== userUid);
-                        if (others.length < 50) {
-                            others.forEach(p => {
-                                window.NotificationService.sendNotificationToUser(p.uid || p.id, "Nuevo Jugador", `${userName} se ha unido a ${evtName}`, evtLink).catch(()=>{});
-                            });
-                        }
-                    }
-
-                    return { success: true };
+                    newPlayerData.partner_name = partnerName;
+                    if (partnerId) newPlayerData.partner_id = partnerId;
+                    
+                    updates.players = firebase.firestore.FieldValue.arrayUnion(newPlayerData, partnerData);
+                    updates.registeredPlayers = firebase.firestore.FieldValue.arrayUnion(newPlayerData, partnerData);
                 }
+
+                // 4. ESCRITURA ATÓMICA DE ARRAY (Soporta alta concurrencia)
+                await eventRef.update(updates);
+                console.log(`✅ ${logId} Inscripción completada con éxito.`);
+
+                // 5. TAREAS DE FONDO (Sin esperar a que terminen)
+                if (window.NotificationService) {
+                    window.NotificationService.sendNotificationToUser(userUid, "Inscripción OK", `Te has apuntado a ${event.name || type}.`, { url: 'live', eventId: americanaId }).catch(() => {});
+                }
+
+                return { success: true };
+
             } catch (err) {
-                console.error("Error in addPlayer (Transaction):", err);
-                return { success: false, error: err.message };
+                console.error(`${logId} Error en inscripción rápida:`, err);
+                return { success: false, error: err.message || "Error de red. Intenta de nuevo." };
             }
         }
 
@@ -275,58 +190,49 @@
         }
 
         async removePlayer(americanaId, userId, type = 'americana') {
+            const logId = `[QUICK-LEAVE-${americanaId.substring(0,5)}]`;
+            console.log(`⚡ ${logId} Tramitando baja rápida...`);
+
             try {
                 const db = window.db;
                 const collectionName = (type === 'entreno') ? 'entrenos' : 'americanas';
                 const eventRef = db.collection(collectionName).doc(americanaId);
 
-                let eventData = null;
+                // 1. Obtener datos actuales (1 lectura)
+                const doc = await eventRef.get();
+                if (!doc.exists) return { success: false, error: "Evento no encontrado" };
 
-                const result = await db.runTransaction(async (transaction) => {
-                    const doc = await transaction.get(eventRef);
-                    if (!doc.exists) throw new Error("Evento no encontrado");
+                const event = doc.data();
+                const players = event.players || [];
+                
+                // Buscar exactamente qué objetos borrar (Firestore necesita el objeto exacto para arrayRemove)
+                const itemsToRemove = players.filter(p => p && (p.uid === userId || p.id === userId));
 
-                    const event = doc.data();
-                    eventData = event;
-                    const currentPlayers = event.players || event.registeredPlayers || [];
-                    const newPlayers = currentPlayers.filter(p => (p.uid || p.id) !== userId);
+                if (itemsToRemove.length === 0) {
+                    return { success: true, message: "Ya no estabas en la lista." };
+                }
 
-                    const updates = {
-                        registeredPlayers: newPlayers,
-                        players: newPlayers
-                    };
-
-                    const maxPlayers = (event.max_courts || 4) * 4;
-                    if (event.status === 'live' && newPlayers.length < maxPlayers) {
-                        updates.status = 'open';
-                    }
-
-                    transaction.update(eventRef, updates);
-                    return { success: true, wasLive: (event.status === 'live' && newPlayers.length < maxPlayers) };
+                // 2. Ejecutar borrado atómico (Sin transacción para evitar 429)
+                await eventRef.update({
+                    players: firebase.firestore.FieldValue.arrayRemove(...itemsToRemove),
+                    registeredPlayers: firebase.firestore.FieldValue.arrayRemove(...itemsToRemove),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp() // 🚀 FORZAR NOTIFICACIÓN
                 });
 
-                if (result.success) {
-                    if (result.wasLive) {
-                        await this.purgeMatches(americanaId, type);
-                    }
+                console.log(`✅ ${logId} Baja completada.`);
 
-                    const maxPlayers = (eventData.max_courts || 4) * 4;
-                    const currentPlayersCount = (eventData.players || []).length;
-                    
-                    if (currentPlayersCount < maxPlayers) {
-                         await this.triggerNextInWaitlist(americanaId, type);
-                    }
-
+                // 3. Tareas de fondo (Waitlist / Notificaciones)
+                setTimeout(() => {
+                    this.triggerNextInWaitlist(americanaId, type).catch(() => {});
                     if (window.NotificationService) {
-                        const evtName = eventData.name || type.toUpperCase();
-                        window.NotificationService.sendNotificationToUser(userId, "Baja Confirmada", `Te has dado de baja de ${evtName}.`, { url: 'americanas' });
+                        window.NotificationService.sendNotificationToUser(userId, "Baja Confirmada", `Te has dado de baja.`, { url: 'americanas' }).catch(() => {});
                     }
-                }
+                }, 1000);
 
                 return { success: true };
             } catch (err) {
-                console.error(`Error in removePlayer (${type}):`, err);
-                return { success: false, error: err.message };
+                console.error(`${logId} Error en baja:`, err);
+                return { success: false, error: "Error al tramitar la baja. Reintenta." };
             }
         }
 

@@ -364,21 +364,12 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                 let winningCollection = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
 
                 try {
-                    if (eventType) {
-                        const snap = await window.db.collection(winningCollection).where('americana_id', '==', eventId).get();
-                        matches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    } else {
-                        // Auto-detect
-                        const eSnap = await window.db.collection('entrenos_matches').where('americana_id', '==', eventId).get();
-                        if (!eSnap.empty) {
-                            matches = eSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                            winningCollection = 'entrenos_matches';
-                        } else {
-                            const mSnap = await window.db.collection('matches').where('americana_id', '==', eventId).get();
-                            matches = mSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                            winningCollection = 'matches';
-                        }
-                    }
+                    const coll = window.db.collection(winningCollection);
+                    const snap = await coll
+                        .where('americana_id', '==', eventId)
+                        .where('status', '==', 'scheduled') // 🛡️ CRITICAL OPTIMIZATION: Only fetch pending matches
+                        .get();
+                    matches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 } catch (err) {
                     console.error("Error fetching matches for substitution:", err);
                     return 0;
@@ -386,6 +377,10 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
 
                 const pending = matches.filter(m => !m.isFinished && m.status !== 'finished');
                 let updatesCount = 0;
+
+                // 🛡️ [OPTIMIZATION] Use WriteBatch to prevent 429 errors
+                const batch = window.db.batch();
+                let batchHasData = false;
 
                 for (const m of pending) {
                     let updatePayload = {};
@@ -421,12 +416,20 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                     });
 
                     if (changed) {
-                        try {
-                            await window.db.collection(winningCollection).doc(m.id).update(updatePayload);
-                            updatesCount++;
-                        } catch (e) {
-                            console.error(`Error updating match ${m.id}:`, e);
-                        }
+                        const ref = window.db.collection(winningCollection).doc(m.id);
+                        batch.update(ref, updatePayload);
+                        updatesCount++;
+                        batchHasData = true;
+                    }
+                }
+
+                if (batchHasData) {
+                    try {
+                        await batch.commit();
+                        console.log(`✅ Batch commit success: Updated ${updatesCount} matches.`);
+                    } catch (e) {
+                        console.error(`❌ Batch commit failed:`, e);
+                        return 0;
                     }
                 }
 

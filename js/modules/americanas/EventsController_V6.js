@@ -131,14 +131,14 @@
                     this.onDataUpdate();
                 }, err => console.error("Error loading entrenos:", err));
 
-            // 2. Automation Loop (Check every 30s)
+            // 2. Automation Loop (Check every 120s to save quota)
             if (this.autoStartInterval) clearInterval(this.autoStartInterval);
             this.autoStartInterval = setInterval(() => {
                 this.checkAutoStartEvents();
                 if (window.AmericanaService?.processWaitlistTimeouts) {
                     window.AmericanaService.processWaitlistTimeouts();
                 }
-            }, 30000);
+            }, 120000); // 2 minutes (optimized for quota)
         }
 
         init() {
@@ -1212,7 +1212,7 @@
             if (window.AmericanaService && (window.AmericanaService.db || window.AmericanaService._getCollectionService)) return true;
             
             console.log("⏳ [EventsController] Waiting for AmericanaService...");
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 50; i++) {
                 if (window.AmericanaService && (window.AmericanaService.db || window.AmericanaService._getCollectionService)) {
                     console.log("✅ [EventsController] AmericanaService ready.");
                     return true;
@@ -1243,6 +1243,10 @@
                 const isFixed = mode === 'fixed' || (evt.name || '').toUpperCase().includes('FIJA');
 
                 if (await this.waitForService()) {
+                    // 🛡️ PREVENT DOUBLE-CLICK SPAM (429 Protection)
+                    if (this.isJoining) return;
+                    this.isJoining = true;
+
                     let partnerName = null;
                     let partnerId = null;
 
@@ -1274,7 +1278,10 @@
                                 placeholder: "Escribe nombre o teléfono..."
                             });
 
-                            if (!selectedPartner) return;
+                            if (!selectedPartner) {
+                                this.isJoining = false;
+                                return;
+                            }
                             partnerName = selectedPartner.name;
                             partnerId = selectedPartner.id;
                         } else {
@@ -1283,7 +1290,10 @@
                                 message: "Te apuntarás sin pareja. El sistema o el admin te asignarán una más adelante. ¿Continuar?",
                                 confirmText: "SÍ, APUNTARME"
                             });
-                            if (!confirmSolo) return;
+                            if (!confirmSolo) {
+                                this.isJoining = false;
+                                return;
+                            }
                         }
                     } else {
                         const confirmed = await window.PremiumModal.confirm({
@@ -1291,7 +1301,10 @@
                             message: "¿Quieres apuntarte a este evento?",
                             confirmText: "SÍ, APUNTARME"
                         });
-                        if (!confirmed) return;
+                        if (!confirmed) {
+                            this.isJoining = false;
+                            return;
+                        }
                     }
 
                     const userToJoin = {
@@ -1301,6 +1314,14 @@
                     };
 
                     const res = await window.AmericanaService.addPlayer(id, userToJoin, type, partnerName, partnerId);
+                    
+                    this.isJoining = false; 
+
+                    // 🚀 MANUAL REFRESH (Visual reliability)
+                    if (res.success) {
+                        this.onDataUpdate();
+                    }
+
                     window.PremiumModal.alert({
                         title: res.success ? "✅ ÉXITO" : "❌ ERROR",
                         message: res.success ? (partnerName ? `Inscrito correctamente con ${partnerName}.` : "Te has inscrito correctamente.") : "Error: " + res.error,
@@ -1308,8 +1329,10 @@
                     });
                 }
             } catch (err) {
+                this.isJoining = false; 
                 console.error("Error joining event:", err);
-                window.PremiumModal.alert({ title: "❌ ERROR", message: "Error crítico al intentar apuntarse: " + err.message, type: 'error' });
+                const msg = err.message || "Error desconocido";
+                window.PremiumModal.alert({ title: "❌ ERROR", message: "Error al intentar apuntarse: " + msg, type: 'error' });
             }
         }
 
@@ -1332,6 +1355,10 @@
                     const userUid = this.state.currentUser.uid || this.state.currentUser.id;
                     const res = await window.AmericanaService.removePlayer(id, userUid, type);
                     
+                    if (res.success) {
+                        this.onDataUpdate(); // 🚀 REFRESH INSTANTÁNEO
+                    }
+
                     window.PremiumModal.alert({
                         title: res.success ? "✅ TRÁMITE REALIZADO" : "❌ ERROR",
                         message: res.success ? "Baja tramitada correctamente." : "Error: " + res.error,
@@ -1446,41 +1473,38 @@
 
             const dbPlayers = [];
             try {
-                const promises = uniqueRawList.map(p => {
-                    const uid = (typeof p === 'string') ? p : (p.uid || p.id);
-                    return window.db.collection('players').doc(uid).get();
-                });
+                // OPTIMIZED: Use 'in' query for batch fetching (Firestore limit 30 per query)
+                const uids = uniqueRawList.map(p => (typeof p === 'string') ? p : (p.uid || p.id));
+                
+                const chunks = [];
+                for (let i = 0; i < uids.length; i += 30) {
+                    chunks.push(uids.slice(i, i + 30));
+                }
 
-                const snapshots = await Promise.all(promises);
+                for (const chunk of chunks) {
+                    const snap = await window.db.collection('players').where(window.firebase.firestore.FieldPath.documentId(), 'in', chunk).get();
+                    snap.forEach(doc => {
+                        dbPlayers.push({ id: doc.id, ...doc.data() });
+                    });
+                }
 
-                snapshots.forEach((snap, index) => {
-                    const registrationMeta = (typeof uniqueRawList[index] === 'object') ? uniqueRawList[index] : { joinedAt: null };
-
-                    let pData = null;
-                    if (snap.exists) {
-                        pData = { id: snap.id, ...snap.data() };
-                    } else {
-                        // Fallback
-                        const fallbackUid = (typeof uniqueRawList[index] === 'string') ? uniqueRawList[index] : (uniqueRawList[index].uid || uniqueRawList[index].id);
-                        pData = (typeof uniqueRawList[index] === 'object') ? uniqueRawList[index] : { id: fallbackUid, name: 'Usuario' };
+                // Add fallback data for players not found in DB
+                dbPlayers.forEach(p => {
+                    const regMeta = uniqueRawList.find(r => ((typeof r === 'string') ? r : (r.uid || r.id)) === p.id) || {};
+                    if (typeof regMeta === 'object') {
+                        p.joinedAt = regMeta.joinedAt || p.joinedAt || null;
+                        p.partner_name = regMeta.partner_name || p.partner_name || null;
+                        p.partner_id = regMeta.partner_id || p.partner_id || null;
                     }
-
-                    // CRITICAL: Copy event-specific partner data
-                    pData.joinedAt = registrationMeta.joinedAt || pData.joinedAt || null;
-                    pData.partner_name = registrationMeta.partner_name || pData.partner_name || null;
-                    pData.partner_id = registrationMeta.partner_id || pData.partner_id || null;
-
-                    dbPlayers.push(pData);
                 });
 
-                // ORDENAR POR ORDEN DE INSCRIPCIÓN
+                // Sort by registration time
                 dbPlayers.sort((a, b) => {
                     const timeA = a.joinedAt ? new Date(a.joinedAt).getTime() : 0;
                     const timeB = b.joinedAt ? new Date(b.joinedAt).getTime() : 0;
                     return timeA - timeB;
                 });
-
-            } catch (e) { console.error("Error fetching players:", e); }
+            } catch (e) { console.error("Error fetching players in batch:", e); }
 
             // --- REDESIGN: NEON BROADCAST WITH PAIR GROUPING ---
             const maxCourts = parseInt(evt.max_courts || evt.courts || 4);

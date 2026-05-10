@@ -47,6 +47,11 @@
                                     RANKING <span style="background: linear-gradient(90deg, #CCFF00, #84cc16); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">PRO</span>
                                 </h1>
                             </div>
+                            <!-- 🏆 TOP RÉCORDS ACCESS -->
+                            <button onclick="window.Router.navigate('records')" 
+                                    style="background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%); color: black; border: none; padding: 10px 18px; border-radius: 14px; font-weight: 950; font-size: 0.65rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 20px rgba(255, 215, 0, 0.2); cursor: pointer; transition: 0.3s; transform: rotate(1deg);">
+                                <i class="fas fa-award"></i> TOP RÉCORDS
+                            </button>
                         </div>
                     </div>
 

@@ -241,6 +241,10 @@ window.loadAdminView = async function (viewName) {
             if (window.AdminViews.database_health) await window.AdminViews.database_health();
             else throw new Error("Health Module not loaded");
         }
+        else if (viewName === 'tournaments_mgmt') {
+            if (window.AdminTournaments) window.AdminTournaments.init();
+            else throw new Error("Tournaments Module not loaded");
+        }
         else {
             // Fallback for Simulator or others not yet refactored logic
             if (window.AdminViews && window.AdminViews[viewName]) {

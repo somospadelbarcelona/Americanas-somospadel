@@ -309,7 +309,9 @@
 
                 <div class="cmd-brand" style="display: flex; align-items: center; gap: 14px;">
                     <img src="img/logo_somospadel.png?v=60.1"
-                        style="height: 44px; display: block; object-fit: contain; filter: drop-shadow(0px 0px 0.5px rgba(0,0,0,0.8));">
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+                         style="height: 44px; display: block; object-fit: contain; filter: drop-shadow(0px 0px 0.5px rgba(0,0,0,0.8));">
+                    <div style="display:none; color:var(--brand-neon); font-size:1.5rem; font-weight:900;">SOMOS PÁDEL</div>
                     <div style="height: 30px; width: 2px; background: #e1e8f0;"></div>
                     <div style="display: flex; flex-direction: column; line-height: 1.1;">
                         <span
@@ -634,15 +636,13 @@
                 <i class="fas fa-trophy"></i>
                 <span>Ranking</span>
             </div>
-            <div class="nav-item haptic-feedback" onclick="window.Router && window.Router.navigate('equipos')"
-                id="nav-equipos">
+            <div class="nav-item" id="nav-teams" onclick="window.Router.navigate('teams')">
                 <i class="fas fa-users"></i>
-                <span>Equipos</span>
+                <span>EQUIPOS</span>
             </div>
-            <div class="nav-item haptic-feedback" onclick="window.Router && window.Router.navigate('records')"
-                id="nav-records">
-                <i class="fas fa-award"></i>
-                <span>Récords</span>
+            <div class="nav-item" id="nav-tournaments" onclick="window.Router.navigate('tournaments')">
+                <i class="fas fa-trophy"></i>
+                <span>TORNEOS</span>
             </div>
             <div class="nav-item haptic-feedback"
                 onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('profile')"
@@ -966,9 +966,12 @@
     <script src="js/modules/ranking/RankingController.js"></script>
 
     <!-- Teams Module -->
-    <script src="js/modules/teams/teams_data.js"></script>
-    <script src="js/modules/teams/TeamView.js"></script>
-    <script src="js/modules/teams/TeamController.js"></script>
+    <script src="js/modules/teams/teams_data.js?v=10"></script>
+    <script src="js/modules/teams/TeamView.js?v=11"></script>
+    <script src="js/modules/teams/TeamController.js?v=11"></script>
+    <script src="js/modules/tournaments/TournamentView.js?v=11"></script>
+    <script src="js/modules/tournaments/TournamentController.js?v=11"></script>
+    <script src="js/modules/records/RecordsView.js?v=11"></script>
 
     <!-- Hall of Fame (Records) Module -->
     <script src="js/modules/records/RecordsView.js?v=2"></script>

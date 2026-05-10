@@ -1,0 +1,36 @@
+{
+  "api_intercepts": [
+    {
+      "url": "https://jnn-pa.googleapis.com/$rpc/google.internal.waa.v1.Waa/GenerateIT",
+      "data": [
+        "kRqtFygf8Z3VkmQHM0/QKP3DYDzV8CA9REKfhcCvjlstezwEZigf5kiWWQRYqImSgLr1JbK3OPTzgujWhZfHiROE",
+        43200,
+        100
+      ]
+    },
+    {
+      "url": "https://jnn-pa.googleapis.com/$rpc/google.internal.waa.v1.Waa/GenerateIT",
+      "data": [
+        "TeSKk228ORq49FCfBcN0U7buRE6PxINi3A8j/eaeFV+FJNfityL0UU3JBsNFpQguh+stSc1sfpwTjigqN4bCKkRw",
+        43200,
+        100
+      ]
+    },
+    {
+      "url": "https://jnn-pa.googleapis.com/$rpc/google.internal.waa.v1.Waa/GenerateIT",
+      "data": [
+        "raaeiKyAhMNpNPdkx5pyvpGWaqnqndCu6+16XDItbzpU3c/HOn45l6YMe75lGf0CkrjVlCPxDwq1KKCuKIXD/Luo",
+        43200,
+        100
+      ]
+    },
+    {
+      "url": "https://jnn-pa.googleapis.com/$rpc/google.internal.waa.v1.Waa/GenerateIT",
+      "data": [
+        "/rBBF1i3EzO1HulaRrYE06N9V7bbiFTLJs6Ua1DdHMnbqMAn6pOdpagIuYEC5bFtTWEOusxoE8PtRXF8JUoJxgQ=",
+        43200,
+        100
+      ]
+    }
+  ]
+}

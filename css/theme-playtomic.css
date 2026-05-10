@@ -3913,7 +3913,10 @@ body {
 }
 
 .auth-overlay-enterprise {
-    background: rgba(0, 0, 0, 0.92);
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), 
+                url('https://images.unsplash.com/photo-1626248294249-19943fce2657?q=80&w=2070&auto=format&fit=crop') !important;
+    background-size: cover !important;
+    background-position: center !important;
     backdrop-filter: blur(10px);
 }
 

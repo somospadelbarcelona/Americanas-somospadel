@@ -468,6 +468,10 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                 const pending = matches.filter(m => !m.isFinished && m.status !== 'finished');
                 let updatesCount = 0;
 
+                // 🛡️ [OPTIMIZATION] Use WriteBatch to prevent 429 errors
+                const batch = window.db.batch();
+                let batchHasData = false;
+
                 for (const m of pending) {
                     let updatePayload = {};
                     let changed = false;
@@ -502,12 +506,20 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                     });
 
                     if (changed) {
-                        try {
-                            await window.db.collection(winningCollection).doc(m.id).update(updatePayload);
-                            updatesCount++;
-                        } catch (e) {
-                            console.error(`Error updating match ${m.id}:`, e);
-                        }
+                        const ref = window.db.collection(winningCollection).doc(m.id);
+                        batch.update(ref, updatePayload);
+                        updatesCount++;
+                        batchHasData = true;
+                    }
+                }
+
+                if (batchHasData) {
+                    try {
+                        await batch.commit();
+                        console.log(`✅ Batch commit success: Updated ${updatesCount} matches.`);
+                    } catch (e) {
+                        console.error(`❌ Batch commit failed:`, e);
+                        return 0;
                     }
                 }
 

@@ -5,6 +5,9 @@
 (function () {
     const db = window.firebase ? firebase.firestore() : null;
 
+    const memoryCache = {}; // 🛡️ GLOBAL MEMORY CACHE (RAM)
+    const pendingRequests = {}; // 🕒 IN-FLIGHT REQUEST TRACKER
+
     class DatabaseService {
         constructor(collectionName) {
             this.collectionName = collectionName;
@@ -14,23 +17,51 @@
         async getAll() {
             if (!this.collection) return [];
 
-            // Smart Cache for specific collections (like players)
             const cacheKey = `all_${this.collectionName}`;
+
+            // 1. 🥇 FIRST DEFENSE: MEMORY RAM CACHE (Instant)
+            if (memoryCache[cacheKey]) {
+                console.log(`⚡ [RAM-Cache] Serving ${this.collectionName} from memory`);
+                return memoryCache[cacheKey];
+            }
+
+            // 2. 🥈 SECOND DEFENSE: IN-FLIGHT REQUEST (Prevents 429 during simultaneous loads)
+            if (pendingRequests[cacheKey]) {
+                console.log(`🕒 [Pending] Waiting for existing ${this.collectionName} request...`);
+                return await pendingRequests[cacheKey];
+            }
+
+            // 3. 🥉 THIRD DEFENSE: INDEXEDDB CACHE
             if (window.CacheService) {
                 const cached = await window.CacheService.get('database', cacheKey);
                 if (cached) {
                     console.log(`🚀 [Cache] Serving ${this.collectionName} from IndexedDB`);
+                    memoryCache[cacheKey] = cached; // Lift to RAM
                     return cached;
                 }
             }
 
-            const snapshot = await this.collection.get();
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // 4. 🌐 NETWORK FALLBACK (Only if needed)
+            console.log(`🌐 [Network] Fetching ${this.collectionName} from Firestore...`);
+            
+            // Track this promise to prevent parallel calls
+            pendingRequests[cacheKey] = (async () => {
+                try {
+                    const snapshot = await this.collection.get();
+                    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    memoryCache[cacheKey] = data; // Save to RAM
 
-            if (window.CacheService && data.length > 0) {
-                await window.CacheService.set('database', cacheKey, data, 1000 * 60 * 15); // Cache for 15 mins
-            }
-            return data;
+                    if (window.CacheService && data.length > 0) {
+                        await window.CacheService.set('database', cacheKey, data, 1000 * 60 * 15);
+                    }
+                    return data;
+                } finally {
+                    delete pendingRequests[cacheKey];
+                }
+            })();
+
+            return await pendingRequests[cacheKey];
         }
 
         async getById(id) {
