@@ -41,21 +41,13 @@
                 { j: 6, date: '13 Jun', time: '08:00', opponent: 'INDOOR RUBI 4M', venue: 'Rubí', isHome: false, score: 'Pendiente', status: 'upcoming' },
                 { j: 7, date: '20 Jun', time: '16:30', opponent: 'CLUB PADEL VALLIRANA 4M', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' }
             ],
-            nextMatch: {
-                opponent: 'PAPIOL PADEL CLUB 4M',
-                date: '16 May',
-                time: '16:30',
-                venue: 'Padel BCN - El Prat',
-                isHome: true
-            },
             groupStandings: [
                 { pos: 1, team: 'CEM TENNIS HOSPITALET 4M', pj: 1, pg: 1, pp: 0, sf: 3, sc: 0, df: 3, pts: 3 },
-                { pos: 2, team: 'Papiol Padel Club 4M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 3, team: 'Pádel Oxigen 4M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 4, team: 'Club Padel Vallirana 4M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 5, team: 'Padeland 4M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 6, team: 'Somos Pádel BCN 4M', pj: 1, pg: 0, pp: 1, sf: 0, sc: 3, df: -3, pts: 0, isCurrent: true },
-                { pos: 7, team: 'INDOOR RUBI 4M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 }
+                { pos: 2, team: 'CLUB PADEL VALLIRANA 4M', pj: 1, pg: 1, pp: 0, sf: 2, sc: 1, df: 1, pts: 3 },
+                { pos: 3, team: 'PAPIOL PADEL CLUB 4M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
+                { pos: 4, team: 'PÁDEL OXIGEN 4M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
+                { pos: 5, team: 'PADELAND 4M', pj: 1, pg: 0, pp: 1, sf: 1, sc: 2, df: -1, pts: 0 },
+                { pos: 6, team: 'SOMOS PÁDEL BCN 4M', pj: 1, pg: 0, pp: 1, sf: 0, sc: 3, df: -3, pts: 0, isCurrent: true }
             ],
             logo: 'img/logo_somospadel.png',
             link: 'https://summapadel.com/event/151'
@@ -66,8 +58,8 @@
             category: 'Masculina',
             division: 'Tercera (3M B)',
             group: '3MA FASE 2 G5',
-            captain: 'Pendiente Oficial',
-            ranking: 4,
+            captain: 'Alex Cuadra Cabezas',
+            ranking: 8,
             points: 0,
             stats: { pj: 1, pg: 0, pp: 1, sf: 0, sc: 3 },
             roster: [
@@ -89,37 +81,23 @@
                 { name: 'Juan José Jiménez', pts: 12.0 }
             ],
             schedule: [
-                { j: 1, date: '09 May', time: '12:00', opponent: 'CRAZYXPADEL 3M BLAU', venue: 'Crazyxpadel', isHome: false, score: '0 - 3', status: 'completed' },
+                { j: 1, date: '09 May', time: '12:00', opponent: 'PÁDEL OXIGEN 3M', venue: 'Crazyxpadel', isHome: false, score: '0 - 3', status: 'completed' },
                 { j: 2, date: '16 May', time: '16:30', opponent: 'Club Tennis Vilanova 3M', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
                 { j: 3, date: '25 May', time: 'TBD', opponent: 'Cpt R El Centre - Castellar', venue: 'Castellar', isHome: false, score: 'Pendiente', status: 'upcoming' },
                 { j: 4, date: '30 May', time: '16:30', opponent: 'Horizon Padel 3M', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
                 { j: 5, date: '06 Jun', time: 'TBD', opponent: 'La Paleda Indoor Padel A', venue: 'La Paleda', isHome: false, score: 'Pendiente', status: 'upcoming' },
                 { j: 6, date: '13 Jun', time: '16:30', opponent: 'VILA PADEL INDOOR A', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
-                { j: 7, date: '20 Jun', time: 'TBD', opponent: 'LAS PISTAS', venue: 'Las Pistas', isHome: false, score: 'Pendiente', status: 'upcoming' },
-                { j: 8, date: '05 Set', time: '16:30', opponent: 'Pàdel Oxigen 3M', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
-                { j: 9, date: '12 Set', time: 'TBD', opponent: 'Club Tennis Vilanova 3M', venue: 'Club Tennis Vilanova', isHome: false, score: 'Pendiente', status: 'upcoming' },
-                { j: 10, date: '19 Set', time: '16:30', opponent: 'Cpt R El Centre - Castellar', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
-                { j: 11, date: '27 Set', time: 'TBD', opponent: 'Horizon Padel 3M', venue: 'Horizon Padel', isHome: false, score: 'Pendiente', status: 'upcoming' },
-                { j: 12, date: '03 Oct', time: '16:30', opponent: 'La Paleda Indoor Padel A', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
-                { j: 13, date: '10 Oct', time: 'TBD', opponent: 'VILA PADEL INDOOR A', venue: 'Vila Padel', isHome: false, score: 'Pendiente', status: 'upcoming' },
-                { j: 14, date: '17 Oct', time: '16:30', opponent: 'LAS PISTAS', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' }
+                { j: 7, date: '20 Jun', time: 'TBD', opponent: 'LAS PISTAS', venue: 'Las Pistas', isHome: false, score: 'Pendiente', status: 'upcoming' }
             ],
-            nextMatch: {
-                opponent: 'Club Tennis Vilanova 3M',
-                date: '16 May',
-                time: '16:30',
-                venue: 'Padel BCN - El Prat',
-                isHome: true
-            },
             groupStandings: [
-                { pos: 1, team: 'CRAZYXPADEL 3M BLAU', pj: 1, pg: 1, pp: 0, sf: 3, sc: 0, df: 3, pts: 3 },
-                { pos: 2, team: 'Pàdel Oxígen 3M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 3, team: 'VILA PADEL INDOOR A', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 4, team: 'Cpt R El Centre - Castellar', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 5, team: 'Horizon Padel 3M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 6, team: 'La Paleda Indoor Padel A', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 7, team: 'Club Tennis Vilanova 3M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 8, team: 'Somos Pádel BCN 3MB', pj: 1, pg: 0, pp: 1, sf: 0, sc: 3, df: -3, pts: 0, isCurrent: true }
+                { pos: 1, team: 'PÁDEL OXIGEN 3M', pj: 1, pg: 1, pp: 0, sf: 3, sc: 0, df: 3, pts: 3 },
+                { pos: 2, team: 'CPI B EL CASINO GASTROBAR', pj: 1, pg: 1, pp: 0, sf: 2, sc: 1, df: 1, pts: 3 },
+                { pos: 3, team: 'LA PALETA INDOOR PÁDEL A', pj: 1, pg: 1, pp: 0, sf: 2, sc: 1, df: 1, pts: 3 },
+                { pos: 4, team: 'VILA PADEL INDOOR A', pj: 1, pg: 0, pp: 1, sf: 1, sc: 2, df: -1, pts: 0 },
+                { pos: 5, team: 'HORIZON PADEL 3M', pj: 1, pg: 0, pp: 1, sf: 1, sc: 2, df: -1, pts: 0 },
+                { pos: 6, team: 'Club Tennis Vilanova 3M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
+                { pos: 7, team: 'LAS PISTAS', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
+                { pos: 8, team: 'SOMOS PÁDEL BCN 3MB', pj: 1, pg: 0, pp: 1, sf: 0, sc: 3, df: -3, pts: 0, isCurrent: true }
             ],
             logo: 'img/logo_somospadel.png',
             link: 'https://summapadel.com/event/151'
@@ -130,8 +108,8 @@
             category: 'Masculina',
             division: 'Tercera (3M A)',
             group: '3MB FASE 2 G3',
-            captain: 'Pendiente',
-            ranking: 1,
+            captain: 'Abraham Rosell',
+            ranking: 2,
             points: 3,
             stats: { pj: 1, pg: 1, pp: 0, sf: 2, sc: 1 },
             roster: [
@@ -159,22 +137,13 @@
                 { j: 6, date: '12 Jun', time: '20:30', opponent: 'PADEL BARCELONA EL PRAT 3M', venue: 'El Prat', isHome: false, score: 'Pendiente', status: 'upcoming' },
                 { j: 7, date: '19 Jun', time: '19:00', opponent: 'AURIAL PADEL CORNELLA 3M', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' }
             ],
-            nextMatch: {
-                opponent: 'CT ANDRÉS GIMENO 3M',
-                date: '15 May',
-                time: '20:00',
-                venue: 'Andrés Gimeno',
-                isHome: false
-            },
             groupStandings: [
-                { pos: 1, team: 'SOMOS PÁDEL BCN 3MA', pj: 1, pg: 1, pp: 0, sf: 2, sc: 1, df: 1, pts: 3, isCurrent: true },
-                { pos: 2, team: 'CT ANDRÉS GIMENO 3M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 3, team: 'PADEL INDOOR HOSPITALET 3M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 4, team: 'CLUB EGARA 3M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 5, team: 'TENNIS DESPI 3M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 6, team: 'PADEL BARCELONA EL PRAT 3M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 7, team: 'AURIAL PADEL CORNELLA 3M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
-                { pos: 8, team: 'CRAZYXPADEL 3M GRIS', pj: 1, pg: 0, pp: 1, sf: 1, sc: 2, df: -1, pts: 0 }
+                { pos: 1, team: 'CT ANDRÉS GIMENO 3M', pj: 1, pg: 1, pp: 0, sf: 3, sc: 0, df: 3, pts: 3 },
+                { pos: 2, team: 'SOMOS PÁDEL BCN 3MA', pj: 1, pg: 1, pp: 0, sf: 2, sc: 1, df: 1, pts: 3, isCurrent: true },
+                { pos: 3, team: 'DAVID LLOYD 3 M', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
+                { pos: 4, team: 'PÁDEL PEÑA MALAGA 3G', pj: 0, pg: 0, pp: 0, sf: 0, sc: 0, df: 0, pts: 0 },
+                { pos: 5, team: 'CRAZYXPADEL 3M GRIS', pj: 1, pg: 0, pp: 1, sf: 1, sc: 2, df: -1, pts: 0 },
+                { pos: 6, team: 'CLUB TENNIS I PADEL SEGUR 3M', pj: 1, pg: 0, pp: 1, sf: 0, sc: 3, df: -3, pts: 0 }
             ],
             logo: 'img/logo_somospadel.png',
             link: 'https://summapadel.com/event/151'

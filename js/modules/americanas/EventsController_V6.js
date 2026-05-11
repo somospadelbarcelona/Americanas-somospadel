@@ -707,8 +707,16 @@
                 });
             }
 
-            if (month !== 'all') events = events.filter(e => e.normDate.startsWith(month));
-            if (category !== 'all') events = events.filter(e => e.category === category);
+            if (month !== 'all') events = events.filter(e => e.normDate && e.normDate.startsWith(month));
+            if (category !== 'all') {
+                events = events.filter(e => {
+                    const cat = (e.category || '').toLowerCase();
+                    if (category === 'male') return cat === 'male' || cat === 'masculina';
+                    if (category === 'female') return cat === 'female' || cat === 'femenina';
+                    if (category === 'mixed') return cat === 'mixed' || cat === 'mixta' || cat === 'mixto';
+                    return cat === category;
+                });
+            }
 
             const eventsHtml = events.map(evt => this.renderCard(evt)).join('');
             const filterBarHtml = !onlyMine ? this.renderFilterBar(this.getAllSortedEvents().filter(e => e.status !== 'finished' && (e.status === 'live' || e.normDate >= todayStr))) : '';
@@ -861,9 +869,12 @@
         renderFinishedView() {
             const todayStr = this.getTodayStr();
             const { month, category } = this.state.filters;
-            let finishedEvents = this.getAllSortedEvents().filter(e => e.status === 'finished' || e.status === 'cancelled' || e.date < todayStr);
-            if (month !== 'all') finishedEvents = finishedEvents.filter(e => e.date.startsWith(month));
+            // ✅ FIX: Usar normDate (YYYY-MM-DD) para comparaciones correctas
+            let finishedEvents = this.getAllSortedEvents().filter(e => e.status === 'finished' || e.status === 'cancelled' || (e.normDate && e.normDate < todayStr && e.normDate !== '9999-99-99'));
+            if (month !== 'all') finishedEvents = finishedEvents.filter(e => e.normDate && e.normDate.startsWith(month));
             if (category !== 'all') finishedEvents = finishedEvents.filter(e => e.category === category);
+            // Ordenar más recientes primero
+            finishedEvents = finishedEvents.sort((a, b) => (b.normDate || '').localeCompare(a.normDate || ''));
 
             return `
                 <div style="padding: 25px; background: #f8fafc; min-height: 80vh; font-family: 'Outfit', sans-serif;">
@@ -871,7 +882,7 @@
                         <span style="background: rgba(100, 116, 139, 0.1); color: #64748b; padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800;">Archivo Histórico</span>
                         <h2 style="font-size: 2rem; font-weight: 950; color: #0f172a; margin: 10px 0;">Eventos <span style="color: #64748b;">Pasados</span></h2>
                     </div>
-                    ${this.renderFilterBar(this.getAllSortedEvents().filter(e => e.status === 'finished' || e.date < todayStr))}
+                    ${this.renderFilterBar(this.getAllSortedEvents().filter(e => e.status === 'finished' || e.status === 'cancelled' || (e.normDate && e.normDate < todayStr && e.normDate !== '9999-99-99')))}
                     <div style="display: flex; flex-direction: column; gap: 15px; padding-bottom: 120px;">
                         ${finishedEvents.length ? finishedEvents.map(evt => this.renderCard(evt, true)).join('') : '<p style="text-align:center; padding:40px; color:#94a3b8;">No hay eventos finalizados.</p>'}
                     </div>
@@ -944,7 +955,8 @@
         }
 
         renderCard(evt, isFinished = false) {
-            const players = evt.players || evt.registeredPlayers || [];
+            // ✅ FIX: Robust player list detection (handle empty arrays)
+            const players = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
             const playerCount = players.length;
             const maxCourts = parseInt(evt.max_courts || evt.courts || 4);
             const maxPlayers = maxCourts * 4;
@@ -1017,14 +1029,20 @@
 
             // Gender logical check
             const userGender = user ? (user.gender || '').toLowerCase() : '';
-            const isChico = userGender === 'm' || userGender === 'chico';
-            const isChica = userGender === 'f' || userGender === 'chica';
+            const isChico = userGender === 'm' || userGender === 'chico' || userGender === 'male';
+            const isChica = userGender === 'f' || userGender === 'chica' || userGender === 'female';
             const cat = (evt.category || 'open').toLowerCase();
+            
             let isGenderMismatch = false;
             let mismatchCase = ''; // 'male', 'female', 'none'
-            if (cat === 'male' && !isChico) { isGenderMismatch = true; mismatchCase = 'male'; }
-            if (cat === 'female' && !isChica) { isGenderMismatch = true; mismatchCase = 'female'; }
-            if (cat === 'mixed' && !isChico && !isChica) { isGenderMismatch = true; mismatchCase = 'none'; }
+            
+            const isCatMale = cat === 'male' || cat === 'masculina';
+            const isCatFemale = cat === 'female' || cat === 'femenina';
+            const isCatMixed = cat === 'mixed' || cat === 'mixta' || cat === 'mixto';
+
+            if (isCatMale && !isChico) { isGenderMismatch = true; mismatchCase = 'male'; }
+            if (isCatFemale && !isChica) { isGenderMismatch = true; mismatchCase = 'female'; }
+            if (isCatMixed && !isChico && !isChica) { isGenderMismatch = true; mismatchCase = 'none'; }
 
             // Button Logic
             let cardAction = `window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}')`;
@@ -1459,8 +1477,8 @@
             modal.innerHTML = `<div style="padding: 100px; text-align: center;"><div class="loader"></div><p style="margin-top:20px; font-weight:900; letter-spacing:2px;">DETECTANDO EQUIPOS Y NIVELES EN TIEMPO REAL...</p></div>`;
             modal.style.display = 'block';
 
-            // FETCH FRESH DATA FOR ALL REGISTERED PLAYERS
-            const rawList = evt.players || evt.registeredPlayers || [];
+            // ✅ FIX: Robust player list detection
+            const rawList = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
 
             // DEDUPLICATE UNIQUE IDS FIRST
             const seenIds = new Set();
@@ -1473,22 +1491,33 @@
 
             const dbPlayers = [];
             try {
-                // OPTIMIZED: Use 'in' query for batch fetching (Firestore limit 30 per query)
-                const uids = uniqueRawList.map(p => (typeof p === 'string') ? p : (p.uid || p.id));
-                
-                const chunks = [];
-                for (let i = 0; i < uids.length; i += 30) {
-                    chunks.push(uids.slice(i, i + 30));
+                // ✅ FIX: Usar firebase.firestore directamente (no window.firebase que puede ser undefined)
+                const FieldPath = firebase.firestore.FieldPath;
+
+                // OPTIMIZED: Use 'in' query for batch fetching (Firestore limit: 30 per query)
+                const uids = uniqueRawList
+                    .map(p => (typeof p === 'string') ? p : (p.uid || p.id))
+                    .filter(Boolean); // ✅ FIX: Eliminar valores null/undefined que rompen el query
+
+                // ✅ FIX: Proteger contra array vacío (Firestore lanza error con 'in' [])
+                if (uids.length === 0) {
+                    console.log('[Inscritos] No hay inscritos en este evento.');
+                } else {
+                    const chunks = [];
+                    for (let i = 0; i < uids.length; i += 30) {
+                        chunks.push(uids.slice(i, i + 30));
+                    }
+
+                    for (const chunk of chunks) {
+                        if (chunk.length === 0) continue; // doble seguridad
+                        const snap = await window.db.collection('players').where(FieldPath.documentId(), 'in', chunk).get();
+                        snap.forEach(doc => {
+                            dbPlayers.push({ id: doc.id, ...doc.data() });
+                        });
+                    }
                 }
 
-                for (const chunk of chunks) {
-                    const snap = await window.db.collection('players').where(window.firebase.firestore.FieldPath.documentId(), 'in', chunk).get();
-                    snap.forEach(doc => {
-                        dbPlayers.push({ id: doc.id, ...doc.data() });
-                    });
-                }
-
-                // Add fallback data for players not found in DB
+                // Fusionar metadatos de inscripción (joinedAt, partner) con datos de BD
                 dbPlayers.forEach(p => {
                     const regMeta = uniqueRawList.find(r => ((typeof r === 'string') ? r : (r.uid || r.id)) === p.id) || {};
                     if (typeof regMeta === 'object') {
@@ -1498,7 +1527,25 @@
                     }
                 });
 
-                // Sort by registration time
+                // ✅ Añadir fallback para inscritos que no tienen perfil en 'players'
+                const foundIds = new Set(dbPlayers.map(p => p.id));
+                uniqueRawList.forEach(raw => {
+                    const rid = (typeof raw === 'string') ? raw : (raw.uid || raw.id);
+                    if (rid && !foundIds.has(rid) && typeof raw === 'object') {
+                        // Jugador inscrito sin perfil completo en BD → mostrar con datos básicos
+                        dbPlayers.push({
+                            id: rid, uid: rid,
+                            name: raw.name || 'Jugador',
+                            level: raw.level || '3.5',
+                            joinedAt: raw.joinedAt || null,
+                            partner_name: raw.partner_name || null,
+                            partner_id: raw.partner_id || null,
+                            team_somospadel: raw.team_somospadel || []
+                        });
+                    }
+                });
+
+                // Ordenar por hora de inscripción
                 dbPlayers.sort((a, b) => {
                     const timeA = a.joinedAt ? new Date(a.joinedAt).getTime() : 0;
                     const timeB = b.joinedAt ? new Date(b.joinedAt).getTime() : 0;
@@ -1679,7 +1726,13 @@
                         gap: 15px; 
                         margin-bottom: 40px;
                     ">
-                        ${cardsHtml}
+                        ${cardsHtml || `
+                            <div style="grid-column: 1 / -1; padding: 60px; text-align: center; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
+                                <i class="fas fa-users-slash" style="font-size: 3rem; color: rgba(255,255,255,0.1); margin-bottom: 15px;"></i>
+                                <div style="color: #64748b; font-weight: 800; font-size: 1.1rem;">TODAVÍA NO HAY INSCRITOS</div>
+                                <div style="color: #475569; font-size: 0.9rem; margin-top: 5px;">¡Sé el primero en apuntarte!</div>
+                            </div>
+                        `}
                     </div>
 
                     <!-- FOOTER ACTIONS -->
@@ -1826,7 +1879,7 @@
                 if (!card) return;
 
                 // 1. Update Player Count
-                const players = evt.players || evt.registeredPlayers || [];
+                const players = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
                 const playerCount = players.length;
                 const maxCourts = parseInt(evt.max_courts || evt.courts || 4);
                 const maxPlayers = maxCourts * 4;
