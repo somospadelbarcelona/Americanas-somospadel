@@ -178,6 +178,12 @@
                         <!-- DASHBOARD HERO INTEGRATION -->
                         <div id="profile-hero-root" style="margin-bottom: 25px;"></div>
 
+                        <!-- ⚡ POWER LEVEL STATUS CARD -->
+                        <div id="profile-power-level-root" style="margin-bottom: 25px;"></div>
+
+                        <!-- 🌐 TECH HUB CARD -->
+                        <div id="profile-tech-hub-root" style="margin-bottom: 25px;"></div>
+
                         <!-- STATS GRID & CHARTS -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
                             
@@ -337,6 +343,19 @@
                 // Hero Card & Partner Synergy (if available via Window)
                 const context = data.context || { status: 'EMPTY' };
                 if (window.HeroCard) document.getElementById('profile-hero-root').innerHTML = window.HeroCard.render(context);
+                
+                // Render Power Level Card
+                const pLevelRoot = document.getElementById('profile-power-level-root');
+                if (pLevelRoot && user && window.PowerLevelCard) {
+                    pLevelRoot.innerHTML = window.PowerLevelCard.render(user);
+                }
+
+                // Render Tech Hub Card
+                const techHubRoot = document.getElementById('profile-tech-hub-root');
+                if (techHubRoot) {
+                    techHubRoot.innerHTML = this.renderTechHub();
+                }
+
                 if (window.DashboardView && window.DashboardView.renderActivityFeed) window.DashboardView.renderActivityFeed('profile-activity-root');
             }, 100);
         }
@@ -350,6 +369,103 @@
             if (type === 'fis') val = base + 10;
             if (type === 'tec') val = base + 18;
             return Math.min(99, Math.round(val));
+        }
+
+        renderTechHub() {
+            return `
+                <div class="noticias-banner-premium" style="
+                    background: rgba(15, 23, 42, 0.8); 
+                    backdrop-filter: blur(20px);
+                    border-radius: 24px;
+                    padding: 18px !important;
+                    color: #fff; 
+                    position: relative; 
+                    overflow: hidden; 
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255,255,255,0.05);
+                    border: 1px solid rgba(204, 255, 0, 0.15);
+                    transition: all 0.4s ease;
+                ">
+                    <!-- Hexagon Background Pattern -->
+                    <div style="position: absolute; right: -30px; top: -30px; font-size: 8rem; color: #CCFF00; opacity: 0.05; transform: rotate(-10deg); pointer-events: none;">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: relative; z-index: 2;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 10px; height: 10px; background: #00E36D; border-radius: 50%; box-shadow: 0 0 10px #00E36D;"></div>
+                            <span style="font-size: 0.8rem; font-weight: 950; letter-spacing: 2px; color: #00E36D; text-transform: uppercase;">TECH HUB</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.1);">v4.0.5</div>
+                    </div>
+                    
+                    <h3 style="font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.3rem; margin: 0 0 12px 0; color: #fff; letter-spacing: -0.5px;">Ecosistema <span style="color: #CCFF00;">SomosPadel</span></h3>
+                    <p style="font-size: 0.85rem; color: #94a3b8; line-height: 1.6; margin: 0 0 25px 0; font-weight: 500;">
+                        Accede a herramientas de alto rendimiento diseñadas por y para jugadores de competición.
+                    </p>
+                    
+                    <!-- Main Actions Grid -->
+                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; position: relative; z-index: 2;">
+                         <!-- TV LIVE -->
+                         <div onclick="window.Router.navigate('live')" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 0 20px rgba(204,255,0,0.2)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'; this.style.boxShadow='none';">
+                            <div style="position: absolute; top: -10px; right: -10px; width: 40px; height: 40px; background: rgba(204,255,0,0.1); border-radius: 50%; filter: blur(15px); animation: auraPulse 2s infinite;"></div>
+                            <i class="fas fa-satellite-dish" style="color: #CCFF00; font-size: 1.4rem; filter: drop-shadow(0 0 5px #CCFF00);"></i>
+                            <div>
+                                <div style="font-weight: 950; font-size: 0.8rem;">CENTER COURT</div>
+                                <div style="font-size: 0.6rem; color: #64748b; font-weight: 700;">LIVE STREAMING</div>
+                            </div>
+                        </div>
+                        <!-- CHAT SOS -->
+                        <div onclick="window.Router.navigate('live')" style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.borderColor='#ef4444'; this.style.boxShadow='0 0 25px rgba(239,68,68,0.3)';" onmouseout="this.style.background='rgba(239, 68, 68, 0.05)'; this.style.borderColor='rgba(239, 68, 68, 0.2)'; this.style.boxShadow='none';">
+                            <div style="position: absolute; top: -10px; right: -10px; width: 40px; height: 40px; background: rgba(239,68,68,0.2); border-radius: 50%; filter: blur(15px); animation: auraPulse 2s infinite linear;"></div>
+                            <i class="fas fa-comment-medical" style="color: #ef4444; font-size: 1.4rem; animation: pulseSOS 2s infinite; filter: drop-shadow(0 0 8px #ef4444);"></i>
+                            <div>
+                                <div style="font-weight: 950; font-size: 0.8rem; color: #ef4444;">CHAT TÁCTICO</div>
+                                <div style="font-size: 0.6rem; color: #64748b; font-weight: 700;">BOTÓN SOS ACTIVADO</div>
+                            </div>
+                        </div>
+                     </div>
+
+                     <style>
+                         @keyframes auraPulse {
+                             0% { transform: scale(1); opacity: 0.3; }
+                             50% { transform: scale(1.5); opacity: 0.1; }
+                             100% { transform: scale(1); opacity: 0.3; }
+                         }
+                     </style>
+
+                     <style>
+                         @keyframes pulseSOS {
+                             0% { opacity: 1; }
+                             50% { opacity: 0.5; }
+                             100% { opacity: 1; }
+                         }
+                     </style>
+
+                     <!-- Secondary Actions -->
+                     <div style="display: flex; gap: 10px; margin-bottom: 25px;">
+                         <button onclick="window.CaptainView.open()" style="flex: 2; background: #CCFF00; color: #000; border: none; padding: 15px; border-radius: 16px; font-weight: 950; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(204, 255, 0, 0.2);">
+                             <i class="fas fa-robot"></i> CAPITÁN VIRTUAL
+                         </button>
+                         <button onclick="window.DashboardView ? window.DashboardView.showChatInfo() : null" style="flex: 1; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 16px; font-weight: 800; font-size: 0.8rem; cursor: pointer;">
+                             GUÍA
+                         </button>
+                     </div>
+                     
+                     <!-- TECHNOLOGY FOOTER -->
+                     <div onclick="window.open('presentation.html', '_blank')" style="background: linear-gradient(90deg, rgba(204, 255, 0, 0.05), transparent); border: 1px solid rgba(204, 255, 0, 0.1); border-radius: 20px; padding: 15px; cursor: pointer; transition: 0.3s; display: flex; justify-content: space-between; align-items: center;" onmouseover="this.style.background='rgba(204, 255, 0, 0.1)'; this.style.borderColor='rgba(204, 255, 0, 0.3)';" onmouseout="this.style.background='rgba(204, 255, 0, 0.05)'; this.style.borderColor='rgba(204, 255, 0, 0.1)';">
+                         <div style="display: flex; align-items: center; gap: 12px;">
+                             <div style="width: 38px; height: 38px; background: rgba(0,0,0,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(204, 255, 0, 0.2);">
+                                 <i class="fas fa-microchip" style="color: #CCFF00;"></i>
+                             </div>
+                             <div style="display: flex; flex-direction: column;">
+                                 <span style="font-weight: 900; font-size: 0.75rem; letter-spacing: 0.5px;">CORE TECHNOLOGY</span>
+                                 <span style="font-size: 0.65rem; color: #64748b; font-weight: 700;">Powered by Somospadel BCN</span>
+                             </div>
+                         </div>
+                         <i class="fas fa-chevron-right" style="color: #CCFF00; font-size: 0.8rem;"></i>
+                     </div>
+                </div>
+            `;
         }
 
         initCharts(data, user) {

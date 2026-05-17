@@ -1,4 +1,4 @@
-﻿/**
+/**
  * DashboardView.js [v40 CLEAN]
  * "Context-First" Mobile Dashboard
  * Designed for Clarity, Speed and Outdoor Use
@@ -651,13 +651,13 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                         action: "window.Router.navigate('profile')"
                     },
                     {
-                        tag: 'ðŸ›ï¸ TIENDA VIP',
+                        tag: '🛍️ TIENDA VIP',
                         icon: 'fa-shopping-bag',
                         bgColor: 'linear-gradient(135deg, #312e81 0%, #4338ca 100%)',
                         accent: '#818cf8',
-                        title: 'SomosPadel Store',
-                        desc: 'Los mejores precios en palas de alta gama y equipaciÃ³n oficial.',
-                        action: "window.open('https://somospadel.eu', '_blank')"
+                        title: 'Tienda Oficial (En Breve)',
+                        desc: 'Muy pronto disponible la tienda online oficial integrada directamente en esta app.',
+                        action: "window.StoryFeedWidget ? window.StoryFeedWidget.showStory('shop') : alert('Tienda online oficial integrada muy pronto en la app.')"
                     },
                     {
                         tag: 'ðŸ’¡ SMART TIP',

@@ -608,7 +608,7 @@
 
             // TRIGGER ASYNC CONTENT
             this.loadGeoRadarWidget();
-            if (this.state.activeTab === 'entrenos') {
+            if (this.state.activeTab === 'entrenos' || this.state.activeTab === 'events') {
                 this.loadSynergyWidget();
             }
         }
@@ -816,15 +816,15 @@
                             <button onclick="window.EventsController.renderEntrenoGuideModal()" style="background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); padding: 12px 25px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-info-circle" style="color: #CCFF00;"></i> ¿CÓMO FUNCIONAN LOS FORMATOS?
                             </button>
+                            ` : ''}
 
                             <!-- PREDICTIVE SYNERGY WIDGET (MIRROR FROM DASHBOARD) -->
-                            <div id="predictive-synergy-entrenos-root" style="width: 100%; max-width: 500px; margin: 0 auto;">
+                            <div id="predictive-synergy-entrenos-root" style="width: 100%; max-width: 500px; margin: 15px auto 0;">
                                 <div style="text-align: center; padding: 30px; color: rgba(255,255,255,0.2); font-weight: 800; background: rgba(0,0,0,0.1); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
                                     <i class="fas fa-brain fa-spin" style="margin-bottom: 10px; font-size: 1.2rem; color: #CCFF00;"></i><br>
                                     Cargando tu compatibilidad...
                                 </div>
                             </div>
-                            ` : ''}
                         </div>
                     </div>
                 </div>

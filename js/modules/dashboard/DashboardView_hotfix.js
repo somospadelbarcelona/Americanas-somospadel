@@ -11,6 +11,10 @@
             window.dashNavigate = (route, source = 'news') => {
                 console.log(`🏁 [GLOBAL NAV] From: ${source}, Route: ${route}`);
                 try {
+                    // Close story modal if open (critical for navigation from stories)
+                    if (window.StoryFeedWidget && typeof window.StoryFeedWidget.hideStory === 'function') {
+                        window.StoryFeedWidget.hideStory();
+                    }
                     if (route.startsWith('http')) {
                         window.open(route, '_blank');
                     } else if (window.Router) {
@@ -85,182 +89,7 @@
                         <!-- Cargado vía JS (StoryFeedWidget) -->
                     </div>
 
-                    <!-- 6. NEWS MARQUEE -->
-                    <div id="registration-widget-root" style="
-                        background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000 100%);
-                        border-radius: 24px;
-                        margin: 0 15px 8px !important;
-                        padding: 14px 0 !important;
-                        box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-                        border: 1px solid rgba(255,255,255,0.1);
-                        z-index: 10;
-                        animation: floatUp 0.8s ease-out forwards;
-                        overflow: hidden;
-                    ">
 
-                        <div class="live-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px !important; padding: 0 20px; position:relative; z-index:20;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <div style="
-                                    background: linear-gradient(90deg, #00E36D, #00ff9d); 
-                                    color: #000; 
-                                    padding: 6px 16px; 
-                                    border-radius: 12px; 
-                                    font-size: 0.75rem; 
-                                    font-weight: 950; 
-                                    letter-spacing: 1px;
-                                    box-shadow: 0 0 20px rgba(0,227,109,0.4);
-                                    text-transform: uppercase;
-                                    display:flex; align-items:center; gap:6px;
-                                ">
-                                    <i class="fas fa-cube"></i> NOTICIAS
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div id="live-scroller-content" style="
-                            width: 100%; 
-                            position: relative; 
-                            transform-style: preserve-3d;
-                            min-height: 220px;
-                        ">
-                            <style>
-                                @keyframes marqueeNews {
-                                    0% { transform: translate3d(0, 0, 0); }
-                                    100% { transform: translate3d(-50%, 0, 0); }
-                                }
-                                .news-marquee-track {
-                                    display: flex;
-                                    gap: 12px;
-                                    width: max-content;
-                                    animation: marqueeNews 45s linear infinite;
-                                    padding: 15px 15px 25px;
-                                    will-change: transform;
-                                    backface-visibility: hidden;
-                                }
-                                /* Only pause on desktop hover to avoid mobile sticking */
-                                @media (hover: hover) {
-                                    .news-marquee-track:hover {
-                                        animation-play-state: paused;
-                                    }
-                                }
-                                .news-marquee-track:active, 
-                                .scene-3d-track:active,
-                                .infinite-scroll-wrapper:active {
-                                    animation-play-state: paused !important;
-                                }
-
-                                .registration-ticker-card, 
-                                .holo-card {
-                                    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-                                    flex-shrink: 0;
-                                    pointer-events: auto !important;
-                                    user-select: none;
-                                    position: relative;
-                                    overflow: hidden;
-                                    transform-style: preserve-3d;
-                                }
-
-                                .registration-ticker-card::before,
-                                .holo-card::before {
-                                    content: '';
-                                    position: absolute;
-                                    top: 0; left: -150%;
-                                    width: 100%; height: 100%;
-                                    background: linear-gradient(
-                                        90deg, 
-                                        transparent, 
-                                        rgba(255,255,255,0.05) 45%, 
-                                        rgba(255,255,255,0.15) 50%, 
-                                        rgba(255,255,255,0.05) 55%, 
-                                        transparent
-                                    );
-                                    transform: skewX(-25deg);
-                                    transition: 0s;
-                                    z-index: 5;
-                                    pointer-events: none;
-                                }
-
-                                .registration-ticker-card:hover::before,
-                                .holo-card:hover::before {
-                                    left: 150%;
-                                    transition: 0.8s ease-in-out;
-                                }
-
-                                .registration-ticker-card:hover,
-                                .holo-card:hover {
-                                    transform: translateY(-8px) scale(1.02) rotateX(2deg);
-                                    border-color: rgba(255,255,255,0.4) !important;
-                                    box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 20px rgba(255,255,255,0.1) !important;
-                                    z-index: 50;
-                                }
-
-                                @keyframes tagPulse {
-                                    0% { opacity: 0.7; transform: scale(1); }
-                                    50% { opacity: 1; transform: scale(1.05); }
-                                    100% { opacity: 0.7; transform: scale(1); }
-                                }
-
-                                .premium-tag {
-                                    animation: tagPulse 2s infinite ease-in-out;
-                                }
-                                
-                                /* 3D HOLO ENGINE STYLES */
-                                @keyframes marquee3D {
-                                    0% { transform: rotateY(0deg) translateZ(0); }
-                                    100% { transform: rotateY(-360deg) translateZ(0); }
-                                }
-                                @keyframes hologramFloat {
-                                    0%, 100% { transform: translateY(0) scale(1); filter: brightness(1); }
-                                    50% { transform: translateY(-5px) scale(1.02); filter: brightness(1.2); }
-                                }
-                                .scene-3d-track {
-                                    display: flex;
-                                    gap: 30px;
-                                    padding-left: 50px;
-                                    width: max-content;
-                                    transform-style: preserve-3d;
-                                    animation: scroll3d 60s linear infinite;
-                                }
-                                @keyframes scroll3d {
-                                    0% { transform: translateX(0) rotateX(5deg) rotateY(2deg); }
-                                    50% { transform: translateX(-50%) rotateX(0deg) rotateY(-2deg); }
-                                    100% { transform: translateX(-100%) rotateX(5deg) rotateY(2deg); }
-                                }
-                                .infinite-scroll-wrapper {
-                                    display: flex;
-                                    width: max-content;
-                                    animation: infiniteScroll 40s linear infinite;
-                                }
-                                @keyframes infiniteScroll {
-                                    0% { transform: translateX(0); }
-                                    100% { transform: translateX(-50%); }
-                                }
-                                .holo-card-inner {
-                                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-                                    transform: rotateY(15deg);
-                                    transform-origin: left center;
-                                    backdrop-filter: blur(8px);
-                                    -webkit-backdrop-filter: blur(8px);
-                                }
-                            </style>
-                            <div id="live-scroller-inner" class="infinite-scroll-wrapper" style="transform-style: preserve-3d; padding-left: 20px;">
-                                <!-- SKELETON 3D LOADER -->
-                                ${Array(4).fill(0).map((_, i) => `
-                                    <div style="
-                                        min-width: 280px; height: 180px; 
-                                        background: rgba(255,255,255,0.02); 
-                                        border-radius: 24px; 
-                                        border: 1px solid rgba(255,255,255,0.05); 
-                                        margin-right: 25px;
-                                        transform: rotateY(10deg);
-                                        display: flex; align-items: center; justify-content: center;
-                                    ">
-                                        <i class="fas fa-cube fa-spin" style="color:rgba(255,255,255,0.1); font-size:2rem;"></i>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
 
 
 
@@ -362,118 +191,7 @@
                         <div id="activity-feed-content" style="display: flex; flex-direction: column; gap: 10px;">
                             <!-- Content loaded via JS -->
                         </div>
-                    </div>
 
-                    <!-- 5. POWER LEVEL STATUS (Relocated below Recent Activity) -->
-                    <div id="power-level-root" style="animation: floatUp 0.8s ease-out forwards;">
-                        <!-- Loaded via JS (PowerLevelCard) -->
-                    </div>
-
-
-
-                    <!-- 4. TECH HUB & NEWS -->
-                    <div id="noticias-banner-root" style="padding: 0 15px !important; animation: floatUp 0.85s ease-out forwards; margin-bottom: 30px; margin-top: 0;">
-                        <div class="noticias-banner-premium" style="
-                            background: rgba(15, 23, 42, 0.8); 
-                            backdrop-filter: blur(20px);
-                            border-radius: 24px;
-                            padding: 18px !important;
-                            color: #fff; 
-                            position: relative; 
-                            overflow: hidden; 
-                            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255,255,255,0.05);
-                            border: 1px solid rgba(204, 255, 0, 0.15);
-                            transition: all 0.4s ease;
-                        ">
-                            <!-- Hexagon Background Pattern -->
-                            <div style="position: absolute; right: -30px; top: -30px; font-size: 8rem; color: #CCFF00; opacity: 0.05; transform: rotate(-10deg); pointer-events: none;">
-                                <i class="fas fa-layer-group"></i>
-                            </div>
-                            
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: relative; z-index: 2;">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="width: 10px; height: 10px; background: #00E36D; border-radius: 50%; box-shadow: 0 0 10px #00E36D;"></div>
-                                    <span style="font-size: 0.8rem; font-weight: 950; letter-spacing: 2px; color: #00E36D; text-transform: uppercase;">TECH HUB</span>
-                                </div>
-                                <div style="background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.1);">v4.0.5</div>
-                            </div>
-                            
-                            <h3 style="font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.3rem; margin: 0 0 12px 0; color: #fff; letter-spacing: -0.5px;">Ecosistema <span style="color: #CCFF00;">SomosPadel</span></h3>
-                            <p style="font-size: 0.85rem; color: #94a3b8; line-height: 1.6; margin: 0 0 25px 0; font-weight: 500;">
-                                Accede a herramientas de alto rendimiento diseñadas por y para jugadores de competición.
-                            </p>
-                            
-                            <!-- Main Actions Grid -->
-                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; position: relative; z-index: 2;">
-                                 <!-- TV LIVE -->
-                                 <div onclick="window.Router.navigate('live')" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 0 20px rgba(204,255,0,0.2)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'; this.style.boxShadow='none';">
-                                    <div style="position: absolute; top: -10px; right: -10px; width: 40px; height: 40px; background: rgba(204,255,0,0.1); border-radius: 50%; filter: blur(15px); animation: auraPulse 2s infinite;"></div>
-                                    <i class="fas fa-satellite-dish" style="color: #CCFF00; font-size: 1.4rem; filter: drop-shadow(0 0 5px #CCFF00);"></i>
-                                    <div>
-                                        <div style="font-weight: 950; font-size: 0.8rem;">CENTER COURT</div>
-                                        <div style="font-size: 0.6rem; color: #64748b; font-weight: 700;">LIVE STREAMING</div>
-                                    </div>
-                                </div>
-                                <!-- CHAT SOS -->
-                                <div onclick="window.Router.navigate('live')" style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.borderColor='#ef4444'; this.style.boxShadow='0 0 25px rgba(239,68,68,0.3)';" onmouseout="this.style.background='rgba(239, 68, 68, 0.05)'; this.style.borderColor='rgba(239, 68, 68, 0.2)'; this.style.boxShadow='none';">
-                                    <div style="position: absolute; top: -10px; right: -10px; width: 40px; height: 40px; background: rgba(239,68,68,0.2); border-radius: 50%; filter: blur(15px); animation: auraPulse 2s infinite linear;"></div>
-                                    <i class="fas fa-comment-medical" style="color: #ef4444; font-size: 1.4rem; animation: pulseSOS 2s infinite; filter: drop-shadow(0 0 8px #ef4444);"></i>
-                                    <div>
-                                        <div style="font-weight: 950; font-size: 0.8rem; color: #ef4444;">CHAT TÁCTICO</div>
-                                        <div style="font-size: 0.6rem; color: #64748b; font-weight: 700;">BOTÓN SOS ACTIVADO</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <style>
-                                @keyframes auraPulse {
-                                    0% { transform: scale(1); opacity: 0.3; }
-                                    50% { transform: scale(1.5); opacity: 0.1; }
-                                    100% { transform: scale(1); opacity: 0.3; }
-                                }
-                            </style>
-
-                            <style>
-                                @keyframes pulseSOS {
-                                    0% { opacity: 1; }
-                                    50% { opacity: 0.5; }
-                                    100% { opacity: 1; }
-                                }
-                            </style>
-
-                            <!-- Secondary Actions -->
-                            <div style="display: flex; gap: 10px; margin-bottom: 25px;">
-                                <button onclick="window.CaptainView.open()" style="flex: 2; background: #CCFF00; color: #000; border: none; padding: 15px; border-radius: 16px; font-weight: 950; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(204, 255, 0, 0.2);">
-                                    <i class="fas fa-robot"></i> CAPITÁN VIRTUAL
-                                </button>
-                                <button onclick="window.DashboardView.showChatInfo()" style="flex: 1; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 16px; font-weight: 800; font-size: 0.8rem; cursor: pointer;">
-                                    GUÍA
-                                </button>
-                            </div>
-                            
-                            <!-- TECHNOLOGY FOOTER -->
-                            <div onclick="window.open('presentation.html', '_blank')" style="background: linear-gradient(90deg, rgba(204, 255, 0, 0.05), transparent); border: 1px solid rgba(204, 255, 0, 0.1); border-radius: 20px; padding: 15px; cursor: pointer; transition: 0.3s; display: flex; justify-content: space-between; align-items: center;" onmouseover="this.style.background='rgba(204, 255, 0, 0.1)'; this.style.borderColor='rgba(204, 255, 0, 0.3)';" onmouseout="this.style.background='rgba(204, 255, 0, 0.05)'; this.style.borderColor='rgba(204, 255, 0, 0.1)';">
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="width: 38px; height: 38px; background: rgba(0,0,0,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(204, 255, 0, 0.2);">
-                                        <i class="fas fa-microchip" style="color: #CCFF00;"></i>
-                                    </div>
-                                    <div style="display: flex; flex-direction: column;">
-                                        <span style="font-weight: 900; font-size: 0.75rem; letter-spacing: 0.5px;">CORE TECHNOLOGY</span>
-                                        <span style="font-size: 0.65rem; color: #64748b; font-weight: 700;">Powered by Somospadel BCN</span>
-                                    </div>
-                                </div>
-                                <i class="fas fa-chevron-right" style="color: #CCFF00; font-size: 0.8rem;"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 5. PREDICTIVE SYNERGY (MOVED TO LAST POSITION) -->
-                    <div id="predictive-synergy-root" style="margin: 12px 15px 40px !important; position: relative; z-index: 50; display: block !important; min-height: 100px;">
-                        <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.3); font-weight: 800; background: rgba(0,0,0,0.2); border-radius: 24px;">
-                            <i class="fas fa-brain fa-spin" style="margin-bottom: 10px; font-size: 1.5rem; color: #CCFF00;"></i><br>
-                            Sincronizando Inteligencia Predictiva...
-                        </div>
-                    </div>
 
                     </div>
                 </div>
@@ -499,17 +217,8 @@
 
                 window.scrollTo(0, 0);
 
-                // Render Power Level Card
-                const pLevelRoot = document.getElementById('power-level-root');
-                if (pLevelRoot && user && window.PowerLevelCard) {
-                    pLevelRoot.innerHTML = window.PowerLevelCard.render(user);
-                }
 
-                // Load Partner Synergy Widget
-                if (user && window.PartnerSynergyWidget) {
-                    const synergyWidget = document.getElementById('predictive-synergy-root');
-                    if (synergyWidget) synergyWidget.style.display = 'block';
-                }
+
 
                 // 2. Fetch Real Data for Weather Cards
                 let weatherData = [];
@@ -928,9 +637,9 @@
                         icon: 'fa-shopping-bag',
                         bgColor: 'linear-gradient(135deg, #312e81 0%, #4338ca 100%)',
                         accent: '#818cf8',
-                        title: 'SomosPadel Store',
-                        desc: 'Los mejores precios en palas de alta gama y equipación oficial.',
-                        action: "window.open('https://somospadel.eu', '_blank')"
+                        title: 'Tienda Oficial (En Breve)',
+                        desc: 'Muy pronto disponible la tienda online oficial integrada directamente en esta app.',
+                        action: "window.StoryFeedWidget ? window.StoryFeedWidget.showStory('shop') : alert('Tienda online oficial integrada muy pronto en la app.')"
                     },
                     {
                         tag: '💡 SMART TIP',
@@ -1534,19 +1243,6 @@
             }
 
             try {
-                const container = document.getElementById('live-scroller-content');
-                if (!container) {
-                    console.warn("⚠️ [DashboardView] live-scroller-content not found, skipping other widgets");
-                    return;
-                }
-
-                // 1. Load Registration Cards (Intelligent Ticker)
-                // Aseguramos visibilidad del contenedor
-                const newsRoot = document.getElementById('registration-widget-root');
-                if (newsRoot) newsRoot.style.display = 'block';
-
-                await this.renderLiveWidget(context);
-
                 // 3. Load Activity Feed
                 const activityContainer = document.getElementById('activity-feed-content');
                 if (activityContainer) {
