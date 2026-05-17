@@ -697,7 +697,7 @@
             // --------------------------
 
             container.innerHTML = `
-                <div class="tournament-layout fade-in" style="background: #050505;">
+                <div class="tournament-layout fade-in" style="background: #ffffff; color: #0a192f;">
                     
                     <!-- PREMIUM DARK LED SUBMENU -->
                     <style>
@@ -715,15 +715,21 @@
                         }
                     </style>
 
-                    <div style="background: #111; backdrop-filter: blur(20px); padding: 14px; display: flex; justify-content: center; gap: 12px; border-bottom: 2px solid #222; position: sticky; top: 0; z-index: 1002; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
-                        <button onclick="window.ControlTowerView.switchSection('playing')" class="${this.mainSection === 'playing' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #333; background: rgba(255,255,255,0.05); color: #fff; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);">EN JUEGO</button>
-                        <button onclick="window.ControlTowerView.switchSection('history')" class="${this.mainSection === 'history' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #333; background: rgba(255,255,255,0.05); color: #fff; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);">MI PASADO</button>
-                        <button onclick="window.ControlTowerView.switchSection('help')" class="${this.mainSection === 'help' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #333; background: rgba(255,255,255,0.05); color: #fff; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);">INFO</button>
+                    <div style="background: #ffffff; backdrop-filter: blur(20px); padding: 14px; display: flex; justify-content: center; gap: 12px; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 1002; box-shadow: 0 10px 40px rgba(0,0,0,0.05);">
+                        <button onclick="window.ControlTowerView.switchSection('playing')" class="${this.mainSection === 'playing' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #e2e8f0; background: #f8fafc; color: #0a192f; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer;">EN JUEGO</button>
+                        <button onclick="window.ControlTowerView.switchSection('history')" class="${this.mainSection === 'history' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #e2e8f0; background: #f8fafc; color: #0a192f; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer;">MI PASADO</button>
+                        <button onclick="window.ControlTowerView.switchSection('help')" class="${this.mainSection === 'help' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #e2e8f0; background: #f8fafc; color: #0a192f; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer;">INFO</button>
                     </div>
 
                     ${this.renderMainArea(data, isPlayingHere)}
                 </div>
             `;
+
+            // --- RPG RADAR CHART INIT ---
+            if (this.mainSection === 'history') {
+                setTimeout(() => this.initRadarChart(user), 100);
+            }
+
 
             // --- STATE RESTORATION ---
             if (openEditIds.length > 0) {
@@ -762,7 +768,23 @@
         }
 
         renderActiveContent(data, roundData) {
-            if (data?.status === 'LOADING') return '<div class="loader" style="margin:80px auto;"></div>';
+            if (data?.status === 'LOADING') {
+                const skeletons = Array.from({ length: 3 }, () => `
+                    <div class="skeleton-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 20px; margin-bottom: 15px;">
+                        <div class="skeleton-box skeleton-line" style="width: 40%; height: 12px; background: #f1f5f9;"></div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                            <div class="skeleton-box skeleton-line" style="width: 60%; height: 30px; background: #f1f5f9;"></div>
+                            <div class="skeleton-box" style="width: 50px; height: 50px; border-radius: 12px; background: #f1f5f9;"></div>
+                        </div>
+                        <div style="height: 1px; background: #e2e8f0; margin: 15px 0;"></div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="skeleton-box skeleton-line" style="width: 50%; height: 30px; background: #f1f5f9;"></div>
+                            <div class="skeleton-box" style="width: 50px; height: 50px; border-radius: 12px; background: #f1f5f9;"></div>
+                        </div>
+                    </div>
+                `).join('');
+                return `<div style="padding: 15px;">${skeletons}</div>`;
+            }
 
             switch (this.activeTab) {
                 case 'standings': return this.renderStandingsView();
@@ -824,17 +846,17 @@
                     const isLive = evtStatus === 'live' && !isFinished;
 
                     // SYNC CARD CONTAINER STYLES (Zero-Latency)
-                    let cardStyle = 'border: 1px solid var(--border-subtle); opacity: 1; filter: none; transform: none;';
-                    let cardBg = '#0f172a';
+                    let cardStyle = 'border: 1px solid #e2e8f0; opacity: 1; filter: none; transform: none;';
+                    let cardBg = '#ffffff';
                     const user = window.Store ? window.Store.getState('currentUser') : null;
                     const uid = user ? user.uid : '-';
                     const isMyMatch = (match.team_a_ids || []).includes(uid) || (match.team_b_ids || []).includes(uid);
 
                     if (isFinished) {
-                        cardStyle = 'border: 1px solid rgba(255,255,255,0.05); opacity: 0.5; filter: grayscale(100%); z-index: 1;';
-                        cardBg = '#050a0f';
+                        cardStyle = 'border: 1px solid #e2e8f0; opacity: 0.6; filter: grayscale(100%); z-index: 1;';
+                        cardBg = '#f8fafc';
                     } else if (isMyMatch && isLive) {
-                        cardStyle = 'border: 3px solid #CCFF00; box-shadow: 0 0 35px rgba(204, 255, 0, 0.4); transform: scale(1.03); z-index: 10;';
+                        cardStyle = 'border: 3px solid #72a800; box-shadow: 0 15px 45px rgba(114, 168, 0, 0.2); transform: scale(1.03); z-index: 10;';
                     }
                     el.style.cssText += cardStyle;
                     el.style.background = cardBg;
@@ -956,21 +978,21 @@
             const isRoundComplete = roundData.matches.length > 0 && roundData.matches.every(m => m.isFinished);
             let nextRoundUI = '';
 
-            if (isRoundComplete && isViewingMaxRound && this.currentAmericanaDoc?.status === 'live') {
+                if (isRoundComplete && isViewingMaxRound && this.currentAmericanaDoc?.status === 'live') {
                 nextRoundUI = `
-                    <div id="next-round-btn-container" class="animate-pop-in" style="margin-top: 30px; background: white; padding: 25px; border-radius: 20px; border: 2px solid #CCFF00; box-shadow: 0 10px 30px rgba(204,255,0,0.2); text-align: center;">
-                        <h3 style="margin: 0 0 15px 0; font-weight: 900; font-size: 1.1rem;">🏁 RONDA ${roundData.number} FINALIZADA</h3>
-                        <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">
+                    <div id="next-round-btn-container" class="animate-pop-in" style="margin-top: 30px; background: #ffffff; padding: 25px; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.04); text-align: center;">
+                        <h3 style="margin: 0 0 15px 0; font-weight: 950; font-size: 1.1rem; color: #0a192f;">🏁 RONDA ${roundData.number} FINALIZADA</h3>
+                        <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 20px; font-weight: 500;">
                             Todos los resultados han sido introducidos. ¿Deseas generar la siguiente ronda?
                         </p>
                         <div style="display: flex; gap: 15px; justify-content: center;">
                              <button onclick="window.ControlTowerView.triggerNextRound(${roundData.number})" 
                                     class="btn-primary-pro"
-                                    style="padding: 15px 30px; font-size: 1rem; background: var(--playtomic-neon); color: black; border: none; box-shadow: 0 5px 15px rgba(204,255,0,0.4);">
+                                    style="padding: 15px 30px; font-size: 1rem; background: #72a800; color: white; border: none; box-shadow: 0 8px 25px rgba(114, 168, 0, 0.2);">
                                 SI, SIGUIENTE RONDA 🚀
                             </button>
                              <button onclick="document.getElementById('next-round-btn-container').innerHTML='<p>Puedes editar los resultados usando el botón ✏️ en cada tarjeta.</p>'; setTimeout(() => window.ControlTowerView.recalc(), 3000);" 
-                                    style="padding: 15px 20px; font-size: 0.9rem; background: #eee; border: none; border-radius: 12px; font-weight: 800; color: #666; cursor: pointer;">
+                                    style="padding: 15px 20px; font-size: 0.9rem; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; font-weight: 800; color: #64748b; cursor: pointer;">
                                 NO, QUIERO EDITAR
                             </button>
                         </div>
@@ -991,7 +1013,7 @@
                 adminNextRoundBtn = `
                     <div style="flex-shrink:0; padding-left: 10px;">
                         <button onclick="window.ControlTowerView.triggerNextRound(${maxRound})" 
-                                style="background: #000; color: #CCFF00; border: 1px solid #CCFF00; padding: 10px 15px; border-radius: 12px; font-weight: 950; font-size: 0.7rem; letter-spacing: 0.5px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 5px 15px rgba(204,255,0,0.1);">
+                                style="background: #ffffff; color: #72a800; border: 1px solid #72a800; padding: 10px 15px; border-radius: 12px; font-weight: 950; font-size: 0.7rem; letter-spacing: 0.5px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(114, 168, 0, 0.1);">
                             🚀 SIG. RONDA
                         </button>
                     </div>
@@ -1112,38 +1134,21 @@
                 }
             }
 
-            // 2b. DOM DIRECT UPDATE (Massive Performance Boost)
-            // Instead of rebuilding the entire view with this.recalc(), we surgically update the UI
-            const lblSmall = document.getElementById(`score-${field === 'score_a' ? 'a' : 'b'}-val-${matchId}`);
-            if (lblSmall) lblSmall.innerText = newVal;
-
-            const lblLarge = document.getElementById(`match-score-${field === 'score_a' ? 'a' : 'b'}-${matchId}`);
-            if (lblLarge) lblLarge.innerText = newVal;
-
-            // Highlight instantaneous winner styles
+            // 2b. DOM DIRECT UPDATE (Massive Performance Boost with Odometer)
             const sA = parseInt(match.score_a || 0);
             const sB = parseInt(match.score_b || 0);
-            ['a', 'b'].forEach(side => {
-                const box = document.getElementById(`match-score-${side}-${matchId}`);
-                const pingEl = document.getElementById(`score-${side}-val-${matchId}`)?.parentElement?.parentElement;
 
-                if (box) {
-                    const myScore = side === 'a' ? sA : sB;
-                    const otherScore = side === 'a' ? sB : sA;
-                    const isWinner = myScore > otherScore;
-                    box.style.background = isWinner ? 'var(--brand-neon)' : 'rgba(255,255,255,0.05)';
-                    box.style.color = isWinner ? 'black' : 'white';
-                    box.style.border = `1px solid ${isWinner ? 'var(--brand-neon)' : 'rgba(255,255,255,0.1)'}`;
-                    box.style.boxShadow = isWinner ? '0 0 20px rgba(204,255,0,0.3)' : 'none';
+            if (window.MatchCard && window.MatchCard.updateOdometer) {
+                window.MatchCard.updateOdometer(matchId, 'a', sA, sA > sB);
+                window.MatchCard.updateOdometer(matchId, 'b', sB, sB > sA);
+            }
 
-                    // Add Ping Animation
-                    if (delta !== 0 && field === `score_${side}`) {
-                        box.classList.remove('score-updated-ping');
-                        void box.offsetWidth; // Trigger reflow
-                        box.classList.add('score-updated-ping');
-                    }
-                }
-            });
+            // Sync the tiny labels in the edit area if they exist
+            const lblSmallA = document.getElementById(`score-a-val-${matchId}`);
+            if (lblSmallA) lblSmallA.innerText = sA;
+            const lblSmallB = document.getElementById(`score-b-val-${matchId}`);
+            if (lblSmallB) lblSmallB.innerText = sB;
+
 
             // 3. HAPTIC FEEDBACK
             if (window.navigator?.vibrate) window.navigator.vibrate(20);
@@ -1273,6 +1278,17 @@
                     status: 'finished'
                 });
                 console.log("Match finished:", matchId);
+
+                // 🎊 CONFETTI FEEDBACK (Punto 6)
+                if (window.confetti) {
+                    window.confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: ['#CCFF00', '#00E36D', '#ffffff']
+                    });
+                }
+
 
                 if (window.LevelService) {
                     const match = this.allMatches.find(m => m.id === matchId);
@@ -1502,7 +1518,7 @@
                 <div class="fade-in" style="padding: 10px 5px 120px; font-family: 'Outfit', sans-serif;">
                     
                 <!-- SOMOSPADEL LIVE DASHBOARD (Real Community Data) -->
-                <div style="background: linear-gradient(135deg, #111 0%, #050505 100%); padding: 30px; border-radius: 32px; border: 1px solid rgba(204,255,0,0.15); margin-bottom: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); position: relative; overflow: hidden;">
+                <div style="background: #ffffff; padding: 30px; border-radius: 32px; border: 1px solid #e2e8f0; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); position: relative; overflow: hidden;">
                     <div style="position: absolute; top: -20px; right: -20px; font-size: 8rem; opacity: 0.03; color: #CCFF00; transform: rotate(-15deg);"><i class="fas fa-users"></i></div>
                     
                     <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
@@ -1510,22 +1526,22 @@
                             <i class="fas fa-broadcast-tower"></i>
                         </div>
                         <div>
-                            <h2 style="color: #fff; font-size: 1.15rem; font-weight: 950; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Panel de Comunidad</h2>
+                            <h2 style="color: #0a192f; font-size: 1.15rem; font-weight: 950; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Panel de Comunidad</h2>
                             <p style="color: #64748b; font-size: 0.75rem; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Estatus Real • SomosPadel BCN</p>
                         </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
                         <!-- Real Data: Total Players -->
-                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="background: #f8fafc; padding: 20px; border-radius: 24px; border: 1px solid #e2e8f0;">
                             <div style="font-size: 0.65rem; color: #888; font-weight: 900; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;">Jugadores en Club</div>
-                            <div style="font-size: 1.8rem; font-weight: 950; color: #fff; display: flex; align-items: baseline; gap: 5px;">
-                                ${window.Store.getState('players')?.length || '120'}<span style="font-size: 0.8rem; color: #CCFF00;">+</span>
+                            <div style="font-size: 1.8rem; font-weight: 950; color: #0a192f; display: flex; align-items: baseline; gap: 5px;">
+                                ${window.Store.getState('players')?.length || '120'}<span style="font-size: 0.8rem; color: #72a800;">+</span>
                             </div>
                         </div>
                         
                         <!-- Real Data: Next Event -->
-                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="background: #f8fafc; padding: 20px; border-radius: 24px; border: 1px solid #e2e8f0;">
                             <div style="font-size: 0.65rem; color: #888; font-weight: 900; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;">Próxima Cita</div>
                             <div style="font-size: 1rem; font-weight: 950; color: #3b82f6; margin-top: 5px; line-height: 1.2;">
                                 📅 ${(window.Store.getState('americanas')?.[0]?.date) || 'Próximamente'}
@@ -1555,30 +1571,16 @@
                             <!-- EMPTY STATE: PRO DASHBOARD MODE (Copied to ControlTower) -->
                             <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 25px; text-align: center; position: relative; overflow: hidden;">
                                 
-                                <!-- Simulated Radar Chart Visual -->
-                                <div style="margin-bottom: 20px;">
-                                    <div style="font-size: 0.8rem; color: #888; margin-bottom: 15px; font-weight: 700; text-transform:uppercase; letter-spacing:1px;">ANÁLISIS DE ATRIBUTOS (Nivel ${user && user.level ? parseFloat(user.level).toFixed(2) : '3.50'})</div>
-                                    <div style="display: flex; justify-content: space-around; align-items: flex-end; height: 100px; padding: 0 20px;">
-                                        <!-- Bars Logic based on Level -->
-                                        ${(() => {
-                        const l = user ? parseFloat(user.level || 3.5) : 3.5;
-                        const atk = Math.min(100, l * 15 + 20);
-                        const def = Math.min(100, l * 12 + 30);
-                        const tec = Math.min(100, l * 14 + 10);
-                        const fis = Math.min(100, l * 10 + 40);
-
-                        const bar = (h, color, label) => `
-                                                <div style="display:flex; flex-direction:column; align-items:center; gap:8px; flex:1;">
-                                                    <div style="width: 80%; height: 80px; background: rgba(255,255,255,0.05); border-radius: 10px; position: relative; overflow: hidden;">
-                                                        <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: ${h}%; background: ${color}; transition: height 1s ease;"></div>
-                                                    </div>
-                                                    <span style="font-size: 0.6rem; font-weight: 800; color: #aaa;">${label}</span>
-                                                </div>
-                                            `;
-                        return bar(atk, '#ef4444', 'ATAQUE') + bar(def, '#3b82f6', 'DEFENSA') + bar(tec, '#CCFF00', 'TÉCNICA') + bar(fis, '#f59e0b', 'FÍSICO');
-                    })()}
+                                <!-- 🕸️ TARJETA RPG: RADAR CHART (Chart.js) -->
+                                <div style="margin-bottom: 25px; background: rgba(0,0,0,0.4); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                                    <div style="font-size: 0.75rem; color: #CCFF00; margin-bottom: 20px; font-weight: 950; text-transform:uppercase; letter-spacing:2px; text-align: center;">
+                                        ANÁLISIS DE ATRIBUTOS (Nivel ${user && user.level ? parseFloat(user.level).toFixed(2) : '3.50'})
+                                    </div>
+                                    <div style="width: 100%; max-width: 280px; margin: 0 auto; position: relative;">
+                                        <canvas id="playerRadarChart"></canvas>
                                     </div>
                                 </div>
+
 
                                 <p style="font-size: 0.85rem; color: #ddd; margin: 0 0 20px; font-weight: 500; line-height: 1.5;">
                                     Aún no hay partidos registrados este año, pero tu perfil está <b>listo para competir</b>.
@@ -1745,6 +1747,57 @@
                     </div>
                 </div>
             `;
+        }
+
+        initRadarChart(user) {
+            const ctx = document.getElementById('playerRadarChart');
+            if (!ctx || !window.Chart) return;
+
+            const l = user ? parseFloat(user.level || 3.5) : 3.5;
+            const data = {
+                labels: ['ATAQUE', 'DEFENSA', 'TÉCNICA', 'FÍSICO', 'REMATE'],
+                datasets: [{
+                    label: 'Mi Perfil SomosPadel',
+                    data: [
+                        Math.min(100, l * 12 + 20),
+                        Math.min(100, l * 10 + 30),
+                        Math.min(100, l * 14 + 10),
+                        Math.min(100, l * 10 + 40),
+                        Math.min(100, l * 13 + 15)
+                    ],
+                    fill: true,
+                    backgroundColor: 'rgba(204, 255, 0, 0.2)',
+                    borderColor: '#CCFF00',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#CCFF00',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#CCFF00'
+                }]
+            };
+
+            new Chart(ctx, {
+                type: 'radar',
+                data: data,
+                options: {
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            pointLabels: { 
+                                color: '#aaa', 
+                                font: { size: 10, weight: '950', family: 'Outfit' } 
+                            },
+                            ticks: { display: false, stepSize: 20 },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
         }
 
         async replayShuffleAnimation() {

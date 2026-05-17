@@ -96,16 +96,16 @@ window.AdminViews.users = async function () {
                 <tr class="pro-table-row" style="background: ${isPending ? 'rgba(255,165,0,0.12)' : 'transparent'}; border-left: ${isPending ? '4px solid #ff9800' : 'none'};">
                 <td>
                     <div class="pro-player-cell">
-                        <div class="pro-avatar" style="background: ${isSuper ? 'linear-gradient(135deg, #FFD700, #FFA500)' : (u.role === 'admin_player' ? 'var(--primary-glow)' : (isPending ? '#ff9800' : ''))}; color: ${isSuper ? 'black' : 'white'}; box-shadow: ${isSuper ? '0 0 10px #FFD700' : 'none'};">
-                            ${isPending ? '⏳' : (u.name || '?').charAt(0)}
+                        <div class="pro-avatar" style="background: ${isSuper ? 'linear-gradient(135deg, #FFD700, #FFA500)' : (u.role === 'admin_player' ? 'var(--primary-glow)' : (isPending ? '#ff9800' : '#f1f5f9'))}; color: ${isSuper ? 'black' : '#0f172a'}; border: 1px solid #cbd5e1; box-shadow: ${isSuper ? '0 0 10px #FFD700' : 'none'}; font-weight: 800;">
+                            ${isPending ? '⏳' : (u.name || '?').charAt(0).toUpperCase()}
                         </div>
                         <div>
                             <div style="display:flex; align-items:center; gap:8px;">
-                                <div style="font-weight: 700; color: ${isSuper ? '#FFD700' : 'var(--text)'};">${u.name || 'Sin Nombre'}</div>
-                                ${u.membership === 'somospadel_bcn' ? '<span style="font-size:0.6rem; background: var(--primary); color:black; padding: 2px 5px; border-radius:4px; font-weight:700;">COMUNIDAD BCN</span>' : ''}
+                                <div style="font-weight: 800; color: ${isSuper ? '#d97706' : '#0f172a'}; font-size: 0.95rem;">${u.name || 'Sin Nombre'}</div>
+                                ${u.membership === 'somospadel_bcn' ? '<span style="font-size:0.6rem; background: #ccff00; color:black; padding: 2px 6px; border-radius:4px; font-weight:800;">COMUNIDAD BCN</span>' : ''}
                                 ${isPending ? '<span style="font-size:0.55rem; background: #ff9800; color:black; padding: 2px 5px; border-radius:4px; font-weight:800; letter-spacing:1px; animation: blink 1.5s infinite;">SOLICITUD</span>' : ''}
                             </div>
-                            <div style="font-size: 0.7rem; font-weight: 500; color: ${isSuper ? '#FFD700' : (u.role === 'admin_player' ? 'var(--primary)' : 'var(--text-muted)')};">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: ${isSuper ? '#d97706' : (u.role === 'admin_player' ? '#2563eb' : '#475569')};">
                                 ${roleBadge}
                             </div>
                         </div>
@@ -120,8 +120,8 @@ window.AdminViews.users = async function () {
 
                 <td>
                     <div style="display:flex; align-items:center; gap:0.8rem;">
-                         <span style="color: var(--primary); font-family: 'Outfit'; font-weight: 600;">${u.phone || '-'}</span>
-                         <button onclick="window.openWhatsAppActions('${safePhone}', '')" title="Abrir Chat de WhatsApp" style="cursor:pointer; background: rgba(37, 211, 102, 0.1); color: #25D366; border: 1px solid #25D366; padding: 6px 12px; border-radius: 8px; font-weight: 700; display: flex; align-items: center; gap: 6px; font-size: 0.75rem; transition: all 0.2s;">
+                         <span style="color: #0f172a; font-family: 'Outfit'; font-weight: 700;">${u.phone || '-'}</span>
+                         <button onclick="window.openWhatsAppActions('${safePhone}', '')" title="Abrir Chat de WhatsApp" style="cursor:pointer; background: rgba(37, 211, 102, 0.1); color: #16a34a; border: 1px solid #25D366; padding: 6px 12px; border-radius: 8px; font-weight: 700; display: flex; align-items: center; gap: 6px; font-size: 0.75rem; transition: all 0.2s;">
                             <span style="font-size: 1rem;">💬</span>
                          </button>
                     </div>
@@ -188,29 +188,29 @@ window.AdminViews.users = async function () {
     content.innerHTML = `
         <div class="glass-card-enterprise" style="padding: 0; overflow: hidden;">
             <div style="padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: var(--border-pro); flex-wrap: wrap; gap: 1rem;">
-                <h3 style="margin:0;">GOBERNANZA DE JUGADORES <span style="color:var(--text-muted); font-size: 0.8rem; margin-left: 10px;">TOTAL: ${users.length}</span></h3>
+                <h3 style="margin:0; font-weight: 900; color: #0f172a;">GOBERNANZA DE JUGADORES <span style="color:var(--text-muted); font-size: 0.8rem; margin-left: 10px;">TOTAL: ${users.length}</span></h3>
                 <div style="display:flex; gap: 0.8rem; flex-wrap: wrap;">
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #107c10; color: #107c10; background: rgba(16, 124, 16, 0.05);" onclick="exportToExcel()">
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #16a34a; color: #16a34a; background: rgba(22, 163, 74, 0.05); font-weight: 800;" onclick="exportToExcel()">
                         📗 EXPORTAR EXCEL
                     </button>
                     <!-- NEW RESET BUTTON -->
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05);" onclick="batchUpdateTeamLevels()">
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #dc2626; color: #dc2626; background: rgba(220, 38, 38, 0.05); font-weight: 800;" onclick="batchUpdateTeamLevels()">
                         ⚠️ SYNC NIVELES EQ
                     </button>
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #3b82f6; color: #3b82f6; background: rgba(59, 130, 246, 0.05);" onclick="window.Actions.runRescue1101()">
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #2563eb; color: #2563eb; background: rgba(37, 99, 235, 0.05); font-weight: 800;" onclick="window.Actions.runRescue1101()">
                         🚑 RESCATAR PARTIDOS
                     </button>
                     <!-- NEW RECALC STATS BUTTON -->
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #eab308; color: #eab308; background: rgba(234, 179, 8, 0.05); margin-left: auto;" onclick="recalculateMatchesPlayed()">
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #d97706; color: #d97706; background: rgba(217, 119, 6, 0.05); margin-left: auto; font-weight: 800;" onclick="recalculateMatchesPlayed()">
                         🔄 REPARAR STATS
                     </button>
                     <!-- NEW GLOBAL RECALC BUTTON -->
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #CCFF00; color: #CCFF00; background: rgba(204, 255, 0, 0.05);" onclick="handleGlobalLevelRecalc()">
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #0f172a; color: #0f172a; background: #f8fafc; font-weight: 800;" onclick="handleGlobalLevelRecalc()">
                         🏆 RECALCULAR NIVELES (GLOBAL)
                     </button>
 
-                    <input type="text" id="global-search" placeholder="Buscar globalmente..." class="pro-input" style="width: 200px; padding: 0.5rem 1rem;" onkeyup="multiFilterUsers()">
-                    <button class="btn-primary-pro" style="padding: 0.5rem 1.5rem;" onclick="openCreateUserModal()">+ REGISTRAR</button>
+                    <input type="text" id="global-search" placeholder="Buscar globalmente..." class="pro-input" style="width: 200px; padding: 0.5rem 1rem; font-weight: 600; color: #0f172a; background: white;" onkeyup="multiFilterUsers()">
+                    <button class="btn-primary-pro" style="padding: 0.5rem 1.5rem; background: #ccff00; color: black; font-weight: 900;" onclick="openCreateUserModal()">+ REGISTRAR</button>
                 </div>
             </div>
             <div class="filters-row" style="padding: 1rem 2rem; background: rgba(255,255,255,0.02); display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 1fr 1fr; gap: 1rem; border-bottom: var(--border-pro);">
@@ -246,7 +246,7 @@ window.AdminViews.users = async function () {
                     <option value="red">🔴 Oxidado (Rojo)</option>
                     <option value="gray">⚪ Sin datos (Gris)</option>
                 </select>
-                <button class="btn-micro" onclick="resetFilters()" style="background: rgba(255,255,255,0.1);">Limpiar</button>
+                <button class="btn-micro" onclick="resetFilters()" style="background: #e2e8f0; color: #0f172a; font-weight: 800; border: 1px solid #cbd5e1;">LIMPIAR</button>
             </div>
             <table class="pro-table">
                 <thead>

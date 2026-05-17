@@ -21,10 +21,10 @@
 
             container.innerHTML = `
                 <div class="ranking-global-wrapper fade-in" style="
-                    background: #000;
+                    background: #f8fafc;
                     min-height: 100vh; 
                     font-family: 'Outfit', sans-serif; 
-                    color: white; 
+                    color: #0a192f; 
                     padding-bottom: 100px;
                     position: relative;
                     overflow-x: hidden;
@@ -43,7 +43,7 @@
                                     <div style="width: 10px; height: 10px; border-radius: 2px; background: #84cc16; box-shadow: 0 0 15px #84cc16;"></div>
                                     <span style="color: #64748b; font-size: 0.65rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">Somospadel World Tour</span>
                                 </div>
-                                <h1 style="font-weight: 950; font-size: 2.5rem; margin: 0; letter-spacing: -1.5px; color: #fff; line-height: 1.1;">
+                                <h1 style="font-weight: 950; font-size: 2.5rem; margin: 0; letter-spacing: -1.5px; color: #0a192f; line-height: 1.1;">
                                     RANKING <span style="background: linear-gradient(90deg, #CCFF00, #84cc16); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">PRO</span>
                                 </h1>
                             </div>
@@ -63,12 +63,11 @@
                     <!-- 3. MI RENDIMIENTO (High-Tech Card) -->
                     <div style="padding: 0 25px 30px; position: relative; z-index: 4;">
                         <div style="
-                            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-                            backdrop-filter: blur(20px);
-                            border: 1px solid rgba(255, 255, 255, 0.08);
+                            background: #ffffff;
+                            border: 1px solid #e2e8f0;
                             border-radius: 32px;
                             padding: 24px;
-                            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
                         ">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                                 ${(() => {
@@ -87,12 +86,12 @@
                     return `
                                         <div style="text-align: left; border-right: 1px solid rgba(255,255,255,0.05); padding-right: 15px;">
                                             <div style="font-size: 0.6rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">POSICIÓN ACTUAL</div>
-                                            <div style="font-size: 2rem; font-weight: 950; color: #fff; line-height: 1.2;">#${pos}</div>
+                                            <div style="font-size: 2rem; font-weight: 950; color: #0a192f; line-height: 1.2;">#${pos}</div>
                                             <div style="font-size: 0.7rem; color: #CCFF00; font-weight: 800;">TOP ${(pos / rankedData.length * 100).toFixed(0)}% EN ${this.currentCategory.toUpperCase()}</div>
                                         </div>
                                         <div style="text-align: left; padding-left: 5px;">
                                             <div style="font-size: 0.6rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">EFECTIVIDAD</div>
-                                            <div style="font-size: 2rem; font-weight: 950; color: #fff; line-height: 1.2;">${winRate}%</div>
+                                            <div style="font-size: 2rem; font-weight: 950; color: #0a192f; line-height: 1.2;">${winRate}%</div>
                                             <div style="font-size: 0.7rem; color: #64748b; font-weight: 800;"><i class="fas fa-fire" style="color:#ef4444;"></i> ${displayStats.won}W / ${displayStats.played - displayStats.won}L</div>
                                         </div>
                                     `;
@@ -102,10 +101,10 @@
                     </div>
 
                     <!-- STICKY HEADER: TABS + SEARCH -->
-                    <div style="position: sticky; top: 154px; z-index: 1001; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 15px 25px 20px;">
+                    <div style="position: sticky; top: 154px; z-index: 1001; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 15px 25px 20px;">
                         
                         <!-- Navigation Tabs -->
-                        <div style="background: rgba(255, 255, 255, 0.03); padding: 5px; border-radius: 20px; display: flex; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 15px;">
+                        <div style="background: #f1f5f9; padding: 5px; border-radius: 20px; display: flex; border: 1px solid #e2e8f0; margin-bottom: 15px;">
                             <button onclick="window.RankingView.switchView('americanas')" 
                                 style="flex: 1; padding: 12px; border-radius: 16px; border: none; font-weight: 950; transition: 0.3s; cursor: pointer; background: ${this.currentView === 'americanas' ? '#CCFF00' : 'transparent'}; color: ${this.currentView === 'americanas' ? 'black' : '#64748b'}; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px;">
                                 AMERICANAS
@@ -199,14 +198,14 @@
                                         width: ${size}; height: ${size}; 
                                         border-radius: 50%; 
                                         border: 3px solid ${color};
-                                        background: #111;
+                                        background: #ffffff;
                                         padding: 4px;
-                                        box-shadow: 0 15px 30px rgba(0,0,0,0.5), 0 0 20px ${color}22;
+                                        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
                                     ">
                                         <div style="
                                             width: 100%; height: 100%; 
                                             border-radius: 50%; 
-                                            background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#1a1a1a'};
+                                            background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#f1f5f9'};
                                             display: flex; align-items: center; justify-content: center;
                                             overflow: hidden;
                                         ">
@@ -220,12 +219,12 @@
                                         border-radius: 50%;
                                         display: flex; align-items: center; justify-content: center;
                                         font-weight: 950; font-size: 0.8rem;
-                                        border: 3px solid #000;
+                                        border: 3px solid #ffffff;
                                         box-shadow: 0 4px 10px rgba(0,0,0,0.5);
                                     ">${p.rank}</div>
                                 </div>
                                 <div style="text-align: center;">
-                                    <div style="font-weight: 950; font-size: 0.75rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 95px;" title="${p.name}">
+                                    <div style="font-weight: 950; font-size: 0.75rem; color: #0a192f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 95px;" title="${p.name}">
                                         ${p.name}
                                     </div>
                                     <div style="font-weight: 950; font-size: 0.75rem; color: ${color}; opacity: 0.9;">
@@ -323,13 +322,14 @@
 
             return `
                 <div style="
-                    background: rgba(255, 255, 255, 0.03);
+                    background: #ffffff;
                     border-radius: 20px;
                     padding: 14px 16px;
                     display: flex;
                     align-items: center;
                     gap: 12px;
-                    border: 1px solid rgba(255, 255, 255, 0.04);
+                    border: 1px solid #e2e8f0;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
                     animation: floatUp ${0.3 + (index * 0.05)}s ease-out both;
                     position: relative;
                     overflow: hidden;
@@ -347,9 +347,9 @@
                         <div style="
                             width: 52px; height: 52px; 
                             border-radius: 16px; 
-                            background: #111;
+                            background: #f1f5f9;
                             border: 2px solid ${isTop3 ? rankColor + '44' : 'rgba(255,255,255,0.05)'};
-                            background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#1a1a1a'};
+                            background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#f1f5f9'};
                             display: flex; align-items: center; justify-content: center;
                             overflow: hidden;
                         ">
@@ -361,7 +361,7 @@
                     <!-- Info Area -->
                     <div style="flex: 1; min-width: 0; z-index: 2;">
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <div style="font-weight: 950; font-size: 0.95rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <div style="font-weight: 950; font-size: 1.1rem; color: #0a192f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                 ${p.name}
                             </div>
                             <div style="font-size: 0.5rem; font-weight: 950; padding: 1px 6px; border-radius: 4px; background: ${badge.color}22; color: ${badge.color}; border: 1px solid ${badge.color}44; text-transform: uppercase; letter-spacing: 0.5px;">
@@ -369,9 +369,9 @@
                             </div>
                         </div>
                         
-                        <div style="margin-top: 4px; display: flex; align-items: center; gap: 8px;">
+                        <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
                             <div style="display: flex;">${starsHtml}</div>
-                            <span style="font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase;">
+                            <span style="font-size: 0.7rem; color: #475569; font-weight: 900; text-transform: uppercase;">
                                 LVL ${p.level.toFixed(2)}
                             </span>
                         </div>
@@ -384,11 +384,11 @@
                     </div>
 
                     <!-- Score Card -->
-                    <div style="text-align: right; background: ${isTop3 ? 'rgba(204, 255, 0, 0.08)' : 'rgba(255,255,255,0.02)'}; padding: 8px 14px; border-radius: 12px; min-width: 70px; border: 1px solid ${isTop3 ? 'rgba(204,255,0,0.1)' : 'transparent'}; z-index: 2;">
-                        <div style="font-weight: 950; font-size: 1.2rem; color: #fff; line-height: 1;">
+                    <div style="text-align: right; background: ${isTop3 ? 'rgba(204, 255, 0, 0.15)' : '#f8fafc'}; padding: 10px 16px; border-radius: 12px; min-width: 80px; border: 1px solid ${isTop3 ? '#72a80044' : '#e2e8f0'}; z-index: 2;">
+                        <div style="font-weight: 950; font-size: 1.35rem; color: #0a192f; line-height: 1;">
                             ${pStats.points}
                         </div>
-                        <div style="font-size: 0.55rem; color: #CCFF00; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 4px; opacity: 0.8;">
+                        <div style="font-size: 0.6rem; color: #72a800; font-weight: 950; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 4px;">
                             PUNTOS
                         </div>
                     </div>

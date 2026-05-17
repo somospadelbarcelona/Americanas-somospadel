@@ -227,18 +227,26 @@ window.resetRoundScores = async (americanaId, round) => {
     if (!confirm(`¿Reiniciar todos los resultados de la Ronda ${round}?`)) return;
     const matches = await FirebaseDB.matches.getByAmericana(americanaId);
     const roundMatches = matches.filter(m => m.round === parseInt(round));
-    await Promise.all(roundMatches.map(m => FirebaseDB.matches.update(m.id, { score_a: 0, score_b: 0, status: 'scheduled' })));
+    
+    const batch = window.db.batch();
+    const colRef = window.db.collection('matches');
+    roundMatches.forEach(m => batch.update(colRef.doc(m.id), { score_a: 0, score_b: 0, status: 'scheduled' }));
+    if (roundMatches.length > 0) await batch.commit();
+    
     renderMatchesForAmericana(americanaId, round);
 };
 
 window.simulateRoundScores = async (americanaId, round) => {
     const matches = await FirebaseDB.matches.getByAmericana(americanaId);
     const roundMatches = matches.filter(m => m.round === parseInt(round));
-    await Promise.all(roundMatches.map(m => {
+    const batch = window.db.batch();
+    const colRef = window.db.collection('matches');
+    roundMatches.forEach(m => {
         const sA = Math.floor(Math.random() * 7);
         const sB = Math.floor(Math.random() * 7);
-        return FirebaseDB.matches.update(m.id, { score_a: sA, score_b: sB, status: 'finished' });
-    }));
+        batch.update(colRef.doc(m.id), { score_a: sA, score_b: sB, status: 'finished' });
+    });
+    if (roundMatches.length > 0) await batch.commit();
 
     // Trigger Automation
     if (window.AmericanaService && window.AmericanaService.generateNextRound) {
@@ -253,11 +261,14 @@ window.simulateRoundScores = async (americanaId, round) => {
 window.simulateAllAmericanaMatches = async (americanaId) => {
     if (!confirm("¿Simular TODO el torneo con resultados aleatorios?")) return;
     const matches = await FirebaseDB.matches.getByAmericana(americanaId);
-    await Promise.all(matches.map(m => {
+    const batch = window.db.batch();
+    const colRef = window.db.collection('matches');
+    matches.forEach(m => {
         const sA = Math.floor(Math.random() * 7);
         const sB = Math.floor(Math.random() * 7);
-        return FirebaseDB.matches.update(m.id, { score_a: sA, score_b: sB, status: 'finished' });
-    }));
+        batch.update(colRef.doc(m.id), { score_a: sA, score_b: sB, status: 'finished' });
+    });
+    if (matches.length > 0) await batch.commit();
     renderMatchesForAmericana(americanaId, window.currentAdminRound);
 };
 

@@ -31,14 +31,15 @@
         static renderUpcomingMatch(ctx) {
             const timeUntil = this.getTimeUntil(ctx.matchTime);
             const urgencyClass = timeUntil < 60 ? 'urgent' : timeUntil < 180 ? 'soon' : 'today';
-            const accentColor = urgencyClass === 'urgent' ? '#FF2D55' : urgencyClass === 'soon' ? '#FF9500' : '#CCFF00';
+            const accentColor = urgencyClass === 'urgent' ? '#ef4444' : urgencyClass === 'soon' ? '#f59e0b' : '#72a800';
 
             return `
                 <div class="premium-glass-card upcoming fade-in" style="
                     border-left: 5px solid ${accentColor};
                     padding: 28px;
                     margin: 0 0 20px 0;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px ${accentColor}20;
+                    background: #ffffff;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
                     position: relative;
                     overflow: hidden;
                     animation: floatUp 0.6s ease-out;
@@ -62,7 +63,7 @@
                                 ${ctx.matchTime}
                             </div>
                             <div style="font-size: 1rem; color: #94a3b8; font-weight: 700; display: flex; align-items: center; gap: 6px;">
-                                <span style="color: white; opacity: 0.6;">HOY</span> • ${ctx.matchDay}
+                                <span style="color: #0a192f; opacity: 0.6;">HOY</span> • ${ctx.matchDay}
                             </div>
                         </div>
                         <div style="background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); text-align: center;">
@@ -78,7 +79,7 @@
                             </div>
                             <div style="flex: 1;">
                                 <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase;">Compañero</div>
-                                <div style="font-size: 1.1rem; font-weight: 950; color: white;">${ctx.partner || 'Por asignar'}</div>
+                                <div style="font-size: 1.1rem; font-weight: 950; color: #0a192f;">${ctx.partner || 'Por asignar'}</div>
                             </div>
                         </div>
                         <div style="height: 1px; background: rgba(255,255,255,0.04); margin: 14px 0;"></div>
@@ -88,7 +89,7 @@
                             </div>
                             <div style="flex: 1;">
                                 <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase;">Rivales</div>
-                                <div style="font-size: 1.1rem; font-weight: 950; color: white;">${ctx.opponents || 'Por asignar'}</div>
+                                <div style="font-size: 1.1rem; font-weight: 950; color: #0a192f;">${ctx.opponents || 'Por asignar'}</div>
                             </div>
                         </div>
                     </div>
@@ -136,14 +137,14 @@
         static renderVictoryCelebration(ctx) {
             return `
                 <div class="hero-card victory fade-in" style="
-                    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+                    background: #ffffff;
                     border-left: 5px solid #34C759;
                     border-radius: 24px;
                     padding: 32px;
                     margin: 0;
                     width: 100%;
                     box-sizing: border-box;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 30px rgba(52,199,89,0.2);
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
                     position: relative;
                     overflow: hidden;
                 ">
@@ -154,7 +155,7 @@
                         <div style="font-size: 1rem; font-weight: 800; color: #34C759; margin-bottom: 8px; letter-spacing: 2px; text-transform: uppercase;">
                             ¡VICTORIA ÉPICA!
                         </div>
-                        <div style="font-size: 4rem; font-weight: 950; color: white; margin-bottom: 15px; line-height: 1; letter-spacing: -2px;">
+                        <div style="font-size: 4rem; font-weight: 950; color: #0a192f; margin-bottom: 15px; line-height: 1; letter-spacing: -2px;">
                             ${ctx.scoreA} <span style="font-size: 2rem; opacity: 0.3;">-</span> ${ctx.scoreB}
                         </div>
                         <div style="font-size: 1rem; color: #94a3b8; font-weight: 700; margin-bottom: 25px;">
@@ -198,14 +199,14 @@
 
             return `
                 <div class="hero-card fade-in" onclick="HeroCardActions.enrollTournament('${ctx.tournamentId}')" style="
-                    background: #09090b;
+                    background: #ffffff;
                     border: 2px solid ${activeColor};
                     border-radius: 24px;
                     padding: 0;
                     margin: 0;
                     width: 100%;
                     box-sizing: border-box;
-                    box-shadow: 0 0 20px ${activeColor}40;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
                     position: relative;
                     overflow: hidden;
                     cursor: pointer;
@@ -238,7 +239,7 @@
                              <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🏆</div>
                         </div>
 
-                        <h2 style="color: white; font-weight: 950; font-size: 1.6rem; margin: 0 0 5px 0; line-height: 1; text-shadow: 0 0 20px ${activeColor}80;">
+                        <h2 style="color: #0a192f; font-weight: 950; font-size: 1.6rem; margin: 0 0 5px 0; line-height: 1;">
                             ${ctx.tournamentName || 'AMERICANA OPEN'}
                         </h2>
                          <div style="color: #94a3b8; font-size: 0.9rem; font-weight: 700; margin-bottom: 25px; display: flex; align-items: center; gap: 8px;">
@@ -277,24 +278,24 @@
         static renderWeekPreview(ctx) {
             return `
                 <div class="hero-card fade-in" style="
-                    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                    background: #ffffff;
                     border-left: 5px solid #3b82f6;
                     border-radius: 24px;
                     padding: 28px;
                     margin: 0;
                     width: 100%;
                     box-sizing: border-box;
-                    box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
                 ">
                     <div style="font-size: 0.7rem; font-weight: 900; color: #3b82f6; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px;">
                         📅 ESTA SEMANA
                     </div>
-                    <div style="font-size: 1.6rem; font-weight: 950; color: white; margin-bottom: 20px; letter-spacing: -0.5px;">
+                    <div style="font-size: 1.6rem; font-weight: 950; color: #0a192f; margin-bottom: 20px; letter-spacing: -0.5px;">
                         Tienes ${ctx.upcomingMatches} ${ctx.upcomingMatches === 1 ? 'partido' : 'partidos'}
                     </div>
                     
                     <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 16px; margin-bottom: 20px;">
-                        <div style="font-size: 0.9rem; font-weight: 800; color: white; margin-bottom: 6px;">
+                        <div style="font-size: 0.9rem; font-weight: 800; color: #0a192f; margin-bottom: 6px;">
                             Próximo: ${ctx.matchDay}
                         </div>
                         <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;">
@@ -334,7 +335,7 @@
                     right: 20px;
                     width: 50px;
                     height: 50px;
-                    background: rgba(15, 23, 42, 0.9);
+                    background: rgba(255, 255, 255, 0.95);
                     border: 1px solid rgba(59,130,246,0.3);
                     border-radius: 50%;
                     display: flex;

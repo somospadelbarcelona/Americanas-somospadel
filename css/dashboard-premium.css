@@ -4,12 +4,13 @@
  */
 
 :root {
-    --glass-bg: rgba(15, 23, 42, 0.7);
+    --glass-bg: rgba(15, 23, 42, 0.85);
     --glass-border: rgba(255, 255, 255, 0.1);
     --neon-green: #ccff00;
-    --neon-glow: 0 0 15px rgba(204, 255, 0, 0.4);
+    --neon-glow: 0 0 25px rgba(204, 255, 0, 0.5);
     --card-radius: 28px;
 }
+
 
 /* Base Glass Card */
 .premium-glass-card {

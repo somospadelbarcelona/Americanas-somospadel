@@ -47,33 +47,33 @@
                             border: 1px solid #E0E0E0;
                             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
                         ">
-                            <div style="font-size: 0.6rem; color: #888; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
+                            <div style="font-size: 0.6rem; color: #64748b; font-weight: 950; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
                                 NIVEL
                             </div>
-                            <div style="font-size: 2rem; font-weight: 900; color: #000; line-height: 1; margin-bottom: 4px;">
+                            <div style="font-size: 2.2rem; font-weight: 950; color: #0a192f; line-height: 1; margin-bottom: 4px; letter-spacing: -1px;">
                                 ${level}
                             </div>
-                            <div style="font-size: 0.65rem; color: #666; font-weight: 600;">
+                            <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">
                                 ${this.getLevelLabel(level)}
                             </div>
                         </div>
 
                         <!-- POSICIÓN -->
                         <div style="
-                            background: linear-gradient(135deg, #CCFF00 0%, #B8E600 100%);
+                            background: #f8fafc;
                             padding: 16px 12px;
                             border-radius: 16px;
                             text-align: center;
-                            box-shadow: 0 4px 12px rgba(204,255,0,0.25);
-                            border: 1px solid rgba(0,0,0,0.05);
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+                            border: 1px solid #e2e8f0;
                         ">
-                            <div style="font-size: 0.6rem; color: rgba(0,0,0,0.6); font-weight: 800; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
+                            <div style="font-size: 0.6rem; color: #64748b; font-weight: 950; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
                                 POSICIÓN
                             </div>
-                            <div style="font-size: 1.6rem; font-weight: 900; color: #000; line-height: 1; margin-bottom: 4px;">
+                            <div style="font-size: 1.8rem; font-weight: 950; color: #72a800; line-height: 1; margin-bottom: 4px;">
                                 #${position}
                             </div>
-                            <div style="font-size: 0.65rem; color: rgba(0,0,0,0.7); font-weight: 700;">
+                            <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">
                                 de ${totalPlayers}
                             </div>
                         </div>

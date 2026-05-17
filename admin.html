@@ -11,6 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control - App Somospadel BCN</title>
     <link rel="stylesheet" href="css/style.css?v=1002">
+    <link rel="stylesheet" href="css/global-light-fix.css?v=2.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -53,108 +54,65 @@
             padding: 3rem;
         }
 
-        /* --- 💎 FORCE WHITE TEXT IN ADMIN INTERFACE --- */
+        /* --- 💎 ENTERPRISE MATTE LIGHT THEME FOR ADMIN INTERFACE --- */
         :root {
-            --text: #ffffff !important;
-            --text-muted: #bbbbbb !important;
+            --text: #0f172a !important;
+            --text-muted: #475569 !important;
             --admin-sticky-top: 20px;
-            color-scheme: dark;
-            /* Indica al navegador que la página es oscura */
+            color-scheme: light;
         }
 
-        /* Fuerza a que TODO lo que no sea una excepción sea blanco */
-        html,
+        /* 🚨 FUERZA BRUTA DE TEXTO NEGRO/OSCURO EN TODA LA APP ADMIN 🚨 */
         body,
-        div,
-        span,
-        applet,
-        object,
-        iframe,
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6,
-        p,
-        blockquote,
-        pre,
-        a,
-        abbr,
-        acronym,
-        address,
-        big,
-        cite,
-        code,
-        del,
-        dfn,
-        em,
-        img,
-        ins,
-        kbd,
-        q,
-        s,
-        samp,
-        small,
-        strike,
-        strong,
-        sub,
-        sup,
-        tt,
-        var,
-        b,
-        u,
-        i,
-        center,
-        dl,
-        dt,
-        dd,
-        ol,
-        ul,
-        li,
-        fieldset,
-        form,
-        label,
-        legend,
-        table,
-        caption,
-        tbody,
-        tfoot,
-        thead,
-        tr,
-        th,
-        td,
-        article,
-        aside,
-        canvas,
-        details,
-        embed,
-        figure,
-        figcaption,
-        footer,
-        header,
-        hgroup,
-        menu,
-        nav,
-        output,
-        ruby,
-        section,
-        summary,
-        time,
-        mark,
-        audio,
-        video,
-        input,
-        select,
-        textarea {
-            color: #ffffff !important;
+        .app-shell,
+        .main-wrapper,
+        .workspace-area,
+        #content-area,
+        .sidebar-pro,
+        .sidebar-pro *,
+        .nav-menu,
+        .nav-item-pro,
+        .nav-text,
+        .pro-table,
+        .pro-table *,
+        .pro-table th,
+        .pro-table td,
+        .pro-table tr,
+        .pro-table-row,
+        .pro-table-row *,
+        .player-row,
+        .player-row *,
+        .glass-card-enterprise,
+        .glass-card-enterprise *,
+        .stat-value-pro,
+        .modal-content:not(.admin-login-card),
+        .modal-content:not(.admin-login-card) *,
+        .top-bar,
+        .top-title,
+        #page-title {
+            color: #0f172a !important;
+            text-shadow: none !important;
+        }
+
+        /* Excepción para cuando un botón de navegación está activo en el sidebar */
+        .sidebar-pro .nav-item-pro.active {
+            background: #ccff00 !important;
+            color: #000000 !important;
+            font-weight: 900 !important;
+            border-color: #000000 !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+        }
+        .sidebar-pro .nav-item-pro.active .nav-text,
+        .sidebar-pro .nav-item-pro.active .icon-box,
+        .sidebar-pro .nav-item-pro.active i {
+            color: #000000 !important;
         }
 
         /* Allow icons to have their own colors */
         i.fas,
         i.fab,
         i.far {
-            color: inherit !important;
+            color: inherit;
         }
 
         /* Labels priority fix */
@@ -163,7 +121,7 @@
         .modal-content label,
         .modal-content .form-group label,
         .compact-admin-form label {
-            color: #ffffff !important;
+            color: #0f172a !important;
             opacity: 1 !important;
             font-weight: 800 !important;
             font-size: 0.75rem !important;
@@ -176,149 +134,117 @@
         }
 
         /* Inputs & Selects priority fix */
-        .pro-input,
-        select.pro-input,
-        .pro-input-micro,
-        select.pro-input-micro,
-        .modal-content input,
-        .modal-content select,
-        .modal-content textarea,
-        #create-entreno-form input,
-        #create-entreno-form select {
-            color: #ffffff !important;
-            background: rgba(255, 255, 255, 0.07) !important;
-            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        input, select, textarea, .pro-input, .pro-input-micro,
+        .modal-content input, .modal-content select, .modal-content textarea,
+        #create-entreno-form input, #create-entreno-form select {
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
             height: 42px !important;
             padding: 8px 15px !important;
             font-size: 0.95rem !important;
             border-radius: 10px !important;
             width: 100% !important;
             font-family: 'Inter', sans-serif !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
         }
 
-        /* Force Select Icon White */
-        select.pro-input {
+        input:focus, select:focus, textarea:focus {
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
+            border-color: #3b82f6 !important;
+            background: #ffffff !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+        }
+
+        /* Force Select Icon Dark */
+        select {
             appearance: none !important;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230f172a'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") !important;
             background-repeat: no-repeat !important;
             background-position: right 12px center !important;
             background-size: 18px !important;
             padding-right: 40px !important;
         }
 
-        /* Dropdown options fix (Keep legible: Black on White) */
-        .pro-input option,
-        select.pro-input option,
-        .modal-content select option {
-            color: #000000 !important;
+        /* Dropdown options fix */
+        option {
+            color: #0f172a !important;
             background: #ffffff !important;
+            -webkit-text-fill-color: #0f172a !important;
             font-weight: 600 !important;
         }
 
         /* Placeholder */
-        .pro-input::placeholder,
-        input::placeholder {
-            color: rgba(255, 255, 255, 0.4) !important;
+        input::placeholder, textarea::placeholder {
+            color: #94a3b8 !important;
+            -webkit-text-fill-color: #94a3b8 !important;
         }
 
-        /* Headings & Text */
-        .modal-content h1,
-        .modal-content h2,
-        .modal-content h3,
+        /* Headings & Text en Modales (salvo login) */
+        .modal-content:not(.admin-login-card) h1,
+        .modal-content:not(.admin-login-card) h2,
+        .modal-content:not(.admin-login-card) h3,
         .top-title,
-        #page-title,
-        .glass-card-enterprise h3 {
-            color: #ffffff !important;
+        #page-title {
+            color: #0f172a !important;
             text-transform: uppercase !important;
             letter-spacing: 1px !important;
+            font-weight: 900 !important;
         }
 
-        /* Button Exception (Maintain original contrast) */
+        /* Tarjetas Premium en Modo Claro */
+        .glass-card-enterprise {
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+            border-radius: 20px !important;
+            color: #0f172a !important;
+        }
+
+        /* Excepción para la cabecera oscura del torneo en la vista de resultados */
+        .dashboard-header-pro,
+        .dashboard-header-pro div,
+        .dashboard-header-pro h1,
+        .dashboard-header-pro h2,
+        .dashboard-header-pro h3,
+        .dashboard-header-pro p {
+            color: #ffffff !important;
+            text-shadow: none !important;
+        }
+        .dashboard-header-pro button:not(.tab-btn) {
+            color: #ffffff !important;
+        }
+        .dashboard-header-pro .btn-primary-pro,
+        .dashboard-header-pro .btn-primary-pro * {
+            color: #000000 !important;
+        }
+        .dashboard-header-pro .tab-btn {
+            color: #ffffff !important;
+        }
+        .dashboard-header-pro .tab-btn.active {
+            color: #000000 !important;
+        }
+        .dashboard-header-pro select {
+            background: rgba(255,255,255,0.1) !important;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            border-color: rgba(255,255,255,0.2) !important;
+        }
+        .dashboard-header-pro select option {
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
+            background: #ffffff !important;
+        }
+
+        /* Button Exception */
         .btn-primary-pro,
         .btn-glow,
         .btn-primary-pro *,
         .btn-glow * {
             color: #000000 !important;
-        }
-
-        /* --- 🚀 MASSIVE WHITE TEXT REINFORCEMENT --- */
-        /* Targets almost everything inside content areas to avoid black text issues */
-        .modal-content div,
-        .modal-content span,
-        .modal-content p,
-        .modal-content td,
-        .modal-content th,
-        .modal-content strong,
-        .workspace-area div,
-        .workspace-area span,
-        .workspace-area p,
-        .workspace-area td,
-        .workspace-area th,
-        .player-row,
-        .player-row *,
-        input,
-        textarea,
-        .pro-input,
-        .pro-input * {
-            color: #ffffff !important;
-        }
-
-        /* --- 🃏 EXCEPTION: WHITE CARD THEME --- */
-        /* Forces black text on the white entreno cards */
-        .entreno-card-item,
-        .entreno-card-item div,
-        .entreno-card-item span,
-        .entreno-card-item strong,
-        .entreno-card-item p,
-        .entreno-card-item i:not(.fa-whatsapp):not(.fa-trash-alt):not(.fa-clone):not(.fa-pen):not(.fa-bullhorn) {
-            color: #000000 !important;
-            text-shadow: none !important;
-        }
-
-        /* Specific Black Select override */
-        .entreno-card-item select {
-            color: #000000 !important;
-            text-shadow: none !important;
-            opacity: 1 !important;
-        }
-
-        /* --- 🚨 FIX FOR PARTICIPANTS & WAITLIST READABILITY 🚨 --- */
-        #participants-list-entreno,
-        #participants-list-entreno div:not([style*="border-radius:50%"]),
-        #participants-list-entreno span,
-        #participants-list-entreno p,
-        #participants-list-entreno strong,
-        #waitlist-entreno,
-        #waitlist-entreno *,
-        #entreno-fixed-pairs-area,
-        #entreno-fixed-pairs-area * {
-            color: #000000 !important;
-            text-shadow: none !important;
-        }
-
-        /* Keep specific icon colors */
-        .entreno-card-item .fa-calendar-alt {
-            color: #60A5FA !important;
-        }
-
-        .entreno-card-item .fa-clock {
-            color: #A78BFA !important;
-        }
-
-        .entreno-card-item .fa-users {
-            color: #10B981 !important;
-        }
-
-        /* Special fix for placeholders to be visible but muted */
-        input::placeholder,
-        textarea::placeholder {
-            color: rgba(255, 255, 255, 0.5) !important;
-        }
-
-        /* Keep select options black for readability in the dropdown */
-        option {
-            color: #000000 !important;
-            background: #ffffff !important;
+            font-weight: 900 !important;
         }
 
         .btn-micro {
@@ -327,53 +253,23 @@
             font-weight: 800 !important;
             border-radius: 6px !important;
             cursor: pointer !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid #cbd5e1 !important;
             text-transform: uppercase !important;
             line-height: 1 !important;
             width: auto !important;
             display: inline-block !important;
             margin: 2px !important;
             transition: all 0.2s !important;
-            color: #fff !important;
+            color: #0f172a !important;
+            background: #f8fafc !important;
         }
 
         .btn-micro:hover {
-            background: rgba(255, 255, 255, 0.1) !important;
+            background: #e2e8f0 !important;
             transform: translateY(-1px) !important;
         }
-
-        /* --- 🚨 ULTIMATE WHITE TEXT OVERRIDE 🚨 --- */
-        input,
-        select,
-        textarea,
-        .pro-input,
-        .pro-input-micro,
-        input[type="text"],
-        input[type="date"],
-        input[type="time"],
-        input[type="number"],
-        input[type="tel"],
-        select option {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-            /* Para navegadores basados en Webkit/Chrome */
-        }
-
-        /* Asegurar que el texto que el usuario escribe sea blanco */
-        input:focus,
-        select:focus,
-        textarea:focus {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-        }
-
-        /* Mantener las opciones del desplegable legibles (Fondo blanco, texto negro al abrir) */
-        select option {
-            background-color: #ffffff !important;
-            color: #000000 !important;
-            -webkit-text-fill-color: #000000 !important;
-        }
     </style>
+
 
     <!-- SheetJS for Excel Export -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -485,9 +381,9 @@
 
                 <!-- 🏆 NEW: TOURNAMENTS MANAGEMENT -->
                 <button class="nav-item-pro" data-view="tournaments_mgmt" onclick="loadAdminView('tournaments_mgmt')"
-                        style="border: 1px solid rgba(255, 215, 0, 0.2); background: rgba(255, 215, 0, 0.05); margin-bottom: 0.5rem;">
-                    <span class="icon-box" style="color:#FFD700;"><i class="fas fa-trophy"></i></span>
-                    <span class="nav-text" style="color:white; font-weight:700;">Gestor de Torneos</span>
+                        style="border: 1px solid rgba(255, 215, 0, 0.4); background: rgba(255, 215, 0, 0.1); margin-bottom: 0.5rem;">
+                    <span class="icon-box" style="color:#d97706;"><i class="fas fa-trophy"></i></span>
+                    <span class="nav-text" style="font-weight:700;">Gestor de Torneos</span>
                 </button>
 
                 <button class="nav-item-pro nav-group-americana" data-view="simulator_empty"
@@ -498,20 +394,20 @@
 
                 <!-- NEW AUTOPILOT TAB -->
                 <button class="nav-item-pro" data-view="autopilot" onclick="loadAdminView('autopilot')"
-                    style="border:1px solid rgba(204,255,0,0.3); background:rgba(204,255,0,0.05); margin-bottom: 0.5rem;">
+                    style="border:1px solid rgba(204,255,0,0.6); background:rgba(204,255,0,0.2); margin-bottom: 0.5rem;">
                     <span class="icon-box"><i class="fas fa-wand-magic-sparkles"
-                            style="color:var(--brand-neon);"></i></span>
-                    <span class="nav-text" style="color:var(--brand-neon); font-weight:800;">AUTOPILOT 🤖</span>
+                            style="color:#0f172a;"></i></span>
+                    <span class="nav-text" style="color:#0f172a; font-weight:800;">AUTOPILOT 🤖</span>
                 </button>
 
                 <button class="nav-item-pro" data-view="analytics" onclick="loadAdminView('analytics')"
-                    style="border:1px solid rgba(0,212,255,0.3); background:rgba(0,212,255,0.05);">
-                    <span class="icon-box" style="color:#00d4ff;"><i class="fas fa-chart-pie"></i></span>
-                    <span class="nav-text" style="color:white; font-weight:700;">Smart Analytics</span>
+                    style="border:1px solid rgba(0,212,255,0.4); background:rgba(0,212,255,0.1);">
+                    <span class="icon-box" style="color:#0284c7;"><i class="fas fa-chart-pie"></i></span>
+                    <span class="nav-text" style="font-weight:700;">Smart Analytics</span>
                 </button>
 
                 <div
-                    style="margin: 15px 10px 5px 10px; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.3); font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
+                    style="margin: 15px 10px 5px 10px; padding: 10px; border-top: 1px solid #cbd5e1; color: #475569; font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
                     Módulo Entrenos</div>
 
                 <button class="nav-item-pro nav-group-entreno" data-view="entrenos_mgmt"
@@ -538,39 +434,39 @@
                 </button>
 
                 <div
-                    style="margin: 15px 10px 5px 10px; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.3); font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
+                    style="margin: 15px 10px 5px 10px; padding: 10px; border-top: 1px solid #cbd5e1; color: #475569; font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
                     Herramientas</div>
 
                 <button class="nav-item-pro" data-view="network_pulse" onclick="loadAdminView('network_pulse')"
-                    style="border:1px solid rgba(0, 227, 109, 0.3); background:rgba(0, 227, 109, 0.05); margin-bottom: 0.5rem;">
-                    <span class="icon-box"><i class="fas fa-tower-broadcast" style="color:#00E36D;"></i></span>
-                    <span class="nav-text" style="color:#00E36D; font-weight:800;">OP CENTER 🔬</span>
+                    style="border:1px solid rgba(0, 227, 109, 0.4); background:rgba(0, 227, 109, 0.1); margin-bottom: 0.5rem;">
+                    <span class="icon-box"><i class="fas fa-tower-broadcast" style="color:#059669;"></i></span>
+                    <span class="nav-text" style="color:#059669; font-weight:800;">OP CENTER 🔬</span>
                 </button>
 
                 <button class="nav-item-pro" data-view="database_health" onclick="loadAdminView('database_health')"
-                    style="border:1px solid rgba(204, 255, 0, 0.3); background:rgba(204, 255, 0, 0.05); margin-bottom: 0.5rem;">
-                    <span class="icon-box"><i class="fas fa-microscope" style="color:#CCFF00;"></i></span>
-                    <span class="nav-text" style="color:white; font-weight:700;">Diagnóstico & Limpieza 🔬</span>
+                    style="border:1px solid rgba(204, 255, 0, 0.6); background:rgba(204, 255, 0, 0.2); margin-bottom: 0.5rem;">
+                    <span class="icon-box"><i class="fas fa-microscope" style="color:#0f172a;"></i></span>
+                    <span class="nav-text" style="font-weight:700;">Diagnóstico & Limpieza 🔬</span>
                 </button>
 
                 <button class="nav-item-pro" data-view="fix_players" onclick="loadAdminView('fix_players')"
-                    style="border:1px solid rgba(255, 100, 0, 0.3); background:rgba(255, 100, 0, 0.05);">
-                    <span class="icon-box"><i class="fas fa-user-gear" style="color:#FF6400;"></i></span>
-                    <span class="nav-text" style="color:white; font-weight:700;">Reparar Jugadores 🔧</span>
+                    style="border:1px solid rgba(255, 100, 0, 0.4); background:rgba(255, 100, 0, 0.1);">
+                    <span class="icon-box"><i class="fas fa-user-gear" style="color:#ea580c;"></i></span>
+                    <span class="nav-text" style="font-weight:700;">Reparar Jugadores 🔧</span>
                 </button>
 
                 <!-- NEW: SYNC EVERYTHING BUTTON -->
                 <button class="nav-item-pro"
                     onclick="window.LevelAdjustmentService && window.LevelAdjustmentService.recalculateAllLevels()"
                     style="border:1px solid rgba(0, 212, 255, 0.4); background:rgba(0, 212, 255, 0.1); margin-top: 15px; border-radius: 14px; padding: 12px 15px; margin-bottom: 5px;">
-                    <span class="icon-box"><i class="fas fa-sync-alt fa-spin" style="color:#00d4ff;"></i></span>
-                    <span class="nav-text" style="color:white; font-weight:950; letter-spacing: 0.5px;">SINCRONIZAR TODO
+                    <span class="icon-box"><i class="fas fa-sync-alt fa-spin" style="color:#0284c7;"></i></span>
+                    <span class="nav-text" style="font-weight:950; letter-spacing: 0.5px;">SINCRONIZAR TODO
                         🔄</span>
                 </button>
 
                 <!-- 🤖 AI WEB SCRAPER INTEGRATION -->
                 <button class="nav-item-pro" onclick="syncSummapadelData(this)"
-                    style="border:1px solid rgba(204, 255, 0, 0.6); background:rgba(204, 255, 0, 0.1); border-radius: 14px; padding: 12px 15px; margin-bottom: 25px; cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 0 15px rgba(204,255,0,0.2);">
+                    style="border:1px solid rgba(204, 255, 0, 0.8); background:rgba(204, 255, 0, 0.3); border-radius: 14px; padding: 12px 15px; margin-bottom: 25px; cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 0 15px rgba(204,255,0,0.2);">
                     <div
                         style="position: absolute; top:0; left:-100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(204,255,0,0.5), transparent); animation: sweep 3s infinite;">
                     </div>
@@ -1318,8 +1214,8 @@
             <!-- AmericanaService duplicated above -->
 
             <!-- Logic Services (CORE) -->
-            <script src="js/fixed-pairs-logic.js?v=5000"></script>
-            <script src="js/rotating-pozo-logic.js?v=5003"></script>
+            <script src="js/fixed-pairs-logic.js?v=5012"></script>
+            <script src="js/rotating-pozo-logic.js?v=5012"></script>
             <script src="js/MatchMakingService.js?v=5003"></script>
             <script src="js/modules/logic/LevelAdjustmentService.js"></script>
             <script src="js/modules/common/LevelService.js?v=2001"></script>

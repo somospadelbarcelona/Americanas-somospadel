@@ -218,20 +218,20 @@
 
 .pp6-card {
     font-family: 'Inter', sans-serif;
-    margin: 8px 14px 12px;
-    border-radius: 24px;
-    background: linear-gradient(145deg, #0d1f0d 0%, #101820 50%, #0d1a10 100%);
-    border: 1px solid rgba(${accentRgb},0.2);
+    margin: 8px 14px 15px;
+    border-radius: 28px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     overflow: hidden;
     position: relative;
     animation: pp6-in 0.55s cubic-bezier(0.22,1,0.36,1) both;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(${accentRgb},0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.04);
 }
 
 /* Aurora blobs */
 .pp6-blob {
     position: absolute; border-radius: 50%;
-    pointer-events: none; filter: blur(50px); opacity: 0.15;
+    pointer-events: none; filter: blur(60px); opacity: 0.12;
 }
 
 /* Top shimmer line */
@@ -285,28 +285,27 @@
             <!-- Avatar with animated ring -->
             <div style="position:relative; flex-shrink:0;">
                 <div style="
-                    width: 50px; height: 50px; border-radius: 16px;
-                    background: linear-gradient(135deg, rgba(${accentRgb},0.15), rgba(${accentRgb},0.05));
-                    border: 2px solid rgba(${accentRgb},0.5);
+                    width: 55px; height: 55px; border-radius: 18px;
+                    background: #f8fafc;
+                    border: 2px solid #e2e8f0;
                     display: flex; align-items: center; justify-content: center;
-                    color: ${accent}; font-size: 1.1rem; font-weight: 900; letter-spacing: -1px;
-                    animation: pp6-glow 3s ease-in-out infinite;
-                    box-shadow: inset 0 0 20px rgba(${accentRgb},0.1);
+                    color: #0a192f; font-size: 1.25rem; font-weight: 950; letter-spacing: -1px;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.03);
                 ">${initials}</div>
                 <!-- Live dot -->
                 <div style="
                     position:absolute; bottom:-2px; right:-2px;
-                    width:12px; height:12px; border-radius:50%;
-                    background: #00e36d;
-                    border: 2px solid #0d1f0d;
-                    box-shadow: 0 0 8px #00e36d;
-                    animation: pp6-pulse 2s ease-in-out infinite;
+                    width:14px; height:14px; border-radius:50%;
+                    background: #25D366;
+                    border: 3px solid #ffffff;
+                    box-shadow: 0 0 10px rgba(37, 211, 102, 0.4);
+                    animation: pp6-pulse 2.5s ease-in-out infinite;
                 "></div>
             </div>
 
-            <div>
-                <div style="color:rgba(255,255,255,0.35); font-size:0.55rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">${greeting}</div>
-                <div style="color:white; font-size:1.5rem; font-weight:900; letter-spacing:-1px; line-height:1; text-shadow: 0 0 30px rgba(${accentRgb},0.3);">${firstName}</div>
+            <div style="margin-left: 5px;">
+                <div style="color: #64748b; font-size:0.6rem; font-weight:950; letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">${greeting}</div>
+                <div style="color: #0a192f; font-size:1.7rem; font-weight:950; letter-spacing:-1px; line-height:1;">${firstName}</div>
                 <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; align-items:center;">
                     <span style="
                         background: rgba(${accentRgb},0.1);
@@ -333,72 +332,67 @@
         <div onclick="window.Router?.navigate('ranking')"
              style="cursor:pointer; flex-shrink:0;">
             <div style="
-                background: linear-gradient(135deg, rgba(${accentRgb},0.12) 0%, rgba(${accentRgb},0.04) 100%);
-                border: 1.5px solid rgba(${accentRgb},0.35);
-                border-radius: 16px; padding: 10px 14px; text-align: center; min-width: 56px;
-                backdrop-filter: blur(10px);
+                background: #f8fafc;
+                border: 1.5px solid #e2e8f0;
+                border-radius: 20px; padding: 12px 16px; text-align: center; min-width: 60px;
                 transition: transform 0.2s;
                 position: relative; overflow: hidden;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.02);
             "
             onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                <!-- Shine sweep -->
-                <div style="position:absolute;top:0;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);animation:pp6-shine 3s ease-in-out infinite;pointer-events:none;"></div>
                 <div style="font-size:1.3rem; line-height:1;">${rankEmoji}</div>
-                <div style="color:${accent}; font-size:1.1rem; font-weight:900; line-height:1.2; margin-top:2px;">${rankLabel}</div>
-                <div style="color:rgba(255,255,255,0.25); font-size:0.42rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; margin-top:3px;">RANKING</div>
-                ${rivalName ? `<div style="color:rgba(255,255,255,0.2);font-size:0.38rem;margin-top:2px; white-space:nowrap;">vs ${rivalName}</div>` : ''}
+                <div style="color: #0a192f; font-size:1.2rem; font-weight:950; line-height:1.2; margin-top:2px;">${rankLabel}</div>
+                <div style="color: #64748b; font-size:0.42rem; font-weight:950; text-transform:uppercase; letter-spacing:1px; margin-top:3px;">RANKING</div>
             </div>
         </div>
     </div>
 
     <!-- ═══════════════ FORM DOTS ═══════════════ -->
     ${recentForm.length > 0 ? `
-    <div style="padding: 0 16px 12px; display:flex; align-items:center; gap:8px; position:relative; z-index:2;">
-        <span style="color:rgba(255,255,255,0.25); font-size:0.45rem; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; white-space:nowrap; min-width:36px;">Forma</span>
-        <div style="display:flex; gap:5px; flex:1;">
+    <div style="padding: 0 16px 15px; display:flex; align-items:center; gap:10px; position:relative; z-index:2;">
+        <span style="color: #64748b; font-size:0.5rem; font-weight:950; text-transform:uppercase; letter-spacing:1px; white-space:nowrap; min-width:40px;">Forma</span>
+        <div style="display:flex; gap:6px; flex:1;">
             ${recentForm.map((r, i) => `
             <div style="
-                width: 28px; height: 28px; border-radius: 50%;
-                background: ${r === 'W'
-                    ? 'linear-gradient(135deg, #00e36d, #00c95a)'
-                    : 'linear-gradient(135deg, #ff4466, #cc2244)'};
+                width: 30px; height: 30px; border-radius: 50%;
+                background: ${r === 'W' ? '#22c55e' : '#ef4444'};
                 display: flex; align-items: center; justify-content: center;
-                font-size: 0.5rem; font-weight: 900; color: white;
-                box-shadow: 0 4px 12px rgba(${r==='W'?'0,227,109':'255,68,102'},0.4);
+                font-size: 0.6rem; font-weight: 950; color: white;
+                box-shadow: 0 4px 10px rgba(${r==='W'?'34,197,94':'239,68,68'},0.2);
                 animation: pp6-dot 0.4s ${i * 0.08}s cubic-bezier(0.22,1,0.36,1) both;
-                border: 1.5px solid rgba(255,255,255,0.15);">
+                border: 2px solid #ffffff;">
                 ${r}
             </div>`).join('')}
         </div>
-        <span style="color:rgba(255,255,255,0.15); font-size:0.42rem; font-weight:700; white-space:nowrap;">${totalMatches} partidos</span>
-    </div>` : '<div style="height:8px; position:relative; z-index:2;"></div>'}
+        <span style="color: #94a3b8; font-size:0.5rem; font-weight:900; white-space:nowrap;">${totalMatches} PARTIDOS</span>
+    </div>` : '<div style="height:10px; position:relative; z-index:2;"></div>'}
 
     <!-- ═══════════════ DIVIDER ═══════════════ -->
-    <div style="height:1px; background:linear-gradient(90deg,transparent,rgba(${accentRgb},0.2),transparent); margin: 0 16px 12px; position:relative;z-index:2;"></div>
+    <div style="height:1px; background: #f1f5f9; margin: 0 16px 15px; position:relative; z-index:2;"></div>
 
     <!-- ═══════════════ NEXT EVENT ═══════════════ -->
     ${nextEvent ? `
-    <div style="padding: 0 16px 14px; position:relative; z-index:2;">
+    <div style="padding: 0 16px 16px; position:relative; z-index:2;">
         <div class="pp6-event-card" onclick="window.Router?.navigate('${nextEvent.route}')" style="
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.09);
-            border-radius: 18px; padding: 13px 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px; padding: 15px;
             display: flex; align-items: center; justify-content: space-between;
-            cursor: pointer;
-            backdrop-filter: blur(10px);">
+            cursor: pointer;">
             <div style="display:flex; align-items:center; gap:12px;">
                 <div style="
-                    width: 42px; height: 42px; border-radius: 13px; flex-shrink:0;
-                    background: linear-gradient(135deg, rgba(${accentRgb},0.15), rgba(${accentRgb},0.05));
-                    border: 1px solid rgba(${accentRgb},0.25);
-                    display:flex; align-items:center; justify-content:center; font-size:1.2rem;">
+                    width: 46px; height: 46px; border-radius: 14px; flex-shrink:0;
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    display:flex; align-items:center; justify-content:center; font-size:1.3rem;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
                     ${nextEvent.route === 'entrenos' ? '🏓' : '🏆'}
                 </div>
                 <div>
-                    <div style="color:rgba(255,255,255,0.3); font-size:0.42rem; font-weight:800; text-transform:uppercase; letter-spacing:2px; margin-bottom:3px;">Próximo evento</div>
-                    <div style="color:white; font-size:0.9rem; font-weight:900; line-height:1.2; letter-spacing:-0.3px;">${nextEvent.name.substring(0,24)}</div>
-                    <div style="display:flex; gap:8px; margin-top:5px; align-items:center; flex-wrap:wrap;">
-                        ${nextEvent.date ? `<span style="color:rgba(255,255,255,0.35);font-size:0.42rem;font-weight:700;">📅 ${nextEvent.date}</span>` : ''}
+                    <div style="color: #64748b; font-size:0.45rem; font-weight:950; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:4px;">Próximo evento</div>
+                    <div style="color: #0a192f; font-size:1rem; font-weight:950; line-height:1.2; letter-spacing:-0.4px;">${nextEvent.name.substring(0,24)}</div>
+                    <div style="display:flex; gap:10px; margin-top:6px; align-items:center; flex-wrap:wrap;">
+                        ${nextEvent.date ? `<span style="color: #94a3b8; font-size:0.5rem; font-weight:800;">📅 ${nextEvent.date}</span>` : ''}
                         <span style="
                             font-size: 0.42rem; font-weight: 900; padding: 2px 7px; border-radius: 6px;
                             ${nextEvent.spotsLeft > 2
@@ -414,60 +408,62 @@
             </div>
             ${nextEvent.isRegistered
                 ? `<div style="
-                    background:rgba(0,227,109,0.1);border:1px solid rgba(0,227,109,0.3);
-                    color:#00e36d;padding:7px 10px;border-radius:11px;
-                    font-size:0.45rem;font-weight:900;text-align:center;line-height:1.5;">
-                    ✅<br>Inscrito
+                    background: #f1f5f9; border: 1px solid #e2e8f0;
+                    color: #72a800; padding:8px 12px; border-radius:12px;
+                    font-size:0.55rem; font-weight:950; text-align:center; line-height:1.4;">
+                    ✅<br>INSCRITO
                   </div>`
                 : `<div onclick="event.stopPropagation();window.Router?.navigate('${nextEvent.route}')" style="
-                    background: ${accent}; color:#000; padding:10px 14px; border-radius:13px;
-                    font-size:0.6rem; font-weight:900; cursor:pointer; white-space:nowrap;
-                    box-shadow: 0 6px 20px rgba(${accentRgb},0.4);
+                    background: #72a800; color: #fff; padding:12px 18px; border-radius:15px;
+                    font-size:0.65rem; font-weight:950; cursor:pointer; white-space:nowrap;
+                    box-shadow: 0 8px 20px rgba(114, 168, 0, 0.2);
                     transition: transform 0.15s, box-shadow 0.15s;"
-                    onmouseover="this.style.transform='scale(1.06)';this.style.boxShadow='0 8px 28px rgba(${accentRgb},0.6)'"
-                    onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 6px 20px rgba(${accentRgb},0.4)'">
-                    IR →
+                    onmouseover="this.style.transform='scale(1.06)'"
+                    onmouseout="this.style.transform='scale(1)'">
+                    ENTRAR →
                   </div>`}
         </div>
     </div>` : `
     <div style="padding:0 16px 14px; position:relative; z-index:2;">
         <div onclick="window.Router?.navigate('entrenos')" style="
-            background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:18px;
-            padding:14px;text-align:center;cursor:pointer;">
-            <div style="color:rgba(255,255,255,0.2);font-size:0.6rem;font-weight:700;">Sin eventos próximos</div>
-            <div style="color:${accent};font-size:0.5rem;font-weight:900;margin-top:5px;">Ver entrenos →</div>
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px;
+            padding: 18px; text-align: center; cursor: pointer; transition: all 0.2s;"
+            onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+            <div style="font-size: 2rem; margin-bottom: 8px;">🏓</div>
+            <div style="color: #0a192f; font-size: 0.8rem; font-weight: 800;">Sin eventos próximos</div>
+            <div style="color: #72a800; font-size: 0.65rem; font-weight: 950; margin-top: 6px; text-decoration:underline;">Ver entrenos disponibles →</div>
         </div>
     </div>`}
 
     <!-- ═══════════════ STATS GRID ═══════════════ -->
-    <div style="padding: 0 16px 18px; display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:7px; position:relative; z-index:2;">
+    <div style="padding: 0 16px 20px; display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; position:relative; z-index:2;">
 
         <!-- VICTORIAS -->
         <div class="pp6-tile" onclick="window.Router?.navigate('profile')"
-             style="background:linear-gradient(145deg,rgba(0,200,100,0.1),rgba(0,200,100,0.04));border:1px solid rgba(0,200,100,0.2);animation:pp6-tile-in 0.4s 0.1s both;">
-            <div id="pp6-wins" style="color:#00e36d;font-size:1.5rem;font-weight:900;line-height:1;text-shadow:0 0 15px rgba(0,227,109,0.5);">0</div>
-            <div style="color:rgba(255,255,255,0.3);font-size:0.38rem;font-weight:800;margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;">Victorias</div>
+             style="background: #f8fafc; border: 1px solid #e2e8f0; animation: pp6-tile-in 0.4s 0.1s both;">
+            <div id="pp6-wins" style="color: #22c55e; font-size:1.6rem; font-weight:950; line-height:1;">0</div>
+            <div style="color: #64748b; font-size:0.4rem; font-weight:950; margin-top:5px; text-transform:uppercase; letter-spacing:0.5px;">Victoria</div>
         </div>
 
         <!-- DERROTAS -->
         <div class="pp6-tile" onclick="window.Router?.navigate('profile')"
-             style="background:linear-gradient(145deg,rgba(255,60,80,0.1),rgba(255,60,80,0.04));border:1px solid rgba(255,60,80,0.2);animation:pp6-tile-in 0.4s 0.18s both;">
-            <div id="pp6-losses" style="color:#ff4466;font-size:1.5rem;font-weight:900;line-height:1;text-shadow:0 0 15px rgba(255,68,102,0.5);">0</div>
-            <div style="color:rgba(255,255,255,0.3);font-size:0.38rem;font-weight:800;margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;">Derrotas</div>
+             style="background: #f8fafc; border: 1px solid #e2e8f0; animation: pp6-tile-in 0.4s 0.18s both;">
+            <div id="pp6-losses" style="color: #ef4444; font-size:1.6rem; font-weight:950; line-height:1;">0</div>
+            <div style="color: #64748b; font-size:0.4rem; font-weight:950; margin-top:5px; text-transform:uppercase; letter-spacing:0.5px;">Derrota</div>
         </div>
 
         <!-- WIN RATE -->
         <div class="pp6-tile" onclick="window.Router?.navigate('profile')"
-             style="background:linear-gradient(145deg,rgba(${accentRgb},0.1),rgba(${accentRgb},0.03));border:1px solid rgba(${accentRgb},0.2);animation:pp6-tile-in 0.4s 0.26s both;">
-            <div id="pp6-wr" style="color:${accent};font-size:1.25rem;font-weight:900;line-height:1;text-shadow:0 0 15px rgba(${accentRgb},0.5);">0%</div>
-            <div style="color:rgba(255,255,255,0.3);font-size:0.38rem;font-weight:800;margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;">Win Rate</div>
+             style="background: #f1f5f9; border: 1px solid #e2e8f0; animation: pp6-tile-in 0.4s 0.26s both; border-color: #72a800;">
+            <div id="pp6-wr" style="color: #72a800; font-size:1.35rem; font-weight:950; line-height:1;">0%</div>
+            <div style="color: #64748b; font-size:0.4rem; font-weight:950; margin-top:5px; text-transform:uppercase; letter-spacing:0.5px;">W. Rate</div>
         </div>
 
         <!-- TARJETA -->
         <div class="pp6-tile" onclick="window.PlayerView?.shareProfileCard?.()"
-             style="background:linear-gradient(145deg,rgba(100,80,255,0.1),rgba(100,80,255,0.04));border:1px solid rgba(100,80,255,0.2);animation:pp6-tile-in 0.4s 0.34s both;">
-            <div style="font-size:1.2rem;line-height:1;">🎴</div>
-            <div style="color:rgba(255,255,255,0.3);font-size:0.38rem;font-weight:800;margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;">Tarjeta</div>
+             style="background: #ffffff; border: 1px solid #e2e8f0; animation: pp6-tile-in 0.4s 0.34s both; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+            <div style="font-size:1.4rem; line-height:1;">🎴</div>
+            <div style="color: #64748b; font-size:0.4rem; font-weight:950; margin-top:5px; text-transform:uppercase; letter-spacing:0.5px;">Tarjeta</div>
         </div>
     </div>
 
@@ -497,14 +493,14 @@
         _skeleton() {
             return `
             <div style="
-                background:linear-gradient(145deg,#0d1f0d,#101820,#0d1a10);
-                border:1px solid rgba(204,255,0,0.1);border-radius:24px;
-                margin:8px 14px 12px;padding:28px 16px;min-height:220px;
-                display:flex;align-items:center;justify-content:center;
-                box-shadow:0 20px 60px rgba(0,0,0,0.7);">
+                background: #f8fafc;
+                border: 1px solid #e2e8f0; border-radius: 24px;
+                margin: 8px 14px 12px; padding: 28px 16px; min-height: 160px;
+                display: flex; align-items: center; justify-content: center;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
                 <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
-                    <i class="fas fa-circle-notch fa-spin" style="color:rgba(204,255,0,0.5);font-size:1.4rem;"></i>
-                    <span style="color:rgba(255,255,255,0.15);font-size:0.5rem;font-weight:800;text-transform:uppercase;letter-spacing:3px;">Cargando...</span>
+                    <i class="fas fa-circle-notch fa-spin" style="color:#72a800; font-size:1.4rem;"></i>
+                    <span style="color:#94a3b8; font-size:0.55rem; font-weight:800; text-transform:uppercase; letter-spacing:3px;">Cargando...</span>
                 </div>
             </div>`;
         }

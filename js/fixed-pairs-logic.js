@@ -198,24 +198,52 @@ const FixedPairsLogic = {
      * @returns {Array} - Partidos generados
      */
     generatePozoRound(pairs, roundNumber, maxCourts) {
-        console.log(`🎾 Generando ronda ${roundNumber} con sistema Pozo... (${pairs.length} parejas, ${maxCourts} pistas)`);
 
-        // Normalizar pistas: independientemente de current_court, asignar 1,1,2,2,...
-        const sortedPairs = [...pairs].sort((a, b) => (a.current_court || 1) - (b.current_court || 1));
 
-        // Reasignar courts secuencialmente para garantizar pistas correctas
-        sortedPairs.forEach((p, i) => {
-            p._assignedCourt = Math.floor(i / 2) + 1;
+        // Separate explicit and non‑explicit pairs
+        const explicitPairs = pairs.filter(p => p.is_explicit);
+        const nonExplicit = pairs.filter(p => !p.is_explicit);
+
+        // Prepare slot array: two slots per court
+        const totalSlots = maxCourts * 2;
+        const slots = new Array(totalSlots).fill(null);
+
+        // Helper to place a pair into its court slots, preserving existing court if possible
+        const placeInCourt = (pair) => {
+            const court = pair.current_court || pair.initial_court || 1;
+            const baseIdx = (court - 1) * 2;
+            if (!slots[baseIdx]) {
+                slots[baseIdx] = pair;
+            } else if (!slots[baseIdx + 1]) {
+                slots[baseIdx + 1] = pair;
+            } else {
+                // Court already full; fallback to first free slot later
+                // No action here
+            }
+        };
+
+        // First, place explicit pairs (they keep their courts)
+        explicitPairs.forEach(placeInCourt);
+
+        // Fill remaining empty slots with non‑explicit pairs sequentially
+        let nextIdx = 0;
+        nonExplicit.forEach(p => {
+            while (nextIdx < totalSlots && slots[nextIdx]) nextIdx++;
+            if (nextIdx < totalSlots) {
+                const courtNum = Math.floor(nextIdx / 2) + 1;
+                p.current_court = courtNum;
+                slots[nextIdx] = p;
+                nextIdx++;
+            }
         });
 
+        // Build matches from slots (pairs of two per court)
         const matches = [];
-
-        for (let i = 0; i < sortedPairs.length; i += 2) {
-            if (i + 1 < sortedPairs.length) {
-                const pairA = sortedPairs[i];
-                const pairB = sortedPairs[i + 1];
-                const courtNum = pairA._assignedCourt;
-
+        for (let i = 0; i < totalSlots; i += 2) {
+            const pairA = slots[i];
+            const pairB = slots[i + 1];
+            const courtNum = Math.floor(i / 2) + 1;
+            if (pairA && pairB) {
                 matches.push({
                     round: roundNumber,
                     court: courtNum,
@@ -231,23 +259,20 @@ const FixedPairsLogic = {
                     score_a: 0,
                     score_b: 0
                 });
-            } else {
-                // ⚡ NÚMERO IMPAR: última pareja recibe BYE (victoria automática)
-                const lonePair = sortedPairs[i];
-                const courtNum = lonePair._assignedCourt;
-                console.log(`🎯 BYE: ${lonePair.pair_name} descansa en Pista ${courtNum}`);
+            } else if (pairA && !pairB) {
+                // Bye for lone pair
                 matches.push({
                     round: roundNumber,
                     court: courtNum,
-                    pair_a_id: lonePair.id,
+                    pair_a_id: pairA.id,
                     pair_b_id: 'bye',
-                    team_a_ids: [lonePair.player1_id, lonePair.player2_id],
+                    team_a_ids: [pairA.player1_id, pairA.player2_id],
                     team_b_ids: [],
-                    team_a_names: [lonePair.player1_name, lonePair.player2_name],
+                    team_a_names: [pairA.player1_name, pairA.player2_name],
                     team_b_names: ['BYE', ''],
-                    teamA: lonePair.pair_name,
+                    teamA: pairA.pair_name,
                     teamB: 'BYE (Descansa)',
-                    status: 'finished',   // Auto-finish: no juegan, ganan automáticamente
+                    status: 'finished',
                     score_a: 6,
                     score_b: 0,
                     is_bye: true
@@ -281,7 +306,11 @@ const FixedPairsLogic = {
         // Initialize/Reset deduplication guard for this ranking cycle
         window._processedCourtsInRanking = new Set();
 
-        // Procesar resultados de la última ronda
+        // Identify explicit pairs (manual or partner-defined)
+        const explicitPairs = pairs.filter(p => p.is_explicit);
+
+
+        // Procesar resultados de la última ronda (solo sobre pares no explícitos)
         lastRoundMatches.forEach(match => {
             if (match.status === 'finished') {
                 const teamAIds = Array.isArray(match.team_a_ids) ? match.team_a_ids.map(String) : [];
@@ -365,25 +394,14 @@ const FixedPairsLogic = {
         });
 
         // --- CONSOLIDAR PISTAS: Lógica Pozo Correcta ---
-        // El sistema Pozo funciona así entre rondas:
-        //   Pista N ganador → Pista N-1 (sube, número menor es mejor)
-        //   Pista N perdedor → Pista N+1 (baja)
-        //   Ronda siguiente: Pista N tiene al ganador de Pista N+1 vs perdedor de Pista N-1
-        //
-        // Para garantizar esto sin conflictos, reconstruimos el orden
-        // desde los resultados del partido directamente.
-        //
-        // Ordenamos por: pista que ocupaban ANTES del movimiento (match.court) para
-        // reconstruir el bracket de la siguiente ronda.
-        // El orden de pistas para la próxima ronda es:
-        //   - Posición 1 (Pista 1): ganador de Pista 1 original
-        //   - Posición 2 (Pista 1): ganador de Pista 2 original (sube)
-        //   - Posición 3 (Pista 2): perdedor de Pista 1 original (baja)
-        //   - Posición 4 (Pista 2): ganador de Pista 3 original (sube)
-        //   - ... etc.
+        // Preserve explicit pairs courts after ranking update
+        explicitPairs.forEach(p => {
+            // Ensure explicit pairs keep their original court
+            p.current_court = p.current_court || p.initial_court || 1;
+        });
 
-        // Reconstruimos el orden a partir de los propios partidos de la ronda
-        // en lugar de depender de current_court (que puede tener colisiones).
+        // For non-explicit pairs, continue with existing logic
+        // Rebuild court assignments based on match results
         const matchesByCourtSorted = [...lastRoundMatches]
             .filter(m => m.status === 'finished')
             .sort((a, b) => parseInt(a.court) - parseInt(b.court));

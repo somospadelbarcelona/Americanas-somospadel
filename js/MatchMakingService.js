@@ -347,6 +347,10 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                 const existingSnap = await dbCol.where('americana_id', '==', eventId).where('round', '==', roundNum).get();
                 const existingCourts = new Set(existingSnap.docs.map(doc => parseInt(doc.data().court)));
 
+                // 🛡️ OPTIMIZATION: Use WriteBatch to prevent 429 errors when generating many courts
+                const batch = window.db.batch();
+                let batchCount = 0;
+
                 for (const m of matchesData) {
                     const court = parseInt(m.court);
                     if (existingCourts.has(court)) {
@@ -363,9 +367,18 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                         score_b: 0,
                         createdAt: new Date().toISOString()
                     };
-                    const result = await dbCol.add(payload);
-                    created.push({ id: result.id, ...payload });
+                    
+                    const newDocRef = dbCol.doc();
+                    batch.set(newDocRef, payload);
+                    created.push({ id: newDocRef.id, ...payload });
+                    batchCount++;
                 }
+
+                if (batchCount > 0) {
+                    await batch.commit();
+                    console.log(`✅ [BATCH] Created ${batchCount} matches safely without hitting rate limits.`);
+                }
+                
                 return created;
             },
 
@@ -381,6 +394,9 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                 const courtMap = {};
                 let deleted = 0;
 
+                // 🛡️ OPTIMIZATION: Use WriteBatch to prevent 429 limits during cleanup
+                const batch = window.db.batch();
+
                 for (const m of matches) {
                     const court = parseInt(m.court);
                     if (!courtMap[court]) {
@@ -395,10 +411,16 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
                         } else {
                             toDelete = m.id;
                         }
-                        await dbCol.doc(toDelete).delete();
+                        batch.delete(dbCol.doc(toDelete));
                         deleted++;
                     }
                 }
+                
+                if (deleted > 0) {
+                    await batch.commit();
+                    console.log(`🧹 [BATCH] Sanitized and deleted ${deleted} duplicate matches safely.`);
+                }
+                
                 return { deleted };
             },
 

@@ -1,9 +1,9 @@
-/**
+﻿/**
  * DashboardView.js [v40 CLEAN]
  * "Context-First" Mobile Dashboard
  * Designed for Clarity, Speed and Outdoor Use
  */
-console.log("✅ [v40] DashboardView Loaded Correctly");
+console.log("âœ… [v40] DashboardView Loaded Correctly");
 (function () {
     class DashboardView {
         constructor() {
@@ -15,10 +15,10 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 });
             }
 
-            // AUTO-REFRESH MOTOR: Renovación inteligente cada 5 minutos
+            // AUTO-REFRESH MOTOR: RenovaciÃ³n inteligente cada 5 minutos
             this.refreshInterval = setInterval(() => {
                 if (window.Router && window.Router.currentRoute === 'dashboard') {
-                    console.log("🔄 [AI Motor] Renovando noticias y eventos en tiempo real...");
+                    console.log("ðŸ”„ [AI Motor] Renovando noticias y eventos en tiempo real...");
                     this.renderLiveWidget();
                 }
             }, 5 * 60 * 1000); // 5 min
@@ -27,7 +27,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             if (window.Store) {
                 window.Store.subscribe('currentUser', (user) => {
                     if (user && window.Router && window.Router.currentRoute === 'dashboard') {
-                        console.log("👤 [DashboardView] User synced, refreshing live content...");
+                        console.log("ðŸ‘¤ [DashboardView] User synced, refreshing live content...");
                         this.buildContext(user).then(context => this.loadLiveWidgetContent(context));
                     }
                 });
@@ -35,7 +35,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
         }
 
         async render(data) {
-            console.log("📊 [DashboardView] Rendering started...", data);
+            console.log("ðŸ“Š [DashboardView] Rendering started...", data);
             const container = document.getElementById('content-area');
             if (!container) return;
 
@@ -50,436 +50,180 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             container.innerHTML = `
                 <!-- MAIN DASHBOARD SCROLL CONTENT -->
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
-                    background: #f0f4f8 !important;
+                    background: #f1f5f9 !important;
                     min-height: 100vh;
                     padding-top: 0px !important;">
-                    
-                    <!-- 🏓 PADEL PULSE — Personalized live widget (TOP POSITION) -->
-                    <div id="padel-pulse-widget-root" style="animation: floatUp 0.5s ease-out forwards;"></div>
 
-                    <!-- 🚀 PLAYER PROGRESS HUB (Light & Sharp Redesign) -->
-                    <div id="player-progress-hub" class="glass-card animate-float" style="margin: 0 15px 15px; border-left: 5px solid #99cc00; padding: 25px;">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <!-- â‘  WELCOME HERO â€” PadelPulse -->
+                    <div id="padel-pulse-widget-root" style="animation: floatUp 0.4s ease-out forwards;"></div>
+
+                    <!-- â‘¡ ACCIONES RÃPIDAS -->
+                    <div style="margin: 0 15px 16px; display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:10px;">
+                        <div onclick="window.Router.navigate('americanas')" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 8px; text-align:center; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.03);" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                            <div style="font-size:1.5rem; margin-bottom:6px;">ðŸ†</div>
+                            <div style="font-size:0.55rem; font-weight:950; color:#0a192f; text-transform:uppercase; letter-spacing:0.5px;">Americ.</div>
+                        </div>
+                        <div onclick="window.Router.navigate('ranking')" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 8px; text-align:center; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.03);" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                            <div style="font-size:1.5rem; margin-bottom:6px;">ðŸ“Š</div>
+                            <div style="font-size:0.55rem; font-weight:950; color:#0a192f; text-transform:uppercase; letter-spacing:0.5px;">Ranking</div>
+                        </div>
+                        <div onclick="window.Router.navigate('equipos')" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 8px; text-align:center; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.03);" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                            <div style="font-size:1.5rem; margin-bottom:6px;">ðŸ‘¥</div>
+                            <div style="font-size:0.55rem; font-weight:950; color:#0a192f; text-transform:uppercase; letter-spacing:0.5px;">Equipos</div>
+                        </div>
+                        <div onclick="window.Router.navigate('profile')" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 8px; text-align:center; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.03);" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                            <div style="font-size:1.5rem; margin-bottom:6px;">ðŸŽ´</div>
+                            <div style="font-size:0.55rem; font-weight:950; color:#0a192f; text-transform:uppercase; letter-spacing:0.5px;">Perfil</div>
+                        </div>
+                    </div>
+
+                    <!-- â‘¢ MI NIVEL â€” Stats compactas -->
+                    <div id="player-progress-hub" style="margin: 0 15px 16px; background: #ffffff; border-radius: 22px; border: 1px solid #e2e8f0; padding: 18px 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.03); display:flex; align-items:center; gap:16px;">
+                        <div style="flex:1; display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; text-align:center;">
                             <div>
-                                <div style="display: inline-block; background: #0a192f; color: #fff; padding: 4px 12px; border-radius: 8px; font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;"><i class="fas fa-bolt"></i> ESTADO DEL JUGADOR</div>
-                                <h1 style="font-size: 1.8rem; margin-top: 12px; font-weight: 950; color: #0a192f; letter-spacing: -1px;">${user ? user.name.toUpperCase() : 'INVITADO'}</h1>
+                                <div style="font-size:0.5rem; color:#64748b; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Nivel</div>
+                                <div style="font-size:1.6rem; font-weight:950; color:#0a192f; line-height:1;">${userLevel}</div>
                             </div>
-                            <div style="text-align:right;">
-                                <div style="font-size:0.65rem; color:#64748b; font-weight:900; text-transform: uppercase; letter-spacing: 1px;">Nivel Actual</div>
-                                <div style="font-size: 2.2rem; font-weight: 950; color: #0a192f; line-height: 1;">${userLevel}</div>
+                            <div style="border-left:1px solid #f1f5f9; border-right:1px solid #f1f5f9;">
+                                <div style="font-size:0.5rem; color:#64748b; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Ranking</div>
+                                <div style="font-size:1.6rem; font-weight:950; color:#0a192f; line-height:1;">#${user ? (user.ranking_pos || 'â€”') : 'â€”'}</div>
                             </div>
-                        </div>
-                        
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px;">
-                            <div style="background:#f8fafc; padding:18px; border-radius:20px; border:1px solid #e2e8f0;">
-                                <div style="font-size:0.6rem; color:#64748b; font-weight:900; text-transform: uppercase; letter-spacing: 1px;">Ranking Global</div>
-                                <div style="font-size:1.6rem; font-weight:950; color:#0a192f; margin-top: 4px;">#${user ? (user.ranking_pos || '120') : '--'}</div>
-                            </div>
-                            <div style="background:#f8fafc; padding:18px; border-radius:20px; border:1px solid #e2e8f0;">
-                                <div style="font-size:0.6rem; color:#64748b; font-weight:900; text-transform: uppercase; letter-spacing: 1px;">Partidas Totales</div>
-                                <div style="font-size:1.6rem; font-weight:950; color:#0a192f; margin-top: 4px;">${user ? (user.total_matches || '24') : '0'}</div>
+                            <div>
+                                <div style="font-size:0.5rem; color:#64748b; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Partidas</div>
+                                <div style="font-size:1.6rem; font-weight:950; color:#0a192f; line-height:1;">${user ? (user.total_matches || '0') : '0'}</div>
                             </div>
                         </div>
-
-                        <div style="margin-top: 18px; background: rgba(153, 204, 0, 0.1); border-radius: 12px; padding: 12px 18px; font-size: 0.75rem; color: #0a192f; font-weight: 700; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(153, 204, 0, 0.2);">
-                            <i class="fas fa-info-circle" style="color:#72a800;"></i> Siguiente nivel: <span style="font-weight: 900;">${(parseFloat(userLevel) + 0.1).toFixed(1)}</span> — Necesitas <span style="font-weight: 900;">3 victorias</span> más.
+                        <div onclick="window.Router.navigate('profile')" style="flex-shrink:0; background:#5a8a00; color:#fff; padding:12px 16px; border-radius:14px; font-size:0.65rem; font-weight:950; cursor:pointer; text-align:center; white-space:nowrap; box-shadow:0 4px 12px rgba(90,138,0,0.3);">
+                            MI<br>PERFIL â†’
                         </div>
                     </div>
 
-                    <!-- 🏆 MVP SPOTLIGHT & TRENDING PLAYERS (Light & Sharp) -->
-                    <div id="ranking-spotlight-root" style="margin: 0 15px 15px; animation: floatUp 0.8s ease-out forwards;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 5px;">
-                            <div style="font-weight:950; font-size:0.8rem; color:#0a192f; letter-spacing:0.5px; text-transform:uppercase;">🏆 RANKING ELITE (TOP 10)</div>
-                            <div style="font-size:0.7rem; color:#00d2ff; font-weight:900; cursor:pointer;" onclick="window.Router.navigate('ranking')">VER TODOS <i class="fas fa-chevron-right"></i></div>
-                        </div>
-
-                        <!-- MVP SPOTLIGHT CARD -->
-                        <div id="mvp-spotlight-container" style="margin-bottom: 12px;"></div>
-
-                        <div id="trending-players-list" style="display:flex; gap:12px; overflow-x:auto; padding-bottom:10px; scrollbar-width:none;">
-                            <!-- Cargado dinámicamente -->
-                            <div class="loader-mini" style="margin:20px auto;"></div>
-                        </div>
-                    </div>
-
-                    <!-- NEW CONTEXT-FIRST ARCHITECTURE -->
-                    
-                    <!-- 4. PULSE STORIES (Instagram Style) -->
-                    <div id="story-feed-root" style="margin: 0 !important; animation: floatUp 0.8s ease-out forwards; padding-top: 2px;">
-                        <!-- Cargado vía JS (StoryFeedWidget) -->
-                    </div>
-
-
-                    <!-- 6. NEWS MARQUEE (LIGHT CRYSTAL ENGINE) -->
-                    <div id="registration-widget-root" style="
-                        background: #ffffff;
-                        border-radius: 28px;
-                        margin: 2px 15px 15px !important;  
-                        padding: 20px 0 !important; 
-                        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-                        border: 1px solid #e1e8f0;
-                        z-index: 10;
-                        animation: floatUp 0.8s ease-out forwards;
-                        perspective: 1200px;
-                        overflow: hidden;
-                    ">
-
-                        <div class="live-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px !important; padding: 0 20px; position:relative; z-index:20;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <div style="
-                                    background: #0a192f; 
-                                    color: #fff; 
-                                    padding: 6px 16px; 
-                                    border-radius: 12px; 
-                                    font-size: 0.75rem; 
-                                    font-weight: 950; 
-                                    letter-spacing: 1px;
-                                    text-transform: uppercase;
-                                    display:flex; align-items:center; gap:6px;
-                                ">
-                                    <i class="fas fa-cube"></i> NOTICIAS
-                                </div>
-                                <span style="font-size: 0.75rem; font-weight: 900; color: #0a192f; letter-spacing: 1px;">SOMOSPADEL <span style="color:#99cc00;">BCN</span></span>
+                    <!-- â‘£ EN DIRECTO â€” Carrusel eventos/noticias -->
+                    <div id="registration-widget-root" style="margin: 0 0 16px !important; animation: floatUp 0.6s ease-out forwards;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 20px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div style="width:8px; height:8px; background:#ef4444; border-radius:50%; animation:pulseDot 1.5s infinite;"></div>
+                                <span style="font-size:0.75rem; font-weight:950; color:#0a192f; letter-spacing:1px; text-transform:uppercase;">En Directo</span>
                             </div>
+                            <span onclick="window.Router.navigate('americanas')" style="font-size:0.65rem; color:#5a8a00; font-weight:950; cursor:pointer;">Ver todo â†’</span>
                         </div>
-                        
-                        <div id="live-scroller-content" style="
-                            width: 100%; 
-                            position: relative; 
-                            transform-style: preserve-3d;
-                            min-height: 220px;
-                        ">
+                        <div id="live-scroller-content" style="width:100%; position:relative; overflow:hidden;">
                             <style>
-                                @keyframes marqueeNews {
-                                    0% { transform: translate3d(0, 0, 0); }
-                                    100% { transform: translate3d(-50%, 0, 0); }
-                                }
-                                .news-marquee-track {
-                                    display: flex;
-                                    gap: 12px;
-                                    width: max-content;
-                                    animation: marqueeNews 45s linear infinite;
-                                    padding: 15px 15px 25px;
-                                    will-change: transform;
-                                    backface-visibility: hidden;
-                                }
-                                /* Only pause on desktop hover to avoid mobile sticking */
-                                @media (hover: hover) {
-                                    .news-marquee-track:hover {
-                                        animation-play-state: paused;
-                                    }
-                                }
-                                .registration-ticker-card {
-                                    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-                                    flex-shrink: 0;
-                                }
-                                
-                                /* 3D HOLO ENGINE STYLES */
-                                @keyframes marquee3D {
-                                    0% { transform: rotateY(0deg) translateZ(0); }
-                                    100% { transform: rotateY(-360deg) translateZ(0); }
-                                }
-                                @keyframes hologramFloat {
-                                    0%, 100% { transform: translateY(0) scale(1); filter: brightness(1); }
-                                    50% { transform: translateY(-5px) scale(1.02); filter: brightness(1.2); }
-                                }
-                                .scene-3d-track {
-                                    display: flex;
-                                    gap: 30px;
-                                    padding-left: 50px;
-                                    width: max-content;
-                                    transform-style: preserve-3d;
-                                    animation: scroll3d 60s linear infinite;
-                                }
-                                @keyframes scroll3d {
-                                    0% { transform: translateX(0) rotateX(5deg) rotateY(2deg); }
-                                    50% { transform: translateX(-50%) rotateX(0deg) rotateY(-2deg); }
-                                    100% { transform: translateX(-100%) rotateX(5deg) rotateY(2deg); }
-                                }
-                                .infinite-scroll-wrapper {
-                                    display: flex;
-                                    width: max-content;
-                                    animation: infiniteScroll 40s linear infinite;
-                                }
-                                @keyframes infiniteScroll {
-                                    0% { transform: translateX(0); }
-                                    100% { transform: translateX(-50%); }
-                                }
-                                .holo-card {
-                                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-                                    transform: rotateY(15deg);
-                                    transform-origin: left center;
-                                    backdrop-filter: blur(5px);
-                                    -webkit-backdrop-filter: blur(5px);
-                                }
-                                .holo-card:hover {
-                                    transform: rotateY(0deg) scale(1.05) translateZ(20px);
-                                    z-index: 50;
-                                    box-shadow: 0 25px 50px rgba(0,0,0,0.8) !important;
-                                    border-color: #fff !important;
-                                    filter: brightness(1.2);
-                                }
+                                @keyframes marqueeNews { 0% { transform: translate3d(0,0,0); } 100% { transform: translate3d(-50%,0,0); } }
+                                .news-marquee-track { display:flex; gap:12px; width:max-content; animation:marqueeNews 45s linear infinite; padding:5px 15px 15px; will-change:transform; }
+                                @media (hover: hover) { .news-marquee-track:hover { animation-play-state: paused; } }
+                                .registration-ticker-card { transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); flex-shrink:0; }
+                                .infinite-scroll-wrapper { display:flex; width:max-content; animation:infiniteScroll 40s linear infinite; }
+                                @keyframes infiniteScroll { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
+                                .holo-card { transition: all 0.3s ease; }
+                                .holo-card:active { transform: scale(0.97); }
                             </style>
-                            <div id="live-scroller-inner" class="infinite-scroll-wrapper" style="transform-style: preserve-3d; padding-left: 20px;">
-                                <!-- SKELETON LOADER -->
-                                ${Array(4).fill(0).map((_, i) => `
-                                    <div style="
-                                        min-width: 280px; height: 160px; 
-                                        background: #f8fafc; 
-                                        border-radius: 24px; 
-                                        border: 1px solid #e2e8f0; 
-                                        margin-right: 25px;
-                                        display: flex; align-items: center; justify-content: center;
-                                    ">
-                                        <i class="fas fa-cube fa-spin" style="color:#e2e8f0; font-size:2rem;"></i>
+                            <div id="live-scroller-inner" class="infinite-scroll-wrapper" style="padding-left:15px;">
+                                ${Array(4).fill(0).map(() => `
+                                    <div style="min-width:260px; height:155px; background:#ffffff; border-radius:22px; border:1px solid #e2e8f0; margin-right:12px; display:flex; align-items:center; justify-content:center;">
+                                        <i class="fas fa-circle-notch fa-spin" style="color:#e2e8f0; font-size:1.5rem;"></i>
                                     </div>
                                 `).join('')}
                             </div>
                         </div>
                     </div>
 
-
-
-
-                    <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - CLEAN INTERACTIVE -->
-                    <div id="merch-widget-root" onclick="window.open('https://wa.me/34649219350?text=Hola!%20Me%20interesa%20la%20sudadera%20de%20Somos%20Padel%20BCN', '_blank')" style="
-                        margin: 2px 15px 8px !important; 
-                        background: radial-gradient(circle at 10% 20%, #60a5fa 0%, #1e40af 100%);
-                        border-radius: 24px;
-                        padding: 0;
-                        position: relative;
-                        overflow: hidden;
-                        box-shadow: 0 15px 40px rgba(30, 60, 114, 0.4);
-                        border: 1px solid rgba(255, 255, 255, 0.2);
-                        cursor: pointer;
-                        animation: floatUp 0.8s ease-out forwards;
-                        display: flex;
-                        height: 160px;
-                        transition: transform 0.2s;
-                    " onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
-                        
-                        <!-- BG Effect -->
-                        <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.15; background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 15px 15px;"></div>
-                        <div style="position: absolute; right: -50px; bottom: -50px; width: 200px; height: 200px; background: #ffffff; filter: blur(60px); opacity: 0.2;"></div>
-                        <div style="position: absolute; left: -20px; top: -20px; width: 100px; height: 100px; background: #CCFF00; filter: blur(50px); opacity: 0.3;"></div>
-
-                        <!-- Image Section (Left) -->
-                        <div style="width: 45%; position: relative; display: flex; align-items: center; justify-content: center; z-index: 5;">
-                             <img src="./img/sudadera.jpg" 
-                                  onerror="this.style.display='none'" 
-                                  style="width: 110%; height: 110%; object-fit: contain; transform: rotate(-5deg) scale(1.2) translateY(5px); filter: drop-shadow(0 15px 25px rgba(0,0,0,0.4));">
+                    <!-- â‘¤ ACTIVIDAD RECIENTE -->
+                    <div id="activity-feed-root" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:22px; margin:0 15px 16px !important; padding:20px !important; box-shadow:0 4px 16px rgba(0,0,0,0.03); animation:floatUp 0.7s ease-out forwards;">
+                        <div style="font-weight:950; font-size:0.8rem; color:#0a192f; text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+                            <i class="fas fa-rss" style="color:#5a8a00; font-size:1rem;"></i> ACTIVIDAD RECIENTE
                         </div>
+                        <div id="activity-feed-content" style="display:flex; flex-direction:column; gap:10px;"></div>
+                    </div>
 
-                        <!-- Content Section (Right) -->
-                        <div style="width: 55%; padding: 15px 20px 15px 10px; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 2;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
-                                <div style="
-                                    background: #CCFF00; 
-                                    color: #000; 
-                                    font-size: 0.65rem; 
-                                    font-weight: 1000; 
-                                    padding: 4px 10px; 
-                                    border-radius: 8px; 
-                                    text-transform: uppercase;
-                                    letter-spacing: 0.5px;
-                                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                                ">NUEVA COLECCIÓN</div>
+                    <!-- â‘¥ RANKING SPOTLIGHT -->
+                    <div id="ranking-spotlight-root" style="margin:0 15px 16px; animation:floatUp 0.8s ease-out forwards;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px;">
+                            <div style="font-weight:950; font-size:0.8rem; color:#0a192f; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:1rem;">ðŸ†</span> TOP 10 ELITE
                             </div>
-                            
-                            <h3 style="margin: 0; font-size: 1.2rem; color: white; font-weight: 900; line-height: 1; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">
-                                SUDADERA
-                            </h3>
-                            <div style="font-size: 1rem; color: #e0f2fe; font-weight: 300; margin-bottom: 2px; letter-spacing: 1px;">SOMOSPADEL BCN</div>
-                            
-                            <!-- Price & Button Row -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; gap: 10px;">
-                                <div style="color:white; font-weight:900; font-size:1.2rem; text-shadow:0 2px 10px rgba(0,0,0,0.3);">
-                                    24<span style="font-size:0.7rem; vertical-align:top;">,99€</span>
-                                </div>
+                            <div style="font-size:0.65rem; color:#5a8a00; font-weight:950; cursor:pointer;" onclick="window.Router.navigate('ranking')">VER RANKING <i class="fas fa-chevron-right" style="font-size:0.55rem;"></i></div>
+                        </div>
+                        <div id="mvp-spotlight-container" style="margin-bottom:12px;"></div>
+                        <div id="trending-players-list" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:8px; scrollbar-width:none;">
+                            <div style="margin:20px auto; color:#94a3b8;"><i class="fas fa-circle-notch fa-spin"></i></div>
+                        </div>
+                    </div>
 
-                                <div style="
-                                    background: white; 
-                                    color: #1e40af; 
-                                    font-size: 0.75rem; 
-                                    font-weight: 950; 
-                                    padding: 8px 16px; 
-                                    border-radius: 20px; 
-                                    box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
-                                    display: flex; 
-                                    align-items: center; 
-                                    gap: 6px; 
-                                    transition: all 0.2s;
-                                    transform-origin: center;
-                                " onmouseover="this.style.transform='scale(1.1) rotate(2deg)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.3)'" onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.2)'">
-                                    COMPRAR <i class="fas fa-shopping-cart"></i>
-                                </div>
+                    <!-- â‘¦ STORIES -->
+                    <div id="story-feed-root" style="margin:0 !important; animation:floatUp 0.8s ease-out forwards; padding-top:2px;"></div>
+
+                    <!-- â‘§ CLIMA -->
+                    <div id="weather-widget-root" style="margin:0 15px 12px !important; animation:floatUp 0.9s ease-out forwards;"></div>
+
+                    <!-- â‘¨ POWER LEVEL -->
+                    <div id="power-level-root" style="animation:floatUp 0.9s ease-out forwards;"></div>
+
+                    <!-- â‘© MERCH -->
+                    <div onclick="window.open('https://wa.me/34649219350?text=Hola!%20Me%20interesa%20la%20sudadera%20de%20Somos%20Padel%20BCN', '_blank')" style="margin:0 15px 16px !important; background:linear-gradient(135deg,#1e40af 0%,#1e3a8a 100%); border-radius:22px; padding:0; position:relative; overflow:hidden; cursor:pointer; box-shadow:0 8px 24px rgba(30,64,175,0.3); display:flex; height:140px; transition:transform 0.2s;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+                        <div style="position:absolute; inset:0; opacity:0.08; background-image:radial-gradient(#fff 1px,transparent 1px); background-size:14px 14px;"></div>
+                        <div style="width:42%; position:relative; display:flex; align-items:center; justify-content:center; z-index:5;">
+                            <img src="./img/sudadera.jpg" onerror="this.style.display='none'" style="width:110%; height:110%; object-fit:contain; transform:rotate(-5deg) scale(1.2) translateY(5px); filter:drop-shadow(0 10px 20px rgba(0,0,0,0.4));">
+                        </div>
+                        <div style="width:58%; padding:16px 18px 16px 8px; display:flex; flex-direction:column; justify-content:center; z-index:2;">
+                            <div style="background:#5a8a00; color:#fff; font-size:0.6rem; font-weight:950; padding:3px 10px; border-radius:8px; display:inline-block; margin-bottom:8px; width:fit-content;">NUEVA COLECCIÃ“N</div>
+                            <h3 style="margin:0; font-size:1.15rem; color:white; font-weight:950; line-height:1.1;">SUDADERA</h3>
+                            <div style="font-size:0.8rem; color:#93c5fd; font-weight:400; letter-spacing:1px; margin-bottom:10px;">SOMOSPADEL BCN</div>
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <div style="color:white; font-weight:950; font-size:1.15rem;">24<span style="font-size:0.65rem; vertical-align:top;">,99â‚¬</span></div>
+                                <div style="background:white; color:#1e40af; font-size:0.7rem; font-weight:950; padding:6px 14px; border-radius:16px;">COMPRAR â†’</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 3. NEW WEATHER WIDGET -->
-                    <div id="weather-widget-root" style="margin: 2px 15px 8px !important; animation: floatUp 0.8s ease-out forwards;">
-                        <!-- Content loaded via JS -->
-                    </div>
-
-                    <!-- (Old Partner Synergy root removed to favor the new Predictive AI Engine) -->
-
-                    <!-- 4. ACTIVIDAD RECIENTE (CRYSTAL LIGHT) -->
-                    <div id="activity-feed-root" style="
-                        background: #ffffff;
-                        border: 1px solid #e1e8f0;
-                        border-radius: 28px;
-                        margin: 2px 15px 15px !important;
-                        padding: 20px !important;
-                        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-                        animation: floatUp 0.85s ease-out forwards;
-                    ">
-                        <div style="font-weight:950; font-size:0.9rem; color:#0a192f; letter-spacing:-0.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
-                            <i class="fas fa-rss" style="color: #99cc00; font-size: 1.1rem;"></i> ACTIVIDAD RECIENTE
-                        </div>
-                        <div id="activity-feed-content" style="display: flex; flex-direction: column; gap: 12px;">
-                            <!-- Content loaded via JS -->
-                        </div>
-                    </div>
-
-                    <!-- 5. POWER LEVEL STATUS (Relocated below Recent Activity) -->
-                    <div id="power-level-root" style="animation: floatUp 0.8s ease-out forwards;">
-                        <!-- Loaded via JS (PowerLevelCard) -->
-                    </div>
-
-
-
-                    <!-- 4. TECH HUB & NEWS (PREMIUM GLASS ENGINE) -->
-                    <div id="noticias-banner-root" style="padding: 1px 15px !important; animation: floatUp 0.85s ease-out forwards; margin-bottom: 40px; margin-top: 2px;">
-                        <div class="noticias-banner-premium" style="
-                            background: rgba(15, 23, 42, 0.8); 
-                            backdrop-filter: blur(20px);
-                            border-radius: 32px; 
-                            padding: 25px !important; 
-                            color: #fff; 
-                            position: relative; 
-                            overflow: hidden; 
-                            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255,255,255,0.05);
-                            border: 1px solid rgba(204, 255, 0, 0.15);
-                            transition: all 0.4s ease;
-                        ">
-                            <!-- Hexagon Background Pattern -->
-                            <div style="position: absolute; right: -30px; top: -30px; font-size: 8rem; color: #CCFF00; opacity: 0.05; transform: rotate(-10deg); pointer-events: none;">
-                                <i class="fas fa-layer-group"></i>
-                            </div>
-                            
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: relative; z-index: 2;">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="width: 10px; height: 10px; background: #00E36D; border-radius: 50%; box-shadow: 0 0 10px #00E36D;"></div>
-                                    <span style="font-size: 0.8rem; font-weight: 950; letter-spacing: 2px; color: #00E36D; text-transform: uppercase;">TECH HUB</span>
+                    <!-- â‘ª TECH HUB -->
+                    <div id="noticias-banner-root" style="padding:0 15px !important; animation:floatUp 0.95s ease-out forwards; margin-bottom:30px;">
+                        <div style="background:#ffffff; border-radius:22px; padding:22px; color:#0a192f; position:relative; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,0.03); border:1px solid #e2e8f0;">
+                            <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:linear-gradient(90deg,#5a8a00,#7ab800); border-radius:22px 22px 0 0;"></div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; margin-top:6px;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div style="width:8px; height:8px; background:#5a8a00; border-radius:50%;"></div>
+                                    <span style="font-size:0.75rem; font-weight:950; color:#5a8a00; text-transform:uppercase; letter-spacing:1.5px;">HERRAMIENTAS</span>
                                 </div>
-                                <div style="background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.1);">v4.0.5</div>
+                                <div style="background:#f1f5f9; padding:3px 10px; border-radius:12px; font-size:0.6rem; font-weight:800; color:#64748b; border:1px solid #e2e8f0;">v4.0.5</div>
                             </div>
-                            
-                            <h3 style="font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.3rem; margin: 0 0 12px 0; color: #fff; letter-spacing: -0.5px;">Ecosistema <span style="color: #CCFF00;">SomosPadel</span></h3>
-                            <p style="font-size: 0.85rem; color: #94a3b8; line-height: 1.6; margin: 0 0 25px 0; font-weight: 500;">
-                                Accede a herramientas de alto rendimiento diseñadas por y para jugadores de competición.
-                            </p>
-                            
-                            <!-- Main Actions Grid -->
-                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; position: relative; z-index: 2;">
-                                 <!-- TV LIVE -->
-                                 <div onclick="window.Router.navigate('live')" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 0 20px rgba(204,255,0,0.2)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'; this.style.boxShadow='none';">
-                                    <div style="position: absolute; top: -10px; right: -10px; width: 40px; height: 40px; background: rgba(204,255,0,0.1); border-radius: 50%; filter: blur(15px); animation: auraPulse 2s infinite;"></div>
-                                    <i class="fas fa-satellite-dish" style="color: #CCFF00; font-size: 1.4rem; filter: drop-shadow(0 0 5px #CCFF00);"></i>
-                                    <div>
-                                        <div style="font-weight: 950; font-size: 0.8rem;">CENTER COURT</div>
-                                        <div style="font-size: 0.6rem; color: #64748b; font-weight: 700;">LIVE STREAMING</div>
-                                    </div>
+                            <h3 style="font-weight:950; font-size:1.1rem; margin:0 0 6px; color:#0a192f; letter-spacing:-0.5px;">Ecosistema <span style="color:#5a8a00;">SomosPadel</span></h3>
+                            <p style="font-size:0.8rem; color:#64748b; line-height:1.5; margin:0 0 18px;">Herramientas de alto rendimiento para competiciÃ³n.</p>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+                                <div onclick="window.Router.navigate('live')" style="background:#f8fafc; border:1px solid #e2e8f0; padding:16px 14px; border-radius:16px; cursor:pointer; display:flex; flex-direction:column; gap:8px;" onmousedown="this.style.background='#f1f5f9'" onmouseup="this.style.background='#f8fafc'">
+                                    <i class="fas fa-satellite-dish" style="color:#5a8a00; font-size:1.2rem;"></i>
+                                    <div style="font-weight:950; font-size:0.75rem; color:#0a192f;">CENTER COURT</div>
+                                    <div style="font-size:0.55rem; color:#64748b; font-weight:700;">LIVE STREAMING</div>
                                 </div>
-                                <!-- CHAT SOS -->
-                                <div onclick="window.Router.navigate('live')" style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.borderColor='#ef4444'; this.style.boxShadow='0 0 25px rgba(239,68,68,0.3)';" onmouseout="this.style.background='rgba(239, 68, 68, 0.05)'; this.style.borderColor='rgba(239, 68, 68, 0.2)'; this.style.boxShadow='none';">
-                                    <div style="position: absolute; top: -10px; right: -10px; width: 40px; height: 40px; background: rgba(239,68,68,0.2); border-radius: 50%; filter: blur(15px); animation: auraPulse 2s infinite linear;"></div>
-                                    <i class="fas fa-comment-medical" style="color: #ef4444; font-size: 1.4rem; animation: pulseSOS 2s infinite; filter: drop-shadow(0 0 8px #ef4444);"></i>
-                                    <div>
-                                        <div style="font-weight: 950; font-size: 0.8rem; color: #ef4444;">CHAT TÁCTICO</div>
-                                        <div style="font-size: 0.6rem; color: #64748b; font-weight: 700;">BOTÓN SOS ACTIVADO</div>
-                                    </div>
+                                <div onclick="window.Router.navigate('live')" style="background:#fef2f2; border:1px solid #fecaca; padding:16px 14px; border-radius:16px; cursor:pointer; display:flex; flex-direction:column; gap:8px;" onmousedown="this.style.background='#fee2e2'" onmouseup="this.style.background='#fef2f2'">
+                                    <i class="fas fa-comment-medical" style="color:#ef4444; font-size:1.2rem;"></i>
+                                    <div style="font-weight:950; font-size:0.75rem; color:#0a192f;">CHAT TÃCTICO</div>
+                                    <div style="font-size:0.55rem; color:#64748b; font-weight:700;">BOTÃ“N SOS</div>
                                 </div>
                             </div>
-
-                            <style>
-                                @keyframes auraPulse {
-                                    0% { transform: scale(1); opacity: 0.3; }
-                                    50% { transform: scale(1.5); opacity: 0.1; }
-                                    100% { transform: scale(1); opacity: 0.3; }
-                                }
-                            </style>
-
-                            <style>
-                                @keyframes pulseSOS {
-                                    0% { opacity: 1; }
-                                    50% { opacity: 0.5; }
-                                    100% { opacity: 1; }
-                                }
-                            </style>
-
-                            <!-- Secondary Actions -->
-                            <div style="display: flex; gap: 10px; margin-bottom: 25px;">
-                                <button onclick="window.CaptainView.open()" style="flex: 2; background: #CCFF00; color: #000; border: none; padding: 15px; border-radius: 16px; font-weight: 950; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(204, 255, 0, 0.2);">
-                                    <i class="fas fa-robot"></i> CAPITÁN VIRTUAL
-                                </button>
-                                <button onclick="window.DashboardView.showChatInfo()" style="flex: 1; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 16px; font-weight: 800; font-size: 0.8rem; cursor: pointer;">
-                                    GUÍA
-                                </button>
-                            </div>
-                            
-                            <!-- TECHNOLOGY FOOTER -->
-                            <div onclick="window.open('presentation.html', '_blank')" style="background: linear-gradient(90deg, rgba(204, 255, 0, 0.05), transparent); border: 1px solid rgba(204, 255, 0, 0.1); border-radius: 20px; padding: 15px; cursor: pointer; transition: 0.3s; display: flex; justify-content: space-between; align-items: center;" onmouseover="this.style.background='rgba(204, 255, 0, 0.1)'; this.style.borderColor='rgba(204, 255, 0, 0.3)';" onmouseout="this.style.background='rgba(204, 255, 0, 0.05)'; this.style.borderColor='rgba(204, 255, 0, 0.1)';">
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="width: 38px; height: 38px; background: rgba(0,0,0,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(204, 255, 0, 0.2);">
-                                        <i class="fas fa-microchip" style="color: #CCFF00;"></i>
-                                    </div>
-                                    <div style="display: flex; flex-direction: column;">
-                                        <span style="font-weight: 900; font-size: 0.75rem; letter-spacing: 0.5px;">CORE TECHNOLOGY</span>
-                                        <span style="font-size: 0.65rem; color: #64748b; font-weight: 700;">Powered by Somospadel BCN</span>
-                                    </div>
-                                </div>
-                                <i class="fas fa-chevron-right" style="color: #CCFF00; font-size: 0.8rem;"></i>
+                            <div style="display:flex; gap:10px;">
+                                <button onclick="window.CaptainView && window.CaptainView.open()" style="flex:2; background:#0a192f; color:#fff; border:none; padding:14px; border-radius:14px; font-weight:950; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><i class="fas fa-robot"></i> CAPITÃN IA</button>
+                                <button onclick="window.DashboardView && window.DashboardView.showChatInfo()" style="flex:1; background:#f8fafc; color:#0a192f; border:1px solid #e2e8f0; padding:14px; border-radius:14px; font-weight:800; font-size:0.75rem; cursor:pointer;">GUÃA</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 5. PREDICTIVE SYNERGY (MOVED TO LAST POSITION) -->
-                    <div id="predictive-synergy-root" style="margin: 8px 15px 20px !important; position: relative; z-index: 50; display: block !important; min-height: 100px;">
-                        <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.3); font-weight: 800; background: rgba(0,0,0,0.2); border-radius: 24px;">
-                            <i class="fas fa-brain fa-spin" style="margin-bottom: 10px; font-size: 1.5rem; color: #CCFF00;"></i><br>
+                    <!-- â‘« PREDICTIVE SYNERGY -->
+                    <div id="predictive-synergy-root" style="margin:0 15px 30px !important; position:relative; z-index:50; display:block !important; min-height:80px;">
+                        <div style="text-align:center; padding:30px; color:#94a3b8; font-weight:800; background:#ffffff; border-radius:20px; border:1px solid #e2e8f0;">
+                            <i class="fas fa-brain fa-spin" style="margin-bottom:10px; font-size:1.2rem; color:#5a8a00;"></i><br>
                             Sincronizando Inteligencia Predictiva...
                         </div>
                     </div>
 
-                    </div>
                 </div>
-
-
+            </div>
 
         <style>
-            @keyframes slowTicker {
-                0% { transform: translateX(0); }
-                100% { transform: translateX(-50%); }
-            }
-            .ticker-container {
-                width: 100%;
-                overflow: hidden;
-                position: relative;
-                mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-                -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-            }
-            .ticker-content {
-                display: flex;
-                gap: 12px;
-                animation: slowTicker 25s linear infinite;
-                width: max-content;
-                padding: 10px 0;
-            }
-            .ticker-content:hover {
-                animation-play-state: paused;
-            }
+            @keyframes slowTicker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+            .ticker-container { width:100%; overflow:hidden; position:relative; mask-image:linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image:linear-gradient(to right, transparent, black 10%, black 90%, transparent); }
+            .ticker-content { display:flex; gap:12px; animation:slowTicker 25s linear infinite; width:max-content; padding:10px 0; }
+            .ticker-content:hover { animation-play-state: paused; }
             .dashboard-v2-container ::-webkit-scrollbar { display: none; }
         </style>
     `;
@@ -528,7 +272,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         weatherData.forEach(w => {
                             weatherHtml += this.renderWeatherCard(
                                 w.name,
-                                `${w.temp}°C`,
+                                `${w.temp}Â°C`,
                                 w.icon,
                                 {
                                     wind: `${w.wind} km/h`,
@@ -586,7 +330,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                     font-weight: 600;
                                     max-width: 240px;
                                     margin: 10px auto 0;
-                                ">Necesitamos más datos de nivel y victorias para calcular tu pareja perfecta.</div>
+                                ">Necesitamos mÃ¡s datos de nivel y victorias para calcular tu pareja perfecta.</div>
 
                                 <style>
                                     @keyframes scannerMove {
@@ -598,7 +342,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 2px;">
                                 ${this.renderWeatherCard('EL PRAT', '--', '...', { wind: '--', hum: '--', rain: '--' })}
-                                ${this.renderWeatherCard('CORNELLÀ', '--', '...', { wind: '--', hum: '--', rain: '--' })}
+                                ${this.renderWeatherCard('CORNELLÃ€', '--', '...', { wind: '--', hum: '--', rain: '--' })}
                             </div>`;
                     }
 
@@ -619,7 +363,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         <div style="position: relative; border-radius: 32px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); background: #0f172a; animation: borderFlow 4s infinite;">
                             <div style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
                                 <div style="display:flex; align-items:center; gap:10px;">
-                                    <span style="font-size:0.75rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR TÁCTICO <span style="color:#CCFF00;">WAR ROOM</span></span>
+                                    <span style="font-size:0.75rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR TÃCTICO <span style="color:#CCFF00;">WAR ROOM</span></span>
                                 </div>
                                 <div style="display:flex; align-items:center; gap:8px;">
                                     <button onclick="window.DashboardView.toggleTacticalHUD()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.3s; pointer-events: auto;">
@@ -638,15 +382,15 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                 <!-- HUD TOP LEFT: Pista Status -->
                                 <div id="tactical-hud-grip" style="position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-left:3px solid #00E36D; pointer-events:none; animation: floatUp 0.8s ease-out; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
                                     <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">ESTADO DE PISTA</div>
-                                    <div style="font-size:0.75rem; color:#fff; font-weight:1000;">GRIP: <span style="color:#00E36D;">ÓPTIMO (92%)</span></div>
+                                    <div style="font-size:0.75rem; color:#fff; font-weight:1000;">GRIP: <span style="color:#00E36D;">Ã“PTIMO (92%)</span></div>
                                     <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Prob. Pista resbaladiza: 12%</div>
                                 </div>
 
-                                <!-- HUD TOP RIGHT: Rebote/Presión -->
+                                <!-- HUD TOP RIGHT: Rebote/PresiÃ³n -->
                                 <div id="tactical-hud-bounce" style="position:absolute; top:15px; right:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-right:3px solid #CCFF00; pointer-events:none; text-align:right; animation: floatUp 0.8s ease-out 0.2s both; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
                                     <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">INTELIGENCIA BOLA</div>
                                     <div style="font-size:0.75rem; color:#fff; font-weight:1000;">REBOTE: <span style="color:#CCFF00;">ALTO (+15%)</span></div>
-                                    <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Bola rápida + Presión detectada</div>
+                                    <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Bola rÃ¡pida + PresiÃ³n detectada</div>
                                 </div>
 
                                 <!-- HUD BOTTOM CENTER: Scan Line -->
@@ -682,7 +426,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 window.StoryFeedWidget.render('story-feed-root');
             }
 
-            // 🏓 PADEL PULSE — Personalized top widget
+            // ðŸ“ PADEL PULSE â€” Personalized top widget
             if (window.PadelPulse) {
                 window.PadelPulse.render('padel-pulse-widget-root');
             }
@@ -692,13 +436,13 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
 
         initHeaderTickerSync() {
             // REDUNDANT: Handled by core/SmartTicker.js
-            console.log("📺 [DashboardView] Ticker management delegated to SmartTicker.js for premium TV experience.");
+            console.log("ðŸ“º [DashboardView] Ticker management delegated to SmartTicker.js for premium TV experience.");
         }
 
 
         renderWeatherCard(city, temp, icon, details = {}, isPropitious = true) {
-            const intel = details.intel || { score: 100, ballSpeed: '--', recommendation: 'Sincronizando meteorología...', gripStatus: '--' };
-            const statusLabel = isPropitious ? 'ÓPTIMO' : 'ADVERSO';
+            const intel = details.intel || { score: 100, ballSpeed: '--', recommendation: 'Sincronizando meteorologÃ­a...', gripStatus: '--' };
+            const statusLabel = isPropitious ? 'Ã“PTIMO' : 'ADVERSO';
             const statusColor = isPropitious ? '#72a800' : '#ef4444';
             const rainProb = parseInt(details.rain) || 0;
             const isRaining = rainProb > 30;
@@ -750,13 +494,13 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span style="font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-hand-rock" style="color:#72a800;"></i> AGARRE PISTA</span>
-                            <span style="font-size: 0.75rem; color: #72a800; font-weight: 950;">${intel.gripStatus || 'ÓPTIMO'}</span>
+                            <span style="font-size: 0.75rem; color: #72a800; font-weight: 950;">${intel.gripStatus || 'Ã“PTIMO'}</span>
                         </div>
                     </div>
                     <div style="margin-top: 10px; padding: 12px 14px; background: rgba(0,0,0,0.02); border-radius: 16px; border-left: 4px solid ${statusColor};">
                         <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
                             <i class="fas fa-brain" style="font-size: 0.7rem; color: ${statusColor};"></i>
-                            <span style="font-size: 0.6rem; font-weight: 950; color: ${statusColor}; letter-spacing: 0.5px; text-transform: uppercase;">INSIGHT TÁCTICO</span>
+                            <span style="font-size: 0.6rem; font-weight: 950; color: ${statusColor}; letter-spacing: 0.5px; text-transform: uppercase;">INSIGHT TÃCTICO</span>
                         </div>
                         <p style="margin: 0; font-size: 0.75rem; color: #475569; font-weight: 600; line-height: 1.4;">
                             ${intel.recommendation.replace('la IA', 'el sistema').replace('predictivo', 'estimado')}
@@ -773,8 +517,8 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         <div style="width: 80px; height: 80px; background: var(--bg-app); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px; border: 1px solid var(--border-subtle);">
                             <i class="fas fa-calendar-plus" style="font-size: 2.2rem; color: #cbd5e1;"></i>
                         </div>
-                        <h3 style="color: var(--text-primary); font-weight: 950; font-size: 1.25rem; margin-bottom: 10px; letter-spacing: -0.5px;">SIN PLANES PRÓXIMOS</h3>
-                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 25px; font-weight: 600; line-height: 1.5;">Apúntate a una americana para<br>empezar a sumar en el ranking.</p>
+                        <h3 style="color: var(--text-primary); font-weight: 950; font-size: 1.25rem; margin-bottom: 10px; letter-spacing: -0.5px;">SIN PLANES PRÃ“XIMOS</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 25px; font-weight: 600; line-height: 1.5;">ApÃºntate a una americana para<br>empezar a sumar en el ranking.</p>
                         <button onclick="Router.navigate('americanas')" class="btn-3d primary" style="width: auto; padding: 14px 28px;">EXPLORAR EVENTOS</button>
                     </div >
                 `;
@@ -785,7 +529,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                         <div style="color: var(--brand-neon); background: var(--brand-navy); padding: 4px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">${this.formatDateShort(am.date)}</div>
                         ${am.status === 'live' ?
-                    `<div style="background: rgba(255, 45, 85, 0.2); color: #FF2D55; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; animation: blink 1s infinite; border: 1px solid #FF2D55;">EN VIVO 🔴</div>` :
+                    `<div style="background: rgba(255, 45, 85, 0.2); color: #FF2D55; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; animation: blink 1s infinite; border: 1px solid #FF2D55;">EN VIVO ðŸ”´</div>` :
                     `<div style="background: rgba(6, 182, 212, 0.1); color: var(--brand-accent); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900;">CONFIRMADO</div>`
                 }
                     </div>
@@ -802,20 +546,20 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
 
         renderSmartHero(context, userLevel) {
             // SLIDE: VIBRANT GLASS HERO
-            let pillText = "INSCRIPCIÓN ABIERTA";
+            let pillText = "INSCRIPCIÃ“N ABIERTA";
             let btnText = "APUNTARME AHORA";
             let btnClass = "primary";
             let logoText = "AMERICANAS";
-            let explainerText = "¡Quedan pocas plazas! No te quedes fuera hoy.";
+            let explainerText = "Â¡Quedan pocas plazas! No te quedes fuera hoy.";
             let heroImage = "img/ball_hero.jpg";
             let overlayColor = "linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 64, 175, 0.7))";
 
             if (context.status === 'UPCOMING_EVENT') {
-                pillText = "ESTÁS INSCRITO";
+                pillText = "ESTÃS INSCRITO";
                 btnText = "VER DETALLES";
                 btnClass = "navy";
                 logoText = "MI PLAZA";
-                explainerText = "¡Prepárate! Tu próximo reto está a punto de empezar.";
+                explainerText = "Â¡PrepÃ¡rate! Tu prÃ³ximo reto estÃ¡ a punto de empezar.";
                 overlayColor = "linear-gradient(135deg, rgba(2, 6, 23, 0.95), rgba(6, 182, 212, 0.7))";
             } else if (context.status === 'FINISHED') {
                 pillText = "EVENTO FINALIZADO";
@@ -825,11 +569,11 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 explainerText = "Consulta los resultados y revive los mejores momentos.";
                 overlayColor = "linear-gradient(135deg, rgba(31, 41, 55, 0.95), rgba(107, 114, 128, 0.7))";
             } else if (context.status === 'LIVE_MATCH') {
-                pillText = "¡ESTÁS EN PISTA!";
+                pillText = "Â¡ESTÃS EN PISTA!";
                 btnText = "MARCADOR EN VIVO";
                 btnClass = "primary";
                 logoText = "LIVE NOW";
-                explainerText = "Tu partido está en progreso. ¡A por todas!";
+                explainerText = "Tu partido estÃ¡ en progreso. Â¡A por todas!";
                 overlayColor = "linear-gradient(135deg, rgba(225, 29, 72, 0.95), rgba(204, 255, 0, 0.4))";
             }
 
@@ -873,23 +617,23 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     window.WeatherService ? window.WeatherService.getDashboardWeather() : []
                 ]);
 
-                console.log(`🧠[AI News Motor] Processing ${allEvents.length} events for priority feed.`);
+                console.log(`ðŸ§ [AI News Motor] Processing ${allEvents.length} events for priority feed.`);
 
                 let itemsHtml = [];
 
                 // 0. SAFETY BASE: Ensure we always have something to show
                 const dynamicPool = [
                     {
-                        tag: '📈 TU NIVEL',
+                        tag: 'ðŸ“ˆ TU NIVEL',
                         icon: 'fa-chart-line',
                         bgColor: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)',
                         accent: '#38bdf8',
-                        title: 'Nivel Dinámico',
-                        desc: 'Tu nivel evoluciona con cada set. ¡Juega y demuestra tu progreso!',
+                        title: 'Nivel DinÃ¡mico',
+                        desc: 'Tu nivel evoluciona con cada set. Â¡Juega y demuestra tu progreso!',
                         action: "window.Router.navigate('profile')"
                     },
                     {
-                        tag: '🏆 COMPETICIÓN',
+                        tag: 'ðŸ† COMPETICIÃ“N',
                         icon: 'fa-trophy',
                         bgColor: 'linear-gradient(135deg, #111 0%, #701a75 100%)',
                         accent: '#f472b6',
@@ -898,30 +642,30 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         action: "window.Router.navigate('ranking')"
                     },
                     {
-                        tag: '🎾 CONTROL TOTAL',
+                        tag: 'ðŸŽ¾ CONTROL TOTAL',
                         icon: 'fa-user-check',
                         bgColor: 'linear-gradient(135deg, #064e3b 0%, #059669 100%)',
                         accent: '#34d399',
                         title: 'Perfil y Stats',
-                        desc: 'Consulta tu historial, victorias y próximos retos desde tu perfil.',
+                        desc: 'Consulta tu historial, victorias y prÃ³ximos retos desde tu perfil.',
                         action: "window.Router.navigate('profile')"
                     },
                     {
-                        tag: '🛍️ TIENDA VIP',
+                        tag: 'ðŸ›ï¸ TIENDA VIP',
                         icon: 'fa-shopping-bag',
                         bgColor: 'linear-gradient(135deg, #312e81 0%, #4338ca 100%)',
                         accent: '#818cf8',
                         title: 'SomosPadel Store',
-                        desc: 'Los mejores precios en palas de alta gama y equipación oficial.',
+                        desc: 'Los mejores precios en palas de alta gama y equipaciÃ³n oficial.',
                         action: "window.open('https://somospadel.eu', '_blank')"
                     },
                     {
-                        tag: '💡 SMART TIP',
+                        tag: 'ðŸ’¡ SMART TIP',
                         icon: 'fa-brain',
                         bgColor: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
                         accent: '#94a3b8',
-                        title: 'Navegación Gesto',
-                        desc: 'Desliza las historias o pulsa los laterales para pasar rápido.',
+                        title: 'NavegaciÃ³n Gesto',
+                        desc: 'Desliza las historias o pulsa los laterales para pasar rÃ¡pido.',
                         action: "window.DashboardView.showChatInfo()"
                     }
                 ];
@@ -939,11 +683,11 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                 </div>
                             </div>
                             <div style="position: absolute; bottom: 18px; left: 18px; z-index: 2;">
-                                <div style="color:white; font-weight:950; font-size:1.8rem; line-height: 1; margin-bottom: 2px;">${w.temp}ºC</div>
+                                <div style="color:white; font-weight:950; font-size:1.8rem; line-height: 1; margin-bottom: 2px;">${w.temp}ÂºC</div>
                                 <div style="color:rgba(255,255,255,0.6); font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;">${w.name}</div>
                             </div>
                             <div style="position: absolute; bottom: 18px; right: 18px; z-index: 2; text-align: right; display:flex; flex-direction:column; gap:6px;">
-                                <div style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:4px; border-right:2px solid #0ea5e9;">BOLA: ${w.temp > 20 ? 'RÁPIDA' : 'LENTA'}</div>
+                                <div style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:4px; border-right:2px solid #0ea5e9;">BOLA: ${w.temp > 20 ? 'RÃPIDA' : 'LENTA'}</div>
                                 <div style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:4px; border-right:2px solid #38bdf8;">HUM: ${w.humidity}%</div>
                             </div>
                         </div>
@@ -967,16 +711,16 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 if (openEvents.length > 0) {
                     const topEvt = openEvents[0];
                     itemsHtml.push(`
-                    <div class="holo-card" onclick="console.log('🚀 [Dashboard] Event Clicked!'); window.Router.navigate('entrenos')" style="min-width: 280px; width: 280px; height: 180px; ${getAiVisual('fire')} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="holo-card" onclick="console.log('ðŸš€ [Dashboard] Event Clicked!'); window.Router.navigate('entrenos')" style="min-width: 280px; width: 280px; height: 180px; ${getAiVisual('fire')} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
                         <div style="position: absolute; inset:0; background: url('https://media.giphy.com/media/3o7btQ8jDTSLStx3Ko/giphy.gif') center/cover; opacity: 0.15; mix-blend-mode: overlay; pointer-events: none;"></div>
                         <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.2; background: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 3px); pointer-events: none;"></div>
                         
                         <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3; margin-bottom: 20px; pointer-events: none;">
-                            <span style="font-size:0.65rem; font-weight:1000; color:white; background:#ff4d00; padding:6px 14px; border-radius:100px; text-transform:uppercase; letter-spacing:1px; box-shadow: 0 0 15px #ff4d00;">RECOMENDACIÓN</span>
+                            <span style="font-size:0.65rem; font-weight:1000; color:white; background:#ff4d00; padding:6px 14px; border-radius:100px; text-transform:uppercase; letter-spacing:1px; box-shadow: 0 0 15px #ff4d00;">RECOMENDACIÃ“N</span>
                             <i class="fas fa-fire-alt" style="color:#ffcdb2; animation: pulseDot 1s infinite;"></i>
                         </div>
                         <div style="position:relative; z-index:3; pointer-events: none;">
-                            <div style="color:#ffcdb2; font-size:0.7rem; font-weight:900; text-transform:uppercase; letter-spacing:1px; margin-bottom: 6px;">🔥 DESTACADO</div>
+                            <div style="color:#ffcdb2; font-size:0.7rem; font-weight:900; text-transform:uppercase; letter-spacing:1px; margin-bottom: 6px;">ðŸ”¥ DESTACADO</div>
                             <h4 style="margin:0; color:white; font-size:1.1rem; font-weight:1000; line-height:1.1; text-shadow: 0 5px 15px black;">${(topEvt.name || "Evento").toUpperCase()}</h4>
                             <div style="margin-top: 15px; display:inline-block; border-bottom: 2px solid #ff4d00; padding-bottom: 2px; color: white; font-size: 0.8rem; font-weight: 800;">RESERVAR AHORA <i class="fas fa-arrow-right"></i></div>
                         </div>
@@ -990,7 +734,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     if (lowerName.includes('fem') || lowerName.includes('wom')) aiClass = 'neon';
 
                     itemsHtml.push(`
-                    <div class="holo-card" onclick="console.log('🚀 [Dashboard] Event Clicked!'); window.Router.navigate('entrenos')" style="min-width: 260px; width: 260px; height: 180px; ${getAiVisual(aiClass)} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="holo-card" onclick="console.log('ðŸš€ [Dashboard] Event Clicked!'); window.Router.navigate('entrenos')" style="min-width: 260px; width: 260px; height: 180px; ${getAiVisual(aiClass)} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
                         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; opacity: 0.2; filter: blur(4px); color: rgba(255,255,255,0.5); pointer-events: none;"><i class="fas fa-medal"></i></div>
                         <div style="position: absolute; inset: 0; background: linear-gradient(top, transparent, rgba(0,0,0,0.8)); pointer-events: none;"></div>
                         
@@ -1011,12 +755,12 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 const selectedTips = shuffledPool.slice(0, remainingSlots);
 
                 // HELPER: Interactive Action wrapper
-                const doAction = (act) => `console.log('👆 Card Clicked:', '${act}'); ${act}`;
+                const doAction = (act) => `console.log('ðŸ‘† Card Clicked:', '${act}'); ${act}`;
 
                 // Update Actions in dynamicPool for Robustness
                 dynamicPool.forEach(p => {
                     if (p.action && !p.action.includes('console.log')) {
-                        p.action = `console.log('🚀 Navigating to ${p.title}...'); ` + p.action;
+                        p.action = `console.log('ðŸš€ Navigating to ${p.title}...'); ` + p.action;
                     }
                 });
 
@@ -1061,9 +805,9 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             tomorrow.setDate(tomorrow.getDate() + 1);
 
             if (date.toDateString() === today.toDateString()) return 'HOY';
-            if (date.toDateString() === tomorrow.toDateString()) return 'MAÑANA';
+            if (date.toDateString() === tomorrow.toDateString()) return 'MAÃ‘ANA';
 
-            const days = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+            const days = ['DOM', 'LUN', 'MAR', 'MIÃ‰', 'JUE', 'VIE', 'SÃB'];
             return `${days[date.getDay()]} ${date.getDate()} `;
         }
 
@@ -1199,7 +943,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 }
 
             } catch (err) {
-                console.error("❌ [DashboardView] Error building user context:", err);
+                console.error("âŒ [DashboardView] Error building user context:", err);
             }
 
             return context;
@@ -1216,7 +960,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
         formatFriendlyDate(dateStr) {
             if (!dateStr) return '';
             const d = new Date(dateStr);
-            const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const days = ['Domingo', 'Lunes', 'Martes', 'MiÃ©rcoles', 'Jueves', 'Viernes', 'SÃ¡bado'];
             return `${days[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`;
         }
 
@@ -1301,7 +1045,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
         formatDate(dateString) {
             if (!dateString) return '';
             const date = new Date(dateString);
-            const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            const days = ['Dom', 'Lun', 'Mar', 'MiÃ©', 'Jue', 'Vie', 'SÃ¡b'];
             return `${days[date.getDay()]} ${date.getDate()}`;
         }
 
@@ -1321,7 +1065,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
         }
 
         async loadLiveWidgetContent(context) {
-            console.log("🧠 [DashboardView] loadLiveWidgetContent started");
+            console.log("ðŸ§  [DashboardView] loadLiveWidgetContent started");
 
             // 4. Load Predictive Synergy Widget
             try {
@@ -1331,7 +1075,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     window.currentUser ||
                     (window.firebase ? window.firebase.auth().currentUser : null);
 
-                console.log("🧠 [DashboardView] Synergy Init Check:", {
+                console.log("ðŸ§  [DashboardView] Synergy Init Check:", {
                     hasContainer: !!synergyContainer,
                     hasUser: !!user,
                     userId: user ? (user.uid || user.id) : 'none'
@@ -1340,15 +1084,15 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 if (synergyContainer && user) {
                     const userId = user.uid || user.id;
                     if (!userId) {
-                        console.warn("⚠️ [DashboardView] User exists but has no UID/ID");
-                        synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">⚠️ Sesión incompleta</div>`;
+                        console.warn("âš ï¸ [DashboardView] User exists but has no UID/ID");
+                        synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">âš ï¸ SesiÃ³n incompleta</div>`;
                         return;
                     }
 
                     // Subscribe to real-time changes
                     if (window.PartnerSynergyService && window.PartnerSynergyService.subscribeToPlayerData) {
                         window.PartnerSynergyService.subscribeToPlayerData(userId, async () => {
-                            console.log("🧠 [DashboardView] Real-time Sync Triggered");
+                            console.log("ðŸ§  [DashboardView] Real-time Sync Triggered");
                             const html = await this.renderPredictiveSynergy();
                             if (html && synergyContainer) synergyContainer.innerHTML = html;
                         });
@@ -1358,35 +1102,35 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     const refreshSynergy = async () => {
                         const html = await this.renderPredictiveSynergy();
                         if (html && html.trim() !== '') {
-                            console.log("🧠 [DashboardView] Synergy HTML generated");
+                            console.log("ðŸ§  [DashboardView] Synergy HTML generated");
                             if (synergyContainer) synergyContainer.innerHTML = html;
                         } else {
-                            console.warn("🧠 [DashboardView] Synergy HTML was empty");
-                            if (synergyContainer) synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center; border:1px solid rgba(255,0,0,0.3); border-radius:15px;">⚠️ Generando análisis...</div>`;
+                            console.warn("ðŸ§  [DashboardView] Synergy HTML was empty");
+                            if (synergyContainer) synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center; border:1px solid rgba(255,0,0,0.3); border-radius:15px;">âš ï¸ Generando anÃ¡lisis...</div>`;
                         }
                     };
 
                     refreshSynergy();
                 } else if (!synergyContainer) {
-                    console.error("❌ [DashboardView] predictive-synergy-root NOT FOUND");
+                    console.error("âŒ [DashboardView] predictive-synergy-root NOT FOUND");
                 } else if (!user) {
-                    console.warn("⚠️ [DashboardView] No user found in Store during loadLiveWidgetContent");
+                    console.warn("âš ï¸ [DashboardView] No user found in Store during loadLiveWidgetContent");
                     // Don't show the "Lock" message immediately if we just loaded, give it a second
                     setTimeout(() => {
                         const userCheck = (window.Store ? window.Store.getState('currentUser') : null) || window.currentUser;
                         if (!userCheck && synergyContainer) {
-                            synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">🔒 Inicia sesión para ver tu análisis</div>`;
+                            synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">ðŸ”’ Inicia sesiÃ³n para ver tu anÃ¡lisis</div>`;
                         }
                     }, 2000);
                 }
             } catch (e) {
-                console.error("❌ Predictive Synergy loading failed", e);
+                console.error("âŒ Predictive Synergy loading failed", e);
             }
 
             try {
                 const container = document.getElementById('live-scroller-content');
                 if (!container) {
-                    console.warn("⚠️ [DashboardView] live-scroller-content not found, skipping other widgets");
+                    console.warn("âš ï¸ [DashboardView] live-scroller-content not found, skipping other widgets");
                     return;
                 }
 
@@ -1409,7 +1153,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 // 4. Load Trending Players
                 this.renderTrendingPlayers();
             } catch (e) {
-                console.error('❌ [DashboardView] Error in core widget loading:', e);
+                console.error('âŒ [DashboardView] Error in core widget loading:', e);
             }
         }
 
@@ -1426,27 +1170,26 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 if (mvpRoot && players.length > 0) {
                     const mvp = players[0];
                     mvpRoot.innerHTML = `
-                        <div class="premium-glass-card animate-float" style="padding: 20px; border: 1px solid var(--neon-green); box-shadow: 0 0 20px rgba(204,255,0,0.1) inset;">
-                            <div style="display:flex; align-items:center; gap:20px;">
-                                <div style="position:relative;">
-                                    <div style="width:80px; height:80px; border-radius:50%; border:3px solid var(--neon-green); overflow:hidden; background:#1a1a1a;">
-                                        <div style="width:100%; height:100%; background: ${mvp.photo_url ? `url('${mvp.photo_url}') center/cover` : 'transparent'}; display:flex; align-items:center; justify-content:center;">
-                                            ${!mvp.photo_url ? `<span style="font-size:1.8rem; font-weight:900; color:#444;">${mvp.name.charAt(0)}</span>` : ''}
+                        <div style="background: #ffffff; border-radius: 24px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 8px 30px rgba(0,0,0,0.04); margin-bottom: 12px; position:relative; overflow:hidden;">
+                            <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:linear-gradient(90deg,#72a800,#a3d900); border-radius:24px 24px 0 0;"></div>
+                            <div style="display:flex; align-items:center; gap:16px;">
+                                <div style="position:relative; flex-shrink:0;">
+                                    <div style="width:72px; height:72px; border-radius:50%; border:3px solid #72a800; overflow:hidden; background:#f1f5f9;">
+                                        <div style="width:100%; height:100%; background: ${mvp.photo_url ? `url('${mvp.photo_url}') center/cover` : '#f1f5f9'}; display:flex; align-items:center; justify-content:center;">
+                                            ${!mvp.photo_url ? `<span style="font-size:1.8rem; font-weight:950; color:#0a192f;">${mvp.name.charAt(0)}</span>` : ''}
                                         </div>
                                     </div>
-                                    <div style="position:absolute; top:-10px; right:-10px; font-size:1.8rem; filter: drop-shadow(0 0 10px #CCFF00);">👑</div>
+                                    <div style="position:absolute; top:-8px; right:-8px; font-size:1.5rem;">&#x1F451;</div>
                                 </div>
                                 <div style="flex:1;">
-                                    <div class="neon-badge" style="background:var(--neon-green); color:#000; display:inline-block; font-size:0.55rem; padding:2px 8px; margin-bottom:8px;">JUGADOR ELITE</div>
-                                    <h2 style="font-size:1.4rem; font-weight:1000; color:#fff; margin:0; line-height:1;">${mvp.name.toUpperCase()}</h2>
-                                    <div style="display:flex; align-items:center; gap:10px; margin-top:5px;">
-                                        <div class="stat-highlight" style="font-size:1.2rem; color:var(--neon-green);">${mvp.points || 0} <span style="font-size:0.6rem; color:#888;">PTS</span></div>
-                                        <div style="font-size:0.7rem; color:#94a3b8; font-weight:900;">• ACTUAL #1 GLOBAL</div>
+                                    <div style="display:inline-block; background:#f1f5f9; color:#72a800; padding:3px 10px; border-radius:8px; font-size:0.55rem; font-weight:950; letter-spacing:1px; border:1px solid #e2e8f0; margin-bottom:8px; text-transform:uppercase;">Jugador #1</div>
+                                    <h2 style="font-size:1.3rem; font-weight:950; color:#0a192f; margin:0; line-height:1; letter-spacing:-0.5px;">${mvp.name.toUpperCase()}</h2>
+                                    <div style="display:flex; align-items:center; gap:10px; margin-top:6px;">
+                                        <div style="font-size:1.4rem; color:#72a800; font-weight:950;">${mvp.points || 0} <span style="font-size:0.6rem; color:#64748b; font-weight:800;">PTS</span></div>
+                                        <div style="font-size:0.6rem; color:#94a3b8; font-weight:900; text-transform:uppercase; letter-spacing:0.5px;">Global #1</div>
                                     </div>
                                 </div>
-                                <div style="text-align:right;">
-                                    <i class="fas fa-trophy" style="font-size:2rem; color: #CCFF00; opacity:0.3; filter:blur(1px);"></i>
-                                </div>
+                                <i class="fas fa-trophy" style="font-size:2rem; color:#fbbf24; opacity:0.7; flex-shrink:0;"></i>
                             </div>
                         </div>
                     `;
@@ -1456,28 +1199,29 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 const topPlayers = players.slice(1, 10); // Rest of Top 10
 
                 if (topPlayers.length === 0) {
-                    root.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.3); font-size:0.7rem;">Sincronizando racha...</div>`;
+                    root.innerHTML = `<div style="padding:20px; color:#94a3b8; font-size:0.7rem; text-align:center;">Sincronizando ranking...</div>`;
                     return;
                 }
 
                 root.innerHTML = topPlayers.map(p => `
-                    <div class="premium-glass-card" style="min-width: 140px; padding: 15px; text-align: center; flex-shrink: 0; background: rgba(255,255,255,0.03);">
-                        <div style="position:relative; width:60px; height:60px; margin:0 auto 10px;">
-                            <div style="width:100%; height:100%; border-radius:50%; border:2px solid var(--neon-green); background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#1a1a1a'}; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                                ${!p.photo_url ? `<span style="font-weight:900; color:#444;">${p.name.charAt(0)}</span>` : ''}
+                    <div style="min-width: 110px; padding: 14px 10px; text-align: center; flex-shrink: 0; background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                        <div style="position:relative; width:52px; height:52px; margin:0 auto 10px;">
+                            <div style="width:100%; height:100%; border-radius:50%; border:2px solid #e2e8f0; background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#f1f5f9'}; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                                ${!p.photo_url ? `<span style="font-weight:950; color:#0a192f; font-size:1.1rem;">${p.name.charAt(0)}</span>` : ''}
                             </div>
-                            <div style="position:absolute; bottom:-5px; right:-5px; background:var(--neon-green); color:#000; font-size:0.55rem; font-weight:950; padding:2px 6px; border-radius:12px; border:2px solid #000;">
+                            <div style="position:absolute; bottom:-5px; right:-5px; background:#72a800; color:#fff; font-size:0.5rem; font-weight:950; padding:2px 5px; border-radius:10px; border:2px solid #fff;">
                                 #${p.ranking_pos || '?'}
                             </div>
                         </div>
-                        <div style="font-size: 0.75rem; font-weight: 1000; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom:4px;">${p.name.split(' ')[0]}</div>
-                        <div style="font-size: 0.65rem; color: var(--neon-green); font-weight: 900;">${p.points || 0} PTS</div>
+                        <div style="font-size: 0.7rem; font-weight: 950; color: #0a192f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom:4px;">${p.name.split(' ')[0]}</div>
+                        <div style="font-size: 0.6rem; color: #72a800; font-weight: 900;">${p.points || 0} PTS</div>
                     </div>
                 `).join('');
 
+
             } catch (err) {
                 console.error("Error rendering trending players:", err);
-                if (root) root.innerHTML = "⚠️ Error sync";
+                if (root) root.innerHTML = "âš ï¸ Error sync";
             }
         }
 
@@ -1491,9 +1235,9 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             setTimeout(async () => {
                 if (window.PremiumModal) {
                     await window.PremiumModal.alert({
-                        title: '💡 TIP DE NAVEGACIÓN',
-                        message: 'Hemos optimizado tu experiencia. Ahora tus <b>Acciones Rápidas</b> y tu <b>Estado Físico</b> están centralizados en tu <b>PERFIL</b>.<br><br>¡Haz clic en tu foto o en la pestaña Perfil para verlo todo!',
-                        btnText: '¡ENTENDIDO!',
+                        title: 'ðŸ’¡ TIP DE NAVEGACIÃ“N',
+                        message: 'Hemos optimizado tu experiencia. Ahora tus <b>Acciones RÃ¡pidas</b> y tu <b>Estado FÃ­sico</b> estÃ¡n centralizados en tu <b>PERFIL</b>.<br><br>Â¡Haz clic en tu foto o en la pestaÃ±a Perfil para verlo todo!',
+                        btnText: 'Â¡ENTENDIDO!',
                         type: 'info'
                     });
                     sessionStorage.setItem('profileTipShown', 'true');
@@ -1599,8 +1343,8 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 realNotifications.forEach(notif => {
                     activities.push({
                         type: notif.isChat ? 'chat' : 'notification',
-                        icon: notif.isChat ? '💬' : '🔔',
-                        title: notif.title || 'Notificación',
+                        icon: notif.isChat ? 'ðŸ’¬' : 'ðŸ””',
+                        title: notif.title || 'NotificaciÃ³n',
                         desc: notif.body || '',
                         time: this.formatRelativeTime(notif.timestamp),
                         color: notif.isChat ? '#CCFF00' : '#38bdf8',
@@ -1621,17 +1365,17 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         catColor = '#00C4FF'; // Blue
                     }
 
-                    // Lógica de colores de equipo idéntica a EventsController_V6
+                    // LÃ³gica de colores de equipo idÃ©ntica a EventsController_V6
                     const t = reg.playerTeam ? reg.playerTeam.toUpperCase() : '';
-                    let teamColor = '#38bdf8'; // Default Cyan (3º)
-                    if (t.includes('4º')) teamColor = '#84cc16'; // Neon Green
-                    if (t.includes('3º')) teamColor = '#38bdf8'; // Cyan
-                    if (t.includes('2º')) teamColor = '#f59e0b'; // Gold/Orange
+                    let teamColor = '#38bdf8'; // Default Cyan (3Âº)
+                    if (t.includes('4Âº')) teamColor = '#84cc16'; // Neon Green
+                    if (t.includes('3Âº')) teamColor = '#38bdf8'; // Cyan
+                    if (t.includes('2Âº')) teamColor = '#f59e0b'; // Gold/Orange
                     if (t.includes('MIXTO')) teamColor = '#ef4444'; // Red
 
                     activities.push({
                         type: 'registration',
-                        icon: '🎾',
+                        icon: 'ðŸŽ¾',
                         title: reg.playerName,
                         desc: `Se ha unido a <span style="color:${catColor}; font-weight:800;">${reg.eventName}</span>${reg.playerTeam ? `<br><span style="color:${teamColor}; font-size:0.65rem; font-weight:950; letter-spacing:1px; text-shadow: 0 0 8px ${teamColor}60; border-bottom: 2px solid ${teamColor}; padding-bottom: 1px;">${t}</span>` : ''}`,
                         time: this.formatRelativeTime(reg.timestamp),
@@ -1644,8 +1388,8 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 urgentAlerts.forEach(alert => {
                     activities.push({
                         type: 'urgent',
-                        icon: '🚨',
-                        title: '¡ÚLTIMA HORA!',
+                        icon: 'ðŸš¨',
+                        title: 'Â¡ÃšLTIMA HORA!',
                         desc: alert.title,
                         time: 'ahora',
                         color: '#ef4444',
@@ -1659,9 +1403,9 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 rankingChanges.forEach(change => {
                     activities.push({
                         type: 'ranking',
-                        icon: change.position === 1 ? '👑' : '📈',
+                        icon: change.position === 1 ? 'ðŸ‘‘' : 'ðŸ“ˆ',
                         title: change.playerName,
-                        desc: `${change.position === 1 ? '¡NUEVO LÍDER!' : `Entra en el TOP ${change.position}`} del ranking`,
+                        desc: `${change.position === 1 ? 'Â¡NUEVO LÃDER!' : `Entra en el TOP ${change.position}`} del ranking`,
                         time: this.formatRelativeTime(change.timestamp),
                         color: '#f59e0b',
                         timestamp: change.timestamp,
@@ -1775,7 +1519,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     if (spotsLeft > 0 && spotsLeft <= 2 && maxPlayers > 0) {
                         alerts.push({
                             type: 'urgent',
-                            title: `¡ÚLTIMA${spotsLeft === 1 ? '' : 'S'} ${spotsLeft} PLAZA${spotsLeft === 1 ? '' : 'S'}! ${event.name}`,
+                            title: `Â¡ÃšLTIMA${spotsLeft === 1 ? '' : 'S'} ${spotsLeft} PLAZA${spotsLeft === 1 ? '' : 'S'}! ${event.name}`,
                             eventName: event.name,
                             spotsLeft,
                             timestamp: Date.now(),
@@ -1874,7 +1618,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     const cardBg = isFull ? 'linear-gradient(135deg, #475569 0%, #1e293b 100%)' : 'linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)';
                     const btnText = isFull ? 'VER LISTA DE ESPERA' : 'APUNTARME AHORA';
                     const btnBg = isFull ? '#94a3b8' : '#00E36D';
-                    const statusDesc = isFull ? '¡Pista completa! Avisaremos bajas.' : `¡Solo <b>${spots} plazas</b>! Se llenará pronto.`;
+                    const statusDesc = isFull ? 'Â¡Pista completa! Avisaremos bajas.' : `Â¡Solo <b>${spots} plazas</b>! Se llenarÃ¡ pronto.`;
                     const navigateAction = "window.Router.navigate('entrenos'); setTimeout(() => { if(window.EventsController) window.EventsController.filterByType('entreno'); }, 200);";
 
                     let html = `
@@ -1886,7 +1630,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         </style>
                         <div class="smart-hero-card" onclick="${navigateAction}" style="background: ${cardBg}; border-radius: 16px; padding: 20px; color: white; position: relative; overflow: hidden; margin-bottom: 5px; cursor: pointer;">
                             <div style="position: absolute; top: -20px; right: -20px; font-size: 5rem; color: rgba(255,255,255,0.1); transform: rotate(-15deg);"><i class="fas fa-star"></i></div>
-                            <div style="background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 4px 12px; border-radius: 100px; font-size: 0.6rem; font-weight: 900; display: inline-block; margin-bottom: 12px; text-transform: uppercase;">RECOMENDACIÓN</div>
+                            <div style="background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 4px 12px; border-radius: 100px; font-size: 0.6rem; font-weight: 900; display: inline-block; margin-bottom: 12px; text-transform: uppercase;">RECOMENDACIÃ“N</div>
                             <div style="font-size: 1.4rem; font-weight: 900; margin-bottom: 5px;">${urgentAm.name}</div>
                             <p style="font-size: 0.8rem; opacity: 0.9; margin-bottom: 15px;">${statusDesc}</p>
                             <div style="background: ${btnBg}; color: black; padding: 12px; border-radius: 12px; text-align: center; font-weight: 950; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 10px;">
@@ -1895,11 +1639,11 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         </div>
                     `;
 
-                    const hypeMessages = [`🔥 <b>${pCount + 3} personas</b> viéndolo`, `⚡ <b>Alta Demanda</b>: Se llenará hoy`, `🏆 <b>Nivel Garantizado</b>`];
+                    const hypeMessages = [`ðŸ”¥ <b>${pCount + 3} personas</b> viÃ©ndolo`, `âš¡ <b>Alta Demanda</b>: Se llenarÃ¡ hoy`, `ðŸ† <b>Nivel Garantizado</b>`];
                     if (players.length > 0) {
                         const randomPlayer = players[Math.floor(Math.random() * players.length)];
                         const pName = (randomPlayer.name || 'Jugador').split(' ')[0];
-                        hypeMessages.unshift(`🚀 <b>${pName}</b> acaba de unirse`);
+                        hypeMessages.unshift(`ðŸš€ <b>${pName}</b> acaba de unirse`);
                     }
 
                     const tickerItems = [...hypeMessages, ...hypeMessages].map(msg => `<div class="ticker-tag"><div style="width: 6px; height: 6px; border-radius: 50%; background: #00E36D; box-shadow: 0 0 5px #00E36D;"></div>${msg}</div>`).join('');
@@ -1922,12 +1666,12 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             }
 
             const guideItems = [
-                { title: 'HISTORIAS LIVE', icon: 'fa-play-circle', color: '#fb7185', desc: 'Sigue la actualidad del club al estilo Instagram. Pulsa derecha para avanzar, izquierda para volver o mantén para pausar.' },
-                { title: 'RANKING GLOBAL', icon: 'fa-trophy', color: '#CCFF00', desc: 'Suma puntos en Americanas y Entrenos. El sistema recalcula tu nivel dinámicamente según tus victorias.' },
-                { title: 'METEOROLOGÍA', icon: 'fa-cloud-sun', color: '#0ea5e9', desc: 'Análisis en tiempo real de temperatura y humedad. Te indicamos la velocidad de la bola y el agarre de pista óptimo.' },
-                { title: 'NOTIFICACIONES PUSH', icon: 'fa-bell', color: '#fbbf24', desc: 'Recibe avisos instantáneos cuando se abran inscripciones o cuando tu partido esté listo para empezar.' },
-                { title: 'APP MULTI-MODO', icon: 'fa-layer-group', color: '#a855f7', desc: 'Gestiona Americanas, Entrenos, Clases y Pozo desde un solo lugar con lógica de ascensos automáticos.' },
-                { title: 'PILOTO AUTOMÁTICO', icon: 'fa-robot', color: '#34d399', desc: 'El sistema genera cruces 4h antes del evento y notifica a los jugadores para que todo fluya sin esperas.' }
+                { title: 'HISTORIAS LIVE', icon: 'fa-play-circle', color: '#fb7185', desc: 'Sigue la actualidad del club al estilo Instagram. Pulsa derecha para avanzar, izquierda para volver o mantÃ©n para pausar.' },
+                { title: 'RANKING GLOBAL', icon: 'fa-trophy', color: '#CCFF00', desc: 'Suma puntos en Americanas y Entrenos. El sistema recalcula tu nivel dinÃ¡micamente segÃºn tus victorias.' },
+                { title: 'METEOROLOGÃA', icon: 'fa-cloud-sun', color: '#0ea5e9', desc: 'AnÃ¡lisis en tiempo real de temperatura y humedad. Te indicamos la velocidad de la bola y el agarre de pista Ã³ptimo.' },
+                { title: 'NOTIFICACIONES PUSH', icon: 'fa-bell', color: '#fbbf24', desc: 'Recibe avisos instantÃ¡neos cuando se abran inscripciones o cuando tu partido estÃ© listo para empezar.' },
+                { title: 'APP MULTI-MODO', icon: 'fa-layer-group', color: '#a855f7', desc: 'Gestiona Americanas, Entrenos, Clases y Pozo desde un solo lugar con lÃ³gica de ascensos automÃ¡ticos.' },
+                { title: 'PILOTO AUTOMÃTICO', icon: 'fa-robot', color: '#34d399', desc: 'El sistema genera cruces 4h antes del evento y notifica a los jugadores para que todo fluya sin esperas.' }
             ];
 
             modal.innerHTML = `
@@ -1938,7 +1682,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         <div style="width: 50px; height: 50px; background: #CCFF00; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; box-shadow: 0 0 20px rgba(204,255,0,0.3);">
                             <i class="fas fa-book-open" style="color: black; font-size: 1.4rem;"></i>
                         </div>
-                        <h3 style="margin: 0 0 4px 0; color: #fff; font-weight: 950; font-size: 1.5rem; letter-spacing: -0.5px;">GUÍA <span style="color:#CCFF00">SMART</span> JUGADOR</h3>
+                        <h3 style="margin: 0 0 4px 0; color: #fff; font-weight: 950; font-size: 1.5rem; letter-spacing: -0.5px;">GUÃA <span style="color:#CCFF00">SMART</span> JUGADOR</h3>
                         <p style="color: rgba(255,255,255,0.4); font-size: 0.65rem; margin: 0; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;">Manual de Experiencia SomosPadel</p>
                     </div>
 
@@ -1975,10 +1719,10 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
         }
         async renderPredictiveSynergy() {
             try {
-                console.log("🧠 [DashboardView] renderPredictiveSynergy called");
+                console.log("ðŸ§  [DashboardView] renderPredictiveSynergy called");
                 const user = window.Store ? window.Store.getState('currentUser') : null;
                 if (!user) {
-                    console.warn("🧠 [DashboardView] No user for synergy");
+                    console.warn("ðŸ§  [DashboardView] No user for synergy");
                     return '';
                 }
 
@@ -1987,7 +1731,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 const userPhoto = user.photoURL || user.photo_url || 'img/default-avatar.png';
 
                 if (!window.PartnerSynergyService || !window.FirebaseDB) {
-                    console.error("🧠 [DashboardView] Synergy Services MISSING");
+                    console.error("ðŸ§  [DashboardView] Synergy Services MISSING");
                     return '';
                 }
 
@@ -1998,7 +1742,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     bestPartners = await window.PartnerSynergyService.getBestPartnersFor(userId, 3) || [];
                     trend = await window.PartnerSynergyService.getRecentPerformanceTrend(userId) || trend;
                 } catch (e) {
-                    console.error("🧠 [DashboardView] Fetching synergy failed", e);
+                    console.error("ðŸ§  [DashboardView] Fetching synergy failed", e);
                 }
 
                 let rankingInfo = { nextRival: null, myStats: null };
@@ -2019,7 +1763,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         }
                     }
                 } catch (e) {
-                    console.error("🧠 [DashboardView] Ranking calc error", e);
+                    console.error("ðŸ§  [DashboardView] Ranking calc error", e);
                 }
 
                 const myTotalPts = rankingInfo.myStats ?
@@ -2032,10 +1776,10 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     (rivalTotalPts > myTotalPts ?
                         `Objetivo: Superar a <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span>. Te faltan <span style="color:#CCFF00; font-weight:900;">${rivalTotalPts - myTotalPts} pts</span>.` :
                         (rivalTotalPts > 0 ?
-                            `Estás empatado con <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span>. ¡Una victoria más y le superas!` :
-                            `Supera a <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span> en tu próximo match para subir en el Top.`
+                            `EstÃ¡s empatado con <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span>. Â¡Una victoria mÃ¡s y le superas!` :
+                            `Supera a <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span> en tu prÃ³ximo match para subir en el Top.`
                         )) :
-                    (myTotalPts > 0 ? '¡Eres el líder actual! Mantén el nivel para conservar tu puesto.' : 'Comienza a jugar partidos para subir en el Ranking mundial.');
+                    (myTotalPts > 0 ? 'Â¡Eres el lÃ­der actual! MantÃ©n el nivel para conservar tu puesto.' : 'Comienza a jugar partidos para subir en el Ranking mundial.');
 
                 // HELPER: Get Smart Name (Name + 1st Surname) and Initials (N.S.)
                 const getSmartData = (fullName) => {
@@ -2058,8 +1802,8 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         photo: p.player?.photoURL || p.player?.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(sData.display)}&background=0f172a&color=fff&size=128`,
                         chemistry: Math.round(p.totalScore || 0),
                         color: p.rating?.color || '#CCFF00',
-                        desc: hasHistory ? (p.playChemistry.winRate > 60 ? 'Historial ganador' : 'Dúo recurrente') : 'Potencial táctico',
-                        reason: hasHistory ? `Habéis jugado ${p.playChemistry.matchesPlayed} partidos juntos.` : `Nivel de juego muy similar (${p.levelCompatibility.level2}).`
+                        desc: hasHistory ? (p.playChemistry.winRate > 60 ? 'Historial ganador' : 'DÃºo recurrente') : 'Potencial tÃ¡ctico',
+                        reason: hasHistory ? `HabÃ©is jugado ${p.playChemistry.matchesPlayed} partidos juntos.` : `Nivel de juego muy similar (${p.levelCompatibility.level2}).`
                     };
                 }) : [];
 
@@ -2080,24 +1824,24 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                     photo: p.photoURL || p.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(sData.display)}&background=random&color=fff&size=128`,
                                     chemistry: 75 + Math.floor(Math.random() * 15),
                                     color: i === 0 ? '#00E36D' : (i === 1 ? '#CCFF00' : '#38bdf8'),
-                                    desc: 'Dúo sugerido',
+                                    desc: 'DÃºo sugerido',
                                     reason: 'Compatibilidad por nivel de juego.'
                                 });
                             });
                         }
                     } catch (err) {
-                        console.error("🧠 Fallback players failed", err);
+                        console.error("ðŸ§  Fallback players failed", err);
                     }
                 }
 
                 // If still empty after fallback (very rare), use better named dummies
                 if (synergies.length === 0) {
                     synergies.push({ name: 'Pro 1', photo: 'https://i.pravatar.cc/150?u=1', chemistry: 85, color: '#00E36D', desc: 'Compatibilidad nivel' });
-                    synergies.push({ name: 'Pro 2', photo: 'https://i.pravatar.cc/150?u=2', chemistry: 72, color: '#CCFF00', desc: 'Estilo similar' });
-                    synergies.push({ name: 'Pro 3', photo: 'https://i.pravatar.cc/150?u=3', chemistry: 60, color: '#38bdf8', desc: 'Buena racha' });
+                    synergies.push({ name: 'Pro 2', photo: 'https://i.pravatar.cc/150?u=2', chemistry: 72, color: '#72a800', desc: 'Estilo similar' });
+                    synergies.push({ name: 'Pro 3', photo: 'https://i.pravatar.cc/150?u=3', chemistry: 60, color: '#1e3a8a', desc: 'Buena racha' });
                 }
 
-                const fatigueColor = trend.status === 'HIGH' ? '#ef4444' : (trend.status === 'OPTIMAL' ? '#00E36D' : '#CCFF00');
+                const fatigueColor = trend.status === 'HIGH' ? '#ef4444' : (trend.status === 'OPTIMAL' ? '#00E36D' : '#72a800');
 
                 return `
                     <div class="synergy-glass-container" data-widget="predictive-synergy" style="
@@ -2118,13 +1862,13 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; z-index: 20;">
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <div style="width: 12px; height: 12px; background: #CCFF00; border-radius: 50%; box-shadow: 0 0 15px #CCFF00; animation: pulseSOS 1.5s infinite;"></div>
-                                <span style="font-size: 0.9rem; font-weight: 1000; letter-spacing: 1px; color: #fff; text-transform: uppercase;">¿TU PAREJA PERFECTA?</span>
+                                <span style="font-size: 0.9rem; font-weight: 1000; letter-spacing: 1px; color: #fff; text-transform: uppercase;">Â¿TU PAREJA PERFECTA?</span>
                             </div>
                             <div style="background: rgba(0,227,109,0.15); padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 900; color: #00E36D; border: 1px solid #00E36D40; letter-spacing: 1px;">MATCH PADEL</div>
                         </div>
 
                         <p style="font-size: 0.72rem; color: rgba(255,255,255,0.5); line-height: 1.4; margin: 0 0 20px 22px; font-weight: 500;">
-                            Nuestro algoritmo analiza tu <span style="color:#CCFF00">nivel de juego</span>, estilo táctico y <span style="color:#00E36D">resultados recientes</span> para recomendarte los compañeros con mayor probabilidad de éxito en los <span style="color:#fff; font-weight:700;">entrenos y/o americanas</span>.
+                            Nuestro algoritmo analiza tu <span style="color:#CCFF00">nivel de juego</span>, estilo tÃ¡ctico y <span style="color:#00E36D">resultados recientes</span> para recomendarte los compaÃ±eros con mayor probabilidad de Ã©xito en los <span style="color:#fff; font-weight:700;">entrenos y/o americanas</span>.
                         </p>
 
                         <div style="display: grid; grid-template-columns: 1fr; gap: 24px;">
@@ -2137,7 +1881,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                     <div style="width: 100%; height: 100%; border-radius: 50%; background: #0f172a; overflow: hidden; border: 2px solid #0f172a;">
                                         <img src="${userPhoto}" style="width: 100%; height: 100%; object-fit: cover;">
                                     </div>
-                                    <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: #CCFF00; color: #000; font-size: 0.6rem; font-weight: 1000; padding: 3px 10px; border-radius: 100px; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">TÚ</div>
+                                    <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: #CCFF00; color: #000; font-size: 0.6rem; font-weight: 1000; padding: 3px 10px; border-radius: 100px; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">TÃš</div>
                                 </div>
 
                                 <!-- SYNERGY NODES -->
@@ -2211,7 +1955,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                             <i class="fas fa-chart-line" style="color: #38bdf8; font-size: 1.3rem;"></i>
                                         </div>
                                         <div>
-                                            <div style="font-size: 0.85rem; font-weight: 1000; color: #fff; margin-bottom: 4px;">PROYECCIÓN DE ASCENSO</div>
+                                            <div style="font-size: 0.85rem; font-weight: 1000; color: #fff; margin-bottom: 4px;">PROYECCIÃ“N DE ASCENSO</div>
                                             <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.5; font-weight: 500;">
                                                 ${rankingMsg}
                                             </p>
@@ -2226,9 +1970,9 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                             <i class="fas fa-lightbulb" style="color: #CCFF00; font-size: 1.3rem;"></i>
                                         </div>
                                         <div>
-                                            <div style="font-size: 0.85rem; font-weight: 1000; color: #fff; margin-bottom: 4px;">CONSEJO DEL CAPITÁN</div>
+                                            <div style="font-size: 0.85rem; font-weight: 1000; color: #fff; margin-bottom: 4px;">CONSEJO DEL CAPITÃN</div>
                                             <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.5; font-weight: 500;">
-                                                Tu pareja ideal es <span style="color:#CCFF00; font-weight:900;">${synergies[0]?.name || 'un perfil defensivo'}</span>. Juntos tenéis un ratio de cobertura de red del <span style="color:#00E36D; font-weight:900;">85%</span>.
+                                                Tu pareja ideal es <span style="color:#CCFF00; font-weight:900;">${synergies[0]?.name || 'un perfil defensivo'}</span>. Juntos tenÃ©is un ratio de cobertura de red del <span style="color:#00E36D; font-weight:900;">85%</span>.
                                             </p>
                                         </div>
                                     </div>
@@ -2268,5 +2012,5 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
     }
 
     window.DashboardView = new DashboardView();
-    console.log("🚀 Vibrant Dashboard Loaded");
+    console.log("ðŸš€ Vibrant Dashboard Loaded");
 })();

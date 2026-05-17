@@ -131,7 +131,7 @@
                         <!-- BRANDING HEADER -->
                         <div class="drawer-brand">
                             <img src="img/logo_somospadel.png" style="width: 70px; height: auto; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(204,255,0,0.5));">
-                            <div style="font-weight: 900; color: white; letter-spacing: 1.5px; font-size: 1.2rem; font-family: 'Outfit';">SOMOS<span style="color: #CCFF00;">PADEL</span></div>
+                            <div style="font-weight: 900; color: #0a192f; letter-spacing: 1.5px; font-size: 1.2rem; font-family: 'Outfit';">SOMOS<span style="color: #CCFF00;">PADEL</span></div>
                             <div style="font-size: 0.65rem; color: #666; font-weight: 800; letter-spacing: 3px; margin-top: 2px;">BARCELONA</div>
                         </div>
 

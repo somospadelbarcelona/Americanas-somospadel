@@ -53,8 +53,27 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
         window.auth = auth;
         window.FirebaseFirestore = firebase.firestore; // ADDED: Global access to FieldPath, etc.
 
-        // Initialize Messaging
-        let messaging;
+        // Listen for auth state changes and expose globally
+        firebase.auth().onAuthStateChanged(user => {
+            window.currentUser = user;
+            console.log('🔐 Auth state changed:', user ? `uid=${user.uid}` : 'no user');
+        });
+
+        // Verify Firestore connection immediately
+        db.collection('players').limit(1).get()
+            .then(snapshot => {
+                console.log(`✅ Conexión Firestore OK, ${snapshot.size} documentos en 'players'`);
+            })
+            .catch(err => {
+                console.error('❌ Error al conectar con Firestore al iniciar:', err);
+                if (window.PremiumModal) {
+                    window.PremiumModal.alert({
+                        title: "🔴 FIREBASE CONN ERROR",
+                        message: err.message || 'Error de conexión a Firestore',
+                        type: 'danger'
+                    });
+                }
+            });
         try {
             if (firebase.messaging.isSupported()) {
                 messaging = firebase.messaging();

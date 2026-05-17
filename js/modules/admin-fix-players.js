@@ -380,8 +380,9 @@ window.performMerge = async function (masterId, secondaryId) {
 
         console.log(`📊 [Merge] Encontrados ${allMatches.length} partidos y ${allEntrenosMatches.length} entrenos para transferir.`);
 
-        // Batch updates for efficiency
-        const updatePromises = [];
+        // Batch updates for efficiency to avoid 429 errors
+        const batch = window.db.batch();
+        let batchCount = 0;
 
         // Update Matches
         allMatches.forEach(m => {
@@ -411,7 +412,9 @@ window.performMerge = async function (masterId, secondaryId) {
             if (m.player2 === secondaryId) { upd.player2 = masterId; changed = true; }
             
             if (changed) {
-                updatePromises.push(FirebaseDB.matches.update(m.id, upd));
+                const docRef = window.db.collection('matches').doc(m.id);
+                batch.update(docRef, upd);
+                batchCount++;
             }
         });
 
@@ -428,7 +431,9 @@ window.performMerge = async function (masterId, secondaryId) {
                 changed = true;
             }
             if (changed) {
-                updatePromises.push(FirebaseDB.entrenos_matches.update(m.id, upd));
+                const docRef = window.db.collection('entrenos_matches').doc(m.id);
+                batch.update(docRef, upd);
+                batchCount++;
             }
         });
 
@@ -444,11 +449,15 @@ window.performMerge = async function (masterId, secondaryId) {
                     }
                     return p;
                 });
-                updatePromises.push(FirebaseDB.americanas.update(a.id, { players: newPlayers }));
+                const docRef = window.db.collection('americanas').doc(a.id);
+                batch.update(docRef, { players: newPlayers });
+                batchCount++;
             }
         });
 
-        await Promise.all(updatePromises);
+        if (batchCount > 0) {
+            await batch.commit();
+        }
 
         // 4. Update Master Profile
         await FirebaseDB.players.update(masterId, {

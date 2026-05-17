@@ -36,10 +36,10 @@
             }
 
             container.innerHTML = `
-                <div class="player-profile-wrapper fade-in" style="background: #09090b; min-height: 100vh; padding-bottom: 200px; font-family: 'Outfit', sans-serif; color: white;">
+                <div class="player-profile-wrapper fade-in" style="background: #f8fafc; min-height: 100vh; padding-bottom: 200px; font-family: 'Outfit', sans-serif; color: #0a192f;">
                     
                     <!-- Profile Header: Dynamic & Aesthetic -->
-                    <div style="background: linear-gradient(180deg, #18181b 0%, #09090b 100%); padding: 60px 24px 40px; border-bottom: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden;">
+                    <div style="background: #ffffff; padding: 60px 24px 40px; border-bottom: 1px solid #e2e8f0; position: relative; overflow: hidden;">
                         <!-- Animated background elements -->
                         <div style="position: absolute; top: -100px; left: -100px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(204,255,0,0.1) 0%, transparent 70%); animation: pulse 8s infinite;"></div>
                         <div style="position: absolute; bottom: -50px; right: -50px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%); animation: pulse 6s infinite reverse;"></div>
@@ -65,27 +65,27 @@
                                         height: 100%; 
                                         border-radius: 40px; 
                                         background: url('${user.photo_url || user.photoURL || 'img/logo_somospadel.png'}') center/cover; 
-                                        border: 4px solid #09090b;
+                                        border: 4px solid #ffffff;
                                         position: relative;
                                         overflow: hidden;
-                                        background-color: #1a1a1a;
+                                        background-color: #f1f5f9;
                                     ">
                                         ${!(user.photo_url || user.photoURL) ? `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#CCFF00; font-size:3rem; font-weight:900;">${user.name.substring(0, 1).toUpperCase()}</div>` : ''}
                                     </div>
                                     
                                     <!-- Verified Icon -->
-                                    <div style="position: absolute; top: -8px; right: -8px; background: #CCFF00; color: #000; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; border: 4px solid #09090b; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                                    <div style="position: absolute; top: -8px; right: -8px; background: #CCFF00; color: #000; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; border: 4px solid #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
                                         <i class="fas fa-check"></i>
                                     </div>
 
                                     <!-- Camera Icon -->
-                                    <div onclick="window.PlayerView.showUpdatePhotoPrompt()" style="position: absolute; bottom: -8px; right: -8px; background: white; width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer; border: 4px solid #09090b;">
+                                    <div onclick="window.PlayerView.showUpdatePhotoPrompt()" style="position: absolute; bottom: -8px; right: -8px; background: white; width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); cursor: pointer; border: 4px solid #ffffff;">
                                         <i class="fas fa-camera" style="color: #000; font-size: 1rem;"></i>
                                     </div>
                                 </div>
                             </div>
                             
-                            <h2 style="font-weight: 950; font-size: 2rem; margin: 0; text-transform: uppercase; letter-spacing: -1px; color: #fff; line-height:1;">${user.name}</h2>
+                            <h2 style="font-weight: 950; font-size: 2.4rem; margin: 0; text-transform: uppercase; letter-spacing: -1.5px; color: #0a192f; line-height: 0.9;">${user.name}</h2>
                             
                             <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 15px;">
                                 ${(() => {
@@ -94,17 +94,17 @@
                         `<i class="fas fa-star" style="font-size: 0.9rem; color: ${i < badge.stars ? badge.color : 'rgba(255,255,255,0.1)'}; margin-right: 2px; ${i < badge.stars ? 'text-shadow: 0 0 10px ' + badge.color : ''}"></i>`
                     ).join('');
                     return `
-                                        <div style="font-size: 0.75rem; font-weight: 950; padding: 4px 16px; border-radius: 20px; background: ${badge.color}22; color: ${badge.color}; border: 1px solid ${badge.color}44; text-transform: uppercase; letter-spacing: 2px; box-shadow: ${badge.shadow};">
+                                        <div style="font-size: 0.85rem; font-weight: 950; padding: 6px 20px; border-radius: 20px; background: ${badge.color}22; color: ${badge.color}; border: 1px solid ${badge.color}44; text-transform: uppercase; letter-spacing: 2px; box-shadow: ${badge.shadow};">
                                             RANGO ${badge.label}
                                         </div>
                                         <div style="display: flex; gap: 4px;">${starsHtml}</div>
-                                        <span style="color: #64748b; font-size: 0.7rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px;">NIVEL ${parseFloat(user.level || 3.5).toFixed(2)}</span>
+                                        <span style="color: #475569; font-size: 0.8rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px;">NIVEL ${parseFloat(user.level || 3.5).toFixed(2)}</span>
                                     `;
                 })()}
                             </div>
 
                             <!-- PROGRESS TO NEXT STAR (Enhanced) -->
-                            <div style="margin-top: 25px; width: 100%; max-width: 320px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 20px; position: relative; overflow: hidden;">
+                            <div style="margin-top: 25px; width: 100%; max-width: 320px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 24px; padding: 20px; position: relative; overflow: hidden;">
                                 ${(() => {
                                     const currentLvl = parseFloat(user.level || 3.5);
                                     const nextThreshold = (Math.floor(currentLvl * 2) + 1) / 2;
@@ -117,11 +117,11 @@
                                         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px;">
                                             <div style="text-align: left;">
                                                 <div style="color: #64748b; font-size: 0.55rem; font-weight: 950; text-transform: uppercase; letter-spacing: 1.5px;">PROYECTO DE ASCENSO</div>
-                                                <div style="color: #fff; font-weight: 900; font-size: 0.85rem; margin-top: 2px;">RANGO ${nextBadge.label}</div>
+                                                <div style="color: #0a192f; font-weight: 900; font-size: 0.85rem; margin-top: 2px;">RANGO ${nextBadge.label}</div>
                                             </div>
                                             <div style="text-align: right;">
-                                                <div style="color: #CCFF00; font-weight: 950; font-size: 1rem; line-height: 1;">-${diff}</div>
-                                                <div style="color: #64748b; font-size: 0.5rem; font-weight: 800; text-transform: uppercase;">PARA SUBIR</div>
+                                                <div style="color: #72a800; font-weight: 950; font-size: 1.2rem; line-height: 1;">-${diff}</div>
+                                                <div style="color: #475569; font-size: 0.55rem; font-weight: 900; text-transform: uppercase;">PARA SUBIR</div>
                                             </div>
                                         </div>
                                         <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; position: relative; overflow: hidden;">
@@ -166,7 +166,7 @@
                                 <button onclick="window.PlayerView.haptic(50); window.PlayerView.shareProfileCard()" class="haptic-feedback" style="background: rgba(204,255,0,0.05); border: 1px solid #CCFF00; color: #CCFF00; padding: 12px 20px; border-radius: 16px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                                     <i class="fas fa-share-alt"></i> COMPARTIR
                                 </button>
-                                <button onclick="window.PlayerView.haptic(30); window.PlayerView.showUpdatePasswordPrompt()" class="haptic-feedback" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px 20px; border-radius: 16px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer;">
+                                <button onclick="window.PlayerView.haptic(30); window.PlayerView.showUpdatePasswordPrompt()" class="haptic-feedback" style="background: #ffffff; border: 1px solid #e2e8f0; color: #0a192f; padding: 12px 20px; border-radius: 16px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer;">
                                     <i class="fas fa-cog"></i>
                                 </button>
                             </div>
@@ -185,7 +185,7 @@
                             <div class="glass-card" style="padding: 20px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                                 <div style="position:relative; width: 80px; height: 80px; margin-bottom: 10px;">
                                     <canvas id="profileWinRateChart"></canvas>
-                                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-weight:900; font-size:1.2rem; color:white;">
+                                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-weight:900; font-size:1.2rem; color: #0a192f;">
                                         ${data.stats.winRate}%
                                     </div>
                                 </div>
@@ -194,7 +194,7 @@
 
                             <!-- Total Matches (Big Number) -->
                             <div class="glass-card" style="padding: 20px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-                                <div style="font-size: 2.5rem; font-weight: 950; color: white;">${data.stats.matches || 0}</div>
+                                <div style="font-size: 2.5rem; font-weight: 950; color: #0a192f;">${data.stats.matches || 0}</div>
                                 <div style="color: #64748b; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">PARTIDOS</div>
                                 <div style="margin-top:5px; font-size:0.7rem; color:#CCFF00; font-weight:900;">${data.stats.won || 0} Wins</div>
                             </div>
@@ -202,11 +202,11 @@
                         </div>
 
                         <!-- PERFORMANCE HISTORY (Line Chart) -->
-                        <div style="margin-bottom: 25px; background: rgba(255,255,255,0.03); border-radius: 32px; padding: 25px; border: 1px solid rgba(255,255,255,0.05); position:relative; overflow:hidden;">
+                        <div style="margin-bottom: 25px; background: #ffffff; border-radius: 32px; padding: 25px; border: 1px solid #e2e8f0; position:relative; overflow:hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
                             <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle at 100% 0%, rgba(204,255,0,0.05), transparent 50%); pointer-events:none;"></div>
                             
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-                                <h3 style="margin: 0; font-size: 0.8rem; font-weight: 950; letter-spacing: 1px; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 10px;">
+                                <h3 style="margin: 0; font-size: 0.8rem; font-weight: 950; letter-spacing: 1px; color: #0a192f; text-transform: uppercase; display: flex; align-items: center; gap: 10px;">
                                     <i class="fas fa-chart-area" style="color: #CCFF00;"></i> Progresión de Nivel
                                 </h3>
                                 <div style="font-size: 0.65rem; font-weight: 900; color: #CCFF00; background: rgba(204,255,0,0.1); padding: 4px 10px; border-radius: 10px; border: 1px solid rgba(204,255,0,0.2);">
@@ -219,8 +219,8 @@
                         </div>
 
                         <!-- ATTRIBUTE RADAR (Spider Chart) -->
-                        <div style="margin-bottom: 25px; background: rgba(255,255,255,0.03); border-radius: 32px; padding: 25px; border: 1px solid rgba(255,255,255,0.05);">
-                            <h3 style="margin: 0 0 20px; font-size: 0.8rem; font-weight: 950; letter-spacing: 1px; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 10px;">
+                        <div style="margin-bottom: 25px; background: #ffffff; border-radius: 32px; padding: 25px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
+                            <h3 style="margin: 0 0 20px; font-size: 0.8rem; font-weight: 950; letter-spacing: 1px; color: #0a192f; text-transform: uppercase; display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-microchip" style="color: #3b82f6;"></i> Análisis de Atributos
                             </h3>
                             <div style="width: 100%; max-width: 280px; margin: 0 auto 20px;">
@@ -237,7 +237,7 @@
                                 </div>
                             </div>
                         </div>                        <!-- TACTICAL COACH: High-Tech Card (Point 5 Glass) -->
-                        <div class="crystal-card" style="margin-bottom: 25px; background: linear-gradient(135deg, rgba(204,255,0,0.08) 0%, rgba(0,0,0,0) 100%); padding: 25px;">
+                        <div class="crystal-card" style="margin-bottom: 25px; background: #ffffff; padding: 25px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
                             <div style="position: absolute; right: -15px; top: -15px; font-size: 6rem; opacity: 0.05; color: #CCFF00; pointer-events: none;"><i class="fas fa-strategy"></i></div>
                             
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
@@ -245,14 +245,14 @@
                                     <div style="width: 36px; height: 36px; background: #CCFF00; color: #000; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; box-shadow: 0 0 15px rgba(204, 255, 0, 0.3);">
                                         <i class="fas fa-clipboard-check"></i>
                                     </div>
-                                    <span style="font-weight: 950; font-size: 0.85rem; letter-spacing: 1px; color: #fff; text-transform: uppercase;">Informe Técnico</span>
+                                    <span style="font-weight: 950; font-size: 0.85rem; letter-spacing: 1px; color: #0a192f; text-transform: uppercase;">Informe Técnico</span>
                                 </div>
                                 <span style="font-size: 0.65rem; background: rgba(204, 204, 0, 0.15); color: #CCFF00; padding: 5px 12px; border-radius: 20px; font-weight: 950; border: 1px solid rgba(204,255,0,0.3); letter-spacing: 0.5px;">
                                     ${data.smartInsights?.badge || 'PROCESANDO'}
                                 </span>
                             </div>
 
-                            <p style="font-size: 1.1rem; line-height: 1.5; font-weight: 700; color: #fff; margin: 0 0 15px; letter-spacing: -0.2px;">
+                            <p style="font-size: 1.1rem; line-height: 1.5; font-weight: 700; color: #0a192f; margin: 0 0 15px; letter-spacing: -0.2px;">
                                 "${data.smartInsights?.summary || 'Sigue jugando para recibir consejos tácticos personalizados.'}"
                             </p>
                             
@@ -275,7 +275,7 @@
                                 </div>
                                 <div style="flex: 1;">
                                     <div style="color: #ef4444; font-size: 0.65rem; font-weight: 950; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px;">TU NÉMESIS 💀</div>
-                                    <div style="font-size: 1.4rem; font-weight: 950; color: white; line-height: 1.1;">${data.h2h.nemesis.name}</div>
+                                    <div style="font-size: 1.4rem; font-weight: 950; color: #0a192f; line-height: 1.1;">${data.h2h.nemesis.name}</div>
                                     <div style="display: flex; gap: 15px; margin-top: 8px;">
                                         <div style="font-size: 0.75rem; color: #64748b; font-weight: 700;">H2H: <b style="color:#ef4444">${data.h2h.nemesis.losses} DERROTAS</b></div>
                                         <div style="font-size: 0.75rem; color: #64748b; font-weight: 700;">PARTIDOS: <b style="color:#fff">${data.h2h.nemesis.matches}</b></div>
@@ -290,7 +290,7 @@
                                 </div>
                                 <div style="flex: 1;">
                                     <div style="color: #ec4899; font-size: 0.65rem; font-weight: 950; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px;">ALMA GEMELA ❤️</div>
-                                    <div style="font-size: 1.4rem; font-weight: 950; color: white; line-height: 1.1;">${data.h2h.soulmate.name}</div>
+                                    <div style="font-size: 1.4rem; font-weight: 950; color: #0a192f; line-height: 1.1;">${data.h2h.soulmate.name}</div>
                                     <div style="display: flex; gap: 15px; margin-top: 8px;">
                                         <div style="font-size: 0.75rem; color: #64748b; font-weight: 700;">WINS: <b style="color:#ec4899">${data.h2h.soulmate.wins} VICTORIAS</b></div>
                                         <div style="font-size: 0.75rem; color: #64748b; font-weight: 700;">PARTIDOS: <b style="color:#fff">${data.h2h.soulmate.matches}</b></div>
@@ -301,21 +301,21 @@
 
                         <!-- RECENT MATCHES -->
                         <div style="margin-bottom: 40px;">
-                             <h3 style="margin: 0 0 15px; font-size: 0.8rem; font-weight: 950; letter-spacing: 1px; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 10px;">
+                             <h3 style="margin: 0 0 15px; font-size: 0.8rem; font-weight: 950; letter-spacing: 1px; color: #0a192f; text-transform: uppercase; display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-history" style="color: #94a3b8;"></i> Historial Reciente
                             </h3>
                             <div style="display: grid; gap: 10px;">
                                 ${data.recentMatches.length > 0 ? data.recentMatches.slice(0, 5).map(m => `
                                     <div style="background: rgba(255,255,255,0.02); padding: 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
                                         <div>
-                                            <div style="font-weight: 800; font-size: 0.85rem; color: #fff;">${m.eventName}</div>
+                                            <div style="font-weight: 800; font-size: 0.85rem; color: #0a192f;">${m.eventName}</div>
                                             <div style="font-size: 0.7rem; color: #666; font-weight: 600;">${m.date}</div>
                                         </div>
                                         <div style="text-align:right;">
                                             <div style="background: ${m.result === 'W' ? 'rgba(204,255,0,0.1)' : 'rgba(239,68,68,0.1)'}; color: ${m.result === 'W' ? '#CCFF00' : '#ef4444'}; padding: 4px 12px; border-radius: 12px; font-weight: 900; font-size: 0.75rem; border: 1px solid ${m.result === 'W' ? 'rgba(204,255,0,0.3)' : 'rgba(239,68,68,0.3)'};">
                                                 ${m.result === 'W' ? 'VICTORIA' : 'DERROTA'}
                                             </div>
-                                            <div style="font-size: 0.75rem; color: #fff; margin-top: 4px; font-weight:800;">
+                                            <div style="font-size: 0.75rem; color: #0a192f; margin-top: 4px; font-weight:800;">
                                                 ${m.score}
                                             </div>
                                         </div>
@@ -399,7 +399,7 @@
                             tension: 0.5,
                             pointRadius: 6,
                             pointHoverRadius: 8,
-                            pointBackgroundColor: '#09090b',
+                            pointBackgroundColor: '#ffffff',
                             pointBorderColor: '#CCFF00',
                             pointBorderWidth: 3,
                             borderWidth: 4

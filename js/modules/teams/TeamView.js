@@ -24,57 +24,60 @@
             const totalPointsCount = allTeams.reduce((acc, t) => acc + (t.points || 0), 0);
 
             this.container.innerHTML = `
-                <div class="teams-view-container animate-fade-in" style="padding: 24px; padding-bottom: 120px; background: #000;">
+                <div class="teams-view-container animate-fade-in" style="padding: 24px; padding-bottom: 120px; background: #f8fafc;">
                     <!-- 💎 EXECUTIVE HEADER -->
-                    <div style="margin-bottom: 35px; background: linear-gradient(135deg, rgba(204,255,0,0.08) 0%, rgba(0,0,0,0) 100%); padding: 40px 20px; border-radius: 32px; border-left: 6px solid var(--brand-neon); position: relative; overflow: hidden;">
-                        <div style="position: absolute; top: -20px; right: -20px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(204,255,0,0.1) 0%, transparent 70%);"></div>
+                    <div style="margin-bottom: 35px; background: #ffffff; padding: 30px 20px 25px; border-radius: 32px; border: 1px solid #e2e8f0; position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+                        <!-- Accent stripe -->
+                        <div style="position:absolute; top:0; left:0; width:100%; height:5px; background:linear-gradient(90deg,#5a8a00,#7ab800); border-radius:32px 32px 0 0;"></div>
+                        <div style="position: absolute; top: -20px; right: -20px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(90,138,0,0.06) 0%, transparent 70%);"></div>
                         
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; position: relative; z-index: 2;">
-                            <h1 style="color: white; font-weight: 950; font-size: 2.6rem; margin: 0; letter-spacing: -1.5px; text-transform: uppercase; line-height: 0.85;">
-                                EQUIPOS <br><span style="color:var(--brand-neon); text-shadow: 0 0 15px rgba(204,255,0,0.4);">SOMOS PÁDEL</span>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; position: relative; z-index: 2; margin-top: 8px;">
+                            <h1 style="color: #0a192f; font-weight: 950; font-size: 2.6rem; margin: 0; letter-spacing: -1.5px; text-transform: uppercase; line-height: 0.85;">
+                                EQUIPOS <br><span style="color:#5a8a00;">SOMOS PÁDEL</span>
                             </h1>
-                            <img src="img/logo_somospadel.png" style="width: 65px; height: 65px; object-fit: contain; filter: drop-shadow(0 10px 20px rgba(204,255,0,0.3)); flex-shrink: 0;">
+                            <img src="img/logo_somospadel.png" style="width: 65px; height: 65px; object-fit: contain; flex-shrink: 0;">
                         </div>
 
-                        <!-- 🚀 4 WOW BUTTONS CENTERED -->
-                        <div style="display: flex; justify-content: center; gap: 12px; margin-top: 35px; flex-wrap: wrap; position: relative; z-index: 2;">
-                            <!-- Nº EQUIPOS (Lima) -->
-                            <div style="flex: 1; min-width: 75px; background: rgba(204,255,0,0.05); padding: 12px 10px; border-radius: 20px; border: 1px solid rgba(204,255,0,0.2); text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2), inset 0 0 10px rgba(204,255,0,0.05);">
-                                <div style="font-size: 0.5rem; color: #ccff00; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Nº EQUIPOS</div>
-                                <div style="font-size: 1.4rem; color: white; font-weight: 950; line-height: 1;">${totalTeamsCount}</div>
+                        <!-- Stats Row -->
+                        <div style="display: flex; justify-content: center; gap: 12px; margin-top: 25px; flex-wrap: wrap; position: relative; z-index: 2;">
+                            <!-- Nº EQUIPOS -->
+                            <div style="flex: 1; min-width: 75px; background: #f8fafc; padding: 14px 10px; border-radius: 20px; border: 1px solid #e2e8f0; text-align: center;">
+                                <div style="font-size: 0.5rem; color: #5a8a00; font-weight: 950; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Nº EQUIPOS</div>
+                                <div style="font-size: 1.6rem; color: #0a192f; font-weight: 950; line-height: 1;">${totalTeamsCount}</div>
                             </div>
                             
-                            <!-- PLANTILLA (Oro) -->
-                            <div style="flex: 1; min-width: 75px; background: rgba(255,184,0,0.05); padding: 12px 10px; border-radius: 20px; border: 1px solid rgba(255,184,0,0.2); text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-                                <div style="font-size: 0.5rem; color: #ffb800; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">PLANTILLA</div>
-                                <div style="font-size: 1.4rem; color: white; font-weight: 950; line-height: 1;">${totalPlayersCount}</div>
+                            <!-- PLANTILLA -->
+                            <div style="flex: 1; min-width: 75px; background: #f8fafc; padding: 14px 10px; border-radius: 20px; border: 1px solid #e2e8f0; text-align: center;">
+                                <div style="font-size: 0.5rem; color: #92400e; font-weight: 950; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">PLANTILLA</div>
+                                <div style="font-size: 1.6rem; color: #0a192f; font-weight: 950; line-height: 1;">${totalPlayersCount}</div>
                             </div>
 
-                            <!-- VICTORIAS (Verde Esmeralda) -->
-                            <div style="flex: 1; min-width: 75px; background: rgba(0,255,136,0.05); padding: 12px 10px; border-radius: 20px; border: 1px solid rgba(0,255,136,0.2); text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-                                <div style="font-size: 0.5rem; color: #00ff88; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">VICTORIAS</div>
-                                <div style="font-size: 1.4rem; color: white; font-weight: 950; line-height: 1;">${totalWins}</div>
+                            <!-- VICTORIAS -->
+                            <div style="flex: 1; min-width: 75px; background: #f8fafc; padding: 14px 10px; border-radius: 20px; border: 1px solid #e2e8f0; text-align: center;">
+                                <div style="font-size: 0.5rem; color: #15803d; font-weight: 950; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">VICTORIAS</div>
+                                <div style="font-size: 1.6rem; color: #0a192f; font-weight: 950; line-height: 1;">${totalWins}</div>
                             </div>
 
-                            <!-- PUNTOS CLUB (Cian) -->
-                            <div style="flex: 1; min-width: 75px; background: rgba(0,210,255,0.05); padding: 12px 10px; border-radius: 20px; border: 1px solid rgba(0,210,255,0.2); text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-                                <div style="font-size: 0.5rem; color: #00d2ff; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">PUNTOS CLUB</div>
-                                <div style="font-size: 1.4rem; color: white; font-weight: 950; line-height: 1;">${totalPointsCount}</div>
+                            <!-- PUNTOS CLUB -->
+                            <div style="flex: 1; min-width: 75px; background: #f8fafc; padding: 14px 10px; border-radius: 20px; border: 1px solid #e2e8f0; text-align: center;">
+                                <div style="font-size: 0.5rem; color: #1e40af; font-weight: 950; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">PUNTOS CLUB</div>
+                                <div style="font-size: 1.6rem; color: #0a192f; font-weight: 950; line-height: 1;">${totalPointsCount}</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 🌀 MODERN FILTERS -->
-                    <div style="display: flex; gap: 12px; margin-bottom: 30px; overflow-x: auto; padding: 5px; scrollbar-width: none; -ms-overflow-style: none;">
+                    <!-- Filtros de categoría -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 30px; overflow-x: auto; padding: 5px; scrollbar-width: none; -ms-overflow-style: none;">
                         <style>.teams-view-container div::-webkit-scrollbar { display: none; }</style>
                         ${['Todos', 'Masculina', 'Femenina', 'Mixta'].map(cat => `
                             <button onclick="window.TeamController.setCategory('${cat}')" 
-                                    style="padding: 12px 24px; border-radius: 16px; border: 1px solid ${this.activeCategory === cat ? 'var(--brand-neon)' : 'rgba(255,255,255,0.1)'}; 
+                                    style="padding: 10px 22px; border-radius: 14px;
+                                           border: 1.5px solid ${this.activeCategory === cat ? '#5a8a00' : '#e2e8f0'}; 
                                            font-weight: 900; font-size: 0.8rem; cursor: pointer; white-space: nowrap;
-                                           background: ${this.activeCategory === cat ? 'var(--brand-neon)' : 'rgba(255,255,255,0.03)'};
-                                           color: ${this.activeCategory === cat ? 'black' : 'white'};
-                                           box-shadow: ${this.activeCategory === cat ? '0 8px 20px rgba(204,255,0,0.2)' : 'none'};
-                                           transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                                           background: ${this.activeCategory === cat ? '#5a8a00' : '#ffffff'};
+                                           color: ${this.activeCategory === cat ? '#ffffff' : '#64748b'};
+                                           box-shadow: ${this.activeCategory === cat ? '0 4px 12px rgba(90,138,0,0.25)' : '0 2px 6px rgba(0,0,0,0.04)'};
+                                           transition: all 0.2s ease;">
                                 ${cat.toUpperCase()}
                             </button>
                         `).join('')}
@@ -101,12 +104,12 @@
                 <div class="team-card glass-card-enterprise" 
                      id="team-${team.id}"
                      onclick="window.TeamView.toggleCard('${team.id}')"
-                     style="background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%); 
-                            border: 1px solid rgba(255,255,255,0.1); border-radius: 32px; padding: 20px; transition: all 0.4s ease; 
-                            position: relative; overflow: hidden; cursor: pointer; margin-bottom: 20px;">
+                     style="background: #ffffff; 
+                            border: 1px solid #e2e8f0; border-radius: 32px; padding: 20px; transition: all 0.4s ease; 
+                            position: relative; overflow: hidden; cursor: pointer; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
                     
                     <!-- TOP BADGE -->
-                    <div style="position: absolute; top: 0; right: 0; background: var(--brand-neon); color: black; padding: 6px 20px; border-bottom-left-radius: 20px; font-weight: 950; font-size: 0.6rem; letter-spacing: 1px;">
+                    <div style="position: absolute; top: 0; right: 0; background: #5a8a00; color: #fff; padding: 6px 20px; border-bottom-left-radius: 20px; font-weight: 950; font-size: 0.6rem; letter-spacing: 1px;">
                         ${team.division}
                     </div>
 
@@ -120,9 +123,9 @@
                             </div>
                         </div>
                         <div style="flex: 1;">
-                            <h3 style="color: white; margin: 0; font-size: 1.1rem; font-weight: 950; line-height: 1.1;">${team.name}</h3>
+                            <h3 style="color: #0a192f; margin: 0; font-size: 1.25rem; font-weight: 950; line-height: 1.1;">${team.name}</h3>
                             <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px;">
-                                <span style="font-size: 0.6rem; color: #ccc; font-weight: 700; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 6px;">
+                                <span style="font-size: 0.65rem; color: #475569; font-weight: 800; background: #f1f5f9; padding: 2px 8px; border-radius: 6px;">
                                     ${((team.name.includes('3MB') || team.name.includes('3M B'))) ? 'Miguel Ángel Méndez Ruiz' : 
                                       ((team.name.includes('3MA') || team.name.includes('3M A'))) ? 'Abraham Rosell' : 
                                       ((team.captain && !team.captain.includes('Pendiente')) ? team.captain : (team.roster && team.roster.length > 0 ? team.roster[0].name : 'Capitán por definir'))}
@@ -148,7 +151,7 @@
                                 </div>
                                 <div style="flex: 1;">
                                     <div style="font-size: 0.5rem; color: #00d2ff; font-weight: 950; text-transform: uppercase;">PRÓXIMO PARTIDO</div>
-                                    <div style="font-size: 0.85rem; color: white; font-weight: 800;">vs ${next.opponent}</div>
+                                    <div style="font-size: 0.85rem; color: #0a192f; font-weight: 800;">vs ${next.opponent}</div>
                                     <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5); font-weight: 700;">
                                         ${next.date} • ${next.time}h
                                     </div>

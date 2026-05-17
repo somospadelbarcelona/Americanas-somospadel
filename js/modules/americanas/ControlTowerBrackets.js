@@ -35,7 +35,7 @@
                         padding: 20px;
                         overflow-x: auto;
                         -webkit-overflow-scrolling: touch;
-                        background: #050505;
+                        background: #f8fafc;
                         min-height: 70vh;
                     }
                     .bracket-round {
@@ -46,11 +46,11 @@
                         gap: 15px;
                     }
                     .bracket-match-node {
-                        background: #111827;
-                        border-radius: 12px;
-                        border: 1px solid rgba(255,255,255,0.05);
-                        padding: 10px;
-                        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                        background: #ffffff;
+                        border-radius: 16px;
+                        border: 1px solid #e2e8f0;
+                        padding: 12px;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
                         position: relative;
                     }
                     .bracket-team {
@@ -63,30 +63,32 @@
                     .bracket-team-name {
                         font-size: 0.75rem;
                         font-weight: 800;
-                        color: #ddd;
+                        color: #0a192f;
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
                         text-transform: uppercase;
                     }
                     .bracket-score {
-                        background: rgba(255,255,255,0.05);
-                        min-width: 24px;
-                        height: 24px;
+                        background: #f1f5f9;
+                        min-width: 26px;
+                        height: 26px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        border-radius: 4px;
+                        border-radius: 6px;
                         font-weight: 950;
                         font-size: 0.8rem;
-                        color: #fff;
+                        color: #64748b;
+                        border: 1px solid #e2e8f0;
                     }
                     .bracket-winner {
-                        color: #CCFF00 !important;
+                        color: #72a800 !important;
                     }
                     .bracket-winner-score {
-                        background: #CCFF00 !important;
-                        color: #000 !important;
+                        background: #72a800 !important;
+                        color: #ffffff !important;
+                        border-color: #72a800 !important;
                     }
                     .bracket-connector {
                         position: absolute;
@@ -94,11 +96,11 @@
                         top: 50%;
                         width: 10px;
                         height: 1px;
-                        background: rgba(255,255,255,0.1);
+                        background: #e2e8f0;
                     }
                     .round-title {
                         text-align: center;
-                        color: #666;
+                        color: #64748b;
                         font-size: 0.65rem;
                         font-weight: 950;
                         letter-spacing: 2px;
@@ -124,7 +126,7 @@
                                             <span class="bracket-team-name ${winA ? 'bracket-winner' : ''}">${Array.isArray(m.team_a_names) ? m.team_a_names.join('/') : (m.team_a_names || 'TEAM A')}</span>
                                             <span class="bracket-score ${winA ? 'bracket-winner-score' : ''}">${isFinished ? sA : '-'}</span>
                                         </div>
-                                        <div style="height: 1px; background: rgba(255,255,255,0.03); margin: 4px 0;"></div>
+                                        <div style="height: 1px; background: #f1f5f9; margin: 4px 0;"></div>
                                         <div class="bracket-team">
                                             <span class="bracket-team-name ${winB ? 'bracket-winner' : ''}">${Array.isArray(m.team_b_names) ? m.team_b_names.join('/') : (m.team_b_names || 'TEAM B')}</span>
                                             <span class="bracket-score ${winB ? 'bracket-winner-score' : ''}">${isFinished ? sB : '-'}</span>

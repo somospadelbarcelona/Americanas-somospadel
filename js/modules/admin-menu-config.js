@@ -287,15 +287,32 @@ window.AdminViews.config = async function () {
             let count = 0;
             let skipped = 0;
 
+            let batch = window.db.batch();
+            let opCount = 0;
+
             for (const u of users) {
                 if (u.phone === '649219350' || (u.phone && u.phone.endsWith('649219350'))) {
                     console.log(`🛡️ SKIPPING SUPER ADMIN: ${u.name}`);
                     skipped++;
                     continue;
                 }
-                await FirebaseDB.players.update(u.id, { password: 'PADEL26' });
+                batch.update(window.db.collection('players').doc(u.id), { password: 'PADEL26' });
                 count++;
+                opCount++;
+
+                if (opCount >= 450) {
+                    await batch.commit();
+                    batch = window.db.batch();
+                    opCount = 0;
+                }
             }
+
+            if (opCount > 0) {
+                await batch.commit();
+            }
+
+            // Invalidate Cache after batch operation
+            if (window.CacheService) window.CacheService.remove('players', 'all');
 
             alert(`✅ OPERACIÓN COMPLETADA\\n\\n - ${count} contraseñas cambiadas a PADEL26\\n - ${skipped} usuarios admin protegidos (NOA21)\\n\\nAhora todos pueden entrar con 'PADEL26'.`);
             loadAdminView('config');

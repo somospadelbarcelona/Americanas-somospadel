@@ -579,7 +579,7 @@
 
             let contentHtml = '';
             if (this.state.loading) {
-                contentHtml = '<div style="padding:40px; text-align:center;"><div class="loader"></div><p style="color:#888; margin-top:10px;">Cargando datos...</p></div>';
+                contentHtml = '<div style="padding: 100px; text-align: center;"><div class="loader"></div><p style="margin-top:20px; font-weight:900; letter-spacing:2px;">CARGANDO AMERICANAS...</p></div>';
             } else {
                 switch (this.state.activeTab) {
                     case 'events': contentHtml = this.renderEventsList(false, false); break;
@@ -775,21 +775,19 @@
                             z-index: 5;
                         }
                     </style>
-                    <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #0f172a 0%, #000000 100%); border-radius: 20px; margin: 15px; box-shadow: 0 0 25px rgba(204,255,0,0.25); border: 2px solid #CCFF00; position: relative; overflow: hidden;">
-                        <div style="display: flex; align-items: center; gap: 12px; position: relative; z-index: 1;">
-                            <div class="padel-ball-live" style="width: 44px; height: 44px; background: #000; border: 2.5px solid #CCFF00; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                <div class="ball-inner-spin" style="width: 28px; height: 28px; background: radial-gradient(circle at 30% 30%, #e5ff00, #CCFF00 60%, #b3e600); border-radius: 50%; position: relative; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.2);">
-                                    <!-- Padel Seams -->
-                                    <div style="position:absolute; top:0; left:20%; width:60%; height:100%; border:1.5px solid rgba(255,255,255,0.6); border-radius:50%; border-top:none; border-bottom:none; opacity: 0.7;"></div>
-                                    <div style="position:absolute; top:20%; left:0; width:100%; height:60%; border:1.5px solid rgba(255,255,255,0.6); border-radius:50%; border-left:none; border-right:none; opacity: 0.7;"></div>
-                                </div>
+                    <div style="padding: 20px 20px 16px; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 24px; margin: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; position: relative; overflow: hidden;">
+                        <!-- Subtle accent line -->
+                        <div style="position:absolute; top:0; left:0; width:100%; height:4px; background: linear-gradient(90deg, #72a800, #a3d900); border-radius:24px 24px 0 0;"></div>
+                        <div style="display: flex; align-items: center; gap: 14px; position: relative; z-index: 1;">
+                            <div style="width: 48px; height: 48px; background: #f1f5f9; border: 2px solid #e2e8f0; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                🎾
                             </div>
                             <div>
-                                <h2 style="font-size: 1.15rem; font-weight: 950; margin: 0; color: white;">Eventos <span style="color: #CCFF00;">App Somospadel BCN</span></h2>
-                                <p style="color: rgba(204,255,0,0.9); font-size: 0.65rem; font-weight: 850; text-transform: uppercase;">¡Apúntate en tiempo real!</p>
+                                <h2 style="font-size: 1.1rem; font-weight: 950; margin: 0; color: #0a192f; letter-spacing: -0.5px;">Eventos <span style="color: #72a800;">SomosPadel BCN</span></h2>
+                                <p style="color: #64748b; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin: 3px 0 0;">Inscripción en tiempo real</p>
                             </div>
                         </div>
-                        <div style="background: #000; padding: 6px 14px; border-radius: 14px; border: 1.5px solid #00E36D; color: white; font-weight: 950;"><i class="fas fa-bolt" style="color: #00E36D;"></i> ${events.length}</div>
+                        <div style="background: #f1f5f9; padding: 8px 16px; border-radius: 14px; border: 1px solid #e2e8f0; color: #0a192f; font-weight: 950; display:flex; align-items:center; gap:6px; font-size:1rem;"><span style="color:#72a800; font-size:0.7rem; font-weight:900;">TOTAL</span> ${events.length}</div>
                     </div>
                     ${filterBarHtml}
                     <div style="padding-bottom: 80px; padding-left:10px; padding-right:10px;">
@@ -974,7 +972,7 @@
             `;
 
             return `
-                <div style="background: linear-gradient(180deg, #0f172a 0%, #000000 100%); min-height: 100vh; padding: 25px 20px 140px; font-family: 'Outfit', sans-serif; position: relative; overflow: hidden;">
+                <div style="background: #ffffff; min-height: 100vh; padding: 25px 20px 140px; font-family: 'Outfit', sans-serif; position: relative; overflow: hidden;">
                     <!-- Ambient Glow Effects -->
                     <div style="position: absolute; top: -100px; right: -100px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(204,255,0,0.05) 0%, transparent 70%); pointer-events: none;"></div>
                     <div style="position: absolute; bottom: 100px; left: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(56,189,248,0.03) 0%, transparent 70%); pointer-events: none;"></div>
@@ -987,11 +985,11 @@
                             </div>
                             <span style="color: #64748b; font-size: 0.75rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;">Archivo de Retransmisiones</span>
                         </div>
-                        <h2 style="font-size: 2.2rem; font-weight: 950; color: white; margin: 0; line-height: 1; letter-spacing: -1px;">EVENTOS <span style="color: #CCFF00;">PASADOS</span></h2>
+                        <h2 style="font-size: 2.2rem; font-weight: 950; color: #0a192f; margin: 0; line-height: 1; letter-spacing: -1px;">EVENTOS <span style="color: #72a800;">PASADOS</span></h2>
                         <div style="display: flex; align-items: center; gap: 15px; margin-top: 15px;">
                             <div style="background: rgba(255,255,255,0.05); padding: 8px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 8px;">
                                 <i class="fas fa-database" style="color: #CCFF00; font-size: 0.7rem;"></i>
-                                <span style="color: white; font-weight: 800; font-size: 0.8rem;">${totalCount} REGISTROS</span>
+                                <span style="color: #0a192f; font-weight: 800; font-size: 0.8rem;">${totalCount} REGISTROS</span>
                             </div>
                             <div style="height: 4px; flex: 1; background: rgba(255,255,255,0.05); border-radius: 10px;"></div>
                         </div>
@@ -1025,7 +1023,7 @@
             const matches = this.state.personalMatches || [];
             const user = this.state.currentUser;
 
-            if (this.state.loadingResults) return '<div style="padding:100px; text-align:center;"><div class="loader"></div></div>';
+            if (this.state.loadingResults) return '<div style="padding: 100px; text-align: center;"><div class="loader"></div><p style="margin-top:20px; font-weight:900; letter-spacing:2px;">CARGANDO RESULTADOS...</p></div>';
             if (!user) return '<div style="padding:80px; text-align:center; color:white;"><i class="fas fa-lock" style="font-size:3rem; margin-bottom:15px; opacity:0.2;"></i><p>Inicia sesión.</p></div>';
 
             const realMatches = matches.filter(m => {
@@ -1185,53 +1183,51 @@
             const progress = Math.min((playerCount / maxPlayers) * 100, 100);
             const progressColor = isFull ? '#FF3B30' : (progress > 80 ? '#eab308' : '#CCFF00');
 
-            // 🌈 BROADCAST V7: HYPER-COMPACT & ULTRA-COLORFUL
+            // 🌈 BROADCAST V7: HYPER-COMPACT & ULTRA-COLORFUL (MATTE AESTHETIC)
             const themeColor = isLive ? '#FF2D55' : (isCancelled ? '#ef4444' : categoryColor);
             
             return `
                 <div id="event-card-${evt.id}" onclick="${cardAction}" style="
-                    background: linear-gradient(170deg, #1a1a1a 0%, #000 100%);
-                    border-radius: 28px;
+                    background: #141414;
+                    border-radius: 24px;
                     overflow: hidden;
-                    margin-bottom: 16px;
-                    border: 1.5px solid ${themeColor}33;
-                    box-shadow: 0 12px 30px rgba(0,0,0,0.6), inset 0 0 25px ${themeColor}10;
+                    margin-bottom: 18px;
+                    border: 1px solid rgba(255,255,255,0.04);
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
                     font-family: 'Outfit', sans-serif;
                     position: relative;
-                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                 ">
                     <!-- HEADER STRIPE -->
-                    <div style="height: 5px; background: linear-gradient(90deg, transparent, ${themeColor}, transparent); opacity: 0.9;"></div>
+                    <div style="height: 4px; background: ${themeColor}; opacity: 0.9;"></div>
 
                     <div style="display: flex; flex-direction: column;">
                         
                         <!-- IMAGE AREA -->
-                        <div style="height: 150px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative;">
-                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.85));"></div>
+                        <div style="height: 140px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative;">
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(20,20,20,0.1), #141414); mix-blend-mode: overlay;"></div>
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to top, #141414 2%, transparent 70%);"></div>
                             
                             <!-- FLOATING BADGES -->
                             <div style="position: absolute; top: 12px; left: 12px; display: flex; gap: 8px;">
-                                <div style="background: rgba(255,255,255,0.95); width: 48px; height: 56px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 1.5px solid ${themeColor};">
-                                    <span style="font-size: 0.55rem; font-weight: 950; color: #666;">${dayName}</span>
-                                    <span style="font-size: 1.4rem; font-weight: 950; color: #000; line-height: 0.9;">${dayNum}</span>
+                                <div style="background: rgba(20,20,20,0.6); width: 48px; height: 52px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(10px);">
+                                    <span style="font-size: 0.55rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;">${dayName}</span>
+                                    <span style="font-size: 1.3rem; font-weight: 900; color: #fff; line-height: 1;">${dayNum}</span>
                                 </div>
                             </div>
 
-                            <div style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.85); border-radius: 12px; padding: 6px 12px; border: 1.5px solid ${themeColor}55; color: #fff; font-size: 0.7rem; font-weight: 950; display: flex; align-items: center; gap: 6px; backdrop-filter: blur(5px);">
+                            <div style="position: absolute; top: 12px; right: 12px; background: rgba(20,20,20,0.7); border-radius: 10px; padding: 6px 12px; border: 1px solid rgba(255,255,255,0.08); color: #fff; font-size: 0.8rem; font-weight: 900; display: flex; align-items: center; backdrop-filter: blur(10px);">
                                 <span style="color: #CCFF00;">${priceSoc}€</span>
-                                <span style="opacity: 0.2;">|</span>
-                                <span>${priceExt}€</span>
                             </div>
 
-                            <div style="position: absolute; bottom: 12px; left: 12px; display: flex; align-items: center; gap: 8px;">
-                                <span style="background: ${themeColor}CC; color: #fff; padding: 3px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">${formatLabel}</span>
-                                <span style="background: rgba(0,0,0,0.7); color: #fff; padding: 3px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); font-size: 0.55rem; font-weight: 800;">${maxCourts} PISTAS</span>
+                            <div style="position: absolute; bottom: 12px; left: 12px; display: flex; align-items: center; gap: 6px;">
+                                <span style="background: ${themeColor}; color: #000; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">${formatLabel}</span>
+                                <span style="background: rgba(255,255,255,0.1); color: #fff; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.6rem; font-weight: 700; backdrop-filter: blur(4px);">${maxCourts} PISTAS</span>
                             </div>
 
                             <!-- ACTION BUTTON (FAB) -->
-                            <div id="event-fab-${evt.id}" onclick="event.stopPropagation(); ${fabAction}" style="position: absolute; bottom: -25px; right: 18px; width: 62px; height: 62px; background: ${btnColor === '#fff' ? '#CCFF00' : btnColor}; color: ${btnColor === '#fff' ? '#000' : 'white'}; border-radius: 50%; border: 3px solid #000; box-shadow: 0 6px 15px ${btnColor}55; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transition: all 0.2s; ${isLive ? 'animation: pulse-border 2s infinite;' : ''}">
-                                <i class="fas ${btnIcon}" style="font-size: 1rem; margin-bottom: 2px;"></i>
-                                <span style="font-size: 0.4rem; font-weight: 950;">${btnLabel}</span>
+                            <div id="event-fab-${evt.id}" onclick="event.stopPropagation(); ${fabAction}" style="position: absolute; bottom: -20px; right: 16px; width: 54px; height: 54px; background: ${btnColor === '#fff' ? '#CCFF00' : btnColor}; color: ${btnColor === '#fff' ? '#000' : 'white'}; border-radius: 16px; border: 3px solid #141414; box-shadow: 0 8px 15px rgba(0,0,0,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transform: rotate(-3deg); transition: transform 0.2s; ${isLive ? 'animation: pulse-border 2s infinite;' : ''}">
+                                <i class="fas ${btnIcon}" style="font-size: 1.1rem;"></i>
                             </div>
                         </div>
 
@@ -1443,9 +1439,17 @@
                     
                     this.isJoining = false; 
 
-                    // 🚀 MANUAL REFRESH (Visual reliability)
                     if (res.success) {
                         this.onDataUpdate();
+                        // 🎊 CONFETTI FEEDBACK (Punto 6)
+                        if (window.confetti) {
+                            window.confetti({
+                                particleCount: 100,
+                                spread: 70,
+                                origin: { y: 0.6 },
+                                colors: ['#CCFF00', '#00E36D', '#ffffff']
+                            });
+                        }
                     }
 
                     window.PremiumModal.alert({
@@ -1538,6 +1542,16 @@
                 if (confirmed) {
                     const userUid = this.state.currentUser.uid || this.state.currentUser.id;
                     const res = await window.AmericanaService.confirmWaitlist(id, userUid, type);
+                    
+                    if (res.success && window.confetti) {
+                        window.confetti({
+                            particleCount: 150,
+                            spread: 100,
+                            origin: { y: 0.6 },
+                            colors: ['#CCFF00', '#38bdf8', '#ffffff']
+                        });
+                    }
+
                     window.PremiumModal.alert({
                         title: res.success ? "🎾 ¡DENTRO!" : "❌ ERROR",
                         message: res.success ? "¡Bienvenido al evento!" : "Error: " + res.error,
@@ -1582,7 +1596,9 @@
                 document.body.appendChild(modal);
             }
             modal.style.cssText = `position: fixed; inset: 0; background: #000; z-index: 30000; overflow-y: auto; font-family: 'Outfit', sans-serif; color: white; display: flex; flex-direction: column;`;
-            modal.innerHTML = `<div style="padding: 100px; text-align: center;"><div class="loader"></div><p style="margin-top:20px; font-weight:900; letter-spacing:2px;">CARGANDO JUGADORES...</p></div>`;
+            modal.innerHTML = `
+<div style="padding: 100px; text-align: center;"><div class="loader"></div><p style="margin-top:20px; font-weight:900; letter-spacing:2px;">CARGANDO JUGADORES...</p></div>
+            `;
             modal.style.display = 'block';
 
             // ✅ FIX V2: LECTURA DIRECTA desde Firestore (evita datos stale del snapshot local)
@@ -1618,7 +1634,9 @@
                 return true;
             });
 
-            modal.innerHTML = `<div style="padding: 100px; text-align: center;"><div class="loader"></div><p style="margin-top:20px; font-weight:900; letter-spacing:2px;">CARGANDO ${uniqueRawList.length} JUGADORES...</p></div>`;
+            modal.innerHTML = `
+<div style="padding: 100px; text-align: center;"><div class="loader"></div><p style="margin-top:20px; font-weight:900; letter-spacing:2px;">CARGANDO BASE DE DATOS...</p></div>
+            `;
 
             const dbPlayers = [];
             try {

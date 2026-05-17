@@ -134,7 +134,7 @@ body {
     left: 0;
     width: 100%;
     z-index: 10000;
-    background: #000;
+    background: #ffffff;
     display: flex;
     flex-direction: column;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -144,10 +144,10 @@ body {
     position: relative;
     width: 100%;
     z-index: 1005;
-    background: rgba(15, 23, 42, 0.95);
+    background: #ffffff;
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid #e2e8f0;
     height: 44px;
     display: flex;
     align-items: center;
@@ -190,8 +190,8 @@ body {
     top: 0;
     height: 100%;
     padding: 0 15px;
-    background: #000;
-    color: var(--brand-neon);
+    background: #ffffff;
+    color: #0a192f;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -199,8 +199,8 @@ body {
     font-size: 0.65rem;
     letter-spacing: 2px;
     z-index: 10;
-    border-right: 3px solid var(--brand-neon);
-    box-shadow: 10px 0 20px rgba(0, 0, 0, 0.5);
+    border-right: 3px solid #CCFF00;
+    box-shadow: 10px 0 20px rgba(0, 0, 0, 0.05);
     text-transform: uppercase;
 }
 
@@ -327,9 +327,9 @@ body {
 
 /* UPCOMING STATE (Elegant Navy) */
 .hero-card.upcoming {
-    background: linear-gradient(135deg, var(--brand-navy) 0%, #000c24 100%);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    color: #0a192f;
+    border: 1px solid #e2e8f0;
 }
 
 .hero-card.upcoming .upcoming-label {
@@ -661,7 +661,7 @@ body {
     gap: 10px;
     padding: 16px 20px;
     overflow-x: auto;
-    background: #0d1117;
+    background: #ffffff;
     /* Darker than header */
     white-space: nowrap;
     border-bottom: 1px solid #333;
@@ -693,8 +693,8 @@ body {
 }
 
 .tower-header {
-    background: #111;
-    color: white;
+    background: #ffffff;
+    color: #0a192f;
     padding: 16px 20px;
     position: sticky;
     top: 60px;

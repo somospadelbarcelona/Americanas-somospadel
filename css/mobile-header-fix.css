@@ -69,7 +69,8 @@
     .cmd-avatar-container {
         padding: 4px 4px 4px 10px !important;
         gap: 8px !important;
-        background: #0a192f !important;
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
     }
 
     #header-user-name {
@@ -183,10 +184,10 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #0a192f;
+    background: #ffffff;
     padding: 5px 12px 5px 6px;
     border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.15);
+    border: 1px solid #e2e8f0;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -207,10 +208,10 @@ body {
     top: calc(100% + 15px);
     right: 0;
     width: 280px;
-    background: #0a192f !important; /* Force dark background */
+    background: #ffffff !important; /* Force light background */
     backdrop-filter: blur(25px) saturate(150%) !important;
     -webkit-backdrop-filter: blur(25px) saturate(150%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid #e2e8f0 !important;
     border-radius: 24px !important;
     box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(255,255,255,0.02) !important;
     padding: 24px !important;
@@ -246,7 +247,7 @@ body {
 .user-dropdown-name {
     font-size: 1.1rem;
     font-weight: 950;
-    color: #ffffff !important;
+    color: #0a192f !important;
     letter-spacing: -0.5px;
     text-transform: uppercase;
     white-space: nowrap;
@@ -270,10 +271,10 @@ body {
 }
 
 .user-dropdown-stat-card {
-    background: rgba(255,255,255,0.03);
+    background: #f8fafc;
     padding: 12px;
     border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid #e2e8f0;
     text-align: center;
     transition: all 0.3s ease;
 }
@@ -295,7 +296,7 @@ body {
 .user-dropdown-stat-value {
     font-size: 1rem;
     font-weight: 900;
-    color: #ffffff;
+    color: #0a192f;
 }
 
 .user-dropdown-footer {
@@ -318,8 +319,8 @@ body {
 }
 
 .user-dropdown-btn-profile {
-    background: rgba(255,255,255,0.05);
-    color: white !important;
+    background: #f1f5f9;
+    color: #0a192f !important;
     border-color: rgba(255,255,255,0.1);
 }
 
