@@ -235,7 +235,7 @@
                 headerName.innerHTML = `${rawName.split(' ')[0].toUpperCase()}${roleIcon}`;
             }
 
-            const level = user ? (user.level || 3.5).toFixed(2) : "--";
+            const level = user ? parseFloat(user.level || 3.5).toFixed(2) : "--";
             if (headerLevel) headerLevel.innerText = level;
             
             const headerLevelMenu = document.getElementById('header-user-level-menu');
