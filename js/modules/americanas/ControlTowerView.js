@@ -24,6 +24,7 @@
                 mvps: 0 // Placeholder for future logic
             };
             this.autoStartInterval = null;
+            this._recalcTimeout = null;
         }
 
         /**
@@ -34,10 +35,19 @@
             if (this.unsubscribeMatches) this.unsubscribeMatches();
             if (this.unsubscribeEvent) this.unsubscribeEvent();
             if (this.autoStartInterval) clearInterval(this.autoStartInterval);
+            if (this._recalcTimeout) clearTimeout(this._recalcTimeout);
 
             this.unsubscribeMatches = null;
             this.unsubscribeEvent = null;
             this.autoStartInterval = null;
+            this._recalcTimeout = null;
+        }
+
+        debouncedRecalc() {
+            if (this._recalcTimeout) clearTimeout(this._recalcTimeout);
+            this._recalcTimeout = setTimeout(() => {
+                this.recalc();
+            }, 40); // 40ms batching window
         }
 
         goToRound(round, evt) {
@@ -151,7 +161,7 @@
                     }
 
                     if (previousStatus !== updatedEvent.status) {
-                        this.recalc();
+                        this.debouncedRecalc();
                     }
                 }, err => {
                     console.error("Error watching event status:", err);
@@ -206,7 +216,7 @@
 
                             // 3. Update Local State immediately
                             this.currentAmericanaDoc.status = 'live';
-                            this.recalc();
+                            this.debouncedRecalc();
                         } else {
                             console.warn(`⏳ [AutoStart] Live View trigger: Time reached but NOT FULL (${players.length}/${maxCourts * 4}). Waiting.`);
                         }
@@ -307,7 +317,7 @@
                         }
                     }
 
-                    this.recalc();
+                    this.debouncedRecalc();
 
                     // CHECK ROUND COMPLETION (Manual Advancement Prompt)
                     this.checkRoundCompletion(this.allMatches);
@@ -493,15 +503,6 @@
                 // STRICT COUNTING: Only count events derived from real matches found
                 const eventCount = uniqueEvents.size;
 
-                // REMOVED: Fallback guessing logic that was causing ghost data
-                /* 
-                if (eventCount === 0 && user.matches_played > 0) {
-                    eventCount = Math.ceil(parseInt(user.matches_played) / 4); // Approx events
-                    g = parseInt(user.games_played || 0); // If exists
-                    w = parseInt(user.wins || 0);
-                }
-                */
-
                 this.userStats = {
                     games: g,
                     wins: w,
@@ -526,12 +527,12 @@
                 }, []);
 
                 console.log(`✅ [Tower] History Loaded: ${this.userStats.games} games, ${this.userStats.events} events.`);
-                this.recalc();
+                this.debouncedRecalc();
 
             } catch (e) {
                 console.error("History fail:", e);
                 this.userStats = { games: 0, wins: 0, losses: 0, events: 0 };
-                this.recalc();
+                this.debouncedRecalc();
             }
         }
 

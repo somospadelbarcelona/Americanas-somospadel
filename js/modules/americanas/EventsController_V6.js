@@ -79,6 +79,8 @@
             this.unsubscribeEntrenos = null;
             this.unsubscribeUsers = null;
             this.autoStartInterval = null;
+            this._onDataUpdateDebounce = null;
+            this._personalMatchesDebounce = null;
 
             // AUTO-INIT: Start Background Services Immediately
             this.startBackgroundService();
@@ -98,6 +100,8 @@
             if (this.unsubscribeEntrenosA) this.unsubscribeEntrenosA();
             if (this.unsubscribeEntrenosB) this.unsubscribeEntrenosB();
             if (this.autoStartInterval) clearInterval(this.autoStartInterval);
+            if (this._onDataUpdateDebounce) clearTimeout(this._onDataUpdateDebounce);
+            if (this._personalMatchesDebounce) clearTimeout(this._personalMatchesDebounce);
 
             if (window.GeoService) window.GeoService.stopTracking();
             window.removeEventListener('geo_update', this._onGeoUpdate);
@@ -109,7 +113,12 @@
             // Check if we have received at least one update for each main collection
             if (this.state.americanas && this.state.entrenos) {
                 this.state.loading = false;
-                if (this.state.viewInitialized) this.render();
+                if (this.state.viewInitialized) {
+                    if (this._onDataUpdateDebounce) clearTimeout(this._onDataUpdateDebounce);
+                    this._onDataUpdateDebounce = setTimeout(() => {
+                        this.render();
+                    }, 50); // 50ms batch window
+                }
             }
         }
 
@@ -371,7 +380,11 @@
 
                         this.state.personalMatches = unique.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                         this.state.loadingResults = false;
-                        this.render();
+                        
+                        if (this._personalMatchesDebounce) clearTimeout(this._personalMatchesDebounce);
+                        this._personalMatchesDebounce = setTimeout(() => {
+                            this.render();
+                        }, 50); // 50ms batch window
                     };
 
                     this.unsubscribeMatchesA = window.db.collection('matches').where('team_a_ids', 'array-contains', uid).onSnapshot(snap => {
@@ -740,13 +753,13 @@
                             70% { transform: scale(1.5); opacity:0; }
                             100% { transform: scale(1); opacity:0.8; }
                         }
-
-                            0% { transform: translateY(0) scale(1) rotate(0deg); box-shadow: 0 0 15px rgba(204,255,0,0.4); }
-                            15% { transform: translateY(-30px) scale(0.9, 1.1) rotate(45deg); box-shadow: 0 0 40px rgba(204,255,0,0.8); }
-                            30% { transform: translateY(0) scale(1.2, 0.8) rotate(90deg); box-shadow: 0 0 20px rgba(204,255,0,0.6); }
-                            45% { transform: translateY(-15px) scale(0.95, 1.05) rotate(135deg); box-shadow: 0 0 30px rgba(204,255,0,0.7); }
-                            60% { transform: translateY(0) scale(1.1, 0.9) rotate(180deg); box-shadow: 0 0 15px rgba(204,255,0,0.5); }
-                            100% { transform: translateY(0) scale(1) rotate(360deg); box-shadow: 0 0 15px rgba(204,255,0,0.4); }
+                        @keyframes ball-physics {
+                            0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 0.8; }
+                            15% { transform: translateY(-30px) scale(0.9, 1.1) rotate(45deg); opacity: 1; }
+                            30% { transform: translateY(0) scale(1.2, 0.8) rotate(90deg); opacity: 0.8; }
+                            45% { transform: translateY(-15px) scale(0.95, 1.05) rotate(135deg); opacity: 1; }
+                            60% { transform: translateY(0) scale(1.1, 0.9) rotate(180deg); opacity: 0.8; }
+                            100% { transform: translateY(0) scale(1) rotate(360deg); opacity: 0.8; }
                         }
                         @keyframes internal-spin {
                             0% { transform: rotate(0deg) scale(1); filter: brightness(1); }

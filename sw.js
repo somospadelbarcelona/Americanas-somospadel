@@ -67,14 +67,36 @@ self.addEventListener('activate', (event) => {
     return self.clients.claim();
 });
 
+// Limitador de caché para no saturar la RAM de dispositivos gama media/baja (Fase 4)
+async function trimCache(cacheName, maxItems) {
+    try {
+        const cache = await caches.open(cacheName);
+        const keys = await cache.keys();
+        if (keys.length > maxItems) {
+            // Borramos los más antiguos (las primeras posiciones)
+            for (let i = 0; i < keys.length - maxItems; i++) {
+                await cache.delete(keys[i]);
+            }
+            console.log(`🧹 [SW Cache Cleanup] Trimmed cache to ${maxItems} items.`);
+        }
+    } catch (e) {
+        console.error("Cache trim failed:", e);
+    }
+}
+
 // FETCH: Advanced Strategy (Cache-First for Modules, Network-First for Data)
 self.addEventListener('fetch', (event) => {
+    // Solo cachear peticiones GET
+    if (event.request.method !== 'GET') return;
+
     const url = new URL(event.request.url);
 
-    // Ignorar APIs externas y Firebase
+    // Ignorar APIs externas, Firebase y Analytics
     if (url.origin.includes('firestore.googleapis.com') ||
         url.origin.includes('firebasestorage') ||
-        url.origin.includes('google-analytics')) {
+        url.origin.includes('google-analytics') ||
+        url.origin.includes('google') ||
+        url.pathname.includes('/api/')) {
         return;
     }
 
@@ -88,7 +110,10 @@ self.addEventListener('fetch', (event) => {
                 const fetchPromise = fetch(event.request).then(networkResponse => {
                     // Solo cachear si la respuesta es válida
                     if (networkResponse && networkResponse.status === 200) {
-                        caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResponse.clone()));
+                        caches.open(CACHE_NAME).then(cache => {
+                            cache.put(event.request, networkResponse.clone());
+                            trimCache(CACHE_NAME, 60); // Limitar a 60 recursos
+                        });
                     }
                     return networkResponse;
                 }).catch(() => null);
@@ -100,16 +125,28 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Estrategia para Documentos y otros (Stale-While-Revalidate)
+    // Estrategia para Documentos y otros (Stale-While-Revalidate Real y Eficiente)
     event.respondWith(
-        fetch(event.request).catch(() => {
-            return caches.match(event.request).then(cached => {
-                if (cached) return cached;
-                // Si falla todo, devolver el index.html (SPA routing support)
-                if (event.request.mode === 'navigate') {
-                    return caches.match('./index.html');
+        caches.match(event.request).then(cached => {
+            const fetchPromise = fetch(event.request).then(networkResponse => {
+                if (networkResponse && networkResponse.status === 200) {
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(event.request, networkResponse.clone());
+                        trimCache(CACHE_NAME, 60); // Limitar a 60 recursos
+                    });
                 }
-            });
+                return networkResponse;
+            }).catch(() => null);
+
+            // Retornar de inmediato el caché si existe (Carga instantánea)
+            if (cached) return cached;
+
+            // Soporte offline para rutas de navegación (SPA)
+            if (event.request.mode === 'navigate') {
+                return caches.match('./index.html') || fetchPromise;
+            }
+
+            return fetchPromise;
         })
     );
 });

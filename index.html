@@ -3,8 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <script src="js/security-core.js?v=2"></script>
-    <script src="js/core/SecurityArmor.js?v=2"></script>
+    <script src="js/security-core.js?v=2" defer></script>
+    <script src="js/core/SecurityArmor.js?v=2" defer></script>
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>App Somospadel BCN</title>
@@ -48,15 +48,29 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/mobile-header-fix.css?v=1.2">
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js" defer></script>
 
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js" defer></script>
     <script>
         // registry initialization
         window._matchRegistry = window._matchRegistry || {};
     </script>
     <style>
+        /* 🚀 PERFORMANCE OVERRIDE PARA MÓVILES (Fase 2) */
+        @media (max-width: 768px) {
+            * {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+            .glass-card, .crystal-card, .dashboard-stat-card {
+                background: rgba(255, 255, 255, 0.98) !important;
+            }
+            .header-tabs-inner {
+                background: rgba(204, 255, 0, 0.98) !important;
+            }
+        }
+
         * {
             box-sizing: border-box;
         }
@@ -76,17 +90,28 @@
         }
 
 
-        /* 🎾 TRUE OLED DARK MODE & NEON PULSE */
+        /* 🎾 TRUE OLED DARK MODE & NEON PULSE (Optimized) */
+        @keyframes floatUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
         @keyframes neon-pulse {
-            0% { box-shadow: 0 0 15px rgba(204, 255, 0, 0.2); border-color: rgba(204, 255, 0, 0.3); }
-            50% { box-shadow: 0 0 35px rgba(204, 255, 0, 0.6); border-color: rgba(204, 255, 0, 0.8); }
-            100% { box-shadow: 0 0 15px rgba(204, 255, 0, 0.2); border-color: rgba(204, 255, 0, 0.3); }
+            0% { opacity: 0.9; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.02); }
+            100% { opacity: 0.9; transform: scale(0.98); }
         }
 
         .live-pulse-card {
             animation: neon-pulse 2s infinite ease-in-out;
             background: rgba(204, 255, 0, 0.05) !important;
             border-width: 2px !important;
+            border-color: rgba(204, 255, 0, 0.4) !important;
         }
 
         .glass-card {
@@ -193,32 +218,32 @@
         @keyframes loginBallLife {
             0% {
                 transform: translateY(0) scale(1) rotate(0deg);
-                filter: drop-shadow(0 0 15px rgba(204, 255, 0, 0.4));
+                opacity: 0.8;
             }
 
             15% {
                 transform: translateY(-40px) scale(0.9, 1.1) rotate(15deg);
-                filter: drop-shadow(0 0 35px rgba(204, 255, 0, 0.8));
+                opacity: 1;
             }
 
             30% {
                 transform: translateY(0) scale(1.2, 0.8) rotate(0deg);
-                filter: drop-shadow(0 0 15px rgba(204, 255, 0, 0.6));
+                opacity: 0.8;
             }
 
             45% {
                 transform: translateY(-20px) scale(0.95, 1.05) rotate(-10deg);
-                filter: drop-shadow(0 0 25px rgba(204, 255, 0, 0.7));
+                opacity: 1;
             }
 
             60% {
                 transform: translateY(0) scale(1.1, 0.9) rotate(0deg);
-                filter: drop-shadow(0 0 15px rgba(204, 255, 0, 0.5));
+                opacity: 0.8;
             }
 
             100% {
                 transform: translateY(0) scale(1) rotate(360deg);
-                filter: drop-shadow(0 0 15px rgba(204, 255, 0, 0.4));
+                opacity: 0.8;
             }
         }
 
@@ -986,118 +1011,117 @@
             </form>
         </div>
     </div>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/firebase-init.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js" defer></script>
+    <script src="js/firebase-config.js" defer></script>
+    <script src="js/firebase-init.js" defer></script>
 
     <!-- CORE SERVICES -->
-    <script src="js/modules/core/Constants.js?v=2001"></script>
-    <script src="js/core/ContextService.js"></script>
-    <script src="js/core/StateManager.js"></script>
-    <script src="js/core/CacheService.js"></script>
-    <script src="js/core/DatabaseService.js"></script>
-    <script src="js/core/AuthService.js?v=12.1"></script>
-    <script src="js/core/Router.js?v=5.7"></script>
-    <script src="js/core/SmartTicker.js"></script>
+    <script src="js/modules/core/Constants.js?v=2001" defer></script>
+    <script src="js/core/ContextService.js" defer></script>
+    <script src="js/core/StateManager.js" defer></script>
+    <script src="js/core/CacheService.js" defer></script>
+    <script src="js/core/DatabaseService.js" defer></script>
+    <script src="js/core/AuthService.js?v=12.1" defer></script>
+    <script src="js/core/Router.js?v=5.7" defer></script>
+    <script src="js/core/SmartTicker.js" defer></script>
 
     <!-- Layer 3: Logic Business -->
-    <script src="js/modules/common/StandingsService.js"></script>
-    <script src="js/modules/common/GeoService.js"></script>
-    <script src="js/modules/common/EventService.js"></script>
-    <script src="js/modules/common/ParticipantService.js"></script>
-    <script src="js/modules/common/LevelService.js"></script>
-    <script src="js/modules/common/ShuffleAnimator.js"></script>
+    <script src="js/modules/common/StandingsService.js" defer></script>
+    <script src="js/modules/common/GeoService.js" defer></script>
+    <script src="js/modules/common/EventService.js" defer></script>
+    <script src="js/modules/common/ParticipantService.js" defer></script>
+    <script src="js/modules/common/LevelService.js" defer></script>
+    <script src="js/modules/common/ShuffleAnimator.js" defer></script>
     <!-- NOTIFICATIONS -->
-    <script src="js/modules/common/NotificationService.js?v=1.1"></script>
-    <script src="js/modules/ui/NotificationUi.js"></script>
-    <script src="js/modules/logic/MatchMakingService.js?v=5011"></script>
-    <script src="js/modules/americanas/AmericanaLogic.js"></script>
-    <script src="js/modules/americanas/AmericanaService.js?v=1013"></script>
-    <script src="js/app-init.js"></script>
-    <script src="js/modules/common/WhatsAppService.js?v=8.5" charset="UTF-8"></script>
-    <script src="js/fixed-pairs-logic.js?v=5012"></script>
-    <script src="js/rotating-pozo-logic.js?v=5012"></script>
-    <script src="js/modules/logic/LevelAdjustmentService.js"></script>
-    <script src="js/modules/auth/AuthController.js?v=12.1"></script>
-    <script src="js/modules/common/PartnerSynergyService.js"></script>
-    <script src="js/modules/common/PartnerSynergyWidget.js"></script>
-    <script src="js/modules/core/NetworkPulseService.js"></script>
-    <script src="js/modules/dashboard/NetworkPulseWidget.js"></script>
+    <script src="js/modules/common/NotificationService.js?v=1.1" defer></script>
+    <script src="js/modules/ui/NotificationUi.js" defer></script>
+    <script src="js/modules/logic/MatchMakingService.js?v=5011" defer></script>
+    <script src="js/modules/americanas/AmericanaLogic.js" defer></script>
+    <script src="js/modules/americanas/AmericanaService.js?v=1013" defer></script>
+    <script src="js/app-init.js" defer></script>
+    <script src="js/modules/common/WhatsAppService.js?v=8.5" defer charset="UTF-8"></script>
+    <script src="js/fixed-pairs-logic.js?v=5012" defer></script>
+    <script src="js/rotating-pozo-logic.js?v=5012" defer></script>
+    <script src="js/modules/logic/LevelAdjustmentService.js" defer></script>
+    <script src="js/modules/auth/AuthController.js?v=12.1" defer></script>
+    <script src="js/modules/common/PartnerSynergyService.js" defer></script>
+    <script src="js/modules/common/PartnerSynergyWidget.js" defer></script>
+    <script src="js/modules/core/NetworkPulseService.js" defer></script>
+    <script src="js/modules/dashboard/NetworkPulseWidget.js" defer></script>
 
     <!-- Layer 4: Views & controllers -->
     <!-- Dashboard Components (NEW) -->
-    <script src="js/modules/common/WeatherService.js"></script>
-    <script src="js/modules/dashboard/HeroCard.js"></script>
-    <script src="js/modules/dashboard/PowerLevelCard.js"></script>
-    <script src="js/modules/dashboard/QuickStats.js"></script>
-    <script src="js/modules/dashboard/ActionGrid.js"></script>
+    <script src="js/modules/common/WeatherService.js" defer></script>
+    <script src="js/modules/dashboard/HeroCard.js" defer></script>
+    <script src="js/modules/dashboard/PowerLevelCard.js" defer></script>
+    <script src="js/modules/dashboard/QuickStats.js" defer></script>
+    <script src="js/modules/dashboard/ActionGrid.js" defer></script>
 
-    <script src="js/modules/dashboard/GeoRadarWidget.js"></script>
-    <script src="js/modules/dashboard/StoryFeedWidget.js?v=6"></script>
-    <script src="js/modules/dashboard/PadelPulse.js?v=6.0"></script>
-    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=COMPACT_V1"></script>
-    <script src="js/modules/dashboard/DashboardController.js"></script>
-    <script src="js/modules/players/PlayerView.js?v=400"></script>
-    <script src="js/modules/players/PlayerController.js?v=400"></script>
-    <script src="js/modules/americanas/ControlTowerStandings.js"></script>
-    <script src="js/modules/americanas/ControlTowerBrackets.js"></script>
-    <script src="js/modules/americanas/ControlTowerStats.js"></script>
-    <script src="js/modules/americanas/ControlTowerReport.js"></script>
-    <script src="js/modules/americanas/ControlTowerView.js?v=4039"></script>
-    <script src="js/modules/americanas/TVView.js?v=2.0"></script>
-    <script src="js/modules/chat/ChatService.js?v=1.1"></script>
-    <script src="js/modules/chat/ChatView.js?v=1.1"></script>
-    <script src="js/modules/americanas/EntrenoLiveView.js"></script>
-    <script src="js/modules/americanas/EventsController_V6.js?v=9.8"></script>
-    <script src="js/modules/common/SocialShareService.js"></script>
-    <script src="js/modules/admin/SocialShareView.js"></script>
+    <script src="js/modules/dashboard/GeoRadarWidget.js" defer></script>
+    <script src="js/modules/dashboard/StoryFeedWidget.js?v=6" defer></script>
+    <script src="js/modules/dashboard/PadelPulse.js?v=6.0" defer></script>
+    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=COMPACT_V1" defer></script>
+    <script src="js/modules/dashboard/DashboardController.js" defer></script>
+    <script src="js/modules/players/PlayerView.js?v=400" defer></script>
+    <script src="js/modules/players/PlayerController.js?v=400" defer></script>
+    <script src="js/modules/americanas/ControlTowerStandings.js" defer></script>
+    <script src="js/modules/americanas/ControlTowerBrackets.js" defer></script>
+    <script src="js/modules/americanas/ControlTowerStats.js" defer></script>
+    <script src="js/modules/americanas/ControlTowerReport.js" defer></script>
+    <script src="js/modules/americanas/ControlTowerView.js?v=4039" defer></script>
+    <script src="js/modules/americanas/TVView.js?v=2.0" defer></script>
+    <script src="js/modules/chat/ChatService.js?v=1.1" defer></script>
+    <script src="js/modules/chat/ChatView.js?v=1.1" defer></script>
+    <script src="js/modules/americanas/EntrenoLiveView.js" defer></script>
+    <script src="js/modules/americanas/EventsController_V6.js?v=9.8" defer></script>
+    <script src="js/modules/common/SocialShareService.js" defer></script>
+    <script src="js/modules/admin/SocialShareView.js" defer></script>
 
     <!-- CAPTAIN SOMOSPADEL (AI COACH) -->
 
-    <script src="js/modules/captain/CaptainService.js"></script>
-    <script src="js/modules/captain/CaptainView.js"></script>
+    <script src="js/modules/captain/CaptainService.js" defer></script>
+    <script src="js/modules/captain/CaptainView.js" defer></script>
 
     <!-- UI Components -->
-    <script src="js/modules/ui/PremiumModal.js"></script>
-    <script src="js/modules/ui/PlayerAutocomplete.js"></script>
-    <script src="js/modules/ui/EventModals.js"></script>
-    <script src="js/modules/ui/MatchCard.js"></script>
-    <script src="js/modules/ui/EventHeader.js"></script>
+    <script src="js/modules/ui/PremiumModal.js" defer></script>
+    <script src="js/modules/ui/PlayerAutocomplete.js" defer></script>
+    <script src="js/modules/ui/EventModals.js" defer></script>
+    <script src="js/modules/ui/MatchCard.js" defer></script>
+    <script src="js/modules/ui/EventHeader.js" defer></script>
 
     <!-- Ranking Module -->
-    <script src="js/modules/ranking/RankingView.js"></script>
-    <script src="js/modules/ranking/RankingController.js"></script>
+    <script src="js/modules/ranking/RankingView.js" defer></script>
+    <script src="js/modules/ranking/RankingController.js" defer></script>
 
     <!-- Teams Module -->
-    <script src="js/modules/teams/teams_data.js?v=10"></script>
-    <script src="js/modules/teams/TeamView.js?v=11"></script>
-    <script src="js/modules/teams/TeamController.js?v=11"></script>
-    <script src="js/modules/tournaments/TournamentView.js?v=11"></script>
-    <script src="js/modules/tournaments/TournamentController.js?v=11"></script>
-    <script src="js/modules/records/RecordsView.js?v=11"></script>
+    <script src="js/modules/teams/teams_data.js?v=10" defer></script>
+    <script src="js/modules/teams/TeamView.js?v=11" defer></script>
+    <script src="js/modules/teams/TeamController.js?v=11" defer></script>
+    <script src="js/modules/tournaments/TournamentView.js?v=11" defer></script>
+    <script src="js/modules/tournaments/TournamentController.js?v=11" defer></script>
 
     <!-- Hall of Fame (Records) Module -->
-    <script src="js/modules/records/RecordsView.js?v=2"></script>
-    <script src="js/modules/records/RecordsController.js?v=2"></script>
+    <script src="js/modules/records/RecordsView.js?v=2" defer></script>
+    <script src="js/modules/records/RecordsController.js?v=2" defer></script>
 
     <!-- Stats Module -->
-    <script src="js/modules/stats/StatsView.js"></script>
-    <script src="js/modules/stats/StatsController.js"></script>
+    <script src="js/modules/stats/StatsView.js" defer></script>
+    <script src="js/modules/stats/StatsController.js" defer></script>
 
     <!-- Agenda Module -->
-    <script src="js/modules/agenda/AgendaView.js"></script>
-    <script src="js/modules/agenda/AgendaController.js"></script>
+    <script src="js/modules/agenda/AgendaView.js" defer></script>
+    <script src="js/modules/agenda/AgendaController.js" defer></script>
 
     <!-- Match Story Card (Post-Match Shareable) -->
-    <script src="js/modules/players/MatchStoryCard.js?v=1.4"></script>
+    <script src="js/modules/players/MatchStoryCard.js?v=1.4" defer></script>
 
     <!-- Entry Point -->
-    <script src="js/modules/admin/AICopilot_v4.js?v=4.0"></script>
-    <script src="js/app.js?v=3003"></script>
+    <script src="js/modules/admin/AICopilot_v4.js?v=4.0" defer></script>
+    <script src="js/app.js?v=3003" defer></script>
 </body>
 
 <!-- PWA Service Worker AUTO-CLEAN PROTOCOL -->
@@ -1182,8 +1206,8 @@
     }
 </script>
 <!-- AI Copilot v4 (Autonomous Engine) -->
-<script src="js/modules/admin/AICopilot_v4.js"></script>
-<script src="js/modules/admin/NeuralAgent_v6.js"></script>
+<script src="js/modules/admin/AICopilot_v4.js" defer></script>
+<script src="js/modules/admin/NeuralAgent_v6.js" defer></script>
 </body>
 
 </html>
