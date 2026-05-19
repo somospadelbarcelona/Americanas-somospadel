@@ -5,45 +5,57 @@
     class TeamController {
         constructor() {
             this.teams = [];
+            this.unsubscribe = null;
         }
 
         async init() {
             console.log("👥 [TeamController] Initializing...");
 
-            // Intentar cargar datos locales con reintentos (max 3)
-            let attempts = 0;
-            const tryLoad = async () => {
-                if (window.ClubTeamsData && window.ClubTeamsData.length > 0) {
-                    console.log(`✅ [TeamController] Loading ${window.ClubTeamsData.length} teams from Local Data (Attempt ${attempts + 1}).`);
-                    this.teams = window.ClubTeamsData;
-                    this.render();
-                    return true;
-                }
-                if (attempts < 3) {
-                    attempts++;
-                    console.log(`⏳ [TeamController] Data not ready, retrying in 200ms... (${attempts}/3)`);
-                    await new Promise(r => setTimeout(r, 200));
-                    return await tryLoad();
-                }
-                return false;
-            };
+            // 1. Cargar datos locales inmediatamente para render instantáneo
+            if (window.ClubTeamsData && window.ClubTeamsData.length > 0) {
+                console.log(`✅ [TeamController] Instantly loading ${window.ClubTeamsData.length} teams from Local Data.`);
+                this.teams = window.ClubTeamsData;
+                this.render();
+            }
 
-            const success = await tryLoad();
-            if (success) return;
-
-            // Fallback a Firestore si después de los reintentos no hay datos locales
+            // 2. Suscribirse a actualizaciones en tiempo real en Firestore
             if (window.db || (window.firebase && firebase.firestore)) {
                 const db = window.db || firebase.firestore();
-                try {
-                    console.log("📡 [TeamController] Fetching from Firestore (Fallback)...");
-                    const snapshot = await db.collection('club_teams').get();
-                    if (!snapshot.empty) {
-                        this.teams = snapshot.docs.map(doc => doc.data());
-                        this.render();
-                    }
-                } catch (e) {
-                    console.warn("⚠️ [TeamController] Firestore fallback failed:", e);
+                
+                // Limpiar suscripción previa si existe
+                if (this.unsubscribe) {
+                    this.unsubscribe();
+                    this.unsubscribe = null;
                 }
+
+                console.log("📡 [TeamController] Subscribing to real-time updates from Firestore (club_teams)...");
+                this.unsubscribe = db.collection('club_teams').onSnapshot((snapshot) => {
+                    if (!snapshot.empty) {
+                        const newTeams = snapshot.docs.map(doc => doc.data());
+                        console.log(`⚡ [TeamController] Real-Time update: Received ${newTeams.length} teams from Firestore.`);
+                        
+                        // Actualizar datos locales y del controlador
+                        this.teams = newTeams;
+                        window.ClubTeamsData = newTeams;
+                        
+                        // Re-renderizar la vista
+                        this.render();
+                    } else {
+                        console.warn("⚠️ [TeamController] Firestore collection 'club_teams' is empty.");
+                    }
+                }, (error) => {
+                    console.error("❌ [TeamController] Real-Time listener failed:", error);
+                });
+            } else {
+                console.warn("⚠️ [TeamController] Firebase/Firestore not available for real-time updates.");
+            }
+        }
+
+        destroy() {
+            if (this.unsubscribe) {
+                console.log("🔌 [TeamController] Unsubscribing from Firestore real-time listener.");
+                this.unsubscribe();
+                this.unsubscribe = null;
             }
         }
 

@@ -101,7 +101,8 @@
                 { name: 'TVView', routes: ['tv'] },
                 { name: 'PlayerController', routes: ['profile'] },
                 { name: 'RecordsController', routes: ['records'] },
-                { name: 'RankingController', routes: ['ranking'] }
+                { name: 'RankingController', routes: ['ranking'] },
+                { name: 'TeamController', routes: ['teams', 'equipos'] }
             ];
 
             controllersToCleanup.forEach(ctrl => {

@@ -8,7 +8,10 @@ python scraper/bot_summapadel.py
 echo.
 echo ============================================
 echo   PROCESO COMPLETADO!
-echo   Ahora ve a tu Panel Admin y pulsa:
-echo   SINCRO SUMMAPADEL
+echo   Si el servidor local (http://localhost:8080)
+echo   estaba activo, los datos se habrán subido
+echo   automáticamente a Firebase en tiempo real.
+echo   De lo contrario, inicia el servidor local y
+echo   sincroniza manualmente desde el panel admin.
 echo ============================================
 pause

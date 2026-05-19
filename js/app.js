@@ -161,6 +161,11 @@
                             <span style="font-weight: 700;">RÉCORDS</span>
                         </div>
 
+                        <div class="drawer-item" onclick="window.smartNavigate('teams', null)">
+                            <i class="fas fa-users" style="color: #72a800; text-shadow: 0 0 10px rgba(114,168,0,0.3);"></i>
+                            <span style="font-weight: 700;">EQUIPOS</span>
+                        </div>
+
                         <div class="drawer-item" onclick="window.smartNavigate('profile', null)">
                             <i class="fas fa-user-astronaut" style="color: #3b82f6; text-shadow: 0 0 10px rgba(59,130,246,0.3);"></i>
                             <span style="font-weight: 700;">MI PERFIL</span>
