@@ -1862,8 +1862,158 @@ window.ExtractedTeamsData = [
         "pts": 0.0
       }
     ],
-    "schedule": [],
-    "nextMatch": null,
+    "schedule": [
+      {
+        "j": 1,
+        "date": "Diss 30 May",
+        "time": "17:00h",
+        "opponent": "CLUB ESPORTIU GRANVIAMAR",
+        "score": "Pendiente",
+        "venue": "Ce granvia mar",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 2,
+        "date": "Dium 17 May",
+        "time": "13:30h",
+        "opponent": "MX3 INDOOR GAVÀ",
+        "score": "2 - 1",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "completed"
+      },
+      {
+        "j": 3,
+        "date": "Dium 24 May",
+        "time": "16:00h",
+        "opponent": "NOVA PADEL MIXTO PIH",
+        "score": "Pendiente",
+        "venue": "Padel indoor l' hospitalet",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 4,
+        "date": "Dium 31 May",
+        "time": "13:30h",
+        "opponent": "CRAZYXPADEL 3MIXTA BLANCO",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 5,
+        "date": "Dium 07 Jun",
+        "time": "13:00h",
+        "opponent": "CLUB SPORTS TENNIS Y PADEL CUNIT",
+        "score": "Pendiente",
+        "venue": "Club sports tenis y padel cunit .",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 6,
+        "date": "Dium 14 Jun",
+        "time": "13:30h",
+        "opponent": "CT ANDRÉS GIMENO 3X",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 7,
+        "date": "Dill 22 Jun",
+        "time": "00:00h",
+        "opponent": "BYE",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 8,
+        "date": "Dium 06 Set",
+        "time": "13:30h",
+        "opponent": "CLUB ESPORTIU GRANVIAMAR",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 9,
+        "date": "Dium 13 Set",
+        "time": "15:00h",
+        "opponent": "MX3 INDOOR GAVÀ",
+        "score": "Pendiente",
+        "venue": "Padel indoor gavà",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 10,
+        "date": "Dium 20 Set",
+        "time": "13:30h",
+        "opponent": "NOVA PADEL MIXTO PIH",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 11,
+        "date": "Dium 27 Set",
+        "time": "14:30h",
+        "opponent": "CRAZYXPADEL 3MIXTA BLANCO",
+        "score": "Pendiente",
+        "venue": "Pro padel gavà .",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 12,
+        "date": "Dium 04 Oct",
+        "time": "13:30h",
+        "opponent": "CLUB SPORTS TENNIS Y PADEL CUNIT",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 13,
+        "date": "Diss 10 Oct",
+        "time": "18:00h",
+        "opponent": "CT ANDRÉS GIMENO 3X",
+        "score": "Pendiente",
+        "venue": "Club de tennis andrés gimeno",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 14,
+        "date": "Dium 18 Oct",
+        "time": "13:30h",
+        "opponent": "BYE",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      }
+    ],
+    "nextMatch": {
+      "j": 1,
+      "date": "Diss 30 May",
+      "time": "17:00h",
+      "opponent": "CLUB ESPORTIU GRANVIAMAR",
+      "score": "Pendiente",
+      "venue": "Ce granvia mar",
+      "isHome": false,
+      "status": "upcoming"
+    },
     "groupStandings": [
       {
         "pos": 1,

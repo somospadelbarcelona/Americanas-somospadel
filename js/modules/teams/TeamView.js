@@ -576,9 +576,9 @@
 
                             <!-- 📲 FOOTER ACTION ROW -->
                             <div style="display: flex; gap: 8px; margin-top: 15px;">
-                                <button onclick="window.open('https://wa.me/?text=${encodeURIComponent(`🏆 Clasificación de ${team.name}:\n` + standings.slice(0, 3).map(s => `${s.pos}. ${s.team} - ${s.pts} pts`).join('\n'))}', '_blank')" 
-                                        style="flex: 1; background: #25D366; color: white; border: none; padding: 12px; border-radius: 16px; font-weight: 900; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.15); transition: 0.2s;">
-                                    <i class="fab fa-whatsapp" style="font-size: 0.85rem;"></i> COMPARTIR TABLA
+                                <button id="share-btn-${team.id}" onclick="window.TeamView.openShareModal('${team.id}', 'class')" 
+                                        style="flex: 1; background: #25D366; color: white; border: none; padding: 12px; border-radius: 16px; font-weight: 900; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.15); transition: all 0.2s ease;">
+                                    <i class="fab fa-whatsapp" style="font-size: 0.9rem;"></i> COMPARTIR TABLA
                                 </button>
                                 <a href="${officialLink}" target="_blank" onclick="event.stopPropagation();" 
                                    style="background: #0f172a; color: white; border: none; padding: 12px 16px; border-radius: 16px; font-weight: 900; font-size: 0.7rem; text-decoration: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;">
@@ -628,6 +628,19 @@
                 activeBtn.style.background = '#0f172a';
                 activeBtn.style.color = '#ffffff';
                 activeBtn.style.fontWeight = '900';
+            }
+
+            // Actualizar dinámicamente el botón de compartir inferior
+            const shareBtn = document.getElementById(`share-btn-${teamId}`);
+            if (shareBtn) {
+                let label = 'COMPARTIR TABLA';
+                if (tabName === 'class') label = 'COMPARTIR TABLA';
+                else if (tabName === 'sched') label = 'COMPARTIR PARTIDOS';
+                else if (tabName === 'rost') label = 'COMPARTIR SQUAD';
+                else if (tabName === 'stats') label = 'COMPARTIR ESTADÍSTICAS';
+                
+                shareBtn.innerHTML = `<i class="fab fa-whatsapp" style="font-size: 0.9rem;"></i> ${label}`;
+                shareBtn.setAttribute('onclick', `window.TeamView.openShareModal('${teamId}', '${tabName}')`);
             }
 
             // Chart Rendering
@@ -792,6 +805,708 @@
             const metricTeamsCount = document.getElementById('metric-teams-count');
             if (metricTeamsCount) {
                 metricTeamsCount.innerText = visibleCount;
+            }
+        }
+
+        // ==========================================
+        // 💎 PREMIUM TEAM SHARE MODAL ("WOW" SYSTEM)
+        // ==========================================
+
+        openShareModal(teamId, initialTab = 'class') {
+            const team = this.lastTeams.find(t => t.id === teamId);
+            if (!team) {
+                alert("No se encontraron los datos del equipo.");
+                return;
+            }
+
+            // Haptic
+            if (window.navigator.vibrate) window.navigator.vibrate(25);
+
+            // Create overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'team-share-overlay';
+            overlay.className = 'animate-fade-in';
+            overlay.style.cssText = `
+                position: fixed; inset: 0; background: rgba(5, 5, 8, 0.95); z-index: 120000;
+                display: flex; align-items: center; justify-content: center;
+                font-family: 'Outfit', sans-serif; backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px); opacity: 0; transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+                padding: 10px; box-sizing: border-box; overflow-y: auto;
+            `;
+
+            overlay.innerHTML = `
+                <div id="team-share-container" style="background: #0d0d11; border: 1.5px solid rgba(204, 255, 0, 0.15); border-radius: 32px; width: 100%; max-width: 950px; display: grid; grid-template-columns: 1fr; gap: 20px; padding: 25px; box-sizing: border-box; position: relative; box-shadow: 0 30px 80px rgba(0,0,0,0.8); transform: scale(0.9); transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                    
+                    <!-- Glow effect -->
+                    <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: #CCFF00; filter: blur(80px); opacity: 0.15; pointer-events: none;"></div>
+                    
+                    <!-- Close button -->
+                    <button onclick="window.TeamView.closeShareModal()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; font-size: 1.1rem; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; z-index: 10;" onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'; this.style.color='white';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.color='#cbd5e1';">
+                        <i class="fas fa-times"></i>
+                    </button>
+
+                    <!-- Header -->
+                    <div style="text-align: left; padding-right: 50px;">
+                        <span style="font-size: 0.7rem; color: #CCFF00; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">PRO SOCIAL GENERATOR</span>
+                        <h2 style="color: white; font-weight: 950; font-size: 1.6rem; margin: 4px 0 0; text-transform: uppercase; letter-spacing: -0.5px;">
+                            COMPARTE TU EQUIPO <span style="color: #38b000;">EN WHATSAPP</span>
+                        </h2>
+                    </div>
+
+                    <!-- Inner grid layout for preview + controls -->
+                    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 25px; align-items: center;" id="share-inner-grid">
+                        
+                        <!-- COLUMN 1: LIVE INTERACTIVE PREVIEW -->
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: #07070a; border: 1.5px dashed rgba(255,255,255,0.08); border-radius: 24px; padding: 20px; position: relative; overflow: hidden; min-height: 480px; box-shadow: inset 0 4px 20px rgba(0,0,0,0.5);" id="preview-column">
+                            
+                            <!-- Scale Wrapper to show 1080x1920 perfectly on screen -->
+                            <div id="preview-scale-wrapper" style="transform-origin: center center; width: 1080px; height: 1920px; display: flex; align-items: center; justify-content: center; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
+                                <!-- HTML content will be rendered here -->
+                                <div id="preview-card-content" style="width: 100%; height: 100%;"></div>
+                            </div>
+                            
+                            <!-- Floating helper -->
+                            <div style="position: absolute; bottom: 12px; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 30px; font-size: 0.65rem; color: rgba(255,255,255,0.7); font-weight: 800; pointer-events: none; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-info-circle" style="color: #CCFF00;"></i> PREVISUALIZACIÓN DE ALTA RESOLUCIÓN (9:16)
+                            </div>
+                        </div>
+
+                        <!-- COLUMN 2: TAB SELECTOR & ACTIONS -->
+                        <div style="display: flex; flex-direction: column; gap: 20px;" id="controls-column">
+                            
+                            <!-- Mini Selector Tab -->
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">1. SELECCIONA EL DISEÑO DE CROMO</span>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 5px; border-radius: 16px;">
+                                    <button id="modal-tab-class" onclick="window.TeamView.renderSharePreview('${teamId}', 'class')" style="padding: 12px 6px; border-radius: 12px; border: none; font-weight: 900; font-size: 0.65rem; cursor: pointer; transition: all 0.25s; text-transform: uppercase;">
+                                        🏆 TABLA
+                                    </button>
+                                    <button id="modal-tab-sched" onclick="window.TeamView.renderSharePreview('${teamId}', 'sched')" style="padding: 12px 6px; border-radius: 12px; border: none; font-weight: 900; font-size: 0.65rem; cursor: pointer; transition: all 0.25s; text-transform: uppercase;">
+                                        📅 PARTIDOS
+                                    </button>
+                                    <button id="modal-tab-rost" onclick="window.TeamView.renderSharePreview('${teamId}', 'rost')" style="padding: 12px 6px; border-radius: 12px; border: none; font-weight: 900; font-size: 0.65rem; cursor: pointer; transition: all 0.25s; text-transform: uppercase;">
+                                        👥 SQUAD
+                                    </button>
+                                    <button id="modal-tab-stats" onclick="window.TeamView.renderSharePreview('${teamId}', 'stats')" style="padding: 12px 6px; border-radius: 12px; border: none; font-weight: 900; font-size: 0.65rem; cursor: pointer; transition: all 0.25s; text-transform: uppercase;">
+                                        📊 STATS
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Capture Hint for mobile -->
+                            <div style="background: rgba(204,255,0,0.05); border: 1px solid rgba(204,255,0,0.15); border-radius: 16px; padding: 12px 15px; display: flex; align-items: center; gap: 10px; font-size: 0.75rem; color: #cbd5e1; font-weight: 700; line-height: 1.35;">
+                                <i class="fas fa-lightbulb" style="color: #CCFF00; font-size: 1.1rem; flex-shrink: 0;"></i>
+                                <span><strong>Tip Premium:</strong> Puedes copiar el cromo al portapapeles y pegarlo directamente en tu chat de WhatsApp. ¡Visual y sin esfuerzo!</span>
+                            </div>
+
+                            <!-- Actions Group -->
+                            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">2. ACCIONES DE COMPARTIR</span>
+                                
+                                <!-- WhatsApp share -->
+                                <button onclick="window.open(window.TeamView.getWhatsAppShareText('${teamId}', window.TeamView.activeShareTab), '_blank')" style="background: #25D366; color: white; border: none; padding: 18px; border-radius: 16px; font-weight: 950; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 25px rgba(37,211,102,0.25); text-transform: uppercase; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='none';">
+                                    <i class="fab fa-whatsapp" style="font-size: 1.25rem;"></i> ENVIAR A WHATSAPP
+                                </button>
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <!-- Copy to clipboard -->
+                                    <button id="modal-copy-btn" onclick="window.TeamView.copyShareImageToClipboard('${teamId}', window.TeamView.activeShareTab, 'modal-copy-btn')" style="background: #0f172a; color: white; border: 1.5px solid rgba(255,255,255,0.15); padding: 16px; border-radius: 16px; font-weight: 900; font-size: 0.75rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.borderColor='#CCFF00'; this.style.background='rgba(255,255,255,0.02)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'; this.style.background='#0f172a';">
+                                        <i class="far fa-clipboard" style="font-size: 1.2rem; color: #CCFF00;"></i>
+                                        <span>COPIAR IMAGEN</span>
+                                    </button>
+                                    
+                                    <!-- Download image -->
+                                    <button id="modal-dl-btn" onclick="window.TeamView.downloadShareImage('${teamId}', window.TeamView.activeShareTab, 'modal-dl-btn')" style="background: #CCFF00; color: #000000; border: none; padding: 16px; border-radius: 16px; font-weight: 950; font-size: 0.75rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 6px 15px rgba(204,255,0,0.2); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='none';">
+                                        <i class="fas fa-download" style="font-size: 1.1rem;"></i>
+                                        <span>DESCARGAR FOTO</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+            
+            // Adjust CSS responsively to scale the card
+            this.adjustPreviewScale();
+            window.addEventListener('resize', this.adjustPreviewScale);
+
+            // Trigger animations
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+                const container = document.getElementById('team-share-container');
+                if (container) container.style.transform = 'scale(1)';
+            }, 50);
+
+            // Render first preview
+            this.renderSharePreview(teamId, initialTab);
+        }
+
+        closeShareModal() {
+            const overlay = document.getElementById('team-share-overlay');
+            if (overlay) {
+                window.removeEventListener('resize', this.adjustPreviewScale);
+                overlay.style.opacity = '0';
+                const container = document.getElementById('team-share-container');
+                if (container) container.style.transform = 'scale(0.9)';
+                setTimeout(() => overlay.remove(), 350);
+            }
+        }
+
+        adjustPreviewScale() {
+            const previewColumn = document.getElementById('preview-column');
+            const scaleWrapper = document.getElementById('preview-scale-wrapper');
+            if (!previewColumn || !scaleWrapper) return;
+
+            const padding = 40;
+            const containerHeight = previewColumn.clientHeight - padding;
+            const cardHeight = 1920;
+            const scale = containerHeight / cardHeight;
+
+            // Apply scale safely
+            scaleWrapper.style.transform = `scale(${Math.min(scale, 0.45)})`;
+        }
+
+        renderSharePreview(teamId, tabName) {
+            this.activeShareTab = tabName;
+            const team = this.lastTeams.find(t => t.id === teamId);
+            if (!team) return;
+
+            // Highlight active button inside the selector
+            const tabs = ['class', 'sched', 'rost', 'stats'];
+            tabs.forEach(tab => {
+                const btn = document.getElementById(`modal-tab-${tab}`);
+                if (btn) {
+                    if (tab === tabName) {
+                        btn.style.background = '#CCFF00';
+                        btn.style.color = '#000';
+                    } else {
+                        btn.style.background = 'transparent';
+                        btn.style.color = '#94a3b8';
+                    }
+                }
+            });
+
+            // Set content
+            const contentArea = document.getElementById('preview-card-content');
+            if (contentArea) {
+                contentArea.innerHTML = this.getShareTemplateHTML(team, tabName, false);
+            }
+
+            // Haptic feedback
+            if (window.navigator.vibrate) window.navigator.vibrate(8);
+        }
+
+        getShareTemplateHTML(team, tabName, isForCapture = false) {
+            const dateStr = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+            const standings = team.groupStandings || [];
+            const schedule = team.schedule || [];
+            const roster = team.roster || [];
+            
+            // Captain sanitization
+            const cleanCap = (team.name.includes('3MB') || team.name.includes('3M B')) ? 'Miguel Ángel Méndez' : 
+                             (team.name.includes('3MA') || team.name.includes('3M A')) ? 'Abraham Rosell' : 
+                             (team.captain && !team.captain.includes('Pendiente') ? team.captain : 'Capitán por definir');
+            const cleanCapLower = cleanCap.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+            let maxPts = 0;
+            if (roster.length > 0) {
+                maxPts = Math.max(...roster.map(p => parseInt(p.pts) || 0));
+            }
+
+            // Advanced stats calculations
+            let winRate = 0;
+            let winCount = team.stats ? team.stats.pg : 0;
+            let pjCount = team.stats ? team.stats.pj : 0;
+            let streak = [];
+            
+            if (schedule.length > 0) {
+                const sortedMatches = [...schedule].sort((a, b) => parseInt(a.j) - parseInt(b.j));
+                const completedMatches = sortedMatches.filter(m => m.status === 'completed' && m.score);
+                
+                let matchesWon = 0;
+                completedMatches.forEach(m => {
+                    const res = this.getMatchResult(m);
+                    if (!res.valid) return;
+                    if (res.isWin) matchesWon++;
+                    streak.push(res.isWin ? 'W' : 'L');
+                });
+                
+                const totalPlayed = completedMatches.length;
+                if (totalPlayed > 0) {
+                    winRate = Math.round((matchesWon / totalPlayed) * 100);
+                }
+                if (streak.length > 5) streak = streak.slice(-5);
+            }
+
+            const sf = team.stats ? team.stats.sf : 0;
+            const sc = team.stats ? team.stats.sc : 0;
+            const setDiff = sf - sc;
+
+            const scaleStyle = isForCapture ? '' : 'width: 100%; height: 100%;';
+
+            // Return corresponding premium template HTML
+            if (tabName === 'class') {
+                return `
+                    <div class="insta-story-card" style="${scaleStyle} width: 1080px; height: 1920px; background: linear-gradient(135deg, #07070a 0%, #121216 100%); font-family: 'Outfit', sans-serif; position: relative; color: white; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 110px 70px; box-sizing: border-box;">
+                        <!-- Glows -->
+                        <div style="position: absolute; top: -100px; left: -100px; width: 650px; height: 650px; background: #CCFF00; filter: blur(200px); opacity: 0.16; border-radius: 50%;"></div>
+                        <div style="position: absolute; bottom: -100px; right: -100px; width: 650px; height: 650px; background: #38b000; filter: blur(200px); opacity: 0.16; border-radius: 50%;"></div>
+                        <div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0, rgba(255,255,255,0.015) 1px, transparent 0, transparent 50%); background-size: 25px 25px; opacity: 0.4;"></div>
+
+                        <!-- Header -->
+                        <div style="text-align: center; z-index: 10; width: 100%;">
+                            <img src="${team.logo || 'img/logo_somospadel.png'}" style="width: 140px; height: 140px; object-fit: contain; margin-bottom: 25px; filter: drop-shadow(0 10px 25px rgba(0,0,0,0.6));" crossorigin="anonymous">
+                            <div style="font-size: 1.3rem; font-weight: 900; color: #CCFF00; letter-spacing: 6px; text-transform: uppercase;">LLIGA GUINOTPRUNERA</div>
+                            <h1 style="font-size: 3.5rem; font-weight: 950; margin: 10px 0; text-transform: uppercase; letter-spacing: -1.5px; line-height: 1.05;">
+                                CLASIFICACIÓN<br><span style="color: #38b000;">GRUPO ${team.group.split(' ').pop().toUpperCase()}</span>
+                            </h1>
+                        </div>
+
+                        <!-- Main stand card -->
+                        <div style="width: 100%; background: rgba(255, 255, 255, 0.02); border: 2px solid rgba(255, 255, 255, 0.07); border-radius: 35px; padding: 40px 30px; box-sizing: border-box; backdrop-filter: blur(20px); z-index: 10; box-shadow: 0 25px 50px rgba(0,0,0,0.4);">
+                            <table style="width: 100%; border-collapse: separate; border-spacing: 0 16px;">
+                                <thead>
+                                    <tr style="color: rgba(255,255,255,0.4); font-size: 1.05rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-align: center;">
+                                        <th style="padding: 10px; text-align: left;">POS & EQUIPO</th>
+                                        <th style="padding: 10px;">PTS</th>
+                                        <th style="padding: 10px;">PJ</th>
+                                        <th style="padding: 10px;">PG</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${standings.slice(0, 6).map((s, idx) => {
+                                        const isSp = s.isCurrent;
+                                        const rowBg = isSp ? 'linear-gradient(90deg, rgba(204,255,0,0.14) 0%, rgba(204,255,0,0.02) 100%)' : 'rgba(255,255,255,0.01)';
+                                        const rowBorder = isSp ? '2px solid #CCFF00' : '1px solid rgba(255,255,255,0.04)';
+                                        return `
+                                            <tr style="background: ${rowBg}; border-radius: 18px;">
+                                                <td style="padding: 18px 25px; font-weight: 900; font-size: 1.5rem; border-top-left-radius: 18px; border-bottom-left-radius: 18px; border: ${rowBorder}; border-right: none; display: flex; align-items: center; gap: 15px; color: ${isSp ? '#CCFF00' : 'white'};">
+                                                    <span style="font-size: 1.8rem; font-weight: 950; color: ${idx === 0 ? '#eab308' : (idx === 1 ? '#cbd5e1' : (idx === 2 ? '#CD7F32' : 'rgba(255,255,255,0.3)'))};">#${s.pos}</span>
+                                                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 440px;">
+                                                        ${s.team.toUpperCase()} ${isSp ? '👑' : ''}
+                                                    </span>
+                                                </td>
+                                                <td style="padding: 18px 10px; font-size: 1.7rem; font-weight: 950; text-align: center; color: ${isSp ? '#CCFF00' : 'white'}; border-top: ${rowBorder}; border-bottom: ${rowBorder};">${s.pts}</td>
+                                                <td style="padding: 18px 10px; font-size: 1.5rem; font-weight: 800; text-align: center; color: rgba(255,255,255,0.5); border-top: ${rowBorder}; border-bottom: ${rowBorder};">${s.pj}</td>
+                                                <td style="padding: 18px 25px; font-size: 1.5rem; font-weight: 900; text-align: center; color: #38b000; border-top-right-radius: 18px; border-bottom-right-radius: 18px; border: ${rowBorder}; border-left: none;">${s.pg}</td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Footer -->
+                        <div style="text-align: center; z-index: 10; width: 100%;">
+                            <div style="font-size: 1.7rem; font-weight: 900; letter-spacing: 5px; color: white;">SOMOS PÁDEL BCN</div>
+                            <div style="font-size: 1.1rem; color: rgba(255,255,255,0.4); margin-top: 10px; text-transform: uppercase; letter-spacing: 2px;">APP OFICIAL • ${dateStr}</div>
+                            <div style="margin-top: 30px; display: inline-flex; align-items: center; gap: 15px; background: #CCFF00; color: black; padding: 14px 35px; border-radius: 50px; font-weight: 900; font-size: 1.25rem; box-shadow: 0 8px 20px rgba(204,255,0,0.25);">
+                                <i class="fab fa-instagram" style="font-size: 1.5rem;"></i> @somospadelbarcelona_
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (tabName === 'sched') {
+                return `
+                    <div class="insta-story-card" style="${scaleStyle} width: 1080px; height: 1920px; background: linear-gradient(135deg, #050508 0%, #121216 100%); font-family: 'Outfit', sans-serif; position: relative; color: white; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 110px 70px; box-sizing: border-box;">
+                        <!-- Glows -->
+                        <div style="position: absolute; top: -100px; right: -100px; width: 650px; height: 650px; background: #38b000; filter: blur(200px); opacity: 0.16; border-radius: 50%;"></div>
+                        <div style="position: absolute; bottom: -100px; left: -100px; width: 650px; height: 650px; background: #00d2ff; filter: blur(200px); opacity: 0.15; border-radius: 50%;"></div>
+                        <div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0, rgba(255,255,255,0.015) 1px, transparent 0, transparent 50%); background-size: 25px 25px; opacity: 0.3;"></div>
+
+                        <!-- Header -->
+                        <div style="text-align: center; z-index: 10; width: 100%;">
+                            <img src="${team.logo || 'img/logo_somospadel.png'}" style="width: 140px; height: 140px; object-fit: contain; margin-bottom: 25px; filter: drop-shadow(0 10px 25px rgba(0,0,0,0.6));" crossorigin="anonymous">
+                            <div style="font-size: 1.3rem; font-weight: 900; color: #CCFF00; letter-spacing: 6px; text-transform: uppercase;">CALENDARIO & RESULTADOS</div>
+                            <h1 style="font-size: 3.2rem; font-weight: 950; margin: 10px 0; text-transform: uppercase; letter-spacing: -1px; line-height: 1.05; max-width: 900px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block;">
+                                ${team.name.toUpperCase()}
+                            </h1>
+                        </div>
+
+                        <!-- Main Matches List -->
+                        <div style="width: 100%; display: flex; flex-direction: column; gap: 24px; z-index: 10; margin: 30px 0;">
+                            ${schedule.slice(-5).map(m => {
+                                const res = this.getMatchResult(m);
+                                const isCompleted = res.valid;
+                                const isWin = isCompleted && res.isWin;
+                                const isLive = m.status === 'live' || m.status === 'playing';
+
+                                const cardBg = isLive ? 'rgba(56,176,0,0.1)' : 'rgba(255, 255, 255, 0.02)';
+                                const cardBorder = isLive ? '2px solid #38b000' : '1px solid rgba(255, 255, 255, 0.06)';
+                                const labelBg = isLive ? '#38b000' : (!isCompleted ? 'rgba(255,255,255,0.06)' : (isWin ? 'rgba(56,176,0,0.15)' : 'rgba(239,68,68,0.15)'));
+                                const labelColor = isLive ? 'black' : (!isCompleted ? '#cbd5e1' : (isWin ? '#CCFF00' : '#ef4444'));
+                                const statusText = isLive ? 'EN JUEGO' : (isCompleted ? m.score : 'PENDIENTE');
+
+                                return `
+                                    <div style="background: ${cardBg}; border: ${cardBorder}; border-radius: 26px; padding: 22px 30px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+                                        <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1;">
+                                            <span style="font-size: 1.05rem; color: #CCFF00; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">JORNADA ${m.j}</span>
+                                            <span style="font-size: 1.7rem; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 15px;">
+                                                vs ${m.opponent.toUpperCase()}
+                                            </span>
+                                            <div style="display: flex; align-items: center; gap: 10px; font-size: 1.15rem; color: rgba(255,255,255,0.5); font-weight: 700;">
+                                                <i class="far fa-calendar-alt" style="color: #38b000;"></i>
+                                                <span>${m.date} • ${m.venue.toUpperCase()}</span>
+                                            </div>
+                                        </div>
+                                        <div style="font-size: 1.6rem; font-weight: 950; background: ${labelBg}; color: ${labelColor}; padding: 12px 24px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05); min-width: 170px; text-align: center; letter-spacing: 0.5px; flex-shrink: 0;">
+                                            ${statusText}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <!-- Footer -->
+                        <div style="text-align: center; z-index: 10; width: 100%;">
+                            <div style="font-size: 1.7rem; font-weight: 900; letter-spacing: 5px; color: white;">SOMOS PÁDEL BCN</div>
+                            <div style="font-size: 1.1rem; color: rgba(255,255,255,0.4); margin-top: 10px; text-transform: uppercase; letter-spacing: 2px;">APP OFICIAL • LIGA DE PÁDEL</div>
+                            <div style="margin-top: 30px; display: inline-flex; align-items: center; gap: 15px; background: #CCFF00; color: black; padding: 14px 35px; border-radius: 50px; font-weight: 900; font-size: 1.25rem; box-shadow: 0 8px 20px rgba(204,255,0,0.25);">
+                                <i class="fab fa-instagram" style="font-size: 1.5rem;"></i> @somospadelbarcelona_
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (tabName === 'rost') {
+                return `
+                    <div class="insta-story-card" style="${scaleStyle} width: 1080px; height: 1920px; background: linear-gradient(135deg, #06060a 0%, #121217 100%); font-family: 'Outfit', sans-serif; position: relative; color: white; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 110px 70px; box-sizing: border-box;">
+                        <!-- Glows -->
+                        <div style="position: absolute; top: -100px; left: -100px; width: 680px; height: 680px; background: #CCFF00; filter: blur(220px); opacity: 0.16; border-radius: 50%;"></div>
+                        <div style="position: absolute; bottom: -100px; right: -100px; width: 680px; height: 680px; background: #8b5cf6; filter: blur(220px); opacity: 0.14; border-radius: 50%;"></div>
+                        <div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0, rgba(255,255,255,0.015) 1px, transparent 0, transparent 50%); background-size: 25px 25px; opacity: 0.3;"></div>
+
+                        <!-- Header -->
+                        <div style="text-align: center; z-index: 10; width: 100%;">
+                            <img src="${team.logo || 'img/logo_somospadel.png'}" style="width: 140px; height: 140px; object-fit: contain; margin-bottom: 25px; filter: drop-shadow(0 10px 25px rgba(0,0,0,0.6));" crossorigin="anonymous">
+                            <div style="font-size: 1.3rem; font-weight: 900; color: #CCFF00; letter-spacing: 6px; text-transform: uppercase;">PLANTILLA OFICIAL • ROSTER</div>
+                            <h1 style="font-size: 3.2rem; font-weight: 950; margin: 10px 0; text-transform: uppercase; letter-spacing: -1px; line-height: 1.05; max-width: 900px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block;">
+                                ${team.name.toUpperCase()}
+                            </h1>
+                        </div>
+
+                        <!-- Roster Renders -->
+                        <div style="width: 100%; display: flex; flex-direction: column; gap: 20px; z-index: 10; margin: 30px 0; max-height: 900px; overflow: hidden;">
+                            ${roster.map((player, idx) => {
+                                const pNameLower = (player.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                const isCap = pNameLower.includes(cleanCapLower) && cleanCapLower.length > 3;
+                                const isMVP = (parseInt(player.pts) === maxPts) && maxPts > 0;
+                                const initial = player.name ? player.name.charAt(0).toUpperCase() : '?';
+                                const bgColors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#6366f1'];
+                                const avatarBg = bgColors[player.name.length % bgColors.length];
+
+                                return `
+                                    <div style="background: rgba(255, 255, 255, 0.02); border: 1.5px solid rgba(255, 255, 255, 0.05); border-radius: 25px; padding: 18px 25px; display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(15px); box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                                        <div style="display: flex; align-items: center; gap: 20px; min-width: 0; flex: 1;">
+                                            <!-- Avatar -->
+                                            <div style="width: 70px; height: 70px; border-radius: 50%; background: ${avatarBg}; color: white; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 900; box-shadow: 0 5px 12px rgba(0,0,0,0.25); position: relative; flex-shrink: 0;">
+                                                ${initial}
+                                                ${isCap ? `
+                                                    <div style="position: absolute; bottom: -2px; right: -2px; background: #0f172a; border: 1.5px solid #fff; color: #fff; font-size: 0.8rem; font-weight: 950; width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3);" title="Capitán">C</div>
+                                                ` : ''}
+                                            </div>
+                                            <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1;">
+                                                <span style="font-size: 1.65rem; font-weight: 900; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.name.toUpperCase()}</span>
+                                                <div style="display: flex; gap: 8px;">
+                                                    ${isCap ? `<span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; font-size: 0.8rem; font-weight: 900; padding: 2px 10px; border-radius: 6px; letter-spacing: 0.5px;">CAPITÁN</span>` : ''}
+                                                    ${isMVP ? `<span style="background: linear-gradient(135deg, #eab308 0%, #f59e0b 100%); color: white; font-size: 0.8rem; font-weight: 900; padding: 2px 10px; border-radius: 6px; box-shadow: 0 2px 6px rgba(234,179,8,0.35); display: inline-flex; align-items: center; gap: 3px;"><i class="fas fa-crown"></i> MVP</span>` : ''}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style="background: rgba(56, 176, 0, 0.1); border: 1px solid rgba(56, 176, 0, 0.25); color: #CCFF00; font-size: 1.45rem; font-weight: 950; padding: 10px 22px; border-radius: 16px; letter-spacing: 0.5px; flex-shrink: 0; margin-left: 10px;">
+                                            ${player.pts} <span style="font-size: 1rem; color: rgba(255,255,255,0.5);">PTS</span>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <!-- Footer -->
+                        <div style="text-align: center; z-index: 10; width: 100%;">
+                            <div style="font-size: 1.7rem; font-weight: 900; letter-spacing: 5px; color: white;">SOMOS PÁDEL BCN</div>
+                            <div style="font-size: 1.1rem; color: rgba(255,255,255,0.4); margin-top: 10px; text-transform: uppercase; letter-spacing: 2px;">APP OFICIAL • ROSTER COMPLETO</div>
+                            <div style="margin-top: 30px; display: inline-flex; align-items: center; gap: 15px; background: #CCFF00; color: black; padding: 14px 35px; border-radius: 50px; font-weight: 900; font-size: 1.25rem; box-shadow: 0 8px 20px rgba(204,255,0,0.25);">
+                                <i class="fab fa-instagram" style="font-size: 1.5rem;"></i> @somospadelbarcelona_
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (tabName === 'stats') {
+                return `
+                    <div class="insta-story-card" style="${scaleStyle} width: 1080px; height: 1920px; background: linear-gradient(135deg, #07070a 0%, #121217 100%); font-family: 'Outfit', sans-serif; position: relative; color: white; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 110px 70px; box-sizing: border-box;">
+                        <!-- Glows -->
+                        <div style="position: absolute; top: -100px; right: -100px; width: 680px; height: 680px; background: #38b000; filter: blur(220px); opacity: 0.18; border-radius: 50%;"></div>
+                        <div style="position: absolute; bottom: -100px; left: -100px; width: 680px; height: 680px; background: #CCFF00; filter: blur(220px); opacity: 0.16; border-radius: 50%;"></div>
+                        <div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0, rgba(255,255,255,0.015) 1px, transparent 0, transparent 50%); background-size: 25px 25px; opacity: 0.3;"></div>
+
+                        <!-- Header -->
+                        <div style="text-align: center; z-index: 10; width: 100%;">
+                            <img src="${team.logo || 'img/logo_somospadel.png'}" style="width: 140px; height: 140px; object-fit: contain; margin-bottom: 25px; filter: drop-shadow(0 10px 25px rgba(0,0,0,0.6));" crossorigin="anonymous">
+                            <div style="font-size: 1.3rem; font-weight: 900; color: #CCFF00; letter-spacing: 6px; text-transform: uppercase;">ESTADÍSTICAS & RENDIMIENTO</div>
+                            <h1 style="font-size: 3.2rem; font-weight: 950; margin: 10px 0; text-transform: uppercase; letter-spacing: -1px; line-height: 1.05; max-width: 900px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block;">
+                                ${team.name.toUpperCase()}
+                            </h1>
+                        </div>
+
+                        <!-- Main KPIs Content -->
+                        <div style="width: 100%; display: flex; flex-direction: column; gap: 35px; z-index: 10; margin: 30px 0;">
+                            
+                            <!-- Win Rate big visual -->
+                            <div style="background: rgba(255,255,255,0.02); border: 2px solid rgba(56,176,0,0.3); border-radius: 35px; padding: 45px; text-align: center; backdrop-filter: blur(20px); box-shadow: 0 15px 35px rgba(0,0,0,0.25);">
+                                <div style="font-size: 1.3rem; color: rgba(255,255,255,0.5); font-weight: 800; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 15px;">PORCENTAJE DE VICTORIAS</div>
+                                <div style="font-size: 7rem; font-weight: 950; color: #CCFF00; line-height: 1; margin-bottom: 25px;">${winRate}%</div>
+                                
+                                <!-- Neon progress bar -->
+                                <div style="width: 100%; background: rgba(255,255,255,0.05); height: 20px; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.04); padding: 2px; box-sizing: border-box;">
+                                    <div style="width: ${winRate}%; background: linear-gradient(90deg, #38b000 0%, #CCFF00 100%); height: 100%; border-radius: 8px; box-shadow: 0 0 12px rgba(204,255,0,0.4);"></div>
+                                </div>
+                            </div>
+
+                            <!-- Dual columns Sub-KPIs -->
+                            <div style="display: flex; gap: 24px;">
+                                <!-- PJ / PG -->
+                                <div style="flex: 1; background: rgba(255,255,255,0.02); border: 1.5px solid rgba(255,255,255,0.05); border-radius: 28px; padding: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(15px);">
+                                    <span style="font-size: 1rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">PARTIDOS J/G</span>
+                                    <span style="font-size: 3.2rem; font-weight: 950; color: white;">${pjCount}<span style="font-size: 2rem; color: #38b000; font-weight: 900;"> / ${winCount}</span></span>
+                                </div>
+                                
+                                <!-- Sets Diff -->
+                                <div style="flex: 1; background: rgba(255,255,255,0.02); border: 1.5px solid rgba(255,255,255,0.05); border-radius: 28px; padding: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(15px);">
+                                    <span style="font-size: 1rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">DIF. SETS</span>
+                                    <span style="font-size: 3.2rem; font-weight: 950; color: ${setDiff >= 0 ? '#CCFF00' : '#ef4444'};">${setDiff > 0 ? '+' + setDiff : setDiff}</span>
+                                </div>
+                            </div>
+
+                            <!-- Streak Row -->
+                            <div style="background: rgba(255,255,255,0.02); border: 1.5px solid rgba(255,255,255,0.05); border-radius: 28px; padding: 25px 35px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(15px);">
+                                <span style="font-size: 1.25rem; font-weight: 900; color: white; letter-spacing: 1px; text-transform: uppercase;">FORMA (ÚLT. 5)</span>
+                                <div style="display: flex; gap: 12px;">
+                                    ${streak.length > 0 ? streak.map(res => `
+                                        <div style="width: 46px; height: 46px; border-radius: 50%; background: ${res === 'W' ? '#38b000' : '#ef4444'}; color: white; font-size: 1.35rem; font-weight: 950; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px ${res === 'W' ? 'rgba(56,176,0,0.3)' : 'rgba(239,68,68,0.3)'};">
+                                            ${res === 'W' ? 'V' : 'D'}
+                                        </div>
+                                    `).join('') : '<span style="font-size: 1.2rem; color: rgba(255,255,255,0.3); font-weight: 800;">SIN REGISTROS</span>'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div style="text-align: center; z-index: 10; width: 100%;">
+                            <div style="font-size: 1.7rem; font-weight: 900; letter-spacing: 5px; color: white;">SOMOS PÁDEL BCN</div>
+                            <div style="font-size: 1.1rem; color: rgba(255,255,255,0.4); margin-top: 10px; text-transform: uppercase; letter-spacing: 2px;">APP OFICIAL • EVOLUCIÓN PREMIUM</div>
+                            <div style="margin-top: 30px; display: inline-flex; align-items: center; gap: 15px; background: #CCFF00; color: black; padding: 14px 35px; border-radius: 50px; font-weight: 900; font-size: 1.25rem; box-shadow: 0 8px 20px rgba(204,255,0,0.25);">
+                                <i class="fab fa-instagram" style="font-size: 1.5rem;"></i> @somospadelbarcelona_
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `<div>Diseño no encontrado</div>`;
+        }
+
+        getWhatsAppShareText(teamId, tabName) {
+            const team = this.lastTeams.find(t => t.id === teamId);
+            if (!team) return '';
+
+            const standings = team.groupStandings || [];
+            const schedule = team.schedule || [];
+            const roster = team.roster || [];
+            const winCount = team.stats ? team.stats.pg : 0;
+            const pjCount = team.stats ? team.stats.pj : 0;
+            const sf = team.stats ? team.stats.sf : 0;
+            const sc = team.stats ? team.stats.sc : 0;
+            const setDiff = sf - sc;
+
+            let text = '';
+
+            if (tabName === 'class') {
+                text = `🏆 *CLASIFICACIÓN OFICIAL - ${team.name.toUpperCase()}* 🏆\n\n`;
+                text += `¡Estamos compitiendo a tope en la Lliga Guinotprunera! 🎾🔥\n\n`;
+                text += `Así está la tabla en el *Grupo ${team.group.split(' ').pop().toUpperCase()}*:\n`;
+                
+                standings.slice(0, 4).forEach(s => {
+                    const icon = s.isCurrent ? '👑' : (s.pos === '1' ? '🥇' : '🔹');
+                    text += `${icon} *#${s.pos}* ${s.team} - *${s.pts} pts* (PJ:${s.pj} G:${s.pg})\n`;
+                });
+                
+                text += `\n📲 Sigue todos nuestros partidos, plantillas y estadísticas completas en tiempo real: *https://summapadel.com/event/151* 🚀🎾`;
+            } else if (tabName === 'sched') {
+                text = `📅 *PARTIDOS Y RESULTADOS - ${team.name.toUpperCase()}* 📅\n\n`;
+                text += `¡El ritmo de la lliga no se detiene! Así van nuestras jornadas:\n\n`;
+                
+                schedule.slice(-4).forEach(m => {
+                    const isCompleted = m.status === 'completed' && m.score;
+                    const resStr = isCompleted ? `👉 *${m.score}*` : '⏳ _Pendiente_';
+                    text += `🔸 *J${m.j}:* vs ${m.opponent}\n    ${m.date} | ${resStr}\n`;
+                });
+                
+                text += `\n📲 Calendario completo y lives en la App Oficial: *https://summapadel.com/event/151* 🎾🔥`;
+            } else if (tabName === 'rost') {
+                text = `👥 *PLANTILLA OFICIAL (SQUAD) - ${team.name.toUpperCase()}* 👥\n\n`;
+                text += `¡Presentamos al equipo de guerreros que defiende los colores del club! 🎾💪\n\n`;
+                
+                roster.forEach(p => {
+                    text += `👤 *${p.name.toUpperCase()}* - ${p.pts} pts\n`;
+                });
+                
+                text += `\n📲 Roster completo con evoluciones en vivo en la App de Somos Pádel: *https://summapadel.com/event/151* 🔥📈`;
+            } else if (tabName === 'stats') {
+                let winRate = 0;
+                let streakStr = 'Sin datos';
+                if (schedule.length > 0) {
+                    const completed = schedule.filter(m => m.status === 'completed' && m.score);
+                    let matchesWon = 0;
+                    let streak = [];
+                    completed.forEach(m => {
+                        const res = this.getMatchResult(m);
+                        if (res.valid && res.isWin) matchesWon++;
+                        if (res.valid) streak.push(res.isWin ? 'V' : 'D');
+                    });
+                    if (completed.length > 0) winRate = Math.round((matchesWon / completed.length) * 100);
+                    if (streak.length > 0) streakStr = streak.slice(-5).join(' - ');
+                }
+
+                text = `📊 *INFORME DE RENDIMIENTO - ${team.name.toUpperCase()}* 📊\n\n`;
+                text += `¡Analizamos las estadísticas oficiales del equipo! Ligas Guinotprunera 📈🎾\n\n`;
+                text += `📈 *Efectividad (Win Rate):* ${winRate}%\n`;
+                text += `🎾 *Partidos Jugados / Ganados:* ${pjCount} / ${winCount}\n`;
+                text += `🏆 *Diferencia de sets:* ${setDiff >= 0 ? '+' : ''}${setDiff}\n`;
+                text += `🔥 *Última racha (Forma):* [ ${streakStr} ]\n\n`;
+                text += `📲 Ver todas las métricas en tiempo real en la App oficial de Somos Pádel: *https://summapadel.com/event/151* 🚀💪`;
+            }
+
+            return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+        }
+
+        async downloadShareImage(teamId, tabName, btnId) {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> GENERANDO...`;
+            }
+
+            const team = this.lastTeams.find(t => t.id === teamId);
+            if (!team) return;
+
+            try {
+                // Render fully in a hidden container to scale 1080x1920
+                const container = document.createElement('div');
+                container.style.cssText = "position: fixed; top: -9999px; left: -9999px; width: 1080px; height: 1920px; overflow: hidden; z-index: -9999;";
+                container.innerHTML = this.getShareTemplateHTML(team, tabName, true);
+                document.body.appendChild(container);
+
+                // Delay to allow rendering
+                await new Promise(resolve => setTimeout(resolve, 400));
+
+                const canvas = await html2canvas(container, {
+                    scale: 2, // High resolution
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#07070a',
+                    logging: false
+                });
+
+                document.body.removeChild(container);
+
+                const dataUrl = canvas.toDataURL('image/png', 1.0);
+                
+                // Triggers direct download
+                const link = document.createElement('a');
+                link.download = `SomosPadel_${team.name.replace(/\s+/g, '_')}_${tabName}_${new Date().toISOString().slice(0,10)}.png`;
+                link.href = dataUrl;
+                link.click();
+
+                if (btn) {
+                    btn.innerHTML = `<i class="fas fa-check"></i> FOTO GUARDADA`;
+                    btn.style.background = '#38b000';
+                    btn.style.color = '#fff';
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.style.background = '#CCFF00';
+                        btn.style.color = '#000000';
+                        btn.innerHTML = `<i class="fas fa-download"></i> DESCARGAR FOTO`;
+                    }, 2500);
+                }
+            } catch (err) {
+                console.error("Error downloading share image:", err);
+                alert("Error al generar la imagen. Por favor, reintenta.");
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> REINTENTAR`;
+                }
+            }
+        }
+
+        async copyShareImageToClipboard(teamId, tabName, btnId) {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> PREPARANDO...`;
+            }
+
+            const team = this.lastTeams.find(t => t.id === teamId);
+            if (!team) return;
+
+            try {
+                // Render fully in a hidden container to scale 1080x1920
+                const container = document.createElement('div');
+                container.style.cssText = "position: fixed; top: -9999px; left: -9999px; width: 1080px; height: 1920px; overflow: hidden; z-index: -9999;";
+                container.innerHTML = this.getShareTemplateHTML(team, tabName, true);
+                document.body.appendChild(container);
+
+                // Delay to allow rendering
+                await new Promise(resolve => setTimeout(resolve, 400));
+
+                const canvas = await html2canvas(container, {
+                    scale: 1.5, // Well optimized resolution for copying
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#07070a',
+                    logging: false
+                });
+
+                document.body.removeChild(container);
+
+                canvas.toBlob(async (blob) => {
+                    if (!blob) {
+                        throw new Error("No se pudo crear el blob de la imagen.");
+                    }
+                    try {
+                        const item = new ClipboardItem({ "image/png": blob });
+                        await navigator.clipboard.write([item]);
+                        
+                        if (btn) {
+                            btn.innerHTML = `<i class="fas fa-check"></i> ¡IMAGEN COPIADA!`;
+                            btn.style.borderColor = '#38b000';
+                            btn.style.color = '#CCFF00';
+                            setTimeout(() => {
+                                btn.disabled = false;
+                                btn.style.borderColor = 'rgba(255,255,255,0.15)';
+                                btn.style.color = 'white';
+                                btn.innerHTML = `<i class="far fa-clipboard"></i> COPIAR IMAGEN`;
+                            }, 2500);
+                        }
+                    } catch (clipErr) {
+                        console.warn("Restricciones del Portapapeles del navegador, activando fallback de descarga:", clipErr);
+                        // Safe download fallback if browser prevents direct copying
+                        this.downloadShareImage(teamId, tabName, btnId);
+                    }
+                }, 'image/png');
+
+            } catch (err) {
+                console.error("Error copying share image:", err);
+                alert("Restricción del navegador. Se procederá a la descarga del cromo.");
+                this.downloadShareImage(teamId, tabName, btnId);
             }
         }
     }
