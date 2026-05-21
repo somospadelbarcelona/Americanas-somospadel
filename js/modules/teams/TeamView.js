@@ -827,18 +827,90 @@
             overlay.id = 'team-share-overlay';
             overlay.className = 'animate-fade-in';
             overlay.style.cssText = `
-                position: fixed; inset: 0; background: rgba(5, 5, 8, 0.95); z-index: 120000;
+                position: fixed; inset: 0; background: rgba(8, 8, 12, 0.85); z-index: 120000;
                 display: flex; align-items: center; justify-content: center;
-                font-family: 'Outfit', sans-serif; backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px); opacity: 0; transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-                padding: 10px; box-sizing: border-box; overflow-y: auto;
+                font-family: 'Outfit', sans-serif; backdrop-filter: blur(25px);
+                -webkit-backdrop-filter: blur(25px); opacity: 0; transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+                padding: 15px; box-sizing: border-box; overflow-y: auto;
             `;
 
             overlay.innerHTML = `
-                <div id="team-share-container" style="background: #0d0d11; border: 1.5px solid rgba(204, 255, 0, 0.15); border-radius: 32px; width: 100%; max-width: 950px; display: grid; grid-template-columns: 1fr; gap: 20px; padding: 25px; box-sizing: border-box; position: relative; box-shadow: 0 30px 80px rgba(0,0,0,0.8); transform: scale(0.9); transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                <style>
+                    #team-share-container {
+                        background: rgba(13, 13, 17, 0.95); 
+                        border: 1.5px solid rgba(204, 255, 0, 0.25); 
+                        border-radius: 32px; 
+                        width: 100%; 
+                        max-width: 920px; 
+                        display: flex;
+                        flex-direction: column;
+                        gap: 20px; 
+                        padding: 28px; 
+                        box-sizing: border-box; 
+                        position: relative; 
+                        box-shadow: 0 35px 80px rgba(0,0,0,0.8); 
+                        transform: scale(0.9); 
+                        transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                        max-height: 92vh;
+                        overflow-y: auto;
+                        backdrop-filter: blur(15px);
+                        -webkit-backdrop-filter: blur(15px);
+                    }
                     
+                    #share-inner-grid {
+                        display: grid; 
+                        grid-template-columns: 1.2fr 1fr; 
+                        gap: 30px; 
+                        align-items: center;
+                    }
+
+                    #preview-column {
+                        display: flex; 
+                        flex-direction: column; 
+                        align-items: center; 
+                        justify-content: center; 
+                        background: #060608; 
+                        border: 1.5px dashed rgba(255,255,255,0.08); 
+                        border-radius: 24px; 
+                        padding: 24px; 
+                        position: relative; 
+                        overflow: hidden; 
+                        min-height: 520px; 
+                        box-shadow: inset 0 4px 20px rgba(0,0,0,0.6);
+                    }
+
+                    @media (max-width: 992px) {
+                        #team-share-container {
+                            padding: 20px !important;
+                            border-radius: 24px !important;
+                            max-height: 95vh !important;
+                            gap: 15px !important;
+                        }
+                        #share-inner-grid {
+                            grid-template-columns: 1fr !important;
+                            gap: 18px !important;
+                        }
+                        #preview-column {
+                            min-height: auto !important;
+                            padding: 15px 10px !important;
+                            order: 2; /* Cromo abajo para mejor lectura y selector arriba */
+                        }
+                        #controls-column {
+                            order: 1; /* Selector y botones arriba */
+                        }
+                        #modal-helper-text {
+                            font-size: 0.6rem !important;
+                            padding: 6px 12px !important;
+                            position: relative !important;
+                            bottom: auto !important;
+                            margin-top: 10px !important;
+                        }
+                    }
+                </style>
+
+                <div id="team-share-container">
                     <!-- Glow effect -->
-                    <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: #CCFF00; filter: blur(80px); opacity: 0.15; pointer-events: none;"></div>
+                    <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: #CCFF00; filter: blur(80px); opacity: 0.12; pointer-events: none;"></div>
                     
                     <!-- Close button -->
                     <button onclick="window.TeamView.closeShareModal()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; font-size: 1.1rem; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; z-index: 10;" onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'; this.style.color='white';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.color='#cbd5e1';">
@@ -848,34 +920,39 @@
                     <!-- Header -->
                     <div style="text-align: left; padding-right: 50px;">
                         <span style="font-size: 0.7rem; color: #CCFF00; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">PRO SOCIAL GENERATOR</span>
-                        <h2 style="color: white; font-weight: 950; font-size: 1.6rem; margin: 4px 0 0; text-transform: uppercase; letter-spacing: -0.5px;">
+                        <h2 style="color: white; font-weight: 950; font-size: 1.5rem; margin: 4px 0 0; text-transform: uppercase; letter-spacing: -0.5px;">
                             COMPARTE TU EQUIPO <span style="color: #38b000;">EN WHATSAPP</span>
                         </h2>
                     </div>
 
                     <!-- Inner grid layout for preview + controls -->
-                    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 25px; align-items: center;" id="share-inner-grid">
+                    <div id="share-inner-grid">
                         
                         <!-- COLUMN 1: LIVE INTERACTIVE PREVIEW -->
-                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: #07070a; border: 1.5px dashed rgba(255,255,255,0.08); border-radius: 24px; padding: 20px; position: relative; overflow: hidden; min-height: 480px; box-shadow: inset 0 4px 20px rgba(0,0,0,0.5);" id="preview-column">
+                        <div id="preview-column">
                             
-                            <!-- Scale Wrapper to show 1080x1920 perfectly on screen -->
-                            <div id="preview-scale-wrapper" style="transform-origin: center center; width: 1080px; height: 1920px; display: flex; align-items: center; justify-content: center; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
-                                <!-- HTML content will be rendered here -->
-                                <div id="preview-card-content" style="width: 100%; height: 100%;"></div>
+                            <!-- Container Sizer que define el espacio real ocupado por el cromo escalado -->
+                            <div id="preview-container-sizer" style="position: relative; overflow: visible; display: flex; align-items: center; justify-content: center; transition: all 0.25s ease;">
+                                
+                                <!-- Scale Wrapper inside Sizer -->
+                                <div id="preview-scale-wrapper" style="position: absolute; transform-origin: top left; width: 1080px; height: 1920px; display: flex; align-items: center; justify-content: center; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6); background: #07070a;">
+                                    <!-- HTML content will be rendered here -->
+                                    <div id="preview-card-content" style="width: 100%; height: 100%;"></div>
+                                </div>
+                                
                             </div>
                             
                             <!-- Floating helper -->
-                            <div style="position: absolute; bottom: 12px; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 30px; font-size: 0.65rem; color: rgba(255,255,255,0.7); font-weight: 800; pointer-events: none; display: flex; align-items: center; gap: 6px;">
+                            <div id="modal-helper-text" style="position: absolute; bottom: 12px; background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 30px; font-size: 0.65rem; color: rgba(255,255,255,0.85); font-weight: 800; pointer-events: none; display: flex; align-items: center; gap: 6px; z-index: 10;">
                                 <i class="fas fa-info-circle" style="color: #CCFF00;"></i> PREVISUALIZACIÓN DE ALTA RESOLUCIÓN (9:16)
                             </div>
                         </div>
 
                         <!-- COLUMN 2: TAB SELECTOR & ACTIONS -->
-                        <div style="display: flex; flex-direction: column; gap: 20px;" id="controls-column">
+                        <div style="display: flex; flex-direction: column; gap: 18px;" id="controls-column">
                             
                             <!-- Mini Selector Tab -->
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
                                 <span style="font-size: 0.65rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">1. SELECCIONA EL DISEÑO DE CROMO</span>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 5px; border-radius: 16px;">
                                     <button id="modal-tab-class" onclick="window.TeamView.renderSharePreview('${teamId}', 'class')" style="padding: 12px 6px; border-radius: 12px; border: none; font-weight: 900; font-size: 0.65rem; cursor: pointer; transition: all 0.25s; text-transform: uppercase;">
@@ -894,13 +971,13 @@
                             </div>
 
                             <!-- Capture Hint for mobile -->
-                            <div style="background: rgba(204,255,0,0.05); border: 1px solid rgba(204,255,0,0.15); border-radius: 16px; padding: 12px 15px; display: flex; align-items: center; gap: 10px; font-size: 0.75rem; color: #cbd5e1; font-weight: 700; line-height: 1.35;">
+                            <div style="background: rgba(204,255,0,0.04); border: 1px solid rgba(204,255,0,0.12); border-radius: 16px; padding: 12px 15px; display: flex; align-items: center; gap: 10px; font-size: 0.75rem; color: #cbd5e1; font-weight: 700; line-height: 1.35;">
                                 <i class="fas fa-lightbulb" style="color: #CCFF00; font-size: 1.1rem; flex-shrink: 0;"></i>
                                 <span><strong>Tip Premium:</strong> Puedes copiar el cromo al portapapeles y pegarlo directamente en tu chat de WhatsApp. ¡Visual y sin esfuerzo!</span>
                             </div>
 
                             <!-- Actions Group -->
-                            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+                            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 5px;">
                                 <span style="font-size: 0.65rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">2. ACCIONES DE COMPARTIR</span>
                                 
                                 <!-- WhatsApp share -->
@@ -959,15 +1036,35 @@
         adjustPreviewScale() {
             const previewColumn = document.getElementById('preview-column');
             const scaleWrapper = document.getElementById('preview-scale-wrapper');
+            const sizer = document.getElementById('preview-container-sizer');
             if (!previewColumn || !scaleWrapper) return;
 
-            const padding = 40;
-            const containerHeight = previewColumn.clientHeight - padding;
+            const padding = 24;
+            const containerWidth = previewColumn.clientWidth - padding;
+            
+            // Calculamos un alto máximo adaptativo para que el cromo quepa en pantalla de forma nítida
+            const isMobile = window.innerWidth <= 992;
+            const maxAvailableHeight = isMobile ? Math.min(window.innerHeight * 0.42, 380) : Math.min(window.innerHeight * 0.62, 600);
+            
+            const cardWidth = 1080;
             const cardHeight = 1920;
-            const scale = containerHeight / cardHeight;
 
-            // Apply scale safely
-            scaleWrapper.style.transform = `scale(${Math.min(scale, 0.45)})`;
+            const scaleX = containerWidth / cardWidth;
+            const scaleY = maxAvailableHeight / cardHeight;
+            let scale = Math.min(scaleX, scaleY);
+
+            // Limitación de escalas máximas para asegurar una visualización pulida
+            const maxScale = isMobile ? 0.22 : 0.32;
+            const finalScale = Math.min(scale, maxScale);
+
+            // Aplicamos la escala al cromo usando transform-origin: top left
+            scaleWrapper.style.transform = `scale(${finalScale})`;
+            
+            // Establecemos el tamaño del sizer para que el contenedor reserve el espacio exacto
+            if (sizer) {
+                sizer.style.width = `${cardWidth * finalScale}px`;
+                sizer.style.height = `${cardHeight * finalScale}px`;
+            }
         }
 
         renderSharePreview(teamId, tabName) {
@@ -1318,6 +1415,9 @@
             const team = this.lastTeams.find(t => t.id === teamId);
             if (!team) return '';
 
+            // Obtenemos la URL dinámica de la propia aplicación de forma limpia
+            const appUrl = window.location.href.split('?')[0];
+
             const standings = team.groupStandings || [];
             const schedule = team.schedule || [];
             const roster = team.roster || [];
@@ -1339,7 +1439,7 @@
                     text += `${icon} *#${s.pos}* ${s.team} - *${s.pts} pts* (PJ:${s.pj} G:${s.pg})\n`;
                 });
                 
-                text += `\n📲 Sigue todos nuestros partidos, plantillas y estadísticas completas en tiempo real: *https://summapadel.com/event/151* 🚀🎾`;
+                text += `\n📲 Sigue todos nuestros partidos, plantillas y estadísticas completas en tiempo real: *${appUrl}* 🚀🎾`;
             } else if (tabName === 'sched') {
                 text = `📅 *PARTIDOS Y RESULTADOS - ${team.name.toUpperCase()}* 📅\n\n`;
                 text += `¡El ritmo de la lliga no se detiene! Así van nuestras jornadas:\n\n`;
@@ -1350,7 +1450,7 @@
                     text += `🔸 *J${m.j}:* vs ${m.opponent}\n    ${m.date} | ${resStr}\n`;
                 });
                 
-                text += `\n📲 Calendario completo y lives en la App Oficial: *https://summapadel.com/event/151* 🎾🔥`;
+                text += `\n📲 Calendario completo y lives en la App Oficial: *${appUrl}* 🎾🔥`;
             } else if (tabName === 'rost') {
                 text = `👥 *PLANTILLA OFICIAL (SQUAD) - ${team.name.toUpperCase()}* 👥\n\n`;
                 text += `¡Presentamos al equipo de guerreros que defiende los colores del club! 🎾💪\n\n`;
@@ -1359,7 +1459,7 @@
                     text += `👤 *${p.name.toUpperCase()}* - ${p.pts} pts\n`;
                 });
                 
-                text += `\n📲 Roster completo con evoluciones en vivo en la App de Somos Pádel: *https://summapadel.com/event/151* 🔥📈`;
+                text += `\n📲 Roster completo con evoluciones en vivo en la App de Somos Pádel: *${appUrl}* 🔥📈`;
             } else if (tabName === 'stats') {
                 let winRate = 0;
                 let streakStr = 'Sin datos';
@@ -1382,7 +1482,7 @@
                 text += `🎾 *Partidos Jugados / Ganados:* ${pjCount} / ${winCount}\n`;
                 text += `🏆 *Diferencia de sets:* ${setDiff >= 0 ? '+' : ''}${setDiff}\n`;
                 text += `🔥 *Última racha (Forma):* [ ${streakStr} ]\n\n`;
-                text += `📲 Ver todas las métricas en tiempo real en la App oficial de Somos Pádel: *https://summapadel.com/event/151* 🚀💪`;
+                text += `📲 Ver todas las métricas en tiempo real en la App oficial de Somos Pádel: *${appUrl}* 🚀💪`;
             }
 
             return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
