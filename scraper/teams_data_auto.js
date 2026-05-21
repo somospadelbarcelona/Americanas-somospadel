@@ -55,16 +55,24 @@ window.ExtractedTeamsData = [
         "pts": 25.0
       },
       {
+        "name": "David Díaz Cotes",
+        "pts": 25.0
+      },
+      {
         "name": "Carlos David Asmadt",
         "pts": 25.0
       },
       {
-        "name": "David Díaz Cotes",
-        "pts": 20.0
-      },
-      {
         "name": "Vicenç López Aguilar",
         "pts": 15.0
+      },
+      {
+        "name": "Alex Espinosa Espinosa Touzon",
+        "pts": 15.0
+      },
+      {
+        "name": "Eloy Arrabal",
+        "pts": 10.0
       },
       {
         "name": "Marcos Clemente Molinero",
@@ -77,14 +85,6 @@ window.ExtractedTeamsData = [
       {
         "name": "Joel Sanchez Portillo",
         "pts": 10.0
-      },
-      {
-        "name": "Alex Espinosa Espinosa Touzon",
-        "pts": 10.0
-      },
-      {
-        "name": "Eloy Arrabal",
-        "pts": 5.0
       },
       {
         "name": "Sergio Martín Canales",
@@ -109,16 +109,6 @@ window.ExtractedTeamsData = [
         "venue": "Padel bcn - el prat",
         "isHome": true,
         "status": "completed"
-      },
-      {
-        "j": 1,
-        "date": "Diss 09 May",
-        "time": "15:00h",
-        "opponent": "POR CONFIRMAR",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
       },
       {
         "j": 2,
@@ -151,30 +141,10 @@ window.ExtractedTeamsData = [
         "status": "upcoming"
       },
       {
-        "j": 4,
-        "date": "Diss 30 May",
-        "time": "15:00h",
-        "opponent": "POR CONFIRMAR",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
         "j": 5,
         "date": "Diss 06 Jun",
         "time": "13:30h",
         "opponent": "XTREM PADEL 3M",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
-        "j": 6,
-        "date": "Diss 13 Jun",
-        "time": "15:00h",
-        "opponent": "POR CONFIRMAR",
         "score": "Pendiente",
         "venue": "Padel bcn - el prat",
         "isHome": true,
@@ -211,30 +181,10 @@ window.ExtractedTeamsData = [
         "status": "upcoming"
       },
       {
-        "j": 8,
-        "date": "Dium 06 Set",
-        "time": "00:00h",
-        "opponent": "POR CONFIRMAR",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
         "j": 9,
         "date": "Diss 12 Set",
         "time": "13:30h",
         "opponent": "CLUB TENNIS I PADEL SEGUR 3M",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
-        "j": 9,
-        "date": "Diss 12 Set",
-        "time": "15:00h",
-        "opponent": "POR CONFIRMAR",
         "score": "Pendiente",
         "venue": "Padel bcn - el prat",
         "isHome": true,
@@ -248,16 +198,6 @@ window.ExtractedTeamsData = [
         "score": "Pendiente",
         "venue": "Canvia Racket Club",
         "isHome": false,
-        "status": "upcoming"
-      },
-      {
-        "j": 10,
-        "date": "Diss 19 Set",
-        "time": "15:00h",
-        "opponent": "POR CONFIRMAR",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
         "status": "upcoming"
       },
       {
@@ -292,16 +232,6 @@ window.ExtractedTeamsData = [
       },
       {
         "j": 14,
-        "date": "Diss 17 Oct",
-        "time": "15:00h",
-        "opponent": "POR CONFIRMAR",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
-        "j": 14,
         "date": "Dium 18 Oct",
         "time": "17:00h",
         "opponent": "CT ANDRÉS GIMENO 3M",
@@ -312,10 +242,10 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 1,
-      "date": "Diss 09 May",
+      "j": 3,
+      "date": "Diss 23 May",
       "time": "15:00h",
-      "opponent": "POR CONFIRMAR",
+      "opponent": "PÁDEL PEÑA MALAGA 3G",
       "score": "Pendiente",
       "venue": "Padel bcn - el prat",
       "isHome": true,
@@ -553,16 +483,6 @@ window.ExtractedTeamsData = [
         "status": "upcoming"
       },
       {
-        "j": 3,
-        "date": "Diss 23 May",
-        "time": "13:30h",
-        "opponent": "POR CONFIRMAR",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
         "j": 4,
         "date": "Dium 31 May",
         "time": "12:00h",
@@ -580,16 +500,6 @@ window.ExtractedTeamsData = [
         "score": "Pendiente",
         "venue": "La paleta Indoor Pàdel",
         "isHome": false,
-        "status": "upcoming"
-      },
-      {
-        "j": 5,
-        "date": "Diss 06 Jun",
-        "time": "13:30h",
-        "opponent": "POR CONFIRMAR",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
         "status": "upcoming"
       },
       {
@@ -613,30 +523,10 @@ window.ExtractedTeamsData = [
         "status": "upcoming"
       },
       {
-        "j": 7,
-        "date": "Diss 20 Jun",
-        "time": "13:30h",
-        "opponent": "POR CONFIRMAR",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
         "j": 8,
         "date": "Diss 05 Set",
         "time": "16:30h",
         "opponent": "PÁDEL OXIGEN 3M",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
-        "j": 9,
-        "date": "Diss 12 Set",
-        "time": "13:30h",
-        "opponent": "POR CONFIRMAR",
         "score": "Pendiente",
         "venue": "Padel bcn - el prat",
         "isHome": true,
@@ -664,16 +554,6 @@ window.ExtractedTeamsData = [
       },
       {
         "j": 11,
-        "date": "Diss 26 Set",
-        "time": "13:30h",
-        "opponent": "POR CONFIRMAR",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
-        "j": 11,
         "date": "Dium 27 Set",
         "time": "13:00h",
         "opponent": "HORIZON PADEL 3M",
@@ -687,16 +567,6 @@ window.ExtractedTeamsData = [
         "date": "Diss 03 Oct",
         "time": "16:30h",
         "opponent": "LA PALETA INDOOR PÁDEL A",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
-        "j": 13,
-        "date": "Diss 10 Oct",
-        "time": "13:30h",
-        "opponent": "POR CONFIRMAR",
         "score": "Pendiente",
         "venue": "Padel bcn - el prat",
         "isHome": true,
@@ -736,7 +606,7 @@ window.ExtractedTeamsData = [
     "groupStandings": [
       {
         "pos": 1,
-        "team": "LA PALETA INDOOR PÁDEL A",
+        "team": "CPI B EL CASINO GASTROBAR",
         "pj": 2,
         "pg": 2,
         "pp": 0,
@@ -745,30 +615,30 @@ window.ExtractedTeamsData = [
       },
       {
         "pos": 2,
+        "team": "LA PALETA INDOOR PÁDEL A",
+        "pj": 2,
+        "pg": 2,
+        "pp": 0,
+        "df": 0,
+        "pts": 4
+      },
+      {
+        "pos": 3,
+        "team": "PÁDEL OXIGEN 3M",
+        "pj": 2,
+        "pg": 2,
+        "pp": 0,
+        "df": 0,
+        "pts": 4
+      },
+      {
+        "pos": 4,
         "team": "CLUB TENNIS VILANOVA 3M",
         "pj": 1,
         "pg": 2,
         "pp": 0,
         "df": 0,
         "pts": 3
-      },
-      {
-        "pos": 3,
-        "team": "PÁDEL OXIGEN 3M",
-        "pj": 1,
-        "pg": 2,
-        "pp": 0,
-        "df": 0,
-        "pts": 3
-      },
-      {
-        "pos": 4,
-        "team": "CPI B EL CASINO GASTROBAR",
-        "pj": 1,
-        "pg": 1,
-        "pp": 0,
-        "df": 0,
-        "pts": 2
       },
       {
         "pos": 5,
@@ -854,12 +724,16 @@ window.ExtractedTeamsData = [
         "pts": 16.0
       },
       {
+        "name": "Pau Martin Gálvez",
+        "pts": 14.0
+      },
+      {
         "name": "Manuel Gamero Plaza",
         "pts": 13.0
       },
       {
         "name": "Oscar Coscolín Génova",
-        "pts": 9.0
+        "pts": 12.0
       },
       {
         "name": "Fernando Rodríguez Sequí",
@@ -878,10 +752,6 @@ window.ExtractedTeamsData = [
         "pts": 9.0
       },
       {
-        "name": "Pau Martin Gálvez",
-        "pts": 9.0
-      },
-      {
         "name": "Javier Alejandro Hita Pérez",
         "pts": 9.0
       },
@@ -894,11 +764,11 @@ window.ExtractedTeamsData = [
         "pts": 6.0
       },
       {
-        "name": "Vladimir Starciuc",
-        "pts": 3.0
+        "name": "Bernat Pecharromán Vilamitjana",
+        "pts": 6.0
       },
       {
-        "name": "Bernat Pecharromán Vilamitjana",
+        "name": "Vladimir Starciuc",
         "pts": 3.0
       },
       {
@@ -952,16 +822,6 @@ window.ExtractedTeamsData = [
         "status": "completed"
       },
       {
-        "j": 2,
-        "date": "Dium 17 May",
-        "time": "13:30h",
-        "opponent": "POR CONFIRMAR",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
         "j": 3,
         "date": "Diss 23 May",
         "time": "15:30h",
@@ -979,16 +839,6 @@ window.ExtractedTeamsData = [
         "score": "Pendiente",
         "venue": "Padeland .",
         "isHome": false,
-        "status": "upcoming"
-      },
-      {
-        "j": 4,
-        "date": "Dium 31 May",
-        "time": "13:30h",
-        "opponent": "POR CONFIRMAR",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
         "status": "upcoming"
       },
       {
@@ -1013,29 +863,9 @@ window.ExtractedTeamsData = [
       },
       {
         "j": 7,
-        "date": "Dium 21 Jun",
-        "time": "00:00h",
-        "opponent": "POR CONFIRMAR",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
-        "j": 7,
         "date": "Diss 20 Jun",
         "time": "16:30h",
         "opponent": "CLUB PADEL VALLIRANA 4M",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
-        "j": 8,
-        "date": "Diss 05 Set",
-        "time": "13:30h",
-        "opponent": "POR CONFIRMAR",
         "score": "Pendiente",
         "venue": "Padel bcn - el prat",
         "isHome": true,
@@ -1083,16 +913,6 @@ window.ExtractedTeamsData = [
       },
       {
         "j": 12,
-        "date": "Diss 03 Oct",
-        "time": "13:30h",
-        "opponent": "POR CONFIRMAR",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
-        "j": 12,
         "date": "Dium 04 Oct",
         "time": "00:00h",
         "opponent": "BYE",
@@ -1112,26 +932,6 @@ window.ExtractedTeamsData = [
         "status": "upcoming"
       },
       {
-        "j": 13,
-        "date": "Diss 10 Oct",
-        "time": "12:00h",
-        "opponent": "POR CONFIRMAR",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
-        "j": 14,
-        "date": "Diss 17 Oct",
-        "time": "13:30h",
-        "opponent": "POR CONFIRMAR",
-        "score": "Pendiente",
-        "venue": "Padel bcn - el prat",
-        "isHome": true,
-        "status": "upcoming"
-      },
-      {
         "j": 14,
         "date": "Dium 18 Oct",
         "time": "11:40h",
@@ -1143,10 +943,10 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 2,
-      "date": "Dium 17 May",
-      "time": "13:30h",
-      "opponent": "POR CONFIRMAR",
+      "j": 3,
+      "date": "Diss 23 May",
+      "time": "15:30h",
+      "opponent": "PÁDEL OXIGEN 4M",
       "score": "Pendiente",
       "venue": "Padel bcn - el prat",
       "isHome": true,
@@ -1216,6 +1016,720 @@ window.ExtractedTeamsData = [
         "pp": 1,
         "df": 0,
         "pts": 0
+      }
+    ],
+    "logo": "img/logo_somospadel.png",
+    "link": "about:blank"
+  },
+  {
+    "id": "somos-padel-bcn-4xa",
+    "name": "SOMOS PÁDEL BCN 4XA",
+    "category": "Mixta",
+    "division": "Cuarta",
+    "group": "4XB FASE 2 G1",
+    "captain": "Sonia Rodriguez",
+    "subcaptain": "Pendiente",
+    "ranking": 1,
+    "points": 5,
+    "stats": {
+      "pj": 2,
+      "pg": 3,
+      "pp": 0,
+      "sf": 0,
+      "sc": 0
+    },
+    "roster": [
+      {
+        "name": "Alejandro Coscolin Peregrin",
+        "pts": 66.0
+      },
+      {
+        "name": "Sonja Dolinda Nijhof",
+        "pts": 60.0
+      },
+      {
+        "name": "David Díaz Cotes",
+        "pts": 54.0
+      },
+      {
+        "name": "Natalia Farré Roig",
+        "pts": 45.0
+      },
+      {
+        "name": "Juan Manuel León",
+        "pts": 40.0
+      },
+      {
+        "name": "David Asensio Guerrero",
+        "pts": 38.0
+      },
+      {
+        "name": "Miguel Muñoz Melero",
+        "pts": 27.0
+      },
+      {
+        "name": "Albert Garcia Edo",
+        "pts": 24.0
+      },
+      {
+        "name": "Anaïs Grebot",
+        "pts": 21.0
+      },
+      {
+        "name": "Sonia Rodriguez",
+        "pts": 15.0
+      },
+      {
+        "name": "Dani Ramoneda Valles",
+        "pts": 15.0
+      },
+      {
+        "name": "Laura Baltic",
+        "pts": 14.0
+      },
+      {
+        "name": "Lluisa Ramoneda Garcia",
+        "pts": 12.0
+      },
+      {
+        "name": "Alex Cuadra Cabezas",
+        "pts": 6.0
+      },
+      {
+        "name": "Pili Jorques",
+        "pts": 6.0
+      },
+      {
+        "name": "Saray Muñoz Carod",
+        "pts": 6.0
+      },
+      {
+        "name": "Marta Murugarren Chumillas",
+        "pts": 6.0
+      },
+      {
+        "name": "Kevin Mancilla Serrano",
+        "pts": 3.0
+      },
+      {
+        "name": "Miguel Ángel Méndez Ruiz",
+        "pts": 3.0
+      },
+      {
+        "name": "Esther Carrillo Conde",
+        "pts": 3.0
+      },
+      {
+        "name": "Maria José Martínez Valdecantos",
+        "pts": 3.0
+      },
+      {
+        "name": "Mari Carmen Pérez Ruiz",
+        "pts": 3.0
+      },
+      {
+        "name": "Raquel Fernandez Fernandez",
+        "pts": 0.0
+      },
+      {
+        "name": "Victoria Mota",
+        "pts": 0.0
+      },
+      {
+        "name": "Noelia Ornaque Muñoz",
+        "pts": 0.0
+      },
+      {
+        "name": "Fernando Garcia-Mauiriño Delás",
+        "pts": 0.0
+      }
+    ],
+    "schedule": [
+      {
+        "j": 1,
+        "date": "Dium 10 May",
+        "time": "13:30h",
+        "opponent": "BLACK PADEL PRAT 4X",
+        "score": "2 - 1",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "completed"
+      },
+      {
+        "j": 2,
+        "date": "Dium 17 May",
+        "time": "13:00h",
+        "opponent": "CRAZYXPADEL 4MIXTA LILA",
+        "score": "3 - 0",
+        "venue": "Aurial pàdel cornellà .",
+        "isHome": false,
+        "status": "completed"
+      },
+      {
+        "j": 3,
+        "date": "Dium 24 May",
+        "time": "13:30h",
+        "opponent": "SOMOS PÁDEL BCN 4XB",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 4,
+        "date": "Dium 31 May",
+        "time": "11:30h",
+        "opponent": "NPADEL MIXTE CASTELLAR",
+        "score": "Pendiente",
+        "venue": "Padel indoor castellar .",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 5,
+        "date": "Dium 07 Jun",
+        "time": "13:30h",
+        "opponent": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 6,
+        "date": "Diss 13 Jun",
+        "time": "17:00h",
+        "opponent": "MASQUEPADEL",
+        "score": "Pendiente",
+        "venue": "Espai laru .",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 7,
+        "date": "Dium 21 Jun",
+        "time": "17:00h",
+        "opponent": "AURIAL PADEL SABADELL 4X",
+        "score": "Pendiente",
+        "venue": "Aurial indoor sabadell",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 8,
+        "date": "Diss 05 Set",
+        "time": "13:30h",
+        "opponent": "BLACK PADEL PRAT 4X",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 9,
+        "date": "Dium 13 Set",
+        "time": "13:30h",
+        "opponent": "CRAZYXPADEL 4MIXTA LILA",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 10,
+        "date": "Dium 20 Set",
+        "time": "16:30h",
+        "opponent": "SOMOS PÁDEL BCN 4XB",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 11,
+        "date": "Dium 27 Set",
+        "time": "13:30h",
+        "opponent": "NPADEL MIXTE CASTELLAR",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 12,
+        "date": "Dium 04 Oct",
+        "time": "13:00h",
+        "opponent": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
+        "score": "Pendiente",
+        "venue": "Aurial Vilapadel",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 13,
+        "date": "Dium 11 Oct",
+        "time": "13:30h",
+        "opponent": "MASQUEPADEL",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 14,
+        "date": "Dium 18 Oct",
+        "time": "13:30h",
+        "opponent": "AURIAL PADEL SABADELL 4X",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      }
+    ],
+    "nextMatch": {
+      "j": 3,
+      "date": "Dium 24 May",
+      "time": "13:30h",
+      "opponent": "SOMOS PÁDEL BCN 4XB",
+      "score": "Pendiente",
+      "venue": "Padel bcn - el prat",
+      "isHome": true,
+      "status": "upcoming"
+    },
+    "groupStandings": [
+      {
+        "pos": 1,
+        "team": "SOMOS PÁDEL BCN 4XA",
+        "pj": 2,
+        "pg": 3,
+        "pp": 0,
+        "df": 0,
+        "pts": 5,
+        "isCurrent": true
+      },
+      {
+        "pos": 2,
+        "team": "AURIAL PADEL SABADELL 4X",
+        "pj": 2,
+        "pg": 2,
+        "pp": 0,
+        "df": 0,
+        "pts": 4
+      },
+      {
+        "pos": 3,
+        "team": "MASQUEPADEL",
+        "pj": 2,
+        "pg": 1,
+        "pp": 1,
+        "df": 0,
+        "pts": 3
+      },
+      {
+        "pos": 4,
+        "team": "NPADEL MIXTE CASTELLAR",
+        "pj": 2,
+        "pg": 1,
+        "pp": 1,
+        "df": 0,
+        "pts": 3
+      },
+      {
+        "pos": 5,
+        "team": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
+        "pj": 2,
+        "pg": 1,
+        "pp": 1,
+        "df": 0,
+        "pts": 3
+      },
+      {
+        "pos": 6,
+        "team": "SOMOS PÁDEL BCN 4XB",
+        "pj": 2,
+        "pg": 0,
+        "pp": 2,
+        "df": 0,
+        "pts": 2
+      },
+      {
+        "pos": 7,
+        "team": "BLACK PADEL PRAT 4X",
+        "pj": 2,
+        "pg": 0,
+        "pp": 2,
+        "df": 0,
+        "pts": 2
+      },
+      {
+        "pos": 8,
+        "team": "CRAZYXPADEL 4MIXTA LILA",
+        "pj": 2,
+        "pg": 0,
+        "pp": 2,
+        "df": 0,
+        "pts": 2
+      }
+    ],
+    "logo": "img/logo_somospadel.png",
+    "link": "about:blank"
+  },
+  {
+    "id": "somos-padel-bcn-4xb",
+    "name": "SOMOS PÁDEL BCN 4XB",
+    "category": "Mixta",
+    "division": "Cuarta",
+    "group": "4XB FASE 2 G1",
+    "captain": "Javier Frauca Ferre",
+    "subcaptain": "Pendiente",
+    "ranking": 6,
+    "points": 2,
+    "stats": {
+      "pj": 2,
+      "pg": 0,
+      "pp": 2,
+      "sf": 0,
+      "sc": 0
+    },
+    "roster": [
+      {
+        "name": "Vladimir Starciuc",
+        "pts": 15.0
+      },
+      {
+        "name": "Teresa Gomez",
+        "pts": 11.0
+      },
+      {
+        "name": "Natalia Guasch",
+        "pts": 9.0
+      },
+      {
+        "name": "Sara Vallmajo Gómez",
+        "pts": 9.0
+      },
+      {
+        "name": "María Jesús López Durán",
+        "pts": 6.0
+      },
+      {
+        "name": "Javier Frauca Ferre",
+        "pts": 6.0
+      },
+      {
+        "name": "Carlota Calabuig",
+        "pts": 6.0
+      },
+      {
+        "name": "Ángel Cruz Romero",
+        "pts": 6.0
+      },
+      {
+        "name": "Bianca Barboza Stappung",
+        "pts": 6.0
+      },
+      {
+        "name": "Roberto Jaime",
+        "pts": 6.0
+      },
+      {
+        "name": "Silvia Martin Rodriguez",
+        "pts": 6.0
+      },
+      {
+        "name": "Gregor Stajer",
+        "pts": 6.0
+      },
+      {
+        "name": "Anna Gaseni Sapena",
+        "pts": 3.0
+      },
+      {
+        "name": "Mariam Quimis Zambrano",
+        "pts": 3.0
+      },
+      {
+        "name": "Paula Alves De Araújo",
+        "pts": 3.0
+      },
+      {
+        "name": "Francisco Javier Jobani Vidal",
+        "pts": 3.0
+      },
+      {
+        "name": "Eduardo Costa Gavilan",
+        "pts": 3.0
+      },
+      {
+        "name": "Jordi Seuba Garces",
+        "pts": 3.0
+      },
+      {
+        "name": "Alberto Barba Baena",
+        "pts": 3.0
+      },
+      {
+        "name": "Jose Luis Bergas Sanchez",
+        "pts": 0.0
+      },
+      {
+        "name": "Jordi Díaz Blanch",
+        "pts": 0.0
+      },
+      {
+        "name": "Plamen Penchev",
+        "pts": 0.0
+      },
+      {
+        "name": "Montse Lopez Sans",
+        "pts": 0.0
+      },
+      {
+        "name": "Antonio Navajas Lindez",
+        "pts": 0.0
+      },
+      {
+        "name": "Jorge Rueda Ruiz",
+        "pts": 0.0
+      },
+      {
+        "name": "Julio Alberto Sáez Amarillo",
+        "pts": 0.0
+      },
+      {
+        "name": "Sonia Medina Parra",
+        "pts": 0.0
+      },
+      {
+        "name": "Yolanda Presa",
+        "pts": 0.0
+      }
+    ],
+    "schedule": [
+      {
+        "j": 1,
+        "date": "Dium 10 May",
+        "time": "11:30h",
+        "opponent": "NPADEL MIXTE CASTELLAR",
+        "score": "1 - 2",
+        "venue": "Padel indoor castellar .",
+        "isHome": false,
+        "status": "completed"
+      },
+      {
+        "j": 2,
+        "date": "Dium 17 May",
+        "time": "16:30h",
+        "opponent": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
+        "score": "1 - 2",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "completed"
+      },
+      {
+        "j": 3,
+        "date": "Dium 24 May",
+        "time": "13:30h",
+        "opponent": "SOMOS PÁDEL BCN 4XA",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 4,
+        "date": "Dium 31 May",
+        "time": "16:30h",
+        "opponent": "AURIAL PADEL SABADELL 4X",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 5,
+        "date": "Diss 06 Jun",
+        "time": "13:30h",
+        "opponent": "BLACK PADEL PRAT 4X",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 6,
+        "date": "Dium 14 Jun",
+        "time": "16:30h",
+        "opponent": "CRAZYXPADEL 4MIXTA LILA",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 7,
+        "date": "Dium 21 Jun",
+        "time": "16:30h",
+        "opponent": "MASQUEPADEL",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 8,
+        "date": "Dium 06 Set",
+        "time": "16:30h",
+        "opponent": "NPADEL MIXTE CASTELLAR",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 9,
+        "date": "Dium 13 Set",
+        "time": "13:00h",
+        "opponent": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
+        "score": "Pendiente",
+        "venue": "Aurial Vilapadel",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 10,
+        "date": "Dium 20 Set",
+        "time": "16:30h",
+        "opponent": "SOMOS PÁDEL BCN 4XA",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 11,
+        "date": "Dium 27 Set",
+        "time": "17:00h",
+        "opponent": "AURIAL PADEL SABADELL 4X",
+        "score": "Pendiente",
+        "venue": "Aurial indoor sabadell",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 12,
+        "date": "Dium 04 Oct",
+        "time": "16:30h",
+        "opponent": "BLACK PADEL PRAT 4X",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 13,
+        "date": "Dium 11 Oct",
+        "time": "13:00h",
+        "opponent": "CRAZYXPADEL 4MIXTA LILA",
+        "score": "Pendiente",
+        "venue": "Aurial pàdel cornellà .",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 14,
+        "date": "Diss 17 Oct",
+        "time": "17:00h",
+        "opponent": "MASQUEPADEL",
+        "score": "Pendiente",
+        "venue": "Espai laru .",
+        "isHome": false,
+        "status": "upcoming"
+      }
+    ],
+    "nextMatch": {
+      "j": 3,
+      "date": "Dium 24 May",
+      "time": "13:30h",
+      "opponent": "SOMOS PÁDEL BCN 4XA",
+      "score": "Pendiente",
+      "venue": "Padel bcn - el prat",
+      "isHome": false,
+      "status": "upcoming"
+    },
+    "groupStandings": [
+      {
+        "pos": 1,
+        "team": "SOMOS PÁDEL BCN 4XA",
+        "pj": 2,
+        "pg": 3,
+        "pp": 0,
+        "df": 0,
+        "pts": 5
+      },
+      {
+        "pos": 2,
+        "team": "AURIAL PADEL SABADELL 4X",
+        "pj": 2,
+        "pg": 2,
+        "pp": 0,
+        "df": 0,
+        "pts": 4
+      },
+      {
+        "pos": 3,
+        "team": "MASQUEPADEL",
+        "pj": 2,
+        "pg": 1,
+        "pp": 1,
+        "df": 0,
+        "pts": 3
+      },
+      {
+        "pos": 4,
+        "team": "NPADEL MIXTE CASTELLAR",
+        "pj": 2,
+        "pg": 1,
+        "pp": 1,
+        "df": 0,
+        "pts": 3
+      },
+      {
+        "pos": 5,
+        "team": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
+        "pj": 2,
+        "pg": 1,
+        "pp": 1,
+        "df": 0,
+        "pts": 3
+      },
+      {
+        "pos": 6,
+        "team": "SOMOS PÁDEL BCN 4XB",
+        "pj": 2,
+        "pg": 0,
+        "pp": 2,
+        "df": 0,
+        "pts": 2,
+        "isCurrent": true
+      },
+      {
+        "pos": 7,
+        "team": "BLACK PADEL PRAT 4X",
+        "pj": 2,
+        "pg": 0,
+        "pp": 2,
+        "df": 0,
+        "pts": 2
+      },
+      {
+        "pos": 8,
+        "team": "CRAZYXPADEL 4MIXTA LILA",
+        "pj": 2,
+        "pg": 0,
+        "pp": 2,
+        "df": 0,
+        "pts": 2
       }
     ],
     "logo": "img/logo_somospadel.png",

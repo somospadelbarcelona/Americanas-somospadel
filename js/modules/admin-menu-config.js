@@ -264,6 +264,23 @@ window.AdminViews.config = async function () {
             </div>
         </div>
 
+        <!-- 🎾 SINCRONIZADOR DE EQUIPOS MIXTOS -->
+        <div class="glass-card-enterprise" style="border-left: 4px solid #72a800; margin-top: 2rem;">
+            <h3>🎾 SINCRONIZACIÓN DE EQUIPOS MIXTOS</h3>
+            <p style="color:var(--text-muted); margin-bottom: 1.5rem;">Sincroniza de forma definitiva los dos equipos mixtos estáticos de Somos Pádel BCN para que conserven sus estadísticas en tiempo real en la nube.</p>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+                <div>
+                    <div style="font-weight: 700; color: #0f172a;">Equipos mixtos: 4XA y 4XB</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">
+                        Guarda los rosters, jornadas y clasificaciones en la colección <code>club_teams</code> de Firestore.
+                    </div>
+                </div>
+                <button class="btn-primary-pro" style="background: linear-gradient(135deg, #CCFF00 0%, #00E36D 100%); color: black !important; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 900; cursor: pointer; text-transform: uppercase;" onclick="window.open('admin_tools/sync_mixta_teams.html', '_blank')">
+                    <i class="fas fa-sync-alt" style="margin-right: 6px;"></i> Abrir Sincronizador
+                </button>
+            </div>
+        </div>
+
         <div class="glass-card-enterprise" style="margin-top: 2rem;">
             <h3>📊 DIAGNÓSTICO DE ROLES</h3>
             <button class="btn-outline-pro" onclick="checkRoleDistribution()">VER DISTRIBUCIÓN DE ROLES</button>

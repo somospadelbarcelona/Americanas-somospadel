@@ -40,6 +40,20 @@ TARGET_TEAMS = [
         "div": "Cuarta",
         "group": "4MA FASE 2 G4",
         "cat": "Masculina"
+    },
+    {
+        "slug": "somos-padel-bcn-4xa",
+        "name": "SOMOS PÁDEL BCN 4XA",
+        "div": "Cuarta",
+        "group": "4XB FASE 2 G1",
+        "cat": "Mixta"
+    },
+    {
+        "slug": "somos-padel-bcn-4xb",
+        "name": "SOMOS PÁDEL BCN 4XB",
+        "div": "Cuarta",
+        "group": "4XB FASE 2 G1",
+        "cat": "Mixta"
     }
 ]
 
@@ -69,6 +83,18 @@ def slug(name):
 def contains_club(text):
     tl = text.lower()
     return any(kw in tl for kw in CLUB_KEYWORDS)
+
+def clean_team_name(name):
+    n = name.upper()
+    n = n.replace("P?DEL", "PADEL").replace("PÁDEL", "PADEL").replace("PÀDEL", "PADEL").replace("PADELL", "PADEL")
+    n = n.replace("Ó", "O").replace("Í", "I").replace("Ú", "U").replace("É", "E").replace("Á", "A")
+    n = re.sub(r'[^A-Z0-9\s]', '', n)
+    return " ".join(n.split())
+
+def is_same_team(name1, name2):
+    s1 = slug(clean_team_name(name1)).replace("-", "")
+    s2 = slug(clean_team_name(name2)).replace("-", "")
+    return s1 == s2
 
 async def go_back_to_list(page):
     try:
@@ -150,7 +176,7 @@ async def click_element_by_text(page, text_to_find, element_selector="*"):
     }}""", [text_to_find, element_selector])
     return success
 
-async def scrape_group(page, cat, division, group_name, team_slug):
+async def scrape_group(page, cat, division, group_name, team_slug, target_name):
     """Extrae clasificaciones, partidos y plantilla de forma robusta"""
     print(f"   Iniciando raspado del grupo {group_name}...")
     await page.wait_for_timeout(2000)
@@ -175,7 +201,7 @@ async def scrape_group(page, cat, division, group_name, team_slug):
             if not await row.is_visible():
                 continue
             row_text = (await row.inner_text()).strip()
-            if not row_text or not contains_club(row_text):
+            if not row_text:
                 continue
                 
             lines = [l.strip() for l in row_text.split("\n") if l.strip()]
@@ -206,6 +232,12 @@ async def scrape_group(page, cat, division, group_name, team_slug):
             else:
                 continue
                 
+            is_team1_target = is_same_team(team1, target_name)
+            is_team2_target = is_same_team(team2, target_name)
+            
+            if not is_team1_target and not is_team2_target:
+                continue # Ignorar partidos que no correspondan a nuestro equipo exacto
+                
             status_lower = status_str.lower()
             is_live_status = any(term in status_lower for term in ["iniciada", "joc", "juego", "progreso", "playing", "live"])
             
@@ -214,7 +246,7 @@ async def scrape_group(page, cat, division, group_name, team_slug):
             status = "upcoming"
             isHome = True
             
-            if contains_club(team1):
+            if is_team1_target:
                 opponent = team2
                 isHome = True
                 if is_completed:
@@ -228,7 +260,7 @@ async def scrape_group(page, cat, division, group_name, team_slug):
                     if is_live_status:
                         score = "En juego"
                         status = "live"
-            elif contains_club(team2):
+            elif is_team2_target:
                 opponent = team1
                 isHome = False
                 if is_completed:
@@ -296,7 +328,14 @@ async def scrape_group(page, cat, division, group_name, team_slug):
             name_cell = lines[1]
             captain_cell = lines[2]
             
-            is_current = contains_club(name_cell)
+            # Limpieza y comparación robusta para evitar mezclar equipos mixtos (4XA y 4XB) del mismo grupo
+            def clean_name(s):
+                s = s.lower()
+                s = s.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
+                s = re.sub(r'[^a-z0-9]', '', s)
+                return s
+            
+            is_current = clean_name(target_name) in clean_name(name_cell) or clean_name(name_cell) in clean_name(target_name)
             if is_current:
                 target_row_element = row
                 team_name = name_cell
@@ -443,16 +482,32 @@ async def main():
                 await page.goto(TARGET_URL, wait_until="domcontentloaded")
                 await page.wait_for_timeout(2000)
 
-                # 1. Seleccionar Masculina/Femenina
-                await click_tab_robust(page, ["Masculí", "Masculina"])
+                # 1. Seleccionar Categoria (Masculina, Femenina o Mixta)
+                cat_terms = ["Masculí", "Masculina"]
+                if target["cat"].lower() in ["mixta", "mixto", "mixte"]:
+                    cat_terms = ["Mixte", "Mixta", "Mixto"]
+                elif target["cat"].lower() in ["femenina", "femení", "femenino"]:
+                    cat_terms = ["Femení", "Femenina", "Femenino"]
+                
+                print(f"   Seleccionando categoria con keywords: {cat_terms}...")
+                await click_tab_robust(page, cat_terms)
                 await page.wait_for_timeout(1500)
 
                 # 2. Desplazar y clicar División (Tercera o Cuarta)
                 div_keywords = []
+                cat_letter = "M"
+                if target["cat"].lower() in ["mixta", "mixto", "mixte"]:
+                    cat_letter = "MX"
+                elif target["cat"].lower() in ["femenina", "femení", "femenino"]:
+                    cat_letter = "F"
+                
                 if "tercera" in target["div"].lower():
-                    div_keywords = ["M3", "Tercera"]
+                    div_keywords = [f"{cat_letter}3", "Tercera"]
                 elif "cuarta" in target["div"].lower():
-                    div_keywords = ["M4", "Cuarta"]
+                    if cat_letter == "MX":
+                        div_keywords = ["MX4", "Quarta"]
+                    else:
+                        div_keywords = [f"{cat_letter}4", "Cuarta"]
                 else:
                     div_keywords = [target["div"]]
 
@@ -525,7 +580,7 @@ async def main():
                 await page.wait_for_timeout(2500)
 
                 # 4. Extraer datos del grupo
-                result = await scrape_group(page, target["cat"], target["div"], target["group"], target["slug"])
+                result = await scrape_group(page, target["cat"], target["div"], target["group"], target["slug"], target["name"])
                 if result:
                     found_teams.append(result)
                     print(f"   [OK] Cazado {result['name']} | Grupo: {result['group']} | Roster: {len(result['roster'])} | PJ: {result['stats']['pj']}")
@@ -615,20 +670,25 @@ async def run_auto_sync():
             browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
             
-            url = "http://localhost:8080/admin.html"
+            url = "http://127.0.0.1:8080/admin.html"
             print(f"[AUTO-SYNC] Conectando al panel de administración en {url}...")
             try:
-                await page.goto(url, timeout=6000, wait_until="networkidle")
+                await page.goto(url, timeout=12000, wait_until="domcontentloaded")
             except Exception as e:
-                print(f"[AUTO-SYNC] [WARN] No se pudo conectar al servidor local en {url}.")
-                print("            Asegúrate de ejecutar INICIAR_SERVIDOR.bat antes del bot para la sincronización automática.")
-                await browser.close()
-                return
+                url = "http://[::1]:8080/admin.html"
+                print(f"[AUTO-SYNC] Reintentando con IPv6 en {url}...")
+                try:
+                    await page.goto(url, timeout=12000, wait_until="domcontentloaded")
+                except Exception as e2:
+                    print(f"[AUTO-SYNC] [WARN] No se pudo conectar al servidor local: {e2}")
+                    print("            Asegúrate de ejecutar INICIAR_SERVIDOR.bat antes del bot para la sincronización automática.")
+                    await browser.close()
+                    return
             
             # Introducir el PIN de acceso
             print("[AUTO-SYNC] Iniciando sesión...")
             await page.fill("#pin-input", "212121")
-            await page.click("#admin-login-btn")
+            await page.evaluate("() => document.getElementById('admin-login-btn').click()")
             await page.wait_for_timeout(2000)
             
             # Localizar el botón de sincronización
@@ -641,7 +701,8 @@ async def run_auto_sync():
                 # Aceptar los diálogos automáticamente
                 page.on("dialog", lambda dialog: dialog.accept())
                 
-                await sync_btn.click()
+                print("[AUTO-SYNC] Clicando el botón usando JavaScript para evitar overlays...")
+                await page.evaluate("(btn) => btn.click()", sync_btn)
                 print("[AUTO-SYNC] Sincronizando datos en Firestore...")
                 
                 # Esperar a que el botón termine las fases y vuelva a su estado original

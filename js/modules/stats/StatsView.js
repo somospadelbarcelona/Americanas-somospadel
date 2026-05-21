@@ -228,7 +228,7 @@
                                 <div style="font-size: 1.6rem; font-weight: 900; color: white;">${stats.totalPlayed}</div>
                             </div>
                             <div style="background: rgba(255,255,255,0.03); border-radius: 20px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); flex:1; display:flex; flex-direction:column; justify-content:center;">
-                                <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">PISTA 1 WINS</div>
+                                <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">GANADOS PISTA 1</div>
                                 <div style="font-size: 1.6rem; font-weight: 900; color: #ccff00;">${stats.court1Wins}</div>
                             </div>
                         </div>
@@ -342,7 +342,7 @@
                     this.chartInstances.win = new Chart(ctxWin, {
                         type: 'doughnut',
                         data: {
-                            labels: ['Wins', 'Losses'],
+                            labels: ['Victorias', 'Derrotas'],
                             datasets: [{
                                 data: [stats.totalWon, stats.totalPlayed - stats.totalWon],
                                 backgroundColor: ['#ccff00', 'rgba(255,255,255,0.1)'],

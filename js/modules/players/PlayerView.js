@@ -202,7 +202,7 @@
                             <div class="glass-card" style="padding: 20px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
                                 <div style="font-size: 2.5rem; font-weight: 950; color: #0a192f;">${data.stats.matches || 0}</div>
                                 <div style="color: #64748b; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">PARTIDOS</div>
-                                <div style="margin-top:5px; font-size:0.7rem; color:#CCFF00; font-weight:900;">${data.stats.won || 0} Wins</div>
+                                <div style="margin-top:5px; font-size:0.7rem; color:#CCFF00; font-weight:900;">${data.stats.won || 0} Victorias</div>
                             </div>
 
                         </div>
@@ -298,7 +298,7 @@
                                     <div style="color: #ec4899; font-size: 0.65rem; font-weight: 950; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px;">ALMA GEMELA ❤️</div>
                                     <div style="font-size: 1.4rem; font-weight: 950; color: #0a192f; line-height: 1.1;">${data.h2h.soulmate.name}</div>
                                     <div style="display: flex; gap: 15px; margin-top: 8px;">
-                                        <div style="font-size: 0.75rem; color: #64748b; font-weight: 700;">WINS: <b style="color:#ec4899">${data.h2h.soulmate.wins} VICTORIAS</b></div>
+                                        <div style="font-size: 0.75rem; color: #64748b; font-weight: 700;">VICTORIAS: <b style="color:#ec4899">${data.h2h.soulmate.wins} VICTORIAS</b></div>
                                         <div style="font-size: 0.75rem; color: #64748b; font-weight: 700;">PARTIDOS: <b style="color:#fff">${data.h2h.soulmate.matches}</b></div>
                                     </div>
                                 </div>
@@ -482,7 +482,7 @@
                 this.charts.win = new Chart(ctxWin, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Wins', 'Losses'],
+                        labels: ['Victorias', 'Derrotas'],
                         datasets: [{
                             data: [data.stats.won || 0, (data.stats.matches - data.stats.won) || 1],
                             backgroundColor: [color, 'rgba(255,255,255,0.05)'],

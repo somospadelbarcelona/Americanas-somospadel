@@ -6,6 +6,9 @@ on:
     - cron: '0 */4 * * *'
   workflow_dispatch: # Permite iniciar la sincronización de forma manual desde la pestaña Actions en GitHub
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   scrape-and-sync:
     runs-on: ubuntu-latest

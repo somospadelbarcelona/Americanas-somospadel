@@ -147,6 +147,86 @@
             ],
             logo: 'img/logo_somospadel.png',
             link: 'https://summapadel.com/event/151'
+        },
+        {
+            id: 'somos-padel-bcn-4xa',
+            name: 'SOMOS PÁDEL BCN 4XA',
+            category: 'Mixta',
+            division: 'Cuarta (4X)',
+            group: '4XB FASE 2 G1',
+            captain: 'Capitán por definir',
+            ranking: 3,
+            points: 3,
+            stats: { pj: 2, pg: 1, pp: 1, sf: 2, sc: 4 },
+            roster: [
+                { name: 'Alejandro Coscolin Peregrin', pts: 54.0 },
+                { name: 'Kevin Mancilla Serrano', pts: 48.0 },
+                { name: 'Laura Martínez Ruiz', pts: 42.0 },
+                { name: 'Marta Gómez Sánchez', pts: 36.0 },
+                { name: 'David Asensio Guerrero', pts: 35.0 },
+                { name: 'Cristina Soler Martín', pts: 28.0 },
+                { name: 'Patricia Losa Cubero', pts: 24.0 }
+            ],
+            schedule: [
+                { j: 1, date: '10 May', time: '12:00', opponent: 'SOMOS PÁDEL BCN 4XB', venue: 'Padel BCN - El Prat', isHome: true, score: '2 - 1', status: 'completed' },
+                { j: 2, date: '17 May', time: '17:00', opponent: 'CLUB TENNIS VILANOVA 4X', venue: 'Vilanova', isHome: false, score: '0 - 3', status: 'completed' },
+                { j: 3, date: '24 May', time: '16:30', opponent: 'PÁDEL OXIGEN 4X', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
+                { j: 4, date: '31 May', time: '18:00', opponent: 'CEM TENNIS HOSPITALET 4X', venue: 'Hospitalet', isHome: false, score: 'Pendiente', status: 'upcoming' },
+                { j: 5, date: '07 Jun', time: '16:30', opponent: 'PAPIOL PADEL CLUB 4X', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
+                { j: 6, date: '14 Jun', time: '12:00', opponent: 'BYE', venue: '-', isHome: false, score: '-', status: 'upcoming' },
+                { j: 7, date: '21 Jun', time: '16:30', opponent: 'CLUB PADEL VALLIRANA 4X', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' }
+            ],
+            groupStandings: [
+                { pos: 1, team: 'CLUB TENNIS VILANOVA 4X', pj: 2, pg: 2, pp: 0, df: 4, pts: 6 },
+                { pos: 2, team: 'PÁDEL OXIGEN 4X', pj: 2, pg: 1, pp: 1, df: 2, pts: 3 },
+                { pos: 3, team: 'SOMOS PÁDEL BCN 4XA', pj: 2, pg: 1, pp: 1, df: -2, pts: 3, isCurrent: true },
+                { pos: 4, team: 'SOMOS PÁDEL BCN 4XB', pj: 2, pg: 1, pp: 1, df: -1, pts: 3 },
+                { pos: 5, team: 'CEM TENNIS HOSPITALET 4X', pj: 1, pg: 1, pp: 0, df: 1, pts: 3 },
+                { pos: 6, team: 'PAPIOL PADEL CLUB 4X', pj: 1, pg: 0, pp: 1, df: -2, pts: 0 },
+                { pos: 7, team: 'CLUB PADEL VALLIRANA 4X', pj: 2, pg: 0, pp: 2, df: -4, pts: 0 }
+            ],
+            logo: 'img/logo_somospadel.png',
+            link: 'https://summapadel.com/event/151'
+        },
+        {
+            id: 'somos-padel-bcn-4xb',
+            name: 'SOMOS PÁDEL BCN 4XB',
+            category: 'Mixta',
+            division: 'Cuarta (4X)',
+            group: '4XB FASE 2 G1',
+            captain: 'Capitán por definir',
+            ranking: 4,
+            points: 3,
+            stats: { pj: 2, pg: 1, pp: 1, sf: 3, sc: 3 },
+            roster: [
+                { name: 'Miquel Muñoz Melero', pts: 46.0 },
+                { name: 'Alex Cuadra Cabezas', pts: 44.0 },
+                { name: 'Sandra Vilas Flores', pts: 38.0 },
+                { name: 'Carla Domènech Solé', pts: 34.0 },
+                { name: 'Oscar Coscolín Génova', pts: 22.0 },
+                { name: 'Silvia Valls Vidal', pts: 20.0 },
+                { name: 'Nuria Estévez Ruiz', pts: 18.0 }
+            ],
+            schedule: [
+                { j: 1, date: '10 May', time: '12:00', opponent: 'SOMOS PÁDEL BCN 4XA', venue: 'Padel BCN - El Prat', isHome: false, score: '1 - 2', status: 'completed' },
+                { j: 2, date: '17 May', time: '16:30', opponent: 'PAPIOL PADEL CLUB 4X', venue: 'Padel BCN - El Prat', isHome: true, score: '2 - 1', status: 'completed' },
+                { j: 3, date: '24 May', time: '18:00', opponent: 'CLUB PADEL VALLIRANA 4X', venue: 'Vallirana', isHome: false, score: 'Pendiente', status: 'upcoming' },
+                { j: 4, date: '31 May', time: '16:30', opponent: 'PÁDEL OXIGEN 4X', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
+                { j: 5, date: '07 Jun', time: '13:30', opponent: 'CLUB TENNIS VILANOVA 4X', venue: 'Vilanova', isHome: false, score: 'Pendiente', status: 'upcoming' },
+                { j: 6, date: '14 Jun', time: '16:30', opponent: 'CEM TENNIS HOSPITALET 4X', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
+                { j: 7, date: '21 Jun', time: '12:00', opponent: 'BYE', venue: '-', isHome: false, score: '-', status: 'upcoming' }
+            ],
+            groupStandings: [
+                { pos: 1, team: 'CLUB TENNIS VILANOVA 4X', pj: 2, pg: 2, pp: 0, df: 4, pts: 6 },
+                { pos: 2, team: 'PÁDEL OXIGEN 4X', pj: 2, pg: 1, pp: 1, df: 2, pts: 3 },
+                { pos: 3, team: 'SOMOS PÁDEL BCN 4XA', pj: 2, pg: 1, pp: 1, df: -2, pts: 3 },
+                { pos: 4, team: 'SOMOS PÁDEL BCN 4XB', pj: 2, pg: 1, pp: 1, df: -1, pts: 3, isCurrent: true },
+                { pos: 5, team: 'CEM TENNIS HOSPITALET 4X', pj: 1, pg: 1, pp: 0, df: 1, pts: 3 },
+                { pos: 6, team: 'PAPIOL PADEL CLUB 4X', pj: 1, pg: 0, pp: 1, df: -2, pts: 0 },
+                { pos: 7, team: 'CLUB PADEL VALLIRANA 4X', pj: 2, pg: 0, pp: 2, df: -4, pts: 0 }
+            ],
+            logo: 'img/logo_somospadel.png',
+            link: 'https://summapadel.com/event/151'
         }
     ];
 })();

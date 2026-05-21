@@ -6,6 +6,7 @@
         constructor() {
             this.teams = [];
             this.unsubscribe = null;
+            this.localBackup = [];
         }
 
         async init() {
@@ -14,6 +15,7 @@
             // 1. Cargar datos locales inmediatamente para render instantáneo
             if (window.ClubTeamsData && window.ClubTeamsData.length > 0) {
                 console.log(`✅ [TeamController] Instantly loading ${window.ClubTeamsData.length} teams from Local Data.`);
+                this.localBackup = JSON.parse(JSON.stringify(window.ClubTeamsData));
                 this.teams = window.ClubTeamsData;
                 this.render();
             }
@@ -30,19 +32,35 @@
 
                 console.log("📡 [TeamController] Subscribing to real-time updates from Firestore (club_teams)...");
                 this.unsubscribe = db.collection('club_teams').onSnapshot((snapshot) => {
+                    let newTeams = [];
                     if (!snapshot.empty) {
-                        const newTeams = snapshot.docs.map(doc => doc.data());
+                        newTeams = snapshot.docs.map(doc => doc.data());
                         console.log(`⚡ [TeamController] Real-Time update: Received ${newTeams.length} teams from Firestore.`);
-                        
-                        // Actualizar datos locales y del controlador
-                        this.teams = newTeams;
-                        window.ClubTeamsData = newTeams;
-                        
-                        // Re-renderizar la vista
-                        this.render();
                     } else {
                         console.warn("⚠️ [TeamController] Firestore collection 'club_teams' is empty.");
                     }
+
+                    // Fusión inteligente: empezar con una copia profunda de nuestro localBackup
+                    const mergedTeams = JSON.parse(JSON.stringify(this.localBackup || []));
+
+                    // Para cada equipo de Firestore
+                    newTeams.forEach(firestoreTeam => {
+                        const localIndex = mergedTeams.findIndex(t => t.id === firestoreTeam.id);
+                        if (localIndex !== -1) {
+                            // Si existe localmente, lo reemplazamos o actualizamos con los datos de Firestore
+                            mergedTeams[localIndex] = { ...mergedTeams[localIndex], ...firestoreTeam };
+                        } else {
+                            // Si no existe localmente, lo añadimos
+                            mergedTeams.push(firestoreTeam);
+                        }
+                    });
+
+                    // Actualizar datos locales y del controlador
+                    this.teams = mergedTeams;
+                    window.ClubTeamsData = mergedTeams;
+                    
+                    // Re-renderizar la vista
+                    this.render();
                 }, (error) => {
                     console.error("❌ [TeamController] Real-Time listener failed:", error);
                 });
@@ -65,6 +83,24 @@
             this.render();
         }
 
+        handleSearch(query) {
+            if (window.TeamView) {
+                window.TeamView.searchQuery = query;
+                window.TeamView.filterDOM();
+            }
+        }
+
+        clearSearch() {
+            const input = document.getElementById('team-search-input');
+            if (input) {
+                input.value = '';
+            }
+            if (window.TeamView) {
+                window.TeamView.searchQuery = '';
+                window.TeamView.filterDOM();
+            }
+        }
+
         render() {
             if (window.TeamView) {
                 window.TeamView.render(this.teams);
@@ -74,13 +110,14 @@
         async showTeamDetail(teamId) {
             const team = this.teams.find(t => t.id === teamId);
             if (!team) return;
+            const officialLink = (team.link && team.link.startsWith('http') && team.link !== 'about:blank') ? team.link : 'https://summapadel.com/event/151';
 
             if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
 
             // WhatsApp Share Helper
             const getShareUrl = (section) => {
                 const text = section === 'roster' 
-                    ? `🎾 Plantilla de ${team.name}:\n${team.roster.map(p => `- ${p.name} (${p.pts} pts)`).join('\n')}`
+                    ? `🎾 Jugadores de ${team.name}:\n${team.roster.map(p => `- ${p.name} (${p.pts} pts)`).join('\n')}`
                     : section === 'jornadas'
                     ? `📅 Próximas jornadas de ${team.name}:\n${team.schedule.map(m => `- J${m.j}: vs ${m.opponent} (${m.date})`).join('\n')}`
                     : `📊 Clasificación de ${team.name}:\n${team.groupStandings.slice(0, 3).map(s => `${s.pos}. ${s.team} - ${s.pts} pts`).join('\n')}`;
@@ -123,7 +160,7 @@
                                 <div style="font-size: 1.6rem; font-weight: 950; color: #0f172a; line-height: 1;">${team.stats.pj}</div>
                             </div>
                             <div style="text-align: right; z-index: 1;">
-                                <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">W / L</div>
+                                <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">G / P</div>
                                 <div style="font-size: 1.6rem; font-weight: 950; color: #0f172a; line-height: 1;">${team.stats.pg}<span style="color:#cbd5e1; font-weight: 300;">/</span>${team.stats.pp}</div>
                             </div>
                         </div>
@@ -161,7 +198,7 @@
                         <div style="display: flex; background: #f1f5f9; padding: 4px; border-radius: 18px; margin-bottom: 25px; border: 1px solid #e2e8f0; overflow-x: auto; scrollbar-width: none;">
                             <button onclick="window.TeamController.switchTab(this, 'tab-roster', '#0f172a', '#ffffff')" 
                                     style="flex: 1; padding: 10px 5px; border-radius: 14px; background: #0f172a; color: #ffffff; border: none; font-weight: 950; font-size: 0.55rem; cursor: pointer; min-width: 80px;">
-                                <i class="fas fa-users" style="margin-right: 4px;"></i> PLANTILLA
+                                <i class="fas fa-users" style="margin-right: 4px;"></i> JUGADORES
                             </button>
                             <button id="btn-tab-jornadas" onclick="window.TeamController.switchTab(this, 'tab-jornadas', '#0088cc', '#ffffff')" 
                                     style="flex: 1; padding: 10px 5px; border-radius: 14px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.55rem; cursor: pointer; min-width: 80px;">
@@ -191,10 +228,10 @@
                                             </div>
                                             <span style="font-size: 0.65rem; color: #72a800; font-weight: 950; background: rgba(114,168,0,0.08); padding: 4px 10px; border-radius: 20px;">${player.pts} pts</span>
                                         </div>
-                                    `).join('') : '<p style="color:#666; text-align:center;">No hay plantilla disponible</p>'}
+                                    `).join('') : '<p style="color:#666; text-align:center;">No hay jugadores disponibles</p>'}
                                 </div>
                                 <button onclick="window.open('${getShareUrl('roster')}', '_blank')" style="${shareBtnStyle}">
-                                    <i class="fab fa-whatsapp"></i> COMPARTIR PLANTILLA
+                                    <i class="fab fa-whatsapp"></i> COMPARTIR JUGADORES
                                 </button>
                             </div>
 
@@ -202,8 +239,12 @@
                             <div id="tab-jornadas" style="display: none; animation: fadeIn 0.3s ease-out;">
                                 <div class="pm-content-scroll" style="max-height: 300px; overflow-y: auto;">
                                     ${team.schedule && team.schedule.length > 0 ? team.schedule.map(m => {
-                                        const isWin = m.score && m.status === 'completed' && parseInt(m.score.split('-')[0]) > parseInt(m.score.split('-')[1]);
-                                        const isLoss = m.score && m.status === 'completed' && parseInt(m.score.split('-')[0]) < parseInt(m.score.split('-')[1]);
+                                        const res = (window.TeamView && typeof window.TeamView.getMatchResult === 'function')
+                                            ? window.TeamView.getMatchResult(m)
+                                            : { valid: false };
+                                        
+                                        const isWin = res.valid && res.isWin;
+                                        const isLoss = res.valid && res.isLoss;
                                         const accentColor = m.status !== 'completed' ? '#0088cc' : (isWin ? '#72a800' : (isLoss ? '#ef4444' : '#64748b'));
                                         
                                         return `
@@ -328,10 +369,10 @@
                             </div>
                         </div>
 
-                        <button onclick="window.open('${team.link}', '_blank')" 
-                                style="width: 100%; padding: 18px; margin-top: 10px; background: linear-gradient(135deg, #0f172a 0%, #334155 100%); color: white; border: none; border-radius: 20px; font-weight: 950; cursor: pointer; font-size: 0.8rem; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2); transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <a href="${officialLink}" target="_blank" onclick="event.stopPropagation();" 
+                           style="text-decoration: none; width: 100%; padding: 18px; margin-top: 10px; background: linear-gradient(135deg, #0f172a 0%, #334155 100%); color: white; border: none; border-radius: 20px; font-weight: 950; cursor: pointer; font-size: 0.8rem; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2); transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
                             <i class="fas fa-external-link-alt" style="color: #72a800;"></i> FICHA COMPLETA SUMMAPADEL
-                        </button>
+                        </a>
                     </div>
 
                     <style>
