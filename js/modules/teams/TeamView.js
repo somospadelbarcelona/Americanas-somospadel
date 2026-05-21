@@ -99,9 +99,27 @@
                                 <h1 style="color: #0f172a; font-weight: 950; font-size: 2.2rem; margin: 3px 0 0; letter-spacing: -1px; text-transform: uppercase; line-height: 1.05;">
                                     EQUIPOS <br><span style="color:#38b000;">SOMOS PÁDEL</span>
                                 </h1>
+                                <button onclick="
+                                    if (window.db && window.db.clearPersistence) {
+                                        const btn = this;
+                                        btn.innerHTML = '<i class=\\'fas fa-spinner fa-spin\\'></i> Limpiando...';
+                                        window.db.clearPersistence().then(() => {
+                                            window.location.reload(true);
+                                        }).catch(err => {
+                                            console.error('Error clearing persistence:', err);
+                                            window.location.reload(true);
+                                        });
+                                    } else {
+                                        window.location.reload(true);
+                                    }
+                                " style="margin-top: 12px; background: linear-gradient(135deg, #0f172a 0%, #334155 100%); color: white; border: none; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(15,23,42,0.15); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(15,23,42,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(15,23,42,0.15)';">
+                                    <i class="fas fa-sync-alt"></i> SINCRONIZAR DATOS
+                                </button>
                             </div>
                             <img src="img/logo_somospadel.png" style="width: 60px; height: 60px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.05));">
-                                             <!-- 📊 METRICS ROW -->
+                        </div>
+                        
+                        <!-- 📊 METRICS ROW -->
                         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 25px; position: relative; z-index: 2;">
                             <div style="background: #f8fafc; padding: 12px 6px; border-radius: 16px; border: 1px solid #edf2f7; text-align: center;">
                                 <div style="font-size: 0.5rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Equipos</div>

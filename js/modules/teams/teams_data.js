@@ -227,6 +227,22 @@
             ],
             logo: 'img/logo_somospadel.png',
             link: 'https://summapadel.com/event/151'
+        },
+        {
+            id: 'somos-padel-bcn-3xa',
+            name: 'SOMOS PÁDEL BCN 3XA',
+            category: 'Mixta',
+            division: 'Tercera (3X)',
+            group: '3XB FASE 2 G3',
+            captain: 'Capitán por definir',
+            ranking: 0,
+            points: 0,
+            stats: { pj: 0, pg: 0, pp: 0, sf: 0, sc: 0 },
+            roster: [],
+            schedule: [],
+            groupStandings: [],
+            logo: 'img/logo_somospadel.png',
+            link: 'https://summapadel.com/event/151'
         }
     ];
 })();

@@ -46,14 +46,24 @@ TARGET_TEAMS = [
         "name": "SOMOS PÁDEL BCN 4XA",
         "div": "Cuarta",
         "group": "4XB FASE 2 G1",
-        "cat": "Mixta"
+        "cat": "Mixta",
+        "url": "https://summapadel.com/event/151"
     },
     {
         "slug": "somos-padel-bcn-4xb",
         "name": "SOMOS PÁDEL BCN 4XB",
         "div": "Cuarta",
         "group": "4XB FASE 2 G1",
-        "cat": "Mixta"
+        "cat": "Mixta",
+        "url": "https://summapadel.com/event/151"
+    },
+    {
+        "slug": "somos-padel-bcn-3xa",
+        "name": "SOMOS PÁDEL BCN 3X",
+        "div": "Tercera",
+        "group": "3XB FASE 2 G3",
+        "cat": "Mixta",
+        "url": "https://summapadel.com/event/151"
     }
 ]
 
@@ -479,7 +489,9 @@ async def main():
         for target in TARGET_TEAMS:
             print(f"\n[PROCESANDO] {target['name']}...")
             try:
-                await page.goto(TARGET_URL, wait_until="domcontentloaded")
+                # Usar URL específica del equipo si existe, si no usar TARGET_URL general
+                team_url = target.get("url", TARGET_URL)
+                await page.goto(team_url, wait_until="domcontentloaded")
                 await page.wait_for_timeout(2000)
 
                 # 1. Seleccionar Categoria (Masculina, Femenina o Mixta)

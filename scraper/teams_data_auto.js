@@ -1734,5 +1734,203 @@ window.ExtractedTeamsData = [
     ],
     "logo": "img/logo_somospadel.png",
     "link": "about:blank"
+  },
+  {
+    "id": "somos-padel-bcn-3xa",
+    "name": "SOMOS PÁDEL BCN 3X",
+    "category": "Mixta",
+    "division": "Tercera",
+    "group": "3XB FASE 2 G3",
+    "captain": "Toni Millan Deu",
+    "subcaptain": "Pendiente",
+    "ranking": 2,
+    "points": 2,
+    "stats": {
+      "pj": 1,
+      "pg": 1,
+      "pp": 0,
+      "sf": 0,
+      "sc": 0
+    },
+    "roster": [
+      {
+        "name": "Cristina Garcia-Milà Mateu",
+        "pts": 60.0
+      },
+      {
+        "name": "Olga Pylypchuk Slobudiuk",
+        "pts": 60.0
+      },
+      {
+        "name": "Juan José Jiménez Valverde",
+        "pts": 39.0
+      },
+      {
+        "name": "David Navea",
+        "pts": 36.0
+      },
+      {
+        "name": "Vanessa Mambrilla Gomez",
+        "pts": 36.0
+      },
+      {
+        "name": "Mariona Leyes Ausio",
+        "pts": 35.0
+      },
+      {
+        "name": "Ernesto Rodera",
+        "pts": 34.0
+      },
+      {
+        "name": "Lola Caro Burguillos",
+        "pts": 28.0
+      },
+      {
+        "name": "Toni Millan Deu",
+        "pts": 24.0
+      },
+      {
+        "name": "Eloy Arrabal",
+        "pts": 15.0
+      },
+      {
+        "name": "Sergio Serrano Vila",
+        "pts": 15.0
+      },
+      {
+        "name": "Verónica Silva Cerdà",
+        "pts": 12.0
+      },
+      {
+        "name": "Manuel Gamero Plaza",
+        "pts": 10.0
+      },
+      {
+        "name": "Alberto Muñoz Algora",
+        "pts": 10.0
+      },
+      {
+        "name": "Òscar Fort Saldaña",
+        "pts": 9.0
+      },
+      {
+        "name": "Ana Fort Saldaña",
+        "pts": 9.0
+      },
+      {
+        "name": "Nadia Flora Costa",
+        "pts": 5.0
+      },
+      {
+        "name": "Maika Gonzalez Gomez",
+        "pts": 5.0
+      },
+      {
+        "name": "Natalie Sorolla Foster",
+        "pts": 5.0
+      },
+      {
+        "name": "Octavi Navarro Carbonell",
+        "pts": 5.0
+      },
+      {
+        "name": "Rosa Domínguez Merino",
+        "pts": 5.0
+      },
+      {
+        "name": "Clara Fernández Alegre",
+        "pts": 0.0
+      },
+      {
+        "name": "Josep Maria Rochera Revilla",
+        "pts": 0.0
+      },
+      {
+        "name": "Marta Farre Foj",
+        "pts": 0.0
+      },
+      {
+        "name": "Pedro Roca Roca",
+        "pts": 0.0
+      },
+      {
+        "name": "Ramón Mejias Ramos",
+        "pts": 0.0
+      },
+      {
+        "name": "Mario Sanz López",
+        "pts": 0.0
+      }
+    ],
+    "schedule": [],
+    "nextMatch": null,
+    "groupStandings": [
+      {
+        "pos": 1,
+        "team": "CLUB SPORTS TENNIS Y PADEL CUNIT",
+        "pj": 2,
+        "pg": 1,
+        "pp": 1,
+        "df": 0,
+        "pts": 3
+      },
+      {
+        "pos": 2,
+        "team": "SOMOS PÁDEL BCN 3X",
+        "pj": 1,
+        "pg": 1,
+        "pp": 0,
+        "df": 0,
+        "pts": 2,
+        "isCurrent": true
+      },
+      {
+        "pos": 3,
+        "team": "NOVA PADEL MIXTO PIH",
+        "pj": 1,
+        "pg": 1,
+        "pp": 0,
+        "df": 0,
+        "pts": 2
+      },
+      {
+        "pos": 4,
+        "team": "CRAZYXPADEL 3MIXTA BLANCO",
+        "pj": 1,
+        "pg": 1,
+        "pp": 0,
+        "df": 0,
+        "pts": 2
+      },
+      {
+        "pos": 5,
+        "team": "CT ANDRÉS GIMENO 3X",
+        "pj": 1,
+        "pg": 0,
+        "pp": 1,
+        "df": 0,
+        "pts": 1
+      },
+      {
+        "pos": 6,
+        "team": "CLUB ESPORTIU GRANVIAMAR",
+        "pj": 1,
+        "pg": 0,
+        "pp": 1,
+        "df": 0,
+        "pts": 1
+      },
+      {
+        "pos": 7,
+        "team": "MX3 INDOOR GAVÀ",
+        "pj": 1,
+        "pg": 0,
+        "pp": 1,
+        "df": 0,
+        "pts": 1
+      }
+    ],
+    "logo": "img/logo_somospadel.png",
+    "link": "about:blank"
   }
 ];
