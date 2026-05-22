@@ -819,6 +819,9 @@
                 return;
             }
 
+            // Inicializar filtro de jornadas para el cromo de calendario
+            this.shareScheduleFilter = 'smart';
+
             // Haptic
             if (window.navigator.vibrate) window.navigator.vibrate(25);
 
@@ -970,6 +973,14 @@
                                 </div>
                             </div>
 
+                            <!-- Selector de Rango de Jornadas (Solo para Partidos) -->
+                            <div id="modal-sched-range-container" style="display: none; flex-direction: column; gap: 6px; margin-top: 5px;">
+                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">JORNADAS A MOSTRAR</span>
+                                <div id="modal-sched-range-buttons" style="display: flex; flex-wrap: wrap; gap: 6px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 8px; border-radius: 16px; justify-content: center;">
+                                    <!-- Botones generados dinámicamente -->
+                                </div>
+                            </div>
+
                             <!-- Capture Hint for mobile -->
                             <div style="background: rgba(204,255,0,0.04); border: 1px solid rgba(204,255,0,0.12); border-radius: 16px; padding: 12px 15px; display: flex; align-items: center; gap: 10px; font-size: 0.75rem; color: #cbd5e1; font-weight: 700; line-height: 1.35;">
                                 <i class="fas fa-lightbulb" style="color: #CCFF00; font-size: 1.1rem; flex-shrink: 0;"></i>
@@ -1087,6 +1098,41 @@
                 }
             });
 
+            // Dynamic schedule range selector rendering
+            const rangeContainer = document.getElementById('modal-sched-range-container');
+            if (rangeContainer) {
+                if (tabName === 'sched') {
+                    rangeContainer.style.display = 'flex';
+                    const buttonsArea = document.getElementById('modal-sched-range-buttons');
+                    if (buttonsArea) {
+                        const schedule = team.schedule || [];
+                        const totalMatches = schedule.length;
+                        const blockSize = 5;
+                        const currentFilter = this.shareScheduleFilter || 'smart';
+                        let buttonsHTML = `
+                            <button onclick="window.TeamView.changeScheduleFilter('${teamId}', 'smart')" style="padding: 8px 12px; border-radius: 10px; border: 1px solid ${currentFilter === 'smart' ? '#CCFF00' : 'rgba(255,255,255,0.1)'}; font-weight: 900; font-size: 0.65rem; cursor: pointer; transition: all 0.2s; text-transform: uppercase; background: ${currentFilter === 'smart' ? '#CCFF00' : 'transparent'}; color: ${currentFilter === 'smart' ? '#000' : '#cbd5e1'}; flex-shrink: 0; min-width: 90px;">
+                                🔥 ACTUALIDAD
+                            </button>
+                        `;
+                        
+                        for (let i = 0; i < totalMatches; i += blockSize) {
+                            const start = i + 1;
+                            const end = Math.min(i + blockSize, totalMatches);
+                            const filterVal = `${start}-${end}`;
+                            const isActive = currentFilter === filterVal;
+                            buttonsHTML += `
+                                <button onclick="window.TeamView.changeScheduleFilter('${teamId}', '${filterVal}')" style="padding: 8px 12px; border-radius: 10px; border: 1px solid ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.1)'}; font-weight: 900; font-size: 0.65rem; cursor: pointer; transition: all 0.2s; text-transform: uppercase; background: ${isActive ? '#CCFF00' : 'transparent'}; color: ${isActive ? '#000' : '#cbd5e1'}; flex-shrink: 0;">
+                                    J${start}-${end}
+                                </button>
+                            `;
+                        }
+                        buttonsArea.innerHTML = buttonsHTML;
+                    }
+                } else {
+                    rangeContainer.style.display = 'none';
+                }
+            }
+
             // Set content
             const contentArea = document.getElementById('preview-card-content');
             if (contentArea) {
@@ -1095,6 +1141,12 @@
 
             // Haptic feedback
             if (window.navigator.vibrate) window.navigator.vibrate(8);
+        }
+
+        changeScheduleFilter(teamId, filterVal) {
+            this.shareScheduleFilter = filterVal;
+            if (window.navigator.vibrate) window.navigator.vibrate(8);
+            this.renderSharePreview(teamId, 'sched');
         }
 
         getShareTemplateHTML(team, tabName, isForCapture = false) {
@@ -1210,6 +1262,48 @@
             }
 
             if (tabName === 'sched') {
+                const sortedSchedule = [...schedule].sort((a, b) => parseInt(a.j) - parseInt(b.j));
+                
+                // Aplicar filtro de rango de jornadas (máximo 5 partidos)
+                let filteredMatches = [];
+                const filter = this.shareScheduleFilter || 'smart';
+                if (filter === 'smart') {
+                    let targetIndex = sortedSchedule.findIndex(m => m.status !== 'completed');
+                    if (targetIndex === -1) {
+                        targetIndex = sortedSchedule.length - 1;
+                    }
+                    let start = Math.max(0, targetIndex - 2);
+                    let end = Math.min(sortedSchedule.length, start + 5);
+                    if (end - start < 5 && start > 0) {
+                        start = Math.max(0, end - 5);
+                    }
+                    filteredMatches = sortedSchedule.slice(start, end);
+                } else {
+                    const range = filter.split('-');
+                    if (range.length === 2) {
+                        const startIdx = parseInt(range[0]) - 1;
+                        const endIdx = parseInt(range[1]);
+                        filteredMatches = sortedSchedule.slice(startIdx, endIdx);
+                    } else {
+                        filteredMatches = sortedSchedule.slice(0, 5);
+                    }
+                }
+
+                const totalMatches = filteredMatches.length;
+                
+                // Si hay más de 5 partidos, compactamos dinámicamente los estilos para evitar desbordar el cromo
+                const isCompact = totalMatches > 5;
+                const gap = isCompact ? '12px' : '24px';
+                const cardPadding = isCompact ? '12px 22px' : '22px 30px';
+                const cardGap = isCompact ? '2px' : '6px';
+                const jnSize = isCompact ? '0.85rem' : '1.05rem';
+                const opSize = isCompact ? '1.25rem' : '1.7rem';
+                const infoSize = isCompact ? '0.9rem' : '1.15rem';
+                const resSize = isCompact ? '1.15rem' : '1.6rem';
+                const resPadding = isCompact ? '8px 16px' : '12px 24px';
+                const resMinWidth = isCompact ? '120px' : '170px';
+                const listMargin = isCompact ? '15px 0' : '30px 0';
+
                 return `
                     <div class="insta-story-card" style="${scaleStyle} width: 1080px; height: 1920px; background: linear-gradient(135deg, #050508 0%, #121216 100%); font-family: 'Outfit', sans-serif; position: relative; color: white; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 110px 70px; box-sizing: border-box;">
                         <!-- Glows -->
@@ -1220,15 +1314,15 @@
                         <!-- Header -->
                         <div style="text-align: center; z-index: 10; width: 100%;">
                             <img src="${team.logo || 'img/logo_somospadel.png'}" style="width: 140px; height: 140px; object-fit: contain; margin-bottom: 25px; filter: drop-shadow(0 10px 25px rgba(0,0,0,0.6));" crossorigin="anonymous">
-                            <div style="font-size: 1.3rem; font-weight: 900; color: #CCFF00; letter-spacing: 6px; text-transform: uppercase;">CALENDARIO & RESULTADOS</div>
+                            <div style="font-size: 1.3rem; font-weight: 900; color: #CCFF00; letter-spacing: 6px; text-transform: uppercase;">CALENDARIO & RESULTADOS ${filter === 'smart' ? '• ACTUALIDAD' : `• J${filter}`}</div>
                             <h1 style="font-size: 3.2rem; font-weight: 950; margin: 10px 0; text-transform: uppercase; letter-spacing: -1px; line-height: 1.05; max-width: 900px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block;">
                                 ${team.name.toUpperCase()}
                             </h1>
                         </div>
 
                         <!-- Main Matches List -->
-                        <div style="width: 100%; display: flex; flex-direction: column; gap: 24px; z-index: 10; margin: 30px 0;">
-                            ${schedule.slice(-5).map(m => {
+                        <div style="width: 100%; display: flex; flex-direction: column; gap: ${gap}; z-index: 10; margin: ${listMargin};">
+                            ${filteredMatches.map(m => {
                                 const res = this.getMatchResult(m);
                                 const isCompleted = res.valid;
                                 const isWin = isCompleted && res.isWin;
@@ -1241,18 +1335,18 @@
                                 const statusText = isLive ? 'EN JUEGO' : (isCompleted ? m.score : 'PENDIENTE');
 
                                 return `
-                                    <div style="background: ${cardBg}; border: ${cardBorder}; border-radius: 26px; padding: 22px 30px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
-                                        <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1;">
-                                            <span style="font-size: 1.05rem; color: #CCFF00; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">JORNADA ${m.j}</span>
-                                            <span style="font-size: 1.7rem; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 15px;">
+                                    <div style="background: ${cardBg}; border: ${cardBorder}; border-radius: 26px; padding: ${cardPadding}; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+                                        <div style="display: flex; flex-direction: column; gap: ${cardGap}; min-width: 0; flex: 1;">
+                                            <span style="font-size: ${jnSize}; color: #CCFF00; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">JORNADA ${m.j}</span>
+                                            <span style="font-size: ${opSize}; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 15px;">
                                                 vs ${m.opponent.toUpperCase()}
                                             </span>
-                                            <div style="display: flex; align-items: center; gap: 10px; font-size: 1.15rem; color: rgba(255,255,255,0.5); font-weight: 700;">
+                                            <div style="display: flex; align-items: center; gap: 10px; font-size: ${infoSize}; color: rgba(255,255,255,0.5); font-weight: 700;">
                                                 <i class="far fa-calendar-alt" style="color: #38b000;"></i>
                                                 <span>${m.date} • ${m.venue.toUpperCase()}</span>
                                             </div>
                                         </div>
-                                        <div style="font-size: 1.6rem; font-weight: 950; background: ${labelBg}; color: ${labelColor}; padding: 12px 24px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05); min-width: 170px; text-align: center; letter-spacing: 0.5px; flex-shrink: 0;">
+                                        <div style="font-size: ${resSize}; font-weight: 950; background: ${labelBg}; color: ${labelColor}; padding: ${resPadding}; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05); min-width: ${resMinWidth}; text-align: center; letter-spacing: 0.5px; flex-shrink: 0;">
                                             ${statusText}
                                         </div>
                                     </div>
@@ -1441,10 +1535,38 @@
                 
                 text += `\n📲 Sigue todos nuestros partidos, plantillas y estadísticas completas en tiempo real: *${appUrl}* 🚀🎾`;
             } else if (tabName === 'sched') {
-                text = `📅 *PARTIDOS Y RESULTADOS - ${team.name.toUpperCase()}* 📅\n\n`;
+                const filter = this.shareScheduleFilter || 'smart';
+                const filterLabel = filter === 'smart' ? 'ACTUALIDAD' : `JORNADAS ${filter}`;
+                text = `📅 *PARTIDOS Y RESULTADOS (${filterLabel}) - ${team.name.toUpperCase()}* 📅\n\n`;
                 text += `¡El ritmo de la lliga no se detiene! Así van nuestras jornadas:\n\n`;
                 
-                schedule.slice(-4).forEach(m => {
+                const sortedSchedule = [...schedule].sort((a, b) => parseInt(a.j) - parseInt(b.j));
+                
+                // Aplicar el mismo filtro para el texto de WhatsApp
+                let filteredMatches = [];
+                if (filter === 'smart') {
+                    let targetIndex = sortedSchedule.findIndex(m => m.status !== 'completed');
+                    if (targetIndex === -1) {
+                        targetIndex = sortedSchedule.length - 1;
+                    }
+                    let start = Math.max(0, targetIndex - 2);
+                    let end = Math.min(sortedSchedule.length, start + 5);
+                    if (end - start < 5 && start > 0) {
+                        start = Math.max(0, end - 5);
+                    }
+                    filteredMatches = sortedSchedule.slice(start, end);
+                } else {
+                    const range = filter.split('-');
+                    if (range.length === 2) {
+                        const startIdx = parseInt(range[0]) - 1;
+                        const endIdx = parseInt(range[1]);
+                        filteredMatches = sortedSchedule.slice(startIdx, endIdx);
+                    } else {
+                        filteredMatches = sortedSchedule.slice(0, 5);
+                    }
+                }
+                
+                filteredMatches.forEach(m => {
                     const isCompleted = m.status === 'completed' && m.score;
                     const resStr = isCompleted ? `👉 *${m.score}*` : '⏳ _Pendiente_';
                     text += `🔸 *J${m.j}:* vs ${m.opponent}\n    ${m.date} | ${resStr}\n`;
