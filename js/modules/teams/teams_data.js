@@ -243,6 +243,46 @@
             groupStandings: [],
             logo: 'img/logo_somospadel.png',
             link: 'https://summapadel.com/event/151'
+        },
+        {
+            id: 'somos-padel-bcn-4fa',
+            name: 'SOMOS PÁDEL BCN 4FA',
+            category: 'Femenina',
+            division: 'Cuarta (4F)',
+            group: '4FB FASE 2 G3',
+            captain: 'Gemma Saavedra',
+            subcaptain: 'Nadia Flora Costa',
+            ranking: 1,
+            points: 6,
+            stats: { pj: 2, pg: 2, pp: 0, sf: 4, sc: 2 },
+            roster: [
+                { name: 'Lola Caro Burguillos', pts: 66.0 },
+                { name: 'Cristina Matamala', pts: 60.0 },
+                { name: 'Nadia Flora Costa', pts: 51.0 },
+                { name: 'Saray Muñoz Carod', pts: 48.0 },
+                { name: 'Marta Bassons Turú', pts: 48.0 },
+                { name: 'Berta Cañas Porte', pts: 33.0 },
+                { name: 'Mayte Vega Santos', pts: 33.0 }
+            ],
+            schedule: [
+                { j: 1, date: '10 May', time: '10:00', opponent: 'ACCURA SANT BOI 4F', venue: 'Accura sant boi', isHome: false, score: '2 - 1', status: 'completed' },
+                { j: 2, date: '16 May', time: '09:00', opponent: 'PCP FEMENÍ 4', venue: 'Padel bcn - el prat', isHome: true, score: '2 - 1', status: 'completed' },
+                { j: 3, date: '23 May', time: '11:40', opponent: 'VALKIRIAS CPV', venue: 'Club padel vilanova', isHome: false, score: 'Pendiente', status: 'upcoming' },
+                { j: 4, date: '30 May', time: '13:30', opponent: 'CEM TENNIS HOSPITALET 4F', venue: 'Padel bcn - el prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
+                { j: 5, date: '06 Jun', time: '13:30', opponent: 'PADEL CLUB SAN JUST 4F', venue: 'Padel bcn - el prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
+                { j: 6, date: '14 Jun', time: '10:00', opponent: 'INDOOR RUBI 4F', venue: 'Rubí', isHome: false, score: 'Pendiente', status: 'upcoming' },
+                { j: 7, date: '21 Jun', time: '13:30', opponent: 'BYE', venue: '-', isHome: true, score: '-', status: 'upcoming' }
+            ],
+            groupStandings: [
+                { pos: 1, team: 'SOMOS PÁDEL BCN 4FA', pj: 2, pg: 2, pp: 0, df: 2, pts: 6, isCurrent: true },
+                { pos: 2, team: 'VALKIRIAS CPV', pj: 2, pg: 1, pp: 1, df: 0, pts: 3 },
+                { pos: 3, team: 'ACCURA SANT BOI 4F', pj: 2, pg: 1, pp: 1, df: 0, pts: 3 },
+                { pos: 4, team: 'CEM TENNIS HOSPITALET 4F', pj: 2, pg: 1, pp: 1, df: 0, pts: 3 },
+                { pos: 5, team: 'PADEL CLUB SAN JUST 4F', pj: 2, pg: 1, pp: 1, df: 0, pts: 3 },
+                { pos: 6, team: 'PCP FEMENÍ 4', pj: 2, pg: 0, pp: 2, df: -2, pts: 0 }
+            ],
+            logo: 'img/logo_somospadel.png',
+            link: 'https://summapadel.com/event/151'
         }
     ];
 })();

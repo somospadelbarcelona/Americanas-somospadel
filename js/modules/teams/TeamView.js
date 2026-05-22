@@ -92,32 +92,36 @@
                         <!-- Accent line -->
                         <div style="position:absolute; top:0; left:0; width:100%; height:6px; background: linear-gradient(90deg, #70e000, #38b000); border-radius: 28px 28px 0 0;"></div>
                         <div style="position: absolute; top: -30px; right: -30px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(112,224,0,0.08) 0%, transparent 70%); border-radius: 50%;"></div>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2;">
+                                   <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2;">
                             <div>
                                 <span style="font-size: 0.65rem; color: #38b000; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;">LLIGA GUINOTPRUNERA</span>
                                 <h1 style="color: #0f172a; font-weight: 950; font-size: 2.2rem; margin: 3px 0 0; letter-spacing: -1px; text-transform: uppercase; line-height: 1.05;">
                                     EQUIPOS <br><span style="color:#38b000;">SOMOS PÁDEL</span>
                                 </h1>
-                                <button onclick="
-                                    if (window.db && window.db.clearPersistence) {
-                                        const btn = this;
-                                        btn.innerHTML = '<i class=\\'fas fa-spinner fa-spin\\'></i> Limpiando...';
-                                        window.db.clearPersistence().then(() => {
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+                                    <button onclick="
+                                        if (window.db && window.db.clearPersistence) {
+                                            const btn = this;
+                                            btn.innerHTML = '<i class=\'fas fa-spinner fa-spin\'></i> Limpiando...';
+                                            window.db.clearPersistence().then(() => {
+                                                window.location.reload(true);
+                                            }).catch(err => {
+                                                console.error('Error clearing persistence:', err);
+                                                window.location.reload(true);
+                                            });
+                                        } else {
                                             window.location.reload(true);
-                                        }).catch(err => {
-                                            console.error('Error clearing persistence:', err);
-                                            window.location.reload(true);
-                                        });
-                                    } else {
-                                        window.location.reload(true);
-                                    }
-                                " style="margin-top: 12px; background: linear-gradient(135deg, #0f172a 0%, #334155 100%); color: white; border: none; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(15,23,42,0.15); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(15,23,42,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(15,23,42,0.15)';">
-                                    <i class="fas fa-sync-alt"></i> SINCRONIZAR DATOS
-                                </button>
+                                        }
+                                    " style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%); color: white; border: none; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(15,23,42,0.15); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(15,23,42,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(15,23,42,0.15)';">
+                                        <i class="fas fa-sync-alt"></i> SINCRONIZAR DATOS
+                                    </button>
+                                    <button onclick="window.TeamView.openNextMatchesSummaryModal()" style="background: linear-gradient(135deg, #38b000 0%, #70e000 100%); color: white; border: none; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(56,176,0,0.15); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(56,176,0,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(56,176,0,0.15)';">
+                                        <i class="fas fa-share-alt"></i> RESUMEN SIG. JORNADA
+                                    </button>
+                                </div>
                             </div>
                             <img src="img/logo_somospadel.png" style="width: 60px; height: 60px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.05));">
-                        </div>
+                        </div>         </div>
                         
                         <!-- 📊 METRICS ROW -->
                         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 25px; position: relative; z-index: 2;">
@@ -260,7 +264,7 @@
             if (hasSchedule) {
                 const sortedMatches = [...team.schedule].sort((a, b) => parseInt(a.j) - parseInt(b.j));
                 const completedMatches = sortedMatches.filter(m => m.status === 'completed' && m.score);
-                const pendingMatches = sortedMatches.filter(m => m.status === 'pending' || m.status === 'scheduled');
+                const pendingMatches = sortedMatches.filter(m => m.status === 'pending' || m.status === 'scheduled' || m.status === 'upcoming');
                 
                 if (pendingMatches.length > 0) {
                     pendingMatchInfo = pendingMatches[0];
@@ -770,7 +774,8 @@
                 
                 const cleanSubcap = (team.name.includes('3MB') || team.name.includes('3M B')) ? 'alex cuadra cabezas' : 
                                     (team.name.includes('3MA') || team.name.includes('3M A')) ? 'miquel munoz' : 
-                                    (team.name.includes('4MA') || team.name.includes('4M A') || team.name === 'SOMOS PÁDEL BCN 4M') ? 'alejandro coscolin' : '';
+                                    (team.name.includes('4MA') || team.name.includes('4M A') || team.name === 'SOMOS PÁDEL BCN 4M') ? 'alejandro coscolin' : 
+                                    (team.name.includes('4FA') || team.name === 'SOMOS PÁDEL BCN 4FA') ? 'nadia flora costa' : '';
 
                 // Comprobar si alguno de los jugadores del roster coincide
                 const matchesRoster = team.roster && team.roster.some(player => {
@@ -805,6 +810,576 @@
             const metricTeamsCount = document.getElementById('metric-teams-count');
             if (metricTeamsCount) {
                 metricTeamsCount.innerText = visibleCount;
+            }
+        }
+
+        // ==================================================
+        // 💎 PREMIUM NEXT MATCHES SUMMARY MODAL ("WOW" SYSTEM)
+        // ==================================================
+
+        /**
+         * Genera el HTML del cromo de resumen de la próxima jornada (1080x1920).
+         * Se usa tanto para la previsualización como para la captura con html2canvas.
+         */
+        getNextMatchesSummaryStoryHTML(teams, isForCapture = false) {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+
+            // Recopilar el próximo partido de cada equipo
+            const teamMatches = teams.map(team => {
+                let nextMatch = null;
+                if (team.schedule && team.schedule.length > 0) {
+                    const sortedMatches = [...team.schedule].sort((a, b) => parseInt(a.j) - parseInt(b.j));
+                    const pendingMatches = sortedMatches.filter(m => m.status === 'pending' || m.status === 'scheduled' || m.status === 'upcoming');
+                    if (pendingMatches.length > 0) {
+                        nextMatch = pendingMatches[0];
+                    }
+                }
+                return { team, nextMatch };
+            });
+
+            const cardStyle = isForCapture ? 'width: 1080px; height: 1920px;' : 'width: 100%; height: 100%;';
+
+            // Construir las filas de cada equipo
+            const teamRows = teamMatches.map((tm) => {
+                const { team, nextMatch } = tm;
+                const teamShortName = team.name.replace('SOMOS PÁDEL BCN ', '').replace('SOMOS PÁDEL ', '');
+
+                if (nextMatch) {
+                    const isHome = nextMatch.isHome;
+                    const homeAwayBg = isHome ? 'rgba(204,255,0,0.12)' : 'rgba(96,165,250,0.12)';
+                    const homeAwayColor = isHome ? '#CCFF00' : '#60a5fa';
+                    const homeAwayText = isHome ? '🏠 LOCAL' : '✈️ VISIT.';
+                    return `
+                        <div style="background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 28px 32px; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden;">
+                            <div style="position: absolute; top: 0; left: 0; width: 5px; height: 100%; background: linear-gradient(180deg, #CCFF00, #38b000); border-radius: 5px 0 0 5px;"></div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-size: 30px; font-weight: 950; color: #CCFF00; text-transform: uppercase; letter-spacing: 0.5px;">${teamShortName}</div>
+                                <div style="background: ${homeAwayBg}; color: ${homeAwayColor}; padding: 7px 18px; border-radius: 30px; font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">${homeAwayText}</div>
+                            </div>
+                            <div style="font-size: 34px; font-weight: 800; color: white; margin: 4px 0 2px;">vs ${nextMatch.opponent}</div>
+                            <div style="display: flex; gap: 24px; align-items: center; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 10px; color: #94a3b8; font-size: 26px; font-weight: 700;"><span style="color: #CCFF00;">📅</span> ${nextMatch.date}${nextMatch.time ? ' • ' + nextMatch.time : ''}</div>
+                                <div style="display: flex; align-items: center; gap: 10px; color: #94a3b8; font-size: 26px; font-weight: 700;"><span style="color: #CCFF00;">📍</span> ${nextMatch.venue}</div>
+                            </div>
+                            <div style="color: #64748b; font-size: 22px; font-weight: 700;">Jornada ${nextMatch.j} • ${team.group || team.division}</div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 24px 32px; display: flex; align-items: center; gap: 16px; opacity: 0.5;">
+                            <div style="font-size: 30px; font-weight: 950; color: #64748b; text-transform: uppercase;">${teamShortName}</div>
+                            <div style="color: #475569; font-size: 26px; font-weight: 700;">— Sin partidos pendientes</div>
+                        </div>
+                    `;
+                }
+            }).join('');
+
+            return `
+                <div style="${cardStyle} background: linear-gradient(180deg, #07070a 0%, #0a1014 25%, #080d12 75%, #07070a 100%); font-family: 'Outfit', sans-serif; display: flex; flex-direction: column; position: relative; overflow: hidden; box-sizing: border-box; padding: 60px 50px;">
+                    <!-- Background glow effects -->
+                    <div style="position: absolute; top: -120px; right: -80px; width: 450px; height: 450px; background: radial-gradient(circle, rgba(204,255,0,0.07), transparent 70%); pointer-events: none;"></div>
+                    <div style="position: absolute; bottom: -120px; left: -80px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(56,176,0,0.05), transparent 70%); pointer-events: none;"></div>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 600px; background: radial-gradient(circle, rgba(204,255,0,0.02), transparent 60%); pointer-events: none;"></div>
+
+                    <!-- Header -->
+                    <div style="text-align: center; margin-bottom: 36px; flex-shrink: 0;">
+                        <div style="font-size: 22px; font-weight: 900; color: #475569; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 16px;">LLIGA GUINOTPRUNERA 2025-2026</div>
+                        <div style="display: inline-block; background: linear-gradient(135deg, #CCFF00 0%, #38b000 100%); padding: 16px 50px; border-radius: 50px; margin-bottom: 20px; box-shadow: 0 8px 30px rgba(204,255,0,0.2);">
+                            <span style="font-size: 38px; font-weight: 950; color: #000; text-transform: uppercase; letter-spacing: 3px;">⚡ PRÓXIMA JORNADA ⚡</span>
+                        </div>
+                        <div style="font-size: 48px; font-weight: 950; color: white; text-transform: uppercase; letter-spacing: -0.5px; line-height: 1.15;">EQUIPOS <span style="background: linear-gradient(135deg, #CCFF00, #38b000); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">SOMOS PÁDEL BCN</span></div>
+                        <div style="width: 100px; height: 4px; background: linear-gradient(90deg, #CCFF00, #38b000); margin: 22px auto 0; border-radius: 4px;"></div>
+                    </div>
+
+                    <!-- Team cards -->
+                    <div style="display: flex; flex-direction: column; gap: 16px; flex: 1; justify-content: center;">
+                        ${teamRows}
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="text-align: center; margin-top: 36px; padding-top: 28px; border-top: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;">
+                        <div style="font-size: 28px; font-weight: 800; color: #94a3b8;">🎾 ¡Vamos equipo! Apoya a nuestros jugadores 💪🔥</div>
+                        <div style="font-size: 20px; color: #475569; font-weight: 700; margin-top: 12px;">${dateStr} • somospadel.es</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * Retorna la URL oficial de producción para compartir.
+         */
+        getCleanShareUrl() {
+            return 'https://somospadelbarcelona.github.io/Americanas-somospadel/';
+        }
+
+        /**
+         * Genera el texto formateado para WhatsApp con los datos reales de la próxima jornada.
+         */
+        getSummaryWhatsAppText(teams) {
+            let text = `🏆 *PRÓXIMA JORNADA – SOMOS PÁDEL BCN* 🏆\n`;
+            text += `🔥 _¡El espectáculo de la Lliga Guinotprunera no se detiene!_ 🔥\n\n`;
+            text += `🎾 Apoya a nuestros equipos y no te pierdas ningún partidazo de esta jornada. ¡A darlo todo en la pista! 💪💥\n\n`;
+            text += `───────────────────\n`;
+            text += `⚔️ *NUESTROS ENFRENTAMIENTOS* ⚔️\n`;
+            text += `───────────────────\n\n`;
+
+            teams.forEach(team => {
+                const teamShortName = team.name.replace('SOMOS PÁDEL BCN ', '').replace('SOMOS PÁDEL ', '').toUpperCase();
+                
+                let nextMatch = null;
+                if (team.schedule && team.schedule.length > 0) {
+                    const sortedMatches = [...team.schedule].sort((a, b) => parseInt(a.j) - parseInt(b.j));
+                    const pendingMatches = sortedMatches.filter(m => m.status === 'pending' || m.status === 'scheduled' || m.status === 'upcoming');
+                    if (pendingMatches.length > 0) {
+                        nextMatch = pendingMatches[0];
+                    }
+                }
+
+                if (nextMatch) {
+                    const homeAwayIcon = nextMatch.isHome ? '🏠' : '✈️';
+                    const homeAwayLabel = nextMatch.isHome ? 'LOCAL' : 'VISITANTE';
+                    
+                    text += `🟢 *${teamShortName}* (Jornada ${nextMatch.j})\n`;
+                    text += `   🆚 *${nextMatch.opponent}*\n`;
+                    text += `   📅 ${nextMatch.date} ${nextMatch.time ? '• ⏰ ' + nextMatch.time : ''}\n`;
+                    text += `   📍 Club: _${nextMatch.venue}_\n`;
+                    text += `   ${homeAwayIcon} _Jugamos como ${homeAwayLabel}_\n\n`;
+                } else {
+                    text += `⚪ *${teamShortName}*\n`;
+                    text += `   🏁 _Sin partidos programados esta jornada_\n\n`;
+                }
+            });
+
+            text += `───────────────────\n`;
+            text += `📢 *¡SÍGUENOS Y COMPARTE!* 📢\n`;
+            text += `───────────────────\n`;
+            text += `📸 Instagram: *@somospadelbarcelona_* ❤️🎾\n\n`;
+            text += `🌐 Marcadores y clasificaciones en tiempo real:\n`;
+            
+            const appUrl = this.getCleanShareUrl();
+            text += `📲 Haz click aquí: ${appUrl}#teams 🚀🔥`;
+            
+            return text;
+        }
+
+        openNextMatchesSummaryModal() {
+            const teams = this.lastTeams || [];
+            if (teams.length === 0) {
+                alert("No hay equipos cargados.");
+                return;
+            }
+
+            // Haptic
+            if (window.navigator.vibrate) window.navigator.vibrate(25);
+
+            // Generar el texto del resumen con datos reales
+            const whatsAppText = this.getSummaryWhatsAppText(teams);
+
+            // Create overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'next-matches-summary-overlay';
+            overlay.style.cssText = `
+                position: fixed; inset: 0; background: rgba(8, 8, 12, 0.85); z-index: 120000;
+                display: flex; align-items: center; justify-content: center;
+                font-family: 'Outfit', sans-serif; backdrop-filter: blur(25px);
+                -webkit-backdrop-filter: blur(25px); opacity: 0; transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+                padding: 15px; box-sizing: border-box; overflow-y: auto;
+            `;
+
+            overlay.innerHTML = `
+                <style>
+                    #summary-modal-container {
+                        background: rgba(13, 13, 17, 0.95);
+                        border: 1.5px solid rgba(204, 255, 0, 0.25);
+                        border-radius: 32px;
+                        width: 100%;
+                        max-width: 920px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 20px;
+                        padding: 28px;
+                        box-sizing: border-box;
+                        position: relative;
+                        box-shadow: 0 35px 80px rgba(0,0,0,0.8);
+                        transform: scale(0.9);
+                        transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                        max-height: 92vh;
+                        overflow-y: auto;
+                        backdrop-filter: blur(15px);
+                        -webkit-backdrop-filter: blur(15px);
+                    }
+
+                    #summary-inner-grid {
+                        display: grid;
+                        grid-template-columns: 1.2fr 1fr;
+                        gap: 30px;
+                        align-items: center;
+                    }
+
+                    #summary-preview-column {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        background: #060608;
+                        border: 1.5px dashed rgba(255,255,255,0.08);
+                        border-radius: 24px;
+                        padding: 24px;
+                        position: relative;
+                        overflow: hidden;
+                        min-height: 520px;
+                        box-shadow: inset 0 4px 20px rgba(0,0,0,0.6);
+                    }
+
+                    .summary-textarea {
+                        width: 100%;
+                        height: 150px;
+                        background: rgba(255,255,255,0.03);
+                        border: 1px solid rgba(255,255,255,0.1);
+                        border-radius: 16px;
+                        color: #cbd5e1;
+                        padding: 12px 15px;
+                        font-family: 'Outfit', monospace, sans-serif;
+                        font-size: 0.75rem;
+                        line-height: 1.45;
+                        resize: none;
+                        outline: none;
+                        transition: border-color 0.25s;
+                    }
+                    .summary-textarea:focus {
+                        border-color: #CCFF00;
+                    }
+
+                    @media (max-width: 992px) {
+                        #summary-modal-container {
+                            padding: 20px !important;
+                            border-radius: 24px !important;
+                            max-height: 95vh !important;
+                            gap: 15px !important;
+                        }
+                        #summary-inner-grid {
+                            grid-template-columns: 1fr !important;
+                            gap: 18px !important;
+                        }
+                        #summary-preview-column {
+                            min-height: auto !important;
+                            padding: 15px 10px !important;
+                            order: 2;
+                        }
+                        #summary-controls-column {
+                            order: 1;
+                        }
+                        #summary-helper-text {
+                            font-size: 0.6rem !important;
+                            padding: 6px 12px !important;
+                            position: relative !important;
+                            bottom: auto !important;
+                            margin-top: 10px !important;
+                        }
+                    }
+                </style>
+
+                <div id="summary-modal-container">
+                    <!-- Glow effect -->
+                    <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: #CCFF00; filter: blur(80px); opacity: 0.12; pointer-events: none;"></div>
+
+                    <!-- Close button -->
+                    <button onclick="window.TeamView.closeNextMatchesSummaryModal()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; font-size: 1.1rem; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; z-index: 10;" onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'; this.style.color='white';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.color='#cbd5e1';">
+                        <i class="fas fa-times"></i>
+                    </button>
+
+                    <!-- Header -->
+                    <div style="text-align: left; padding-right: 50px;">
+                        <span style="font-size: 0.7rem; color: #CCFF00; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">PREMIUM SOCIAL SHARING</span>
+                        <h2 style="color: white; font-weight: 950; font-size: 1.5rem; margin: 4px 0 0; text-transform: uppercase; letter-spacing: -0.5px;">
+                            RESUMEN DE LA <span style="color: #38b000;">PRÓXIMA JORNADA</span>
+                        </h2>
+                    </div>
+
+                    <!-- Inner grid layout: preview + controls -->
+                    <div id="summary-inner-grid">
+
+                        <!-- COLUMN 1: LIVE PREVIEW OF THE CROMO -->
+                        <div id="summary-preview-column">
+                            <div id="summary-preview-sizer" style="position: relative; overflow: visible; display: flex; align-items: center; justify-content: center; transition: all 0.25s ease;">
+                                <div id="summary-preview-scale-wrapper" style="position: absolute; transform-origin: top left; width: 1080px; height: 1920px; display: flex; align-items: center; justify-content: center; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6); background: #07070a;">
+                                    <div id="summary-preview-content" style="width: 100%; height: 100%;"></div>
+                                </div>
+                            </div>
+                            <div id="summary-helper-text" style="position: absolute; bottom: 12px; background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 30px; font-size: 0.65rem; color: rgba(255,255,255,0.85); font-weight: 800; pointer-events: none; display: flex; align-items: center; gap: 6px; z-index: 10;">
+                                <i class="fas fa-info-circle" style="color: #CCFF00;"></i> CARTELERA ALTA RESOLUCIÓN (9:16)
+                            </div>
+                        </div>
+
+                        <!-- COLUMN 2: CONTROLS & ACTIONS -->
+                        <div style="display: flex; flex-direction: column; gap: 16px;" id="summary-controls-column">
+
+                            <!-- Tip -->
+                            <div style="background: rgba(204,255,0,0.04); border: 1px solid rgba(204,255,0,0.12); border-radius: 16px; padding: 12px 15px; display: flex; align-items: center; gap: 10px; font-size: 0.75rem; color: #cbd5e1; font-weight: 700; line-height: 1.35;">
+                                <i class="fas fa-lightbulb" style="color: #CCFF00; font-size: 1.1rem; flex-shrink: 0;"></i>
+                                <span><strong>Tip Premium:</strong> Descarga la cartelera en alta calidad y compártela en tus redes sociales o pégala en WhatsApp.</span>
+                            </div>
+
+                            <!-- WhatsApp Text Box -->
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">TEXTO PARA WHATSAPP</span>
+                                <textarea id="summary-text-box" class="summary-textarea" readonly>${whatsAppText}</textarea>
+                            </div>
+
+                            <!-- Actions Group -->
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">ACCIONES DE COMPARTIR</span>
+
+                                <!-- WhatsApp share -->
+                                <button onclick="window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(document.getElementById('summary-text-box').value), '_blank')" style="background: #25D366; color: white; border: none; padding: 16px; border-radius: 16px; font-weight: 950; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 25px rgba(37,211,102,0.25); text-transform: uppercase; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='none';">
+                                    <i class="fab fa-whatsapp" style="font-size: 1.25rem;"></i> ENVIAR TEXTO A WHATSAPP
+                                </button>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <!-- Copy image to clipboard -->
+                                    <button id="summary-copy-img-btn" onclick="window.TeamView.copySummaryImageToClipboard('summary-copy-img-btn')" style="background: #0f172a; color: white; border: 1.5px solid rgba(255,255,255,0.15); padding: 16px; border-radius: 16px; font-weight: 900; font-size: 0.75rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.borderColor='#CCFF00'; this.style.background='rgba(255,255,255,0.02)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'; this.style.background='#0f172a';">
+                                        <i class="far fa-clipboard" style="font-size: 1.2rem; color: #CCFF00;"></i>
+                                        <span>COPIAR IMAGEN</span>
+                                    </button>
+
+                                    <!-- Download image -->
+                                    <button id="summary-dl-btn" onclick="window.TeamView.downloadSummaryImage('summary-dl-btn')" style="background: #CCFF00; color: #000000; border: none; padding: 16px; border-radius: 16px; font-weight: 950; font-size: 0.75rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 6px 15px rgba(204,255,0,0.2); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='none';">
+                                        <i class="fas fa-download" style="font-size: 1.1rem;"></i>
+                                        <span>DESCARGAR FOTO</span>
+                                    </button>
+                                </div>
+
+                                <!-- Copy text -->
+                                <button id="summary-copy-txt-btn" onclick="window.TeamView.copySummaryToClipboard()" style="background: transparent; color: #cbd5e1; border: 1.5px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 16px; font-weight: 900; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.25)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)';">
+                                    <i class="far fa-copy" style="color: #94a3b8;"></i> COPIAR TEXTO
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            // Render the preview cromo inside the preview column
+            const previewContent = document.getElementById('summary-preview-content');
+            if (previewContent) {
+                previewContent.innerHTML = this.getNextMatchesSummaryStoryHTML(teams, false);
+            }
+
+            // Adjust CSS responsively to scale the card
+            this.adjustSummaryPreviewScale();
+            this._boundAdjustSummaryScale = () => this.adjustSummaryPreviewScale();
+            window.addEventListener('resize', this._boundAdjustSummaryScale);
+
+            // Trigger animations
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+                const container = document.getElementById('summary-modal-container');
+                if (container) container.style.transform = 'scale(1)';
+            }, 50);
+        }
+
+        /**
+         * Calcula y aplica la escala del cromo de resumen dentro de la columna de previsualización.
+         */
+        adjustSummaryPreviewScale() {
+            const previewColumn = document.getElementById('summary-preview-column');
+            const scaleWrapper = document.getElementById('summary-preview-scale-wrapper');
+            const sizer = document.getElementById('summary-preview-sizer');
+            if (!previewColumn || !scaleWrapper) return;
+
+            const padding = 24;
+            const containerWidth = previewColumn.clientWidth - padding;
+
+            const isMobile = window.innerWidth <= 992;
+            const maxAvailableHeight = isMobile ? Math.min(window.innerHeight * 0.42, 380) : Math.min(window.innerHeight * 0.62, 600);
+
+            const cardWidth = 1080;
+            const cardHeight = 1920;
+
+            const scaleX = containerWidth / cardWidth;
+            const scaleY = maxAvailableHeight / cardHeight;
+            let scale = Math.min(scaleX, scaleY);
+
+            const maxScale = isMobile ? 0.22 : 0.32;
+            const finalScale = Math.min(scale, maxScale);
+
+            scaleWrapper.style.transform = `scale(${finalScale})`;
+
+            if (sizer) {
+                sizer.style.width = `${cardWidth * finalScale}px`;
+                sizer.style.height = `${cardHeight * finalScale}px`;
+            }
+        }
+
+        closeNextMatchesSummaryModal() {
+            const overlay = document.getElementById('next-matches-summary-overlay');
+            if (overlay) {
+                if (this._boundAdjustSummaryScale) {
+                    window.removeEventListener('resize', this._boundAdjustSummaryScale);
+                }
+                overlay.style.opacity = '0';
+                const container = document.getElementById('summary-modal-container');
+                if (container) container.style.transform = 'scale(0.9)';
+                setTimeout(() => overlay.remove(), 350);
+            }
+        }
+
+        async copySummaryToClipboard() {
+            const btn = document.getElementById('summary-copy-txt-btn');
+            const textBox = document.getElementById('summary-text-box');
+            if (!textBox) return;
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> COPIANDO...`;
+            }
+
+            try {
+                await navigator.clipboard.writeText(textBox.value);
+                if (btn) {
+                    btn.innerHTML = `<i class="fas fa-check"></i> ¡TEXTO COPIADO!`;
+                    btn.style.borderColor = '#38b000';
+                    btn.style.color = '#CCFF00';
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.style.borderColor = 'rgba(255,255,255,0.1)';
+                        btn.style.color = '#cbd5e1';
+                        btn.innerHTML = `<i class="far fa-copy" style="color: #94a3b8;"></i> COPIAR TEXTO`;
+                    }, 2500);
+                }
+            } catch (err) {
+                console.error("Error copying text:", err);
+                alert("No se pudo copiar el texto automáticamente.");
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.borderColor = 'rgba(255,255,255,0.1)';
+                    btn.style.color = '#cbd5e1';
+                    btn.innerHTML = `<i class="far fa-copy" style="color: #94a3b8;"></i> COPIAR TEXTO`;
+                }
+            }
+        }
+
+        /**
+         * Descarga la cartelera de la próxima jornada como imagen PNG en alta calidad.
+         */
+        async downloadSummaryImage(btnId) {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> GENERANDO...`;
+            }
+
+            const teams = this.lastTeams || [];
+
+            try {
+                // Render a full 1080x1920 container off-screen for capture
+                const container = document.createElement('div');
+                container.style.cssText = "position: fixed; top: -9999px; left: -9999px; width: 1080px; height: 1920px; overflow: hidden; z-index: -9999;";
+                container.innerHTML = this.getNextMatchesSummaryStoryHTML(teams, true);
+                document.body.appendChild(container);
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                const canvas = await html2canvas(container, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#07070a',
+                    logging: false
+                });
+
+                document.body.removeChild(container);
+
+                const dataUrl = canvas.toDataURL('image/png', 1.0);
+                const link = document.createElement('a');
+                link.download = `SomosPadel_ProximaJornada_${new Date().toISOString().slice(0,10)}.png`;
+                link.href = dataUrl;
+                link.click();
+
+                if (btn) {
+                    btn.innerHTML = `<i class="fas fa-check"></i> ¡GUARDADA!`;
+                    btn.style.background = '#38b000';
+                    btn.style.color = '#fff';
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.style.background = '#CCFF00';
+                        btn.style.color = '#000000';
+                        btn.innerHTML = `<i class="fas fa-download"></i> DESCARGAR FOTO`;
+                    }, 2500);
+                }
+            } catch (err) {
+                console.error("Error downloading summary image:", err);
+                alert("Error al generar la imagen. Por favor, reintenta.");
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> REINTENTAR`;
+                }
+            }
+        }
+
+        /**
+         * Copia la cartelera de la próxima jornada al portapapeles como imagen.
+         */
+        async copySummaryImageToClipboard(btnId) {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> PREPARANDO...`;
+            }
+
+            const teams = this.lastTeams || [];
+
+            try {
+                const container = document.createElement('div');
+                container.style.cssText = "position: fixed; top: -9999px; left: -9999px; width: 1080px; height: 1920px; overflow: hidden; z-index: -9999;";
+                container.innerHTML = this.getNextMatchesSummaryStoryHTML(teams, true);
+                document.body.appendChild(container);
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                const canvas = await html2canvas(container, {
+                    scale: 1.5,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#07070a',
+                    logging: false
+                });
+
+                document.body.removeChild(container);
+
+                canvas.toBlob(async (blob) => {
+                    if (!blob) {
+                        throw new Error("No se pudo crear el blob de la imagen.");
+                    }
+                    try {
+                        const item = new ClipboardItem({ "image/png": blob });
+                        await navigator.clipboard.write([item]);
+
+                        if (btn) {
+                            btn.innerHTML = `<i class="fas fa-check"></i> ¡IMAGEN COPIADA!`;
+                            btn.style.borderColor = '#38b000';
+                            btn.style.color = '#CCFF00';
+                            setTimeout(() => {
+                                btn.disabled = false;
+                                btn.style.borderColor = 'rgba(255,255,255,0.15)';
+                                btn.style.color = 'white';
+                                btn.innerHTML = `<i class="far fa-clipboard" style="font-size: 1.2rem; color: #CCFF00;"></i><span>COPIAR IMAGEN</span>`;
+                            }, 2500);
+                        }
+                    } catch (clipErr) {
+                        console.warn("Restricciones del portapapeles, activando fallback de descarga:", clipErr);
+                        this.downloadSummaryImage(btnId);
+                    }
+                }, 'image/png');
+
+            } catch (err) {
+                console.error("Error copying summary image:", err);
+                alert("Restricción del navegador. Se procederá a la descarga.");
+                this.downloadSummaryImage(btnId);
             }
         }
 
@@ -1510,7 +2085,7 @@
             if (!team) return '';
 
             // Obtenemos la URL dinámica de la propia aplicación de forma limpia
-            const appUrl = window.location.href.split('?')[0];
+            const appUrl = this.getCleanShareUrl();
 
             const standings = team.groupStandings || [];
             const schedule = team.schedule || [];
@@ -1533,7 +2108,7 @@
                     text += `${icon} *#${s.pos}* ${s.team} - *${s.pts} pts* (PJ:${s.pj} G:${s.pg})\n`;
                 });
                 
-                text += `\n📲 Sigue todos nuestros partidos, plantillas y estadísticas completas en tiempo real: *${appUrl}* 🚀🎾`;
+                text += `\n📲 Haz click aquí para ver todos nuestros partidos, plantillas y estadísticas en tiempo real: *${appUrl}#teams* 🚀🎾`;
             } else if (tabName === 'sched') {
                 const filter = this.shareScheduleFilter || 'smart';
                 const filterLabel = filter === 'smart' ? 'ACTUALIDAD' : `JORNADAS ${filter}`;
@@ -1572,7 +2147,7 @@
                     text += `🔸 *J${m.j}:* vs ${m.opponent}\n    ${m.date} | ${resStr}\n`;
                 });
                 
-                text += `\n📲 Calendario completo y lives en la App Oficial: *${appUrl}* 🎾🔥`;
+                text += `\n📲 Haz click aquí para ver el calendario completo en tiempo real: *${appUrl}#teams* 🎾🔥`;
             } else if (tabName === 'rost') {
                 text = `👥 *PLANTILLA OFICIAL (SQUAD) - ${team.name.toUpperCase()}* 👥\n\n`;
                 text += `¡Presentamos al equipo de guerreros que defiende los colores del club! 🎾💪\n\n`;
@@ -1581,7 +2156,7 @@
                     text += `👤 *${p.name.toUpperCase()}* - ${p.pts} pts\n`;
                 });
                 
-                text += `\n📲 Roster completo con evoluciones en vivo en la App de Somos Pádel: *${appUrl}* 🔥📈`;
+                text += `\n📲 Haz click aquí para ver el roster oficial y clasificaciones en tiempo real: *${appUrl}#teams* 🔥📈`;
             } else if (tabName === 'stats') {
                 let winRate = 0;
                 let streakStr = 'Sin datos';
@@ -1604,7 +2179,7 @@
                 text += `🎾 *Partidos Jugados / Ganados:* ${pjCount} / ${winCount}\n`;
                 text += `🏆 *Diferencia de sets:* ${setDiff >= 0 ? '+' : ''}${setDiff}\n`;
                 text += `🔥 *Última racha (Forma):* [ ${streakStr} ]\n\n`;
-                text += `📲 Ver todas las métricas en tiempo real en la App oficial de Somos Pádel: *${appUrl}* 🚀💪`;
+                text += `📲 Haz click aquí para ver las métricas de rendimiento en tiempo real: *${appUrl}#teams* 🚀💪`;
             }
 
             return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
