@@ -60,6 +60,27 @@
             this.render(this.lastTeams); // Re-render para reordenar
         }
 
+        /**
+         * Limpia la caché de persistencia de Firestore y recarga la página.
+         * Se llama desde el botón inline para evitar problemas de comillas en onclick.
+         */
+        syncData(btn) {
+            if (btn) {
+                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Limpiando...`;
+                btn.disabled = true;
+            }
+            if (window.db && window.db.clearPersistence) {
+                window.db.clearPersistence()
+                    .then(() => window.location.reload(true))
+                    .catch(err => {
+                        console.error('Error clearing persistence:', err);
+                        window.location.reload(true);
+                    });
+            } else {
+                window.location.reload(true);
+            }
+        }
+
         render(teams) {
             this.lastTeams = teams || [];
             this.container = document.getElementById('content-area');
@@ -99,20 +120,7 @@
                                     EQUIPOS <br><span style="color:#38b000;">SOMOS PÁDEL</span>
                                 </h1>
                                 <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
-                                    <button onclick="
-                                        if (window.db && window.db.clearPersistence) {
-                                            const btn = this;
-                                            btn.innerHTML = '<i class=\'fas fa-spinner fa-spin\'></i> Limpiando...';
-                                            window.db.clearPersistence().then(() => {
-                                                window.location.reload(true);
-                                            }).catch(err => {
-                                                console.error('Error clearing persistence:', err);
-                                                window.location.reload(true);
-                                            });
-                                        } else {
-                                            window.location.reload(true);
-                                        }
-                                    " style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%); color: white; border: none; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(15,23,42,0.15); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(15,23,42,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(15,23,42,0.15)';">
+                                    <button onclick="window.TeamView.syncData(this)" style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%); color: white; border: none; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(15,23,42,0.15); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(15,23,42,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(15,23,42,0.15)';">
                                         <i class="fas fa-sync-alt"></i> SINCRONIZAR DATOS
                                     </button>
                                     <button onclick="window.TeamView.openNextMatchesSummaryModal()" style="background: linear-gradient(135deg, #38b000 0%, #70e000 100%); color: white; border: none; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(56,176,0,0.15); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(56,176,0,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(56,176,0,0.15)';">
@@ -838,6 +846,106 @@
                 return { team, nextMatch };
             });
 
+            // Determinar dimensiones según la cantidad de equipos para que quepan todos en 1920px de alto
+            const count = teams.length;
+            let sizes = {
+                containerPadding: '60px 50px',
+                headerMarginBottom: '36px',
+                headerTitleFontSize: '48px',
+                headerBannerPadding: '16px 50px',
+                headerBannerFontSize: '38px',
+                rowGap: '16px',
+                cardPadding: '28px 32px',
+                cardGap: '10px',
+                teamNameFontSize: '30px',
+                homeAwayFontSize: '20px',
+                homeAwayPadding: '7px 18px',
+                vsFontSize: '34px',
+                detailsFontSize: '26px',
+                jornadaFontSize: '22px',
+                footerMarginTop: '36px',
+                footerPaddingTop: '28px',
+                footerLine1FontSize: '28px',
+                footerLine2FontSize: '20px',
+                noMatchPadding: '24px 32px',
+                noMatchFontSize: '30px',
+                noMatchTextFontSize: '26px'
+            };
+
+            if (count === 5) {
+                sizes = {
+                    containerPadding: '50px 40px',
+                    headerMarginBottom: '28px',
+                    headerTitleFontSize: '44px',
+                    headerBannerPadding: '14px 44px',
+                    headerBannerFontSize: '34px',
+                    rowGap: '14px',
+                    cardPadding: '22px 26px',
+                    cardGap: '8px',
+                    teamNameFontSize: '26px',
+                    homeAwayFontSize: '18px',
+                    homeAwayPadding: '6px 14px',
+                    vsFontSize: '30px',
+                    detailsFontSize: '22px',
+                    jornadaFontSize: '19px',
+                    footerMarginTop: '28px',
+                    footerPaddingTop: '22px',
+                    footerLine1FontSize: '24px',
+                    footerLine2FontSize: '18px',
+                    noMatchPadding: '18px 24px',
+                    noMatchFontSize: '26px',
+                    noMatchTextFontSize: '22px'
+                };
+            } else if (count === 6) {
+                sizes = {
+                    containerPadding: '40px 30px',
+                    headerMarginBottom: '20px',
+                    headerTitleFontSize: '38px',
+                    headerBannerPadding: '12px 36px',
+                    headerBannerFontSize: '30px',
+                    rowGap: '12px',
+                    cardPadding: '16px 22px',
+                    cardGap: '6px',
+                    teamNameFontSize: '22px',
+                    homeAwayFontSize: '16px',
+                    homeAwayPadding: '5px 12px',
+                    vsFontSize: '26px',
+                    detailsFontSize: '19px',
+                    jornadaFontSize: '16px',
+                    footerMarginTop: '20px',
+                    footerPaddingTop: '16px',
+                    footerLine1FontSize: '22px',
+                    footerLine2FontSize: '16px',
+                    noMatchPadding: '14px 20px',
+                    noMatchFontSize: '22px',
+                    noMatchTextFontSize: '19px'
+                };
+            } else if (count >= 7) {
+                sizes = {
+                    containerPadding: '30px 24px',
+                    headerMarginBottom: '16px',
+                    headerTitleFontSize: '34px',
+                    headerBannerPadding: '8px 28px',
+                    headerBannerFontSize: '26px',
+                    rowGap: '10px',
+                    cardPadding: '14px 18px',
+                    cardGap: '4px',
+                    teamNameFontSize: '20px',
+                    homeAwayFontSize: '14px',
+                    homeAwayPadding: '4px 10px',
+                    vsFontSize: '22px',
+                    detailsFontSize: '17px',
+                    jornadaFontSize: '14px',
+                    footerMarginTop: '16px',
+                    footerPaddingTop: '12px',
+                    footerLine1FontSize: '18px',
+                    footerLine2FontSize: '14px',
+                    noMatchPadding: '10px 16px',
+                    noMatchFontSize: '18px',
+                    noMatchTextFontSize: '16px'
+                };
+            }
+
             const cardStyle = isForCapture ? 'width: 1080px; height: 1920px;' : 'width: 100%; height: 100%;';
 
             // Construir las filas de cada equipo
@@ -851,56 +959,56 @@
                     const homeAwayColor = isHome ? '#CCFF00' : '#60a5fa';
                     const homeAwayText = isHome ? '🏠 LOCAL' : '✈️ VISIT.';
                     return `
-                        <div style="background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 28px 32px; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden;">
+                        <div style="background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: ${sizes.cardPadding}; display: flex; flex-direction: column; gap: ${sizes.cardGap}; position: relative; overflow: hidden;">
                             <div style="position: absolute; top: 0; left: 0; width: 5px; height: 100%; background: linear-gradient(180deg, #CCFF00, #38b000); border-radius: 5px 0 0 5px;"></div>
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div style="font-size: 30px; font-weight: 950; color: #CCFF00; text-transform: uppercase; letter-spacing: 0.5px;">${teamShortName}</div>
-                                <div style="background: ${homeAwayBg}; color: ${homeAwayColor}; padding: 7px 18px; border-radius: 30px; font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">${homeAwayText}</div>
+                                <div style="font-size: ${sizes.teamNameFontSize}; font-weight: 950; color: #CCFF00; text-transform: uppercase; letter-spacing: 0.5px;">${teamShortName}</div>
+                                <div style="background: ${homeAwayBg}; color: ${homeAwayColor}; padding: ${sizes.homeAwayPadding}; border-radius: 30px; font-size: ${sizes.homeAwayFontSize}; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">${homeAwayText}</div>
                             </div>
-                            <div style="font-size: 34px; font-weight: 800; color: white; margin: 4px 0 2px;">vs ${nextMatch.opponent}</div>
+                            <div style="font-size: ${sizes.vsFontSize}; font-weight: 800; color: white; margin: 4px 0 2px;">vs ${nextMatch.opponent}</div>
                             <div style="display: flex; gap: 24px; align-items: center; flex-wrap: wrap;">
-                                <div style="display: flex; align-items: center; gap: 10px; color: #94a3b8; font-size: 26px; font-weight: 700;"><span style="color: #CCFF00;">📅</span> ${nextMatch.date}${nextMatch.time ? ' • ' + nextMatch.time : ''}</div>
-                                <div style="display: flex; align-items: center; gap: 10px; color: #94a3b8; font-size: 26px; font-weight: 700;"><span style="color: #CCFF00;">📍</span> ${nextMatch.venue}</div>
+                                <div style="display: flex; align-items: center; gap: 10px; color: #94a3b8; font-size: ${sizes.detailsFontSize}; font-weight: 700;"><span style="color: #CCFF00;">📅</span> ${nextMatch.date}${nextMatch.time ? ' • ' + nextMatch.time : ''}</div>
+                                <div style="display: flex; align-items: center; gap: 10px; color: #94a3b8; font-size: ${sizes.detailsFontSize}; font-weight: 700;"><span style="color: #CCFF00;">📍</span> ${nextMatch.venue}</div>
                             </div>
-                            <div style="color: #64748b; font-size: 22px; font-weight: 700;">Jornada ${nextMatch.j} • ${team.group || team.division}</div>
+                            <div style="color: #64748b; font-size: ${sizes.jornadaFontSize}; font-weight: 700;">Jornada ${nextMatch.j} • ${team.group || team.division}</div>
                         </div>
                     `;
                 } else {
                     return `
-                        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 24px 32px; display: flex; align-items: center; gap: 16px; opacity: 0.5;">
-                            <div style="font-size: 30px; font-weight: 950; color: #64748b; text-transform: uppercase;">${teamShortName}</div>
-                            <div style="color: #475569; font-size: 26px; font-weight: 700;">— Sin partidos pendientes</div>
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: ${sizes.noMatchPadding}; display: flex; align-items: center; gap: 16px; opacity: 0.5;">
+                            <div style="font-size: ${sizes.noMatchFontSize}; font-weight: 950; color: #64748b; text-transform: uppercase;">${teamShortName}</div>
+                            <div style="color: #475569; font-size: ${sizes.noMatchTextFontSize}; font-weight: 700;">— Sin partidos pendientes</div>
                         </div>
                     `;
                 }
             }).join('');
 
             return `
-                <div style="${cardStyle} background: linear-gradient(180deg, #07070a 0%, #0a1014 25%, #080d12 75%, #07070a 100%); font-family: 'Outfit', sans-serif; display: flex; flex-direction: column; position: relative; overflow: hidden; box-sizing: border-box; padding: 60px 50px;">
+                <div style="${cardStyle} background: linear-gradient(180deg, #07070a 0%, #0a1014 25%, #080d12 75%, #07070a 100%); font-family: 'Outfit', sans-serif; display: flex; flex-direction: column; position: relative; overflow: hidden; box-sizing: border-box; padding: ${sizes.containerPadding};">
                     <!-- Background glow effects -->
                     <div style="position: absolute; top: -120px; right: -80px; width: 450px; height: 450px; background: radial-gradient(circle, rgba(204,255,0,0.07), transparent 70%); pointer-events: none;"></div>
                     <div style="position: absolute; bottom: -120px; left: -80px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(56,176,0,0.05), transparent 70%); pointer-events: none;"></div>
                     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 600px; background: radial-gradient(circle, rgba(204,255,0,0.02), transparent 60%); pointer-events: none;"></div>
 
                     <!-- Header -->
-                    <div style="text-align: center; margin-bottom: 36px; flex-shrink: 0;">
+                    <div style="text-align: center; margin-bottom: ${sizes.headerMarginBottom}; flex-shrink: 0;">
                         <div style="font-size: 22px; font-weight: 900; color: #475569; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 16px;">LLIGA GUINOTPRUNERA 2025-2026</div>
-                        <div style="display: inline-block; background: linear-gradient(135deg, #CCFF00 0%, #38b000 100%); padding: 16px 50px; border-radius: 50px; margin-bottom: 20px; box-shadow: 0 8px 30px rgba(204,255,0,0.2);">
-                            <span style="font-size: 38px; font-weight: 950; color: #000; text-transform: uppercase; letter-spacing: 3px;">⚡ PRÓXIMA JORNADA ⚡</span>
+                        <div style="display: inline-block; background: linear-gradient(135deg, #CCFF00 0%, #38b000 100%); padding: ${sizes.headerBannerPadding}; border-radius: 50px; margin-bottom: 20px; box-shadow: 0 8px 30px rgba(204,255,0,0.2);">
+                            <span style="font-size: ${sizes.headerBannerFontSize}; font-weight: 950; color: #000; text-transform: uppercase; letter-spacing: 3px;">⚡ PRÓXIMA JORNADA ⚡</span>
                         </div>
-                        <div style="font-size: 48px; font-weight: 950; color: white; text-transform: uppercase; letter-spacing: -0.5px; line-height: 1.15;">EQUIPOS <span style="background: linear-gradient(135deg, #CCFF00, #38b000); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">SOMOS PÁDEL BCN</span></div>
+                        <div style="font-size: ${sizes.headerTitleFontSize}; font-weight: 950; color: white; text-transform: uppercase; letter-spacing: -0.5px; line-height: 1.15;">EQUIPOS <span style="background: linear-gradient(135deg, #CCFF00, #38b000); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">SOMOS PÁDEL BCN</span></div>
                         <div style="width: 100px; height: 4px; background: linear-gradient(90deg, #CCFF00, #38b000); margin: 22px auto 0; border-radius: 4px;"></div>
                     </div>
 
                     <!-- Team cards -->
-                    <div style="display: flex; flex-direction: column; gap: 16px; flex: 1; justify-content: center;">
+                    <div style="display: flex; flex-direction: column; gap: ${sizes.rowGap}; flex: 1; justify-content: center;">
                         ${teamRows}
                     </div>
 
                     <!-- Footer -->
-                    <div style="text-align: center; margin-top: 36px; padding-top: 28px; border-top: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;">
-                        <div style="font-size: 28px; font-weight: 800; color: #94a3b8;">🎾 ¡Vamos equipo! Apoya a nuestros jugadores 💪🔥</div>
-                        <div style="font-size: 20px; color: #475569; font-weight: 700; margin-top: 12px;">${dateStr} • somospadel.es</div>
+                    <div style="text-align: center; margin-top: ${sizes.footerMarginTop}; padding-top: ${sizes.footerPaddingTop}; border-top: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;">
+                        <div style="font-size: ${sizes.footerLine1FontSize}; font-weight: 800; color: #94a3b8;">🎾 ¡Vamos equipo! Apoya a nuestros jugadores 💪🔥</div>
+                        <div style="font-size: ${sizes.footerLine2FontSize}; color: #475569; font-weight: 700; margin-top: 12px;">${dateStr} • somospadel.es</div>
                     </div>
                 </div>
             `;

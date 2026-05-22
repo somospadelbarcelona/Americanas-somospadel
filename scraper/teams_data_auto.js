@@ -2082,5 +2082,314 @@ window.ExtractedTeamsData = [
     ],
     "logo": "img/logo_somospadel.png",
     "link": "about:blank"
+  },
+  {
+    "id": "somos-padel-bcn-2f",
+    "name": "SOMOS PÁDEL BCN 2F",
+    "category": "Femenina",
+    "division": "Segunda",
+    "group": "2FB FASE 2 G2",
+    "captain": "Silvia Serrano Pinilla",
+    "subcaptain": "Pendiente",
+    "ranking": 7,
+    "points": 0,
+    "stats": {
+      "pj": 1,
+      "pg": 0,
+      "pp": 1,
+      "sf": 0,
+      "sc": 0
+    },
+    "roster": [
+      {
+        "name": "Monica Carmona Merchan",
+        "pts": 72.0
+      },
+      {
+        "name": "Silvia Serrano Pinilla",
+        "pts": 64.0
+      },
+      {
+        "name": "Emeline Calafell",
+        "pts": 55.0
+      },
+      {
+        "name": "Reyes Calzada",
+        "pts": 48.0
+      },
+      {
+        "name": "Luisa Oganisyan",
+        "pts": 48.0
+      },
+      {
+        "name": "Merche Belmonte Rincón",
+        "pts": 40.0
+      },
+      {
+        "name": "María Muñoz Castaño",
+        "pts": 39.0
+      },
+      {
+        "name": "Maribel Campoy Álvarez",
+        "pts": 32.0
+      },
+      {
+        "name": "Estefania Vega",
+        "pts": 32.0
+      },
+      {
+        "name": "Marta Farre Foj",
+        "pts": 31.0
+      },
+      {
+        "name": "Veronica Luque",
+        "pts": 23.0
+      },
+      {
+        "name": "Silvia Lopez Morillo",
+        "pts": 20.0
+      },
+      {
+        "name": "Mariluz Cervero",
+        "pts": 8.0
+      },
+      {
+        "name": "Eva Bové",
+        "pts": 0.0
+      },
+      {
+        "name": "Clara Vilar",
+        "pts": 0.0
+      }
+    ],
+    "schedule": [
+      {
+        "j": 1,
+        "date": "Dium 10 May",
+        "time": "16:30h",
+        "opponent": "CPR FEMENI",
+        "score": "0 - 3",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "completed"
+      },
+      {
+        "j": 2,
+        "date": "Dive 22 May",
+        "time": "20:45h",
+        "opponent": "CLUB PADEL VILANOVA C",
+        "score": "0 - 3",
+        "venue": "Club padel vilanova",
+        "isHome": false,
+        "status": "completed"
+      },
+      {
+        "j": 3,
+        "date": "Diss 23 May",
+        "time": "13:00h",
+        "opponent": "PADELARIUM - OLD SCHOOL",
+        "score": "Pendiente",
+        "venue": "Padelarium gavá",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 4,
+        "date": "Dium 31 May",
+        "time": "16:30h",
+        "opponent": "GALAS DELFOS 2FA",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 5,
+        "date": "Dium 07 Jun",
+        "time": "18:00h",
+        "opponent": "PANTERES GROGUES",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 6,
+        "date": "Dium 14 Jun",
+        "time": "16:30h",
+        "opponent": "BCN PRO PADEL ACADEMY 2FA",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 7,
+        "date": "Diss 20 Jun",
+        "time": "13:30h",
+        "opponent": "PÁDEL OXIGEN 2FA",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 8,
+        "date": "Diss 05 Set",
+        "time": "13:30h",
+        "opponent": "CPR FEMENI",
+        "score": "Pendiente",
+        "venue": "Club padel ripollet",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 9,
+        "date": "Dium 13 Set",
+        "time": "16:30h",
+        "opponent": "CLUB PADEL VILANOVA C",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 10,
+        "date": "Dium 20 Set",
+        "time": "16:30h",
+        "opponent": "PADELARIUM - OLD SCHOOL",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 11,
+        "date": "Diss 26 Set",
+        "time": "13:00h",
+        "opponent": "GALAS DELFOS 2FA",
+        "score": "Pendiente",
+        "venue": "Club delfos",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 12,
+        "date": "Dium 04 Oct",
+        "time": "16:30h",
+        "opponent": "PANTERES GROGUES",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      },
+      {
+        "j": 13,
+        "date": "Dium 11 Oct",
+        "time": "12:30h",
+        "opponent": "BCN PRO PADEL ACADEMY 2FA",
+        "score": "Pendiente",
+        "venue": "Bcn pro padel academy 1",
+        "isHome": false,
+        "status": "upcoming"
+      },
+      {
+        "j": 14,
+        "date": "Dium 18 Oct",
+        "time": "16:30h",
+        "opponent": "PÁDEL OXIGEN 2FA",
+        "score": "Pendiente",
+        "venue": "Padel bcn - el prat",
+        "isHome": true,
+        "status": "upcoming"
+      }
+    ],
+    "nextMatch": {
+      "j": 3,
+      "date": "Diss 23 May",
+      "time": "13:00h",
+      "opponent": "PADELARIUM - OLD SCHOOL",
+      "score": "Pendiente",
+      "venue": "Padelarium gavá",
+      "isHome": false,
+      "status": "upcoming"
+    },
+    "groupStandings": [
+      {
+        "pos": 1,
+        "team": "CPR FEMENI",
+        "pj": 2,
+        "pg": 4,
+        "pp": 0,
+        "df": 0,
+        "pts": 6
+      },
+      {
+        "pos": 2,
+        "team": "PÁDEL OXIGEN 2FA",
+        "pj": 2,
+        "pg": 2,
+        "pp": 0,
+        "df": 0,
+        "pts": 4
+      },
+      {
+        "pos": 3,
+        "team": "PANTERES GROGUES",
+        "pj": 1,
+        "pg": 1,
+        "pp": 0,
+        "df": 0,
+        "pts": 2
+      },
+      {
+        "pos": 4,
+        "team": "GALAS DELFOS 2FA",
+        "pj": 1,
+        "pg": 1,
+        "pp": 0,
+        "df": 0,
+        "pts": 2
+      },
+      {
+        "pos": 5,
+        "team": "CLUB PADEL VILANOVA C",
+        "pj": 1,
+        "pg": 0,
+        "pp": 1,
+        "df": 0,
+        "pts": 1
+      },
+      {
+        "pos": 6,
+        "team": "BCN PRO PADEL ACADEMY 2FA",
+        "pj": 0,
+        "pg": 0,
+        "pp": 0,
+        "df": 0,
+        "pts": 0
+      },
+      {
+        "pos": 7,
+        "team": "SOMOS PÁDEL BCN 2F",
+        "pj": 1,
+        "pg": 0,
+        "pp": 1,
+        "df": 0,
+        "pts": 0,
+        "isCurrent": true
+      },
+      {
+        "pos": 8,
+        "team": "PADELARIUM - OLD SCHOOL",
+        "pj": 2,
+        "pg": 0,
+        "pp": 2,
+        "df": 0,
+        "pts": 0
+      }
+    ],
+    "logo": "img/logo_somospadel.png",
+    "link": "about:blank"
   }
 ];

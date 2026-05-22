@@ -64,6 +64,14 @@ TARGET_TEAMS = [
         "group": "3XB FASE 2 G3",
         "cat": "Mixta",
         "url": "https://summapadel.com/event/151"
+    },
+    {
+        "slug": "somos-padel-bcn-2f",
+        "name": "SOMOS PÁDEL BCN 2F",
+        "div": "Segunda",
+        "group": "2FB FASE 2 G2",
+        "cat": "Femenina",
+        "url": "https://summapadel.com/event/151"
     }
 ]
 
@@ -513,7 +521,9 @@ async def main():
                 elif target["cat"].lower() in ["femenina", "femení", "femenino"]:
                     cat_letter = "F"
                 
-                if "tercera" in target["div"].lower():
+                if "segunda" in target["div"].lower():
+                    div_keywords = [f"{cat_letter}2", "Segunda"]
+                elif "tercera" in target["div"].lower():
                     div_keywords = [f"{cat_letter}3", "Tercera"]
                 elif "cuarta" in target["div"].lower():
                     if cat_letter == "MX":
@@ -528,6 +538,8 @@ async def main():
                 elements = await page.query_selector_all("li, .mbsc-lv-item")
                 target_element = None
                 for el in elements:
+                    if not await el.is_visible():
+                        continue
                     text = (await el.inner_text()).replace('\n', ' ').strip().lower()
                     if all(kw.lower() in text for kw in div_keywords):
                         target_element = el
