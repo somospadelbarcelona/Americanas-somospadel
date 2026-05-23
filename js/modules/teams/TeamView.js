@@ -129,7 +129,7 @@
                                 </div>
                             </div>
                             <img src="img/logo_somospadel.png" style="width: 60px; height: 60px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.05));">
-                        </div>         </div>
+                        </div>
                         
                         <!-- 📊 METRICS ROW -->
                         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 25px; position: relative; z-index: 2;">
@@ -150,7 +150,6 @@
                                 <div style="font-size: 1.3rem; color: #0f172a; font-weight: 950;">${totalPointsCount}</div>
                             </div>
                         </div>
-                    </div>
                     </div>
 
                     <!-- 🔍 SEARCH BAR -->
