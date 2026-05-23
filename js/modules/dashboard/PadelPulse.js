@@ -218,7 +218,7 @@
 
 .pp6-card {
     font-family: 'Inter', sans-serif;
-    margin: 8px 14px 15px;
+    margin: 8px 14px 6px;
     border-radius: 28px;
     background: #ffffff;
     border: 1px solid #e2e8f0;

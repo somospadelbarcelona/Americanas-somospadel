@@ -73,19 +73,19 @@
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
                     background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.08) 0%, transparent 70%);
                     min-height: 100vh;
-                    padding-top: 4px !important;
+                    padding-top: 0;
                 ">
 
                     <!-- 🏓 PADEL PULSE — Widget personalizado en tiempo real -->
                     <div id="padel-pulse-widget-root" style="animation: floatUp 0.5s ease-out forwards;"></div>
 
                     <!-- 0. HERO CARD (CONTEXT AWARE) -->
-                    <div id="hero-card-root" style="animation: floatUp 0.8s ease-out forwards; margin-top: -4px;">
+                    <div id="hero-card-root" style="animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS (HeroCard) -->
                     </div>
 
                     <!-- 4. PULSE STORIES (Instagram Style) -->
-                    <div id="story-feed-root" style="margin: 0 !important; animation: floatUp 0.8s ease-out forwards; padding-top: 0;">
+                    <div id="story-feed-root" style="margin: 0 !important; padding: 0;">
                         <!-- Cargado vía JS (StoryFeedWidget) -->
                     </div>
 

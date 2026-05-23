@@ -245,6 +245,8 @@ body {
     padding-left: 0 !important;
     padding-right: 0 !important;
     overflow-x: hidden;
+    gap: 6px !important;
+    /* Compact spacing between all dashboard widgets */
 }
 
 .mobile-panel {
@@ -2194,10 +2196,10 @@ body {
 .dashboard-v2-container {
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    /* Space between visual blocks */
-    padding: 0 20px 120px 20px;
-    /* Safe space plus bottom nav */
+    gap: 8px;
+    /* Space between visual blocks — reduced from 24px */
+    padding: 0 0 120px 0;
+    /* Safe space plus bottom nav — horizontal handled per-widget */
     max-width: 600px;
     /* Tablet constraint */
     margin: 0 auto;

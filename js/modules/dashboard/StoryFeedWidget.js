@@ -97,17 +97,18 @@
                 /* Story Bar Layout with Premium Fade Edge Indication */
                 .story-feed-v3-wrapper {
                     position: relative;
-                    padding: 8px 0;
+                    padding: 0;
                     user-select: none;
                     width: 100%;
-                    overflow: hidden;
+                    overflow: visible;
+                    background: transparent;
                 }
                 .story-feed-v3-wrapper::after {
                     content: '';
                     position: absolute;
                     top: 0;
                     right: 0;
-                    height: 100%;
+                    height: calc(100% - 10px);
                     width: 40px;
                     background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.98));
                     pointer-events: none;
@@ -119,8 +120,8 @@
                     flex-direction: row !important;
                     justify-content: flex-start;
                     align-items: center;
-                    gap: 14px;
-                    padding: 10px 20px;
+                    gap: 12px;
+                    padding: 6px 16px 10px;
                     overflow-x: auto !important;
                     overflow-y: visible !important;
                     scrollbar-width: none;
@@ -131,6 +132,13 @@
                     scroll-snap-type: x mandatory;
                 }
                 .story-h-scroll::-webkit-scrollbar { display: none; }
+                
+                @media (max-width: 600px) {
+                    .story-h-scroll {
+                        gap: 8px;
+                        padding: 4px 12px 8px;
+                    }
+                }
                 
                 @media (min-width: 768px) {
                     .story-h-scroll {
@@ -146,16 +154,22 @@
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    gap: 6px;
+                    gap: 5px;
                     cursor: pointer;
                     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
                     scroll-snap-align: start;
                     flex-shrink: 0 !important;
-                    min-width: 68px !important;
+                    min-width: 66px !important;
+                }
+                @media (max-width: 600px) {
+                    .story-v3-item {
+                        min-width: 58px !important;
+                        gap: 3px;
+                    }
                 }
                 
                 .story-v3-item:hover { 
-                    transform: translateY(-3px) scale(1.04); 
+                    transform: translateY(-2px) scale(1.03); 
                 }
 
                 @keyframes pulseDot {
@@ -166,13 +180,20 @@
 
                 /* Sphere 3D Outer & Inner Glow Engine */
                 .story-v3-outer {
-                    width: 56px;
-                    height: 56px;
+                    width: 54px;
+                    height: 54px;
                     border-radius: 50%;
                     padding: 2.5px;
                     position: relative;
                     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
                     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                }
+                @media (max-width: 600px) {
+                    .story-v3-outer {
+                        width: 48px;
+                        height: 48px;
+                        padding: 2px;
+                    }
                 }
                 
                 /* Interactive ambient glow */
@@ -210,8 +231,13 @@
                 }
                 
                 .story-v3-inner i {
-                    font-size: 1.2rem;
+                    font-size: 1.15rem;
                     transition: all 0.25s ease;
+                }
+                @media (max-width: 600px) {
+                    .story-v3-inner i {
+                        font-size: 1rem;
+                    }
                 }
                 
                 .story-v3-item:hover .story-v3-inner i {
@@ -220,13 +246,13 @@
                 
                 /* Precise Typography styling */
                 .story-v3-label {
-                    font-size: 0.58rem;
-                    font-weight: 800; 
-                    color: #1e293b; 
+                    font-size: 0.6rem;
+                    font-weight: 900; 
+                    color: #0f172a !important; 
                     letter-spacing: 0.3px;
                     text-transform: uppercase;
                     white-space: nowrap;
-                    margin-top: 3px;
+                    margin-top: 4px;
                     text-align: center;
                     font-family: 'Outfit', sans-serif;
                     
@@ -236,6 +262,12 @@
                     -webkit-font-smoothing: antialiased;
                     -moz-osx-font-smoothing: grayscale;
                     text-rendering: optimizeLegibility;
+                }
+                @media (max-width: 600px) {
+                    .story-v3-label {
+                        font-size: 0.55rem;
+                        margin-top: 3px;
+                    }
                 }
 
                 /* Stories Fullscreen Modal */
