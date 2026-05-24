@@ -1,4 +1,4 @@
-﻿/**
+/**
  * TeamView.js - Club Teams Premium Redesign (Broadcast Light Aesthetic)
  * Reestructuración Maestra e interactividad avanzada dentro de cada tarjeta.
  */
@@ -833,7 +833,7 @@
             const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
 
             // Recopilar el próximo partido de cada equipo
-            const teamMatches = teams.map(team => {
+            const teamMatchesRaw = teams.map(team => {
                 let nextMatch = null;
                 if (team.schedule && team.schedule.length > 0) {
                     const sortedMatches = [...team.schedule].sort((a, b) => parseInt(a.j) - parseInt(b.j));
@@ -845,141 +845,231 @@
                 return { team, nextMatch };
             });
 
+            // ──────────────────────────────────────────────────
+            // 🏅 ORDENAR POR CATEGORÍA: Masculina → Femenina → Mixta
+            // ──────────────────────────────────────────────────
+            const categoryOrder = { 'Masculina': 0, 'Femenina': 1, 'Mixta': 2 };
+            const teamMatches = [...teamMatchesRaw].sort((a, b) => {
+                const catA = categoryOrder[a.team.category] ?? 99;
+                const catB = categoryOrder[b.team.category] ?? 99;
+                return catA - catB;
+            });
+
+            // ──────────────────────────────────────────────────
+            // 🎨 PALETA DE COLORES POR CATEGORÍA
+            // ──────────────────────────────────────────────────
+            const categoryStyles = {
+                'Masculina': {
+                    accent:      '#0284c7',
+                    accentDark:  '#0369a1',
+                    cardBg:      '#f0f9ff',
+                    border:      '#bae6fd',
+                    gradient:    'linear-gradient(180deg, #0284c7 0%, #0369a1 100%)',
+                    teamColor:   '#0284c7',
+                    emoji:       '👨',
+                    label:       'MASCULINA',
+                    headerBg:    'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
+                },
+                'Femenina': {
+                    accent:      '#db2777',
+                    accentDark:  '#be185d',
+                    cardBg:      '#fdf2f8',
+                    border:      '#fbcfe8',
+                    gradient:    'linear-gradient(180deg, #db2777 0%, #be185d 100%)',
+                    teamColor:   '#db2777',
+                    emoji:       '👩',
+                    label:       'FEMENINA',
+                    headerBg:    'linear-gradient(135deg, #db2777 0%, #f472b6 100%)',
+                },
+                'Mixta': {
+                    accent:      '#7c3aed',
+                    accentDark:  '#6d28d9',
+                    cardBg:      '#f5f3ff',
+                    border:      '#ddd6fe',
+                    gradient:    'linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%)',
+                    teamColor:   '#7c3aed',
+                    emoji:       '👥',
+                    label:       'MIXTA',
+                    headerBg:    'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
+                },
+            };
+            const defaultStyle = {
+                accent: '#38b000', accentDark: '#007200', cardBg: '#f8fafc',
+                border: '#e2e8f0', gradient: 'linear-gradient(180deg, #38b000 0%, #007200 100%)',
+                teamColor: '#38b000', emoji: '🏓', label: '', headerBg: 'linear-gradient(135deg, #38b000, #70e000)',
+            };
+
             // Determinar dimensiones según la cantidad de equipos para que quepan todos en 1920px de alto
             const count = teams.length;
             let sizes = {
-                containerPadding: '60px 50px',
-                headerMarginBottom: '36px',
-                headerTitleFontSize: '48px',
+                containerPadding: '50px 46px',
+                headerMarginBottom: '32px',
+                headerTitleFontSize: '52px',
                 headerBannerPadding: '16px 50px',
-                headerBannerFontSize: '38px',
-                rowGap: '16px',
-                cardPadding: '28px 32px',
-                cardGap: '10px',
+                headerBannerFontSize: '40px',
+                rowGap: '14px',
+                catHeaderFontSize: '22px',
+                catHeaderPadding: '10px 20px',
+                catHeaderMarginBottom: '8px',
+                cardPadding: '22px 28px',
+                cardGap: '8px',
                 teamNameFontSize: '30px',
                 homeAwayFontSize: '20px',
-                homeAwayPadding: '7px 18px',
+                homeAwayPadding: '7px 16px',
                 vsFontSize: '34px',
-                detailsFontSize: '26px',
-                jornadaFontSize: '22px',
-                footerMarginTop: '36px',
-                footerPaddingTop: '28px',
+                detailsFontSize: '24px',
+                jornadaFontSize: '20px',
+                footerMarginTop: '32px',
+                footerPaddingTop: '24px',
                 footerLine1FontSize: '28px',
                 footerLine2FontSize: '20px',
-                noMatchPadding: '24px 32px',
-                noMatchFontSize: '30px',
-                noMatchTextFontSize: '26px'
+                noMatchPadding: '20px 28px',
+                noMatchFontSize: '28px',
+                noMatchTextFontSize: '24px'
             };
 
             if (count === 5) {
                 sizes = {
-                    containerPadding: '50px 40px',
-                    headerMarginBottom: '28px',
-                    headerTitleFontSize: '44px',
+                    containerPadding: '44px 40px',
+                    headerMarginBottom: '26px',
+                    headerTitleFontSize: '46px',
                     headerBannerPadding: '14px 44px',
-                    headerBannerFontSize: '34px',
-                    rowGap: '14px',
-                    cardPadding: '22px 26px',
-                    cardGap: '8px',
-                    teamNameFontSize: '26px',
+                    headerBannerFontSize: '36px',
+                    rowGap: '12px',
+                    catHeaderFontSize: '20px',
+                    catHeaderPadding: '8px 18px',
+                    catHeaderMarginBottom: '6px',
+                    cardPadding: '18px 24px',
+                    cardGap: '6px',
+                    teamNameFontSize: '28px',
                     homeAwayFontSize: '18px',
                     homeAwayPadding: '6px 14px',
                     vsFontSize: '30px',
                     detailsFontSize: '22px',
-                    jornadaFontSize: '19px',
-                    footerMarginTop: '28px',
-                    footerPaddingTop: '22px',
+                    jornadaFontSize: '18px',
+                    footerMarginTop: '26px',
+                    footerPaddingTop: '20px',
                     footerLine1FontSize: '24px',
                     footerLine2FontSize: '18px',
-                    noMatchPadding: '18px 24px',
+                    noMatchPadding: '16px 22px',
                     noMatchFontSize: '26px',
                     noMatchTextFontSize: '22px'
                 };
             } else if (count === 6) {
                 sizes = {
-                    containerPadding: '40px 30px',
+                    containerPadding: '36px 34px',
                     headerMarginBottom: '20px',
-                    headerTitleFontSize: '38px',
-                    headerBannerPadding: '12px 36px',
-                    headerBannerFontSize: '30px',
-                    rowGap: '12px',
-                    cardPadding: '16px 22px',
-                    cardGap: '6px',
-                    teamNameFontSize: '22px',
+                    headerTitleFontSize: '42px',
+                    headerBannerPadding: '12px 38px',
+                    headerBannerFontSize: '32px',
+                    rowGap: '10px',
+                    catHeaderFontSize: '18px',
+                    catHeaderPadding: '7px 16px',
+                    catHeaderMarginBottom: '5px',
+                    cardPadding: '14px 20px',
+                    cardGap: '5px',
+                    teamNameFontSize: '24px',
                     homeAwayFontSize: '16px',
                     homeAwayPadding: '5px 12px',
-                    vsFontSize: '26px',
-                    detailsFontSize: '19px',
+                    vsFontSize: '27px',
+                    detailsFontSize: '20px',
                     jornadaFontSize: '16px',
                     footerMarginTop: '20px',
                     footerPaddingTop: '16px',
                     footerLine1FontSize: '22px',
                     footerLine2FontSize: '16px',
-                    noMatchPadding: '14px 20px',
+                    noMatchPadding: '12px 18px',
                     noMatchFontSize: '22px',
                     noMatchTextFontSize: '19px'
                 };
             } else if (count >= 7) {
                 sizes = {
-                    containerPadding: '30px 24px',
-                    headerMarginBottom: '16px',
-                    headerTitleFontSize: '34px',
+                    containerPadding: '28px 26px',
+                    headerMarginBottom: '14px',
+                    headerTitleFontSize: '36px',
                     headerBannerPadding: '8px 28px',
-                    headerBannerFontSize: '26px',
-                    rowGap: '10px',
-                    cardPadding: '14px 18px',
+                    headerBannerFontSize: '28px',
+                    rowGap: '9px',
+                    catHeaderFontSize: '16px',
+                    catHeaderPadding: '6px 14px',
+                    catHeaderMarginBottom: '4px',
+                    cardPadding: '12px 16px',
                     cardGap: '4px',
-                    teamNameFontSize: '20px',
+                    teamNameFontSize: '22px',
                     homeAwayFontSize: '14px',
                     homeAwayPadding: '4px 10px',
-                    vsFontSize: '22px',
-                    detailsFontSize: '17px',
+                    vsFontSize: '24px',
+                    detailsFontSize: '18px',
                     jornadaFontSize: '14px',
-                    footerMarginTop: '16px',
+                    footerMarginTop: '14px',
                     footerPaddingTop: '12px',
-                    footerLine1FontSize: '18px',
+                    footerLine1FontSize: '20px',
                     footerLine2FontSize: '14px',
-                    noMatchPadding: '10px 16px',
-                    noMatchFontSize: '18px',
-                    noMatchTextFontSize: '16px'
+                    noMatchPadding: '10px 14px',
+                    noMatchFontSize: '20px',
+                    noMatchTextFontSize: '17px'
                 };
             }
 
             const cardStyle = isForCapture ? 'width: 1080px; height: 1920px;' : 'width: 100%; height: 100%;';
 
-            // Construir las filas de cada equipo
+            // ──────────────────────────────────────────────────
+            // 🏟️ CONSTRUIR LAS FILAS AGRUPADAS POR CATEGORÍA
+            // ──────────────────────────────────────────────────
+            let lastCategory = null;
             const teamRows = teamMatches.map((tm) => {
                 const { team, nextMatch } = tm;
                 const teamShortName = team.name.replace('SOMOS PÁDEL BCN ', '').replace('SOMOS PÁDEL ', '');
+                const cat = team.category || '';
+                const cs = categoryStyles[cat] || defaultStyle;
 
+                // Cabecera de sección si es una nueva categoría
+                let catHeader = '';
+                if (cat !== lastCategory) {
+                    lastCategory = cat;
+                    if (cat) {
+                        catHeader = `
+                            <div style="display: flex; align-items: center; gap: 12px; margin-top: ${lastCategory === cat ? '0' : sizes.rowGap}; margin-bottom: ${sizes.catHeaderMarginBottom};">
+                                <div style="flex: 1; height: 2px; background: ${cs.gradient}; border-radius: 2px; opacity: 0.5;"></div>
+                                <div style="background: ${cs.headerBg}; color: #ffffff; padding: ${sizes.catHeaderPadding}; border-radius: 30px; font-size: ${sizes.catHeaderFontSize}; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; white-space: nowrap; box-shadow: 0 4px 12px ${cs.accent}33;">
+                                    ${cs.emoji} ${cs.label}
+                                </div>
+                                <div style="flex: 1; height: 2px; background: ${cs.gradient}; border-radius: 2px; opacity: 0.5;"></div>
+                            </div>
+                        `;
+                    }
+                }
+
+                let cardHTML = '';
                 if (nextMatch) {
                     const isHome = nextMatch.isHome;
-                    const homeAwayBg = isHome ? 'rgba(56, 176, 0, 0.1)' : 'rgba(37, 99, 235, 0.1)';
-                    const homeAwayColor = isHome ? '#007200' : '#1d4ed8';
+                    const homeAwayBg = isHome ? `${cs.accent}18` : 'rgba(37, 99, 235, 0.1)';
+                    const homeAwayColor = isHome ? cs.accentDark : '#1d4ed8';
                     const homeAwayText = isHome ? '🏠 LOCAL' : '✈️ VISIT.';
-                    return `
-                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: ${sizes.cardPadding}; display: flex; flex-direction: column; gap: ${sizes.cardGap}; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);">
-                            <div style="position: absolute; top: 0; left: 0; width: 5px; height: 100%; background: linear-gradient(180deg, #38b000, #007200); border-radius: 5px 0 0 5px;"></div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div style="font-size: ${sizes.teamNameFontSize}; font-weight: 950; color: #38b000; text-transform: uppercase; letter-spacing: 0.5px;">${teamShortName}</div>
+                    cardHTML = `
+                        <div style="background: ${cs.cardBg}; border: 1.5px solid ${cs.border}; border-radius: 20px; padding: ${sizes.cardPadding}; display: flex; flex-direction: column; gap: ${sizes.cardGap}; position: relative; overflow: hidden; box-shadow: 0 8px 20px ${cs.accent}12;">
+                            <div style="position: absolute; top: 0; left: 0; width: 6px; height: 100%; background: ${cs.gradient}; border-radius: 6px 0 0 6px;"></div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 6px;">
+                                <div style="font-size: ${sizes.teamNameFontSize}; font-weight: 950; color: ${cs.teamColor}; text-transform: uppercase; letter-spacing: 0.5px;">${teamShortName}</div>
                                 <div style="background: ${homeAwayBg}; color: ${homeAwayColor}; padding: ${sizes.homeAwayPadding}; border-radius: 30px; font-size: ${sizes.homeAwayFontSize}; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">${homeAwayText}</div>
                             </div>
-                            <div style="font-size: ${sizes.vsFontSize}; font-weight: 800; color: #0f172a; margin: 4px 0 2px;">vs ${nextMatch.opponent}</div>
-                            <div style="display: flex; gap: 24px; align-items: center; flex-wrap: wrap;">
-                                <div style="display: flex; align-items: center; gap: 10px; color: #475569; font-size: ${sizes.detailsFontSize}; font-weight: 700;"><span>📅</span> ${nextMatch.date}${nextMatch.time ? ' • ' + nextMatch.time : ''}</div>
-                                <div style="display: flex; align-items: center; gap: 10px; color: #475569; font-size: ${sizes.detailsFontSize}; font-weight: 700;"><span>📍</span> ${nextMatch.venue}</div>
+                            <div style="font-size: ${sizes.vsFontSize}; font-weight: 800; color: #0f172a; margin: 2px 0 2px; padding-left: 6px;">vs ${nextMatch.opponent}</div>
+                            <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap; padding-left: 6px;">
+                                <div style="display: flex; align-items: center; gap: 8px; color: #475569; font-size: ${sizes.detailsFontSize}; font-weight: 700;">📅 ${nextMatch.date}${nextMatch.time ? ' · ' + nextMatch.time : ''} &nbsp; 📍 ${nextMatch.venue}</div>
                             </div>
-                            <div style="color: #64748b; font-size: ${sizes.jornadaFontSize}; font-weight: 700;">Jornada ${nextMatch.j} • ${team.group || team.division}</div>
+                            <div style="color: ${cs.accent}; font-size: ${sizes.jornadaFontSize}; font-weight: 700; padding-left: 6px;">Jornada ${nextMatch.j} · ${team.group || team.division}</div>
                         </div>
                     `;
                 } else {
-                    return `
-                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 24px; padding: ${sizes.noMatchPadding}; display: flex; align-items: center; gap: 16px; opacity: 0.65; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
-                            <div style="font-size: ${sizes.noMatchFontSize}; font-weight: 950; color: #38b000; text-transform: uppercase;">${teamShortName}</div>
+                    cardHTML = `
+                        <div style="background: ${cs.cardBg}; border: 1.5px solid ${cs.border}; border-radius: 20px; padding: ${sizes.noMatchPadding}; display: flex; align-items: center; gap: 16px; opacity: 0.7; box-shadow: 0 4px 12px ${cs.accent}08; position: relative; overflow: hidden;">
+                            <div style="position: absolute; top: 0; left: 0; width: 6px; height: 100%; background: ${cs.gradient}; border-radius: 6px 0 0 6px;"></div>
+                            <div style="font-size: ${sizes.noMatchFontSize}; font-weight: 950; color: ${cs.teamColor}; text-transform: uppercase; padding-left: 6px;">${teamShortName}</div>
                             <div style="color: #64748b; font-size: ${sizes.noMatchTextFontSize}; font-weight: 700;">— Sin partidos pendientes</div>
                         </div>
                     `;
                 }
+                return catHeader + cardHTML;
             }).join('');
 
             return `
