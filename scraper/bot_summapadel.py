@@ -488,19 +488,33 @@ async def main():
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(
-            headless=True,
-            args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+            headless=False,
+            args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage",
+                  "--disable-blink-features=AutomationControlled"]
         )
-        page = await browser.new_page()
-        page.set_default_timeout(15000)
+        context = await browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            viewport={"width": 1280, "height": 900}
+        )
+        page = await context.new_page()
+        page.set_default_timeout(60000)
 
         for target in TARGET_TEAMS:
             print(f"\n[PROCESANDO] {target['name']}...")
             try:
                 # Usar URL específica del equipo si existe, si no usar TARGET_URL general
                 team_url = target.get("url", TARGET_URL)
-                await page.goto(team_url, wait_until="domcontentloaded")
-                await page.wait_for_timeout(2000)
+                # Reintentar hasta 3 veces si hay timeout
+                for intento in range(3):
+                    try:
+                        await page.goto(team_url, wait_until="domcontentloaded", timeout=60000)
+                        break
+                    except Exception as goto_err:
+                        print(f"   [REINTENTO {intento+1}/3] Error al cargar: {goto_err}")
+                        if intento == 2:
+                            raise
+                        await page.wait_for_timeout(3000)
+                await page.wait_for_timeout(3000)
 
                 # 1. Seleccionar Categoria (Masculina, Femenina o Mixta)
                 cat_terms = ["Masculí", "Masculina"]
@@ -612,6 +626,7 @@ async def main():
             except Exception as e:
                 print(f"   [FATAL] Error procesando {target['name']}: {e}")
 
+        await context.close()
         await browser.close()
 
     print(f"\n[RESULTADO] Sincronizacion de {len(found_teams)} equipos finalizada.")
