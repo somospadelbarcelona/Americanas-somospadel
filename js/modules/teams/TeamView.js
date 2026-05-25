@@ -374,7 +374,18 @@
                     <div style="margin-top: 15px; padding: 10px 15px; background: linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,41,59,0.98)); border-radius: 16px; border-left: 4px solid #38b000; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
                         <div>
                             <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Próximo Reto • J${pendingMatchInfo.j}</div>
-                            <div style="font-size: 0.85rem; color: #ffffff; font-weight: 900; margin-top: 2px;">vs ${pendingMatchInfo.opponent}</div>
+                            <div style="font-size: 0.85rem; color: #ffffff; font-weight: 900; margin-top: 2px; display: flex; align-items: center; gap: 8px;">
+                                <span>vs ${pendingMatchInfo.opponent}</span>
+                                ${pendingMatchInfo.opponent !== 'BYE' ? `
+                                    <span onclick="event.stopPropagation(); window.TeamController.showRivalScouting('${team.id}', '${pendingMatchInfo.opponent}')" 
+                                          style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(56, 176, 0, 0.15); color: #70e000; font-size: 0.65rem; cursor: pointer; transition: 0.2s;" 
+                                          title="Scouting del Rival"
+                                          onmouseover="this.style.background='rgba(56, 176, 0, 0.25)'"
+                                          onmouseout="this.style.background='rgba(56, 176, 0, 0.15)'">
+                                        <i class="fas fa-radiation"></i>
+                                    </span>
+                                ` : ''}
+                            </div>
                             <div style="font-size: 0.65rem; color: #cbd5e1; font-weight: 600; margin-top: 2px;"><i class="far fa-calendar-alt" style="color: #38b000;"></i> ${pendingMatchInfo.date} • ${pendingMatchInfo.venue}</div>
                         </div>
                         <i class="fas fa-fire-alt" style="color: #f59e0b; font-size: 1.5rem; opacity: 0.8; animation: pulseGlow 2s infinite;"></i>
@@ -459,8 +470,17 @@
                                         return `
                                             <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #f8fafc; border-radius: 16px; border: 1px solid #edf2f7; margin-bottom: 6px;">
                                                 <div style="min-width: 0; flex: 1;">
-                                                    <div style="font-size: 0.75rem; font-weight: 900; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                                        J${m.j}: vs ${m.opponent}
+                                                    <div style="font-size: 0.75rem; font-weight: 900; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px;">
+                                                         <span>J${m.j}: vs ${m.opponent}</span>
+                                                         ${m.status !== 'completed' && m.opponent !== 'BYE' ? `
+                                                             <span onclick="event.stopPropagation(); window.TeamController.showRivalScouting('${team.id}', '${m.opponent}')" 
+                                                                   style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: rgba(56, 176, 0, 0.08); color: #38b000; font-size: 0.55rem; cursor: pointer; transition: 0.2s;" 
+                                                                   title="Scouting del Rival"
+                                                                   onmouseover="this.style.background='rgba(56, 176, 0, 0.15)'"
+                                                                   onmouseout="this.style.background='rgba(56, 176, 0, 0.08)'">
+                                                                 <i class="fas fa-radiation"></i>
+                                                             </span>
+                                                         ` : ''}
                                                     </div>
                                                     <div style="font-size: 0.6rem; color: #94a3b8; font-weight: 700; margin-top: 1px;">
                                                         ${m.date} • ${m.venue}
