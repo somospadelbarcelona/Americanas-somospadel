@@ -167,6 +167,11 @@
                         </div>
                     </div>
 
+                    <!-- 3.5 NEWS BLOG WIDGET -->
+                    <div id="blog-news-widget-root" style="margin: 0 15px 12px !important; animation: floatUp 0.8s ease-out forwards;">
+                        <!-- Content loaded via JS -->
+                    </div>
+
                     <!-- 3. WEATHER WIDGET -->
                     <div id="weather-widget-root" style="margin: 0 15px 8px !important; animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS -->
@@ -379,6 +384,11 @@
                     weatherRoot.style.display = 'block';
                 }
 
+                // Load Blog News Widget
+                const blogRoot = document.getElementById('blog-news-widget-root');
+                if (blogRoot) {
+                    blogRoot.innerHTML = this.renderBlogWidget();
+                }
 
                 // PRO CONTENT (AGENDA) REMOVED PER USER REQUEST
 
@@ -407,8 +417,237 @@
             console.log("📺 [DashboardView] Ticker management delegated to SmartTicker.js for premium TV experience.");
         }
 
+        toggleWeatherDetails(safeCityId) {
+            const details = document.getElementById(`weather-details-${safeCityId}`);
+            const insight = document.getElementById(`weather-insight-${safeCityId}`);
+            const btn = document.getElementById(`weather-btn-${safeCityId}`);
+            
+            if (details && btn) {
+                if (details.style.display === 'none') {
+                    details.style.display = 'flex';
+                    if (insight) insight.style.display = 'block';
+                    btn.innerHTML = `Ver menos <i class="fas fa-chevron-up" id="weather-icon-${safeCityId}"></i>`;
+                } else {
+                    details.style.display = 'none';
+                    if (insight) insight.style.display = 'none';
+                    btn.innerHTML = `Ver más <i class="fas fa-chevron-down" id="weather-icon-${safeCityId}"></i>`;
+                }
+            }
+        }
+
+        toggleActivityFeed() {
+            const container = document.getElementById('activity-extended-container');
+            const btn = document.getElementById('activity-toggle-btn');
+            
+            if (container && btn) {
+                if (container.style.display === 'none') {
+                    container.style.display = 'flex';
+                    btn.innerHTML = `Ver menos <i class="fas fa-chevron-up" id="activity-toggle-icon"></i>`;
+                } else {
+                    container.style.display = 'none';
+                    btn.innerHTML = `Ver más <i class="fas fa-chevron-down" id="activity-toggle-icon"></i>`;
+                }
+            }
+        }
+
+        renderBlogWidget() {
+            // Fetch async, inject into shell
+            setTimeout(async () => {
+                const container = document.getElementById('dynamic-blog-posts-container');
+                if (!container) return;
+                try {
+                    const db = window.db || firebase.firestore();
+                    const snapshot = await db.collection('blog_posts').orderBy('timestamp', 'desc').get();
+                    let posts = [];
+                    if (!snapshot.empty) {
+                        posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    } else {
+                        posts = [
+                            { id: 'torneo-primavera', category: '🏆 TORNEOS', catColor: '#CCFF00', title: 'Gran Torneo de Primavera 2026', emoji: '🎾', imgGrad: 'linear-gradient(135deg, #CCFF00 0%, #84cc16 100%)', snippet: '¡Inscripciones abiertas! 120 plazas, Welcome Pack premium y gran barbacoa final.', content: 'Llega el evento más esperado del año.', date: 'Hoy', readTime: '2 min' },
+                            { id: 'scouting-rival', category: '📊 RANKING', catColor: '#38bdf8', title: 'Ranking Actualizado: Top 5 de la Temporada', emoji: '🏅', imgGrad: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)', snippet: 'El ranking se ha recalculado. ¿Has subido posiciones esta semana?', content: 'Consulta tu posición en la sección Ranking.', date: 'Ayer', readTime: '2 min' },
+                            { id: 'tactica-medio', category: '💡 CONSEJOS', catColor: '#f59e0b', title: 'La Táctica del Centro', emoji: '⚡', imgGrad: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)', snippet: 'Jugar al medio reduce drásticamente los ángulos del rival.', content: 'El centro de la pista es la clave táctica más poderosa.', date: 'Hace 3 días', readTime: '4 min' }
+                        ];
+                    }
+                    if (posts.length === 0) { container.innerHTML = ''; return; }
+                    const featured = posts[0];
+                    const rest = posts.slice(1, 5);
+
+                    const premiumIcon = (post, size = 60) => {
+                        const grad = post.imgGrad || 'linear-gradient(135deg, #CCFF00, #84cc16)';
+                        const em = post.emoji || '📰';
+                        return `<div style="width:${size}px;height:${size}px;border-radius:${Math.round(size*0.27)}px;background:${grad};display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.3);"><div style="position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.25) 0%,transparent 100%);border-radius:inherit;pointer-events:none;"></div><div style="position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,0.12) 1px,transparent 1px);background-size:${Math.round(size/7)}px ${Math.round(size/7)}px;pointer-events:none;"></div><span style="font-size:${Math.round(size*0.42)}px;position:relative;z-index:2;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.3));line-height:1;">${em}</span></div>`;
+                    };
+
+                    const featuredCard = `
+                        <div onclick="window.DashboardView.openBlogPost('${featured.id}')"
+                             style="border-radius:22px;overflow:hidden;cursor:pointer;background:${featured.imgGrad||'linear-gradient(135deg,#1e293b,#0f172a)'};position:relative;min-height:160px;box-shadow:0 12px 35px rgba(0,0,0,0.45);transition:transform 0.3s ease,box-shadow 0.3s ease;border:1px solid rgba(255,255,255,0.12);"
+                             onmouseover="this.style.transform='scale(1.015)';this.style.boxShadow='0 18px 45px rgba(0,0,0,0.6)';"
+                             onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 12px 35px rgba(0,0,0,0.45)';">
+                            <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,0.07) 1px,transparent 1px);background-size:18px 18px;pointer-events:none;"></div>
+                            <div style="position:absolute;bottom:0;left:0;right:0;height:70%;background:linear-gradient(0deg,rgba(0,0,0,0.75) 0%,transparent 100%);pointer-events:none;"></div>
+                            <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(255,255,255,0.15) 0%,transparent 70%);pointer-events:none;filter:blur(15px);"></div>
+                            <div style="position:relative;padding:18px;display:flex;gap:16px;align-items:flex-end;min-height:160px;">
+                                <div style="width:80px;height:80px;border-radius:20px;background:rgba(255,255,255,0.15);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:center;box-shadow:0 8px 20px rgba(0,0,0,0.25);">
+                                    <span style="font-size:2.6rem;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.4));line-height:1;">${featured.emoji||'📰'}</span>
+                                </div>
+                                <div style="flex:1;min-width:0;">
+                                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+                                        <span style="font-size:0.52rem;font-weight:900;color:${featured.catColor||'#CCFF00'};background:rgba(0,0,0,0.4);border:1px solid ${featured.catColor||'#CCFF00'}50;padding:3px 9px;border-radius:6px;letter-spacing:1px;text-transform:uppercase;">${featured.category||'REVISTA'}</span>
+                                        <span style="font-size:0.48rem;font-weight:900;color:rgba(255,255,255,0.5);letter-spacing:0.5px;text-transform:uppercase;">★ DESTACADO</span>
+                                    </div>
+                                    <h3 style="margin:0 0 7px 0;color:white;font-weight:900;font-size:1.05rem;line-height:1.25;letter-spacing:-0.3px;text-shadow:0 2px 8px rgba(0,0,0,0.5);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${featured.title}</h3>
+                                    <p style="margin:0 0 10px 0;color:rgba(255,255,255,0.75);font-size:0.72rem;font-weight:500;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${featured.snippet}</p>
+                                    <div style="display:flex;align-items:center;gap:10px;">
+                                        <span style="font-size:0.6rem;color:rgba(255,255,255,0.5);font-weight:600;display:flex;align-items:center;gap:4px;"><i class="far fa-calendar" style="font-size:0.55rem;"></i>${featured.date||'Hoy'}</span>
+                                        <span style="font-size:0.6rem;color:rgba(255,255,255,0.5);font-weight:600;display:flex;align-items:center;gap:4px;"><i class="far fa-clock" style="font-size:0.55rem;"></i>${featured.readTime||'3 min'}</span>
+                                        <div style="margin-left:auto;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);border-radius:20px;padding:4px 12px;font-size:0.6rem;font-weight:800;color:white;display:flex;align-items:center;gap:4px;backdrop-filter:blur(5px);">LEER <i class="fas fa-arrow-right" style="font-size:0.5rem;"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+
+                    const compactCards = rest.map(post => `
+                        <div onclick="window.DashboardView.openBlogPost('${post.id}')"
+                             style="display:flex;gap:14px;align-items:center;padding:13px 14px;border-radius:16px;cursor:pointer;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);transition:all 0.25s ease;position:relative;overflow:hidden;"
+                             onmouseover="this.style.background='rgba(255,255,255,0.09)';this.style.borderColor='rgba(255,255,255,0.18)';this.style.transform='translateX(3px)';"
+                             onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.borderColor='rgba(255,255,255,0.07)';this.style.transform='translateX(0)';">
+                            <div style="position:absolute;left:0;top:20%;bottom:20%;width:3px;background:${post.catColor||'#CCFF00'};border-radius:0 3px 3px 0;opacity:0.7;"></div>
+                            ${premiumIcon(post, 60)}
+                            <div style="flex:1;min-width:0;">
+                                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                                    <span style="font-size:0.5rem;font-weight:900;letter-spacing:0.8px;color:${post.catColor||'#CCFF00'};text-transform:uppercase;">${(post.category||'REVISTA').replace(/^[^\s]+\s/,'')}</span>
+                                    <span style="font-size:0.58rem;color:rgba(255,255,255,0.35);font-weight:600;display:flex;align-items:center;gap:3px;"><i class="far fa-clock" style="font-size:0.5rem;"></i>${post.readTime||'3 min'}</span>
+                                </div>
+                                <h4 style="margin:0 0 4px 0;color:rgba(255,255,255,0.95);font-weight:800;font-size:0.88rem;line-height:1.2;letter-spacing:-0.2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${post.title}</h4>
+                                <p style="margin:0;color:rgba(255,255,255,0.5);font-size:0.68rem;font-weight:500;line-height:1.35;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;">${post.snippet}</p>
+                            </div>
+                            <div style="flex-shrink:0;color:rgba(255,255,255,0.25);font-size:0.7rem;"><i class="fas fa-chevron-right"></i></div>
+                        </div>
+                    `).join('');
+
+                    container.innerHTML = featuredCard + `<div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">${compactCards}</div>`;
+
+                } catch (err) {
+                    console.error("Fallo al inyectar blog posts dinámicos:", err);
+                    container.innerHTML = '';
+                }
+            }, 100);
+
+            return `
+                <div style="background:linear-gradient(160deg,#0d1b2e 0%,#0a1628 50%,#0f1f35 100%);border:1px solid rgba(255,255,255,0.1);border-radius:28px;padding:20px;box-shadow:0 25px 60px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.08);position:relative;overflow:hidden;">
+                    <div style="position:absolute;top:-60px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(204,255,0,0.08) 0%,transparent 70%);pointer-events:none;filter:blur(30px);"></div>
+                    <div style="position:absolute;bottom:-60px;left:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(56,189,248,0.08) 0%,transparent 70%);pointer-events:none;filter:blur(30px);"></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.07);">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#CCFF00,#84cc16);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(204,255,0,0.35);">
+                                <i class="fas fa-newspaper" style="font-size:0.75rem;color:#000;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:0.75rem;font-weight:900;color:white;letter-spacing:0.5px;text-transform:uppercase;">SomosPadel BCN</div>
+                                <div style="font-size:0.55rem;color:rgba(255,255,255,0.45);font-weight:600;letter-spacing:0.5px;">REVISTA OFICIAL</div>
+                            </div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,rgba(204,255,0,0.15),rgba(204,255,0,0.05));border:1px solid rgba(204,255,0,0.3);padding:4px 10px;border-radius:20px;font-size:0.5rem;font-weight:900;color:#CCFF00;letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:5px;animation:pulseGlow 3s ease-in-out infinite;">
+                            <span style="width:5px;height:5px;background:#CCFF00;border-radius:50%;animation:pulseDot 1.5s infinite;"></span>EN VIVO
+                        </div>
+                    </div>
+                    <div id="dynamic-blog-posts-container" style="display:flex;flex-direction:column;gap:10px;">
+                        ${[0,1,2].map(i => `
+                            <div style="display:flex;gap:12px;align-items:center;padding:12px;border-radius:14px;background:rgba(255,255,255,0.03);">
+                                <div style="width:60px;height:60px;border-radius:14px;background:rgba(255,255,255,0.07);flex-shrink:0;"></div>
+                                <div style="flex:1;">
+                                    <div style="height:8px;width:40%;background:rgba(255,255,255,0.07);border-radius:4px;margin-bottom:8px;"></div>
+                                    <div style="height:11px;width:85%;background:rgba(255,255,255,0.07);border-radius:4px;margin-bottom:6px;"></div>
+                                    <div style="height:8px;width:65%;background:rgba(255,255,255,0.05);border-radius:4px;"></div>
+                                </div>
+                            </div>
+                        `).join('')}
+          async openBlogPost(postId) {
+                      </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async openBlogPost(postId) {
+            try {
+                const db = window.db || firebase.firestore();
+                const doc = await db.collection('blog_posts').doc(postId).get();
+                let post = null;
+                
+                if (doc.exists) {
+                    post = doc.data();
+                } else {
+                    const fallbackPosts = {
+                        'torneo-primavera': {
+                            category: '🏆 TORNEOS',
+                            catColor: '#CCFF00',
+                            title: 'Gran Torneo de Primavera 2026',
+                            content: 'Llega el evento más esperado del año. El próximo 15 de Junio celebraremos el Gran Torneo de Primavera en las instalaciones de El Prat. Contaremos con categorías masculina, femenina y mixta de todos los niveles. Con tu inscripción recibirás un Welcome Pack de primer nivel (camiseta oficial de la Lliga, grip y bebida energética). Al finalizar el torneo, disfrutaremos de una barbacoa comunitaria para todos los participantes con sorteos y música en directo. ¡Inscripciones limitadas a 120 plazas, reserva la tuya en la sección de eventos!',
+                            date: 'Hoy',
+                            readTime: '2 min de lectura'
+                        },
+                        'scouting-rival': {
+                            category: '📡 TECNOLOGÍA',
+                            catColor: '#38bdf8',
+                            title: 'Nuevo Scouting de Rivales',
+                            content: 'Hemos integrado una nueva herramienta revolucionaria en la sección de Equipos. Ahora, al lado del nombre de tu próximo oponente, verás un botón verde con el icono de radiación táctica. Al pulsarlo, el sistema analiza el histórico de partidos de tus oponentes, su porcentaje de victorias en casa/fuera, tendencias de rendimiento, y te ofrece un reporte detallado con sus puntos fuertes y debilidades. Utiliza esta ventaja tecnológica para planificar tu estrategia ganadora antes de entrar a pista.',
+                            date: 'Ayer',
+                            readTime: '3 min de lectura'
+                        },
+                        'tactica-medio': {
+                            category: '💡 CONSEJOS',
+                            catColor: '#f59e0b',
+                            title: 'La Teoría de Jugar al Medio',
+                            content: 'Jugar por el centro de la pista o "la teoría del medio" es una de las tácticas más eficaces en el pádel. Al tirar la bola al centro, reduces drásticamente los ángulos de rebote del rival, evitas que abran la bola a las paredes, y generas dudas de comunicación y espacio entre la pareja contraria. Es ideal para situaciones bajo presión o globos difíciles. ¡Conversa con tu compañero y probad a saturar el centro de la pista en vuestro próximo partido!',
+                            date: 'Hace 3 días',
+                            readTime: '4 min de lectura'
+                        }
+                    };
+                    post = fallbackPosts[postId];
+                }
+
+                if (!post) return;
+
+                const modal = document.createElement('div');
+                modal.id = 'blog-post-modal';
+                modal.style = `
+                    position: fixed; inset: 0; z-index: 10000;
+                    background: rgba(0,0,0,0.85); backdrop-filter: blur(15px);
+                    display: flex; align-items: center; justify-content: center;
+                    padding: 20px; font-family: 'Outfit', sans-serif;
+                    animation: fadeIn 0.3s ease-out;
+                `;
+                
+                modal.innerHTML = `
+                    <div style="background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 32px; width: 100%; max-width: 500px; padding: 25px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); position: relative; animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                        <button onclick="document.getElementById('blog-post-modal').remove()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <span style="font-size: 0.6rem; font-weight: 1000; color: ${post.catColor || '#CCFF00'}; border: 1px solid ${post.catColor || '#CCFF00'}40; padding: 3px 10px; border-radius: 8px; background: ${post.catColor || '#CCFF00'}10; text-transform: uppercase;">${post.category || 'REVISTA'}</span>
+                            <span style="font-size: 0.65rem; color: rgba(255,255,255,0.4); font-weight: 800;">${post.readTime || '3 min'} de lectura</span>
+                        </div>
+                        <h3 style="color: white; font-weight: 950; font-size: 1.4rem; margin: 0 0 15px 0; line-height: 1.2; letter-spacing: -0.5px; padding-right: 40px;">${post.title}</h3>
+                        <p style="color: rgba(255,255,255,0.8); font-size: 0.85rem; font-weight: 500; line-height: 1.6; margin: 0 0 20px 0;">${post.content}</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.7rem; color: rgba(255,255,255,0.4); font-weight: 800;">
+                            <span>Publicado: ${post.date || 'Recientemente'}</span>
+                            <span style="color: #CCFF00; font-weight: 900;">SOMOSPADEL BCN</span>
+                        </div>
+                    </div>
+                    <style>
+                        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                    </style>
+                `;
+                document.body.appendChild(modal);
+            } catch (err) {
+                console.error("Error al abrir blog post:", err);
+            }
+        }
 
         renderWeatherCard(city, temp, icon, details = {}, isPropitious = true) {
+            const safeCityId = city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-");
             const intel = details.intel || { score: 100, ballSpeed: '--', recommendation: 'Sincronizando meteorología...', gripStatus: '--' };
             const statusLabel = isPropitious ? 'ÓPTIMO' : 'ADVERSO';
             const statusColor = isPropitious ? '#00E36D' : '#FF2D55';
@@ -447,7 +686,7 @@
                     background: ${cardBg}; background-size: 200% 200%; animation: cardShine 10s ease infinite;
                     border: 1px solid rgba(255,255,255,0.1); border-radius: 32px; padding: 24px 20px;
                     display: flex; flex-direction: column; gap: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-                    position: relative; overflow: hidden; min-height: 280px;
+                    position: relative; overflow: hidden; min-height: auto;
                 ">
                     ${weatherOverlay}
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 2;">
@@ -457,11 +696,18 @@
                             <div style="font-size: 0.6rem; color: white; opacity: 0.6; font-weight: 800; letter-spacing: 1px;">SCORE ${intel.score}%</div>
                         </div>
                     </div>
-                    <div style="position: relative; z-index: 2; margin-top: 10px; animation: textSlideIn 0.5s ease-out;">
-                        <div style="color: white; font-weight: 950; font-size: 2.8rem; line-height: 0.9; letter-spacing: -2px; text-shadow: 0 5px 10px rgba(0,0,0,0.5);">${temp}</div>
-                        <div style="color: rgba(255,255,255,0.7); font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px;">${city}</div>
+                    <div style="position: relative; z-index: 2; margin-top: 10px; animation: textSlideIn 0.5s ease-out; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <div style="color: white; font-weight: 950; font-size: 2.8rem; line-height: 0.9; letter-spacing: -2px; text-shadow: 0 5px 10px rgba(0,0,0,0.5);">${temp}</div>
+                            <div style="color: rgba(255,255,255,0.7); font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px;">${city}</div>
+                        </div>
+                        <button onclick="event.stopPropagation(); window.DashboardView.toggleWeatherDetails('${safeCityId}')" 
+                                id="weather-btn-${safeCityId}" 
+                                style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: white; border-radius: 12px; padding: 6px 12px; font-size: 0.65rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s; backdrop-filter: blur(4px);">
+                            Ver más <i class="fas fa-chevron-down" id="weather-icon-${safeCityId}"></i>
+                        </button>
                     </div>
-                    <div style="margin-top: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 10px; position: relative; z-index: 2; backdrop-filter: blur(5px); animation: textSlideIn 0.7s ease-out;">
+                    <div id="weather-details-${safeCityId}" style="display: none; flex-direction: column; gap: 10px; margin-top: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); position: relative; z-index: 2; backdrop-filter: blur(5px); animation: textSlideIn 0.7s ease-out;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
                             <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-bolt" style="color:#fbbf24;"></i> VELOCIDAD BOLA</span>
                             <span style="font-size: 0.7rem; color: #fbbf24; font-weight: 950; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);">${intel.ballSpeed}</span>
@@ -479,7 +725,7 @@
                             <span style="font-size: 0.7rem; color: #00E36D; font-weight: 950;">${intel.gripStatus || 'ÓPTIMO'}</span>
                         </div>
                     </div>
-                    <div style="margin-top: 12px; padding: 12px 14px; background: rgba(0,0,0,0.2); border-radius: 16px; border-left: 3px solid ${statusColor}; animation: textSlideIn 0.8s ease-out;">
+                    <div id="weather-insight-${safeCityId}" style="display: none; margin-top: 12px; padding: 12px 14px; background: rgba(0,0,0,0.2); border-radius: 16px; border-left: 3px solid ${statusColor}; animation: textSlideIn 0.8s ease-out;">
                         <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 5px;">
                             <i class="fas fa-brain" style="font-size: 0.65rem; color: ${statusColor}; opacity: 0.9;"></i>
                             <span style="font-size: 0.55rem; font-weight: 950; color: ${statusColor}; letter-spacing: 0.5px; text-transform: uppercase;">INSIGHT TÁCTICO</span>
@@ -1489,11 +1735,14 @@
                     `;
                 }
 
+                const alwaysVisible = top6.slice(0, 2);
+                const extended = top6.slice(2);
+
                 return `
                     <div style="position: relative;">
                         <div class="activity-timeline-line"></div>
                         <div style="display: flex; flex-direction: column; gap: 12px;">
-                            ${top6.map((activity, index) => `
+                            ${alwaysVisible.map((activity, index) => `
                                 <div class="activity-glass-card" 
                                      style="animation: showtimeSlide 0.6s both ${index * 0.12}s; color: ${activity.color};"
                                      onclick="${activity.action ? `window.Router.navigate('${activity.action.toLowerCase()}')` : ''}">
@@ -1520,7 +1769,49 @@
                                     </div>
                                 </div>
                             `).join('')}
+
+                            ${extended.length > 0 ? `
+                            <div id="activity-extended-container" style="display: none; flex-direction: column; gap: 12px;">
+                                ${extended.map((activity, index) => `
+                                    <div class="activity-glass-card" 
+                                         style="color: ${activity.color};"
+                                         onclick="${activity.action ? `window.Router.navigate('${activity.action.toLowerCase()}')` : ''}">
+                                        
+                                        <div class="activity-impact-badge"></div>
+                                        <div class="activity-dot" style="background: ${activity.color};"></div>
+                                        
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; position: relative; z-index: 1;">
+                                            <div style="flex: 1;">
+                                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                                    <span style="font-size: 0.95rem; font-weight: 1000; color: white; text-transform: uppercase; letter-spacing: -0.5px; font-style: italic;">${activity.title}</span>
+                                                    ${activity.priority === 'critical' ? `<span style="background: #ef4444; color: white; font-size: 0.55rem; font-weight: 1000; padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; animation: pulse 1s infinite; box-shadow: 0 0 15px #ef4444;">BREAKING</span>` : ''}
+                                                </div>
+                                                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.7); font-weight: 700; line-height: 1.5; letter-spacing: 0.2px;">${activity.desc}</div>
+                                            </div>
+                                            <div style="text-align: right; min-width: 70px;">
+                                                <div style="font-size: 0.6rem; color: ${activity.color}; font-weight: 1000; text-transform: uppercase; opacity: 0.8; letter-spacing: 1px;">${activity.time}</div>
+                                                ${activity.action ? `
+                                                    <div style="margin-top: 8px; font-size: 0.55rem; font-weight: 1000; color: #000; background: ${activity.color}; padding: 3px 10px; border-radius: 4px; display: inline-block; box-shadow: 0 4px 10px ${activity.color}40; transform: skewX(-10deg);">
+                                                        ${activity.action.toUpperCase()}
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            ` : ''}
                         </div>
+
+                        ${extended.length > 0 ? `
+                        <div style="text-align: center; margin-top: 15px;">
+                            <button onclick="event.stopPropagation(); window.DashboardView.toggleActivityFeed()" 
+                                    id="activity-toggle-btn" 
+                                    style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: white; border-radius: 14px; padding: 10px 24px; font-size: 0.75rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                                Ver más <i class="fas fa-chevron-down" id="activity-toggle-icon"></i>
+                            </button>
+                        </div>
+                        ` : ''}
                     </div>
                 `;
             } catch (e) {

@@ -237,6 +237,10 @@ window.loadAdminView = async function (viewName) {
             if (window.AdminViews.analytics) await window.AdminViews.analytics();
             else throw new Error("Analytics Module not loaded");
         }
+        else if (viewName === 'blog_posts') {
+            if (window.AdminViews.blog_posts) await window.AdminViews.blog_posts();
+            else throw new Error("Blog Module not loaded");
+        }
         else if (viewName === 'database_health') {
             if (window.AdminViews.database_health) await window.AdminViews.database_health();
             else throw new Error("Health Module not loaded");
