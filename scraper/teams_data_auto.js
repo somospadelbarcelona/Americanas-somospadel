@@ -302,8 +302,8 @@ window.ExtractedTeamsData = [
         "pos": 6,
         "team": "CLUB TENNIS I PADEL SEGUR 3M",
         "pj": 3,
-        "pg": 0,
-        "pp": 3,
+        "pg": 1,
+        "pp": 2,
         "df": 0,
         "pts": 2
       },
@@ -608,7 +608,7 @@ window.ExtractedTeamsData = [
         "pos": 1,
         "team": "CPI B EL CASINO GASTROBAR",
         "pj": 3,
-        "pg": 4,
+        "pg": 3,
         "pp": 0,
         "df": 0,
         "pts": 7
@@ -617,7 +617,7 @@ window.ExtractedTeamsData = [
         "pos": 2,
         "team": "CLUB TENNIS VILANOVA 3M",
         "pj": 2,
-        "pg": 4,
+        "pg": 2,
         "pp": 0,
         "df": 0,
         "pts": 6
@@ -653,8 +653,8 @@ window.ExtractedTeamsData = [
         "pos": 6,
         "team": "VILA PADEL INDOOR A",
         "pj": 3,
-        "pg": 0,
-        "pp": 3,
+        "pg": 1,
+        "pp": 2,
         "df": 0,
         "pts": 3
       },
@@ -662,8 +662,8 @@ window.ExtractedTeamsData = [
         "pos": 7,
         "team": "HORIZON PADEL 3M",
         "pj": 3,
-        "pg": 0,
-        "pp": 3,
+        "pg": 1,
+        "pp": 2,
         "df": 0,
         "pts": 2
       },
@@ -957,7 +957,7 @@ window.ExtractedTeamsData = [
         "pos": 1,
         "team": "INDOOR RUBI 4M",
         "pj": 3,
-        "pg": 5,
+        "pg": 3,
         "pp": 0,
         "df": 0,
         "pts": 8
@@ -984,8 +984,8 @@ window.ExtractedTeamsData = [
         "pos": 4,
         "team": "CLUB PADEL VALLIRANA 4M",
         "pj": 3,
-        "pg": 1,
-        "pp": 2,
+        "pg": 2,
+        "pp": 1,
         "df": 0,
         "pts": 4
       },
@@ -993,8 +993,8 @@ window.ExtractedTeamsData = [
         "pos": 5,
         "team": "PADELAND 4M",
         "pj": 3,
-        "pg": 0,
-        "pp": 3,
+        "pg": 1,
+        "pp": 2,
         "df": 0,
         "pts": 3
       },
@@ -1002,8 +1002,8 @@ window.ExtractedTeamsData = [
         "pos": 6,
         "team": "PÁDEL OXIGEN 4M",
         "pj": 2,
-        "pg": 0,
-        "pp": 2,
+        "pg": 1,
+        "pp": 1,
         "df": 0,
         "pts": 2
       },
@@ -1033,8 +1033,8 @@ window.ExtractedTeamsData = [
     "points": 6,
     "stats": {
       "pj": 3,
-      "pg": 3,
-      "pp": 0,
+      "pg": 2,
+      "pp": 1,
       "sf": 0,
       "sc": 0
     },
@@ -1301,8 +1301,8 @@ window.ExtractedTeamsData = [
         "pos": 1,
         "team": "SOMOS PÁDEL BCN 4XA",
         "pj": 3,
-        "pg": 3,
-        "pp": 0,
+        "pg": 2,
+        "pp": 1,
         "df": 0,
         "pts": 6,
         "isCurrent": true
@@ -1329,8 +1329,8 @@ window.ExtractedTeamsData = [
         "pos": 4,
         "team": "NPADEL MIXTE CASTELLAR",
         "pj": 3,
-        "pg": 1,
-        "pp": 2,
+        "pg": 2,
+        "pp": 1,
         "df": 0,
         "pts": 4
       },
@@ -1338,8 +1338,8 @@ window.ExtractedTeamsData = [
         "pos": 5,
         "team": "MASQUEPADEL",
         "pj": 3,
-        "pg": 1,
-        "pp": 2,
+        "pg": 2,
+        "pp": 1,
         "df": 0,
         "pts": 4
       },
@@ -1347,8 +1347,8 @@ window.ExtractedTeamsData = [
         "pos": 6,
         "team": "BLACK PADEL PRAT 4X",
         "pj": 3,
-        "pg": 1,
-        "pp": 2,
+        "pg": 2,
+        "pp": 1,
         "df": 0,
         "pts": 4
       },
@@ -1365,8 +1365,8 @@ window.ExtractedTeamsData = [
         "pos": 8,
         "team": "CRAZYXPADEL 4MIXTA LILA",
         "pj": 3,
-        "pg": 0,
-        "pp": 3,
+        "pg": 1,
+        "pp": 2,
         "df": 0,
         "pts": 3
       }
@@ -1662,8 +1662,8 @@ window.ExtractedTeamsData = [
         "pos": 1,
         "team": "SOMOS PÁDEL BCN 4XA",
         "pj": 3,
-        "pg": 3,
-        "pp": 0,
+        "pg": 2,
+        "pp": 1,
         "df": 0,
         "pts": 6
       },
@@ -1689,8 +1689,8 @@ window.ExtractedTeamsData = [
         "pos": 4,
         "team": "NPADEL MIXTE CASTELLAR",
         "pj": 3,
-        "pg": 1,
-        "pp": 2,
+        "pg": 2,
+        "pp": 1,
         "df": 0,
         "pts": 4
       },
@@ -1698,8 +1698,8 @@ window.ExtractedTeamsData = [
         "pos": 5,
         "team": "MASQUEPADEL",
         "pj": 3,
-        "pg": 1,
-        "pp": 2,
+        "pg": 2,
+        "pp": 1,
         "df": 0,
         "pts": 4
       },
@@ -1707,8 +1707,8 @@ window.ExtractedTeamsData = [
         "pos": 6,
         "team": "BLACK PADEL PRAT 4X",
         "pj": 3,
-        "pg": 1,
-        "pp": 2,
+        "pg": 2,
+        "pp": 1,
         "df": 0,
         "pts": 4
       },
@@ -1726,8 +1726,8 @@ window.ExtractedTeamsData = [
         "pos": 8,
         "team": "CRAZYXPADEL 4MIXTA LILA",
         "pj": 3,
-        "pg": 0,
-        "pp": 3,
+        "pg": 1,
+        "pp": 2,
         "df": 0,
         "pts": 3
       }
@@ -2056,8 +2056,8 @@ window.ExtractedTeamsData = [
         "pos": 5,
         "team": "MX3 INDOOR GAVÀ",
         "pj": 2,
-        "pg": 0,
-        "pp": 2,
+        "pg": 1,
+        "pp": 1,
         "df": 0,
         "pts": 2
       },
@@ -2065,8 +2065,8 @@ window.ExtractedTeamsData = [
         "pos": 6,
         "team": "CLUB ESPORTIU GRANVIAMAR",
         "pj": 2,
-        "pg": 0,
-        "pp": 2,
+        "pg": 1,
+        "pp": 1,
         "df": 0,
         "pts": 2
       },
@@ -2347,7 +2347,7 @@ window.ExtractedTeamsData = [
         "pos": 1,
         "team": "AURIAL CORNELLÀ",
         "pj": 3,
-        "pg": 5,
+        "pg": 3,
         "pp": 0,
         "df": 0,
         "pts": 8
@@ -2384,8 +2384,8 @@ window.ExtractedTeamsData = [
         "pos": 5,
         "team": "BLACK PADEL PRAT MUNAY CLUB 4F",
         "pj": 3,
-        "pg": 1,
-        "pp": 2,
+        "pg": 2,
+        "pp": 1,
         "df": 0,
         "pts": 4
       },
@@ -2393,8 +2393,8 @@ window.ExtractedTeamsData = [
         "pos": 6,
         "team": "VALKIRIAS CPV",
         "pj": 3,
-        "pg": 0,
-        "pp": 3,
+        "pg": 1,
+        "pp": 2,
         "df": 0,
         "pts": 3
       },
@@ -2402,8 +2402,8 @@ window.ExtractedTeamsData = [
         "pos": 7,
         "team": "QUEENS OF PADEL",
         "pj": 3,
-        "pg": 0,
-        "pp": 3,
+        "pg": 1,
+        "pp": 2,
         "df": 0,
         "pts": 3
       },
@@ -2656,7 +2656,7 @@ window.ExtractedTeamsData = [
         "pos": 1,
         "team": "CPR FEMENI",
         "pj": 3,
-        "pg": 4,
+        "pg": 3,
         "pp": 0,
         "df": 0,
         "pts": 7
@@ -2710,8 +2710,8 @@ window.ExtractedTeamsData = [
         "pos": 7,
         "team": "PADELARIUM - OLD SCHOOL",
         "pj": 3,
-        "pg": 0,
-        "pp": 3,
+        "pg": 1,
+        "pp": 2,
         "df": 0,
         "pts": 2
       },

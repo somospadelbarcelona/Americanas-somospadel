@@ -365,8 +365,12 @@ async def scrape_group(page, cat, division, group_name, team_slug, target_name):
             if is_current:
                 target_row_element = row
                 team_name = name_cell
-                
-            pg = max(0, pts - pj)
+            # Algoritmo de estimación consistente de victorias/derrotas (Liga GuinotPrunera)
+            # pts es la suma de pistas ganadas, por lo que pg <= pts // 2 y pg >= ceil((pts - pj) / 2)
+            import math
+            lower_bound = max(0, math.ceil((pts - pj) / 2))
+            upper_bound = min(pj, pts // 2)
+            pg = upper_bound
             pp = max(0, pj - pg)
             
             standings.append({
@@ -628,6 +632,47 @@ async def main():
                 # 4. Extraer datos del grupo
                 result = await scrape_group(page, target["cat"], target["div"], target["group"], target["slug"], target["name"])
                 if result:
+                    # --- CORRECCIÓN AUTOMÁTICA DE ESTADÍSTICAS BASADA EN CALENDARIO ---
+                    real_pj = 0
+                    real_pg = 0
+                    real_pp = 0
+                    real_pts = 0
+                    for m in result.get("schedule", []):
+                        if m.get("status") == "completed" and m.get("score") and m.get("score") != "Pendiente":
+                            real_pj += 1
+                            score_str = m.get("score", "")
+                            parts = score_str.split("-")
+                            if len(parts) == 2:
+                                try:
+                                    s1 = int(parts[0].strip())
+                                    s2 = int(parts[1].strip())
+                                    real_pts += s1  # Suma de pistas ganadas
+                                    if s1 > s2:
+                                        real_pg += 1
+                                    else:
+                                        real_pp += 1
+                                except ValueError:
+                                    pass
+                    
+                    if real_pj > 0:
+                        print(f"   [CORRECCIÓN] Recalculado desde calendario: PJ={real_pj}, PG={real_pg}, PP={real_pp}, PTS={real_pts}")
+                        result["stats"]["pj"] = real_pj
+                        result["stats"]["pg"] = real_pg
+                        result["stats"]["pp"] = real_pp
+                        result["points"] = real_pts  # PTS = suma de pistas ganadas
+                        
+                        # Actualizar su entrada en groupStandings
+                        for st in result.get("groupStandings", []):
+                            def clean_name(s):
+                                return re.sub(r'[^A-Z0-9]', '', s.upper())
+                            if clean_name(st.get("team", "")) == clean_name(result["name"]):
+                                st["pj"] = real_pj
+                                st["pg"] = real_pg
+                                st["pp"] = real_pp
+                                st["pts"] = real_pts
+                                print(f"   [CORRECCIÓN] Entrada del equipo propio en la clasificación corregida.")
+                    # ------------------------------------------------------------------
+
                     found_teams.append(result)
                     print(f"   [OK] Cazado {result['name']} | Grupo: {result['group']} | Roster: {len(result['roster'])} | PJ: {result['stats']['pj']}")
 
@@ -638,6 +683,35 @@ async def main():
         await browser.close()
 
     print(f"\n[RESULTADO] Sincronizacion de {len(found_teams)} equipos finalizada.")
+
+    # --- POST-PROCESAMIENTO CRUZADO PARA CORREGIR CLASIFICACIONES DE TODOS LOS GRUPOS ---
+    print("\n[POST-PROCESO] Iniciando corrección cruzada de clasificaciones...")
+    club_stats = {}
+    for team in found_teams:
+        name = team["name"].strip().upper()
+        simplified = re.sub(r'[^A-Z0-9]', '', name)
+        club_stats[simplified] = {
+            "pj": team["stats"]["pj"],
+            "pg": team["stats"]["pg"],
+            "pp": team["stats"]["pp"],
+            "pts": team["points"]
+        }
+    
+    for team in found_teams:
+        if "groupStandings" in team and team["groupStandings"]:
+            for st in team["groupStandings"]:
+                st_name = st["team"].strip().upper()
+                st_simplified = re.sub(r'[^A-Z0-9]', '', st_name)
+                
+                if st_simplified in club_stats:
+                    real = club_stats[st_simplified]
+                    st["pj"] = real["pj"]
+                    st["pg"] = real["pg"]
+                    st["pp"] = real["pp"]
+                    st["pts"] = real["pts"]
+                    print(f"   [OK] Corrección cruzada: Fila de '{st['team']}' en la tabla de '{team['name']}' corregida a PJ={real['pj']}, PG={real['pg']}, PTS={real['pts']}")
+    print("[POST-PROCESO] Corrección cruzada completada con éxito.\n")
+    # -------------------------------------------------------------------------------------
 
     # Escribir el teams_data_auto.js limpio
     js_out = "// Generado automaticamente - Bot SOMOS PADEL BCN v6\n"

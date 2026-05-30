@@ -461,6 +461,197 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
             }
         }
 
+        async shareBlogPost(postId, title) {
+            this.showShareMenu(postId, title);
+        }
+
+        showShareMenu(postId, title) {
+            const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
+            const shareText = `¡Mira esta noticia en SomosPadel BCN! 🎾\n\n"${title}"\n\n`;
+            
+            // Si ya existe un menú de compartir previo, lo eliminamos
+            const existingShare = document.getElementById('blog-share-menu-modal');
+            if (existingShare) existingShare.remove();
+            
+            const shareModal = document.createElement('div');
+            shareModal.id = 'blog-share-menu-modal';
+            shareModal.style = `
+                position: fixed; inset: 0; z-index: 999999999 !important;
+                background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                display: flex; align-items: center; justify-content: center;
+                padding: 20px; font-family: 'Outfit', sans-serif;
+                animation: fadeIn 0.25s ease-out;
+            `;
+            
+            shareModal.innerHTML = `
+                <div style="background: #090f1e; border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; width: 100%; max-width: 360px; padding: 24px; box-shadow: 0 30px 70px rgba(0,0,0,0.85); position: relative; text-align: center; animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                    
+                    <!-- Botón de Cerrar del Menú de Compartir -->
+                    <button id="share-modal-close-btn" 
+                            style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s;"
+                            onmouseover="this.style.background='rgba(255,255,255,0.15)'"
+                            onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+                        <i class="fas fa-times" style="font-size: 0.8rem;"></i>
+                    </button>
+                    
+                    <div style="margin-bottom: 22px;">
+                        <span style="font-size: 2.5rem; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));">📢</span>
+                        <h4 style="color: white; font-weight: 950; font-size: 1.25rem; margin: 12px 0 6px 0; letter-spacing: -0.4px;">Compartir Noticia</h4>
+                        <p style="color: rgba(255,255,255,0.5); font-size: 0.78rem; line-height: 1.4; margin: 0; padding: 0 10px;">Selecciona el canal oficial para compartir este contenido con tu red de pádel.</p>
+                    </div>
+                    
+                    <!-- Lista de Opciones Premium -->
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        
+                        <!-- WhatsApp Option -->
+                        <button id="share-btn-whatsapp"
+                                style="background: rgba(37, 211, 102, 0.1); border: 1px solid rgba(37, 211, 102, 0.25); color: #25D366; font-weight: 800; font-size: 0.85rem; padding: 12px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                                onmouseover="this.style.background='rgba(37, 211, 102, 0.2)';this.style.borderColor='#25D366';this.style.transform='scale(1.03) translateY(-1px)';"
+                                onmouseout="this.style.background='rgba(37, 211, 102, 0.1)';this.style.borderColor='rgba(37, 211, 102, 0.25)';this.style.transform='scale(1) translateY(0)';">
+                            <i class="fab fa-whatsapp" style="font-size: 1.2rem;"></i>
+                            <span>Compartir por WhatsApp</span>
+                        </button>
+                        
+                        <!-- Instagram Option -->
+                        <button id="share-btn-instagram"
+                                style="background: rgba(225, 48, 108, 0.1); border: 1px solid rgba(225, 48, 108, 0.25); color: #E1306C; font-weight: 800; font-size: 0.85rem; padding: 12px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                                onmouseover="this.style.background='rgba(225, 48, 108, 0.2)';this.style.borderColor='#E1306C';this.style.transform='scale(1.03) translateY(-1px)';"
+                                onmouseout="this.style.background='rgba(225, 48, 108, 0.1)';this.style.borderColor='rgba(225, 48, 108, 0.25)';this.style.transform='scale(1) translateY(0)';">
+                            <i class="fab fa-instagram" style="font-size: 1.2rem;"></i>
+                            <span>Compartir en Instagram</span>
+                        </button>
+                        
+                        <!-- Copiar Enlace Option -->
+                        <button id="share-btn-copy"
+                                style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); color: #3b82f6; font-weight: 800; font-size: 0.85rem; padding: 12px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                                onmouseover="this.style.background='rgba(59, 130, 246, 0.2)';this.style.borderColor='#3b82f6';this.style.transform='scale(1.03) translateY(-1px)';"
+                                onmouseout="this.style.background='rgba(59, 130, 246, 0.1)';this.style.borderColor='rgba(59, 130, 246, 0.25)';this.style.transform='scale(1) translateY(0)';">
+                            <i class="fas fa-link" style="font-size: 1rem;"></i>
+                            <span>Copiar Enlace de Noticia</span>
+                        </button>
+
+                        <!-- Compartir Nativo -->
+                        <button id="native-share-btn"
+                                style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.12); color: white; font-weight: 800; font-size: 0.85rem; padding: 12px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                                onmouseover="this.style.background='rgba(255, 255, 255, 0.08)';this.style.transform='scale(1.03) translateY(-1px)';"
+                                onmouseout="this.style.background='rgba(255, 255, 255, 0.04)';this.style.transform='scale(1) translateY(0)';">
+                            <i class="fas fa-share-alt" style="font-size: 1rem;"></i>
+                            <span>Otras aplicaciones</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(shareModal);
+            
+            // Asignamos manejadores de eventos directos sin dependencias globales
+            const closeBtn = shareModal.querySelector('#share-modal-close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    shareModal.remove();
+                });
+            }
+
+            const waBtn = shareModal.querySelector('#share-btn-whatsapp');
+            if (waBtn) {
+                waBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.actionShare('whatsapp', shareUrl, encodeURIComponent(shareText));
+                });
+            }
+
+            const igBtn = shareModal.querySelector('#share-btn-instagram');
+            if (igBtn) {
+                igBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.actionShare('instagram', shareUrl, '');
+                });
+            }
+
+            const copyBtn = shareModal.querySelector('#share-btn-copy');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.actionShare('copy', shareUrl, '');
+                });
+            }
+
+            const nativeBtn = shareModal.querySelector('#native-share-btn');
+            if (nativeBtn) {
+                if (navigator.share) {
+                    nativeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.actionShare('native', shareUrl, encodeURIComponent(shareText));
+                    });
+                } else {
+                    nativeBtn.style.display = 'none';
+                }
+            }
+            
+            // Cerrar menú de compartir si se hace clic fuera de la tarjeta
+            shareModal.onclick = (e) => {
+                if (e.target === shareModal) shareModal.remove();
+            };
+        }
+
+        async actionShare(type, url, textDecoded) {
+            const text = decodeURIComponent(textDecoded);
+            
+            // Eliminar modal de compartir al ejecutar acción
+            const menu = document.getElementById('blog-share-menu-modal');
+            if (menu) menu.remove();
+            
+            if (type === 'whatsapp') {
+                const waUrl = `https://wa.me/?text=${encodeURIComponent(text + url)}`;
+                window.open(waUrl, '_blank');
+            } else if (type === 'instagram') {
+                try {
+                    await navigator.clipboard.writeText(url);
+                    if (window.PremiumModal) {
+                        window.PremiumModal.alert({
+                            title: '📸 ENLACE COPIADO',
+                            message: '<b>Hemos copiado el enlace al portapapeles.</b><br><br>Ahora abriremos Instagram para que puedas crear una Story o enviárselo por mensaje directo a tus amigos y compañeros de SomosPadel. 🎾',
+                            type: 'success'
+                        });
+                    } else {
+                        alert('¡Enlace copiado! Abre Instagram para pegarlo en tus Stories.');
+                    }
+                    setTimeout(() => {
+                        window.open('https://www.instagram.com', '_blank');
+                    }, 600);
+                } catch (e) {
+                    console.warn("Fallo al copiar para Instagram share:", e);
+                }
+            } else if (type === 'copy') {
+                try {
+                    await navigator.clipboard.writeText(url);
+                    if (window.PremiumModal) {
+                        window.PremiumModal.alert({
+                            title: '📋 COPIADO AL PORTAPAPELES',
+                            message: 'El enlace directo a la noticia ha sido guardado con éxito. ¡Listo para pegar en cualquier chat! 🎾',
+                            type: 'success'
+                        });
+                    } else {
+                        alert('¡Enlace copiado al portapapeles!');
+                    }
+                } catch (e) {
+                    console.warn("Fallo al copiar enlace:", e);
+                }
+            } else if (type === 'native') {
+                try {
+                    await navigator.share({
+                        title: 'SomosPadel BCN',
+                        text: text,
+                        url: url
+                    });
+                } catch (e) {
+                    console.warn('Native share cancelled:', e);
+                }
+            }
+        }
+
         renderBlogWidget() {
             // Fetch async, inject into shell
             setTimeout(async () => {
@@ -471,116 +662,63 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                     const snapshot = await db.collection('blog_posts').orderBy('timestamp', 'desc').get();
                     let posts = [];
                     if (!snapshot.empty) {
-                        posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        posts = snapshot.docs.map(doc => {
+                            const data = doc.data();
+                            return {
+                                id: doc.id,
+                                ...data
+                            };
+                        });
                     } else {
                         posts = [
-                            { id: 'torneo-primavera', category: '🏆 TORNEOS', catColor: '#CCFF00', title: 'Gran Torneo de Primavera 2026', emoji: '🎾', imgGrad: 'linear-gradient(135deg, #CCFF00 0%, #84cc16 100%)', snippet: '¡Inscripciones abiertas! 120 plazas, Welcome Pack premium y gran barbacoa final.', content: 'Llega el evento más esperado del año. El próximo 15 de Junio celebraremos el Gran Torneo de Primavera.', date: 'Hoy', readTime: '2 min' },
-                            { id: 'scouting-rival', category: '📊 RANKING', catColor: '#38bdf8', title: 'Ranking Actualizado: Top 5 de la Temporada', emoji: '🏅', imgGrad: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)', snippet: 'El ranking se ha recalculado. ¿Has subido posiciones esta semana?', content: 'Consulta tu posición actualizada en la sección de Ranking.', date: 'Ayer', readTime: '2 min' },
-                            { id: 'tactica-medio', category: '💡 CONSEJOS', catColor: '#f59e0b', title: 'La Táctica del Centro', emoji: '⚡', imgGrad: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)', snippet: 'Jugar al medio reduce drásticamente los ángulos del rival.', content: 'El centro de la pista es la clave táctica más poderosa del pádel moderno.', date: 'Hace 3 días', readTime: '4 min' }
+                            { id: 'torneo-primavera', category: '🏆 TORNEOS', catColor: '#CCFF00', title: 'Gran Torneo de Primavera 2026', emoji: '🎾', imgGrad: 'linear-gradient(135deg, #CCFF00 0%, #84cc16 100%)', snippet: '¡Inscripciones abiertas! 120 plazas, Welcome Pack premium y barbacoa final.', content: 'Llega el evento más esperado del año. El 15 de Junio celebraremos el Gran Torneo de Primavera con categorías masculina, femenina y mixta. ¡Reserva tu plaza!', date: 'Hoy', readTime: '2 min' },
+                            { id: 'ranking-actualizado', category: '📊 RANKING', catColor: '#38bdf8', title: 'Ranking Actualizado: Top 5 de la Temporada', emoji: '🏅', imgGrad: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)', snippet: 'El ranking se ha recalculado. ¿Has subido posiciones esta semana?', content: 'Consulta tu posición actualizada en la sección Ranking. Nuevos puntos asignados tras la última jornada.', date: 'Ayer', readTime: '2 min' },
+                            { id: 'tactica-centro', category: '💡 CONSEJOS', catColor: '#f59e0b', title: 'Táctica: Jugar al Centro de la Pista', emoji: '⚡', imgGrad: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)', snippet: 'Jugar al medio reduce los ángulos del rival y genera dudas en la pareja contraria.', content: 'El centro de la pista es la clave táctica más potente del pádel. Al tirar al centro reduces ángulos y generas confusión.', date: 'Hace 3 días', readTime: '3 min' }
                         ];
+                        // Fallbacks listos
                     }
-
                     if (posts.length === 0) { container.innerHTML = ''; return; }
-
                     const featured = posts[0];
                     const rest = posts.slice(1, 5);
 
-                    // ── Función para generar icono premium ──────────────────
-                    const premiumIcon = (post, size = 72) => {
+                    const premiumIcon = (post, size = 60) => {
                         const grad = post.imgGrad || 'linear-gradient(135deg, #CCFF00, #84cc16)';
                         const em = post.emoji || '📰';
-                        return `
-                            <div style="
-                                width: ${size}px; height: ${size}px; border-radius: ${Math.round(size * 0.27)}px;
-                                background: ${grad};
-                                display: flex; align-items: center; justify-content: center;
-                                flex-shrink: 0; position: relative; overflow: hidden;
-                                box-shadow: 0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
-                            ">
-                                <!-- Shine overlay -->
-                                <div style="position:absolute; top:0; left:0; right:0; height:50%; background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 100%); pointer-events:none; border-radius: inherit;"></div>
-                                <!-- Dot texture -->
-                                <div style="position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px); background-size: ${Math.round(size/7)}px ${Math.round(size/7)}px; pointer-events:none;"></div>
-                                <!-- Emoji -->
-                                <span style="font-size: ${Math.round(size * 0.42)}px; position:relative; z-index:2; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3)); line-height:1;">${em}</span>
-                            </div>`;
+                        return `<div style="width:${size}px;height:${size}px;border-radius:${Math.round(size*0.27)}px;background:${grad};display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(77,124,15,0.18),inset 0 1px 0 rgba(255,255,255,0.35);"><div style="position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.25) 0%,transparent 100%);border-radius:inherit;pointer-events:none;"></div><div style="position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,0.12) 1px,transparent 1px);background-size:${Math.round(size/7)}px ${Math.round(size/7)}px;pointer-events:none;"></div><span style="font-size:${Math.round(size*0.42)}px;position:relative;z-index:2;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.15));line-height:1;">${em}</span></div>`;
                     };
 
-                    // ── FEATURED CARD ───────────────────────────────────────
                     const featuredCard = `
                         <div onclick="window.DashboardView.openBlogPost('${featured.id}')"
-                             style="
-                                border-radius: 22px; overflow: hidden; cursor: pointer;
-                                background: ${featured.imgGrad || 'linear-gradient(135deg, #1e293b, #0f172a)'};
-                                position: relative; min-height: 160px;
-                                box-shadow: 0 12px 35px rgba(0,0,0,0.45);
-                                transition: transform 0.3s ease, box-shadow 0.3s ease;
-                                border: 1px solid rgba(255,255,255,0.12);
-                             "
-                             onmouseover="this.style.transform='scale(1.015)'; this.style.boxShadow='0 18px 45px rgba(0,0,0,0.6)';"
-                             onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 12px 35px rgba(0,0,0,0.45)';">
-
-                            <!-- BG texture -->
-                            <div style="position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px); background-size: 18px 18px; pointer-events:none;"></div>
-                            <!-- Dark overlay bottom -->
-                            <div style="position:absolute; bottom:0; left:0; right:0; height:70%; background: linear-gradient(0deg, rgba(0,0,0,0.75) 0%, transparent 100%); pointer-events:none;"></div>
-                            <!-- Glow top-right -->
-                            <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); pointer-events:none; filter:blur(15px);"></div>
-
-                            <!-- Content -->
-                            <div style="position:relative; padding: 18px 18px 18px 18px; display:flex; gap:16px; align-items:flex-end; min-height:160px;">
-
-                                <!-- Left: big emoji icon -->
-                                <div style="
-                                    width: 80px; height: 80px; border-radius: 20px;
-                                    background: rgba(255,255,255,0.15);
-                                    backdrop-filter: blur(10px);
-                                    border: 1px solid rgba(255,255,255,0.3);
-                                    display: flex; align-items: center; justify-content: center;
-                                    flex-shrink: 0; align-self: center;
-                                    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-                                ">
-                                    <span style="font-size: 2.6rem; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)); line-height:1;">${featured.emoji || '📰'}</span>
+                             class="premium-blog-3d-card"
+                             style="border-radius: 24px; overflow: hidden; cursor: pointer; background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(16px) saturate(120%); -webkit-backdrop-filter: blur(16px) saturate(120%); position: relative; min-height: 170px; box-shadow: 0 10px 30px rgba(0,0,0,0.03), 0 1px 2px rgba(255,255,255,0.8), inset 0 1px 0 rgba(255,255,255,0.9); transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid rgba(255, 255, 255, 0.7); transform-style: preserve-3d; perspective: 1000px;"
+                             onmouseover="this.style.transform='translateY(-6px) translateZ(10px) rotateX(1.5deg) rotateY(-0.8deg)';this.style.boxShadow='0 25px 50px rgba(56,113,0,0.12), 0 8px 20px rgba(0,0,0,0.02)';this.style.borderColor='rgba(255,255,255,0.95)';"
+                             onmouseout="this.style.transform='translateY(0) translateZ(0) rotateX(0) rotateY(0)';this.style.boxShadow='0 10px 30px rgba(0,0,0,0.03)';this.style.borderColor='rgba(255, 255, 255, 0.7)';"
+                        >
+                            <div style="position: absolute; inset: 0; background-image: radial-gradient(rgba(132,204,22,0.06) 1px, transparent 1px); background-size: 15px 15px; pointer-events: none;"></div>
+                            
+                            <div style="position: relative; padding: 20px; display: flex; gap: 18px; align-items: center; min-height: 170px;">
+                                <div style="width: 80px; height: 80px; border-radius: 20px; background: ${featured.imgGrad || 'linear-gradient(135deg, #CCFF00, #84cc16)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 8px 24px rgba(77,124,15,0.2), inset 0 1px 0 rgba(255,255,255,0.4); animation: premiumEmojiFloat 3.8s ease-in-out infinite;">
+                                    <span style="font-size: 2.4rem; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.15)); line-height: 1;">${featured.emoji||'📰'}</span>
                                 </div>
-
-                                <!-- Right: text -->
-                                <div style="flex:1; min-width:0;">
-                                    <!-- Category + FEATURED label -->
-                                    <div style="display:flex; align-items:center; gap:6px; margin-bottom: 8px; flex-wrap:wrap;">
-                                        <span style="
-                                            font-size: 0.52rem; font-weight: 900;
-                                            color: ${featured.catColor || '#CCFF00'};
-                                            background: rgba(0,0,0,0.4);
-                                            border: 1px solid ${featured.catColor || '#CCFF00'}50;
-                                            padding: 3px 9px; border-radius: 6px;
-                                            letter-spacing: 1px; text-transform: uppercase;
-                                        ">${featured.category || 'REVISTA'}</span>
-                                        <span style="font-size: 0.48rem; font-weight: 900; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; text-transform: uppercase;">★ DESTACADO</span>
+                                <div style="flex: 1; min-width: 0; padding-right: 20px;">
+                                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
+                                        <span style="font-size: 0.52rem; font-weight: 1000; color: #000; background: #CCFF00; border: 1px solid #84cc16; padding: 2.5px 8px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(132,204,22,0.15);">${featured.category||'REVISTA'}</span>
+                                        <span style="font-size: 0.48rem; font-weight: 1000; color: #475569; letter-spacing: 0.5px; text-transform: uppercase; opacity: 0.85;">• DESTACADO</span>
                                     </div>
-
-                                    <h3 style="
-                                        margin: 0 0 7px 0; color: white; font-weight: 900;
-                                        font-size: 1.05rem; line-height: 1.25;
-                                        letter-spacing: -0.3px;
-                                        text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-                                        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow:hidden;
-                                    ">${featured.title}</h3>
-
-                                    <p style="
-                                        margin: 0 0 10px 0; color: rgba(255,255,255,0.75);
-                                        font-size: 0.72rem; font-weight: 500; line-height: 1.4;
-                                        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow:hidden;
-                                    ">${featured.snippet}</p>
+                                    <h3 style="margin: 0 0 6px 0; color: #000000; font-weight: 1000; font-size: 1.1rem; line-height: 1.3; letter-spacing: -0.3px; font-family: 'Outfit';">${featured.title}</h3>
+                                    <p style="margin: 0 0 12px 0; color: #334155; font-size: 0.74rem; font-weight: 600; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter';">${featured.snippet}</p>
 
                                     <div style="display:flex; align-items:center; gap:10px;">
-                                        <span style="font-size: 0.6rem; color: rgba(255,255,255,0.5); font-weight: 600; display:flex; align-items:center; gap:4px;">
-                                            <i class="far fa-calendar" style="font-size:0.55rem;"></i> ${featured.date || 'Hoy'}
+                                        <span style="font-size: 0.6rem; color: #475569; font-weight: 800; display:flex; align-items:center; gap:4px;">
+                                            <i class="far fa-calendar" style="font-size:0.55rem; color: #84cc16;"></i> ${featured.date || 'Hoy'}
                                         </span>
-                                        <span style="font-size: 0.6rem; color: rgba(255,255,255,0.5); font-weight: 600; display:flex; align-items:center; gap:4px;">
-                                            <i class="far fa-clock" style="font-size:0.55rem;"></i> ${featured.readTime || '3 min'}
+                                        <span style="font-size: 0.6rem; color: #475569; font-weight: 800; display:flex; align-items:center; gap:4px;">
+                                            <i class="far fa-clock" style="font-size:0.55rem; color: #84cc16;"></i> ${featured.readTime || '3 min'}
                                         </span>
-                                        <div style="margin-left:auto; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 4px 12px; font-size: 0.6rem; font-weight: 800; color: white; display:flex; align-items:center; gap:4px; backdrop-filter:blur(5px);">
-                                            LEER <i class="fas fa-arrow-right" style="font-size:0.5rem;"></i>
+                                        <div style="margin-left:auto; background: #000000; border: 1px solid #000000; border-radius: 20px; padding: 6px 15px; font-size: 0.62rem; font-weight: 1000; color: #CCFF00; display:flex; align-items:center; gap:6px; box-shadow: 0 4px 10px rgba(0,0,0,0.18); transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                                             onmouseover="this.style.background='#CCFF00';this.style.color='#000';this.style.transform='scale(1.05) translateY(-1px)';this.style.boxShadow='0 6px 15px rgba(204,255,0,0.3)';"
+                                             onmouseout="this.style.background='#000';this.style.color='#CCFF00';this.style.transform='scale(1) translateY(0)';this.style.boxShadow='0 4px 10px rgba(0,0,0,0.18)';">
+                                            LEER AHORA <i class="fas fa-arrow-right" style="font-size:0.5rem;"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -674,16 +812,13 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                             </div>
                         </div>
                         <div style="
-                            background: linear-gradient(135deg, rgba(204,255,0,0.15), rgba(204,255,0,0.05));
-                            border: 1px solid rgba(204,255,0,0.3);
+                            background: #000000; border: 1px solid #CCFF00;
                             padding: 4px 10px; border-radius: 20px;
                             font-size: 0.5rem; font-weight: 900; color: #CCFF00;
                             letter-spacing: 1px; text-transform: uppercase;
                             display: flex; align-items: center; gap: 5px;
-                            animation: pulseGlow 3s ease-in-out infinite;
                         ">
-                            <span style="width:5px; height:5px; background:#CCFF00; border-radius:50%; animation: pulseDot 1.5s infinite;"></span>
-                            EN VIVO
+                            INFO OFICIAL
                         </div>
                     </div>
 
@@ -709,36 +844,66 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
         async openBlogPost(postId) {
             try {
                 const db = window.db || firebase.firestore();
-                const doc = await db.collection('blog_posts').doc(postId).get();
                 let post = null;
-                
-                if (doc.exists) {
-                    post = doc.data();
-                } else {
+                let viewsCount = 1;
+                let lastReaderName = 'Ninguno';
+
+                // Get Current User
+                const user = window.Store ? window.Store.getState('currentUser') : null;
+                const currentUserName = user ? (user.name || user.displayName || 'Jugador Pro') : 'Invitado Pro';
+
+                try {
+                    const doc = await db.collection('blog_posts').doc(postId).get();
+                    if (doc.exists) {
+                        post = doc.data();
+                        
+                        // Increment views & set reader real-time in Firestore
+                        viewsCount = (post.viewsCount || 0) + 1;
+                        lastReaderName = currentUserName;
+
+                        // Non-blocking update to keep speed ultra-fast
+                        db.collection('blog_posts').doc(postId).update({
+                            viewsCount: viewsCount,
+                            lastReaderName: lastReaderName,
+                            lastReaderTimestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        }).catch(e => console.warn("Fallo al actualizar Firestore views:", e));
+                    }
+                } catch (e) {
+                    console.warn("Fallo al conectar con Firestore para blog stats:", e);
+                }
+
+                // Fallback local if Firestore failed or is offline or post is local
+                if (!post) {
                     const fallbackPosts = {
                         'torneo-primavera': {
                             category: '🏆 TORNEOS',
                             catColor: '#CCFF00',
                             title: 'Gran Torneo de Primavera 2026',
-                            content: 'Llega el evento más esperado del año. El próximo 15 de Junio celebraremos el Gran Torneo de Primavera en las instalaciones de El Prat. Contaremos con categorías masculina, femenina y mixta de todos los niveles. Con tu inscripción recibirás un Welcome Pack de primer nivel (camiseta oficial de la Lliga, grip y bebida energética). Al finalizar el torneo, disfrutaremos de una barbacoa comunitaria para todos los participantes con sorteos y música en directo. ¡Inscripciones limitadas a 120 plazas, reserva la tuya en la sección de eventos!',
+                            content: 'Llega el evento más esperado del año. El próximo 15 de Junio celebraremos el Gran Torneo de Primavera en las instalaciones de El Prat. Contaremos con categorías masculina, femenina y mixta de todos los niveles. Con tu inscripción recibirás un Welcome Pack (camiseta oficial, grip y bebida energética). Al finalizar, disfrutaremos de una barbacoa comunitaria con sorteos y música. ¡Inscripciones limitadas a 120 plazas, reserva la tuya en la sección de eventos!',
                             date: 'Hoy',
-                            readTime: '2 min de lectura'
+                            readTime: '2 min',
+                            emoji: '🎾',
+                            imgGrad: 'linear-gradient(135deg, #CCFF00 0%, #84cc16 100%)'
                         },
-                        'scouting-rival': {
-                            category: '📡 TECNOLOGÍA',
+                        'ranking-actualizado': {
+                            category: '📊 RANKING',
                             catColor: '#38bdf8',
-                            title: 'Nuevo Scouting de Rivales',
-                            content: 'Hemos integrado una nueva herramienta revolucionaria en la sección de Equipos. Ahora, al lado del nombre de tu próximo oponente, verás un botón verde con el icono de radiación táctica. Al pulsarlo, el sistema analiza el histórico de partidos de tus oponentes, su porcentaje de victorias en casa/fuera, tendencias de rendimiento, y te ofrece un reporte detallado con sus puntos fuertes y debilidades. Utiliza esta ventaja tecnológica para planificar tu estrategia ganadora antes de entrar a pista.',
+                            title: 'Ranking Actualizado: Top 5 de la Temporada',
+                            content: 'El ranking de la temporada se ha recalculado tras la última jornada de liga. Los nuevos puntos ya están asignados y podrás consultar tu posición actualizada en la sección Ranking. ¡Enhorabuena a los que han subido posiciones esta semana y ánimo a los que luchan por el ascenso!',
                             date: 'Ayer',
-                            readTime: '3 min de lectura'
+                            readTime: '2 min',
+                            emoji: '🏅',
+                            imgGrad: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)'
                         },
-                        'tactica-medio': {
+                        'tactica-centro': {
                             category: '💡 CONSEJOS',
                             catColor: '#f59e0b',
-                            title: 'La Teoría de Jugar al Medio',
-                            content: 'Jugar por el centro de la pista o "la teoría del medio" es una de las tácticas más eficaces en el pádel. Al tirar la bola al centro, reduces drásticamente los ángulos de rebote del rival, evitas que abran la bola a las paredes, y generas dudas de comunicación y espacio entre la pareja contraria. Es ideal para situaciones bajo presión o globos difíciles. ¡Conversa con tu compañero y probad a saturar el centro de la pista en vuestro próximo partido!',
+                            title: 'Táctica: Jugar al Centro de la Pista',
+                            content: 'Jugar por el centro de la pista es una de las tácticas más eficaces en el pádel. Al dirigir la bola al centro, reduces drásticamente los ángulos de rebote del rival, evitas que abran la bola a las paredes y generas dudas de comunicación entre la pareja contraria. Es ideal para situaciones bajo presión o globos difíciles. ¡Probadlo en vuestro próximo partido!',
                             date: 'Hace 3 días',
-                            readTime: '4 min de lectura'
+                            readTime: '3 min',
+                            emoji: '⚡',
+                            imgGrad: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)'
                         }
                     };
                     post = fallbackPosts[postId];
@@ -749,7 +914,7 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                 const modal = document.createElement('div');
                 modal.id = 'blog-post-modal';
                 modal.style = `
-                    position: fixed; inset: 0; z-index: 10000;
+                    position: fixed; inset: 0; z-index: 999999999 !important;
                     background: rgba(0,0,0,0.85); backdrop-filter: blur(15px);
                     display: flex; align-items: center; justify-content: center;
                     padding: 20px; font-family: 'Outfit', sans-serif;
@@ -757,27 +922,92 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                 `;
                 
                 modal.innerHTML = `
-                    <div style="background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 32px; width: 100%; max-width: 500px; padding: 25px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); position: relative; animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
-                        <button onclick="document.getElementById('blog-post-modal').remove()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
-                            <i class="fas fa-times"></i>
+                    <div style="background: #090f1e; border: 1px solid rgba(255,255,255,0.12); border-radius: 32px; width: 100%; max-width: 480px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 35px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1); position: relative; overflow: hidden; animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                        
+                        <!-- Premium Background Glow/Aura -->
+                        <div style="position: absolute; top: 100px; left: -50px; width: 150px; height: 150px; background: radial-gradient(circle, ${post.catColor || '#CCFF00'}15 0%, transparent 70%); pointer-events: none; filter: blur(30px);"></div>
+                        
+                        <!-- Gradient Header Area (Apple News style) -->
+                        <div style="background: ${post.imgGrad || 'linear-gradient(135deg, #1e293b, #0f172a)'}; height: 130px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;">
+                            <div style="position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px); background-size: 14px 14px; pointer-events: none;"></div>
+                            <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 60%, rgba(9,15,30,0.95) 100%); pointer-events: none;"></div>
+                            <!-- Huge Floating 3D-effect Emoji -->
+                            <span class="blog-modal-emoji" style="font-size: 4.8rem; filter: drop-shadow(0 12px 24px rgba(0,0,0,0.5)); z-index: 1; line-height: 1;">${post.emoji || '📰'}</span>
+                        </div>
+
+                        <!-- Content Area -->
+                        <div id="blog-post-content-area" style="padding: 24px; padding-top: 16px; position: relative; z-index: 2; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+                                <span style="font-size: 0.58rem; font-weight: 1000; color: ${post.catColor || '#CCFF00'}; border: 1px solid ${post.catColor || '#CCFF00'}45; padding: 4px 10px; border-radius: 8px; background: ${post.catColor || '#CCFF00'}12; letter-spacing: 0.8px; text-transform: uppercase;">${post.category || 'REVISTA'}</span>
+                                <span style="font-size: 0.62rem; color: rgba(255,255,255,0.45); font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;">• ${post.readTime || '3 MIN'} DE LECTURA</span>
+                            </div>
+                            
+                            <h3 style="color: white; font-weight: 950; font-size: 1.35rem; margin: 0 0 16px 0; line-height: 1.25; letter-spacing: -0.4px; text-shadow: 0 2px 10px rgba(0,0,0,0.4);">${post.title}</h3>
+                            
+                            <p style="color: rgba(255,255,255,0.85); font-size: 0.86rem; font-weight: 500; line-height: 1.65; margin: 0 0 20px 0; word-break: break-word; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">${post.content}</p>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.68rem; color: rgba(255,255,255,0.4); font-weight: 800; letter-spacing: 0.5px;">
+                                <span>Publicado: ${post.date || 'Recientemente'}</span>
+                                <span style="color: #CCFF00; font-weight: 900; letter-spacing: 0.8px;">SOMOSPADEL BCN</span>
+                            </div>
+                        </div>
+
+                        <!-- Floating Premium Control Buttons (Fixed on top of banner) -->
+                        <button id="blog-modal-share-btn"
+                                style="position: absolute; top: 16px; left: 16px; background: rgba(0,0,0,0.65); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25); color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 999999999 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.4);"
+                                onmouseover="this.style.background='#3b82f6';this.style.borderColor='#3b82f6';this.style.transform='scale(1.12) translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(59,130,246,0.5)';"
+                                onmouseout="this.style.background='rgba(0,0,0,0.65)';this.style.borderColor='rgba(255,255,255,0.25)';this.style.transform='scale(1) translateY(0)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.4)';"
+                                title="Compartir Noticia">
+                            <i class="fas fa-share-alt" style="font-size: 0.95rem;"></i>
                         </button>
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                            <span style="font-size: 0.6rem; font-weight: 1000; color: ${post.catColor || '#CCFF00'}; border: 1px solid ${post.catColor || '#CCFF00'}40; padding: 3px 10px; border-radius: 8px; background: ${post.catColor || '#CCFF00'}10; text-transform: uppercase;">${post.category || 'REVISTA'}</span>
-                            <span style="font-size: 0.65rem; color: rgba(255,255,255,0.4); font-weight: 800;">${post.readTime || '3 min'} de lectura</span>
-                        </div>
-                        <h3 style="color: white; font-weight: 950; font-size: 1.4rem; margin: 0 0 15px 0; line-height: 1.2; letter-spacing: -0.5px; padding-right: 40px;">${post.title}</h3>
-                        <p style="color: rgba(255,255,255,0.8); font-size: 0.85rem; font-weight: 500; line-height: 1.6; margin: 0 0 20px 0;">${post.content}</p>
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.7rem; color: rgba(255,255,255,0.4); font-weight: 800;">
-                            <span>Publicado: ${post.date || 'Recientemente'}</span>
-                            <span style="color: #CCFF00; font-weight: 900;">SOMOSPADEL BCN</span>
-                        </div>
+                        
+                        <button id="blog-modal-close-btn"
+                                style="position: absolute; top: 16px; right: 16px; background: rgba(0,0,0,0.65); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25); color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 999999999 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.4);"
+                                onmouseover="this.style.background='#CCFF00';this.style.borderColor='#CCFF00';this.style.color='#000';this.style.transform='scale(1.12) translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(204,255,0,0.5)';"
+                                onmouseout="this.style.background='rgba(0,0,0,0.65)';this.style.borderColor='rgba(255,255,255,0.25)';this.style.color='#fff';this.style.transform='scale(1) translateY(0)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.4)';"
+                                title="Cerrar Noticia">
+                            <i class="fas fa-times" style="font-size: 0.95rem;"></i>
+                        </button>
                     </div>
                     <style>
                         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                        @keyframes slideUp { from { transform: translateY(28px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                        .blog-modal-emoji { animation: modalEmojiFloat 4s ease-in-out infinite; }
+                        @keyframes modalEmojiFloat {
+                            0%, 100% { transform: translateY(0) scale(1); }
+                            50% { transform: translateY(-7px) scale(1.05); }
+                        }
+                        #blog-post-content-area::-webkit-scrollbar { width: 6px; }
+                        #blog-post-content-area::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 10px; }
+                        #blog-post-content-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 10px; }
+                        #blog-post-content-area::-webkit-scrollbar-thumb:hover { background: #CCFF00; }
                     </style>
                 `;
                 document.body.appendChild(modal);
+
+                // Asignamos manejadores de eventos directos sin inline onclicks propensos a fallos
+                const closeBtn = modal.querySelector('#blog-modal-close-btn');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        modal.remove();
+                    });
+                }
+
+                const shareBtn = modal.querySelector('#blog-modal-share-btn');
+                if (shareBtn) {
+                    shareBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.shareBlogPost(postId, post.title);
+                    });
+                }
+
+                // Cerrar modal al hacer click fuera de la tarjeta de contenido para UX impecable
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                };
             } catch (err) {
                 console.error("Error al abrir blog post:", err);
             }

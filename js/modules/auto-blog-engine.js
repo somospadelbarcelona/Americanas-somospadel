@@ -9,68 +9,222 @@
 (function () {
     console.log('🤖 [AutoBlogEngine] Motor de Noticias cargando...');
 
-    // ─── BANCO DE CONSEJOS TÁCTICOS ROTATIVOS ───────────────────────────────
+    // ─── BANCO DE CONSEJOS TÁCTICOS ROTATIVOS ENRIQUECIDOS (MINI-MASTERCLASSES) ───
     const TACTICAL_TIPS = [
         {
             title: '💡 La Teoría del Centro: el Secreto de los Pros',
             emoji: '🎯',
             snippet: 'Jugar al centro reduce los ángulos del rival y provoca dudas entre la pareja contraria.',
-            content: 'Uno de los principios más poderosos del pádel moderno es la "Teoría del Centro". Al golpear consistentemente hacia el centro de la pista, reduces drásticamente los ángulos de rebote que puede explotar el rival. Además, generates confusión entre la pareja contraria — ¿quién coge esa bola? Este simple ajuste táctico puede cambiar completamente un partido. Pruébalo en tu próxima partida y observa cómo el rival se desorganiza.',
+            content: `
+                <div style="font-family:'Inter', sans-serif; color:rgba(255,255,255,0.9); line-height:1.65;">
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+                        <h4 style="margin:0 0 8px; font-family:'Outfit'; font-size:0.95rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">🎯 ¿Por qué es fundamental?</h4>
+                        <p style="margin:0; font-size:0.8rem; color:rgba(255,255,255,0.72); font-weight:500;">Uno de los principios más poderosos del pádel moderno es la "Teoría del Centro". Al golpear consistentemente hacia el centro de la pista, reduces drásticamente los ángulos de rebote que puede explotar el rival. Además, generas confusión espacial y de comunicación entre la pareja contraria — ¿quién coge esa bola?</p>
+                    </div>
+                    
+                    <div style="margin-bottom:18px;">
+                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">📋 Guía de Ejecución Paso a Paso</h4>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
+                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">1</span>
+                                <span style="color:rgba(255,255,255,0.85);"><strong>Apunta a la "T":</strong> Dirige tus golpes hacia el punto donde se cruzan las líneas de servicio del fondo de la pista contraria para un rebote neutro.</span>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
+                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">2</span>
+                                <span style="color:rgba(255,255,255,0.85);"><strong>Controla la altura:</strong> Juega globos profundos por el centro para recuperar tu posición en la red sin regalar ángulos laterales.</span>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
+                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">3</span>
+                                <span style="color:rgba(255,255,255,0.85);"><strong>Sincroniza la volea:</strong> Cuando ambos subáis a la red, mantened una distancia coordinada para cubrir la zona central y el rebote del cristal.</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom:18px;">
+                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">❌ Errores Comunes a Evitar</h4>
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
+                                <span style="color:#ef4444; font-weight:900;">❌</span> Rematar de frente con demasiada fuerza, regalando un rebote cómodo a su cristal de fondo.
+                            </div>
+                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
+                                <span style="color:#ef4444; font-weight:900;">❌</span> No comunicarse con tu pareja en las bolas del centro, permitiendo que ambos duden y dejen pasar el punto.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background:linear-gradient(135deg, rgba(204,255,0,0.08) 0%, rgba(132,204,22,0.03) 100%); border:1px solid rgba(204,255,0,0.22); padding:16px; border-radius:18px; box-shadow: 0 4px 15px rgba(204,255,0,0.05);">
+                        <h4 style="margin:0 0 6px; font-family:'Outfit'; font-size:0.9rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">💡 El Secreto del Coach</h4>
+                        <p style="margin:0; font-size:0.78rem; color:rgba(255,255,255,0.85); font-weight:500;">Si el rival juega muy separado, el juego central es letal. Satura el centro hasta forzar un golpeo defensivo de mala calidad de tu rival, y entonces ataca agresivamente los espacios laterales que queden abiertos.</p>
+                    </div>
+                </div>
+            `,
             catColor: '#f59e0b', imgGrad: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)'
         },
         {
             title: '💡 El Globo Defensivo: Tu Mejor Arma en Apuros',
             emoji: '🌟',
             snippet: 'Cuando estás bajo presión, el globo bien colocado te da tiempo para recuperar la posición.',
-            content: 'El globo no es una señal de debilidad — es una herramienta táctica de alto nivel. Cuando el rival te presiona en el fondo de pista, un globo profundo y con efecto te permite recuperar la posición en la red, resetear el punto y pasar de defender a atacar. La clave está en la altura: lo suficientemente alto para que tu rival no pueda rematar cómodamente, pero no tan alto que le des tiempo de organizar un ataque perfecto.',
+            content: `
+                <div style="font-family:'Inter', sans-serif; color:rgba(255,255,255,0.9); line-height:1.65;">
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+                        <h4 style="margin:0 0 8px; font-family:'Outfit'; font-size:0.95rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">🌟 ¿Por qué es fundamental?</h4>
+                        <p style="margin:0; font-size:0.8rem; color:rgba(255,255,255,0.72); font-weight:500;">El globo no es una señal de debilidad — es una herramienta táctica de alto nivel. Cuando el rival te presiona en el fondo de pista, un globo profundo y con efecto te permite recuperar la posición en la red, resetear el punto y pasar de defender a atacar.</p>
+                    </div>
+                    
+                    <div style="margin-bottom:18px;">
+                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">📋 Guía de Ejecución Paso a Paso</h4>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
+                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">1</span>
+                                <span style="color:rgba(255,255,255,0.85);"><strong>Flexiona las rodillas:</strong> Entra siempre por debajo de la bola con la pala bien abierta para garantizar la parábola ideal.</span>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
+                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">2</span>
+                                <span style="color:rgba(255,255,255,0.85);"><strong>Busca la altura correcta:</strong> Un globo demasiado alto da tiempo a reubicarse, pero un globo tenso y profundo los saca de su posición de red al instante.</span>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
+                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">3</span>
+                                <span style="color:rgba(255,255,255,0.85);"><strong>Acompaña la subida:</strong> Si ves que el globo sobrepasa a los oponentes, sube inmediatamente a la red con tu pareja para consolidar la ventaja.</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom:18px;">
+                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">❌ Errores Comunes a Evitar</h4>
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
+                                <span style="color:#ef4444; font-weight:900;">❌</span> Golpear con la muñeca suelta, lo que provoca globos cortos y fáciles de rematar (bandeja ganadora).
+                            </div>
+                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
+                                <span style="color:#ef4444; font-weight:900;">❌</span> Quedarse estático en el fondo esperando a ver el bote de tu propio globo en lugar de subir a la red.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background:linear-gradient(135deg, rgba(204,255,0,0.08) 0%, rgba(132,204,22,0.03) 100%); border:1px solid rgba(204,255,0,0.22); padding:16px; border-radius:18px; box-shadow: 0 4px 15px rgba(204,255,0,0.05);">
+                        <h4 style="margin:0 0 6px; font-family:'Outfit'; font-size:0.9rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">💡 El Secreto del Coach</h4>
+                        <p style="margin:0; font-size:0.78rem; color:rgba(255,255,255,0.85); font-weight:500;">En pistas de cristal templado outdoor o con viento en contra, el globo alto al rincón del rival es doblemente efectivo porque las trayectorias de rebote se vuelven impredecibles. ¡Úsalo para cansar psicológicamente a tus rivales!</p>
+                    </div>
+                </div>
+            `,
             catColor: '#f59e0b', imgGrad: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'
         },
         {
             title: '💡 La Posición en la Red: Dónde Ganar los Puntos',
             emoji: '⚡',
             snippet: 'Controlar la red te da el dominio del punto. Aprende la posición correcta para voleas ganadoras.',
-            content: 'El pádel se gana en la red. El jugador o pareja que controla la posición central en la red tiene una ventaja enorme: más ángulos de volea, más opciones de rematada y más presión psicológica sobre el rival. La posición ideal es a un metro y medio de la red, alineados con la bola y en posición de split-step justo cuando el rival golpea. Practicar el timing del split-step es el primer paso hacia el dominio de la red.',
+            content: `
+                <div style="font-family:'Inter', sans-serif; color:rgba(255,255,255,0.9); line-height:1.65;">
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+                        <h4 style="margin:0 0 8px; font-family:'Outfit'; font-size:0.95rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">⚡ ¿Por qué es fundamental?</h4>
+                        <p style="margin:0; font-size:0.8rem; color:rgba(255,255,255,0.72); font-weight:500;">El pádel se gana en la red. Quien controla la posición central en la red tiene una ventaja enorme: más ángulos de volea, más presión psicológica sobre el rival y mejores opciones de cierre de punto. La clave es el split-step.</p>
+                    </div>
+                    
+                    <div style="margin-bottom:18px;">
+                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">📋 Guía de Ejecución Paso a Paso</h4>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
+                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">1</span>
+                                <span style="color:rgba(255,255,255,0.85);"><strong>Posicionamiento ideal:</strong> Sitúate a un metro y medio de la red, siempre alineado horizontalmente con la trayectoria de la bola y tu pareja.</span>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
+                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">2</span>
+                                <span style="color:rgba(255,255,255,0.85);"><strong>El Split-Step obligatorio:</strong> Realiza un pequeño salto de caída amortiguada justo en el instante en que tu rival impacta la bola.</span>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
+                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">3</span>
+                                <span style="color:rgba(255,255,255,0.85);"><strong>Pala arriba:</strong> Mantén la cabeza de la pala siempre a la altura del pecho para poder reaccionar a voleas veloces al cuerpo.</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom:18px;">
+                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">❌ Errores Comunes a Evitar</h4>
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
+                                <span style="color:#ef4444; font-weight:900;">❌</span> Pegarse excesivamente a la red, facilitando que te sobrepasen con globos defensivos sencillos.
+                            </div>
+                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
+                                <span style="color:#ef4444; font-weight:900;">❌</span> Bajar los brazos y la pala entre voleas, perdiendo centésimas vitales de reacción defensiva.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background:linear-gradient(135deg, rgba(204,255,0,0.08) 0%, rgba(132,204,22,0.03) 100%); border:1px solid rgba(204,255,0,0.22); padding:16px; border-radius:18px; box-shadow: 0 4px 15px rgba(204,255,0,0.05);">
+                        <h4 style="margin:0 0 6px; font-family:'Outfit'; font-size:0.9rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">💡 El Secreto del Coach</h4>
+                        <p style="margin:0; font-size:0.78rem; color:rgba(255,255,255,0.85); font-weight:500;">La "teoría del imán": cuando tu oponente se desplaza al fondo y se desequilibra, da un paso adelante en la red. Al achicar el espacio, la presión sobre su tiro se multiplica por tres.</p>
+                    </div>
+                </div>
+            `,
             catColor: '#f59e0b', imgGrad: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)'
         },
         {
             title: '💡 El Efecto Cortado: El Golpe que Confunde',
             emoji: '🔄',
             snippet: 'Un golpe cortado con slice hace que la bola patine en el cristal y genere ángulos imposibles.',
-            content: 'El golpe cortado o slice es una de las herramientas más sofisticadas del pádel avanzado. Al golpear la bola con efecto cortado hacia la pared lateral, creas una trayectoria "baja y resbalosa" que es muy difícil de contrarrestar. La bola no sube al rematar contra el cristal — patina. Esto obliga al rival a bajar mucho la raqueta y a menudo resulta en una bola de poca calidad que puedes atacar. Úsalo especialmente en el tercer cristal lateral.',
+            content: `
+                <div style="font-family:'Inter', sans-serif; color:rgba(255,255,255,0.9); line-height:1.65;">
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+                        <h4 style="margin:0 0 8px; font-family:'Outfit'; font-size:0.95rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">🔄 ¿Por qué es fundamental?</h4>
+                        <p style="margin:0; font-size:0.8rem; color:rgba(255,255,255,0.72); font-weight:500;">El golpe cortado (slice) es una de las herramientas más sofisticadas del pádel avanzado. Al golpear la bola con efecto cortado hacia la pared lateral, creas una trayectoria "baja y resbalosa" que patina en el cristal, impidiendo que la bola suba al rebotar.</p>
+                    </div>
+                    
+                    <div style="margin-bottom:18px;">
+                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">📋 Guía de Ejecución Paso a Paso</h4>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
+                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">1</span>
+                                <span style="color:rgba(255,255,255,0.85);"><strong>Impacto de arriba a abajo:</strong> Comienza con la pala alta y finaliza el recorrido por debajo de la bola con la cara de la pala mirando ligeramente hacia arriba.</span>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
+                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">2</span>
+                                <span style="color:rgba(255,255,255,0.85);"><strong>Apunta a la reja lateral:</strong> Dirigir voleas cortadas hacia la reja o las uniones de los cristales laterales genera botes totalmente aleatorios e irrecuperables.</span>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
+                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">3</span>
+                                <span style="color:rgba(255,255,255,0.85);"><strong>Acompaña con el cuerpo:</strong> Transfiere tu peso corporal hacia adelante en el momento del impacto para que la volea viaje con peso y profundidad.</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom:18px;">
+                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">❌ Errores Comunes a Evitar</h4>
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
+                                <span style="color:#ef4444; font-weight:900;">❌</span> Acelerar la muñeca en exceso, provocando que la bola "flote" y salga alta para el remate fácil del rival.
+                            </div>
+                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
+                                <span style="color:#ef4444; font-weight:900;">❌</span> Cortar bolas extremadamente bajas, arriesgando un fallo en la red. En bolas bajas se aconseja juego plano.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background:linear-gradient(135deg, rgba(204,255,0,0.08) 0%, rgba(132,204,22,0.03) 100%); border:1px solid rgba(204,255,0,0.22); padding:16px; border-radius:18px; box-shadow: 0 4px 15px rgba(204,255,0,0.05);">
+                        <h4 style="margin:0 0 6px; font-family:'Outfit'; font-size:0.9rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">💡 El Secreto del Coach</h4>
+                        <p style="margin:0; font-size:0.78rem; color:rgba(255,255,255,0.85); font-weight:500;">Si juegas a la bandeja cortada (víbora), impacta a las 2 en punto (si eres diestro). Ese giro de slice lateral forzará a que la bola rebote contra el fondo patinando hacia el suelo lateral.</p>
+                    </div>
+                </div>
+            `,
             catColor: '#f59e0b', imgGrad: 'linear-gradient(135deg, #34d399 0%, #059669 100%)'
-        },
-        {
-            title: '💡 Comunicación en Pista: El Equipo que Habla, Gana',
-            emoji: '🗣️',
-            snippet: 'Las parejas ganadoras se comunican constantemente. Aprende los códigos de comunicación esenciales.',
-            content: 'El pádel es un deporte de pareja y la comunicación es fundamental. Las mejores parejas tienen un lenguaje propio en pista: "mía", "tuya", "al centro", "cambia", "sube". Antes del partido, acordad vuestra estrategia: quién cubre el centro, cómo gestionáis los globos, cuándo subís juntos. Durante el juego, comunicad entre punto y punto — qué ha fallado, qué ha funcionado. Una pareja bien comunicada multiplica su rendimiento exponencialmente.',
-            catColor: '#f59e0b', imgGrad: 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)'
-        },
-        {
-            title: '💡 El Remate por Tres: La Bola Imposible de Defender',
-            emoji: '💥',
-            snippet: 'Aprende a usar las tres paredes para crear remates imposibles de devolver.',
-            content: 'El "remate por tres" o remate bandeja con efecto hacia los tres cristales es una de las jugadas más espectaculares y efectivas del pádel. En lugar de rematar la bola hacia abajo con potencia, la golpeas hacia la pared del fondo con efectoy rebota hacia las paredes laterales, creando un ángulo imposible. Este golpe requiere técnica y práctica, pero cuando lo dominas te diferencia completamente de los jugadores de tu nivel.',
-            catColor: '#f59e0b', imgGrad: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)'
         }
     ];
 
     // ─── FRASES DE APERTURA Y CIERRE ATRACTIVAS ─────────────────────────────
     const OPENING_HOOKS = [
-        '¡La acción en SomosPadel BCN no para! ',
-        '¡Atención a todos los jugadores! ',
-        '¡Noticias frescas desde la pista! ',
-        '¡El pádel está más vivo que nunca! ',
-        '¡No te pierdas lo que está pasando! ',
-        '¡SomosPadel BCN en plena forma! '
+        '¡La acción en SomosPadel BCN no para! 🎾 ',
+        '¡Atención a todos los miembros de la comunidad! 📢 ',
+        '¡Noticias frescas directas desde el corazón de la pista! 📡 ',
+        '¡El nivel de SomosPadel BCN sigue subiendo como la espuma! 🚀 ',
+        '¡No te pierdas los últimos acontecimientos del club! 🔥 ',
+        '¡SomosPadel BCN en plena ebullición competitiva! 💪 '
     ];
 
     const CLOSING_LINES = [
-        ' ¡Nos vemos en pista! 🎾',
-        ' ¡Apunta la fecha en tu calendario! 📅',
-        ' ¡El nivel sigue subiendo! 🚀',
-        ' ¡SomosPadel BCN es tu club! 💪',
-        ' ¡Que no te lo cuenten! 🔥'
+        ' ¡Nos vemos batallando en pista! 🎾',
+        ' ¡Apunta las fechas en tu calendario y reserva tu plaza antes de que vuelen! 📅',
+        ' ¡El nivel sigue subiendo cada semana! 🚀',
+        ' ¡SomosPadel BCN es el club donde quieres estar! 💪',
+        ' ¡Que no te lo cuenten, vívelo en primera persona! 🔥'
     ];
 
     function randomFrom(arr) {
@@ -119,7 +273,7 @@
         return str.split(' ').map(w => capitalize(w)).join(' ');
     }
 
-    // ─── GENERADORES DE ARTÍCULOS POR TIPO ──────────────────────────────────
+    // ─── GENERADORES DE ARTÍCULOS ENRIQUECIDOS POR TIPO ──────────────────────────
 
     function buildAmericanaOpenArticle(ev) {
         const spots = (parseInt(ev.max_courts || 4) * 4);
@@ -129,6 +283,53 @@
         const loc = ev.location || 'nuestras instalaciones';
         const dateStr = formatDate(ev.date);
         const timeStr = ev.time ? ` a las ${ev.time}` : '';
+        const hook = randomFrom(OPENING_HOOKS);
+
+        const contentHtml = `
+            <div style="font-family:'Inter', sans-serif; color:rgba(255,255,255,0.9); line-height:1.65;">
+                <p style="margin:0 0 16px; font-size:0.84rem; color:rgba(255,255,255,0.85); font-weight:500;">
+                    ${hook}El próximo <strong>${dateStr}${timeStr}</strong> celebramos una nueva e increíble <strong>Americana ${catLabel}</strong> en las instalaciones de ${loc}. Ya contamos con ${registered} competidores inscritos de nuestra gran comunidad padelística.
+                </p>
+                
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px; box-shadow:0 4px 15px rgba(0,0,0,0.15);">
+                    <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.9rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">⏱️ Itinerario del Evento</h4>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                            <span style="font-weight:700; color:white;">• Recepción y Check-in</span>
+                            <span style="color:rgba(255,255,255,0.5);">10 min antes</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                            <span style="font-weight:700; color:white;">• Sorteo de Pistas y Calentamiento</span>
+                            <span style="color:rgba(255,255,255,0.5);">5 min</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                            <span style="font-weight:700; color:white;">• Fase Competitiva Automática (AIEngine)</span>
+                            <span style="color:rgba(255,255,255,0.5);">80 min (Rondas dinámicas)</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; padding-bottom:2px;">
+                            <span style="font-weight:700; color:white;">• Entrega de Premios y Networking</span>
+                            <span style="color:rgba(255,255,255,0.5);">15 min (Cerveza y Refrescos)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:18px;">
+                    <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.9rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">💡 ¿Qué incluye tu inscripción?</h4>
+                    <ul style="margin:0; padding-left:18px; font-size:0.78rem; color:rgba(255,255,255,0.72); display:flex; flex-direction:column; gap:4px;">
+                        <li><strong>Welcome Pack Pro:</strong> Recibe tu pack premium (bebida oficial y grip premium).</li>
+                        <li><strong>Equilibrio Garantizado:</strong> Algoritmo de emparejamiento predictivo optimizado para nivelar el juego.</li>
+                        <li><strong>Recalculación ELO Segura:</strong> Suma puntos de ranking tras cada set y escala en la clasificación oficial.</li>
+                    </ul>
+                </div>
+
+                <div style="background:linear-gradient(135deg, rgba(204,255,0,0.1) 0%, rgba(0,0,0,0) 100%); border:1px solid #CCFF00; padding:14px; border-radius:16px; text-align:center; box-shadow:0 4px 15px rgba(204,255,0,0.05);">
+                    <span style="font-size:0.8rem; font-weight:950; color:#CCFF00; display:block; margin-bottom:4px; text-transform:uppercase;">🔥 ¡ÚLTIMAS PLAZAS DISPONIBLES!</span>
+                    <span style="font-size:0.72rem; color:rgba(255,255,255,0.8); display:block;">
+                        ${free > 0 ? `Quedan exactamente <strong>${free} plazas libres</strong>. Apúntate desde la pestaña "Eventos" de la app antes de que se complete.` : '¡Las plazas habituales se han completado! Puedes unirte a la lista de espera activa por posibles bajas de última hora.'}
+                    </span>
+                </div>
+            </div>
+        `;
 
         return {
             id: `americana-open-${ev.id || ev.name?.slice(0,8).replace(/\s/g,'-')}-${(ev.date||'').replace(/\//g,'-')}`,
@@ -140,7 +341,7 @@
                 ? `🔥 ¡ÚLTIMAS ${free} PLAZAS! Americana ${catLabel} el ${dateStr}`
                 : `🏆 Inscríbete: Americana ${catLabel} el ${dateStr}${timeStr}`,
             snippet: `${registered} jugadores apuntados. ${free > 0 ? `Quedan ${free} plazas libres` : '¡Lista de espera activa'} en ${loc.split(' ').slice(-2).join(' ')}.`,
-            content: `${randomFrom(OPENING_HOOKS)}El próximo ${dateStr}${timeStr} celebramos una nueva Americana ${catLabel} en ${loc}. Ya tenemos ${registered} jugadores inscritos y ${free > 0 ? `quedan ${free} plazas disponibles` : 'la lista de espera está activa'}. Apúntate desde la sección de Americanas de la app antes de que se llene. ${free <= 4 && free > 0 ? '¡No esperes más, las plazas vuelan!' : 'Cada americana es una experiencia única de networking padelístico.'}${randomFrom(CLOSING_LINES)}`,
+            content: contentHtml,
             date: timeAgo(Date.now()),
             readTime: '1 min',
             timestamp: Date.now() - Math.random() * 60000
@@ -152,6 +353,30 @@
         const count = players.length;
         const loc = ev.location || 'pista';
 
+        const contentHtml = `
+            <div style="font-family:'Inter', sans-serif; color:rgba(255,255,255,0.9); line-height:1.65;">
+                <p style="margin:0 0 16px; font-size:0.84rem; color:rgba(255,255,255,0.85); font-weight:500;">
+                    🔴 <strong>¡ACCIÓN EN VIVO EN LAS PISTAS!</strong> La americana <strong>${(ev.name || 'Americana').toUpperCase()}</strong> está en curso ahora mismo en ${loc}. Un total de ${count} jugadores están batallando raqueta en mano en estos momentos.
+                </p>
+                
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px; box-shadow:0 4px 15px rgba(0,0,0,0.15);">
+                    <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.9rem; color:#ef4444; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">⚡ Cobertura en Tiempo Real</h4>
+                    <ul style="margin:0; padding-left:18px; font-size:0.78rem; color:rgba(255,255,255,0.72); display:flex; flex-direction:column; gap:4px;">
+                        <li><strong>Marcadores al Instante:</strong> Sigue court por court la evolución de los tanteos y el punto de oro.</li>
+                        <li><strong>Clasificación Virtual:</strong> Mira cómo fluctúan los puestos de la jornada con cada juego sumado.</li>
+                        <li><strong>Parejas Equilibradas:</strong> La Inteligencia Predictiva de nuestro algoritmo (` + 'AIEngine' + `) ha emparejado a cada ronda duelos de máxima tensión.</li>
+                    </ul>
+                </div>
+
+                <div style="background:linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(0,0,0,0) 100%); border:1px solid #ef4444; padding:14px; border-radius:16px; text-align:center; box-shadow:0 4px 15px rgba(239,68,68,0.05);">
+                    <span style="font-size:0.8rem; font-weight:950; color:#ef4444; display:block; margin-bottom:4px; text-transform:uppercase;">📺 ¡SIGUE LA JORNADA!</span>
+                    <span style="font-size:0.72rem; color:rgba(255,255,255,0.8); display:block;">
+                        Abre la sección "Live" o "Center Court" de la app para ver el radar táctico, marcadores y animar a tus compañeros en directo.
+                    </span>
+                </div>
+            </div>
+        `;
+
         return {
             id: `americana-live-${ev.id || 'ev'}-${new Date().toISOString().slice(0, 10)}`,
             category: '🔴 EN DIRECTO',
@@ -160,7 +385,7 @@
             imgGrad: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
             title: `🔴 EN JUEGO AHORA: ${count} jugadores en acción${ev.location ? ' en ' + ev.location.split(' ').slice(-2).join(' ') : ''}`,
             snippet: `¡La ${(ev.category||'').toUpperCase() || 'americana'} de hoy está en pleno apogeo! Sigue la acción en tiempo real desde la app.`,
-            content: `🔴 ¡EVENTO EN DIRECTO AHORA MISMO! La ${(ev.name || 'Americana').toUpperCase()} está en curso con ${count} jugadores batallando en ${loc}. Los puntos se apuntan en tiempo real — abre la sección "Live" de la app para ver los marcadores, clasificaciones y quién está dominando la jornada. ¡El nivel de juego esta tarde está siendo espectacular!${randomFrom(CLOSING_LINES)}`,
+            content: contentHtml,
             date: 'Ahora mismo',
             readTime: '1 min',
             timestamp: Date.now()
@@ -174,6 +399,66 @@
         const dateStr = formatDate(ev.date);
         const modeLabel = ev.pair_mode === 'rotating' ? 'TWISTER 🌪️' :
             ev.pair_mode === 'fixed' ? 'PAREJA FIJA' : 'ABIERTO';
+        const hook = randomFrom(OPENING_HOOKS);
+
+        let objectivesHtml = '';
+        if (ev.pair_mode === 'rotating') {
+            objectivesHtml = `
+                <li><strong>Flexibilidad Táctica:</strong> Aprende a coordinarte con distintos estilos de juego y niveles en cada set.</li>
+                <li><strong>Rotación Activa (Twister):</strong> Dinámica de rotación al saque y recepción para conocer a toda la comunidad.</li>
+                <li><strong>Adaptabilidad en Red:</strong> Ejercicios intensivos de comunicación espontánea.</li>
+            `;
+        } else {
+            objectivesHtml = `
+                <li><strong>Cohesión de Pareja:</strong> Sincronizad los movimientos de volea y cobertura de cristales como una sola unidad.</li>
+                <li><strong>Estrategia Set-Play:</strong> Trabajad jugadas ensayadas, direcciones de saque y saque-red.</li>
+                <li><strong>Resistencia Psicológica:</strong> Puntos de oro consecutivos en pareja para consolidar la fortaleza.</li>
+            `;
+        }
+
+        const contentHtml = `
+            <div style="font-family:'Inter', sans-serif; color:rgba(255,255,255,0.9); line-height:1.65;">
+                <p style="margin:0 0 16px; font-size:0.84rem; color:rgba(255,255,255,0.85); font-weight:500;">
+                    ${hook}El próximo <strong>${dateStr}</strong> tenemos programado un nuevo entrenamiento en modo <strong>${modeLabel}</strong> en {ev.location || 'nuestras instalaciones'}. Una sesión exclusiva orientada a refinar la técnica e incorporar nuevos conceptos tácticos.
+                </p>
+                
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px; box-shadow:0 4px 15px rgba(0,0,0,0.15);">
+                    <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.9rem; color:#22c55e; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">🎓 Itinerario de la Sesión</h4>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                            <span style="font-weight:700; color:white;">• Calentamiento Dinámico y Activación</span>
+                            <span style="color:rgba(255,255,255,0.5);">10 min</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                            <span style="font-weight:700; color:white;">• Ejercicios de Táctica y Posicionamiento de Red</span>
+                            <span style="color:rgba(255,255,255,0.5);">40 min</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                            <span style="font-weight:700; color:white;">• Puntos de Competición en Situaciones Límite</span>
+                            <span style="color:rgba(255,255,255,0.5);">30 min</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; padding-bottom:2px;">
+                            <span style="font-weight:700; color:white;">• Análisis y Cierre Individual del Coach</span>
+                            <span style="color:rgba(255,255,255,0.5);">10 min</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:18px;">
+                    <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.9rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">🎯 Objetivos de la Sesión</h4>
+                    <ul style="margin:0; padding-left:18px; font-size:0.78rem; color:rgba(255,255,255,0.72); display:flex; flex-direction:column; gap:4px;">
+                        ${objectivesHtml}
+                    </ul>
+                </div>
+
+                <div style="background:linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(0,0,0,0) 100%); border:1px solid #22c55e; padding:14px; border-radius:16px; text-align:center; box-shadow:0 4px 15px rgba(34,197,94,0.05);">
+                    <span style="font-size:0.8rem; font-weight:950; color:#22c55e; display:block; margin-bottom:4px; text-transform:uppercase;">🚀 RESERVA TU PLAZA</span>
+                    <span style="font-size:0.72rem; color:rgba(255,255,255,0.8); display:block;">
+                        ${free > 0 ? `Quedan <strong>${free} plazas disponibles</strong> en este entrenamiento. Apúntate ya para no quedarte fuera.` : '¡Plazas completadas! Puedes sumarte a la lista de reserva para aprovechar cualquier vacante.'}
+                    </span>
+                </div>
+            </div>
+        `;
 
         return {
             id: `entreno-open-${ev.id || 'ent'}-${(ev.date||'').replace(/\//g,'-')}`,
@@ -183,7 +468,7 @@
             imgGrad: 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)',
             title: `🎾 Entreno ${modeLabel} el ${dateStr} — ${free > 0 ? `${free} plazas libres` : '¡Lista de espera!'}`,
             snippet: `${registered} jugadores ya apuntados. Modo ${modeLabel} ${ev.time ? `a las ${ev.time}` : ''}. ${free > 0 ? '¡Apúntate ya!' : 'Únete a la lista de espera.'}`,
-            content: `${randomFrom(OPENING_HOOKS)}El ${dateStr}${ev.time ? ` a las ${ev.time}` : ''} tenemos entreno en modo ${modeLabel} en ${ev.location || 'nuestras instalaciones'}. ${ev.pair_mode === 'rotating' ? 'En el formato TWISTER rotarás de pareja cada ronda, conocerás a todos los jugadores y mejorarás tu adaptación táctica. ' : 'Las parejas fijas trabajarán coordinación y estrategia conjunta. '}Ya se han apuntado ${registered} jugadores. ${free > 0 ? `Quedan ${free} plazas — apúntate desde la sección Americanas/Entrenos de la app.` : 'Las plazas están completas, pero puedes unirte a la lista de espera.'}${randomFrom(CLOSING_LINES)}`,
+            content: contentHtml,
             date: timeAgo(Date.now() - 3600000),
             readTime: '1 min',
             timestamp: Date.now() - 3600000 - Math.random() * 60000
@@ -197,6 +482,48 @@
         const leaderName = titleCase(leader.name || leader.displayName || 'El Líder');
         const leaderPoints = leader.ranking_points || leader.points || '—';
 
+        const top3Html = top3.map((p, idx) => {
+            const medal = ['🥇', '🥈', '🥉'][idx];
+            const name = titleCase(p.name || p.displayName || 'Pro Player');
+            const pts = p.ranking_points || p.points || 0;
+            const level = p.level ? `Nivel ${p.level.toFixed(2)}` : 'Pro';
+            
+            return `
+                <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:10px 14px; border-radius:12px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-size:1.3rem;">${medal}</span>
+                        <div style="display:flex; flex-direction:column;">
+                            <span style="font-weight:800; font-size:0.8rem; color:white; text-transform:uppercase;">${name}</span>
+                            <span style="font-size:0.62rem; color:rgba(255,255,255,0.4); font-weight:700;">${level}</span>
+                        </div>
+                    </div>
+                    <span style="font-weight:950; font-size:0.88rem; color:#38bdf8; font-family:'Outfit';">${pts} PTS</span>
+                </div>
+            `;
+        }).join('');
+
+        const contentHtml = `
+            <div style="font-family:'Inter', sans-serif; color:rgba(255,255,255,0.9); line-height:1.65;">
+                <p style="margin:0 0 16px; font-size:0.84rem; color:rgba(255,255,255,0.85); font-weight:500;">
+                    📊 <strong>¡ACTUALIZACIÓN OFICIAL DEL RANKING!</strong> El circuito competitivo de SomosPadel BCN se mueve y se recalcula con las estadísticas de la semana. <strong>${leaderName}</strong> se mantiene de forma espectacular en el liderato con un total de <strong>${leaderPoints} puntos</strong>.
+                </p>
+                
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:22px; margin-bottom:18px; box-shadow:0 8px 24px rgba(0,0,0,0.15);">
+                    <h4 style="margin:0 0 12px; font-family:'Outfit'; font-size:0.9rem; color:#38bdf8; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; text-align:center;">🏆 Reyes de la Pista (Top 3)</h4>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        ${top3Html}
+                    </div>
+                </div>
+
+                <div style="background:linear-gradient(135deg, rgba(56,189,248,0.08) 0%, rgba(0,0,0,0) 100%); border:1px solid #38bdf8; padding:16px; border-radius:18px; box-shadow: 0 4px 15px rgba(56,189,248,0.05);">
+                    <h4 style="margin:0 0 6px; font-family:'Outfit'; font-size:0.85rem; color:#38bdf8; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">🧠 Recalculación Segura ELO</h4>
+                    <p style="margin:0; font-size:0.74rem; color:rgba(255,255,255,0.72); line-height:1.45;">
+                        Cada resultado de set y juego disputado en nuestras americanas oficiales es procesado de forma segura en nuestro servidor cloud utilizando la fórmula ELO adaptada al pádel. ¡Cada punto sumado te acerca más al trono del club! Revisa tu posición detallada en la pestaña "Ranking" de la app.
+                    </p>
+                </div>
+            </div>
+        `;
+
         return {
             id: `ranking-top-${new Date().toISOString().slice(0, 7)}`,
             category: '📊 RANKING',
@@ -205,7 +532,7 @@
             imgGrad: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)',
             title: `🏅 Ranking Actualizado: ${leaderName} lidera con ${leaderPoints} puntos`,
             snippet: `Top 3: ${top3.map((p, i) => `${['🥇','🥈','🥉'][i]} ${titleCase(p.name || p.displayName || 'Jugador')}`).join(' · ')}. ¿Estás en la lista?`,
-            content: `El ranking de SomosPadel BCN se ha actualizado. ${leaderName} se mantiene al frente con ${leaderPoints} puntos. El TOP 3 actual es: 🥇 ${titleCase(top3[0]?.name || '—')} (${top3[0]?.ranking_points || '—'} pts)${top3[1] ? `, 🥈 ${titleCase(top3[1]?.name || '—')} (${top3[1]?.ranking_points || '—'} pts)` : ''}${top3[2] ? `, 🥉 ${titleCase(top3[2]?.name || '—')} (${top3[2]?.ranking_points || '—'} pts)` : ''}. El ranking se recalcula automáticamente tras cada americana. Cada victoria suma, cada derrota enseña. ¿En qué posición estás tú? Visita la sección Ranking de la app para ver la clasificación completa.${randomFrom(CLOSING_LINES)}`,
+            content: contentHtml,
             date: timeAgo(Date.now() - 7200000),
             readTime: '2 min',
             timestamp: Date.now() - 7200000
@@ -224,6 +551,45 @@
             winRate >= 70 ? 'en racha ganadora 💪' :
             winRate >= 50 ? 'con buenas sensaciones 🎾' :
             'luchando con todo 💥';
+        
+        const hook = randomFrom(OPENING_HOOKS);
+
+        const contentHtml = `
+            <div style="font-family:'Inter', sans-serif; color:rgba(255,255,255,0.9); line-height:1.65;">
+                <p style="margin:0 0 16px; font-size:0.84rem; color:rgba(255,255,255,0.85); font-weight:500;">
+                    ${hook}El equipo oficial del club <strong>${teamName}</strong> está firmando una trayectoria espectacular, mostrándose ${mood} en la liga de la división <strong>${division}</strong>. Su última jornada ha vuelto a consolidar su cohesión.
+                </p>
+                
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px; box-shadow:0 4px 15px rgba(0,0,0,0.15);">
+                    <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.9rem; color:#a78bfa; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">📝 Análisis Estadístico de Liga</h4>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                            <span style="font-weight:700; color:white;">• Partidos Disputados</span>
+                            <span style="font-weight:900; color:#a78bfa;">${total} partidos</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                            <span style="font-weight:700; color:white;">• Victorias</span>
+                            <span style="font-weight:900; color:#22c55e;">${wins} victorias</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                            <span style="font-weight:700; color:white;">• Derrotas</span>
+                            <span style="font-weight:900; color:#ef4444;">${losses} derrotas</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; padding-bottom:2px;">
+                            <span style="font-weight:700; color:white;">• Porcentaje de Éxito (Win-Rate)</span>
+                            <span style="font-weight:950; color:#CCFF00;">${winRate}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background:linear-gradient(135deg, rgba(167,139,250,0.08) 0%, rgba(0,0,0,0) 100%); border:1px solid #a78bfa; padding:16px; border-radius:18px; box-shadow: 0 4px 15px rgba(167,139,250,0.05);">
+                    <h4 style="margin:0 0 6px; font-family:'Outfit'; font-size:0.85rem; color:#a78bfa; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">📋 Pizarra Estratégica del Coach</h4>
+                    <p style="margin:0; font-size:0.75rem; color:rgba(255,255,255,0.72); line-height:1.45;">
+                        El cuerpo técnico del club destaca especialmente la madurez estratégica del equipo y su impecable sincronización en los puntos de oro decisivos. Recomendamos persistir en la presión alta de red tras saques cruzados. ¡Sigue toda la evolución de la liga oficial en la pestaña "Equipos" de la app!
+                    </p>
+                </div>
+            </div>
+        `;
 
         return {
             id: `team-highlight-${(team.id || team.name || 'team').replace(/\s/g,'-').toLowerCase()}-${new Date().toISOString().slice(0,7)}`,
@@ -233,7 +599,7 @@
             imgGrad: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)',
             title: `👥 ${teamName} ${mood} en ${division}`,
             snippet: `${wins}V - ${losses}D en ${total} partidos jugados. ${winRate}% de victorias. ¡Sigue su trayectoria en la app!`,
-            content: `${randomFrom(OPENING_HOOKS)}El equipo ${teamName} está ${mood} en ${division}. Con un balance de ${wins} victorias y ${losses} derrotas en ${total} partidos disputados, acumulan un impresionante ${winRate}% de victorias. ${wins >= 3 && losses === 0 ? '¡Aún no han conocido la derrota esta temporada! Una actuación espectacular que los sitúa como serios candidatos.' : winRate >= 70 ? 'Sus actuaciones esta temporada demuestran el gran nivel del equipo y su cohesión táctica.' : 'El equipo sigue trabajando para mejorar su rendimiento y escalar posiciones.'} Sigue su evolución partido a partido en la sección Equipos de la app.${randomFrom(CLOSING_LINES)}`,
+            content: contentHtml,
             date: timeAgo(Date.now() - 10800000),
             readTime: '1 min',
             timestamp: Date.now() - 10800000 - Math.random() * 60000
@@ -250,7 +616,7 @@
             imgGrad: tip.imgGrad,
             title: tip.title,
             snippet: tip.snippet,
-            content: tip.content + randomFrom(CLOSING_LINES),
+            content: tip.content, // Now is preformatted premium HTML!
             date: timeAgo(Date.now() - 18000000),
             readTime: '3 min',
             timestamp: Date.now() - 18000000 - index * 3600000
@@ -259,6 +625,40 @@
 
     function buildStatsArticle(stats) {
         const { totalMatches, totalPlayers, totalEvents } = stats;
+
+        const contentHtml = `
+            <div style="font-family:'Inter', sans-serif; color:rgba(255,255,255,0.9); line-height:1.65;">
+                <p style="margin:0 0 18px; font-size:0.84rem; color:rgba(255,255,255,0.85); font-weight:500;">
+                    📈 <strong>¡NÚMEROS IMPRESIONANTES EN NUESTRO CLUB!</strong> Las métricas de participación y partidos jugados en la plataforma oficial de SomosPadel BCN siguen superando récords históricos gracias al entusiasmo y alto nivel de juego de todos vosotros. ¡Echa un vistazo a la radiografía de nuestra comunidad!
+                </p>
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:18px;">
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                        <span style="font-size:1.4rem; display:block; margin-bottom:2px;">🎾</span>
+                        <span style="font-size:0.6rem; color:rgba(255,255,255,0.5); font-weight:800; text-transform:uppercase; display:block; letter-spacing:0.5px; margin-bottom:2px;">Partidos</span>
+                        <span style="font-size:0.95rem; font-weight:950; color:#ec4899; font-family:'Outfit';">${totalMatches}</span>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                        <span style="font-size:1.4rem; display:block; margin-bottom:2px;">👥</span>
+                        <span style="font-size:0.6rem; color:rgba(255,255,255,0.5); font-weight:800; text-transform:uppercase; display:block; letter-spacing:0.5px; margin-bottom:2px;">Jugadores</span>
+                        <span style="font-size:0.95rem; font-weight:950; color:#ec4899; font-family:'Outfit';">${totalPlayers}</span>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                        <span style="font-size:1.4rem; display:block; margin-bottom:2px;">🏆</span>
+                        <span style="font-size:0.6rem; color:rgba(255,255,255,0.5); font-weight:800; text-transform:uppercase; display:block; letter-spacing:0.5px; margin-bottom:2px;">Eventos</span>
+                        <span style="font-size:0.95rem; font-weight:950; color:#ec4899; font-family:'Outfit';">${totalEvents}</span>
+                    </div>
+                </div>
+
+                <div style="background:linear-gradient(135deg, rgba(236,72,153,0.08) 0%, rgba(0,0,0,0) 100%); border:1px solid #ec4899; padding:16px; border-radius:18px; box-shadow: 0 4px 15px rgba(236,72,153,0.05);">
+                    <h4 style="margin:0 0 6px; font-family:'Outfit'; font-size:0.85rem; color:#ec4899; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">🌟 Orgullo de Comunidad</h4>
+                    <p style="margin:0; font-size:0.75rem; color:rgba(255,255,255,0.72); line-height:1.45;">
+                        Cada semana incorporamos nuevos perfiles que elevan el nivel y amplían la riqueza deportiva de SomosPadel BCN. Gracias a vuestro esfuerzo continuo, nos consolidamos como la comunidad de referencia en Barcelona. ¡Sigamos impulsando el pádel de alto rendimiento!
+                    </p>
+                </div>
+            </div>
+        `;
+
         return {
             id: `stats-week-${new Date().toISOString().slice(0, 7)}-v2`,
             category: '📢 NOVEDADES',
@@ -267,7 +667,7 @@
             imgGrad: 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)',
             title: `🎉 SomosPadel BCN: ${totalMatches} partidos jugados esta temporada`,
             snippet: `${totalPlayers} jugadores activos, ${totalEvents} eventos completados. ¡La comunidad no para de crecer!`,
-            content: `¡Los números de SomosPadel BCN siguen creciendo! Esta temporada llevamos ${totalMatches} partidos disputados, ${totalPlayers} jugadores activos en nuestra base de datos y ${totalEvents} eventos completados con éxito. Cada semana la comunidad crece con nuevas incorporaciones y el nivel de juego sube constantemente. Si aún no has traído a un amigo al club, ¡este es el momento! Cuantos más seamos, más americanas podemos organizar y más variedad de niveles tenemos. ¡Gracias a todos por hacer de SomosPadel BCN un lugar tan especial!${randomFrom(CLOSING_LINES)}`,
+            content: contentHtml,
             date: timeAgo(Date.now() - 21600000),
             readTime: '2 min',
             timestamp: Date.now() - 21600000

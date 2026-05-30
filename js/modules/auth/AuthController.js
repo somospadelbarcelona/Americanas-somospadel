@@ -58,8 +58,12 @@
                     }
 
                     const btn = newLoginForm.querySelector('button[type="submit"]');
-                    const originalText = btn ? btn.textContent : "Entrar";
-                    if (btn) btn.textContent = "Verificando...";
+                    const originalText = btn ? btn.textContent : "INICIAR SESIÓN 🎾";
+                    if (btn) btn.textContent = "ESCANEANDO BIOMETRÍA...";
+
+                    // Activar Escáner Láser Cibernético de Biometría
+                    const scanner = document.getElementById('login-bio-scanner');
+                    if (scanner) scanner.style.display = 'block';
 
                     let email = phone;
                     if (!email.includes('@')) email = phone + '@somospadel.com';
@@ -69,6 +73,7 @@
                         if (!result.success) {
                             alert("❌ Error de acceso: " + result.error);
                             if (btn) btn.textContent = originalText;
+                            if (scanner) scanner.style.display = 'none';
                         } else {
                             console.log("✅ Login Success!");
 
@@ -76,6 +81,8 @@
                             if (phone) {
                                 localStorage.setItem('remembered_phone', phone);
                             }
+
+                            if (scanner) scanner.style.display = 'none';
 
                             // Hide Modal & Show App
                             const authModal = document.getElementById('auth-modal');
@@ -93,6 +100,7 @@
                     } catch (err) {
                         alert("❌ Error Inesperado: " + err.message);
                         if (btn) btn.textContent = originalText;
+                        if (scanner) scanner.style.display = 'none';
                     }
                 });
             }
