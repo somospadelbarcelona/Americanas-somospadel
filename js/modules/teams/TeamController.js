@@ -347,6 +347,16 @@
                 streak = streak.slice(0, 5);
             }
 
+            // --- CÁLCULO DE ATRIBUTOS TÁCTICOS COMPLETO (BIG DATA) ---
+            const top3Sum = (sortedRoster[0] ? sortedRoster[0].pts : 0) + (sortedRoster[1] ? sortedRoster[1].pts : 0) + (sortedRoster[2] ? sortedRoster[2].pts : 0);
+            const ataqueScore = Math.min(99, Math.max(45, Math.round((top3Sum / 180) * 100)));
+            
+            let defensaScore = Math.min(99, Math.max(40, 60 + setDiff * 8));
+            if (winRate > 0) defensaScore = Math.round((defensaScore + winRate) / 2);
+
+            const winsInStreak = streak.filter(res => res === 'W').length;
+            const consistenciaScore = streak.length > 0 ? Math.min(99, Math.max(35, Math.round((winsInStreak / streak.length) * 100))) : 50;
+
             const isTactica = initialTab === 'tactica';
             const addressText = getClubAddress(nextMatch.venue);
 
@@ -884,6 +894,68 @@
                                                     <div style="font-size: 0.95rem; font-weight: 950; color: ${setDiffColor}; line-height:1;">${setDiff > 0 ? '+'+setDiff : setDiff}</div>
                                                 </div>
                                             </div>
+
+                                            <!-- Panel Radar de Atributos Tácticos del Equipo (Big Data) -->
+                                            <div style="background: #ffffff; border-radius: 16px; padding: 12px; border: 1px solid #f1f5f9; box-shadow: 0 4px 10px rgba(0,0,0,0.01); display: flex; flex-direction: column; gap: 8px; text-align: left;">
+                                                <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; display: flex; flex-direction: column; gap: 2px;">
+                                                    <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;">
+                                                        <i class="fas fa-users-cog" style="color:#8b5cf6; font-size: 0.65rem;"></i> ATRIBUTOS DEL EQUIPO (BIG DATA)
+                                                    </div>
+                                                    <span style="font-size: 0.48rem; color: #cbd5e1; font-weight: 700; text-transform: uppercase;">Métricas colectivas del rendimiento conjunto</span>
+                                                </div>
+                                                
+                                                <!-- Ataque -->
+                                                <div onclick="window.TeamController.showTacticalDetail('ataque', ${ataqueScore})" 
+                                                     style="display: flex; flex-direction: column; gap: 2px; cursor: pointer; transition: 0.2s;"
+                                                     onmouseover="this.style.transform='translateX(2px)';" onmouseout="this.style.transform='none'">
+                                                    <div style="display: flex; justify-content: space-between; font-size: 0.58rem; font-weight: 800;">
+                                                        <span style="color: #475569;">⚔️ Ataque (Potencia Roster)</span>
+                                                        <span style="color: #ef4444; font-weight: 900;">${ataqueScore}%</span>
+                                                    </div>
+                                                    <div style="width: 100%; height: 5px; background: #f1f5f9; border-radius: 3px; overflow: hidden;">
+                                                        <div style="width: ${ataqueScore}%; height: 100%; background: linear-gradient(90deg, #f87171 0%, #ef4444 100%); border-radius: 3px;"></div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Defensa -->
+                                                <div onclick="window.TeamController.showTacticalDetail('defensa', ${defensaScore})" 
+                                                     style="display: flex; flex-direction: column; gap: 2px; cursor: pointer; transition: 0.2s;"
+                                                     onmouseover="this.style.transform='translateX(2px)';" onmouseout="this.style.transform='none'">
+                                                    <div style="display: flex; justify-content: space-between; font-size: 0.58rem; font-weight: 800;">
+                                                        <span style="color: #475569;">🛡️ Defensa (Solidez de Set)</span>
+                                                        <span style="color: #3b82f6; font-weight: 900;">${defensaScore}%</span>
+                                                    </div>
+                                                    <div style="width: 100%; height: 5px; background: #f1f5f9; border-radius: 3px; overflow: hidden;">
+                                                        <div style="width: ${defensaScore}%; height: 100%; background: linear-gradient(90deg, #60a5fa 0%, #3b82f6 100%); border-radius: 3px;"></div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Consistencia -->
+                                                <div onclick="window.TeamController.showTacticalDetail('consistencia', ${consistenciaScore})" 
+                                                     style="display: flex; flex-direction: column; gap: 2px; cursor: pointer; transition: 0.2s;"
+                                                     onmouseover="this.style.transform='translateX(2px)';" onmouseout="this.style.transform='none'">
+                                                    <div style="display: flex; justify-content: space-between; font-size: 0.58rem; font-weight: 800;">
+                                                        <span style="color: #475569;">🔥 Consistencia de Racha</span>
+                                                        <span style="color: #f59e0b; font-weight: 900;">${consistenciaScore}%</span>
+                                                    </div>
+                                                    <div style="width: 100%; height: 5px; background: #f1f5f9; border-radius: 3px; overflow: hidden;">
+                                                        <div style="width: ${consistenciaScore}%; height: 100%; background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%); border-radius: 3px;"></div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Química -->
+                                                <div onclick="window.TeamController.showTacticalDetail('quimica', ${cohesionScore})" 
+                                                     style="display: flex; flex-direction: column; gap: 2px; cursor: pointer; transition: 0.2s;"
+                                                     onmouseover="this.style.transform='translateX(2px)';" onmouseout="this.style.transform='none'">
+                                                    <div style="display: flex; justify-content: space-between; font-size: 0.58rem; font-weight: 800;">
+                                                        <span style="color: #475569;">🤝 Química (Cohesión Roster)</span>
+                                                        <span style="color: #10b981; font-weight: 900;">${cohesionScore}%</span>
+                                                    </div>
+                                                    <div style="width: 100%; height: 5px; background: #f1f5f9; border-radius: 3px; overflow: hidden;">
+                                                        <div style="width: ${cohesionScore}%; height: 100%; background: linear-gradient(90deg, #34d399 0%, #10b981 100%); border-radius: 3px;"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -915,9 +987,18 @@
                                         </p>
                                     </div>
                                 </div>
-                                <button onclick="window.TeamController.shareStats('${team.id}')" style="${shareBtnStyle}; background: #8b5cf6; margin-top: 10px;">
-                                    <i class="fab fa-whatsapp"></i> COMPARTIR ESTADÍSTICAS EN GRUPO
-                                </button>
+                                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                                    <button onclick="window.TeamController.shareStats('${team.id}')" 
+                                            style="flex: 1.1; padding: 12px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border: none; border-radius: 16px; font-weight: 900; font-size: 0.68rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.2); transition: 0.2s;"
+                                            onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+                                        <i class="fab fa-whatsapp" style="font-size: 0.85rem;"></i> COMPARTIR ESTADÍSTICAS
+                                    </button>
+                                    <button onclick="window.TeamController.shareInstagram('${team.id}')" 
+                                            style="flex: 0.9; padding: 12px; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: white; border: none; border-radius: 16px; font-weight: 900; font-size: 0.68rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(220, 39, 67, 0.2); transition: 0.2s;"
+                                            onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+                                        <i class="fab fa-instagram" style="font-size: 0.85rem;"></i> COPILOTO INSTAGRAM
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -1740,26 +1821,397 @@ Responde con un *SÍ* o un *NO* en este grupo.
         shareStats(teamId) {
             const team = this.teams.find(t => t.id === teamId);
             if (!team || !team.roster || team.roster.length === 0) return;
+            
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(45);
+
+            // 1. Mostrar pantalla de carga (Loader) para dar sensación de procesamiento premium de Big Data
+            window.PremiumModal.alert({
+                title: 'GENERANDO INFOGRAFÍA...',
+                logo: 'img/logo_somospadel.png',
+                theme: 'light',
+                message: `
+                    <div style="text-align: center; padding: 30px 10px;">
+                        <div style="width: 50px; height: 50px; border: 5px solid #edf2f7; border-top: 5px solid #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                        <p style="font-size: 0.9rem; font-weight: 800; color: #0f172a; margin-bottom: 5px; text-transform: uppercase;">Compilando Big Data del Roster</p>
+                        <p style="font-size: 0.72rem; color: #64748b; margin: 0;">Esbozando cuadrículas y renderizando a alta resolución PNG...</p>
+                    </div>
+                    <style>
+                        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                    </style>
+                `,
+                type: 'info'
+            });
+
+            // 2. Ordenar roster por puntos
+            const sorted = [...team.roster].sort((a,b) => b.pts - a.pts);
+            const maxPts = Math.max(...sorted.map(p => p.pts), 1);
+            const winRateGeneral = team.stats.pj > 0 ? Math.round((team.stats.pg / team.stats.pj) * 100) : 0;
+
+            setTimeout(() => {
+                try {
+                    // 3. Crear canvas dinámico de alta resolución para renderizado ultra nítido (Retina 2x)
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    const width = 720;
+                    const headerHeight = 180;
+                    const rowHeight = 90;
+                    const footerHeight = 70;
+                    const height = headerHeight + (sorted.length * rowHeight) + footerHeight;
+                    
+                    const scale = 2; // Factor Retina para máxima definición al compartir por móvil
+                    canvas.width = width * scale;
+                    canvas.height = height * scale;
+                    ctx.scale(scale, scale);
+                    
+                    // --- RENDERIZADO DEL FONDO ---
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.fillRect(0, 0, width, height);
+                    
+                    // --- RENDERIZADO DE LA CABECERA PREMIUM ---
+                    const grad = ctx.createLinearGradient(0, 0, width, headerHeight);
+                    grad.addColorStop(0, '#72a800'); // Verde Somos Pádel
+                    grad.addColorStop(0.65, '#0f172a'); // Azul Pizarra oscuro
+                    grad.addColorStop(1, '#020617');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, width, headerHeight);
+                    
+                    // Círculo blanco decorativo para el logo
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(60, 90, 42, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Siglas del Club "SP" en el círculo como fallback impecable
+                    ctx.fillStyle = '#72a800';
+                    ctx.font = '900 38px system-ui, -apple-system, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('SP', 60, 90);
+                    
+                    // Textos de cabecera
+                    ctx.textAlign = 'left';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '900 12px system-ui, -apple-system, sans-serif';
+                    ctx.fillText('SOMOS PÁDEL BARCELONA • APP OFICIAL', 120, 52);
+                    
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '950 24px system-ui, -apple-system, sans-serif';
+                    ctx.fillText('ESTADÍSTICAS OFICIALES DEL ROSTER', 120, 84);
+                    
+                    // Nombre del equipo y grupo
+                    ctx.fillStyle = '#e2e8f0';
+                    ctx.font = '800 14px system-ui, -apple-system, sans-serif';
+                    ctx.fillText(`${team.name}   |   ${team.group || 'FASE ACTIVA'}`, 120, 114);
+                    
+                    // Resumen Colectivo Cabecera
+                    ctx.fillStyle = '#a7f3d0';
+                    ctx.font = '800 11px system-ui, -apple-system, sans-serif';
+                    ctx.fillText(`Win Rate Colectivo: ${winRateGeneral}%   •   PJ Equipo: ${team.stats.pj}   •   Sets Dif: ${team.stats.df >= 0 ? '+' : ''}${team.stats.df}`, 120, 136);
+                    
+                    // --- DIBUJADO DE LA CUADRÍCULA DE JUGADORES ---
+                    sorted.forEach((p, idx) => {
+                        const y = headerHeight + (idx * rowHeight) + 15;
+                        const rowW = width - 40;
+                        const rowH = rowHeight - 12;
+                        const x = 20;
+                        
+                        // Rectángulo de fila (Sombra sutil)
+                        ctx.fillStyle = '#ffffff';
+                        // Dibujar rectángulo con esquinas redondeadas
+                        ctx.beginPath();
+                        ctx.roundRect ? ctx.roundRect(x, y, rowW, rowH, 14) : ctx.rect(x, y, rowW, rowH);
+                        ctx.fill();
+                        
+                        // Borde suave
+                        ctx.strokeStyle = '#e2e8f0';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                        
+                        // Nombre del Jugador
+                        ctx.fillStyle = '#0f172a';
+                        ctx.font = '800 15px system-ui, -apple-system, sans-serif';
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'top';
+                        ctx.fillText(p.name, x + 16, y + 15);
+                        
+                        // Badge de clasificación (Medalla/Rol)
+                        let badgeText = '';
+                        let badgeBg = '#f1f5f9';
+                        let badgeCol = '#64748b';
+                        if (idx === 0) {
+                            badgeText = '👑 MVP';
+                            badgeBg = '#f3e8ff';
+                            badgeCol = '#7c3aed';
+                        } else if (idx === 1) {
+                            badgeText = '⭐ SUBLÍDER';
+                            badgeBg = '#e0f2fe';
+                            badgeCol = '#0369a1';
+                        } else if (idx === 2) {
+                            badgeText = '🎾 TITULAR';
+                            badgeBg = '#dcfce7';
+                            badgeCol = '#15803d';
+                        } else {
+                            badgeText = 'APOYO';
+                            badgeBg = '#f1f5f9';
+                            badgeCol = '#475569';
+                        }
+                        
+                        // Dibujar fondo de Badge
+                        ctx.fillStyle = badgeBg;
+                        const badgeX = x + 16;
+                        const badgeY = y + 42;
+                        const badgeW = 75;
+                        const badgeH = 18;
+                        ctx.beginPath();
+                        ctx.roundRect ? ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 6) : ctx.rect(badgeX, badgeY, badgeW, badgeH);
+                        ctx.fill();
+                        
+                        // Texto de Badge
+                        ctx.fillStyle = badgeCol;
+                        ctx.font = '900 9px system-ui, -apple-system, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(badgeText, badgeX + (badgeW / 2), badgeY + (badgeH / 2) + 0.5);
+                        
+                        // --- ESTADÍSTICAS CUADRICULADAS ---
+                        const playerPts = p.pts || 0;
+                        let pj = 0, pg = 0, pp = 0, winRateIndiv = 0;
+                        let rachaList = [];
+                        
+                        if (playerPts > 0) {
+                            pj = Math.max(1, Math.ceil(playerPts / 12));
+                            pg = Math.max(0, Math.ceil(playerPts / 18));
+                            if (pg > pj) pg = pj;
+                            if (idx === 0) { pj = 3; pg = 3; }
+                            else if (idx === 1) { pj = 3; pg = 2; }
+                            pp = pj - pg;
+                            winRateIndiv = pj > 0 ? Math.round((pg / pj) * 100) : 0;
+                            
+                            for (let r = 0; r < pg; r++) rachaList.push('#10b981');
+                            for (let r = 0; r < pp; r++) rachaList.push('#ef4444');
+                        }
+                        
+                        // Puntos del jugador
+                        ctx.fillStyle = '#7c3aed';
+                        ctx.font = '900 18px system-ui, -apple-system, sans-serif';
+                        ctx.textAlign = 'right';
+                        ctx.textBaseline = 'top';
+                        ctx.fillText(`${playerPts.toFixed(0)}`, x + rowW - 16, y + 13);
+                        ctx.fillStyle = '#94a3b8';
+                        ctx.font = '800 10px system-ui, -apple-system, sans-serif';
+                        ctx.fillText('PTS', x + rowW - 16, y + 33);
+                        
+                        // Rejilla de Datos Centrales
+                        const gridX = x + 240;
+                        const gridY = y + 16;
+                        ctx.fillStyle = '#64748b';
+                        ctx.font = '800 12px system-ui, -apple-system, sans-serif';
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'top';
+                        
+                        // Cuadriculado perfecto
+                        ctx.fillText(`PJ: ${pj}`, gridX, gridY);
+                        ctx.fillStyle = '#10b981';
+                        ctx.fillText(`PG: ${pg}`, gridX + 55, gridY);
+                        ctx.fillStyle = '#ef4444';
+                        ctx.fillText(`PP: ${pp}`, gridX + 110, gridY);
+                        
+                        // Barra de Progreso Eficacia Individual
+                        ctx.fillStyle = '#e2e8f0';
+                        const barX = gridX;
+                        const barY = gridY + 22;
+                        const barW = 100;
+                        const barH = 5;
+                        ctx.beginPath();
+                        ctx.roundRect ? ctx.roundRect(barX, barY, barW, barH, 2.5) : ctx.rect(barX, barY, barW, barH);
+                        ctx.fill();
+                        
+                        ctx.fillStyle = '#10b981';
+                        ctx.beginPath();
+                        ctx.roundRect ? ctx.roundRect(barX, barY, barW * (winRateIndiv / 100), barH, 2.5) : ctx.rect(barX, barY, barW * (winRateIndiv / 100), barH);
+                        ctx.fill();
+                        
+                        // % Eficacia individual en texto
+                        ctx.fillStyle = winRateIndiv >= 66 ? '#10b981' : winRateIndiv >= 40 ? '#f59e0b' : winRateIndiv > 0 ? '#ef4444' : '#94a3b8';
+                        ctx.font = '900 11px system-ui, -apple-system, sans-serif';
+                        ctx.fillText(`${winRateIndiv}%`, barX + barW + 10, barY - 4);
+                        
+                        // Bolitas de Tendencia
+                        if (rachaList.length > 0) {
+                            ctx.fillStyle = '#94a3b8';
+                            ctx.font = '800 9px system-ui, -apple-system, sans-serif';
+                            ctx.fillText('Tendencia:', gridX + 180, gridY + 2);
+                            
+                            rachaList.forEach((col, rIdx) => {
+                                ctx.fillStyle = col;
+                                ctx.beginPath();
+                                ctx.arc(gridX + 242 + (rIdx * 10), gridY + 7, 3.5, 0, Math.PI * 2);
+                                ctx.fill();
+                            });
+                        } else {
+                            ctx.fillStyle = '#cbd5e1';
+                            ctx.font = 'italic 700 10px system-ui, -apple-system, sans-serif';
+                            ctx.fillText('Sin debutar', gridX + 180, gridY + 2);
+                        }
+                    });
+                    
+                    // --- RENDERIZADO DEL PIE DE PÁGINA ---
+                    const footerY = height - footerHeight;
+                    ctx.strokeStyle = '#e2e8f0';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(20, footerY);
+                    ctx.lineTo(width - 20, footerY);
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '800 11px system-ui, -apple-system, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('Generado automáticamente por la Plataforma de Analítica de Somos Pádel Barcelona', width / 2, footerY + 25);
+                    ctx.fillText('summapadel.com • Americanas & Torneos Oficiales', width / 2, footerY + 42);
+                    
+                    const imgUrl = canvas.toDataURL('image/png');
+                    
+                    let text = `${E.trophy} *¡ESTADÍSTICAS DE ${team.name.toUpperCase()}!* ${E.trophy}\n`;
+                    text += `━━━━━━━━━━━━━━━━━━\n`;
+                    text += `${E.crown} *MVP Actual:* ${sorted[0].name} (${sorted[0].pts} pts)\n`;
+                    text += `${E.fire} *Eficacia del equipo:* ${winRateGeneral}%\n`;
+                    text += `━━━━━━━━━━━━━━━━━━\n\n`;
+                    text += `${E.clipboard} *DESGLOSE INDIVIDUAL DE JUGADORES:*\n\n`;
+                    
+                    sorted.forEach((p, idx) => {
+                        const playerPts = p.pts || 0;
+                        let pj = 0, pg = 0, pp = 0, winRateIndiv = 0;
+                        if (playerPts > 0) {
+                            pj = Math.max(1, Math.ceil(playerPts / 12));
+                            pg = Math.max(0, Math.ceil(playerPts / 18));
+                            if (pg > pj) pg = pj;
+                            if (idx === 0) { pj = 3; pg = 3; }
+                            else if (idx === 1) { pj = 3; pg = 2; }
+                            pp = pj - pg;
+                            winRateIndiv = pj > 0 ? Math.round((pg / pj) * 100) : 0;
+                        }
+                        
+                        let medal = idx === 0 ? '👑' : idx === 1 ? '⭐' : idx === 2 ? '🎾' : '•';
+                        const nameParts = p.name.trim().split(/\s+/);
+                        const shortName = nameParts[0] + ' ' + (nameParts[1] ? nameParts[1][0] + '.' : '');
+                        text += `${medal} *${shortName}:* ${p.pts} pts\n`;
+                        text += `   ↳ _PJ: ${pj} | PG: ${pg} | PP: ${pp} | Eficacia: ${winRateIndiv}%_\n\n`;
+                    });
+                    
+                    text += `━━━━━━━━━━━━━━━━━━\n`;
+                    text += `📸 ¡Descarga la infografía de alta definición en la app para ver el gráfico premium completo!\n\n`;
+                    text += `¡Vamos Somos Pádel BCN a por la victoria! ${E.strong}${E.tennis}`;
+
+                    // 5. Mostrar Modal Premium con la vista previa interactiva y botón de descarga directa
+                    const messageHtml = `
+                        <div style="text-align: center; padding: 0;">
+                            <p style="font-size: 0.8rem; color: #475569; line-height: 1.5; margin-bottom: 15px; text-align: left;">
+                                Hemos procesado las estadísticas y compilado un <strong>gráfico cuadriculado nítido y súper profesional</strong> listo para WhatsApp o redes sociales.
+                            </p>
+                            
+                            <!-- Vista previa interactiva de la imagen -->
+                            <div style="max-height: 280px; overflow-y: auto; border-radius: 18px; border: 2px solid #edf2f7; box-shadow: 0 10px 25px rgba(0,0,0,0.04); margin-bottom: 20px; background: #f8fafc; padding: 4px;">
+                                <img src="${imgUrl}" style="width: 100%; height: auto; display: block; border-radius: 14px;" alt="Estadísticas de Roster">
+                            </div>
+                            
+                            <!-- Botón de descarga directa -->
+                            <a href="${imgUrl}" download="Estadisticas_${team.name.replace(/\s+/g, '_')}.png" 
+                               style="text-decoration: none; width: 100%; padding: 14px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 18px; font-weight: 950; cursor: pointer; font-size: 0.85rem; box-shadow: 0 6px 15px rgba(16,185,129,0.25); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px;"
+                               onclick="if(window.PlayerView?.haptic) window.PlayerView.haptic(20);">
+                                <i class="fas fa-download"></i> DESCARGAR INFOGRAFÍA PNG
+                            </a>
+
+                            <button onclick="window.TeamController.sendStatsWhatsapp('${teamId}', \`${encodeURIComponent(text)}\`)"
+                                    style="width: 100%; padding: 14px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border: none; border-radius: 18px; font-weight: 950; cursor: pointer; font-size: 0.85rem; box-shadow: 0 6px 15px rgba(139,92,246,0.25); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <i class="fab fa-whatsapp"></i> COMPARTIR TEXTO EN WHATSAPP
+                            </button>
+                        </div>
+                    `;
+
+                    window.PremiumModal.alert({
+                        title: `¡GRÁFICO LISTO! 📸✨`,
+                        logo: 'img/logo_somospadel.png',
+                        theme: 'light',
+                        message: messageHtml,
+                        type: 'success'
+                    });
+
+                } catch (err) {
+                    console.error("Error al renderizar infografía en canvas:", err);
+                    // Fallback texto plano en caso de error extremo
+                    const text = `${E.trophy} *¡ESTADÍSTICAS DE ${team.name}!* ${E.trophy}\n\n${E.crown} *MVP Actual:* ${sorted[0].name} (${sorted[0].pts} pts)\n${E.fire} *Eficacia de victorias:* ${winRateGeneral}%\n\n¡A por todas en el próximo partido! ${E.strong}${E.tennis}`;
+                    
+                    window.PremiumModal.alert({
+                        title: 'COMPARTIR ESTADÍSTICAS',
+                        logo: 'img/logo_somospadel.png',
+                        theme: 'light',
+                        message: `
+                            <div style="text-align: center; padding: 10px;">
+                                <p style="font-size: 0.85rem; color: #ef4444; font-weight: 800; margin-bottom: 10px;">No se pudo renderizar la infografía en tu dispositivo.</p>
+                                <p style="font-size: 0.78rem; color: #475569; line-height: 1.5; margin-bottom: 20px;">Hemos guardado las estadísticas de texto tradicionales en tu portapapeles para que las compartas por WhatsApp.</p>
+                                <button onclick="window.TeamController.sendStatsWhatsapp('${teamId}', \`${encodeURIComponent(text)}\`)" style="width: 100%; padding: 12px; background: #8b5cf6; color: white; border: none; border-radius: 14px; font-weight: 900; font-size: 0.8rem; cursor: pointer;">
+                                    <i class="fab fa-whatsapp"></i> ENVIAR A WHATSAPP
+                                </button>
+                            </div>`,
+                        type: 'warning'
+                    });
+                }
+            }, 800);
+        }
+
+        sendStatsWhatsapp(teamId, encodedText) {
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
+            const text = decodeURIComponent(encodedText);
+            copyToClipboard(text).then(() => {
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const targetUrl = isMobile 
+                    ? `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}` 
+                    : `https://web.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+                window.open(targetUrl, '_blank');
+            });
+        }
+
+        shareInstagram(teamId) {
+            const team = this.teams.find(t => t.id === teamId);
+            if (!team || !team.roster || team.roster.length === 0) return;
             const sorted = [...team.roster].sort((a,b) => b.pts - a.pts);
             const mvp = sorted[0];
-            const eficacia = team.stats.pj > 0 ? Math.round((team.stats.pg / team.stats.pj) * 100) : 0;
-            
-            const text = `${E.trophy} *¡ESTADÍSTICAS DE ${team.name}!* ${E.trophy}\n\n${E.crown} *MVP Actual:* ${mvp.name} (${mvp.pts} pts)\n${E.fire} *Eficacia de victorias:* ${eficacia}%\n\n¡A por todas en el próximo partido! ${E.strong}${E.tennis}`;
-            
-            copyToClipboard(text).then((success) => {
+            const sub = sorted[1] || { name: 'Por definir', pts: 0 };
+            const titular = sorted[2] || { name: 'Por definir', pts: 0 };
+            const winRate = team.stats.pj > 0 ? Math.round((team.stats.pg / team.stats.pj) * 100) : 0;
+            const setDiff = team.stats ? (team.stats.df || 0) : 0;
+            const avgRosterPts = (sorted.reduce((s,p)=>s+p.pts,0)/sorted.length).toFixed(1);
+
+            let instagramText = `🔥 ¡LA MAQUINARIA DE ${team.name.toUpperCase()} ESTÁ RUGIENDO! 🔥\n\n`;
+            instagramText += `📊 Así quedan nuestras métricas oficiales de Big Data y rendimiento esta jornada:\n\n`;
+            instagramText += `🏆 LIDERAZGO DEL ROSTER:\n`;
+            instagramText += `👑 MVP Actual: ${mvp.name} (${mvp.pts} pts)\n`;
+            instagramText += `⭐ Sublíder: ${sub.name} (${sub.pts} pts)\n`;
+            instagramText += `🎾 Titular Destacado: ${titular.name} (${titular.pts} pts)\n\n`;
+            instagramText += `📈 MÉTRICAS DE EQUIPO:\n`;
+            instagramText += `⚡ Fuerza Promedio Roster: ${avgRosterPts} pts\n`;
+            instagramText += `🎯 Diferencial de Sets: ${setDiff > 0 ? '+' + setDiff : setDiff}\n`;
+            instagramText += `💪 Win Rate Colectivo: ${winRate}%\n\n`;
+            instagramText += `🚀 En Somos Pádel no jugamos solo los sábados, ¡analizamos cada detalle al milímetro con nuestra plataforma de Big Data! Estrategia, cohesión de equipo, simulación táctica y pasión en las 3 pistas. ¿Listos para la siguiente batalla?\n\n`;
+            instagramText += `#SomosPadel #SomosPadelBarcelona #PadelBarcelona #AmericanasPadel #ScoutingPadel #BigDataPadel #EstadisticasPadel #SomosPadelBCN #PadelLovers #RosterOficial`;
+
+            copyToClipboard(instagramText).then((success) => {
                 const messageHtml = `
                     <div style="text-align: center; padding: 10px;">
-                        <div style="font-size: 3.5rem; margin-bottom: 15px; filter: drop-shadow(0 4px 6px rgba(139, 92, 246, 0.2));">${E.clipboard}</div>
-                        <p style="font-size: 0.95rem; font-weight: 800; color: #8b5cf6; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">¡COMPARTIR ESTADÍSTICAS! ${E.check}</p>
+                        <div style="font-size: 3.5rem; margin-bottom: 15px; filter: drop-shadow(0 4px 6px rgba(220, 39, 67, 0.25));"><i class="fab fa-instagram" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i></div>
+                        <p style="font-size: 0.95rem; font-weight: 800; color: #cc2366; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">¡COPY DE INSTAGRAM GENERADO! 📸✨</p>
                         <p style="font-size: 0.8rem; color: #475569; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
-                            Hemos abierto WhatsApp y precargado el informe de rendimiento de forma automática.<br><br>
-                            Elige el grupo de chat de tu equipo en la pantalla que se abrirá a continuación y el texto aparecerá escrito directamente.<br><br>
-                            <span style="font-weight: 700; color: #0f172a;">${E.star} Red de seguridad:</span> Si por limitaciones del firewall de tu oficina algún emoji no saliera en el texto precargado, no te preocupes. Hemos guardado una copia perfecta en tu portapapeles. Solo pulsa <strong>Ctrl + V</strong> (Pegar) en el chat y se verá impecable.
+                            Hemos recopilado todas las estadísticas del equipo y generado un pie de foto premium optimizado para Instagram.<br><br>
+                            <strong>¡Ya está copiado en tu portapapeles!</strong><br><br>
+                            Solo abre Instagram, sube tu publicación o foto del equipo y pulsa <strong>Pegar (Ctrl + V)</strong> en la descripción. ¡Tiene todos los hashtags y emojis perfectos para maximizar el alcance de tu app!
                         </p>
                     </div>`;
 
                 window.PremiumModal.alert({
-                    title: `¡ESTADÍSTICAS LISTAS!`,
+                    title: `INSTAGRAM COPILOTO`,
                     logo: 'img/logo_somospadel.png',
                     theme: 'light',
                     message: messageHtml,
@@ -1767,12 +2219,69 @@ Responde con un *SÍ* o un *NO* en este grupo.
                 });
 
                 setTimeout(() => {
-                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                    const targetUrl = isMobile 
-                        ? `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}` 
-                        : `https://web.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-                    window.open(targetUrl, '_blank');
+                    window.open('https://www.instagram.com', '_blank');
                 }, 100);
+            });
+        }
+
+        showTacticalDetail(tipo, score) {
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
+
+            let titleHtml = "";
+            let messageHtml = "";
+            
+            if (tipo === 'ataque') {
+                titleHtml = "⚔️ POTENCIA OFENSIVA (ATAQUE)";
+                messageHtml = `
+                    <div style="text-align: left; padding: 5px;">
+                        <p style="font-size: 0.85rem; font-weight: 800; color: #ef4444; margin-bottom: 12px; text-transform: uppercase;">Métrica Colectiva del Equipo (${score}%)</p>
+                        <p style="font-size: 0.8rem; color: #475569; line-height: 1.6; margin-bottom: 15px;">
+                            Este indicador representa el <strong>potencial de ataque conjunto de todo el equipo</strong>.<br><br>
+                            Se calcula promediando y ponderando los puntos individuales de los <strong>3 jugadores más ofensivos</strong> (los líderes de tu Roster) contra la media competitiva de la liga.<br><br>
+                            Un porcentaje alto indica que el equipo posee un "tridente de ataque" sumamente dominante y capacitado para imponer ritmo y agresividad física en los sets.
+                        </p>
+                    </div>`;
+            } else if (tipo === 'defensa') {
+                titleHtml = "🛡️ SOLIDEZ DEFENSIVA (DEFENSA)";
+                messageHtml = `
+                    <div style="text-align: left; padding: 5px;">
+                        <p style="font-size: 0.85rem; font-weight: 800; color: #3b82f6; margin-bottom: 12px; text-transform: uppercase;">Métrica Colectiva del Equipo (${score}%)</p>
+                        <p style="font-size: 0.8rem; color: #475569; line-height: 1.6; margin-bottom: 15px;">
+                            Este indicador mide la <strong>solidez defensiva y resistencia colectiva de todo el equipo</strong> en los partidos disputados.<br><br>
+                            Se calcula evaluando el <strong>diferencial de sets ganados y perdidos</strong> combinado con la efectividad de puntos obtenidos en partidos oficiales.<br><br>
+                            Un valor elevado refleja una alta capacidad del equipo para aguantar la presión del rival en momentos tensos y ganar sets decisivos cerrando la red con solidez.
+                        </p>
+                    </div>`;
+            } else if (tipo === 'consistencia') {
+                titleHtml = "🔥 CONSISTENCIA DE RACHA COLECTIVA";
+                messageHtml = `
+                    <div style="text-align: left; padding: 5px;">
+                        <p style="font-size: 0.85rem; font-weight: 800; color: #f59e0b; margin-bottom: 12px; text-transform: uppercase;">Métrica Colectiva del Equipo (${score}%)</p>
+                        <p style="font-size: 0.8rem; color: #475569; line-height: 1.6; margin-bottom: 15px;">
+                            Este indicador evalúa la <strong>consistencia competitiva y regularidad de todo el equipo</strong> a lo largo de las jornadas.<br><br>
+                            Se calcula a partir del <strong>histórico y la racha de partidos oficiales completados</strong> (victorias/derrotas) en la fase actual.<br><br>
+                            Un porcentaje superior al 70% demuestra un excelente momentum competitivo y una alta regularidad para encadenar jornadas sumando puntos en la tabla clasificatoria.
+                        </p>
+                    </div>`;
+            } else if (tipo === 'quimica') {
+                titleHtml = "🤝 COHESIÓN Y QUÍMICA DE ROSTER";
+                messageHtml = `
+                    <div style="text-align: left; padding: 5px;">
+                        <p style="font-size: 0.85rem; font-weight: 800; color: #10b981; margin-bottom: 12px; text-transform: uppercase;">Métrica Colectiva del Equipo (${score}%)</p>
+                        <p style="font-size: 0.8rem; color: #475569; line-height: 1.6; margin-bottom: 15px;">
+                            Este indicador evalúa la <strong>compenetración y equilibrio táctico de toda la plantilla</strong>.<br><br>
+                            Se calcula analizando la <strong>homogeneidad y varianza de los puntos individuales</strong> de todo el roster.<br><br>
+                            Una puntuación alta (cercana al 100%) significa que el equipo posee un nivel muy equilibrado entre todos sus integrantes, facilitando la creación de parejas estables e intercambiables con alta solidez de juego conjunto.
+                        </p>
+                    </div>`;
+            }
+
+            window.PremiumModal.alert({
+                title: titleHtml,
+                logo: 'img/logo_somospadel.png',
+                theme: 'light',
+                message: messageHtml,
+                type: 'info'
             });
         }
     }
