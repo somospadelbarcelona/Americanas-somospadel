@@ -1358,6 +1358,22 @@
                 s3b = players[3] && s2b !== players[3].name && s3a !== players[3].name ? players[3].name : (players[4] ? players[4].name : '');
             }
 
+            // --- NORMA REQUERIDA: ORDENAR PAREJAS POR SUMA DE PUNTOS DESCENDENTE (Pareja 1 > Pareja 2 > Pareja 3) ---
+            const getPlayerPts = (name) => {
+                const p = team.roster.find(r => r.name === name);
+                return p ? p.pts : 0;
+            };
+
+            const p1Temp = { a: s1a, b: s1b, pts: getPlayerPts(s1a) + getPlayerPts(s1b) };
+            const p2Temp = { a: s2a, b: s2b, pts: getPlayerPts(s2a) + getPlayerPts(s2b) };
+            const p3Temp = { a: s3a, b: s3b, pts: getPlayerPts(s3a) + getPlayerPts(s3b) };
+
+            const sortedPairs = [p1Temp, p2Temp, p3Temp].sort((x, y) => y.pts - x.pts);
+
+            s1a = sortedPairs[0].a; s1b = sortedPairs[0].b;
+            s2a = sortedPairs[1].a; s2b = sortedPairs[1].b;
+            s3a = sortedPairs[2].a; s3b = sortedPairs[2].b;
+
             const pairsConfig = [
                 { id: 'p1-player-a', val: s1a },
                 { id: 'p1-player-b', val: s1b },

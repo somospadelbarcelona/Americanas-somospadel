@@ -312,11 +312,17 @@
             const setDiff = sf - sc;
             const setDiffColor = setDiff > 0 ? '#38b000' : (setDiff < 0 ? '#ef4444' : '#64748b');
 
+            const cleanCategory = (team.category || '').toLowerCase();
+            let cardBg = '#ffffff';
+            if (cleanCategory.includes('masc')) cardBg = '#e0f2fe'; // Azul sutil, un poco más visible (Sky-100)
+            else if (cleanCategory.includes('fem')) cardBg = '#fce7f3'; // Rosa sutil, un poco más visible (Pink-100)
+            else if (cleanCategory.includes('mixt')) cardBg = '#f3e8ff'; // Morado sutil, un poco más visible (Purple-100)
+
             return `
                 <div class="team-card" 
                      id="team-${team.id}"
                      onclick="window.TeamView.toggleCard('${team.id}')"
-                     style="background: #ffffff; border: ${isFav ? '2px solid #eab308' : '1px solid #e2e8f0'}; border-radius: 28px; padding: 18px; 
+                     style="background: ${cardBg}; border: ${isFav ? '2px solid #eab308' : '1px solid #e2e8f0'}; border-radius: 28px; padding: 18px; 
                             transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; 
                             cursor: pointer; box-shadow: ${isFav ? '0 10px 30px rgba(234,179,8,0.15)' : '0 4px 18px rgba(0,0,0,0.015)'};">
                     
