@@ -141,6 +141,10 @@ class PremiumModal {
             const modal = document.createElement('div');
             modal.className = 'pm-card' + (options.theme === 'light' ? ' pm-light' : '');
             modal.style.setProperty('--accent-glow', accent + '40');
+            if (options.width) {
+                modal.style.width = '95%';
+                modal.style.maxWidth = options.width;
+            }
 
             modal.innerHTML = `
                 <div style="height: 5px; background: linear-gradient(90deg, ${accent}00, ${accent}, ${accent}00); width: 100%;"></div>
@@ -241,6 +245,113 @@ class PremiumModal {
             const input = overlay.querySelector('#pm-prompt-input');
             setTimeout(() => input.focus(), 100);
             input.onkeydown = (e) => { if (e.key === 'Enter') cleanup(true); };
+        });
+    }
+
+    static async password(options = {}) {
+        this._injectStyles();
+        const {
+            title = 'ACCESO PROTEGIDO 🔒',
+            message = 'Solo capitanes, subcapitanes y admin tienen acceso. Introduce la contraseña:',
+            placeholder = '••••••••',
+            confirmText = 'ACCEDER 🎾',
+            cancelText = 'CANCELAR',
+            type = 'success'
+        } = options;
+
+        return new Promise((resolve) => {
+            const colors = {
+                warning: '#ccff00',
+                danger: '#ff3b30',
+                info: '#00d4ff',
+                success: '#10b981'
+            };
+            const accent = colors[type] || colors.success;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'pm-overlay';
+
+            const modal = document.createElement('div');
+            modal.className = 'pm-card';
+            modal.style.setProperty('--accent-glow', accent + '40');
+
+            modal.innerHTML = `
+                <div style="height: 5px; background: linear-gradient(90deg, ${accent}00, ${accent}, ${accent}00); width: 100%;"></div>
+                <div style="padding: 35px 30px 25px;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: ${accent}12; color: ${accent}; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 1.5rem; border: 1.5px solid ${accent}30; box-shadow: 0 10px 20px -5px ${accent}20;">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <h3 style="color: white; font-family: 'Outfit'; font-weight: 900; margin-bottom: 8px; font-size: 1.3rem; text-align:center;">${title}</h3>
+                    <div style="color: #94a3b8; font-size: 0.85rem; line-height: 1.4; margin-bottom: 20px; text-align:center; font-weight: 600;">${message}</div>
+                    
+                    <div style="position: relative;">
+                        <input type="password" id="pm-password-input" placeholder="${placeholder}" 
+                               style="width: 100%; padding: 16px 50px 16px 16px; border-radius: 16px; background: rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.05); color: white; font-family: 'Outfit'; font-size: 1rem; outline: none; border: 1.5px solid ${accent}40;">
+                        <i class="fas fa-eye" id="pm-toggle-password" 
+                           style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3); cursor: pointer; font-size: 1rem; transition: color 0.2s;"></i>
+                    </div>
+                    <div id="pm-password-error" style="color: #ff3b30; font-size: 0.75rem; font-weight: 800; text-align: center; margin-top: 10px; display: none;">
+                        ❌ Contraseña incorrecta. Inténtalo de nuevo.
+                    </div>
+                </div>
+                <div style="display: flex; padding: 0 25px 30px; gap: 12px;">
+                    <button id="p-modal-cancel" class="pm-btn pm-btn-secondary" style="background: transparent; color: #64748b; border: 1px solid rgba(255,255,255,0.05);">${cancelText}</button>
+                    <button id="p-modal-confirm" class="pm-btn pm-btn-primary" style="background: ${accent}; color: #fff;">${confirmText}</button>
+                </div>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            const input = overlay.querySelector('#pm-password-input');
+            const eyeIcon = overlay.querySelector('#pm-toggle-password');
+            const errorDiv = overlay.querySelector('#pm-password-error');
+
+            eyeIcon.onclick = () => {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    eyeIcon.classList.remove('fa-eye');
+                    eyeIcon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    eyeIcon.classList.remove('fa-eye-slash');
+                    eyeIcon.classList.add('fa-eye');
+                }
+            };
+
+            const cleanup = (result) => {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.remove();
+                    resolve(result);
+                }, 200);
+            };
+
+            overlay.querySelector('#p-modal-confirm').onclick = () => {
+                const val = input.value;
+                if (val.toUpperCase() === 'SOMOSPADEL') {
+                    cleanup(true);
+                } else {
+                    // Shake modal
+                    modal.classList.add('pm-shake-anim');
+                    errorDiv.style.display = 'block';
+                    if (window.navigator.vibrate) window.navigator.vibrate([100, 50, 100]);
+                    
+                    setTimeout(() => {
+                        modal.classList.remove('pm-shake-anim');
+                    }, 400);
+                }
+            };
+
+            overlay.querySelector('#p-modal-cancel').onclick = () => cleanup(false);
+
+            // Focus and enter key
+            setTimeout(() => input.focus(), 100);
+            input.onkeydown = (e) => { 
+                if (e.key === 'Enter') {
+                    overlay.querySelector('#p-modal-confirm').click();
+                } 
+            };
         });
     }
 

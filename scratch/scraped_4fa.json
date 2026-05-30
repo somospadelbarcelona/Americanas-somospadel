@@ -1,0 +1,135 @@
+{
+  "standings": [
+    {
+      "pos": 1,
+      "team": "MASCULINA - PRIMERA",
+      "pj": 0,
+      "pg": 0,
+      "pp": 0,
+      "df": 0,
+      "pts": 0,
+      "isCurrent": false
+    },
+    {
+      "pos": 2,
+      "team": "MASCULINA - SEGUNDA",
+      "pj": 0,
+      "pg": 0,
+      "pp": 0,
+      "df": 0,
+      "pts": 0,
+      "isCurrent": false
+    },
+    {
+      "pos": 3,
+      "team": "MASCULINA - TERCERA",
+      "pj": 0,
+      "pg": 0,
+      "pp": 0,
+      "df": 0,
+      "pts": 0,
+      "isCurrent": false
+    },
+    {
+      "pos": 4,
+      "team": "MASCULINA - CUARTA",
+      "pj": 0,
+      "pg": 0,
+      "pp": 0,
+      "df": 0,
+      "pts": 0,
+      "isCurrent": false
+    },
+    {
+      "pos": 5,
+      "team": "MASCULINA - SENIOR+45",
+      "pj": 0,
+      "pg": 0,
+      "pp": 0,
+      "df": 0,
+      "pts": 0,
+      "isCurrent": false
+    },
+    {
+      "pos": 6,
+      "team": "FEMENINA - PRIMERA",
+      "pj": 0,
+      "pg": 0,
+      "pp": 0,
+      "df": 0,
+      "pts": 0,
+      "isCurrent": false
+    },
+    {
+      "pos": 7,
+      "team": "FEMENINA - SEGUNDA",
+      "pj": 0,
+      "pg": 0,
+      "pp": 0,
+      "df": 0,
+      "pts": 0,
+      "isCurrent": false
+    },
+    {
+      "pos": 8,
+      "team": "FEMENINA - TERCERA",
+      "pj": 0,
+      "pg": 0,
+      "pp": 0,
+      "df": 0,
+      "pts": 0,
+      "isCurrent": false
+    },
+    {
+      "pos": 9,
+      "team": "FEMENINA - CUARTA",
+      "pj": 0,
+      "pg": 0,
+      "pp": 0,
+      "df": 0,
+      "pts": 0,
+      "isCurrent": false
+    },
+    {
+      "pos": 10,
+      "team": "MIXTA - PRIMERA",
+      "pj": 0,
+      "pg": 0,
+      "pp": 0,
+      "df": 0,
+      "pts": 0,
+      "isCurrent": false
+    },
+    {
+      "pos": 11,
+      "team": "MIXTA - SEGUNDA",
+      "pj": 0,
+      "pg": 0,
+      "pp": 0,
+      "df": 0,
+      "pts": 0,
+      "isCurrent": false
+    },
+    {
+      "pos": 12,
+      "team": "MIXTA - TERCERA",
+      "pj": 0,
+      "pg": 0,
+      "pp": 0,
+      "df": 0,
+      "pts": 0,
+      "isCurrent": false
+    },
+    {
+      "pos": 13,
+      "team": "MIXTA - QUARTA",
+      "pj": 0,
+      "pg": 0,
+      "pp": 0,
+      "df": 0,
+      "pts": 0,
+      "isCurrent": false
+    }
+  ],
+  "schedule": []
+}

@@ -120,9 +120,6 @@
                                     EQUIPOS <br><span style="color:#38b000;">SOMOS PÁDEL</span>
                                 </h1>
                                 <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
-                                    <button onclick="window.TeamView.syncData(this)" style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%); color: white; border: none; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(15,23,42,0.15); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(15,23,42,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(15,23,42,0.15)';">
-                                        <i class="fas fa-sync-alt"></i> SINCRONIZAR DATOS
-                                    </button>
                                     <button onclick="window.TeamView.openNextMatchesSummaryModal()" style="background: linear-gradient(135deg, #38b000 0%, #70e000 100%); color: white; border: none; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(56,176,0,0.15); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(56,176,0,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(56,176,0,0.15)';">
                                         <i class="fas fa-share-alt"></i> RESUMEN SIG. JORNADA
                                     </button>
@@ -397,22 +394,26 @@
                         <div style="padding-top: 20px;" onclick="event.stopPropagation();">
                             
                             <!-- 🎛️ HIGH-DENSITY MINI TABS BUTTONS -->
-                            <div style="display: flex; background: #f1f5f9; padding: 3px; border-radius: 12px; border: 1px solid #edf2f7; margin-bottom: 15px;">
+                            <div style="display: flex; background: #f1f5f9; padding: 3px; border-radius: 12px; border: 1px solid #edf2f7; margin-bottom: 15px; overflow-x: auto;">
                                 <button id="btn-${team.id}-class" onclick="window.TeamView.switchCardTab('${team.id}', 'class')" 
-                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: #0f172a; color: #ffffff; border: none; font-weight: 900; font-size: 0.6rem; cursor: pointer; transition: all 0.2s;">
+                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: #0f172a; color: #ffffff; border: none; font-weight: 900; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; min-width: 60px;">
                                     🏆 TABLA
                                 </button>
                                 <button id="btn-${team.id}-sched" onclick="window.TeamView.switchCardTab('${team.id}', 'sched')" 
-                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.6rem; cursor: pointer; transition: all 0.2s;">
+                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; min-width: 70px;">
                                     📅 PARTIDOS
                                 </button>
                                 <button id="btn-${team.id}-rost" onclick="window.TeamView.switchCardTab('${team.id}', 'rost')" 
-                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.6rem; cursor: pointer; transition: all 0.2s;">
+                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; min-width: 80px;">
                                     👥 JUGADORES
                                 </button>
                                 <button id="btn-${team.id}-stats" onclick="window.TeamView.switchCardTab('${team.id}', 'stats')" 
-                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.6rem; cursor: pointer; transition: all 0.2s;">
+                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; min-width: 60px;">
                                     📊 STATS
+                                </button>
+                                <button id="btn-${team.id}-tactica" onclick="event.stopPropagation(); window.TeamController.showTeamDetail('${team.id}', 'tactica')" 
+                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: transparent; color: #10b981; border: none; font-weight: 900; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; min-width: 70px;">
+                                    📋 TÁCTICA
                                 </button>
                             </div>
 

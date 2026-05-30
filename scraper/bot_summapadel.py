@@ -66,6 +66,14 @@ TARGET_TEAMS = [
         "url": "https://summapadel.com/event/151"
     },
     {
+        "slug": "somos-padel-bcn-4fa",
+        "name": "SOMOS PÁDEL BCN 4FA",
+        "div": "Cuarta",
+        "group": "4FB FASE 2 G3",
+        "cat": "Femenina",
+        "url": "https://summapadel.com/event/151"
+    },
+    {
         "slug": "somos-padel-bcn-2f",
         "name": "SOMOS PÁDEL BCN 2F",
         "div": "Segunda",
