@@ -607,50 +607,51 @@
                                                 </div>
                                             </div>
                                             
-                                            <!-- 📋 CARD: ALINEACIÓN SIMULADA -->
-                                            <div style="background: #ffffff; border-radius: 20px; padding: 15px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.01); display: flex; flex-direction: column; gap: 10px;">
-                                                <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
-                                                    <span>Alineación Simulada</span>
-                                                    <span id="tactica-total-media" style="color: #94a3b8; font-weight: 950; background: #f1f5f9; padding: 2px 8px; border-radius: 10px;">Media: 0.0 pts</span>
+                                            <!-- 📋 CARD: BANQUILLO DE DISPONIBLES (SÍ) -->
+                                            <div style="background: #ffffff; border-radius: 24px; padding: 18px; border: 1px solid #f1f5f9; box-shadow: 0 10px 25px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 12px;">
+                                                <div style="font-size: 0.68rem; color: #1e293b; font-weight: 900; text-transform: uppercase; letter-spacing: 0.6px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+                                                    <span style="display: flex; align-items: center; gap: 6px;">
+                                                        <i class="fas fa-users" style="color: #10b981;"></i> Banquillo Disponibles (SÍ)
+                                                    </span>
+                                                    <span id="tactica-total-media" style="color: #10b981; font-weight: 950; background: rgba(16,185,129,0.08); padding: 2px 8px; border-radius: 10px; font-size: 0.55rem;">Media: 0.0 pts</span>
                                                 </div>
                                                 
-                                                <div style="background: #f8fafc; border: 1px solid #edf2f7; border-radius: 14px; padding: 10px;">
-                                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
-                                                        <span style="font-size: 0.65rem; font-weight: 900; color: #0f172a;">PAREJA 1</span>
-                                                        <span id="p1-badge" style="font-size: 0.5rem; font-weight: 900; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 6px;">Vacía</span>
-                                                    </div>
-                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                                                        <select id="p1-player-a" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
-                                                        <select id="p1-player-b" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
-                                                    </div>
+                                                <p style="font-size: 0.55rem; color: #94a3b8; font-weight: 700; margin: 0; line-height: 1.3;">
+                                                    💡 <strong>Pizarra Digital:</strong> Arrastra un jugador a la pista, o tócalo abajo y luego toca una posición en el campo (Drive o Revés).
+                                                </p>
+                                                
+                                                <!-- Banquillo Scroll -->
+                                                <div id="banquillo-tactica-scroll-${team.id}" class="pm-checkboxes-scroll" style="max-height: 190px; display: flex; flex-wrap: wrap; gap: 8px; padding: 2px; align-content: flex-start;">
+                                                    <!-- Se renderiza dinámicamente en updateTactica -->
                                                 </div>
                                                 
-                                                <div style="background: #f8fafc; border: 1px solid #edf2f7; border-radius: 14px; padding: 10px;">
-                                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
-                                                        <span style="font-size: 0.65rem; font-weight: 900; color: #0f172a;">PAREJA 2</span>
-                                                        <span id="p2-badge" style="font-size: 0.5rem; font-weight: 900; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 6px;">Vacía</span>
-                                                    </div>
-                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                                                        <select id="p2-player-a" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
-                                                        <select id="p2-player-b" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
-                                                    </div>
+                                                <!-- Contenedor oculto de selects para compatibilidad absoluta con la DB y flujo -->
+                                                <div id="selections-dropdowns-container" style="display: none;">
+                                                    <select id="p1-player-a" onchange="window.TeamController.updateTactica('${team.id}')"></select>
+                                                    <select id="p1-player-b" onchange="window.TeamController.updateTactica('${team.id}')"></select>
+                                                    <select id="p2-player-a" onchange="window.TeamController.updateTactica('${team.id}')"></select>
+                                                    <select id="p2-player-b" onchange="window.TeamController.updateTactica('${team.id}')"></select>
+                                                    <select id="p3-player-a" onchange="window.TeamController.updateTactica('${team.id}')"></select>
+                                                    <select id="p3-player-b" onchange="window.TeamController.updateTactica('${team.id}')"></select>
                                                 </div>
+
+                                                <!-- Badges técnicos invisibles para que no rompa las referencias del DOM -->
+                                                <span id="p1-badge" style="display: none;"></span>
+                                                <span id="p2-badge" style="display: none;"></span>
+                                                <span id="p3-badge" style="display: none;"></span>
                                                 
-                                                <div style="background: #f8fafc; border: 1px solid #edf2f7; border-radius: 14px; padding: 10px;">
-                                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
-                                                        <span style="font-size: 0.65rem; font-weight: 900; color: #0f172a;">PAREJA 3</span>
-                                                        <span id="p3-badge" style="font-size: 0.5rem; font-weight: 900; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 6px;">Vacía</span>
-                                                    </div>
-                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                                                        <select id="p3-player-a" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
-                                                        <select id="p3-player-b" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
-                                                    </div>
+                                                <div style="display: flex; gap: 8px; margin-top: 5px;">
+                                                    <button onclick="window.TeamController.suggestOptimalAlineacion('${team.id}')" 
+                                                            style="flex: 1; padding: 10px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 12px; font-weight: 900; font-size: 0.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); transition: 0.2s;"
+                                                            onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+                                                        <i class="fas fa-magic"></i> AUTO-ALINEACIÓN
+                                                    </button>
+                                                    <button onclick="window.TeamController.clearAllTacticalSpots('${team.id}')" 
+                                                            style="padding: 10px 12px; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; border-radius: 12px; font-weight: 800; font-size: 0.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;"
+                                                            onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'" title="Limpiar Pizarra">
+                                                        <i class="fas fa-eraser"></i> Limpiar
+                                                    </button>
                                                 </div>
-                                                
-                                                <button onclick="window.TeamController.suggestOptimalAlineacion('${team.id}')" 
-                                                        style="width: 100%; padding: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 10px; font-weight: 850; font-size: 0.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                                    <i class="fas fa-magic"></i> AUTO-ALINEACIÓN ÓPTIMA
-                                                </button>
                                             </div>
                                         </div>
                                         
@@ -689,9 +690,19 @@
 
                                                     <!-- Player Spots (Mitad Inferior) - Lados de Juego Reales (Revés en Izquierda, Drive en Derecha) -->
                                                     <!-- Revés (Abajo Izquierda - court-p1-b) -->
-                                                    <div id="court-p1-b" style="position: absolute; bottom: 12px; left: 26%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25);"><i class="fas fa-arrow-left" style="margin-right: 4px; font-size: 0.55rem; opacity: 0.6;"></i> Revés</div>
+                                                    <div id="court-p1-b" 
+                                                         ondragover="event.preventDefault(); window.TeamController.handleTacticalDragOver(this);" 
+                                                         ondragleave="window.TeamController.handleTacticalDragLeave(this);" 
+                                                         ondrop="window.TeamController.handleTacticalDrop(event, this, '${team.id}', 'p1-player-b');"
+                                                         onclick="window.TeamController.handleTacticalSpotClick(this, '${team.id}', 'p1-player-b');"
+                                                         style="position: absolute; bottom: 12px; left: 26%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px dashed rgba(255,255,255,0.5); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 25px;"><i class="fas fa-arrow-left" style="font-size: 0.55rem; opacity: 0.6;"></i> Revés</div>
                                                     <!-- Drive (Abajo Derecha - court-p1-a) -->
-                                                    <div id="court-p1-a" style="position: absolute; bottom: 12px; left: 74%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25);">Drive <i class="fas fa-arrow-right" style="margin-left: 4px; font-size: 0.55rem; opacity: 0.6;"></i></div>
+                                                    <div id="court-p1-a" 
+                                                         ondragover="event.preventDefault(); window.TeamController.handleTacticalDragOver(this);" 
+                                                         ondragleave="window.TeamController.handleTacticalDragLeave(this);" 
+                                                         ondrop="window.TeamController.handleTacticalDrop(event, this, '${team.id}', 'p1-player-a');"
+                                                         onclick="window.TeamController.handleTacticalSpotClick(this, '${team.id}', 'p1-player-a');"
+                                                         style="position: absolute; bottom: 12px; left: 74%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px dashed rgba(255,255,255,0.5); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 25px;">Drive <i class="fas fa-arrow-right" style="font-size: 0.55rem; opacity: 0.6;"></i></div>
                                                 </div>
 
                                                 <!-- PISTA 2 -->
@@ -724,9 +735,19 @@
 
                                                     <!-- Player Spots (Mitad Inferior) - Lados de Juego Reales -->
                                                     <!-- Revés (Abajo Izquierda - court-p2-b) -->
-                                                    <div id="court-p2-b" style="position: absolute; bottom: 12px; left: 26%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25);"><i class="fas fa-arrow-left" style="margin-right: 4px; font-size: 0.55rem; opacity: 0.6;"></i> Revés</div>
+                                                    <div id="court-p2-b" 
+                                                         ondragover="event.preventDefault(); window.TeamController.handleTacticalDragOver(this);" 
+                                                         ondragleave="window.TeamController.handleTacticalDragLeave(this);" 
+                                                         ondrop="window.TeamController.handleTacticalDrop(event, this, '${team.id}', 'p2-player-b');"
+                                                         onclick="window.TeamController.handleTacticalSpotClick(this, '${team.id}', 'p2-player-b');"
+                                                         style="position: absolute; bottom: 12px; left: 26%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px dashed rgba(255,255,255,0.5); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 25px;"><i class="fas fa-arrow-left" style="font-size: 0.55rem; opacity: 0.6;"></i> Revés</div>
                                                     <!-- Drive (Abajo Derecha - court-p2-a) -->
-                                                    <div id="court-p2-a" style="position: absolute; bottom: 12px; left: 74%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25);">Drive <i class="fas fa-arrow-right" style="margin-left: 4px; font-size: 0.55rem; opacity: 0.6;"></i></div>
+                                                    <div id="court-p2-a" 
+                                                         ondragover="event.preventDefault(); window.TeamController.handleTacticalDragOver(this);" 
+                                                         ondragleave="window.TeamController.handleTacticalDragLeave(this);" 
+                                                         ondrop="window.TeamController.handleTacticalDrop(event, this, '${team.id}', 'p2-player-a');"
+                                                         onclick="window.TeamController.handleTacticalSpotClick(this, '${team.id}', 'p2-player-a');"
+                                                         style="position: absolute; bottom: 12px; left: 74%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px dashed rgba(255,255,255,0.5); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 25px;">Drive <i class="fas fa-arrow-right" style="font-size: 0.55rem; opacity: 0.6;"></i></div>
                                                 </div>
 
                                                 <!-- PISTA 3 -->
@@ -759,9 +780,19 @@
 
                                                     <!-- Player Spots (Mitad Inferior) - Lados de Juego Reales -->
                                                     <!-- Revés (Abajo Izquierda - court-p3-b) -->
-                                                    <div id="court-p3-b" style="position: absolute; bottom: 12px; left: 26%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25);"><i class="fas fa-arrow-left" style="margin-right: 4px; font-size: 0.55rem; opacity: 0.6;"></i> Revés</div>
+                                                    <div id="court-p3-b" 
+                                                         ondragover="event.preventDefault(); window.TeamController.handleTacticalDragOver(this);" 
+                                                         ondragleave="window.TeamController.handleTacticalDragLeave(this);" 
+                                                         ondrop="window.TeamController.handleTacticalDrop(event, this, '${team.id}', 'p3-player-b');"
+                                                         onclick="window.TeamController.handleTacticalSpotClick(this, '${team.id}', 'p3-player-b');"
+                                                         style="position: absolute; bottom: 12px; left: 26%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px dashed rgba(255,255,255,0.5); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 25px;"><i class="fas fa-arrow-left" style="font-size: 0.55rem; opacity: 0.6;"></i> Revés</div>
                                                     <!-- Drive (Abajo Derecha - court-p3-a) -->
-                                                    <div id="court-p3-a" style="position: absolute; bottom: 12px; left: 74%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25);">Drive <i class="fas fa-arrow-right" style="margin-left: 4px; font-size: 0.55rem; opacity: 0.6;"></i></div>
+                                                    <div id="court-p3-a" 
+                                                         ondragover="event.preventDefault(); window.TeamController.handleTacticalDragOver(this);" 
+                                                         ondragleave="window.TeamController.handleTacticalDragLeave(this);" 
+                                                         ondrop="window.TeamController.handleTacticalDrop(event, this, '${team.id}', 'p3-player-a');"
+                                                         onclick="window.TeamController.handleTacticalSpotClick(this, '${team.id}', 'p3-player-a');"
+                                                         style="position: absolute; bottom: 12px; left: 74%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px dashed rgba(255,255,255,0.5); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 25px;">Drive <i class="fas fa-arrow-right" style="margin-left: 4px; font-size: 0.55rem; opacity: 0.6;"></i></div>
                                                 </div>
 
                                             </div>
@@ -1232,7 +1263,7 @@
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
-                    const MAX_WIDTH = 600;
+                    const MAX_WIDTH = 1200; // Aumentado para conservar alta nitidez de captura y mejorar OCR
                     let width = img.width;
                     let height = img.height;
                     
@@ -1245,7 +1276,7 @@
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
                     
                     try {
                         localStorage.setItem(`somospadel_captura_convo_${teamId}`, compressedBase64);
@@ -1271,14 +1302,249 @@
                             const result = await Tesseract.recognize(compressedBase64, 'eng');
                             const ocrText = result.data.text || "";
 
-                            // 4. Normalizador de cadenas (elimina acentos, tildes, mayúsculas, etc.)
+                            // 4. Normalizadores y Levenshtein
                             const clean = (str) => {
+                                if (!str) return "";
                                 return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
                             };
 
-                            const ocrCleanText = clean(ocrText);
+                            const cleanWithSpaces = (str) => {
+                                if (!str) return "";
+                                return str.normalize("NFD")
+                                    .replace(/[\u0300-\u036f]/g, "")
+                                    .toLowerCase()
+                                    .replace(/[^a-z0-9\s]/g, "")
+                                    .replace(/\s+/g, " ")
+                                    .trim();
+                            };
+
+                            const levenshtein = (a, b) => {
+                                const tmp = [];
+                                let i, j, alen = a.length, blen = b.length;
+                                if (alen === 0) return blen;
+                                if (blen === 0) return alen;
+                                for (i = 0; i <= alen; i++) tmp[i] = [i];
+                                for (j = 0; j <= blen; j++) tmp[0][j] = j;
+                                for (i = 1; i <= alen; i++) {
+                                    for (j = 1; j <= blen; j++) {
+                                        tmp[i][j] = Math.min(
+                                            tmp[i - 1][j] + 1,
+                                            tmp[i][j - 1] + 1,
+                                            tmp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+                                        );
+                                    }
+                                }
+                                return tmp[alen][blen];
+                            };
+
+                            const isWordSimilar = (w1, w2) => {
+                                if (w1 === w2) return true;
+                                if (w1.length < 4 || w2.length < 4) return false;
+                                const dist = levenshtein(w1, w2);
+                                const maxAllowedDist = w2.length >= 6 ? 2 : 1;
+                                return dist <= maxAllowedDist;
+                            };
+
                             const detectedPlayers = [];
                             const notDetectedPlayers = [];
+
+                            const ocrLines = ocrText.split('\n');
+                            let inBajasSection = false;
+                            const confirmedSet = new Set();
+
+                            // Función para obtener el jugador que representa al usuario actual (el que dice "Tú" en el chat)
+                            const getActivePlayer = () => {
+                                let name = '';
+                                // 1. Intentar obtener desde el Store
+                                try {
+                                    const storeUser = window.Store?.getState?.('currentUser');
+                                    if (storeUser) name = storeUser.name || storeUser.displayName || '';
+                                } catch (e) {}
+                                
+                                // 2. Intentar obtener desde LocalStorage
+                                if (!name) {
+                                    try {
+                                        const userStr = localStorage.getItem('currentUser') || localStorage.getItem('adminUser');
+                                        if (userStr) {
+                                            const u = JSON.parse(userStr);
+                                            name = u.name || u.displayName || '';
+                                        }
+                                    } catch (e) {}
+                                }
+                                
+                                // 3. Intentar desde variable global
+                                if (!name && window.currentUser) {
+                                    name = window.currentUser.name || window.currentUser.displayName || '';
+                                }
+
+                                // 4. Mapear el nombre al roster
+                                if (name) {
+                                    const cleanName = cleanWithSpaces(name);
+                                    if (cleanName && cleanName !== 'admin' && cleanName !== 'superadmin') {
+                                        const matched = team.roster.find(p => {
+                                            const pClean = cleanWithSpaces(p.name);
+                                            if (pClean === cleanName || pClean.includes(cleanName) || cleanName.includes(pClean)) return true;
+                                            
+                                            const pWords = pClean.split(' ');
+                                            const nameWords = cleanName.split(' ');
+                                            return pWords.some(pw => nameWords.some(nw => pw === nw || isWordSimilar(pw, nw)));
+                                        });
+                                        if (matched) return matched;
+                                    }
+                                }
+
+                                // 5. Red de seguridad absoluta para Alejandro Coscolín en el equipo 4M
+                                if (team.name.includes('4M') || team.name.includes('4 M') || team.id.includes('4m')) {
+                                    const coscoPlayer = team.roster.find(p => p.name.includes('Coscolin') || p.name.includes('Coscolín'));
+                                    if (coscoPlayer) return coscoPlayer;
+                                }
+
+                                // 6. Fallback al capitán si no hay sesión
+                                if (team.captain) {
+                                    const cleanCapName = cleanWithSpaces(team.captain);
+                                    const matchedCap = team.roster.find(p => cleanWithSpaces(p.name) === cleanCapName || cleanWithSpaces(p.name).includes(cleanCapName));
+                                    if (matchedCap) return matchedCap;
+                                }
+
+                                return null;
+                            };
+
+                            const activePlayer = getActivePlayer();
+                            if (activePlayer) {
+                                confirmedSet.add(activePlayer.name);
+                                console.log("🕵️‍♂️ [OCR] Pre-confirmado jugador activo ('Tú'):", activePlayer.name);
+                            }
+
+                            const getInitials = (name) => {
+                                return name.split(' ')
+                                    .map(part => clean(part)[0])
+                                    .filter(Boolean)
+                                    .join('');
+                            };
+
+                            ocrLines.forEach(rawLine => {
+                                const lineClean = cleanWithSpaces(rawLine);
+                                if (!lineClean) return;
+
+                                if (/baja|no\b|lesion|noasist|novan|nodisp/i.test(rawLine)) {
+                                    inBajasSection = true;
+                                } else if (/confirm|si\b|disp|apunt|roster|lista/i.test(rawLine)) {
+                                    inBajasSection = false;
+                                }
+
+                                if (inBajasSection) return;
+
+                                if (/\b(no|baja|lesion|nopo|nopuedo|nopuede|novoy|noasisto|falla)\b/i.test(rawLine)) {
+                                    return;
+                                }
+
+                                let lineWords = lineClean.split(/\s+/);
+                                const rawCleanedTextOnly = lineClean.replace(/[^a-z0-9]/g, '');
+
+                                // Si la línea representa al propio usuario ("Tú"), confirmamos al activePlayer y limpiamos el término para no interferir
+                                const hasTuWord = lineClean === 'tu' || 
+                                             lineClean === 'yo' || 
+                                             lineWords.includes('tu') || 
+                                             lineWords.includes('yo') ||
+                                             lineWords.includes('t') ||
+                                             lineWords.includes('u') ||
+                                             lineClean === 't' ||
+                                             lineClean === 'u' ||
+                                             rawLine.toLowerCase().trim() === 'tu' ||
+                                             /\b(tu|yo)\b/i.test(rawLine);
+
+                                if (hasTuWord) {
+                                    if (activePlayer) {
+                                        confirmedSet.add(activePlayer.name);
+                                        console.log("🕵️‍♂️ [OCR] Línea detectada como 'Tú', confirmando:", activePlayer.name);
+                                    }
+                                    // Filtrar palabras que indiquen "tú" para que no interfieran en el mapeo de nombres
+                                    lineWords = lineWords.filter(w => w !== 'tu' && w !== 'yo' && w !== 't' && w !== 'u');
+                                }
+
+                                if (lineWords.length === 0) return;
+
+                                team.roster.forEach(p => {
+                                    const fullNameClean = cleanWithSpaces(p.name);
+                                    
+                                    // A. Coincidencia exacta de nombre completo en la línea (con espacios)
+                                    if (lineClean.includes(fullNameClean)) {
+                                        confirmedSet.add(p.name);
+                                        return;
+                                    }
+
+                                    // A2. Coincidencia exacta de nombre completo sin espacios
+                                    const fullNameNoSpaces = clean(p.name);
+                                    if (rawCleanedTextOnly.includes(fullNameNoSpaces)) {
+                                        confirmedSet.add(p.name);
+                                        return;
+                                    }
+
+                                    // B. Coincidencia de iniciales (ej: "M.G.P" -> "mgp")
+                                    const playerInitials = getInitials(p.name);
+                                    if (playerInitials.length >= 3 && (lineWords.includes(playerInitials) || rawCleanedTextOnly === playerInitials)) {
+                                        confirmedSet.add(p.name);
+                                        return;
+                                    }
+
+                                    // C. Coincidencia inteligente palabra por palabra
+                                    const pParts = p.name.split(' ').map(part => clean(part)).filter(part => part.length > 2);
+                                    let matchedWordsCount = 0;
+                                    let matchedFirstWord = false;
+                                    let matchedFirstWordExactly = false;
+
+                                    pParts.forEach((part, partIdx) => {
+                                        const hasExactMatch = lineWords.includes(part);
+                                        const hasFuzzyMatch = lineWords.some(word => isWordSimilar(word, part));
+                                        
+                                        if (hasFuzzyMatch) {
+                                            matchedWordsCount++;
+                                            if (partIdx === 0) {
+                                                matchedFirstWord = true;
+                                                if (hasExactMatch) {
+                                                    matchedFirstWordExactly = true;
+                                                }
+                                            }
+                                        }
+                                    });
+
+                                    // Para evitar falsos positivos cruzados de nombres similares (como "Sergio Albert" -> "Sergi Diez"):
+                                    // Si la línea contiene alguna palabra significativa (longitud > 2) que no coincida
+                                    // con ninguna parte del nombre del jugador y que no sea una palabra de estado común, cancelamos el match.
+                                    const ignoredLineWords = new Set([
+                                        'confirmado', 'confirmar', 'confirmada', 'confirmados', 'asiste', 'asistira', 'juega', 'jugar',
+                                        'apuntado', 'apuntados', 'apuntarse', 'lista', 'convocatoria', 'equipo', 'grupo', 'partido',
+                                        'pista', 'drive', 'reves', 'padel', 'baja', 'lesion', 'lesionado', 'entreno', 'alta', 'apuntado'
+                                    ]);
+
+                                    const hasUnmatchedSignificantWord = lineWords.some(word => {
+                                        if (word.length <= 2 || /^\d+$/.test(word)) return false;
+                                        if (ignoredLineWords.has(word)) return false;
+                                        return !pParts.some(part => isWordSimilar(word, part) || word.includes(part) || part.includes(word));
+                                    });
+
+                                    if (hasUnmatchedSignificantWord) {
+                                        return; // Rechazar match para este jugador
+                                    }
+
+                                    // Regla ultra-estricta de resolución:
+                                    // - Si coinciden 2 o más palabras, permitimos coincidencias difusas.
+                                    // - Si solo coincide 1 palabra y es el nombre de pila, exigimos que la coincidencia sea EXACTA para evitar que "Sergio" valide a "Sergi".
+                                    if (matchedWordsCount >= 2) {
+                                        confirmedSet.add(p.name);
+                                    } else if (matchedWordsCount === 1 && matchedFirstWord && matchedFirstWordExactly) {
+                                        const firstName = pParts[0];
+                                        const isUnique = team.roster.filter(other => {
+                                            const otherParts = other.name.split(' ').map(part => clean(part)).filter(part => part.length > 2);
+                                            return otherParts[0] === firstName;
+                                        }).length === 1;
+
+                                        if (isUnique) {
+                                            confirmedSet.add(p.name);
+                                        }
+                                    }
+                                });
+                            });
 
                             // 5. Mapear checkboxes del DOM en la pestaña de Convo
                             const checkboxes = document.querySelectorAll('.convocatoria-player-checkbox');
@@ -1286,25 +1552,7 @@
                             if (checkboxes.length > 0) {
                                 checkboxes.forEach(cb => {
                                     const playerName = cb.value;
-                                    const parts = playerName.split(' ').map(p => clean(p)).filter(p => p.length > 2); // partes del nombre largas
-                                    
-                                    // Verificación de coincidencia difusa inteligente
-                                    let matched = false;
-                                    
-                                    const fullNameClean = clean(playerName);
-                                    if (ocrCleanText.includes(fullNameClean)) {
-                                        matched = true;
-                                    } else {
-                                        let matchCount = 0;
-                                        parts.forEach(part => {
-                                            if (ocrCleanText.includes(part)) {
-                                                matchCount++;
-                                            }
-                                        });
-                                        if (matchCount >= 1 && parts.length > 0) {
-                                            matched = true;
-                                        }
-                                    }
+                                    const matched = confirmedSet.has(playerName);
 
                                     cb.checked = matched;
                                     if (matched) {
@@ -1452,6 +1700,51 @@
             });
 
             const allSelectedPlayers = Object.values(selections).filter(v => v !== '');
+ 
+            // Renderizar el banquillo de disponibles en la pizarra interactiva
+            const banquilloScroll = document.getElementById(`banquillo-tactica-scroll-${teamId}`);
+            if (banquilloScroll) {
+                // Obtener confirmados de los checkboxes de convo
+                const checkboxes = document.querySelectorAll('.convocatoria-player-checkbox');
+                let confirmados = [];
+                if (checkboxes.length > 0) {
+                    confirmados = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+                }
+                
+                // Si no hay confirmados en la Convo, usamos todo el roster del equipo
+                let listPlayers = team.roster || [];
+                if (confirmados.length > 0) {
+                    listPlayers = (team.roster || []).filter(p => confirmados.includes(p.name));
+                }
+
+                // Generar tarjetas de jugadores
+                banquilloScroll.innerHTML = listPlayers.map(p => {
+                    const isAligned = allSelectedPlayers.includes(p.name);
+                    const isSelected = window.activeSelectedPlayer === p.name;
+                    
+                    const alignedStyle = isAligned ? 'opacity: 0.45; border-color: #10b981; background: rgba(16, 185, 129, 0.04);' : '';
+                    const selectedStyle = isSelected ? 'border-color: #7c3aed; box-shadow: 0 0 0 2.5px rgba(124, 58, 237, 0.25); transform: scale(1.03); background: #ffffff;' : '';
+                    
+                    return `
+                        <div draggable="${!isAligned}"
+                             class="tactical-bench-card"
+                             ondragstart="window.TeamController.handleTacticalDragStart(event, '${p.name}', '${teamId}')"
+                             onclick="${isAligned ? '' : `window.TeamController.handleTacticalSelectPlayer(this, '${p.name}', '${teamId}')`}"
+                             style="display: flex; align-items: center; gap: 6px; font-size: 0.65rem; font-weight: 800; color: #334155; cursor: ${isAligned ? 'default' : 'pointer'}; background: white; padding: 6px 10px; border-radius: 10px; border: 1.5px solid #edf2f7; user-select: none; transition: all 0.2s; ${alignedStyle} ${selectedStyle}"
+                             onmouseover="${isAligned ? '' : "this.style.borderColor='#7c3aed'"}" 
+                             onmouseout="${isAligned ? '' : (isSelected ? "this.style.borderColor='#7c3aed'" : "this.style.borderColor='#edf2f7'")}">
+                            
+                            <span style="width: 7px; height: 7px; border-radius: 50%; background: ${p.pts >= 60 ? '#8b5cf6' : p.pts >= 25 ? '#0ea5e9' : '#10b981'};"></span>
+                            <span>${p.name.split(' ')[0]} <span style="font-weight: 700; color: #94a3b8; font-size: 0.58rem;">(${p.pts} pts)</span></span>
+                            ${isAligned ? '<i class="fas fa-check-circle" style="color: #10b981; font-size: 0.65rem; margin-left: 2px;"></i>' : ''}
+                        </div>
+                    `;
+                }).join('');
+
+                if (listPlayers.length === 0) {
+                    banquilloScroll.innerHTML = '<div style="font-size:0.65rem; color:#94a3b8; font-style:italic; padding: 10px 0; width:100%; text-align:center;">No hay jugadores en el banquillo. Marca confirmados en CONVO.</div>';
+                }
+            }
 
             selectIds.forEach(id => {
                 const el = document.getElementById(id);
@@ -1496,31 +1789,51 @@
                 const courtAEl = document.getElementById(p.courtA);
                 const courtBEl = document.getElementById(p.courtB);
 
-                // Update Mini Court Labels
-                if (courtAEl) {
-                    if (valA) {
-                        const shortName = valA.split(' ')[0];
-                        courtAEl.textContent = `${shortName} (${getPlayerPts(valA)} pts)`;
-                        courtAEl.style.background = '#10b981';
-                        courtAEl.style.borderColor = '#ffffff';
-                    } else {
-                        courtAEl.textContent = `P${idx+1} - Drive`;
-                        courtAEl.style.background = 'rgba(0,0,0,0.65)';
-                        courtAEl.style.borderColor = 'rgba(255,255,255,0.4)';
-                    }
-                }
-                if (courtBEl) {
-                    if (valB) {
-                        const shortName = valB.split(' ')[0];
-                        courtBEl.textContent = `${shortName} (${getPlayerPts(valB)} pts)`;
-                        courtBEl.style.background = '#10b981';
-                        courtBEl.style.borderColor = '#ffffff';
-                    } else {
-                        courtBEl.textContent = `P${idx+1} - Revés`;
-                        courtBEl.style.background = 'rgba(0,0,0,0.65)';
-                        courtBEl.style.borderColor = 'rgba(255,255,255,0.4)';
-                    }
-                }
+                 // Update Mini Court Labels
+                 if (courtAEl) {
+                     if (valA) {
+                         const shortName = valA.split(' ')[0];
+                         courtAEl.innerHTML = `
+                             <span>${shortName} <span style="font-size: 0.52rem; opacity: 0.85;">(${getPlayerPts(valA)} pts)</span></span>
+                             <span onclick="window.TeamController.handleTacticalClearSpot(event, '${teamId}', '${p.a}')" 
+                                   style="margin-left: 4px; font-size: 0.72rem; cursor: pointer; color: rgba(255,255,255,0.7); display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background: rgba(0,0,0,0.15); font-weight: bold; line-height: 1; transition: 0.2s;"
+                                   onmouseover="this.style.color='#ef4444'; this.style.background='rgba(255,255,255,0.95)';"
+                                   onmouseout="this.style.color='rgba(255,255,255,0.7)'; this.style.background='rgba(0,0,0,0.15)';">×</span>
+                         `;
+                         courtAEl.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                         courtAEl.style.borderColor = '#ffffff';
+                         courtAEl.style.borderStyle = 'solid';
+                         courtAEl.style.boxShadow = '0 4px 10px rgba(16, 185, 129, 0.35)';
+                     } else {
+                         courtAEl.innerHTML = `<i class="fas fa-plus-circle" style="font-size: 0.55rem; opacity: 0.55; margin-right: 4px;"></i> Drive`;
+                         courtAEl.style.background = 'rgba(15,23,42,0.45)';
+                         courtAEl.style.borderColor = 'rgba(255,255,255,0.35)';
+                         courtAEl.style.borderStyle = 'dashed';
+                         courtAEl.style.boxShadow = 'none';
+                     }
+                 }
+                 if (courtBEl) {
+                     if (valB) {
+                         const shortName = valB.split(' ')[0];
+                         courtBEl.innerHTML = `
+                             <span>${shortName} <span style="font-size: 0.52rem; opacity: 0.85;">(${getPlayerPts(valB)} pts)</span></span>
+                             <span onclick="window.TeamController.handleTacticalClearSpot(event, '${teamId}', '${p.b}')" 
+                                   style="margin-left: 4px; font-size: 0.72rem; cursor: pointer; color: rgba(255,255,255,0.7); display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background: rgba(0,0,0,0.15); font-weight: bold; line-height: 1; transition: 0.2s;"
+                                   onmouseover="this.style.color='#ef4444'; this.style.background='rgba(255,255,255,0.95)';"
+                                   onmouseout="this.style.color='rgba(255,255,255,0.7)'; this.style.background='rgba(0,0,0,0.15)';">×</span>
+                         `;
+                         courtBEl.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                         courtBEl.style.borderColor = '#ffffff';
+                         courtBEl.style.borderStyle = 'solid';
+                         courtBEl.style.boxShadow = '0 4px 10px rgba(16, 185, 129, 0.35)';
+                     } else {
+                         courtBEl.innerHTML = `<i class="fas fa-plus-circle" style="font-size: 0.55rem; opacity: 0.55; margin-right: 4px;"></i> Revés`;
+                         courtBEl.style.background = 'rgba(15,23,42,0.45)';
+                         courtBEl.style.borderColor = 'rgba(255,255,255,0.35)';
+                         courtBEl.style.borderStyle = 'dashed';
+                         courtBEl.style.boxShadow = 'none';
+                     }
+                 }
 
                 if (badge) {
                     if (valA && valB) {
@@ -1626,6 +1939,125 @@
                     `;
                 }
             }
+        }
+
+        handleTacticalDragStart(event, playerName, teamId) {
+            if (event && event.dataTransfer) {
+                event.dataTransfer.setData('text/plain', playerName);
+                event.dataTransfer.effectAllowed = 'move';
+            }
+            window.activeDragPlayer = playerName;
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(10);
+        }
+
+        handleTacticalDragOver(element) {
+            if (element) {
+                element.style.borderColor = '#10b981';
+                element.style.background = 'rgba(16, 185, 129, 0.15)';
+                element.style.boxShadow = '0 0 12px rgba(16, 185, 129, 0.4)';
+            }
+        }
+
+        handleTacticalDragLeave(element) {
+            if (!element) return;
+            const isOccupied = element.querySelector('span[onclick]');
+            if (isOccupied) {
+                element.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                element.style.borderColor = '#ffffff';
+                element.style.borderStyle = 'solid';
+                element.style.boxShadow = '0 4px 10px rgba(16, 185, 129, 0.35)';
+            } else {
+                element.style.background = 'rgba(15,23,42,0.75)';
+                element.style.borderColor = 'rgba(255,255,255,0.5)';
+                element.style.borderStyle = 'dashed';
+                element.style.boxShadow = '0 4px 10px rgba(0,0,0,0.25)';
+            }
+        }
+
+        handleTacticalDrop(event, element, teamId, selectId) {
+            if (event) {
+                event.preventDefault();
+            }
+            const playerName = event ? (event.dataTransfer.getData('text/plain') || window.activeDragPlayer) : window.activeDragPlayer;
+            if (playerName) {
+                this.assignPlayerToSelect(teamId, selectId, playerName);
+            }
+            window.activeDragPlayer = null;
+        }
+
+        handleTacticalSelectPlayer(element, playerName, teamId) {
+            if (window.activeSelectedPlayer === playerName) {
+                window.activeSelectedPlayer = null;
+            } else {
+                window.activeSelectedPlayer = playerName;
+                if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+            }
+            this.updateTactica(teamId);
+        }
+
+        handleTacticalSpotClick(element, teamId, selectId) {
+            if (window.activeSelectedPlayer) {
+                this.assignPlayerToSelect(teamId, selectId, window.activeSelectedPlayer);
+                window.activeSelectedPlayer = null;
+            }
+        }
+
+        handleTacticalClearSpot(event, teamId, selectId) {
+            if (event) {
+                event.stopPropagation();
+            }
+            const selectEl = document.getElementById(selectId);
+            if (selectEl) {
+                selectEl.value = '';
+                selectEl.dispatchEvent(new Event('change'));
+            }
+            this.updateTactica(teamId);
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(10);
+        }
+
+        clearAllTacticalSpots(teamId) {
+            const selectIds = [
+                'p1-player-a', 'p1-player-b',
+                'p2-player-a', 'p2-player-b',
+                'p3-player-a', 'p3-player-b'
+            ];
+            selectIds.forEach(id => {
+                const selectEl = document.getElementById(id);
+                if (selectEl) {
+                    selectEl.value = '';
+                    selectEl.dispatchEvent(new Event('change'));
+                }
+            });
+            window.activeSelectedPlayer = null;
+            this.updateTactica(teamId);
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
+        }
+
+        assignPlayerToSelect(teamId, selectId, playerName) {
+            const selectIds = [
+                'p1-player-a', 'p1-player-b',
+                'p2-player-a', 'p2-player-b',
+                'p3-player-a', 'p3-player-b'
+            ];
+            
+            // Swap / remove from other position if already aligned
+            selectIds.forEach(id => {
+                const selectEl = document.getElementById(id);
+                if (selectEl && selectEl.value === playerName) {
+                    selectEl.value = '';
+                    selectEl.dispatchEvent(new Event('change'));
+                }
+            });
+
+            // Assign to new position
+            const targetSelect = document.getElementById(selectId);
+            if (targetSelect) {
+                targetSelect.value = playerName;
+                targetSelect.dispatchEvent(new Event('change'));
+            }
+
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(25);
+            this.updateTactica(teamId);
         }
 
         suggestOptimalAlineacion(teamId) {
@@ -1766,11 +2198,24 @@
 
             this.updateTactica(teamId);
 
+            let reservesHtml = '';
+            if (usedConfirmados && rosterToUse.length > 6) {
+                const alignedPlayers = [s1a, s1b, s2a, s2b, s3a, s3b];
+                const reserves = rosterToUse.filter(p => !alignedPlayers.includes(p.name)).sort((a, b) => b.pts - a.pts);
+                if (reserves.length > 0) {
+                    reservesHtml = `<br><br><div style="background: rgba(245, 158, 11, 0.08); border-radius: 12px; padding: 12px; border: 1px solid rgba(245, 158, 11, 0.18); text-align: left; font-size: 0.72rem; color: #9a3412;">
+                        <strong>⚠️ Jugadores en Reserva/Suplentes (${reserves.length}):</strong><br>
+                        ${reserves.map(r => `• ${r.name} (${r.pts} pts)`).join('<br>')}
+                        <div style="font-size: 0.58rem; color: #7c2d12; margin-top: 4px; font-weight: 700;">Hemos alineado a los 6 mejores confirmados por ranking de puntos. Los suplentes quedan de reserva para rotaciones.</div>
+                    </div>`;
+                }
+            }
+
             // Alerta informativa premium SweetAlert
             window.PremiumModal.alert({
                 title: 'ALINEACIÓN ÓPTIMA SUGERIDA ⚡',
                 message: usedConfirmados 
-                    ? `Hemos simulado las 3 parejas más equilibradas y potentes utilizando de forma exclusiva a los <strong>${rosterToUse.length} jugadores confirmados (SÍ)</strong> en la pestaña CONVO.<br><br>¡El balance óptimo ya se dibuja en las 3 pistas!`
+                    ? `Hemos simulado las 3 parejas de dobles utilizando de forma exclusiva a los jugadores confirmados en la pestaña CONVO.${reservesHtml}<br><br>¡La alineación activa ya se dibuja en las 3 pistas!`
                     : `Hemos simulado las 3 parejas más potentes utilizando todos los jugadores del roster.<br><br><strong>Consejo de usabilidad:</strong> Desmarca las bajas en la pestaña CONVO basándote en tu captura de WhatsApp y esta auto-alineación considerará solo a los confirmados.`,
                 type: 'success'
             });

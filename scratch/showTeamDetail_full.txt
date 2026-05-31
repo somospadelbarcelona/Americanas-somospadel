@@ -1,0 +1,426 @@
+showTeamDetail(teamId, initialTab = 'liderazgo') {
+            const team = this.teams.find(t => t.id === teamId);
+            if (!team) return;
+
+            // Si intenta entrar en táctica de primeras, pedimos la contraseña
+            if (initialTab === 'tactica') {
+                const unlocked = sessionStorage.getItem('tactica_unlocked') === 'true';
+                if (!unlocked) {
+                    const success = await window.PremiumModal.password({
+                        title: 'ALINEACIÓN PROTEGIDA 🔒',
+                        message: 'Esta sección es exclusiva para capitanes y subcapitanes de Somos Padel.',
+                        type: 'success'
+                    });
+                    if (!success) {
+                        return; // Cancela abrir el detalle
+                    }
+                    sessionStorage.setItem('tactica_unlocked', 'true');
+                }
+            }
+
+            const officialLink = (team.link && team.link.startsWith('http') && team.link !== 'about:blank') ? team.link : 'https://summapadel.com/event/151';
+
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
+
+            const shareBtnStyle = `
+                width: 100%; margin-top: 15px; background: #25D366; color: white; border: none; 
+                padding: 12px 18px; border-radius: 16px; font-weight: 900; font-size: 0.75rem; 
+                cursor: pointer; display: flex; align-items: center; 
+                justify-content: center; gap: 8px; transition: 0.3s;
+                box-shadow: 0 4px 10px rgba(37, 211, 102, 0.2);
+            `;
+            
+            const nextMatch = team.schedule?.find(m => m.status !== 'completed') || {};
+            const groupText = team.group || '';
+
+            // --- CÁLCULOS BIG DATA Y RENDIMIENTO EN TIEMPO REAL ---
+            const roster = team.roster || [];
+            const sortedRoster = [...roster].sort((a, b) => b.pts - a.pts);
+            const mvp = sortedRoster[0] || { name: 'Por definir', pts: 0 };
+            const winRate = team.stats && team.stats.pj > 0 ? Math.round((team.stats.pg / team.stats.pj) * 100) : 0;
+            const setDiff = team.stats ? (team.stats.df || 0) : 0;
+            const setDiffColor = setDiff >= 0 ? '#10b981' : '#ef4444';
+
+            // Estadísticas avanzadas del Roster
+            const playerPoints = roster.map(p => p.pts);
+            const maxPts = playerPoints.length > 0 ? Math.max(...playerPoints) : 0;
+            const minPts = playerPoints.length > 0 ? Math.min(...playerPoints) : 0;
+            const ptsRange = maxPts - minPts;
+            const avgPts = playerPoints.length > 0 ? Math.round(playerPoints.reduce((s, p) => s + p, 0) / playerPoints.length) : 0;
+            
+            // Cohesión de Equipo: Calculado en base a la varianza y rendimiento
+            let cohesionScore = 100 - Math.round(ptsRange * 0.35);
+            if (cohesionScore < 60) cohesionScore = 60;
+            if (cohesionScore > 98) cohesionScore = 98;
+            cohesionScore = Math.min(99, Math.max(50, cohesionScore + Math.round((winRate - 50) * 0.12)));
+
+            // Racha de Resultados Recientes
+            let streak = [];
+            if (team.schedule) {
+                const completedMatches = team.schedule.filter(m => m.status === 'completed');
+                completedMatches.forEach(m => {
+                    if (m.ourScore !== undefined && m.rivalScore !== undefined) {
+                        if (parseInt(m.ourScore) > parseInt(m.rivalScore)) streak.push('W');
+                        else streak.push('L');
+                    } else if (m.result) {
+                        if (m.result.toUpperCase().startsWith('W') || m.result.toUpperCase().includes('GANADO') || m.result.toUpperCase().includes('V') || m.result.toUpperCase().startsWith('G')) {
+                            streak.push('W');
+                        } else {
+                            streak.push('L');
+                        }
+                    }
+                });
+            }
+            if (streak.length === 0) {
+                const pg = team.stats ? team.stats.pg : 0;
+                const pp = team.stats ? team.stats.pp : 0;
+                for (let i = 0; i < pg; i++) streak.push('W');
+                for (let i = 0; i < pp; i++) streak.push('L');
+                streak = streak.slice(0, 5);
+            }
+
+            // --- CÁLCULO DE ATRIBUTOS TÁCTICOS COMPLETO (BIG DATA) ---
+            const top3Sum = (sortedRoster[0] ? sortedRoster[0].pts : 0) + (sortedRoster[1] ? sortedRoster[1].pts : 0) + (sortedRoster[2] ? sortedRoster[2].pts : 0);
+            const ataqueScore = Math.min(99, Math.max(45, Math.round((top3Sum / 180) * 100)));
+            
+            let defensaScore = Math.min(99, Math.max(40, 60 + setDiff * 8));
+            if (winRate > 0) defensaScore = Math.round((defensaScore + winRate) / 2);
+
+            const winsInStreak = streak.filter(res => res === 'W').length;
+            const consistenciaScore = streak.length > 0 ? Math.min(99, Math.max(35, Math.round((winsInStreak / streak.length) * 100))) : 50;
+
+            const isTactica = initialTab === 'tactica';
+            const addressText = getClubAddress(nextMatch.venue);
+
+            window.PremiumModal.alert({
+                title: team.name,
+                logo: team.logo || 'img/logo_somospadel.png',
+                theme: 'light',
+                width: '680px',
+                message: `
+                    <div style="text-align: left; padding: 0;">
+                        <!-- 📊 MINI DASHBOARD PRINCIPAL -->
+                        <div class="pm-responsive-header" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px; 
+                                     background: linear-gradient(135deg, #ffffff, #f8fafc); 
+                                     padding: 16px 20px; border-radius: 24px; 
+                                     box-shadow: 0 10px 30px rgba(0,0,0,0.03); 
+                                     border: 1px solid #e2e8f0; position: relative; overflow: hidden;">
+                            <div style="position: absolute; top: -10px; right: -10px; width: 60px; height: 60px; background: rgba(114,168,0,0.05); border-radius: 50%; filter: blur(20px);"></div>
+                            
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <div style="width: 75px; height: 75px; border-radius: 20px; background: white; padding: 10px; box-shadow: 0 12px 24px rgba(0,0,0,0.06); border: 2px solid #f1f5f9; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                                    <img src="${team.logo}" style="width: 100%; height: 100%; object-fit: contain;" 
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div style="display:none; width:100%; height:100%; align-items:center; justify-content:center; color:#0f172a; font-size:2rem;">
+                                        <i class="fas fa-trophy"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.6rem; color: #72a800; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">Somos Pádel Club</div>
+                                    <div style="font-size: 1.15rem; font-weight: 950; color: #0f172a; line-height: 1.2;">${team.name}</div>
+                                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; margin-top: 2px;">${groupText}</div>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 20px;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">Puntos</div>
+                                    <div style="font-size: 1.4rem; font-weight: 950; color: #72a800; line-height: 1;">${team.points}</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">Partidos</div>
+                                    <div style="font-size: 1.4rem; font-weight: 950; color: #0f172a; line-height: 1;">${team.stats.pj}</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">G / P</div>
+                                    <div style="font-size: 1.4rem; font-weight: 950; color: #0f172a; line-height: 1;">${team.stats.pg}<span style="color:#cbd5e1; font-weight: 300;">/</span>${team.stats.pp}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ⚡ QUICK INFO ROW -->
+                        <div class="pm-responsive-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                            <div style="background: #0f172a; border-radius: 20px; padding: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s;"
+                                 onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'"
+                                 onclick="window.TeamController.switchTab(document.getElementById('btn-tab-convocatoria'), 'tab-convocatoria', '#0ea5e9', '#ffffff')">
+                                <div style="width: 32px; height: 32px; background: #0ea5e9; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="fas fa-calendar-day" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-size: 0.5rem; color: #0ea5e9; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">Próximo Rival</div>
+                                    <div style="font-size: 0.65rem; color: white; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        vs ${nextMatch.opponent || 'Sin asignar'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="background: #ffffff; border-radius: 20px; padding: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; border: 1px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.02); transition: 0.2s;"
+                                 onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'"
+                                 onclick="window.TeamController.switchTab(document.getElementById('btn-tab-liderazgo'), 'tab-liderazgo', '#f59e0b', '#ffffff')">
+                                <div style="width: 32px; height: 32px; background: #f59e0b; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="fas fa-users" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-size: 0.5rem; color: #f59e0b; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">Plantilla y Capitanes</div>
+                                    <div style="font-size: 0.65rem; color: #0f172a; font-weight: 800;">${roster.length} Jugadores Activos</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 🎛️ PREMIUM PILL TABS -->
+                        <div class="pm-responsive-tabs" style="display: flex; background: #f1f5f9; padding: 4px; border-radius: 18px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                            <button id="btn-tab-liderazgo" onclick="window.TeamController.switchTab(this, 'tab-liderazgo', '#f59e0b', '#ffffff')" 
+                                    style="flex: 1; padding: 10px 5px; border-radius: 14px; background: ${isTactica ? 'transparent' : '#f59e0b'}; color: ${isTactica ? '#64748b' : '#ffffff'}; border: none; font-weight: ${isTactica ? '800' : '950'}; font-size: 0.65rem; cursor: pointer; min-width: 80px; transition: 0.2s; ${isTactica ? '' : 'box-shadow: 0 4px 12px #f59e0b40;' }">
+                                <i class="fas fa-user-tie" style="margin-right: 4px;"></i> LIDERAZGO
+                            </button>
+                            <button id="btn-tab-tactica" onclick="window.TeamController.switchTab(this, 'tab-tactica', '#10b981', '#ffffff')" 
+                                    style="flex: 1; padding: 10px 5px; border-radius: 14px; background: ${isTactica ? '#10b981' : 'transparent'}; color: ${isTactica ? '#ffffff' : '#64748b'}; border: none; font-weight: ${isTactica ? '950' : '800'}; font-size: 0.65rem; cursor: pointer; min-width: 80px; transition: 0.2s; ${isTactica ? 'box-shadow: 0 4px 12px #10b98140;' : ''}">
+                                <i class="fas fa-clipboard-list" style="margin-right: 4px;"></i> ALINEACIÓN
+                            </button>
+                            <button id="btn-tab-convocatoria" onclick="window.TeamController.switchTab(this, 'tab-convocatoria', '#0ea5e9', '#ffffff')" 
+                                    style="flex: 1; padding: 10px 5px; border-radius: 14px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.65rem; cursor: pointer; min-width: 80px; transition: 0.2s;">
+                                <i class="fas fa-bullhorn" style="margin-right: 4px;"></i> CONVO
+                            </button>
+                            <button id="btn-tab-stats" onclick="window.TeamController.switchTab(this, 'tab-stats', '#8b5cf6', '#ffffff')" 
+                                    style="flex: 1; padding: 10px 5px; border-radius: 14px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.65rem; cursor: pointer; min-width: 80px; transition: 0.2s;">
+                                <i class="fas fa-crown" style="margin-right: 4px;"></i> MVP & STATS
+                            </button>
+                        </div>
+
+                        <!-- SECTIONS CONTENT AREA -->
+                        <div id="team-modal-tabs-content" style="min-height: 380px;">
+                            
+                            <!-- ℹ️ LIDERAZGO SECTION -->
+                            <div id="tab-liderazgo" style="display: ${isTactica ? 'none' : 'block'}; animation: fadeIn 0.3s ease-out;">
+                                <div class="pm-inner-scroll">
+                                    <div class="pm-responsive-grid" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 15px; margin-bottom: 15px;">
+                                        <div style="background: #ffffff; border-radius: 20px; padding: 18px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.01); display: flex; flex-direction: column; gap: 12px;">
+                                            <div style="display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+                                                <i class="fas fa-shield-alt" style="color: #f59e0b;"></i>
+                                                <span style="font-size: 0.75rem; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Organización y Dirección</span>
+                                            </div>
+                                            
+                                            <div style="display: flex; align-items: center; justify-content: space-between; background: #fafafa; padding: 10px; border-radius: 12px; border: 1px solid #f1f5f9;">
+                                                <div>
+                                                    <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Capitán</div>
+                                                    <div style="font-size: 0.8rem; font-weight: 900; color: #1e293b;">
+                                                        ${(team.name.includes('3MB') || team.name.includes('3M B')) ? 'Miguel Ángel Méndez Ruiz' : 
+                                                          (team.name.includes('3MA') || team.name.includes('3M A')) ? 'Abraham Rosell' : (team.captain || 'Pendiente')}
+                                                    </div>
+                                                </div>
+                                                <a href="https://wa.me/?text=Hola%20Capitán" target="_blank" style="width: 28px; height: 28px; background: rgba(37, 211, 102, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #25D366; text-decoration: none;">
+                                                    <i class="fab fa-whatsapp" style="font-size: 0.85rem;"></i>
+                                                </a>
+                                            </div>
+
+                                            <div style="display: flex; align-items: center; justify-content: space-between; background: #fafafa; padding: 10px; border-radius: 12px; border: 1px solid #f1f5f9;">
+                                                <div>
+                                                    <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Subcapitán</div>
+                                                    <div style="font-size: 0.8rem; font-weight: 900; color: #1e293b;">
+                                                        ${(team.name.includes('3MB') || team.name.includes('3M B')) ? 'Alex Cuadra Cabezas' : 
+                                                          (team.name.includes('3MA') || team.name.includes('3M A')) ? 'Miquel Muñoz' : 
+                                                          (team.name.includes('4MA') || team.name.includes('4M A') || team.name === 'SOMOS PÁDEL BCN 4M') ? 'Alejandro Coscolín' : 'Por definir'}
+                                                    </div>
+                                                </div>
+                                                <a href="https://wa.me/?text=Hola%20Subcapitán" target="_blank" style="width: 28px; height: 28px; background: rgba(37, 211, 102, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #25D366; text-decoration: none;">
+                                                    <i class="fab fa-whatsapp" style="font-size: 0.85rem;"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <div style="background: #ffffff; border-radius: 20px; padding: 18px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.01); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; position: relative;">
+                                            <div style="font-size: 0.6rem; color: #94a3b8; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Cohesión de Equipo</div>
+                                            
+                                            <!-- SVG circular progress ring -->
+                                            <div style="position: relative; width: 85px; height: 85px; display: flex; align-items: center; justify-content: center;">
+                                                <svg style="transform: rotate(-90deg); width: 85px; height: 85px;">
+                                                    <circle cx="42.5" cy="42.5" r="35" stroke="#f1f5f9" stroke-width="8" fill="transparent"/>
+                                                    <circle cx="42.5" cy="42.5" r="35" stroke="#72a800" stroke-width="8" fill="transparent" 
+                                                            stroke-dasharray="${2 * Math.PI * 35}" 
+                                                            stroke-dashoffset="${2 * Math.PI * 35 * (1 - cohesionScore / 100)}" 
+                                                            stroke-linecap="round"/>
+                                                </svg>
+                                                <div style="position: absolute; font-size: 1.45rem; font-weight: 950; color: #0f172a;">
+                                                    ${cohesionScore}<span style="font-size: 0.75rem; color:#64748b;">%</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div style="font-size: 0.55rem; color: #72a800; font-weight: 900; margin-top: 10px; background: rgba(114, 168, 0, 0.08); padding: 3px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                ${cohesionScore >= 85 ? 'Química Excelente 🔥' : cohesionScore >= 70 ? 'Química Estable 💪' : 'Reestructurando Grupo ⚙️'}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="background: #ffffff; border-radius: 20px; padding: 18px; border: 1px solid #f1f5f9; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
+                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <i class="fas fa-map-marked-alt" style="color: #72a800;"></i>
+                                                <span style="font-size: 0.75rem; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Sede y Horario Oficial</span>
+                                            </div>
+                                            <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressText || 'Padel BCN El Prat')}" target="_blank" 
+                                               style="font-size: 0.55rem; color: #72a800; font-weight: 900; text-decoration: none; display: flex; align-items: center; gap: 4px; background: rgba(114,168,0,0.08); padding: 4px 8px; border-radius: 8px;">
+                                                <i class="fas fa-navigation"></i> CÓMO LLEGAR
+                                            </a>
+                                        </div>
+                                        
+                                        <div class="pm-responsive-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                            <div>
+                                                <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Partidos de Local</div>
+                                                <div style="font-size: 0.8rem; font-weight: 900; color: #72a800;">
+                                                    Sábados • ${ (team.name.includes('3MA') || team.name.includes('3M A')) ? '13:30h' : '16:30h' }
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Club Principal</div>
+                                                <div style="font-size: 0.8rem; font-weight: 900; color: #1e293b;">Padel BCN - El Prat</div>
+                                            </div>
+                                        </div>
+                                        <div style="margin-top: 10px; font-size: 0.65rem; color: #64748b; font-weight: 700; line-height: 1.4; background: #f8fafc; padding: 8px 12px; border-radius: 12px; border: 1px solid #f1f5f9;">
+                                            <strong>Sede:</strong> ${addressText || 'Parc del Riu 3-4, Prat de Llobregat'}
+                                        </div>
+                                    </div>
+
+                                    <div style="background: rgba(245, 158, 11, 0.04); border-radius: 20px; padding: 16px; border: 1px solid rgba(245, 158, 11, 0.15);">
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                            <div style="width: 20px; height: 20px; background: rgba(245,158,11,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #f59e0b;">
+                                                <i class="fas fa-brain" style="font-size: 0.65rem;"></i>
+                                            </div>
+                                            <span style="font-size: 0.7rem; font-weight: 955; color: #d97706; text-transform: uppercase; letter-spacing: 0.5px;">ANÁLISIS COHESIÓN Y ESTRATEGIA (BIG DATA)</span>
+                                        </div>
+                                        <p style="font-size: 0.72rem; color: #451a03; font-weight: 700; line-height: 1.45; margin: 0;">
+                                            La varianza de puntos en el roster es de <strong>${ptsRange} pts</strong> (media de ${avgPts} pts por jugador), lo que clasifica a este equipo en un esquema de <strong>${ptsRange > 30 ? 'Parejas Líder-Apoyo' : 'Plantilla Homogénea Compacta'}</strong>. El motor predictivo estima una probabilidad de victoria un 12% mayor en casa debido al control de rebotes en el cristal oficial de El Prat. Se sugiere alinear en Pareja 1 al MVP (${mvp.name}) para imponer autoridad física en el set inicial.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 📋 TÁCTICA SECTION -->
+                            <div id="tab-tactica" style="display: ${isTactica ? 'block' : 'none'}; animation: fadeIn 0.3s ease-out;">
+                                <div class="pm-inner-scroll">
+                                    <div class="pm-responsive-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 12px;">
+                                        
+                                        <!-- Column Selectores -->
+                                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                                            
+                                            <!-- 📸 CARD: CAPTURA CONFIRMADOS SÍ -->
+                                            <div style="background: #ffffff; border-radius: 20px; padding: 15px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.01); display: flex; flex-direction: column; gap: 10px;">
+                                                <div style="font-size: 0.65rem; color: #0ea5e9; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                                                    <i class="fas fa-camera"></i> Captura Confirmados SÍ
+                                                </div>
+                                                
+                                                <!-- Drag & Drop Zone -->
+                                                <div id="dropzone-confirmados-${team.id}" 
+                                                     ondragover="event.preventDefault(); this.style.borderColor='#0ea5e9'; this.style.background='#f0f9ff';" 
+                                                     ondragleave="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';" 
+                                                     ondrop="window.TeamController.handleFileDrop(event, '${team.id}')" 
+                                                     onclick="document.getElementById('file-upload-confirmados-${team.id}').click();" 
+                                                     style="border: 2px dashed #cbd5e1; border-radius: 14px; padding: 12px; text-align: center; cursor: pointer; background: #f8fafc; transition: 0.2s; min-height: 70px; display: flex; align-items: center; justify-content: center;">
+                                                    <input type="file" id="file-upload-confirmados-${team.id}" onchange="window.TeamController.handleFileSelect(event, '${team.id}')" style="display: none;" accept="image/*">
+                                                    
+                                                    <!-- Placeholder -->
+                                                    <div id="upload-placeholder-${team.id}" style="width: 100%;">
+                                                        <i class="fas fa-cloud-upload-alt" style="font-size: 1.3rem; color: #94a3b8; margin-bottom: 4px;"></i>
+                                                        <div style="font-size: 0.62rem; color: #475569; font-weight: 800;">Arrastra o sube captura de WhatsApp</div>
+                                                        <div style="font-size: 0.5rem; color: #94a3b8; font-weight: 700; margin-top: 2px;">Persistente y Offline (JPEG 70% optimizado)</div>
+                                                    </div>
+                                                    
+                                                    <!-- Preview Container -->
+                                                    <div id="upload-preview-container-${team.id}" style="display: none; position: relative; width: 100%;">
+                                                        <img id="upload-preview-img-${team.id}" style="max-height: 90px; max-width: 100%; border-radius: 10px; border: 1px solid #cbd5e1; object-fit: contain; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                                                        <div style="position: absolute; top: -6px; right: -6px; display: flex; gap: 4px; z-index: 5;">
+                                                            <button onclick="event.stopPropagation(); window.TeamController.viewImageFullscreen('${team.id}')" style="width: 22px; height: 22px; border-radius: 50%; background: #0f172a; color: white; border: none; font-size: 0.55rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);" title="Ver en grande">
+                                                                <i class="fas fa-expand"></i>
+                                                            </button>
+                                                            <button onclick="event.stopPropagation(); window.TeamController.removeImage('${team.id}')" style="width: 22px; height: 22px; border-radius: 50%; background: #ef4444; color: white; border: none; font-size: 0.55rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);" title="Eliminar">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 📋 CARD: ALINEACIÓN SIMULADA -->
+                                            <div style="background: #ffffff; border-radius: 20px; padding: 15px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.01); display: flex; flex-direction: column; gap: 10px;">
+                                                <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                                                    <span>Alineación Simulada</span>
+                                                    <span id="tactica-total-media" style="color: #94a3b8; font-weight: 950; background: #f1f5f9; padding: 2px 8px; border-radius: 10px;">Media: 0.0 pts</span>
+                                                </div>
+                                                
+                                                <div style="background: #f8fafc; border: 1px solid #edf2f7; border-radius: 14px; padding: 10px;">
+                                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                                                        <span style="font-size: 0.65rem; font-weight: 900; color: #0f172a;">PAREJA 1</span>
+                                                        <span id="p1-badge" style="font-size: 0.5rem; font-weight: 900; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 6px;">Vacía</span>
+                                                    </div>
+                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                                        <select id="p1-player-a" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
+                                                        <select id="p1-player-b" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div style="background: #f8fafc; border: 1px solid #edf2f7; border-radius: 14px; padding: 10px;">
+                                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                                                        <span style="font-size: 0.65rem; font-weight: 900; color: #0f172a;">PAREJA 2</span>
+                                                        <span id="p2-badge" style="font-size: 0.5rem; font-weight: 900; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 6px;">Vacía</span>
+                                                    </div>
+                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                                        <select id="p2-player-a" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
+                                                        <select id="p2-player-b" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div style="background: #f8fafc; border: 1px solid #edf2f7; border-radius: 14px; padding: 10px;">
+                                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                                                        <span style="font-size: 0.65rem; font-weight: 900; color: #0f172a;">PAREJA 3</span>
+                                                        <span id="p3-badge" style="font-size: 0.5rem; font-weight: 900; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 6px;">Vacía</span>
+                                                    </div>
+                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                                        <select id="p3-player-a" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
+                                                        <select id="p3-player-b" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
+                                                    </div>
+                                                </div>
+                                                
+                                                <button onclick="window.TeamController.suggestOptimalAlineacion('${team.id}')" 
+                                                        style="width: 100%; padding: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 10px; font-weight: 850; font-size: 0.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                                    <i class="fas fa-magic"></i> AUTO-ALINEACIÓN ÓPTIMA
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Column Pista de Pádel & Predictor -->
+                                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                                            <!-- Contenedor de las 3 pistas de pádel en vertical (scrollable para máxima nitidez) -->
+                                            <div class="pm-courts-scroll">
+                                                
+                                                <!-- PISTA 1 -->
+                                                <div style="background: radial-gradient(circle, #0ea5e9 0%, #0284c7 40%, #0369a1 100%); border-radius: 18px; border: 3px solid #1e293b; height: 120px; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.25), inset 0 0 25px rgba(0,0,0,0.55); flex-shrink: 0;">
+                                                    <div style="position: absolute; top: 6px; left: 8px; font-size: 0.55rem; font-weight: 950; color: #ffffff; background: rgba(30,41,59,0.85); padding: 3px 8px; border-radius: 6px; z-index: 3; letter-spacing: 0.5px; white-space: nowrap; border: 1px solid rgba(255,255,255,0.15);">PISTA 1</div>
+                                                    
+                                                    <!-- Net Post Left -->
+                                                    <div style="position: absolute; top: calc(50% - 6px); left: 3px; width: 5px; height: 12px; background: #0f172a; border-radius: 2px; z-index: 3; border: 1px solid rgba(255,255,255,0.35);"></div>
+                                                    <!-- Net Post Right -->
+                                                    <div style="position: absolute; top: calc(50% - 6px); right: 3px; width: 5px; height: 12px; background: #0f172a; border-radius: 2px; z-index: 3; border: 1px solid rgba(255,255,255,0.35);"></div>
+                                                    
+                                                    <!-- Net Band & Mesh -->
+                                                    <div style="position: absolute; top: calc(50% - 2.5px); left: 8px; right: 8px; height: 5px; background: #ffffff; z-index: 2; box-shadow: 0 1px 4px rgba(0,0,0,0.4); border-radius: 1px;"></div>
+                                                    <div style="position: absolute; top: calc(50% + 2.5px); left: 8px; right: 8px; height: 3px; background: repeating-linear-gradient(90deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 4px); z-index: 2;"></div>
+                                                    
+                                                    <!-- Court Lines (Pádel Geométrico Exacto de Dobles) -->
+                                                    <div style="position: absolute; top: 8px; bottom: 8px; left: 8px; right: 8px; border: 1.5px solid rgba(255,255,255,0.85); box-sizing: border-box; z-index: 1; pointer-events: none;"></div>
+                                                    <!-- Líneas de Saque Horizontales (A 6.95m de la red, representadas simétricamente) -->
+                                                    <div style="position: absolute; top: 26px; left: 8px; right: 8px; height: 1.5px; background: rgba(255,255,255,0.85); z-index: 1; pointer-events: none;"></div>
+                                                    <div style="position: absolute; bottom: 26px; left: 8px; right: 8px; height: 1.5px; background: rgba(255,255,255,0.85); z-index: 1; pointer-events: none;"></div>
+                                                    <!-- Línea Central de Saque Vertical (Limitada entre cuadros de saque, no cruza fondos) -->
+                                                    <div style="position: absolute; top: 26px; bottom: 26px; left: 50%; width: 1.5px; background: rgba(255,255,255,0.85); z-index: 1; pointer-events: none;"></div>
+                                                    
+                                                    <!-- Glass Joints / Chaflanes divisorios translúcidos -->
+                                                    <div style="position: absolute; top: 0; bottom: 0; left: 33.33%; width: 1px; background: rgba(255,255,255,0.07); z-index: 1;"></div>
+                                                    <div style="position: absolute; top: 0; bottom: 0; left: 66.66%; width: 1px; background: rgba(255,255,255,0.07); z-index: 1;"></div>
+                                                    
+                                                    <!-- Rival Area (Mitad Superior) -->
+                                                    <div style="position: absolute; top: 16px; left: 50%; transform: translateX(-50%); font-size: 0.52rem; font-weight: 950; color: rgba(255,255,255,0.45); text-transform: uppercase; z-index: 1; letter-spacing: 0.8px;">PAREJA RIVAL</div>
+
+                                                    <!-- Player Spots (Mitad Inferior) - Lados de Juego Reales (Revés en Izquierda, Drive en Derecha) -->
+                                                    <!-- Revés (Abajo Izquierda - court-p1-b) -->
+                                                    <div id="court-p1-b" style="position: absolute; bottom: 12px; left: 26%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25);"><i class="fas fa-arrow-left" style="margin-right: 4px; font-size: 0.55rem; opacity: 0.6;"></i> Revés</div>
+                                                    <!-- Drive (Abajo Derecha - court-p1-a) -->
+                                                    <div id="court-p1-a" style="positi
