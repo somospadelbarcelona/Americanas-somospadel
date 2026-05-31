@@ -771,9 +771,10 @@
                                             </div>
                                         </div>
                                     </div>
-                                <button onclick="window.TeamController.shareTactica('${team.id}')" style="${shareBtnStyle}; background: #10b981; margin-top: 10px;">
-                                    <i class="fab fa-whatsapp"></i> COMPARTIR ALINEACIÓN SIMULADA
-                                </button>
+                                    <button onclick="window.TeamController.shareTactica('${team.id}')" style="${shareBtnStyle}; background: #10b981; margin-top: 10px;">
+                                        <i class="fab fa-whatsapp"></i> COMPARTIR ALINEACIÓN SIMULADA
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- 📢 CONVOCATORIA SECTION -->
@@ -821,19 +822,18 @@
                                         <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 900; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Vista Previa de Encuesta WhatsApp:</div>
                                         <div id="convocatoria-preview-box" style="background: #f8fafc; border-radius: 12px; padding: 12px; border: 1px solid #edf2f7; font-family: 'Courier New', Courier, monospace; font-size: 0.68rem; color: #1e293b; line-height: 1.45; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); white-space: pre-wrap; word-break: break-word;"></div>
                                     </div>
-                                </div>
-                            </div>
-                                <div style="display: flex; gap: 8px; margin-top: 10px;">
-                                    <button onclick="window.TeamController.shareConvocatoria('${team.id}', true)" 
-                                            style="flex: 1.1; padding: 12px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white; border: none; border-radius: 16px; font-weight: 900; font-size: 0.68rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.2); transition: 0.2s;"
-                                             onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
-                                        <i class="fab fa-whatsapp" style="font-size: 0.85rem;"></i> ENVIAR CONVO LIMPIA
-                                    </button>
-                                    <button onclick="window.TeamController.shareConvocatoria('${team.id}', false)" 
-                                            style="flex: 0.9; padding: 12px; background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; border-radius: 16px; font-weight: 900; font-size: 0.68rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(100, 116, 139, 0.2); transition: 0.2s;"
-                                             onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
-                                        <i class="fas fa-list-check" style="font-size: 0.85rem;"></i> ENVIAR CON ASISTENCIA
-                                    </button>
+                                    <div style="display: flex; gap: 8px; margin-top: 10px;">
+                                        <button onclick="window.TeamController.shareConvocatoria('${team.id}', true)" 
+                                                style="flex: 1.1; padding: 12px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white; border: none; border-radius: 16px; font-weight: 900; font-size: 0.68rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.2); transition: 0.2s;"
+                                                 onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+                                            <i class="fab fa-whatsapp" style="font-size: 0.85rem;"></i> ENVIAR CONVO LIMPIA
+                                        </button>
+                                        <button onclick="window.TeamController.shareConvocatoria('${team.id}', false)" 
+                                                style="flex: 0.9; padding: 12px; background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; border-radius: 16px; font-weight: 900; font-size: 0.68rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(100, 116, 139, 0.2); transition: 0.2s;"
+                                                 onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+                                            <i class="fas fa-list-check" style="font-size: 0.85rem;"></i> ENVIAR CON ASISTENCIA
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1204,10 +1204,31 @@
 
         saveAndDisplayImage(file, teamId) {
             if (!file) return;
+            const team = this.teams.find(t => t.id === teamId);
+            if (!team || !team.roster) return;
+
+            const placeholderEl = document.getElementById(`upload-placeholder-${teamId}`);
+            const previewContainerEl = document.getElementById(`upload-preview-container-${teamId}`);
+            const previewImgEl = document.getElementById(`upload-preview-img-${teamId}`);
+            const dropzoneEl = document.getElementById(`dropzone-confirmados-${teamId}`);
+
+            // 1. Mostrar spinner premium de procesamiento de captura
+            if (placeholderEl && dropzoneEl) {
+                dropzoneEl.style.borderColor = '#0ea5e9';
+                dropzoneEl.style.background = 'rgba(14, 165, 233, 0.04)';
+                placeholderEl.innerHTML = `
+                    <div style="width: 100%;">
+                        <i class="fas fa-sync fa-spin" style="font-size: 1.5rem; color: #0ea5e9; margin-bottom: 6px;"></i>
+                        <div style="font-size: 0.65rem; color: #0ea5e9; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">Procesando captura... 📸✨</div>
+                        <div style="font-size: 0.52rem; color: #94a3b8; font-weight: 700; margin-top: 2px;">Analizando nombres y confirmando asistencia en tiempo real</div>
+                    </div>
+                `;
+            }
+
             const reader = new FileReader();
             reader.onload = (e) => {
                 const img = new Image();
-                img.onload = () => {
+                img.onload = async () => {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
@@ -1229,22 +1250,150 @@
                     try {
                         localStorage.setItem(`somospadel_captura_convo_${teamId}`, compressedBase64);
                         
-                        const placeholderEl = document.getElementById(`upload-placeholder-${teamId}`);
-                        const previewContainerEl = document.getElementById(`upload-preview-container-${teamId}`);
-                        const previewImgEl = document.getElementById(`upload-preview-img-${teamId}`);
-                        
-                        if (previewImgEl && previewContainerEl && placeholderEl) {
-                            previewImgEl.src = compressedBase64;
-                            previewContainerEl.style.display = 'block';
-                            placeholderEl.style.display = 'none';
+                        if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
+
+                        // 2. Inyección perezosa dinámica de Tesseract.js para OCR autónomo local
+                        const loadTesseract = () => {
+                            if (window.Tesseract) return Promise.resolve(window.Tesseract);
+                            return new Promise((resolve, reject) => {
+                                const script = document.createElement('script');
+                                script.src = 'https://unpkg.com/tesseract.js@5.0.5/dist/tesseract.min.js';
+                                script.onload = () => resolve(window.Tesseract);
+                                script.onerror = (err) => reject(err);
+                                document.head.appendChild(script);
+                            });
+                        };
+
+                        try {
+                            const Tesseract = await loadTesseract();
+                            
+                            // 3. Ejecutar reconocimiento OCR sobre la captura
+                            const result = await Tesseract.recognize(compressedBase64, 'eng');
+                            const ocrText = result.data.text || "";
+
+                            // 4. Normalizador de cadenas (elimina acentos, tildes, mayúsculas, etc.)
+                            const clean = (str) => {
+                                return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+                            };
+
+                            const ocrCleanText = clean(ocrText);
+                            const detectedPlayers = [];
+                            const notDetectedPlayers = [];
+
+                            // 5. Mapear checkboxes del DOM en la pestaña de Convo
+                            const checkboxes = document.querySelectorAll('.convocatoria-player-checkbox');
+                            
+                            if (checkboxes.length > 0) {
+                                checkboxes.forEach(cb => {
+                                    const playerName = cb.value;
+                                    const parts = playerName.split(' ').map(p => clean(p)).filter(p => p.length > 2); // partes del nombre largas
+                                    
+                                    // Verificación de coincidencia difusa inteligente
+                                    let matched = false;
+                                    
+                                    const fullNameClean = clean(playerName);
+                                    if (ocrCleanText.includes(fullNameClean)) {
+                                        matched = true;
+                                    } else {
+                                        let matchCount = 0;
+                                        parts.forEach(part => {
+                                            if (ocrCleanText.includes(part)) {
+                                                matchCount++;
+                                            }
+                                        });
+                                        if (matchCount >= 1 && parts.length > 0) {
+                                            matched = true;
+                                        }
+                                    }
+
+                                    cb.checked = matched;
+                                    if (matched) {
+                                        detectedPlayers.push(playerName);
+                                    } else {
+                                        notDetectedPlayers.push(playerName);
+                                    }
+                                });
+
+                                // Si el motor no detectó a nadie, restauramos a todos marcados como activos
+                                if (detectedPlayers.length === 0) {
+                                    checkboxes.forEach(cb => cb.checked = true);
+                                }
+                            }
+
+                            // 6. Actualizar paneles visuales y alineaciones
+                            this.updateConvocatoriaPreview(teamId);
+                            this.updateTactica(teamId);
+
+                            // 7. Mostrar previsualización de la captura en el dropzone
+                            if (previewImgEl && previewContainerEl && placeholderEl) {
+                                previewImgEl.src = compressedBase64;
+                                previewContainerEl.style.display = 'block';
+                                placeholderEl.style.display = 'none';
+                            }
+
+                            // Restaurar estilos de la dropzone
+                            if (dropzoneEl) {
+                                dropzoneEl.style.borderColor = '#cbd5e1';
+                                dropzoneEl.style.background = '#f8fafc';
+                            }
+
+                            if (window.PlayerView?.haptic) window.PlayerView.haptic(30);
+
+                            // 8. Alerta final SweetAlert premium con lista de confirmados por la lectura de captura
+                            if (detectedPlayers.length > 0) {
+                                window.PremiumModal.alert({
+                                    title: '¡CAPTURA PROCESADA! 📸✨',
+                                    message: `
+                                        Hemos escaneado los textos de tu captura y confirmado la asistencia automáticamente en la pestaña <strong>CONVO</strong> para:<br><br>
+                                        <div style="background: rgba(16, 185, 129, 0.08); border-radius: 12px; padding: 12px; text-align: left; font-size: 0.72rem; font-weight: 800; max-height: 120px; overflow-y: auto; color: #065f46; display: flex; flex-direction: column; gap: 4px;">
+                                            ${detectedPlayers.map(name => `<span>✅ ${name}</span>`).join('')}
+                                        </div><br>
+                                        Los jugadores no mencionados han quedado como bajas temporales para esta jornada. ¡Ya puedes pulsar <strong>AUTO-ALINEACIÓN ÓPTIMA</strong> para calcular la mejor combinación basándote en ellos!
+                                    `,
+                                    type: 'success'
+                                });
+                            } else {
+                                window.PremiumModal.alert({
+                                    title: 'ANÁLISIS COMPLETADO ⚠️',
+                                    message: 'No pudimos reconocer nombres coincidentes en la captura de pantalla. Por seguridad, hemos dejado a toda la plantilla confirmada de forma predeterminada.<br><br><strong>Consejo:</strong> Asegúrate de que los nombres del chat de WhatsApp coincidan o se parezcan a los del roster oficial.',
+                                    type: 'warning'
+                                });
+                            }
+
+                        } catch (ocrErr) {
+                            console.error("Error en OCR Tesseract", ocrErr);
+                            // Fallback de visualización simple en caso de que falle el OCR o no haya internet
+                            if (previewImgEl && previewContainerEl && placeholderEl) {
+                                previewImgEl.src = compressedBase64;
+                                previewContainerEl.style.display = 'block';
+                                placeholderEl.style.display = 'none';
+                            }
+                            if (dropzoneEl) {
+                                dropzoneEl.style.borderColor = '#cbd5e1';
+                                dropzoneEl.style.background = '#f8fafc';
+                            }
+                            window.PremiumModal.alert({
+                                title: 'Captura Guardada Localmente 📸',
+                                message: 'Guardamos la captura para tu referencia visual al alinear. El escaneo automático no pudo iniciarse (comprueba tu conexión a internet o restricciones locales).',
+                                type: 'info'
+                            });
                         }
-                        
-                        if (window.PlayerView?.haptic) window.PlayerView.haptic(10);
+
                     } catch (err) {
                         console.error("Error guardando imagen en localStorage", err);
+                        // Restaurar estilos
+                        if (placeholderEl && dropzoneEl) {
+                            dropzoneEl.style.borderColor = '#cbd5e1';
+                            dropzoneEl.style.background = '#f8fafc';
+                            placeholderEl.innerHTML = `
+                                <i class="fas fa-cloud-upload-alt" style="font-size: 1.3rem; color: #94a3b8; margin-bottom: 4px;"></i>
+                                <div style="font-size: 0.62rem; color: #475569; font-weight: 800;">Arrastra o sube captura de WhatsApp</div>
+                                <div style="font-size: 0.5rem; color: #94a3b8; font-weight: 700; margin-top: 2px;">Persistente y Offline (JPEG 70% optimizado)</div>
+                            `;
+                        }
                         window.PremiumModal.alert({
                             title: 'Error de Almacenamiento ⚠️',
-                            message: 'No se pudo guardar la imagen por falta de espacio en el navegador. Intenta con una imagen más pequeña.',
+                            message: 'No se pudo guardar la imagen por falta de espacio en el navegador.',
                             type: 'error'
                         });
                     }
@@ -1529,33 +1678,50 @@
                     return false;
                 };
 
-                // Clasificamos y ordenamos chicos y chicas por puntos de roster
+                // Clasificamos y ordenamos chicos y chicas por puntos de roster (descendente)
                 const chicos = rosterToUse.filter(p => !isFemaleName(p.name)).sort((a, b) => b.pts - a.pts);
                 const chicas = rosterToUse.filter(p => isFemaleName(p.name)).sort((a, b) => b.pts - a.pts);
 
-                // Requerimos formar 3 parejas mixtas (3 chicos y 3 chicas más top)
-                const h1 = chicos[0] ? chicos[0].name : '';
-                const h2 = chicos[1] ? chicos[1].name : '';
-                const h3 = chicos[2] ? chicos[2].name : '';
+                // Priorizamos formar parejas mixtas (chico y chica) por cada pista,
+                // ubicando a los jugadores con más puntos en las pistas de más arriba.
+                let poolChicos = [...chicos];
+                let poolChicas = [...chicas];
+                let courtPairs = [];
 
-                const m1 = chicas[0] ? chicas[0].name : '';
-                const m2 = chicas[1] ? chicas[1].name : '';
-                const m3 = chicas[2] ? chicas[2].name : '';
+                for (let pista = 0; pista < 3; pista++) {
+                    let playerA = '';
+                    let playerB = '';
 
-                const h1Pts = chicos[0] ? chicos[0].pts : 0;
-                const m1Pts = chicas[0] ? chicas[0].pts : 0;
+                    // 1. Prioridad: Un chico y una chica por pista
+                    if (poolChicos.length > 0 && poolChicas.length > 0) {
+                        playerA = poolChicos.shift().name;
+                        playerB = poolChicas.shift().name;
+                    } 
+                    // 2. Fallback: Si solo quedan chicos, rellenar con chicos
+                    else if (poolChicos.length >= 2) {
+                        playerA = poolChicos.shift().name;
+                        playerB = poolChicos.shift().name;
+                    } 
+                    // 3. Fallback: Si solo quedan chicas, rellenar con chicas
+                    else if (poolChicas.length >= 2) {
+                        playerA = poolChicas.shift().name;
+                        playerB = poolChicas.shift().name;
+                    } 
+                    // 4. Casos límite de seguridad
+                    else if (poolChicos.length > 0) {
+                        playerA = poolChicos.shift().name;
+                        playerB = poolChicas.length > 0 ? poolChicas.shift().name : '';
+                    } else if (poolChicas.length > 0) {
+                        playerA = poolChicas.shift().name;
+                        playerB = poolChicos.length > 0 ? poolChicos.shift().name : '';
+                    }
 
-                // Balanceo Táctico Competitivo Mixto:
-                // El mejor jugador de un género se empareja con la tercera del otro género para balancear las parejas
-                if (h1Pts >= m1Pts) {
-                    s1a = h1; s1b = m3 || m1 || '';
-                    s2a = h2; s2b = m2 || '';
-                    s3a = h3; s3b = m1 || '';
-                } else {
-                    s1a = m1; s1b = h3 || h1 || '';
-                    s2a = m2; s2b = h2 || '';
-                    s3a = m3; s3b = h1 || '';
+                    courtPairs.push({ a: playerA, b: playerB });
                 }
+
+                s1a = courtPairs[0].a; s1b = courtPairs[0].b;
+                s2a = courtPairs[1].a; s2b = courtPairs[1].b;
+                s3a = courtPairs[2].a; s3b = courtPairs[2].b;
             } else {
                 // Roster no mixto: Algoritmo de emparejamiento balanceado estándar por puntos descendentes
                 const players = [...rosterToUse].sort((a, b) => b.pts - a.pts);
