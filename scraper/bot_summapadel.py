@@ -209,6 +209,7 @@ async def scrape_group(page, cat, division, group_name, team_slug, target_name):
     
     # === 1. Partidos/Calendario (Pestaña 'Jornades' por defecto) ===
     schedule = []
+    calendar_stats = {} # Acumulador de victorias/derrotas de todos los equipos del grupo basados en el calendario
     print("   Cargando todas las jornadas/partidos (scroll progresivo)...")
     
     last_item_count = 0
@@ -257,6 +258,32 @@ async def scrape_group(page, cat, division, group_name, team_slug, target_name):
                 is_completed = False
             else:
                 continue
+                
+            # Acumular estadísticas del calendario para todos los equipos del grupo
+            norm_t1 = clean_team_name(team1).replace(" ", "")
+            norm_t2 = clean_team_name(team2).replace(" ", "")
+            if norm_t1 not in calendar_stats:
+                calendar_stats[norm_t1] = {"pj": 0, "pg": 0, "pp": 0, "pts": 0}
+            if norm_t2 not in calendar_stats:
+                calendar_stats[norm_t2] = {"pj": 0, "pg": 0, "pp": 0, "pts": 0}
+                
+            if is_completed and score1 and score2:
+                try:
+                    s1 = int(score1)
+                    s2 = int(score2)
+                    calendar_stats[norm_t1]["pj"] += 1
+                    calendar_stats[norm_t1]["pts"] += s1
+                    calendar_stats[norm_t2]["pj"] += 1
+                    calendar_stats[norm_t2]["pts"] += s2
+                    
+                    if s1 > s2:
+                        calendar_stats[norm_t1]["pg"] += 1
+                        calendar_stats[norm_t2]["pp"] += 1
+                    else:
+                        calendar_stats[norm_t2]["pg"] += 1
+                        calendar_stats[norm_t1]["pp"] += 1
+                except ValueError:
+                    pass
                 
             is_team1_target = is_same_team(team1, target_name)
             is_team2_target = is_same_team(team2, target_name)
@@ -365,13 +392,36 @@ async def scrape_group(page, cat, division, group_name, team_slug, target_name):
             if is_current:
                 target_row_element = row
                 team_name = name_cell
-            # Algoritmo de estimación consistente de victorias/derrotas (Liga GuinotPrunera)
-            # pts es la suma de pistas ganadas, por lo que pg <= pts // 2 y pg >= ceil((pts - pj) / 2)
-            import math
-            lower_bound = max(0, math.ceil((pts - pj) / 2))
-            upper_bound = min(pj, pts // 2)
-            pg = upper_bound
-            pp = max(0, pj - pg)
+            # Asignar PG y PP reales desde el calendario siempre que sea posible, con fallback de estimación
+            norm_name = clean_team_name(name_cell).replace(" ", "")
+            if norm_name in calendar_stats and calendar_stats[norm_name]["pj"] > 0:
+                # Si el calendario tiene al menos tantos partidos como la tabla oficial, usamos los datos reales del calendario
+                if calendar_stats[norm_name]["pj"] >= pj:
+                    pj = calendar_stats[norm_name]["pj"]
+                    pts = calendar_stats[norm_name]["pts"]
+                    pg = calendar_stats[norm_name]["pg"]
+                    pp = calendar_stats[norm_name]["pp"]
+                    print(f"      [REAL-COMPLETO] {name_cell.upper()}: PJ={pj}, PTS={pts}, PG={pg}, PP={pp} (desde calendario)")
+                else:
+                    pg = calendar_stats[norm_name]["pg"]
+                    pp = calendar_stats[norm_name]["pp"]
+                    # Ajustar PP/PG faltantes con estimación si la tabla tiene más PJ que el calendario
+                    diff_pj = pj - calendar_stats[norm_name]["pj"]
+                    if diff_pj > 0:
+                        diff_pts = pts - calendar_stats[norm_name]["pts"]
+                        import math
+                        est_pg = min(diff_pj, max(0, math.ceil((diff_pts - diff_pj) / 2)))
+                        pg += est_pg
+                        pp += (diff_pj - est_pg)
+                    print(f"      [REAL-PARCIAL] {name_cell.upper()}: PJ={pj}, PTS={pts}, PG={pg}, PP={pp} (calendario + estimación)")
+            else:
+                # Algoritmo de estimación consistente de victorias/derrotas (Liga GuinotPrunera)
+                import math
+                lower_bound = max(0, math.ceil((pts - pj) / 2))
+                upper_bound = min(pj, pts // 2)
+                pg = upper_bound
+                pp = max(0, pj - pg)
+                print(f"      [ESTIMADO] {name_cell.upper()}: PJ={pj}, PTS={pts}, PG={pg}, PP={pp} (estimación)")
             
             standings.append({
                 "pos": len(standings) + 1,
@@ -661,16 +711,83 @@ async def main():
                         result["stats"]["pp"] = real_pp
                         result["points"] = real_pts  # PTS = suma de pistas ganadas
                         
-                        # Actualizar su entrada en groupStandings
+                        # Obtener cuántos partidos jugados tiene nuestro equipo en la clasificación oficial
+                        official_pj_own = 0
                         for st in result.get("groupStandings", []):
                             def clean_name(s):
-                                return re.sub(r'[^A-Z0-9]', '', s.upper())
+                                return clean_team_name(s).replace(" ", "")
                             if clean_name(st.get("team", "")) == clean_name(result["name"]):
+                                official_pj_own = st.get("pj", 0)
+                                break
+                        
+                        # Si la tabla oficial está desactualizada respecto a nuestro calendario real
+                        missing_matches_count = real_pj - official_pj_own
+                        print(f"   [INFO] Partidos completados reales: {real_pj} | PJ oficial: {official_pj_own} | Faltan por computar: {max(0, missing_matches_count)}")
+                        
+                        # Construir un diccionario con los partidos que le faltan a la tabla oficial
+                        # Por ejemplo, si real_pj = 4 y official_pj_own = 3, nos falta sumar la última jornada jugada en el calendario
+                        # Ordenamos los partidos completados del calendario por jornada para coger los últimos
+                        completed_matches = sorted(
+                            [m for m in result.get("schedule", []) if m.get("status") == "completed" and m.get("score") and m.get("score") != "Pendiente"],
+                            key=lambda x: x["j"]
+                        )
+                        
+                        opponents_to_adjust = {}
+                        if missing_matches_count > 0 and len(completed_matches) >= missing_matches_count:
+                            # Los partidos que faltan por computar en la clasificación oficial
+                            missing_matches = completed_matches[-missing_matches_count:]
+                            for m in missing_matches:
+                                opp_name = m.get("opponent", "")
+                                if opp_name and opp_name != "BYE":
+                                    score_str = m.get("score", "")
+                                    parts = score_str.split("-")
+                                    if len(parts) == 2:
+                                        try:
+                                            s1 = int(parts[0].strip())
+                                            s2 = int(parts[1].strip())
+                                            
+                                            # Estadísticas para el rival
+                                            # Si somos locales, el rival es visitante (score2)
+                                            # Si somos visitantes, el rival es local (score2 es nuestro score, score1 es el del rival)
+                                            if m.get("isHome"):
+                                                opp_pts = s2
+                                                opp_win = s2 > s1
+                                            else:
+                                                opp_pts = s1
+                                                opp_win = s1 > s2
+                                                
+                                            opp_norm = clean_team_name(opp_name).replace(" ", "")
+                                            opponents_to_adjust[opp_norm] = {
+                                                "pts": opp_pts,
+                                                "pg": 1 if opp_win else 0,
+                                                "pp": 0 if opp_win else 1
+                                            }
+                                            print(f"      [CALCULAR AJUSTE] Se sumará al rival '{opp_name.upper()}': PJ=+1, PTS=+{opp_pts}, PG=+{1 if opp_win else 0}")
+                                        except ValueError:
+                                            pass
+                        
+                        # Actualizar groupStandings de todos los equipos del grupo (propio y rivales correspondientes)
+                        for st in result.get("groupStandings", []):
+                            def clean_name(s):
+                                return clean_team_name(s).replace(" ", "")
+                            
+                            st_norm = clean_name(st.get("team", ""))
+                            
+                            if st_norm == clean_name(result["name"]):
+                                # Actualizar nuestro propio equipo
                                 st["pj"] = real_pj
                                 st["pg"] = real_pg
                                 st["pp"] = real_pp
                                 st["pts"] = real_pts
                                 print(f"   [CORRECCIÓN] Entrada del equipo propio en la clasificación corregida.")
+                            elif st_norm in opponents_to_adjust:
+                                # Ajustar rival desactualizado
+                                adjustment = opponents_to_adjust[st_norm]
+                                st["pj"] = st.get("pj", 0) + 1
+                                st["pts"] = st.get("pts", 0) + adjustment["pts"]
+                                st["pg"] = st.get("pg", 0) + adjustment["pg"]
+                                st["pp"] = st.get("pp", 0) + adjustment["pp"]
+                                print(f"   [CORRECCIÓN] Fila del rival '{st.get('team')}' en la clasificación ajustada en tiempo real: PJ={st['pj']}, PTS={st['pts']}, PG={st['pg']}, PP={st['pp']}")
                     # ------------------------------------------------------------------
 
                     found_teams.append(result)
@@ -689,7 +806,7 @@ async def main():
     club_stats = {}
     for team in found_teams:
         name = team["name"].strip().upper()
-        simplified = re.sub(r'[^A-Z0-9]', '', name)
+        simplified = clean_team_name(name).replace(" ", "")
         club_stats[simplified] = {
             "pj": team["stats"]["pj"],
             "pg": team["stats"]["pg"],
@@ -701,7 +818,7 @@ async def main():
         if "groupStandings" in team and team["groupStandings"]:
             for st in team["groupStandings"]:
                 st_name = st["team"].strip().upper()
-                st_simplified = re.sub(r'[^A-Z0-9]', '', st_name)
+                st_simplified = clean_team_name(st_name).replace(" ", "")
                 
                 if st_simplified in club_stats:
                     real = club_stats[st_simplified]

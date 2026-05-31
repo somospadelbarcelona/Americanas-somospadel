@@ -40,6 +40,7 @@ class PremiumModal {
                 max-height: 60vh;
                 overflow-y: auto;
                 scrollbar-width: thin;
+                -webkit-overflow-scrolling: touch; /* Suavidad táctil inercial en iOS */
             }
             .pm-content-scroll::-webkit-scrollbar { width: 5px; }
             .pm-content-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
@@ -54,6 +55,108 @@ class PremiumModal {
             .pm-btn:active { transform: scale(0.96); }
             .pm-btn-primary:hover { filter: brightness(1.1); box-shadow: 0 0 20px var(--accent-glow); }
             .pm-btn-secondary:hover { background: rgba(255,255,255,0.05); color: white; }
+
+            /* Clases base para comportamiento de scroll en escritorio */
+            .pm-inner-scroll {
+                max-height: 380px;
+                overflow-y: auto;
+            }
+            .pm-courts-scroll {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                max-height: 240px;
+                overflow-y: auto;
+                padding-right: 5px;
+            }
+            .pm-checkboxes-scroll {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+                max-height: 110px;
+                overflow-y: auto;
+                background: #f8fafc;
+                padding: 8px;
+                border-radius: 14px;
+                border: 1px solid #edf2f7;
+                margin-bottom: 10px;
+            }
+            .pm-leaderboard-scroll {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                max-height: 240px;
+                overflow-y: auto;
+                padding-right: 2px;
+            }
+
+            /* 📱 SISTEMA RESPONSIVO HÍBRIDO (Móviles de hasta 640px) */
+            @media (max-width: 640px) {
+                .pm-card {
+                    width: 95% !important;
+                    max-width: 100% !important;
+                    margin: 10px !important;
+                    border-radius: 24px !important;
+                }
+                .pm-content-scroll {
+                    max-height: 72vh !important; /* Incrementamos espacio vertical */
+                }
+                
+                /* Eliminar por completo los scrolls locales anidados en móviles para evitar conflictos */
+                .pm-inner-scroll {
+                    max-height: none !important;
+                    overflow-y: visible !important;
+                    padding-right: 0 !important;
+                }
+                .pm-courts-scroll {
+                    max-height: none !important;
+                    overflow-y: visible !important;
+                    padding-right: 0 !important;
+                }
+                .pm-checkboxes-scroll {
+                    max-height: none !important;
+                    overflow-y: visible !important;
+                }
+                .pm-leaderboard-scroll {
+                    max-height: none !important;
+                    overflow-y: visible !important;
+                    padding-right: 0 !important;
+                }
+
+                /* Apilamiento responsivo de cabecera y grillas */
+                .pm-responsive-header {
+                    flex-direction: column !important;
+                    align-items: center !important;
+                    text-align: center !important;
+                    gap: 15px !important;
+                }
+                .pm-responsive-header > div {
+                    flex-direction: column !important;
+                    align-items: center !important;
+                }
+                .pm-responsive-grid {
+                    grid-template-columns: 1fr !important;
+                    gap: 12px !important;
+                }
+
+                /* Pestañas deslizantes horizontales táctiles (Swipe) */
+                .pm-responsive-tabs {
+                    overflow-x: auto !important;
+                    -webkit-overflow-scrolling: touch !important;
+                    justify-content: flex-start !important;
+                    gap: 6px !important;
+                    padding-bottom: 6px !important;
+                    scrollbar-width: none !important; /* Firefox */
+                }
+                .pm-responsive-tabs::-webkit-scrollbar {
+                    display: none !important; /* Chrome, Safari, Opera */
+                }
+                .pm-responsive-tabs button {
+                    flex: 0 0 auto !important;
+                    min-width: 95px !important;
+                    padding: 8px 10px !important;
+                }
+            }
         `;
         document.head.appendChild(style);
     }

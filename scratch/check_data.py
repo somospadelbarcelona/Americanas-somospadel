@@ -1,16 +1,27 @@
 import json
-import re
+import os
 
-print("Reading scraper/teams_data_auto.js...")
-try:
-    with open('scraper/teams_data_auto.js', 'r', encoding='utf-8', errors='ignore') as f:
+filepath = os.path.join("scraper", "teams_data_auto.js")
+if os.path.exists(filepath):
+    with open(filepath, "r", encoding="utf-8") as f:
         content = f.read()
     
-    # Try to find references to Gemma, Saavedra or 4FA
-    for term in ['Gemma', 'Saavedra', '4FA', '4F', 'Rubi']:
-        matches = [m.start() for m in re.finditer(term, content, re.IGNORECASE)]
-        print(f"Term '{term}': found {len(matches)} times")
-        for m in matches[:5]:
-            print(f"  Context around {m}: {content[max(0, m-50):min(len(content), m+150)]}...")
-except Exception as e:
-    print("Error:", e)
+    # Extraer el JSON
+    start = content.find("window.ExtractedTeamsData = ") + len("window.ExtractedTeamsData = ")
+    end = content.rfind(";")
+    json_data = json.loads(content[start:end])
+    
+    # Buscar el equipo somos-padel-bcn-4m
+    for team in json_data:
+        if team["id"] == "somos-padel-bcn-4m":
+            print("Nombre:", team["name"])
+            print("Puntos:", team["points"])
+            print("Stats:", team["stats"])
+            print("Clasificación (Tabla):")
+            for st in team["groupStandings"]:
+                print(f"  {st['pos']}. {st['team']}: PJ={st['pj']}, PG={st['pg']}, PP={st['pp']}, PTS={st['pts']}")
+            print("Calendario (Schedule):")
+            for m in team["schedule"]:
+                print(f"  J{m['j']}: {m['opponent']} | Score: {m['score']} | Status: {m['status']} | isHome: {m['isHome']}")
+else:
+    print("No existe el archivo teams_data_auto.js")

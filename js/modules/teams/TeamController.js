@@ -275,7 +275,7 @@
                 const unlocked = sessionStorage.getItem('tactica_unlocked') === 'true';
                 if (!unlocked) {
                     const success = await window.PremiumModal.password({
-                        title: 'TÁCTICA PROTEGIDA 🔒',
+                        title: 'ALINEACIÓN PROTEGIDA 🔒',
                         message: 'Esta sección es exclusiva para capitanes y subcapitanes de Somos Padel.',
                         type: 'success'
                     });
@@ -368,7 +368,7 @@
                 message: `
                     <div style="text-align: left; padding: 0;">
                         <!-- 📊 MINI DASHBOARD PRINCIPAL -->
-                        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px; 
+                        <div class="pm-responsive-header" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px; 
                                      background: linear-gradient(135deg, #ffffff, #f8fafc); 
                                      padding: 16px 20px; border-radius: 24px; 
                                      box-shadow: 0 10px 30px rgba(0,0,0,0.03); 
@@ -407,7 +407,7 @@
                         </div>
 
                         <!-- ⚡ QUICK INFO ROW -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                        <div class="pm-responsive-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
                             <div style="background: #0f172a; border-radius: 20px; padding: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s;"
                                  onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'"
                                  onclick="window.TeamController.switchTab(document.getElementById('btn-tab-convocatoria'), 'tab-convocatoria', '#0ea5e9', '#ffffff')">
@@ -436,18 +436,18 @@
                         </div>
 
                         <!-- 🎛️ PREMIUM PILL TABS -->
-                        <div style="display: flex; background: #f1f5f9; padding: 4px; border-radius: 18px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <div class="pm-responsive-tabs" style="display: flex; background: #f1f5f9; padding: 4px; border-radius: 18px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
                             <button id="btn-tab-liderazgo" onclick="window.TeamController.switchTab(this, 'tab-liderazgo', '#f59e0b', '#ffffff')" 
                                     style="flex: 1; padding: 10px 5px; border-radius: 14px; background: ${isTactica ? 'transparent' : '#f59e0b'}; color: ${isTactica ? '#64748b' : '#ffffff'}; border: none; font-weight: ${isTactica ? '800' : '950'}; font-size: 0.65rem; cursor: pointer; min-width: 80px; transition: 0.2s; ${isTactica ? '' : 'box-shadow: 0 4px 12px #f59e0b40;' }">
                                 <i class="fas fa-user-tie" style="margin-right: 4px;"></i> LIDERAZGO
                             </button>
                             <button id="btn-tab-tactica" onclick="window.TeamController.switchTab(this, 'tab-tactica', '#10b981', '#ffffff')" 
                                     style="flex: 1; padding: 10px 5px; border-radius: 14px; background: ${isTactica ? '#10b981' : 'transparent'}; color: ${isTactica ? '#ffffff' : '#64748b'}; border: none; font-weight: ${isTactica ? '950' : '800'}; font-size: 0.65rem; cursor: pointer; min-width: 80px; transition: 0.2s; ${isTactica ? 'box-shadow: 0 4px 12px #10b98140;' : ''}">
-                                <i class="fas fa-clipboard-list" style="margin-right: 4px;"></i> TÁCTICA
+                                <i class="fas fa-clipboard-list" style="margin-right: 4px;"></i> ALINEACIÓN
                             </button>
                             <button id="btn-tab-convocatoria" onclick="window.TeamController.switchTab(this, 'tab-convocatoria', '#0ea5e9', '#ffffff')" 
                                     style="flex: 1; padding: 10px 5px; border-radius: 14px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.65rem; cursor: pointer; min-width: 80px; transition: 0.2s;">
-                                <i class="fas fa-bullhorn" style="margin-right: 4px;"></i> CONVOCAR
+                                <i class="fas fa-bullhorn" style="margin-right: 4px;"></i> CONVO
                             </button>
                             <button id="btn-tab-stats" onclick="window.TeamController.switchTab(this, 'tab-stats', '#8b5cf6', '#ffffff')" 
                                     style="flex: 1; padding: 10px 5px; border-radius: 14px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.65rem; cursor: pointer; min-width: 80px; transition: 0.2s;">
@@ -460,8 +460,8 @@
                             
                             <!-- ℹ️ LIDERAZGO SECTION -->
                             <div id="tab-liderazgo" style="display: ${isTactica ? 'none' : 'block'}; animation: fadeIn 0.3s ease-out;">
-                                <div class="pm-content-scroll" style="max-height: 380px; overflow-y: auto; padding-right: 5px;">
-                                    <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 15px; margin-bottom: 15px;">
+                                <div class="pm-inner-scroll">
+                                    <div class="pm-responsive-grid" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 15px; margin-bottom: 15px;">
                                         <div style="background: #ffffff; border-radius: 20px; padding: 18px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.01); display: flex; flex-direction: column; gap: 12px;">
                                             <div style="display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
                                                 <i class="fas fa-shield-alt" style="color: #f59e0b;"></i>
@@ -531,7 +531,7 @@
                                             </a>
                                         </div>
                                         
-                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                        <div class="pm-responsive-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                                             <div>
                                                 <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Partidos de Local</div>
                                                 <div style="font-size: 0.8rem; font-weight: 900; color: #72a800;">
@@ -564,124 +564,204 @@
 
                             <!-- 📋 TÁCTICA SECTION -->
                             <div id="tab-tactica" style="display: ${isTactica ? 'block' : 'none'}; animation: fadeIn 0.3s ease-out;">
-                                <div class="pm-content-scroll" style="max-height: 380px; overflow-y: auto; padding-right: 5px;">
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 12px;">
+                                <div class="pm-inner-scroll">
+                                    <div class="pm-responsive-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 12px;">
                                         
                                         <!-- Column Selectores -->
-                                        <div style="background: #ffffff; border-radius: 20px; padding: 15px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.01); display: flex; flex-direction: column; gap: 10px;">
-                                            <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
-                                                <span>Alineación Simulada</span>
-                                                <span id="tactica-total-media" style="color: #94a3b8; font-weight: 950; background: #f1f5f9; padding: 2px 8px; border-radius: 10px;">Media: 0.0 pts</span>
+                                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                                            
+                                            <!-- 📸 CARD: CAPTURA CONFIRMADOS SÍ -->
+                                            <div style="background: #ffffff; border-radius: 20px; padding: 15px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.01); display: flex; flex-direction: column; gap: 10px;">
+                                                <div style="font-size: 0.65rem; color: #0ea5e9; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                                                    <i class="fas fa-camera"></i> Captura Confirmados SÍ
+                                                </div>
+                                                
+                                                <!-- Drag & Drop Zone -->
+                                                <div id="dropzone-confirmados-${team.id}" 
+                                                     ondragover="event.preventDefault(); this.style.borderColor='#0ea5e9'; this.style.background='#f0f9ff';" 
+                                                     ondragleave="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';" 
+                                                     ondrop="window.TeamController.handleFileDrop(event, '${team.id}')" 
+                                                     onclick="document.getElementById('file-upload-confirmados-${team.id}').click();" 
+                                                     style="border: 2px dashed #cbd5e1; border-radius: 14px; padding: 12px; text-align: center; cursor: pointer; background: #f8fafc; transition: 0.2s; min-height: 70px; display: flex; align-items: center; justify-content: center;">
+                                                    <input type="file" id="file-upload-confirmados-${team.id}" onchange="window.TeamController.handleFileSelect(event, '${team.id}')" style="display: none;" accept="image/*">
+                                                    
+                                                    <!-- Placeholder -->
+                                                    <div id="upload-placeholder-${team.id}" style="width: 100%;">
+                                                        <i class="fas fa-cloud-upload-alt" style="font-size: 1.3rem; color: #94a3b8; margin-bottom: 4px;"></i>
+                                                        <div style="font-size: 0.62rem; color: #475569; font-weight: 800;">Arrastra o sube captura de WhatsApp</div>
+                                                        <div style="font-size: 0.5rem; color: #94a3b8; font-weight: 700; margin-top: 2px;">Persistente y Offline (JPEG 70% optimizado)</div>
+                                                    </div>
+                                                    
+                                                    <!-- Preview Container -->
+                                                    <div id="upload-preview-container-${team.id}" style="display: none; position: relative; width: 100%;">
+                                                        <img id="upload-preview-img-${team.id}" style="max-height: 90px; max-width: 100%; border-radius: 10px; border: 1px solid #cbd5e1; object-fit: contain; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                                                        <div style="position: absolute; top: -6px; right: -6px; display: flex; gap: 4px; z-index: 5;">
+                                                            <button onclick="event.stopPropagation(); window.TeamController.viewImageFullscreen('${team.id}')" style="width: 22px; height: 22px; border-radius: 50%; background: #0f172a; color: white; border: none; font-size: 0.55rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);" title="Ver en grande">
+                                                                <i class="fas fa-expand"></i>
+                                                            </button>
+                                                            <button onclick="event.stopPropagation(); window.TeamController.removeImage('${team.id}')" style="width: 22px; height: 22px; border-radius: 50%; background: #ef4444; color: white; border: none; font-size: 0.55rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);" title="Eliminar">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                             
-                                            <div style="background: #f8fafc; border: 1px solid #edf2f7; border-radius: 14px; padding: 10px;">
-                                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
-                                                    <span style="font-size: 0.65rem; font-weight: 900; color: #0f172a;">PAREJA 1</span>
-                                                    <span id="p1-badge" style="font-size: 0.5rem; font-weight: 900; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 6px;">Vacía</span>
+                                            <!-- 📋 CARD: ALINEACIÓN SIMULADA -->
+                                            <div style="background: #ffffff; border-radius: 20px; padding: 15px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.01); display: flex; flex-direction: column; gap: 10px;">
+                                                <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                                                    <span>Alineación Simulada</span>
+                                                    <span id="tactica-total-media" style="color: #94a3b8; font-weight: 950; background: #f1f5f9; padding: 2px 8px; border-radius: 10px;">Media: 0.0 pts</span>
                                                 </div>
-                                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                                                    <select id="p1-player-a" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
-                                                    <select id="p1-player-b" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
+                                                
+                                                <div style="background: #f8fafc; border: 1px solid #edf2f7; border-radius: 14px; padding: 10px;">
+                                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                                                        <span style="font-size: 0.65rem; font-weight: 900; color: #0f172a;">PAREJA 1</span>
+                                                        <span id="p1-badge" style="font-size: 0.5rem; font-weight: 900; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 6px;">Vacía</span>
+                                                    </div>
+                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                                        <select id="p1-player-a" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
+                                                        <select id="p1-player-b" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
+                                                    </div>
                                                 </div>
+                                                
+                                                <div style="background: #f8fafc; border: 1px solid #edf2f7; border-radius: 14px; padding: 10px;">
+                                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                                                        <span style="font-size: 0.65rem; font-weight: 900; color: #0f172a;">PAREJA 2</span>
+                                                        <span id="p2-badge" style="font-size: 0.5rem; font-weight: 900; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 6px;">Vacía</span>
+                                                    </div>
+                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                                        <select id="p2-player-a" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
+                                                        <select id="p2-player-b" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div style="background: #f8fafc; border: 1px solid #edf2f7; border-radius: 14px; padding: 10px;">
+                                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                                                        <span style="font-size: 0.65rem; font-weight: 900; color: #0f172a;">PAREJA 3</span>
+                                                        <span id="p3-badge" style="font-size: 0.5rem; font-weight: 900; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 6px;">Vacía</span>
+                                                    </div>
+                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                                        <select id="p3-player-a" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
+                                                        <select id="p3-player-b" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
+                                                    </div>
+                                                </div>
+                                                
+                                                <button onclick="window.TeamController.suggestOptimalAlineacion('${team.id}')" 
+                                                        style="width: 100%; padding: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 10px; font-weight: 850; font-size: 0.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                                    <i class="fas fa-magic"></i> AUTO-ALINEACIÓN ÓPTIMA
+                                                </button>
                                             </div>
-                                            
-                                            <div style="background: #f8fafc; border: 1px solid #edf2f7; border-radius: 14px; padding: 10px;">
-                                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
-                                                    <span style="font-size: 0.65rem; font-weight: 900; color: #0f172a;">PAREJA 2</span>
-                                                    <span id="p2-badge" style="font-size: 0.5rem; font-weight: 900; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 6px;">Vacía</span>
-                                                </div>
-                                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                                                    <select id="p2-player-a" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
-                                                    <select id="p2-player-b" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
-                                                </div>
-                                            </div>
-                                            
-                                            <div style="background: #f8fafc; border: 1px solid #edf2f7; border-radius: 14px; padding: 10px;">
-                                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
-                                                    <span style="font-size: 0.65rem; font-weight: 900; color: #0f172a;">PAREJA 3</span>
-                                                    <span id="p3-badge" style="font-size: 0.5rem; font-weight: 900; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 6px;">Vacía</span>
-                                                </div>
-                                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                                                    <select id="p3-player-a" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
-                                                    <select id="p3-player-b" onchange="window.TeamController.updateTactica('${team.id}')" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #334155; background: white; outline: none;"></select>
-                                                </div>
-                                            </div>
-                                            
-                                            <button onclick="window.TeamController.suggestOptimalAlineacion('${team.id}')" 
-                                                    style="width: 100%; padding: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 10px; font-weight: 850; font-size: 0.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                                <i class="fas fa-magic"></i> AUTO-ALINEACIÓN ÓPTIMA
-                                            </button>
                                         </div>
                                         
                                         <!-- Column Pista de Pádel & Predictor -->
                                         <div style="display: flex; flex-direction: column; gap: 10px;">
                                             <!-- Contenedor de las 3 pistas de pádel en vertical (scrollable para máxima nitidez) -->
-                                            <div style="display: flex; flex-direction: column; gap: 12px; max-height: 240px; overflow-y: auto; padding-right: 5px;">
+                                            <div class="pm-courts-scroll">
                                                 
                                                 <!-- PISTA 1 -->
-                                                <div style="background: #15803d; border-radius: 16px; border: 3px solid #ffffff; height: 110px; position: relative; overflow: hidden; box-shadow: inset 0 0 25px rgba(0,0,0,0.45); flex-shrink: 0;">
-                                                    <div style="position: absolute; top: 6px; left: 8px; font-size: 0.55rem; font-weight: 900; color: rgba(255,255,255,0.9); background: rgba(0,0,0,0.35); padding: 2px 8px; border-radius: 6px; z-index: 3; letter-spacing: 0.5px; white-space: nowrap;">PISTA 1</div>
+                                                <div style="background: radial-gradient(circle, #0ea5e9 0%, #0284c7 40%, #0369a1 100%); border-radius: 18px; border: 3px solid #1e293b; height: 120px; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.25), inset 0 0 25px rgba(0,0,0,0.55); flex-shrink: 0;">
+                                                    <div style="position: absolute; top: 6px; left: 8px; font-size: 0.55rem; font-weight: 950; color: #ffffff; background: rgba(30,41,59,0.85); padding: 3px 8px; border-radius: 6px; z-index: 3; letter-spacing: 0.5px; white-space: nowrap; border: 1px solid rgba(255,255,255,0.15);">PISTA 1</div>
                                                     
-                                                    <!-- Net (Red horizontal en medio) -->
-                                                    <div style="position: absolute; top: 46%; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.9); z-index: 2; border-top: 1px dashed #000;"></div>
+                                                    <!-- Net Post Left -->
+                                                    <div style="position: absolute; top: calc(50% - 6px); left: 3px; width: 5px; height: 12px; background: #0f172a; border-radius: 2px; z-index: 3; border: 1px solid rgba(255,255,255,0.35);"></div>
+                                                    <!-- Net Post Right -->
+                                                    <div style="position: absolute; top: calc(50% - 6px); right: 3px; width: 5px; height: 12px; background: #0f172a; border-radius: 2px; z-index: 3; border: 1px solid rgba(255,255,255,0.35);"></div>
                                                     
-                                                    <!-- Lines de Pista -->
-                                                    <div style="position: absolute; top: 10px; bottom: 10px; left: 10px; right: 10px; border: 1px solid rgba(255,255,255,0.65);"></div>
-                                                    <div style="position: absolute; top: 10px; bottom: 10px; left: 50%; width: 1px; background: rgba(255,255,255,0.65);"></div>
-                                                    <div style="position: absolute; top: 26px; bottom: 26px; left: 10px; right: 10px; border-top: 1px solid rgba(255,255,255,0.65); border-bottom: 1px solid rgba(255,255,255,0.65);"></div>
+                                                    <!-- Net Band & Mesh -->
+                                                    <div style="position: absolute; top: calc(50% - 2.5px); left: 8px; right: 8px; height: 5px; background: #ffffff; z-index: 2; box-shadow: 0 1px 4px rgba(0,0,0,0.4); border-radius: 1px;"></div>
+                                                    <div style="position: absolute; top: calc(50% + 2.5px); left: 8px; right: 8px; height: 3px; background: repeating-linear-gradient(90deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 4px); z-index: 2;"></div>
+                                                    
+                                                    <!-- Court Lines (Pádel Geométrico Exacto de Dobles) -->
+                                                    <div style="position: absolute; top: 8px; bottom: 8px; left: 8px; right: 8px; border: 1.5px solid rgba(255,255,255,0.85); box-sizing: border-box; z-index: 1; pointer-events: none;"></div>
+                                                    <!-- Líneas de Saque Horizontales (A 6.95m de la red, representadas simétricamente) -->
+                                                    <div style="position: absolute; top: 26px; left: 8px; right: 8px; height: 1.5px; background: rgba(255,255,255,0.85); z-index: 1; pointer-events: none;"></div>
+                                                    <div style="position: absolute; bottom: 26px; left: 8px; right: 8px; height: 1.5px; background: rgba(255,255,255,0.85); z-index: 1; pointer-events: none;"></div>
+                                                    <!-- Línea Central de Saque Vertical (Limitada entre cuadros de saque, no cruza fondos) -->
+                                                    <div style="position: absolute; top: 26px; bottom: 26px; left: 50%; width: 1.5px; background: rgba(255,255,255,0.85); z-index: 1; pointer-events: none;"></div>
+                                                    
+                                                    <!-- Glass Joints / Chaflanes divisorios translúcidos -->
+                                                    <div style="position: absolute; top: 0; bottom: 0; left: 33.33%; width: 1px; background: rgba(255,255,255,0.07); z-index: 1;"></div>
+                                                    <div style="position: absolute; top: 0; bottom: 0; left: 66.66%; width: 1px; background: rgba(255,255,255,0.07); z-index: 1;"></div>
                                                     
                                                     <!-- Rival Area (Mitad Superior) -->
-                                                    <div style="position: absolute; top: 18px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; font-weight: 900; color: rgba(255,255,255,0.35); text-transform: uppercase; z-index: 1; letter-spacing: 0.5px;">PAREJA RIVAL</div>
+                                                    <div style="position: absolute; top: 16px; left: 50%; transform: translateX(-50%); font-size: 0.52rem; font-weight: 950; color: rgba(255,255,255,0.45); text-transform: uppercase; z-index: 1; letter-spacing: 0.8px;">PAREJA RIVAL</div>
 
-                                                    <!-- Player Spots (Mitad Inferior) - Grandes y Nítidos -->
-                                                    <!-- Drive (Abajo Izquierda) -->
-                                                    <div id="court-p1-a" style="position: absolute; bottom: 14px; left: 26%; transform: translateX(-50%); background: rgba(0,0,0,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 10px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">Drive</div>
-                                                    <!-- Revés (Abajo Derecha) -->
-                                                    <div id="court-p1-b" style="position: absolute; bottom: 14px; left: 74%; transform: translateX(-50%); background: rgba(0,0,0,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 10px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">Revés</div>
+                                                    <!-- Player Spots (Mitad Inferior) - Lados de Juego Reales (Revés en Izquierda, Drive en Derecha) -->
+                                                    <!-- Revés (Abajo Izquierda - court-p1-b) -->
+                                                    <div id="court-p1-b" style="position: absolute; bottom: 12px; left: 26%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25);"><i class="fas fa-arrow-left" style="margin-right: 4px; font-size: 0.55rem; opacity: 0.6;"></i> Revés</div>
+                                                    <!-- Drive (Abajo Derecha - court-p1-a) -->
+                                                    <div id="court-p1-a" style="position: absolute; bottom: 12px; left: 74%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25);">Drive <i class="fas fa-arrow-right" style="margin-left: 4px; font-size: 0.55rem; opacity: 0.6;"></i></div>
                                                 </div>
 
                                                 <!-- PISTA 2 -->
-                                                <div style="background: #15803d; border-radius: 16px; border: 3px solid #ffffff; height: 110px; position: relative; overflow: hidden; box-shadow: inset 0 0 25px rgba(0,0,0,0.45); flex-shrink: 0;">
-                                                    <div style="position: absolute; top: 6px; left: 8px; font-size: 0.55rem; font-weight: 900; color: rgba(255,255,255,0.9); background: rgba(0,0,0,0.35); padding: 2px 8px; border-radius: 6px; z-index: 3; letter-spacing: 0.5px; white-space: nowrap;">PISTA 2</div>
+                                                <div style="background: radial-gradient(circle, #0ea5e9 0%, #0284c7 40%, #0369a1 100%); border-radius: 18px; border: 3px solid #1e293b; height: 120px; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.25), inset 0 0 25px rgba(0,0,0,0.55); flex-shrink: 0;">
+                                                    <div style="position: absolute; top: 6px; left: 8px; font-size: 0.55rem; font-weight: 950; color: #ffffff; background: rgba(30,41,59,0.85); padding: 3px 8px; border-radius: 6px; z-index: 3; letter-spacing: 0.5px; white-space: nowrap; border: 1px solid rgba(255,255,255,0.15);">PISTA 2</div>
                                                     
-                                                    <!-- Net (Red horizontal en medio) -->
-                                                    <div style="position: absolute; top: 46%; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.9); z-index: 2; border-top: 1px dashed #000;"></div>
+                                                    <!-- Net Post Left -->
+                                                    <div style="position: absolute; top: calc(50% - 6px); left: 3px; width: 5px; height: 12px; background: #0f172a; border-radius: 2px; z-index: 3; border: 1px solid rgba(255,255,255,0.35);"></div>
+                                                    <!-- Net Post Right -->
+                                                    <div style="position: absolute; top: calc(50% - 6px); right: 3px; width: 5px; height: 12px; background: #0f172a; border-radius: 2px; z-index: 3; border: 1px solid rgba(255,255,255,0.35);"></div>
                                                     
-                                                    <!-- Lines de Pista -->
-                                                    <div style="position: absolute; top: 10px; bottom: 10px; left: 10px; right: 10px; border: 1px solid rgba(255,255,255,0.65);"></div>
-                                                    <div style="position: absolute; top: 10px; bottom: 10px; left: 50%; width: 1px; background: rgba(255,255,255,0.65);"></div>
-                                                    <div style="position: absolute; top: 26px; bottom: 26px; left: 10px; right: 10px; border-top: 1px solid rgba(255,255,255,0.65); border-bottom: 1px solid rgba(255,255,255,0.65);"></div>
+                                                    <!-- Net Band & Mesh -->
+                                                    <div style="position: absolute; top: calc(50% - 2.5px); left: 8px; right: 8px; height: 5px; background: #ffffff; z-index: 2; box-shadow: 0 1px 4px rgba(0,0,0,0.4); border-radius: 1px;"></div>
+                                                    <div style="position: absolute; top: calc(50% + 2.5px); left: 8px; right: 8px; height: 3px; background: repeating-linear-gradient(90deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 4px); z-index: 2;"></div>
+                                                    
+                                                    <!-- Court Lines (Pádel Geométrico Exacto de Dobles) -->
+                                                    <div style="position: absolute; top: 8px; bottom: 8px; left: 8px; right: 8px; border: 1.5px solid rgba(255,255,255,0.85); box-sizing: border-box; z-index: 1; pointer-events: none;"></div>
+                                                    <!-- Líneas de Saque Horizontales -->
+                                                    <div style="position: absolute; top: 26px; left: 8px; right: 8px; height: 1.5px; background: rgba(255,255,255,0.85); z-index: 1; pointer-events: none;"></div>
+                                                    <div style="position: absolute; bottom: 26px; left: 8px; right: 8px; height: 1.5px; background: rgba(255,255,255,0.85); z-index: 1; pointer-events: none;"></div>
+                                                    <!-- Línea Central de Saque Vertical -->
+                                                    <div style="position: absolute; top: 26px; bottom: 26px; left: 50%; width: 1.5px; background: rgba(255,255,255,0.85); z-index: 1; pointer-events: none;"></div>
+                                                    
+                                                    <!-- Glass Joints / Chaflanes divisorios translúcidos -->
+                                                    <div style="position: absolute; top: 0; bottom: 0; left: 33.33%; width: 1px; background: rgba(255,255,255,0.07); z-index: 1;"></div>
+                                                    <div style="position: absolute; top: 0; bottom: 0; left: 66.66%; width: 1px; background: rgba(255,255,255,0.07); z-index: 1;"></div>
                                                     
                                                     <!-- Rival Area (Mitad Superior) -->
-                                                    <div style="position: absolute; top: 18px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; font-weight: 900; color: rgba(255,255,255,0.35); text-transform: uppercase; z-index: 1; letter-spacing: 0.5px;">PAREJA RIVAL</div>
+                                                    <div style="position: absolute; top: 16px; left: 50%; transform: translateX(-50%); font-size: 0.52rem; font-weight: 950; color: rgba(255,255,255,0.45); text-transform: uppercase; z-index: 1; letter-spacing: 0.8px;">PAREJA RIVAL</div>
 
-                                                    <!-- Player Spots (Mitad Inferior) - Grandes y Nítidos -->
-                                                    <!-- Drive (Abajo Izquierda) -->
-                                                    <div id="court-p2-a" style="position: absolute; bottom: 14px; left: 26%; transform: translateX(-50%); background: rgba(0,0,0,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 10px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">Drive</div>
-                                                    <!-- Revés (Abajo Derecha) -->
-                                                    <div id="court-p2-b" style="position: absolute; bottom: 14px; left: 74%; transform: translateX(-50%); background: rgba(0,0,0,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 10px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">Revés</div>
+                                                    <!-- Player Spots (Mitad Inferior) - Lados de Juego Reales -->
+                                                    <!-- Revés (Abajo Izquierda - court-p2-b) -->
+                                                    <div id="court-p2-b" style="position: absolute; bottom: 12px; left: 26%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25);"><i class="fas fa-arrow-left" style="margin-right: 4px; font-size: 0.55rem; opacity: 0.6;"></i> Revés</div>
+                                                    <!-- Drive (Abajo Derecha - court-p2-a) -->
+                                                    <div id="court-p2-a" style="position: absolute; bottom: 12px; left: 74%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25);">Drive <i class="fas fa-arrow-right" style="margin-left: 4px; font-size: 0.55rem; opacity: 0.6;"></i></div>
                                                 </div>
 
                                                 <!-- PISTA 3 -->
-                                                <div style="background: #15803d; border-radius: 16px; border: 3px solid #ffffff; height: 110px; position: relative; overflow: hidden; box-shadow: inset 0 0 25px rgba(0,0,0,0.45); flex-shrink: 0;">
-                                                    <div style="position: absolute; top: 6px; left: 8px; font-size: 0.55rem; font-weight: 900; color: rgba(255,255,255,0.9); background: rgba(0,0,0,0.35); padding: 2px 8px; border-radius: 6px; z-index: 3; letter-spacing: 0.5px; white-space: nowrap;">PISTA 3</div>
+                                                <div style="background: radial-gradient(circle, #0ea5e9 0%, #0284c7 40%, #0369a1 100%); border-radius: 18px; border: 3px solid #1e293b; height: 120px; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.25), inset 0 0 25px rgba(0,0,0,0.55); flex-shrink: 0;">
+                                                    <div style="position: absolute; top: 6px; left: 8px; font-size: 0.55rem; font-weight: 950; color: #ffffff; background: rgba(30,41,59,0.85); padding: 3px 8px; border-radius: 6px; z-index: 3; letter-spacing: 0.5px; white-space: nowrap; border: 1px solid rgba(255,255,255,0.15);">PISTA 3</div>
                                                     
-                                                    <!-- Net (Red horizontal en medio) -->
-                                                    <div style="position: absolute; top: 46%; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.9); z-index: 2; border-top: 1px dashed #000;"></div>
+                                                    <!-- Net Post Left -->
+                                                    <div style="position: absolute; top: calc(50% - 6px); left: 3px; width: 5px; height: 12px; background: #0f172a; border-radius: 2px; z-index: 3; border: 1px solid rgba(255,255,255,0.35);"></div>
+                                                    <!-- Net Post Right -->
+                                                    <div style="position: absolute; top: calc(50% - 6px); right: 3px; width: 5px; height: 12px; background: #0f172a; border-radius: 2px; z-index: 3; border: 1px solid rgba(255,255,255,0.35);"></div>
                                                     
-                                                    <!-- Lines de Pista -->
-                                                    <div style="position: absolute; top: 10px; bottom: 10px; left: 10px; right: 10px; border: 1px solid rgba(255,255,255,0.65);"></div>
-                                                    <div style="position: absolute; top: 10px; bottom: 10px; left: 50%; width: 1px; background: rgba(255,255,255,0.65);"></div>
-                                                    <div style="position: absolute; top: 26px; bottom: 26px; left: 10px; right: 10px; border-top: 1px solid rgba(255,255,255,0.65); border-bottom: 1px solid rgba(255,255,255,0.65);"></div>
+                                                    <!-- Net Band & Mesh -->
+                                                    <div style="position: absolute; top: calc(50% - 2.5px); left: 8px; right: 8px; height: 5px; background: #ffffff; z-index: 2; box-shadow: 0 1px 4px rgba(0,0,0,0.4); border-radius: 1px;"></div>
+                                                    <div style="position: absolute; top: calc(50% + 2.5px); left: 8px; right: 8px; height: 3px; background: repeating-linear-gradient(90deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 4px); z-index: 2;"></div>
+                                                    
+                                                    <!-- Court Lines (Pádel Geométrico Exacto de Dobles) -->
+                                                    <div style="position: absolute; top: 8px; bottom: 8px; left: 8px; right: 8px; border: 1.5px solid rgba(255,255,255,0.85); box-sizing: border-box; z-index: 1; pointer-events: none;"></div>
+                                                    <!-- Líneas de Saque Horizontales -->
+                                                    <div style="position: absolute; top: 26px; left: 8px; right: 8px; height: 1.5px; background: rgba(255,255,255,0.85); z-index: 1; pointer-events: none;"></div>
+                                                    <div style="position: absolute; bottom: 26px; left: 8px; right: 8px; height: 1.5px; background: rgba(255,255,255,0.85); z-index: 1; pointer-events: none;"></div>
+                                                    <!-- Línea Central de Saque Vertical -->
+                                                    <div style="position: absolute; top: 26px; bottom: 26px; left: 50%; width: 1.5px; background: rgba(255,255,255,0.85); z-index: 1; pointer-events: none;"></div>
+                                                    
+                                                    <!-- Glass Joints / Chaflanes divisorios translúcidos -->
+                                                    <div style="position: absolute; top: 0; bottom: 0; left: 33.33%; width: 1px; background: rgba(255,255,255,0.07); z-index: 1;"></div>
+                                                    <div style="position: absolute; top: 0; bottom: 0; left: 66.66%; width: 1px; background: rgba(255,255,255,0.07); z-index: 1;"></div>
                                                     
                                                     <!-- Rival Area (Mitad Superior) -->
-                                                    <div style="position: absolute; top: 18px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; font-weight: 900; color: rgba(255,255,255,0.35); text-transform: uppercase; z-index: 1; letter-spacing: 0.5px;">PAREJA RIVAL</div>
+                                                    <div style="position: absolute; top: 16px; left: 50%; transform: translateX(-50%); font-size: 0.52rem; font-weight: 950; color: rgba(255,255,255,0.45); text-transform: uppercase; z-index: 1; letter-spacing: 0.8px;">PAREJA RIVAL</div>
 
-                                                    <!-- Player Spots (Mitad Inferior) - Grandes y Nítidos -->
-                                                    <!-- Drive (Abajo Izquierda) -->
-                                                    <div id="court-p3-a" style="position: absolute; bottom: 14px; left: 26%; transform: translateX(-50%); background: rgba(0,0,0,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 10px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">Drive</div>
-                                                    <!-- Revés (Abajo Derecha) -->
-                                                    <div id="court-p3-b" style="position: absolute; bottom: 14px; left: 74%; transform: translateX(-50%); background: rgba(0,0,0,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 10px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">Revés</div>
+                                                    <!-- Player Spots (Mitad Inferior) - Lados de Juego Reales -->
+                                                    <!-- Revés (Abajo Izquierda - court-p3-b) -->
+                                                    <div id="court-p3-b" style="position: absolute; bottom: 12px; left: 26%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25);"><i class="fas fa-arrow-left" style="margin-right: 4px; font-size: 0.55rem; opacity: 0.6;"></i> Revés</div>
+                                                    <!-- Drive (Abajo Derecha - court-p3-a) -->
+                                                    <div id="court-p3-a" style="position: absolute; bottom: 12px; left: 74%; transform: translateX(-50%); background: rgba(15,23,42,0.75); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 12px; padding: 4px 6px; font-size: 0.62rem; color: #fff; width: 110px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 900; z-index: 3; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.25);">Drive <i class="fas fa-arrow-right" style="margin-left: 4px; font-size: 0.55rem; opacity: 0.6;"></i></div>
                                                 </div>
 
                                             </div>
@@ -691,7 +771,6 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
                                 <button onclick="window.TeamController.shareTactica('${team.id}')" style="${shareBtnStyle}; background: #10b981; margin-top: 10px;">
                                     <i class="fab fa-whatsapp"></i> COMPARTIR ALINEACIÓN SIMULADA
                                 </button>
@@ -699,7 +778,7 @@
 
                             <!-- 📢 CONVOCATORIA SECTION -->
                             <div id="tab-convocatoria" style="display: none; animation: fadeIn 0.3s ease-out;">
-                                <div class="pm-content-scroll" style="max-height: 380px; overflow-y: auto; padding-right: 5px;">
+                                <div class="pm-inner-scroll">
                                     <div style="background: #ffffff; border-radius: 20px; padding: 18px; border: 1px solid #f1f5f9; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
                                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
                                             <div style="display: flex; align-items: center; gap: 8px;">
@@ -710,7 +789,7 @@
                                         </div>
 
                                         <div style="font-size: 0.6rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 6px;">Selección de Disponibles (${roster.length} jugadores):</div>
-                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; max-height: 110px; overflow-y: auto; background: #f8fafc; padding: 8px; border-radius: 14px; border: 1px solid #edf2f7; margin-bottom: 10px;">
+                                        <div class="pm-checkboxes-scroll pm-responsive-grid">
                                             ${roster.length > 0 ? roster.map((p, idx) => `
                                                 <label style="display: flex; align-items: center; gap: 6px; font-size: 0.68rem; font-weight: 800; color: #334155; cursor: pointer; background: white; padding: 5px 8px; border-radius: 8px; border: 1px solid #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: none; transition: 0.2s;" onmouseover="this.style.borderColor='#0ea5e9'" onmouseout="this.style.borderColor='#e2e8f0'">
                                                     <input type="checkbox" class="convocatoria-player-checkbox" value="${p.name}" checked onchange="window.TeamController.updateConvocatoriaPreview('${team.id}')" style="accent-color: #0ea5e9;">
@@ -736,18 +815,19 @@
                                         </div>
                                     </div>
                                     
-                                    <div id="convocatoria-live-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;"></div>
+                                    <div id="convocatoria-live-list" class="pm-responsive-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;"></div>
 
                                     <div style="background: #ffffff; border-radius: 20px; padding: 15px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
                                         <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 900; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Vista Previa de Encuesta WhatsApp:</div>
                                         <div id="convocatoria-preview-box" style="background: #f8fafc; border-radius: 12px; padding: 12px; border: 1px solid #edf2f7; font-family: 'Courier New', Courier, monospace; font-size: 0.68rem; color: #1e293b; line-height: 1.45; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); white-space: pre-wrap; word-break: break-word;"></div>
                                     </div>
                                 </div>
+                            </div>
                                 <div style="display: flex; gap: 8px; margin-top: 10px;">
                                     <button onclick="window.TeamController.shareConvocatoria('${team.id}', true)" 
                                             style="flex: 1.1; padding: 12px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white; border: none; border-radius: 16px; font-weight: 900; font-size: 0.68rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.2); transition: 0.2s;"
                                              onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
-                                        <i class="fab fa-whatsapp" style="font-size: 0.85rem;"></i> ENVIAR CONVOCATORIA LIMPIA
+                                        <i class="fab fa-whatsapp" style="font-size: 0.85rem;"></i> ENVIAR CONVO LIMPIA
                                     </button>
                                     <button onclick="window.TeamController.shareConvocatoria('${team.id}', false)" 
                                             style="flex: 0.9; padding: 12px; background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; border-radius: 16px; font-weight: 900; font-size: 0.68rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(100, 116, 139, 0.2); transition: 0.2s;"
@@ -759,8 +839,8 @@
 
                             <!-- 🏆 MVP & STATS SECTION -->
                             <div id="tab-stats" style="display: none; animation: fadeIn 0.3s ease-out;">
-                                <div class="pm-content-scroll" style="max-height: 380px; overflow-y: auto; padding-right: 5px;">
-                                    <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 15px; margin-bottom: 15px;">
+                                <div class="pm-inner-scroll">
+                                    <div class="pm-responsive-grid" style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 15px; margin-bottom: 15px;">
                                         
                                         <div style="background: #ffffff; border-radius: 20px; padding: 15px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
                                             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
@@ -768,7 +848,7 @@
                                                 <span style="font-size: 0.7rem; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Leaderboard Roster</span>
                                             </div>
                                             
-                                            <div style="display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; padding-right: 2px;">
+                                            <div class="pm-leaderboard-scroll">
                                                 ${sortedRoster.map((p, idx) => {
                                                     const pct = maxPts > 0 ? Math.round((p.pts / maxPts) * 100) : 0;
                                                     let badgeText = '';
@@ -1026,7 +1106,7 @@
                 const unlocked = sessionStorage.getItem('tactica_unlocked') === 'true';
                 if (!unlocked) {
                     const success = await window.PremiumModal.password({
-                        title: 'TÁCTICA PROTEGIDA 🔒',
+                        title: 'ALINEACIÓN PROTEGIDA 🔒',
                         message: 'Esta pestaña es exclusiva para capitanes y subcapitanes de Somos Padel.',
                         type: 'success'
                     });
@@ -1086,7 +1166,124 @@
                 });
             });
 
+            // Cargar captura de confirmados de LocalStorage si existe
+            const savedImage = localStorage.getItem(`somospadel_captura_convo_${teamId}`);
+            const placeholderEl = document.getElementById(`upload-placeholder-${teamId}`);
+            const previewContainerEl = document.getElementById(`upload-preview-container-${teamId}`);
+            const previewImgEl = document.getElementById(`upload-preview-img-${teamId}`);
+            
+            if (savedImage && previewImgEl && previewContainerEl && placeholderEl) {
+                previewImgEl.src = savedImage;
+                previewContainerEl.style.display = 'block';
+                placeholderEl.style.display = 'none';
+            }
+
             this.updateTactica(teamId);
+        }
+
+        handleFileSelect(event, teamId) {
+            const file = event.target.files[0];
+            if (file) {
+                this.saveAndDisplayImage(file, teamId);
+            }
+        }
+
+        handleFileDrop(event, teamId) {
+            event.preventDefault();
+            const file = event.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                this.saveAndDisplayImage(file, teamId);
+            }
+            
+            const dropzone = document.getElementById(`dropzone-confirmados-${teamId}`);
+            if (dropzone) {
+                dropzone.style.borderColor = '#cbd5e1';
+                dropzone.style.background = '#f8fafc';
+            }
+        }
+
+        saveAndDisplayImage(file, teamId) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    const MAX_WIDTH = 600;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > MAX_WIDTH) {
+                        height = Math.round((height * MAX_WIDTH) / width);
+                        width = MAX_WIDTH;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    try {
+                        localStorage.setItem(`somospadel_captura_convo_${teamId}`, compressedBase64);
+                        
+                        const placeholderEl = document.getElementById(`upload-placeholder-${teamId}`);
+                        const previewContainerEl = document.getElementById(`upload-preview-container-${teamId}`);
+                        const previewImgEl = document.getElementById(`upload-preview-img-${teamId}`);
+                        
+                        if (previewImgEl && previewContainerEl && placeholderEl) {
+                            previewImgEl.src = compressedBase64;
+                            previewContainerEl.style.display = 'block';
+                            placeholderEl.style.display = 'none';
+                        }
+                        
+                        if (window.PlayerView?.haptic) window.PlayerView.haptic(10);
+                    } catch (err) {
+                        console.error("Error guardando imagen en localStorage", err);
+                        window.PremiumModal.alert({
+                            title: 'Error de Almacenamiento ⚠️',
+                            message: 'No se pudo guardar la imagen por falta de espacio en el navegador. Intenta con una imagen más pequeña.',
+                            type: 'error'
+                        });
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        viewImageFullscreen(teamId) {
+            const savedImage = localStorage.getItem(`somospadel_captura_convo_${teamId}`);
+            if (!savedImage) return;
+            
+            window.PremiumModal.alert({
+                title: 'CAPTURA DE CONFIRMACIONES 📸',
+                message: `
+                    <div style="text-align: center; padding: 5px;">
+                        <img src="${savedImage}" style="max-width: 100%; max-height: 70vh; border-radius: 12px; border: 1px solid #cbd5e1; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                        <p style="font-size: 0.7rem; color: #64748b; margin-top: 10px; font-weight: 700;">Captura guardada para la jornada actual.</p>
+                    </div>
+                `,
+                type: 'info'
+            });
+        }
+
+        removeImage(teamId) {
+            localStorage.removeItem(`somospadel_captura_convo_${teamId}`);
+            
+            const placeholderEl = document.getElementById(`upload-placeholder-${teamId}`);
+            const previewContainerEl = document.getElementById(`upload-preview-container-${teamId}`);
+            const previewImgEl = document.getElementById(`upload-preview-img-${teamId}`);
+            
+            if (previewImgEl && previewContainerEl && placeholderEl) {
+                previewImgEl.src = '';
+                previewContainerEl.style.display = 'none';
+                placeholderEl.style.display = 'block';
+            }
+            
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(5);
         }
 
         updateTactica(teamId) {
@@ -1255,7 +1452,7 @@
                     } else {
                         synergyIcon = "fas fa-check-circle";
                         synergyColor = "#059669"; // green
-                        synergyTitle = "Parejas Tácticas Estables";
+                        synergyTitle = "Parejas Estables";
                         synergyDesc = "Configuración competitiva óptima. Buena cobertura espacial y balance ofensivo uniforme en las tres posiciones de ataque.";
                     }
 
@@ -1458,12 +1655,12 @@
             }
 
             // Build survey text
-            let text = `${E.tennis} *CONVOCATORIA - JORNADA ${jNum}* ${E.tennis}
+            let text = `${E.tennis} *CONVO - JORNADA ${jNum}* ${E.tennis}
 ━━━━━━━━━━━━━━━━━━
 ${E.book} *Competición:* ${phaseStr} (${homeAway})
 ${E.cal} *Día:* ${parsedDate}
 ${E.timer} *Hora partido:* ${matchTime}h
-${E.clock} *Hora convocatoria:* ${convTime}
+${E.clock} *Hora convo:* ${convTime}
 ${E.vs} *Rival:* ${nextMatch.opponent || 'Por definir'}
 ${E.stadium} *Club:* ${nextMatch.venue || 'Por definir'}${addressLabel}
 ━━━━━━━━━━━━━━━━━━
@@ -1527,11 +1724,11 @@ ${E.check} *ESTADO DE LA PLANTILLA:*\n`;
             const jNum = nextMatch.j || 'X';
             const addressLabel = addressText ? `\n(${addressText})` : '';
 
-            let text = `*Convocatoria Jornada ${jNum} - ${groupText || phaseStr}*\n`;
+            let text = `*Convo Jornada ${jNum} - ${groupText || phaseStr}*\n`;
             text += `*(${homeAway})*\n`;
             text += `${E.cal} *Día:* ${parsedDate}\n`;
             text += `${E.timer} *Hora partido:* ${matchTime}h\n`;
-            text += `${E.clock} *Hora convocatoria:* ${convTime}\n`;
+            text += `${E.clock} *Hora convo:* ${convTime}\n`;
             text += `${E.vs} *Rival:* ${nextMatch.opponent || 'Por definir'}\n`;
             text += `${E.stadium} *Club:* ${nextMatch.venue || 'Por definir'}${addressLabel}\n\n`;
 
@@ -1754,12 +1951,12 @@ ${E.check} *ESTADO DE LA PLANTILLA:*\n`;
                 const phaseStr = groupText.toUpperCase().includes('FASE 1') ? 'Fase 1' : 'Fase 2';
                 const jNum = nextMatch.j || 'X';
                 
-                finalText = `${E.tennis} *CONVOCATORIA - JORNADA ${jNum}* ${E.tennis}
+                finalText = `${E.tennis} *CONVO - JORNADA ${jNum}* ${E.tennis}
 ━━━━━━━━━━━━━━━━━━
 ${E.book} *Competición:* ${phaseStr} (${homeAway})
 ${E.cal} *Día:* ${parsedDate}
 ${E.timer} *Hora partido:* ${matchTime}h
-${E.clock} *Hora convocatoria:* ${convTime}
+${E.clock} *Hora convo:* ${convTime}
 ${E.vs} *Rival:* ${nextMatch.opponent || 'Por definir'}
 ${E.stadium} *Club:* ${nextMatch.venue || 'Por definir'}${addressLabel}
 ━━━━━━━━━━━━━━━━━━
@@ -1783,12 +1980,12 @@ Responde con un *SÍ* o un *NO* en este grupo.
                     const phaseStr = groupText.toUpperCase().includes('FASE 1') ? 'Fase 1' : 'Fase 2';
                     const jNum = nextMatch.j || 'X';
                     
-                    finalText = `${E.tennis} *CONVOCATORIA - JORNADA ${jNum}* ${E.tennis}
+                    finalText = `${E.tennis} *CONVO - JORNADA ${jNum}* ${E.tennis}
 ━━━━━━━━━━━━━━━━━━
 ${E.book} *Competición:* ${phaseStr} (${homeAway})
 ${E.cal} *Día:* ${parsedDate}
 ${E.timer} *Hora partido:* ${matchTime}h
-${E.clock} *Hora convocatoria:* ${convTime}
+${E.clock} *Hora convo:* ${convTime}
 ${E.vs} *Rival:* ${nextMatch.opponent || 'Por definir'}
 ${E.stadium} *Club:* ${nextMatch.venue || 'Por definir'}${addressLabel}
 ━━━━━━━━━━━━━━━━━━
@@ -1801,9 +1998,9 @@ Responde con un *SÍ* o un *NO* en este grupo.
             }
 
             copyToClipboard(finalText).then((success) => {
-                const titleHtml = isLimpia ? '¡ENVIAR CONVOCATORIA!' : '¡ENVIAR ASISTENCIA!';
+                const titleHtml = isLimpia ? '¡ENVIAR CONVO!' : '¡ENVIAR ASISTENCIA!';
                 const subtitleHtml = isLimpia 
-                    ? 'Hemos abierto WhatsApp y precargado la convocatoria limpia de forma automática.' 
+                    ? 'Hemos abierto WhatsApp y precargado la convo limpia de forma automática.' 
                     : 'Hemos abierto WhatsApp y precargado el resumen de asistencia y logística de forma automática.';
                 const messageHtml = `
                     <div style="text-align: center; padding: 10px;">
@@ -2211,7 +2408,7 @@ Responde con un *SÍ* o un *NO* en este grupo.
             instagramText += `⚡ Fuerza Promedio Roster: ${avgRosterPts} pts\n`;
             instagramText += `🎯 Diferencial de Sets: ${setDiff > 0 ? '+' + setDiff : setDiff}\n`;
             instagramText += `💪 Win Rate Colectivo: ${winRate}%\n\n`;
-            instagramText += `🚀 En Somos Pádel no jugamos solo los sábados, ¡analizamos cada detalle al milímetro con nuestra plataforma de Big Data! Estrategia, cohesión de equipo, simulación táctica y pasión en las 3 pistas. ¿Listos para la siguiente batalla?\n\n`;
+            instagramText += `🚀 En Somos Pádel no jugamos solo los sábados, ¡analizamos cada detalle al milímetro con nuestra plataforma de Big Data! Estrategia, cohesión de equipo, simulación de alineación y pasión en las 3 pistas. ¿Listos para la siguiente batalla?\n\n`;
             instagramText += `#SomosPadel #SomosPadelBarcelona #PadelBarcelona #AmericanasPadel #ScoutingPadel #BigDataPadel #EstadisticasPadel #SomosPadelBCN #PadelLovers #RosterOficial`;
 
             copyToClipboard(instagramText).then((success) => {
