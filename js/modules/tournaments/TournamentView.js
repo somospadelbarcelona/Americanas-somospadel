@@ -48,12 +48,25 @@
                     <div style="background: #eef105; padding: 12px 20px; font-weight: 900; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">
                         BUSCADOR
                     </div>
-                    <div style="padding: 15px 20px; background: white; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 10;">
-                        <input type="text" 
-                               placeholder="Buscador de eventos" 
-                               onkeyup="window.TournamentView.handleSearch(this.value)"
-                               value="${this.searchTerm}"
-                               style="width: 100%; border: none; font-size: 1.1rem; color: #333; outline: none; font-family: 'Outfit', sans-serif;">
+                    <div style="padding: 15px 20px; background: white; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 10; display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+                            <div style="flex: 1; border-right: 1px solid #eee; padding-right: 10px;">
+                                <input type="text" 
+                                       placeholder="Buscador de eventos" 
+                                       onkeyup="window.TournamentView.handleSearch(this.value)"
+                                       value="${this.searchTerm}"
+                                       style="width: 100%; border: none; font-size: 1.1rem; color: #333; outline: none; font-family: 'Outfit', sans-serif;">
+                            </div>
+                            <!-- ⚡ PREMIUM SORT SELECTOR -->
+                            <div style="position: relative; flex-shrink: 0; display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                <i class="fas fa-sort-amount-down" style="color: #64748b; font-size: 0.85rem;"></i>
+                                <select onchange="window.TournamentController.changeSort(this.value)" 
+                                        style="border: none; font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 900; color: #111; outline: none; background: transparent; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <option value="newest" ${window.TournamentController.currentSort === 'newest' ? 'selected' : ''}>Más actuales</option>
+                                    <option value="oldest" ${window.TournamentController.currentSort === 'oldest' ? 'selected' : ''}>Más antiguas</option>
+                                </select>
+                            </div>
+                        </div>
                         
                         <!-- 🏷️ FILTER CHIPS -->
                         <div class="filter-chips" style="display: flex; gap: 8px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px;">

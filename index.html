@@ -984,6 +984,97 @@
                 display: inline-block;
                 margin-bottom: 20px;
             }
+
+            /* === NASA GRAVITATIONAL HOLOGRAPHIC HUD === */
+            .nasa-hud-wrap {
+                position: absolute;
+                inset: -38px;
+                pointer-events: none;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 0.15;
+                transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1), transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+                transform: scale(0.95);
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 0.55rem;
+                color: #CCFF00;
+                z-index: 0;
+            }
+            #login-ball-wrap:hover .nasa-hud-wrap {
+                opacity: 1;
+                transform: scale(1);
+            }
+            
+            .hud-circle-outer {
+                position: absolute;
+                width: 176px;
+                height: 176px;
+                border: 1px dashed rgba(204, 255, 0, 0.45);
+                border-radius: 50%;
+                animation: spinClockwise 25s linear infinite;
+            }
+            .hud-circle-inner {
+                position: absolute;
+                width: 146px;
+                height: 146px;
+                border: 1px dotted rgba(0, 210, 255, 0.5);
+                border-radius: 50%;
+                animation: spinCounterClockwise 15s linear infinite;
+            }
+            @keyframes spinClockwise {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            @keyframes spinCounterClockwise {
+                0% { transform: rotate(360deg); }
+                100% { transform: rotate(0deg); }
+            }
+            
+            .hud-bracket {
+                position: absolute;
+                width: 196px;
+                height: 196px;
+                border-left: 2px solid rgba(204, 255, 0, 0.4);
+                border-right: 2px solid rgba(204, 255, 0, 0.4);
+                border-radius: 24px;
+                opacity: 0.3;
+                pointer-events: none;
+            }
+            
+            .hud-telemetry {
+                position: absolute;
+                font-size: 0.52rem;
+                font-weight: 900;
+                letter-spacing: 1.5px;
+                white-space: nowrap;
+                text-align: left;
+                line-height: 1.4;
+                text-shadow: 0 0 4px rgba(204, 255, 0, 0.6);
+                transition: color 0.3s;
+            }
+            .hud-telemetry.left {
+                right: 125%;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+            .hud-telemetry.right {
+                left: 125%;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+            
+            /* Efecto de glitch cuántico */
+            .glitch-flash {
+                animation: quantumGlitch 0.25s infinite;
+            }
+            @keyframes quantumGlitch {
+                0% { transform: translate(0, 0) skew(0deg); opacity: 1; filter: hue-rotate(0deg); }
+                10% { transform: translate(-2px, 1px) skew(-2deg); opacity: 0.9; }
+                20% { transform: translate(1px, -2px) skew(1deg); opacity: 0.8; filter: hue-rotate(90deg); }
+                30% { transform: translate(0, 0) skew(0deg); opacity: 1; }
+                100% { transform: translate(0, 0) skew(0deg); opacity: 1; }
+            }
         </style>
 
         <div class="glass-card-pro card-enter"
@@ -999,8 +1090,28 @@
                 <div id="login-ball-wrap" class="breathing" onclick="_ballSmash(event)" title="¡Dale un smash!">
                     <!-- Neon ring de energía — PRIMERO en DOM = detrás de la imagen -->
                     <div id="ball-neon-ring" style="position:absolute; inset:-10px; border-radius:50%; border:3px solid transparent; background: transparent padding-box, conic-gradient(from var(--ring-angle,0deg), transparent 55%, #CCFF00 75%, transparent 100%) border-box; pointer-events:none; opacity:0; transition:opacity 0.4s; z-index:0;"></div>
+                    
+                    <!-- NASA Gravitational HUD -->
+                    <div class="nasa-hud-wrap">
+                        <div class="hud-circle-outer"></div>
+                        <div class="hud-circle-inner"></div>
+                        <div class="hud-bracket"></div>
+                        <div class="hud-telemetry left" id="hud-left-data">
+                            SYS: ACTIVE<br>
+                            GRAV: 9.81G<br>
+                            VEL: 0.00m/s<br>
+                            SCAN: ACTIVE
+                        </div>
+                        <div class="hud-telemetry right" id="hud-right-data">
+                            TRAJ: CALIBRATED<br>
+                            RAD: 1.02mSv<br>
+                            ENERGY: 100%<br>
+                            ORBIT: SYNERGY
+                        </div>
+                    </div>
+
                     <!-- Logo principal -->
-                    <img id="login-ball-img" src="img/logo_somospadel.png"
+                    <img id="login-ball-img" src="img/official_ball_logo.png"
                          alt="Somos Padel"
                          style="position:relative; z-index:1;"
                          onerror="this.style.display='none'; document.getElementById('login-ball-fallback').style.display='flex';">
@@ -1015,10 +1126,7 @@
                     ACCESO <span style="color: #CCFF00;">JUGADORES</span>
                 </h1>
                 <p style="color: rgba(255,255,255,0.4); font-size: 0.8rem; font-weight: 600; margin-top: 5px;">
-                    SOMOSPADEL BCN 2026</p>
-            </div>
-
-            <!-- 🎾 BALL PHYSICS & MAGNETISM ENGINE -->
+                             <!-- 🎾 BALL PHYSICS & MAGNETISM ENGINE -->
             <script>
             (function() {
                 var _smashing = false;
@@ -1027,6 +1135,14 @@
                 var _ringAngle = 0;
                 var _ringRaf = null;
                 var _lastMX = 0, _lastMY = 0;
+
+                // === TELEMETRY CONTROLLER ===
+                function _updateTelemetry(leftLines, rightLines) {
+                    var l = document.getElementById('hud-left-data');
+                    var r = document.getElementById('hud-right-data');
+                    if (l) l.innerHTML = leftLines.join('<br>');
+                    if (r) r.innerHTML = rightLines.join('<br>');
+                }
 
                 // === SPINNING NEON RING ===
                 function _spinRing() {
@@ -1057,6 +1173,22 @@
                     _ry += (tiltY - _ry) * 0.12;
                     var img = document.getElementById('login-ball-img');
                     if (img) img.style.transform = 'perspective(600px) rotateX(' + _rx + 'deg) rotateY(' + _ry + 'deg)';
+
+                    // Live Telemetry Updates
+                    var v = Math.min(Math.abs(dx) * 290, 85).toFixed(2);
+                    var e = Math.min(100, Math.floor(100 - (v * 0.15)));
+                    var g = (9.81 - (Math.abs(dx) + Math.abs(dy)) * 2).toFixed(2);
+                    _updateTelemetry([
+                        'SYS: TRACKING',
+                        'GRAV: ' + g + 'G',
+                        'VEL: ' + v + 'm/s',
+                        'SCAN: TILT ' + Math.round(_ry) + '°'
+                    ], [
+                        'TRAJ: TARGETING',
+                        'RAD: ' + (1.02 + Math.abs(dy)*0.5).toFixed(2) + 'mSv',
+                        'ENERGY: ' + e + '%',
+                        'ORBIT: PULSING'
+                    ]);
                 }
                 function _resetMagnet() {
                     if (_smashing) return;
@@ -1069,6 +1201,20 @@
                         if (img) img.style.transform = 'perspective(600px) rotateX(' + _rx + 'deg) rotateY(' + _ry + 'deg)';
                         var ring = document.getElementById('ball-neon-ring');
                         if (ring && !_mouseActive) ring.style.opacity = (Math.abs(_rx) > 0.1 || Math.abs(_ry) > 0.1) ? ring.style.opacity : '0';
+                        
+                        // Slowly restore standard HUD values
+                        _updateTelemetry([
+                            'SYS: ACTIVE',
+                            'GRAV: 9.81G',
+                            'VEL: 0.00m/s',
+                            'SCAN: STABLE'
+                        ], [
+                            'TRAJ: CALIBRATED',
+                            'RAD: 1.02mSv',
+                            'ENERGY: 100%',
+                            'ORBIT: SYNERGY'
+                        ]);
+
                         if (Math.abs(_rx) > 0.05 || Math.abs(_ry) > 0.05) requestAnimationFrame(fade);
                     })();
                 }
@@ -1128,6 +1274,24 @@
                     wrap.classList.remove('breathing');
                     wrap.classList.add('smashing');
 
+                    // Trigger quantum glitch UI in HUD panels
+                    var hudLeft = document.getElementById('hud-left-data');
+                    var hudRight = document.getElementById('hud-right-data');
+                    if (hudLeft) hudLeft.classList.add('glitch-flash');
+                    if (hudRight) hudRight.classList.add('glitch-flash');
+                    
+                    _updateTelemetry([
+                        'SYS: OVERLOAD',
+                        'GRAV: 0.00G',
+                        'VEL: 168.9m/s',
+                        'SCAN: COLLISION'
+                    ], [
+                        'TRAJ: IMPACT',
+                        'RAD: 8.75mSv',
+                        'ENERGY: 250% ⚡',
+                        'ORBIT: SUPERNOVA'
+                    ]);
+
                     // === PARTICLE EXPLOSION ===
                     var colors = ['#CCFF00','#a3e600','#ffffff','#ffff00','#00d2ff','#ff5500'];
                     var sizes  = [6,8,10,12,14,6,8];
@@ -1172,6 +1336,21 @@
                         wrap.classList.add('breathing');
                         img.style.transform = '';
                         _rx = 0; _ry = 0;
+                        
+                        if (hudLeft) hudLeft.classList.remove('glitch-flash');
+                        if (hudRight) hudRight.classList.remove('glitch-flash');
+                        
+                        _updateTelemetry([
+                            'SYS: REBOOTING',
+                            'GRAV: CALIBRATING',
+                            'VEL: 0.00m/s',
+                            'SCAN: RECOVERED'
+                        ], [
+                            'TRAJ: CALIBRATED',
+                            'RAD: 1.02mSv',
+                            'ENERGY: 100%',
+                            'ORBIT: SYNERGY'
+                        ]);
                     }, 700);
                 };
 
@@ -1223,7 +1402,7 @@
                     </a>
                     <a href="presentation.html" target="_blank"
                         style="color: rgba(255,255,255,0.3); text-decoration: none; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        <i class="fas fa-shield-halved"></i> Seguridad Biométrica Activa
+                        <i class="fas fa-shield-halved"></i> Descubre nuestra tecnología
                     </a>
                 </div>
             </form>
@@ -1486,25 +1665,40 @@
     pointer-events: auto;
   }
 
-  /* === BOCADILLO === */
+  /* === HOLOGRAPHIC BOCADILLO === */
   #sp-bubble {
-    background: #ffffff;
-    color: #0a192f;
+    background: rgba(10, 25, 47, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #00d2ff;
     border-radius: 20px 20px 4px 20px;
-    padding: 12px 16px;
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.78rem;
+    padding: 14px 18px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.74rem;
     font-weight: 700;
     line-height: 1.4;
-    max-width: 200px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.1);
-    border: 1.5px solid #e2e8f0;
+    max-width: 210px;
+    border: 1.5px solid rgba(0, 210, 255, 0.4);
     position: relative;
     opacity: 0;
     transform: scale(0.6) translateY(10px);
     transform-origin: bottom right;
     transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.22,1,0.36,1);
     pointer-events: none;
+    text-shadow: 0 0 4px rgba(0, 210, 255, 0.5);
+    background-image: linear-gradient(rgba(0, 210, 255, 0.06) 50%, transparent 50%);
+    background-size: 100% 4px;
+    animation: hologramPulse 3s infinite ease-in-out;
+  }
+  @keyframes hologramPulse {
+    0%, 100% { 
+      box-shadow: 0 8px 30px rgba(0, 210, 255, 0.15), inset 0 0 10px rgba(0, 210, 255, 0.05); 
+      border-color: rgba(0, 210, 255, 0.45); 
+    }
+    50% { 
+      box-shadow: 0 8px 32px rgba(0, 210, 255, 0.3), inset 0 0 16px rgba(0, 210, 255, 0.15); 
+      border-color: rgba(0, 210, 255, 0.9); 
+    }
   }
   #sp-bubble.show {
     opacity: 1;
@@ -1520,15 +1714,18 @@
     top: 6px;
     right: 8px;
     font-size: 0.65rem;
-    color: #94a3b8;
+    color: rgba(0, 210, 255, 0.6);
     cursor: pointer;
     font-weight: 900;
     line-height: 1;
     padding: 2px 4px;
     border-radius: 4px;
-    transition: color 0.2s;
+    transition: color 0.2s, text-shadow 0.2s;
   }
-  #sp-bubble .sp-bubble-close:hover { color: #0a192f; }
+  #sp-bubble .sp-bubble-close:hover { 
+    color: #CCFF00; 
+    text-shadow: 0 0 6px #CCFF00; 
+  }
 
   /* === PELOTA MASCOTA === */
   #sp-ball-btn {
@@ -1624,6 +1821,25 @@
     0%,100% { transform: scale(1); }
     50%      { transform: scale(1.2); box-shadow: 0 0 8px rgba(255,45,85,0.6); }
   }
+
+  /* === NASA ULTRA SCI-FI VERTICAL SCANLINE === */
+  .nasa-scan-sweep {
+    position: fixed;
+    left: 0;
+    width: 100vw;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, rgba(0, 210, 255, 0.8), #CCFF00, rgba(0, 210, 255, 0.8), transparent);
+    box-shadow: 0 0 15px #00d2ff, 0 0 30px #CCFF00;
+    z-index: 99999;
+    pointer-events: none;
+    animation: sweepMotion 1.4s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  }
+  @keyframes sweepMotion {
+    0% { top: -10px; opacity: 0; }
+    15% { opacity: 1; }
+    85% { opacity: 1; }
+    100% { top: 105vh; opacity: 0; }
+  }
 </style>
 
 <!-- MASCOTA DOM -->
@@ -1636,7 +1852,7 @@
 
   <!-- Pelota interactiva -->
   <button id="sp-ball-btn" onclick="window._spTap()" aria-label="Mascota SomosPadel">
-    <img id="sp-ball-img" src="img/logo_somospadel.png" alt="SomosPadel mascot"
+    <img id="sp-ball-img" src="img/official_ball_logo.png" alt="SomosPadel mascot"
          onerror="this.style.fontSize='2rem'; this.src=''; this.alt='🎾';">
     <div id="sp-eyes">
       <div class="sp-eye left"></div>
@@ -1738,6 +1954,14 @@
     // Haptic
     if (navigator.vibrate) navigator.vibrate([15, 8, 25]);
 
+    // NASA Laser scanning sweep line
+    var sweep = document.createElement('div');
+    sweep.className = 'nasa-scan-sweep';
+    document.body.appendChild(sweep);
+    setTimeout(function() {
+      if (sweep.parentNode) sweep.parentNode.removeChild(sweep);
+    }, 1500);
+
     // PIROUETTE
     var btn = document.getElementById('sp-ball-btn');
     if (btn) {
@@ -1751,9 +1975,28 @@
       }, 800);
     }
 
-    // Show next tip
-    _tipIdx = (_tipIdx + 1) % _tips.length;
-    setTimeout(function () { _showBubble(_tips[_tipIdx]); }, 150);
+    // High tech telemetry scan readout
+    var bubble = document.getElementById('sp-bubble');
+    var textEl = document.getElementById('sp-bubble-text');
+    if (bubble && textEl) {
+      var synergy = 92 + Math.floor(Math.random() * 8);
+      var status = ["CALIBRATING", "OPTIMAL", "STABLE", "ACTIVE"][Math.floor(Math.random() * 4)];
+      var orbit = ["LEO-1", "GEO-SYNC", "SYNERGY-1", "DASH-DECK"][Math.floor(Math.random() * 4)];
+      
+      textEl.innerHTML = '<span class="sp-bubble-emoji">📡</span><strong>[QUANTUM SCAN]</strong><br>' +
+                          '• SYNERGY: ' + synergy + '%<br>' +
+                          '• RADAR: ' + status + '<br>' +
+                          '• ORBITAL: ' + orbit + '<br>' +
+                          '• AI-ARMOR: COMPLIANT';
+      bubble.classList.add('show');
+      
+      // After 2.3s, transition to the actual strategic padel tip!
+      if (_bubbleTimer) clearTimeout(_bubbleTimer);
+      _bubbleTimer = setTimeout(function() {
+        _tipIdx = (_tipIdx + 1) % _tips.length;
+        _showBubble(_tips[_tipIdx]);
+      }, 2300);
+    }
   };
 
   /* --- MINI PARTICLE BURST --- */

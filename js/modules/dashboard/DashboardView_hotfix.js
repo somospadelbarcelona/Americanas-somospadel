@@ -240,7 +240,7 @@
 
                     // Render Cards first
                     if (weatherData && weatherData.length > 0) {
-                        weatherHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 2px;">`;
+                        weatherHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">`;
                         weatherData.forEach(w => {
                             weatherHtml += this.renderWeatherCard(
                                 w.name,
@@ -313,7 +313,7 @@
                                     }
                                 </style>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 2px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                                 ${this.renderWeatherCard('EL PRAT', '--', '...', { wind: '--', hum: '--', rain: '--' })}
                                 ${this.renderWeatherCard('CORNELLÀ', '--', '...', { wind: '--', hum: '--', rain: '--' })}
                             </div>`;

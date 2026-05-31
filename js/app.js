@@ -59,9 +59,36 @@
             this.updateGlobalHeader(user);
 
             if (user && user.uid && window.db) {
-                window.db.collection('players').doc(user.uid).update({
-                    lastLogin: new Date().toISOString()
-                }).catch(e => console.warn("⏳ [App] Error actualizando lastLogin:", e));
+                // Evitar duplicar logs en la misma sesión/pestaña del navegador
+                if (!sessionStorage.getItem('somospadel_session_logged')) {
+                    sessionStorage.setItem('somospadel_session_logged', 'true');
+                    
+                    const telemetryData = {
+                        userId: user.uid,
+                        userName: user.name || user.displayName || "Jugador Pro",
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        device: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
+                        language: navigator.language || 'es',
+                        appVersion: 'v9.1-Premium'
+                    };
+
+                    // Guardar log en la colección raíz de Firestore para análisis global de DAU/MAU
+                    window.db.collection('access_logs').add(telemetryData)
+                        .then(() => console.log(`📡 [TELEMETRÍA] Acceso registrado con éxito para: ${telemetryData.userName}`))
+                        .catch(e => console.warn("⏳ [App] Telemetría omitida por red lenta o bloqueador:", e));
+
+                    // Actualizar el perfil del jugador con contadores en tiempo real
+                    window.db.collection('players').doc(user.uid).update({
+                        lastLogin: new Date().toISOString(),
+                        lastActive: firebase.firestore.FieldValue.serverTimestamp(),
+                        sessionCount: firebase.firestore.FieldValue.increment(1)
+                    }).catch(e => console.warn("⏳ [App] Error actualizando actividad en base de datos:", e));
+                } else {
+                    // Si ya se registró en esta sesión, solo actualizamos el timestamp de último login activo
+                    window.db.collection('players').doc(user.uid).update({
+                        lastLogin: new Date().toISOString()
+                    }).catch(e => console.warn("⏳ [App] Error actualizando timestamp activo:", e));
+                }
             }
 
             const authModal = document.getElementById('auth-modal');
