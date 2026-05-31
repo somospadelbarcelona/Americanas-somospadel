@@ -1484,6 +1484,19 @@
             const team = this.teams.find(t => t.id === teamId);
             if (!team || !team.roster || team.roster.length === 0) return;
 
+            // Integración reactiva inteligente con la pestaña de Convo
+            const checkboxes = document.querySelectorAll('.convocatoria-player-checkbox');
+            let rosterToUse = team.roster;
+            let usedConfirmados = false;
+            
+            if (checkboxes.length > 0) {
+                const confirmados = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+                if (confirmados.length >= 6) {
+                    rosterToUse = team.roster.filter(p => confirmados.includes(p.name));
+                    usedConfirmados = true;
+                }
+            }
+
             const isMixto = team.category && team.category.toLowerCase().includes('mixt');
 
             let s1a = '', s1b = '', s2a = '', s2b = '', s3a = '', s3b = '';
@@ -1517,8 +1530,8 @@
                 };
 
                 // Clasificamos y ordenamos chicos y chicas por puntos de roster
-                const chicos = team.roster.filter(p => !isFemaleName(p.name)).sort((a, b) => b.pts - a.pts);
-                const chicas = team.roster.filter(p => isFemaleName(p.name)).sort((a, b) => b.pts - a.pts);
+                const chicos = rosterToUse.filter(p => !isFemaleName(p.name)).sort((a, b) => b.pts - a.pts);
+                const chicas = rosterToUse.filter(p => isFemaleName(p.name)).sort((a, b) => b.pts - a.pts);
 
                 // Requerimos formar 3 parejas mixtas (3 chicos y 3 chicas más top)
                 const h1 = chicos[0] ? chicos[0].name : '';
@@ -1545,7 +1558,7 @@
                 }
             } else {
                 // Roster no mixto: Algoritmo de emparejamiento balanceado estándar por puntos descendentes
-                const players = [...team.roster].sort((a, b) => b.pts - a.pts);
+                const players = [...rosterToUse].sort((a, b) => b.pts - a.pts);
 
                 s1a = players[0] ? players[0].name : '';
                 s1b = players[5] ? players[5].name : (players[1] ? players[1].name : '');
@@ -1586,6 +1599,15 @@
             });
 
             this.updateTactica(teamId);
+
+            // Alerta informativa premium SweetAlert
+            window.PremiumModal.alert({
+                title: 'ALINEACIÓN ÓPTIMA SUGERIDA ⚡',
+                message: usedConfirmados 
+                    ? `Hemos simulado las 3 parejas más equilibradas y potentes utilizando de forma exclusiva a los <strong>${rosterToUse.length} jugadores confirmados (SÍ)</strong> en la pestaña CONVO.<br><br>¡El balance óptimo ya se dibuja en las 3 pistas!`
+                    : `Hemos simulado las 3 parejas más potentes utilizando todos los jugadores del roster.<br><br><strong>Consejo de usabilidad:</strong> Desmarca las bajas en la pestaña CONVO basándote en tu captura de WhatsApp y esta auto-alineación considerará solo a los confirmados.`,
+                type: 'success'
+            });
         }
 
         updateConvocatoriaPreview(teamId) {
