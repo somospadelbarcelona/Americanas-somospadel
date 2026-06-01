@@ -1120,7 +1120,83 @@
                     </div>
 
                     <style>
-                        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+                        @keyframes fadeIn { 
+                            from { opacity: 0; transform: translate3d(0, 5px, 0); } 
+                            to { opacity: 1; transform: translate3d(0, 0, 0); } 
+                        }
+                        
+                        /* ⚡ GPU Hardware-Accelerated & Memory-Optimized Scroll Containers */
+                        .pm-inner-scroll,
+                        .pm-leaderboard-scroll,
+                        .pm-checkboxes-scroll,
+                        .pm-courts-scroll {
+                            will-change: transform;
+                            transform: translate3d(0, 0, 0);
+                            -webkit-overflow-scrolling: touch; /* Momentum scrolling in iOS */
+                            content-visibility: auto;
+                            contain-intrinsic-size: 100px 300px;
+                        }
+                        
+                        .pm-inner-scroll {
+                            max-height: 68vh;
+                            overflow-y: auto;
+                            padding-right: 6px;
+                        }
+                        
+                        .pm-leaderboard-scroll {
+                            max-height: 290px;
+                            overflow-y: auto;
+                            padding-right: 4px;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 8px;
+                        }
+                        
+                        .pm-checkboxes-scroll {
+                            max-height: 150px;
+                            overflow-y: auto;
+                            padding-right: 4px;
+                            padding-bottom: 2px;
+                        }
+                        
+                        .pm-courts-scroll {
+                            max-height: 410px;
+                            overflow-y: auto;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 12px;
+                            padding: 4px;
+                        }
+                        
+                        /* Custom Premium Scrollbars */
+                        .pm-inner-scroll::-webkit-scrollbar,
+                        .pm-leaderboard-scroll::-webkit-scrollbar,
+                        .pm-checkboxes-scroll::-webkit-scrollbar,
+                        .pm-courts-scroll::-webkit-scrollbar {
+                            width: 6px;
+                            height: 6px;
+                        }
+                        .pm-inner-scroll::-webkit-scrollbar-track,
+                        .pm-leaderboard-scroll::-webkit-scrollbar-track,
+                        .pm-checkboxes-scroll::-webkit-scrollbar-track,
+                        .pm-courts-scroll::-webkit-scrollbar-track {
+                            background: rgba(0, 0, 0, 0.02);
+                            border-radius: 10px;
+                        }
+                        .pm-inner-scroll::-webkit-scrollbar-thumb,
+                        .pm-leaderboard-scroll::-webkit-scrollbar-thumb,
+                        .pm-checkboxes-scroll::-webkit-scrollbar-thumb,
+                        .pm-courts-scroll::-webkit-scrollbar-thumb {
+                            background: rgba(15, 23, 42, 0.15);
+                            border-radius: 10px;
+                            transition: background 0.2s;
+                        }
+                        .pm-inner-scroll::-webkit-scrollbar-thumb:hover,
+                        .pm-leaderboard-scroll::-webkit-scrollbar-thumb:hover,
+                        .pm-checkboxes-scroll::-webkit-scrollbar-thumb:hover,
+                        .pm-courts-scroll::-webkit-scrollbar-thumb:hover {
+                            background: rgba(15, 23, 42, 0.3);
+                        }
                     </style>
                 `,
                 type: 'info'
