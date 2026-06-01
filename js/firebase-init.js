@@ -66,7 +66,13 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
             })
             .catch(err => {
                 console.error('❌ Error al conectar con Firestore al iniciar:', err);
-                if (window.PremiumModal) {
+                const isPermissionError = err.code === 'permission-denied' || 
+                                          (err.message && err.message.toLowerCase().includes('permission-denied')) ||
+                                          (err.message && err.message.toLowerCase().includes('missing or insufficient permissions'));
+                
+                if (isPermissionError) {
+                    console.log("ℹ️ Firestore connection requires authentication (normal behavior before login).");
+                } else if (window.PremiumModal) {
                     window.PremiumModal.alert({
                         title: "🔴 FIREBASE CONN ERROR",
                         message: err.message || 'Error de conexión a Firestore',

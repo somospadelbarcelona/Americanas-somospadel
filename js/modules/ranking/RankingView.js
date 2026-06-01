@@ -43,8 +43,11 @@
                                     <div style="width: 10px; height: 10px; border-radius: 2px; background: #84cc16; box-shadow: 0 0 15px #84cc16;"></div>
                                     <span style="color: #64748b; font-size: 0.65rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">Somospadel World Tour</span>
                                 </div>
-                                <h1 style="font-weight: 950; font-size: 2.5rem; margin: 0; letter-spacing: -1.5px; color: #0a192f; line-height: 1.1;">
+                                <h1 style="font-weight: 950; font-size: 2.5rem; margin: 0; letter-spacing: -1.5px; color: #0a192f; line-height: 1.1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                                     RANKING <span style="background: linear-gradient(90deg, #CCFF00, #84cc16); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">PRO</span>
+                                    <span onclick="window.showRolesLegendModal()" style="cursor: pointer; font-size: 0.6rem; font-weight: 950; padding: 4px 10px; border-radius: 10px; background: rgba(100, 116, 139, 0.08); color: #475569; border: 1px solid rgba(100, 116, 139, 0.15); text-transform: uppercase; letter-spacing: 1px; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='rgba(204,255,0,0.1)'; this.style.borderColor='rgba(204,255,0,0.3)'; this.style.color='#72a800';" onmouseout="this.style.background='rgba(100, 116, 139, 0.08)'; this.style.borderColor='rgba(100, 116, 139, 0.15)'; this.style.color='#475569';">
+                                        <i class="fas fa-question-circle"></i> Info Roles
+                                    </span>
                                 </h1>
                             </div>
                             <!-- 🏆 TOP RÉCORDS ACCESS -->
@@ -369,11 +372,12 @@
                             </div>
                         </div>
                         
-                        <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
+                        <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                             <div style="display: flex;">${starsHtml}</div>
                             <span style="font-size: 0.7rem; color: #475569; font-weight: 900; text-transform: uppercase;">
                                 LVL ${p.level.toFixed(2)}
                             </span>
+                            ${window.RoleService ? window.RoleService.getBadgeHtml(p.role, true) : ''}
                         </div>
 
                         ${pointsToNext > 0 && pointsToNext < 15 ? `

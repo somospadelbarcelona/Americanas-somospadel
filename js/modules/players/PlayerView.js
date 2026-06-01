@@ -157,8 +157,13 @@
                                 `).join('') : '<span style="color:#444; font-size:0.6rem;">SIN PARTIDOS</span>'}
                             </div>
                             
-                            <div style="margin-top: 15px; background: linear-gradient(90deg, #CCFF00, #00E36D); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 950; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; display: flex; align-items: center; gap: 8px; justify-content: center;">
-                                <i class="fas fa-crown"></i> EXECUTIVE PLAYER
+                            <div style="margin-top: 18px; display: flex; justify-content: center; align-items: center; min-height: 38px; gap: 8px;">
+                                ${window.RoleService ? window.RoleService.getBadgeHtml(user.role) : `
+                                    <div style="background: linear-gradient(90deg, #CCFF00, #00E36D); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 950; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-crown"></i> EXECUTIVE PLAYER
+                                    </div>
+                                `}
+                                <i class="fas fa-question-circle" onclick="window.showRolesLegendModal()" style="cursor: pointer; color: #64748b; font-size: 0.95rem; transition: color 0.2s;" onmouseover="this.style.color='#CCFF00'" onmouseout="this.style.color='#64748b'" title="Ver leyenda de roles oficiales"></i>
                             </div>
 
                             <!-- ACTION BUTTONS -->

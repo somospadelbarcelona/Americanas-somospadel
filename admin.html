@@ -268,6 +268,97 @@
             background: #e2e8f0 !important;
             transform: translateY(-1px) !important;
         }
+
+        /* --- 📱 CORRECCIÓN ULTRA-PREMIUM CON CONTRASTE COMPLETO Y SCROLL EN MÓVIL (ADMIN) --- */
+        @media (max-width: 1024px) {
+            /* Forzar el fondo del menú lateral/horizontal móvil a blanco y texto a negro */
+            .sidebar-pro, 
+            .sidebar-pro *,
+            .nav-menu {
+                background: #ffffff !important;
+                color: #0f172a !important;
+            }
+            
+            /* Habilitar scroll vertical suave en la barra lateral deslizante móvil */
+            .sidebar-pro {
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            
+            /* Habilitar scroll horizontal fluido en la barra horizontal móvil */
+            .sidebar-pro .nav-menu {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                -webkit-overflow-scrolling: touch !important;
+                padding: 10px 15px !important;
+                gap: 10px !important;
+                margin-top: 1rem !important;
+                scrollbar-width: none !important; /* Ocultar barra en Firefox */
+            }
+            
+            .sidebar-pro .nav-menu::-webkit-scrollbar {
+                display: none !important; /* Ocultar barra en Chrome/Safari */
+            }
+            
+            /* Botones del menú móvil: Prevenir deformación (flex-shrink) y forzar white-space */
+            .sidebar-pro .nav-item-pro {
+                flex: 0 0 auto !important;
+                width: auto !important;
+                min-width: max-content !important;
+                white-space: nowrap !important;
+                padding: 10px 16px !important;
+                border-radius: 14px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                margin-bottom: 0 !important;
+            }
+            
+            /* Botones inactivos en el menú móvil: Fondo blanco, bordes y texto oscuro */
+            .sidebar-pro .nav-item-pro:not(.active) {
+                background: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                color: #475569 !important;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
+            }
+            
+            .sidebar-pro .nav-item-pro:not(.active) .icon-box,
+            .sidebar-pro .nav-item-pro:not(.active) i,
+            .sidebar-pro .nav-item-pro:not(.active) span,
+            .sidebar-pro .nav-item-pro:not(.active) .nav-text {
+                color: #475569 !important;
+                background: transparent !important;
+            }
+
+            /* Botón activo: Fondo amarillo neón brillante, bordes oscuros y texto negro */
+            .sidebar-pro .nav-item-pro.active {
+                background: #ccff00 !important;
+                border: 1px solid #000000 !important;
+                color: #000000 !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+                font-weight: 900 !important;
+            }
+            
+            .sidebar-pro .nav-item-pro.active .icon-box,
+            .sidebar-pro .nav-item-pro.active i,
+            .sidebar-pro .nav-item-pro.active span,
+            .sidebar-pro .nav-item-pro.active .nav-text {
+                color: #000000 !important;
+                background: transparent !important;
+            }
+            
+            /* Ajustes estéticos para la cabecera y el perfil de usuario del admin en móvil */
+            .sidebar-pro .brand-top-left,
+            .sidebar-pro .brand-text-main *,
+            .sidebar-pro .user-profile-widget,
+            .sidebar-pro .user-profile-widget * {
+                background: #ffffff !important;
+                color: #0f172a !important;
+            }
+        }
     </style>
 
 
@@ -1326,6 +1417,7 @@
             <script src="js/modules/admin/NeuralAgent_v6.js"></script>
             <script src="js/modules/admin/BatSignalAgent.js"></script>
 
+            <script src="js/utils/RoleService.js"></script>
             <script src="js/modules/admin-users.js"></script>
             <script src="js/modules/admin-americanas.js"></script>
             <script src="js/modules/admin-matches.js"></script>
