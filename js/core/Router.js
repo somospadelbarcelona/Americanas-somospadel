@@ -20,6 +20,7 @@
                 'agenda': () => this.handleControllerTab('EventsController', 'agenda'),
                 'results': () => this.handleControllerTab('EventsController', 'results'),
                 'entrenos': () => this.handleControllerTab('EventsController', 'entrenos'),
+                'partidas_abiertas': () => window.OpenMatchesController?.init(),
                 'records': () => {
                     console.log("🛣️ [Router] Executing records route...");
                     if (window.RecordsController) {
@@ -102,6 +103,7 @@
                 { name: 'PlayerController', routes: ['profile'] },
                 { name: 'RecordsController', routes: ['records'] },
                 { name: 'RankingController', routes: ['ranking'] },
+                { name: 'OpenMatchesController', routes: ['partidas_abiertas'] },
                 { name: 'TeamController', routes: ['teams', 'equipos'] }
             ];
 

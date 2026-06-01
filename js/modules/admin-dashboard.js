@@ -39,13 +39,7 @@ window.AdminViews.dashboard_home = async function () {
                         <h2 id="dash-today-entrenos">--</h2>
                     </div>
                 </div>
-                <div class="glass-card-enterprise stat-card autopilot-card">
-                    <div class="stat-icon gold"><i class="fas fa-wand-magic-sparkles"></i></div>
-                    <div class="stat-data">
-                        <span class="stat-label">AI Autopilot</span>
-                        <h2 id="dash-ai-status">READY</h2>
-                    </div>
-                </div>
+
             </div>
 
             <!-- Main Content Row -->

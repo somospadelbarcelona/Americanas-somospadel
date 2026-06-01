@@ -105,87 +105,292 @@ function renderResultsFrame(container, activeEvent, allEvents) {
                 if (badge) {
                     const status = newData.status; // 'open', 'live', 'finished'
                     const isLive = status === 'live';
-                    // Determine color based on event type AND status
-                    // If Entreno: Red/Live, or defined color. 
-                    // Let's keep the logic simple:
                     const baseColor = isEntreno ? '#FF2D55' : '#CCFF00';
+                    const badgeText = (isEntreno ? 'CONTROL DE CLASE/ENTRENO' : 'CONTROL DE TORNEO') + ' • ' + status.toUpperCase();
 
-                    const badgeColor = isLive ? '#E11D48' : baseColor;
-                    const badgeBg = isLive ? '#E11D48' : 'transparent';
-                    const badgeShadow = isLive ? '0 0 15px #E11D48' : 'none';
-                    const badgeText = (isEntreno ? 'CONTROL DE CLASE/ENTRENO' : 'CONTROL DE TORNEO') + ' | ' + status.toUpperCase();
-
-                    badge.style.color = isLive ? '#fff' : baseColor;
-                    badge.style.background = isLive ? '#E11D48' : 'transparent'; // Fix: transparent for non-live?
-                    // Actually, let's just reset the whole style string or innerHTML
-                    badge.innerHTML = badgeText;
-                    badge.style.boxShadow = badgeShadow;
-                    // Optional: Update title if changed
+                    badge.style.color = baseColor;
+                    badge.innerHTML = `<span style="width: 6px; height: 6px; border-radius: 50%; background: ${baseColor}; display: inline-block; box-shadow: 0 0 8px ${baseColor};"></span> ${badgeText}`;
+                    
                     const titleEl = document.getElementById('event-title-header');
                     if (titleEl && newData.name) titleEl.innerText = newData.name;
+
+                    const courtLabel = document.getElementById('telemetry-courts-label');
+                    if (courtLabel && newData.max_courts !== undefined) courtLabel.innerText = `${newData.max_courts} pistas`;
+
+                    const courtInput = document.getElementById('quick-courts');
+                    if (courtInput && newData.max_courts !== undefined) courtInput.value = newData.max_courts;
                 }
             }
         });
 
     container.innerHTML = `
-        <div class="dashboard-header-pro" style="margin-bottom: 2rem; background: linear-gradient(135deg, #0a0a0a 0%, #111 100%); padding: 2.5rem; border-radius: 24px;">
-            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
-                <div style="display: flex; align-items: center; gap: 1.5rem;">
-                    <div style="font-size: 2.5rem; text-shadow: 0 0 20px ${color}40;">${isEntreno ? '🏋️' : '🏆'}</div>
-                    <div>
-                        <h1 id="event-title-header" style="margin:0; color: white; font-size: 2.2rem; font-weight: 900;">${activeEvent.name}</h1>
-                        <span id="event-status-badge" style="color: ${activeEvent.status === 'live' ? '#fff' : color}; background: ${activeEvent.status === 'live' ? '#E11D48' : 'transparent'}; padding: 2px 10px; border-radius: 4px; font-weight: 800; letter-spacing: 2px; font-size: 0.8rem; text-transform: uppercase; box-shadow: ${activeEvent.status === 'live' ? '0 0 15px #E11D48' : 'none'};">
-                            ${isEntreno ? 'CONTROL DE CLASE/ENTRENO' : 'CONTROL DE TORNEO'} | ${activeEvent.status.toUpperCase()}
-                        </span>
+        <div class="dashboard-header-pro" style="margin-bottom: 2rem; background: linear-gradient(135deg, #0d0e12 0%, #15181f 100%); padding: 2rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 15px 35px rgba(0,0,0,0.4);">
+            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 2rem; align-items: start;">
+                
+                <!-- COLUMNA IZQUIERDA: INFO & METADATA -->
+                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    <!-- Badge & Icon Row -->
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="width: 54px; height: 54px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
+                            ${isEntreno ? '🏋️' : '🏆'}
+                        </div>
+                        <div>
+                            <span id="event-status-badge" style="display: inline-flex; align-items: center; gap: 6px; color: ${color}; background: rgba(${isEntreno ? '255,45,85' : '204,255,0'}, 0.08); border: 1px solid rgba(${isEntreno ? '255,45,85' : '204,255,0'}, 0.2); padding: 4px 10px; border-radius: 8px; font-weight: 800; letter-spacing: 1px; font-size: 0.7rem; text-transform: uppercase;">
+                                <span style="width: 6px; height: 6px; border-radius: 50%; background: ${color}; display: inline-block; box-shadow: 0 0 8px ${color};"></span>
+                                ${isEntreno ? 'CONTROL DE CLASE/ENTRENO' : 'CONTROL DE TORNEO'} • ${activeEvent.status.toUpperCase()}
+                            </span>
+                            <h1 id="event-title-header" style="margin: 6px 0 0 0; color: white; font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px;">${activeEvent.name}</h1>
+                        </div>
+                    </div>
+
+                    <!-- Telemetry Chips Row -->
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        <!-- Sede Chip -->
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; color: #a0aec0; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-map-marker-alt" style="color: #60A5FA;"></i> ${activeEvent.location || 'Sede no definida'}
+                        </div>
+                        <!-- Formato Chip -->
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; color: #a0aec0; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-shuffle" style="color: #A78BFA;"></i> Formato: ${activeEvent.pair_mode === 'rotating' ? 'Individual / Twister' : 'Parejas Fijas'}
+                        </div>
+                        <!-- Modo de juego -->
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; color: #a0aec0; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-table-tennis-paddle-ball" style="color: #F59E0B;"></i> <span id="telemetry-courts-label">${activeEvent.max_courts || 4} pistas</span>
+                        </div>
                     </div>
                 </div>
-                
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn-primary-pro" onclick="window.Actions.generateRound()" style="background: #3498db; color:white;">⚡ ROND+1</button>
-                    <button class="btn-outline-pro" onclick="window.Actions.sanitizeCurrentRound()" style="border-color: #f1c40f; color:#f1c40f; font-weight:800;">🧹 SANEAR</button>
-                    <button class="btn-outline-pro" id="btn-purge-safe" onclick="window.Actions.purgeFutureRoundsFromUI()" style="display:none; border-color: #ff3b30; color:#ff3b30; font-weight:800;">🗑️ BORRAR POSTERIORES</button>
-                    <button class="btn-primary-pro" onclick="window.Actions.recalculateLevels()" style="background: #9b59b6; color:white;">⚖️ ELO</button>
-                    <button class="btn-primary-pro" onclick="window.Actions.resetEvent()" style="background: #e74c3c; color:white;">🗑️ RESET</button>
-                    ${activeEvent.pair_mode === 'rotating' || activeEvent.type === 'entreno' ? `<button class="btn-primary-pro" onclick="window.Actions.resetEvent(true)" style="background: #f39c12; color:white;">🎲 AZAR</button>` : ''}
-                </div>
-            </div>
 
-            <!-- FILTERS & TABS -->
-             <div style="margin-top: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                 <div style="display: flex; gap: 10px; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 16px;">
-                    <button onclick="window.setTab('matches')" class="tab-btn active" id="tab-matches" style="flex:1; border:none; padding:10px; border-radius:10px; font-weight:900; background:var(--primary); color:black;">PARTIDOS</button>
-                    <button onclick="window.setTab('standings')" class="tab-btn" id="tab-standings" style="flex:1; border:none; padding:10px; border-radius:10px; font-weight:900; background:transparent; color:white;">POSICIONES</button>
-                    <button onclick="window.setTab('stats')" class="tab-btn" id="tab-stats" style="flex:1; border:none; padding:10px; border-radius:10px; font-weight:900; background:transparent; color:white;">ESTADÍSTICAS</button>
-                 </div>
-                 
-                 <div style="display: flex; gap: 1rem;">
-                     <div style="flex:1;">
-                        <select id="event-selector" class="pro-input" onchange="window.locationSelectEvent(this.value)" style="width:100%;">
+                <!-- COLUMNA DERECHA: SELECTOR DE EVENTO & STEPPER -->
+                <div style="display: flex; flex-direction: column; gap: 12px; align-items: flex-end;">
+                    <!-- Event Selector -->
+                    <div style="width: 100%; position: relative;">
+                        <select id="event-selector" class="pro-input" onchange="window.locationSelectEvent(this.value)" style="width:100%; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding-left: 15px; font-weight: 700;">
                             ${allEvents.map(e => `<option value="${e.id}" ${e.id === activeEvent.id ? 'selected' : ''}>[${e.type.substring(0, 3).toUpperCase()}] ${e.name}</option>`).join('')}
                         </select>
-                     </div>
-                     <div style="display:flex; gap:10px;">
-                        <input type="number" id="quick-courts" value="${activeEvent.max_courts || 4}" class="pro-input" style="width:60px; text-align:center;">
-                        <button class="btn-outline-pro" onclick="window.Actions.updateCourts()">💾</button>
                     </div>
-                 </div>
-             </div>
-             
-             <!-- ROUND TABS -->
-             <div id="round-tabs-container" style="display: flex; gap: 1rem; margin-top: 2rem; overflow-x: auto; padding-bottom: 5px;">
+
+                    <!-- Stepper Control de Pistas -->
+                    <div style="display: flex; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; height: 48px; padding: 0 4px; width: 100%; justify-content: space-between;">
+                        <span style="font-size: 0.75rem; font-weight: 800; color: #888; padding: 0 12px; text-transform: uppercase; letter-spacing: 0.5px;">Gestionar Pistas</span>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <button type="button" onclick="window.Actions.adjustCourts(-1)" style="width: 34px; height: 34px; border-radius: 8px; border: none; background: rgba(255,255,255,0.06); color: white; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">-</button>
+                            <input type="number" id="quick-courts" value="${activeEvent.max_courts || 4}" readonly style="width: 35px; border: none; background: transparent; color: white; text-align: center; font-weight: 900; font-size: 1.1rem; -moz-appearance: textfield; pointer-events: none; margin: 0;">
+                            <button type="button" onclick="window.Actions.adjustCourts(1)" style="width: 34px; height: 34px; border-radius: 8px; border: none; background: rgba(255,255,255,0.06); color: white; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">+</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SEPARADOR SLEEK -->
+            <div style="height: 1px; background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.08) 80%, rgba(255,255,255,0) 100%); margin: 1.5rem 0;"></div>
+
+            <!-- FILAS INFERIORES: TABS & ACTION BUTTONS GRID -->
+            <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; align-items: start;">
+                
+                <!-- TABS DE RESULTADOS (Izquierda) -->
+                <div style="display: flex; gap: 6px; background: rgba(255,255,255,0.02); padding: 6px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.04); margin-top: 10px;">
+                    <button onclick="window.setTab('matches')" class="tab-btn ${window.AdminController.activeTab === 'matches' ? 'active' : ''}" id="tab-matches" style="flex:1; border:none; padding:10px 15px; border-radius:10px; font-weight:900; font-size: 0.8rem; letter-spacing: 0.5px; background:${window.AdminController.activeTab === 'matches' ? color : 'transparent'}; color:${window.AdminController.activeTab === 'matches' ? '#000' : '#888'}; cursor: pointer; transition: all 0.3s;">PARTIDOS</button>
+                    <button onclick="window.setTab('standings')" class="tab-btn ${window.AdminController.activeTab === 'standings' ? 'active' : ''}" id="tab-standings" style="flex:1; border:none; padding:10px 15px; border-radius:10px; font-weight:900; font-size: 0.8rem; letter-spacing: 0.5px; background:${window.AdminController.activeTab === 'standings' ? color : 'transparent'}; color:${window.AdminController.activeTab === 'standings' ? '#000' : '#888'}; cursor: pointer; transition: all 0.3s;">POSICIONES</button>
+                    <button onclick="window.setTab('stats')" class="tab-btn ${window.AdminController.activeTab === 'stats' ? 'active' : ''}" id="tab-stats" style="flex:1; border:none; padding:10px 15px; border-radius:10px; font-weight:900; font-size: 0.8rem; letter-spacing: 0.5px; background:${window.AdminController.activeTab === 'stats' ? color : 'transparent'}; color:${window.AdminController.activeTab === 'stats' ? '#000' : '#888'}; cursor: pointer; transition: all 0.3s;">ESTADÍSTICAS</button>
+                </div>
+
+                <!-- ACCIONES DEL EVENTO EN FILA PREMIUM OPTIMIZADA (Derecha) -->
+                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; align-items: flex-end;">
+                    
+                    <div style="font-size: 0.65rem; font-weight: 800; color: #555; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px;">
+                        Control del evento
+                    </div>
+
+                    <div style="display: flex; gap: 8px; align-items: center; justify-content: flex-end; width: 100%; flex-wrap: wrap;">
+                        
+                        <!-- Botón Circular de Ayuda ❔ (Naranja/Amber) -->
+                        <button onclick="window.Actions.toggleHelpMode()" id="btn-toggle-help"
+                            style="width: 38px; height: 38px; border-radius: 50%;
+                                   border: 1.5px solid rgba(251, 191, 36, 0.5);
+                                   background: rgba(251, 191, 36, 0.08);
+                                   color: #fbbf24; font-size: 0.9rem; cursor: pointer;
+                                   display: flex; align-items: center; justify-content: center;
+                                   transition: all 0.25s; box-shadow: 0 0 8px rgba(251,191,36,0.2);"
+                            title="Activar Modo Ayuda"
+                            onmouseover="this.style.background='rgba(251,191,36,0.18)'; this.style.boxShadow='0 0 14px rgba(251,191,36,0.4)';"
+                            onmouseout="this.style.background='rgba(251,191,36,0.08)'; this.style.boxShadow='0 0 8px rgba(251,191,36,0.2)';">
+                            <i class="fas fa-question"></i>
+                        </button>
+
+                        <!-- Botón COMPARTIR 📢 (Violeta) -->
+                        <button onclick="window.Actions.shareStandings()"
+                            style="height: 38px; padding: 0 14px; border-radius: 10px;
+                                   font-weight: 800; font-size: 0.72rem; letter-spacing: 0.3px;
+                                   border: 1.5px solid rgba(167, 139, 250, 0.5);
+                                   background: rgba(167, 139, 250, 0.08);
+                                   color: #a78bfa; cursor: pointer;
+                                   display: flex; align-items: center; gap: 6px;
+                                   transition: all 0.25s; box-shadow: 0 0 8px rgba(167,139,250,0.15);"
+                            title="Copiar clasificación para WhatsApp/compartir"
+                            onmouseover="this.style.background='rgba(167,139,250,0.18)'; this.style.boxShadow='0 0 14px rgba(167,139,250,0.35)';"
+                            onmouseout="this.style.background='rgba(167,139,250,0.08)'; this.style.boxShadow='0 0 8px rgba(167,139,250,0.15)';">
+                            <i class="fas fa-share-nodes"></i> COMPARTIR
+                        </button>
+
+                        <!-- Dropdown de Herramientas 🛠️ (Azul) -->
+                        <div style="position: relative; display: inline-block;" id="tools-dropdown-wrapper">
+                            <button onclick="window.Actions.toggleToolsDropdown(event)" id="btn-tools-dropdown"
+                                style="height: 38px; padding: 0 14px; border-radius: 10px;
+                                       font-weight: 800; font-size: 0.72rem; letter-spacing: 0.3px;
+                                       border: 1.5px solid rgba(96, 165, 250, 0.5);
+                                       background: rgba(96, 165, 250, 0.08);
+                                       color: #60a5fa; cursor: pointer;
+                                       display: flex; align-items: center; gap: 6px;
+                                       transition: all 0.25s; box-shadow: 0 0 8px rgba(96,165,250,0.15);"
+                                onmouseover="this.style.background='rgba(96,165,250,0.18)'; this.style.boxShadow='0 0 14px rgba(96,165,250,0.35)';"
+                                onmouseout="this.style.background='rgba(96,165,250,0.08)'; this.style.boxShadow='0 0 8px rgba(96,165,250,0.15)';">
+                                <i class="fas fa-tools"></i> HERRAMIENTAS <i class="fas fa-chevron-down" style="font-size: 0.55rem; opacity: 0.7;"></i>
+                            </button>
+                            
+                            <!-- MENÚ FLOTANTE GLASSMORPHIC -->
+                            <div id="tools-dropdown-menu" style="display: none; position: absolute; right: 0; top: 46px; width: 270px;
+                                background: rgba(13, 14, 20, 0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                                border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;
+                                box-shadow: 0 15px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(96,165,250,0.1);
+                                z-index: 200; padding: 8px; flex-direction: column; gap: 3px;">
+
+                                <!-- Header del menú -->
+                                <div style="padding: 6px 10px 10px 10px; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 4px;">
+                                    <span style="font-size: 0.6rem; font-weight: 900; color: #555; text-transform: uppercase; letter-spacing: 1px;">🛠️ Herramientas de Control</span>
+                                </div>
+
+                                <!-- SANEAR: Amarillo con fondo sutil -->
+                                <div style="display: flex; flex-direction: column; width: 100%;">
+                                    <button onclick="window.Actions.sanitizeCurrentRound(); window.Actions.toggleToolsDropdown()"
+                                        style="width: 100%; text-align: left; padding: 10px 12px; border-radius: 9px;
+                                               border: 1px solid rgba(241,196,15,0.2);
+                                               background: rgba(241,196,15,0.06);
+                                               color: #f1c40f; font-weight: 700; font-size: 0.76rem;
+                                               display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;"
+                                        onmouseover="this.style.background='rgba(241,196,15,0.14)'; this.style.borderColor='rgba(241,196,15,0.4)';"
+                                        onmouseout="this.style.background='rgba(241,196,15,0.06)'; this.style.borderColor='rgba(241,196,15,0.2)';">
+                                        <span style="width:22px; height:22px; border-radius:6px; background:rgba(241,196,15,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="fas fa-broom" style="font-size:0.7rem;"></i></span>
+                                        <span>Sanear Ronda</span>
+                                    </button>
+                                    <p class="action-help-text" style="display: none; font-size: 0.62rem; color: #a0aec0; padding: 4px 12px 8px 44px; margin: 0; line-height: 1.4;">
+                                        Limpia partidos duplicados o fantasma si hubo micro-cortes de red.
+                                    </p>
+                                </div>
+
+                                <!-- REPARAR: Verde neón con fondo sutil -->
+                                <div style="display: flex; flex-direction: column; width: 100%;">
+                                    <button onclick="window.Actions.repairCurrentRound(); window.Actions.toggleToolsDropdown()"
+                                        style="width: 100%; text-align: left; padding: 10px 12px; border-radius: 9px;
+                                               border: 1px solid rgba(0,227,109,0.2);
+                                               background: rgba(0,227,109,0.06);
+                                               color: #00E36D; font-weight: 700; font-size: 0.76rem;
+                                               display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;"
+                                        onmouseover="this.style.background='rgba(0,227,109,0.14)'; this.style.borderColor='rgba(0,227,109,0.4)';"
+                                        onmouseout="this.style.background='rgba(0,227,109,0.06)'; this.style.borderColor='rgba(0,227,109,0.2)';">
+                                        <span style="width:22px; height:22px; border-radius:6px; background:rgba(0,227,109,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="fas fa-wrench" style="font-size:0.7rem;"></i></span>
+                                        <span>Reparar Pistas</span>
+                                    </button>
+                                    <p class="action-help-text" style="display: none; font-size: 0.62rem; color: #a0aec0; padding: 4px 12px 8px 44px; margin: 0; line-height: 1.4;">
+                                        Detecta jugadores sin partido y reconstruye sus pistas de juego.
+                                    </p>
+                                </div>
+
+                                <!-- SIMULAR / AZAR (Condicional): Naranja -->
+                                ${activeEvent.pair_mode === 'rotating' || activeEvent.type === 'entreno' ? `
+                                <div style="display: flex; flex-direction: column; width: 100%;">
+                                    <button onclick="window.Actions.resetEvent(true); window.Actions.toggleToolsDropdown()"
+                                        style="width: 100%; text-align: left; padding: 10px 12px; border-radius: 9px;
+                                               border: 1px solid rgba(243,156,18,0.2);
+                                               background: rgba(243,156,18,0.06);
+                                               color: #f39c12; font-weight: 700; font-size: 0.76rem;
+                                               display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;"
+                                        onmouseover="this.style.background='rgba(243,156,18,0.14)'; this.style.borderColor='rgba(243,156,18,0.4)';"
+                                        onmouseout="this.style.background='rgba(243,156,18,0.06)'; this.style.borderColor='rgba(243,156,18,0.2)';">
+                                        <span style="width:22px; height:22px; border-radius:6px; background:rgba(243,156,18,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="fas fa-dice" style="font-size:0.7rem;"></i></span>
+                                        <span>Reiniciar con Azar</span>
+                                    </button>
+                                    <p class="action-help-text" style="display: none; font-size: 0.62rem; color: #a0aec0; padding: 4px 12px 8px 44px; margin: 0; line-height: 1.4;">
+                                        Reinicia y regenera la Ronda 1 con parejas al 100% de azar (social).
+                                    </p>
+                                </div>
+                                ` : ''}
+
+                                <!-- SEPARADOR -->
+                                <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 3px 0;"></div>
+
+                                <!-- RESET (Reiniciar Balanceado): Rojo -->
+                                <div style="display: flex; flex-direction: column; width: 100%;">
+                                    <button onclick="window.Actions.resetEvent(); window.Actions.toggleToolsDropdown()"
+                                        style="width: 100%; text-align: left; padding: 10px 12px; border-radius: 9px;
+                                               border: 1px solid rgba(239,68,68,0.2);
+                                               background: rgba(239,68,68,0.06);
+                                               color: #ef4444; font-weight: 700; font-size: 0.76rem;
+                                               display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;"
+                                        onmouseover="this.style.background='rgba(239,68,68,0.14)'; this.style.borderColor='rgba(239,68,68,0.4)';"
+                                        onmouseout="this.style.background='rgba(239,68,68,0.06)'; this.style.borderColor='rgba(239,68,68,0.2)';">
+                                        <span style="width:22px; height:22px; border-radius:6px; background:rgba(239,68,68,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="fas fa-rotate" style="font-size:0.7rem;"></i></span>
+                                        <span>Reiniciar Balanceado</span>
+                                    </button>
+                                    <p class="action-help-text" style="display: none; font-size: 0.62rem; color: #a0aec0; padding: 4px 12px 8px 44px; margin: 0; line-height: 1.4;">
+                                        ⚠️ Borra TODOS los partidos y regenera la Ronda 1 por niveles.
+                                    </p>
+                                </div>
+
+                                <!-- BORRAR POSTERIORES (Seguridad): Rojo oscuro -->
+                                <div id="btn-purge-safe-wrapper" style="display: none; width: 100%;">
+                                    <button id="btn-purge-safe" onclick="window.Actions.purgeFutureRoundsFromUI(); window.Actions.toggleToolsDropdown()"
+                                        style="width: 100%; text-align: left; padding: 10px 12px; border-radius: 9px;
+                                               border: 1px solid rgba(239,68,68,0.2);
+                                               background: rgba(239,68,68,0.04);
+                                               color: #ef4444; font-weight: 700; font-size: 0.76rem;
+                                               display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;"
+                                        onmouseover="this.style.background='rgba(239,68,68,0.12)'; this.style.borderColor='rgba(239,68,68,0.4)';"
+                                        onmouseout="this.style.background='rgba(239,68,68,0.04)'; this.style.borderColor='rgba(239,68,68,0.2)';">
+                                        <span style="width:22px; height:22px; border-radius:6px; background:rgba(239,68,68,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="fas fa-trash-alt" style="font-size:0.7rem;"></i></span>
+                                        <span>Borrar Posteriores</span>
+                                    </button>
+                                    <p class="action-help-text" style="display: none; font-size: 0.62rem; color: #a0aec0; padding: 4px 12px 8px 44px; margin: 0; line-height: 1.4;">
+                                        Elimina rondas siguientes para corregir resultados anteriores.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ROND+1: Botón Principal Neón (Azul/Cian brillante) -->
+                        <button onclick="window.Actions.generateRound()"
+                            style="height: 38px; padding: 0 18px; border-radius: 10px;
+                                   font-weight: 900; font-size: 0.75rem; letter-spacing: 0.5px;
+                                   border: none; cursor: pointer;
+                                   background: linear-gradient(135deg, #00d4ff 0%, #0072ff 100%);
+                                   color: white; box-shadow: 0 0 14px rgba(0,212,255,0.4), 0 2px 8px rgba(0,114,255,0.3);
+                                   display: flex; align-items: center; gap: 6px; transition: all 0.25s;"
+                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,212,255,0.55), 0 0 30px rgba(0,114,255,0.3)';"
+                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 0 14px rgba(0,212,255,0.4), 0 2px 8px rgba(0,114,255,0.3)';">
+                            <i class="fas fa-wand-magic-sparkles"></i> ⚡ ROND+1
+                        </button>
+
+                    </div>
+                </div>
+
+            </div>
+
+             <!-- PESTAÑAS DE RONDAS -->
+             <div id="round-tabs-container" style="display: flex; gap: 8px; margin-top: 1.5rem; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch;">
                 ${[1, 2, 3, 4, 5, 6].map(r => `
                     <button class="btn-round-tab ${window.AdminController.currentRound === r ? 'active' : ''}" 
-                            onclick="window.Actions.switchRound(${r})">
+                            onclick="window.Actions.switchRound(${r})" style="font-size: 0.75rem; padding: 10px 18px; border-radius: 10px;">
                         RONDA ${r}
                     </button>`).join('')}
              </div>
+
         </div>
 
         <div id="results-main-layout" style="display: grid; grid-template-columns: 3fr 1fr; gap: 2rem;">
             <div id="matches-grid"><div class="loader"></div></div>
             <div style="display: flex; flex-direction: column; gap: 1.5rem;">
                 <!-- PRESENCIA EN TIEMPO REAL -->
-                <div class="glass-card-enterprise" style="padding: 1.5rem; border-color: rgba(0,227,109,0.3);">
+                <div class="glass-card-enterprise" style="padding: 1.5rem; border-color: rgba(0,227,109,0.3); border-radius:16px;">
                     <h3 style="margin:0 0 1rem 0; color:#00E36D; font-size:0.85rem; font-weight:900; letter-spacing:1px; display:flex; align-items:center; gap:8px;">
                         <i class="fas fa-satellite-dish"></i> RADAR DE PRESENCIA
                     </h3>
@@ -195,7 +400,7 @@ function renderResultsFrame(container, activeEvent, allEvents) {
                     <div style="margin-top:10px; font-size:0.6rem; color:rgba(255,255,255,0.2); text-align:center;">Actualización: cada 30s</div>
                 </div>
                 <!-- CLASIFICACIÓN -->
-                <div id="sidebar-container" class="glass-card-enterprise">
+                <div id="sidebar-container" class="glass-card-enterprise" style="border-radius:16px;">
                     <h3 style="margin:0 0 1rem 0; color:white; font-size:1rem;">CLASIFICACIÓN</h3>
                     <div id="standings-list"></div>
                 </div>
@@ -366,8 +571,8 @@ async function renderMatchesGrid(eventId, type, round) {
         // --- NEW: UI DYNAMICS FOR PURGE BUTTON ---
         setTimeout(() => {
             const maxR = Math.max(...window.AdminController.matchesBuffer.map(m => parseInt(m.round) || 1));
-            const btnPurge = document.getElementById('btn-purge-safe');
-            if (btnPurge) btnPurge.style.display = (round < maxR) ? 'block' : 'none';
+            const btnPurgeWrapper = document.getElementById('btn-purge-safe-wrapper');
+            if (btnPurgeWrapper) btnPurgeWrapper.style.display = (round < maxR) ? 'block' : 'none';
         }, 500);
 
     } catch (e) {
@@ -980,6 +1185,148 @@ window.Actions = {
         alert("Pistas actualizadas");
     },
 
+    async adjustCourts(delta) {
+        const input = document.getElementById('quick-courts');
+        if (!input) return;
+        let val = parseInt(input.value) + delta;
+        if (val < 1) val = 1;
+        input.value = val;
+        
+        const evt = window.AdminController.activeEvent;
+        if (!evt) return;
+        
+        try {
+            await EventService.updateEvent(evt.type, evt.id, { max_courts: val });
+            if (window.NotificationService) {
+                window.NotificationService.showToast(`Pistas actualizadas a ${val}`, "success");
+            }
+        } catch (e) {
+            console.error("Error al actualizar pistas:", e);
+            alert("Error: " + e.message);
+        }
+    },
+
+    shareStandings() {
+        const evt = window.AdminController.activeEvent;
+        const matches = window.AdminController.matchesBuffer || [];
+        if (!matches.length) {
+            if (window.NotificationService) {
+                window.NotificationService.showToast('No hay datos de clasificación todavía', 'warning');
+            } else {
+                alert('No hay datos de clasificación todavía.');
+            }
+            return;
+        }
+
+        // Build stats map (same logic as renderStandingsInternal)
+        const stats = {};
+        const isRotating = evt && evt.pair_mode === 'rotating';
+        matches.forEach(m => {
+            if (m.status !== 'finished' && m.status !== 'finalizado') return;
+            const process = (namesGroup, score) => {
+                let names = [];
+                if (Array.isArray(namesGroup)) names = isRotating ? namesGroup : [namesGroup.join(' / ')];
+                else if (typeof namesGroup === 'string') names = [namesGroup];
+                names.forEach(name => {
+                    if (!name || name.includes('VACANTE')) return;
+                    if (!stats[name]) stats[name] = { games: 0, played: 0 };
+                    stats[name].played++;
+                    stats[name].games += parseInt(score || 0);
+                });
+            };
+            process(m.team_a_names, m.score_a);
+            process(m.team_b_names, m.score_b);
+        });
+
+        const sorted = Object.entries(stats)
+            .map(([k, v]) => ({ name: k, ...v }))
+            .sort((a, b) => b.games - a.games);
+
+        if (!sorted.length) {
+            alert('Aún no hay partidos finalizados para compartir.');
+            return;
+        }
+
+        const medals = ['🥇', '🥈', '🥉'];
+        const eventName = evt ? evt.name : 'Torneo';
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+        let text = `🏓 *CLASIFICACIÓN EN VIVO — ${eventName.toUpperCase()}*\n`;
+        text += `📅 Actualizado: ${timeStr}h\n`;
+        text += `${'─'.repeat(28)}\n`;
+        sorted.forEach((p, i) => {
+            const medal = medals[i] || `${i + 1}.`;
+            const first = p.name.split(' ')[0];
+            text += `${medal} *${first}* — ${p.games} juegos (${p.played} PJ)\n`;
+        });
+        text += `${'─'.repeat(28)}\n`;
+        text += `⚡ _SomosPadel BCN_`;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                if (window.NotificationService) {
+                    window.NotificationService.showToast('📋 Clasificación copiada — pégala en WhatsApp', 'success');
+                } else {
+                    alert('✅ Clasificación copiada al portapapeles.');
+                }
+            }).catch(() => {
+                prompt('Copia este texto:', text);
+            });
+        } else {
+            prompt('Copia este texto para compartir:', text);
+        }
+    },
+
+    toggleToolsDropdown(event) {
+        if (event) event.stopPropagation();
+        const menu = document.getElementById('tools-dropdown-menu');
+        if (!menu) return;
+        
+        if (!event) {
+            menu.style.display = 'none';
+            return;
+        }
+        
+        const isCurrentlyOpen = menu.style.display === 'flex';
+        menu.style.display = isCurrentlyOpen ? 'none' : 'flex';
+        
+        if (!isCurrentlyOpen) {
+            const closeDropdown = (e) => {
+                const wrapper = document.getElementById('tools-dropdown-wrapper');
+                if (wrapper && !wrapper.contains(e.target)) {
+                    menu.style.display = 'none';
+                    document.removeEventListener('click', closeDropdown);
+                }
+            };
+            setTimeout(() => {
+                document.addEventListener('click', closeDropdown);
+            }, 50);
+        }
+    },
+
+    toggleHelpMode() {
+        const btn = document.getElementById('btn-toggle-help');
+        if (!btn) return;
+        const helps = document.querySelectorAll('.action-help-text');
+        const isActive = btn.classList.toggle('active');
+        
+        if (isActive) {
+            btn.style.borderColor = 'rgba(204,255,0,0.6)';
+            btn.style.color = '#CCFF00';
+            btn.style.background = 'rgba(204,255,0,0.1)';
+            helps.forEach(h => {
+                h.style.display = 'block';
+                h.style.animation = 'fadeIn 0.2s ease-out';
+            });
+        } else {
+            btn.style.borderColor = 'rgba(255,255,255,0.08)';
+            btn.style.color = '#888';
+            btn.style.background = 'rgba(255,255,255,0.03)';
+            helps.forEach(h => h.style.display = 'none');
+        }
+    },
+
     async resetEvent(randomize = false) {
         let msg = randomize
             ? "⚠️ ¿ESTÁS SEGURO?\n\nSe borrarán TODOS los partidos y se generará la Ronda 1 con PAREJAS TOTALMENTE NUEVAS (Modo Aleatorio).\n\n¿Continuar?"
@@ -1242,8 +1589,9 @@ window.setTab = (tab) => {
     // UI Update
     document.querySelectorAll('.tab-btn').forEach(b => {
         const isTarget = b.id === `tab-${tab}`;
-        b.style.background = isTarget ? 'var(--primary)' : 'transparent';
-        b.style.color = isTarget ? 'black' : 'white';
+        const activeColor = window.AdminController.activeEvent.type === 'entreno' ? '#FF2D55' : '#CCFF00';
+        b.style.background = isTarget ? activeColor : 'transparent';
+        b.style.color = isTarget ? 'black' : '#888';
     });
 
     // Toggle containers

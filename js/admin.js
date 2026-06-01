@@ -211,10 +211,7 @@ window.loadAdminView = async function (viewName) {
         else if (viewName === 'americanas_mgmt' && window.AdminViews.americanas_mgmt) {
             await window.AdminViews.americanas_mgmt();
         }
-        else if (viewName === 'autopilot') {
-            if (window.AutopilotView) window.AutopilotView.render();
-            else console.error("AutopilotView not loaded");
-        }
+
         else if (viewName === 'network_pulse') {
             if (window.NetworkPulseView) window.NetworkPulseView.render();
             else console.error("NetworkPulseView not loaded");
@@ -224,6 +221,12 @@ window.loadAdminView = async function (viewName) {
         }
         else if (viewName === 'entrenos_create' && window.AdminViews && window.AdminViews.entrenos_create) {
             await window.AdminViews.entrenos_create();
+        }
+        else if (viewName === 'open_matches_mgmt' && window.AdminViews && window.AdminViews.open_matches_mgmt) {
+            await window.AdminViews.open_matches_mgmt();
+        }
+        else if (viewName === 'open_matches_create' && window.AdminViews && window.AdminViews.open_matches_create) {
+            await window.AdminViews.open_matches_create();
         }
         else if (viewName === 'matches') {
             if (window.loadResultsView) await window.loadResultsView('americana');

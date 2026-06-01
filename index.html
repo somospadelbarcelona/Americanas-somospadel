@@ -641,6 +641,11 @@
                         RANKING
                     </div>
                     <div class="header-tab haptic-feedback"
+                        onclick="window.PlayerView?.haptic?.(20); window._showEnConstruccion(); var w=document.getElementById('nav-tabs-wrapper'); if(w) w.classList.remove('expanded');"
+                        style="flex:1;text-align:center;font-weight:700;font-size:0.55rem;color:rgba(0,0,0,0.55);cursor:pointer;height:100%;display:flex;align-items:center;justify-content:center;">
+                        ABIERTAS
+                    </div>
+                    <div class="header-tab haptic-feedback"
                         onclick="window.PlayerView?.haptic?.(20); window._navAndCollapse('equipos')"
                         style="flex:1;text-align:center;font-weight:700;font-size:0.65rem;color:rgba(0,0,0,0.55);cursor:pointer;height:100%;display:flex;align-items:center;justify-content:center;">
                         EQUIPOS
@@ -734,10 +739,13 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 5px;
+                justify-content: center;
+                gap: 4px;
                 color: #8892b0;
                 transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 text-decoration: none;
+                flex: 1;
+                height: 100%;
             }
 
             .nav-item.active {
@@ -745,19 +753,27 @@
             }
 
             .nav-item i {
-                font-size: 1.15rem;
+                font-size: 1.25rem;
+                width: 1.25rem;
+                height: 1.25rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                line-height: 1;
+                flex-shrink: 0;
             }
 
             .nav-item span {
-                font-size: 0.55rem;
+                font-size: 0.52rem;
                 font-weight: 800;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
+                line-height: 1;
+                text-align: center;
             }
 
             .nav-item.active i {
                 color: #99cc00;
-                transform: translateY(-3px);
                 filter: drop-shadow(0 4px 10px rgba(153, 204, 0, 0.3));
             }
 
@@ -795,6 +811,10 @@
                 <i class="fas fa-trophy"></i>
                 <span>Ranking</span>
             </div>
+            <div class="nav-item haptic-feedback" onclick="window.PlayerView?.haptic?.(20); window._showEnConstruccion()" id="nav-partidas_abiertas">
+                <i class="fab fa-whatsapp"></i>
+                <span>Partidas Abiertas</span>
+            </div>
             <div class="nav-item" id="nav-teams" onclick="window.Router.navigate('teams')">
                 <i class="fas fa-users"></i>
                 <span>EQUIPOS</span>
@@ -813,6 +833,110 @@
     </div>
 
     <!-- Modals -->
+
+    <!-- ===================== MODAL CONTRASEÑA PARTIDAS ABIERTAS ===================== -->
+    <div id="modal-password-abiertas" style="display:none; position:fixed; inset:0; z-index:99999; align-items:center; justify-content:center; background:rgba(0,0,0,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);" onclick="if(event.target===this) window._hidePwdAbiertas();">
+        <div id="modal-pwd-card" style="background:linear-gradient(145deg,#0a192f,#0d2137); border:1px solid rgba(204,255,0,0.2); border-radius:28px; padding:44px 36px 36px; max-width:340px; width:88%; text-align:center; box-shadow:0 30px 80px rgba(0,0,0,0.65), 0 0 50px rgba(204,255,0,0.06); position:relative; animation:pwdBounceIn 0.38s cubic-bezier(0.34,1.56,0.64,1);">
+            <!-- Línea neon superior -->
+            <div style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:55%; height:3px; background:linear-gradient(90deg,transparent,#CCFF00,transparent); border-radius:0 0 4px 4px;"></div>
+            <!-- Icono -->
+            <div id="pwd-icon" style="font-size:2.8rem; margin-bottom:14px; transition:transform 0.3s;">🔐</div>
+            <!-- Título -->
+            <div style="font-size:1.2rem; font-weight:900; color:#ffffff; letter-spacing:0.5px; margin-bottom:4px;">Zona Privada</div>
+            <div style="font-size:0.75rem; color:rgba(204,255,0,0.7); font-weight:700; text-transform:uppercase; letter-spacing:2px; margin-bottom:24px;">Partidas Abiertas</div>
+            <!-- Input contraseña -->
+            <div style="position:relative; margin-bottom:8px;">
+                <input id="pwd-abiertas-input" type="password" placeholder="Introduce el código de acceso" maxlength="10"
+                    style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.12); border-radius:14px; padding:14px 48px 14px 18px; color:#fff; font-size:1rem; font-weight:700; letter-spacing:3px; outline:none; transition:border-color 0.25s, box-shadow 0.25s; text-align:center;"
+                    onfocus="this.style.borderColor='#CCFF00'; this.style.boxShadow='0 0 20px rgba(204,255,0,0.18)'"
+                    onblur="this.style.borderColor='rgba(255,255,255,0.12)'; this.style.boxShadow='none'"
+                    onkeydown="if(event.key==='Enter') window._checkPwdAbiertas()"
+                    oninput="document.getElementById('pwd-error-msg').style.opacity='0'">
+                <!-- Ojo toggle -->
+                <span onclick="var i=document.getElementById('pwd-abiertas-input'); i.type=i.type==='password'?'text':'password'; this.textContent=i.type==='password'?'👁️':'🙈';"
+                    style="position:absolute; right:14px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:1rem; user-select:none;">👁️</span>
+            </div>
+            <!-- Mensaje de error -->
+            <div id="pwd-error-msg" style="font-size:0.75rem; color:#ff4d6d; font-weight:700; height:20px; margin-bottom:16px; opacity:0; transition:opacity 0.3s;">
+                ❌ Código incorrecto. Inténtalo de nuevo.
+            </div>
+            <!-- Botones -->
+            <div style="display:flex; gap:10px;">
+                <button onclick="window._hidePwdAbiertas()"
+                    style="flex:1; background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.6); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:13px; font-weight:800; font-size:0.85rem; cursor:pointer; transition:background 0.2s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">Cancelar</button>
+                <button onclick="window._checkPwdAbiertas()"
+                    style="flex:2; background:#CCFF00; color:#0a192f; border:none; border-radius:14px; padding:13px; font-weight:900; font-size:0.9rem; cursor:pointer; letter-spacing:0.5px; box-shadow:0 6px 20px rgba(204,255,0,0.3); transition:transform 0.15s, box-shadow 0.15s;"
+                    onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">Acceder →</button>
+            </div>
+        </div>
+    </div>
+    <style>
+        @keyframes pwdBounceIn {
+            from { opacity:0; transform:scale(0.78) translateY(20px); }
+            to   { opacity:1; transform:scale(1) translateY(0); }
+        }
+        @keyframes pwdShake {
+            0%,100% { transform:translateX(0); }
+            20%     { transform:translateX(-8px); }
+            40%     { transform:translateX(8px); }
+            60%     { transform:translateX(-5px); }
+            80%     { transform:translateX(5px); }
+        }
+        @keyframes pwdSuccess {
+            0%   { border-color:rgba(204,255,0,0.2); box-shadow:0 30px 80px rgba(0,0,0,0.65); }
+            50%  { border-color:#CCFF00; box-shadow:0 0 60px rgba(204,255,0,0.35); }
+            100% { border-color:rgba(204,255,0,0.2); box-shadow:0 30px 80px rgba(0,0,0,0.65); }
+        }
+    </style>
+    <script>
+        window._showEnConstruccion = function() {
+            var m = document.getElementById('modal-password-abiertas');
+            if (!m) return;
+            m.style.display = 'flex';
+            var inp = document.getElementById('pwd-abiertas-input');
+            if (inp) { inp.value = ''; inp.focus(); }
+            var err = document.getElementById('pwd-error-msg');
+            if (err) err.style.opacity = '0';
+        };
+        window._hidePwdAbiertas = function() {
+            var m = document.getElementById('modal-password-abiertas');
+            if (m) m.style.display = 'none';
+        };
+        window._hideEnConstruccion = window._hidePwdAbiertas;
+        window._checkPwdAbiertas = function() {
+            var inp = document.getElementById('pwd-abiertas-input');
+            if (!inp) return;
+            var val = inp.value.trim().toUpperCase();
+            if (val === 'NOA21') {
+                // Éxito — efecto verde y navegar
+                var card = document.getElementById('modal-pwd-card');
+                var icon = document.getElementById('pwd-icon');
+                if (card) card.style.animation = 'pwdSuccess 0.5s ease forwards';
+                if (icon) icon.textContent = '✅';
+                setTimeout(function() {
+                    window._hidePwdAbiertas();
+                    if (window.Router) window.Router.navigate('partidas_abiertas');
+                    if (card) card.style.animation = '';
+                    if (icon) icon.textContent = '🔐';
+                }, 550);
+            } else {
+                // Error — shake + mensaje
+                var card = document.getElementById('modal-pwd-card');
+                var err = document.getElementById('pwd-error-msg');
+                var icon = document.getElementById('pwd-icon');
+                if (err) err.style.opacity = '1';
+                if (icon) { icon.textContent = '❌'; setTimeout(function(){ icon.textContent='🔐'; }, 800); }
+                if (card) {
+                    card.style.animation = 'pwdShake 0.4s ease';
+                    setTimeout(function(){ card.style.animation = 'none'; }, 420);
+                }
+                if (inp) { inp.value = ''; inp.focus(); }
+            }
+        };
+    </script>
+    <!-- ===================== FIN MODAL CONTRASEÑA PARTIDAS ABIERTAS ===================== -->
+
     <!-- Force Login Modal on Load -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -1519,6 +1643,10 @@
     <!-- Ranking Module -->
     <script src="js/modules/ranking/RankingView.js" defer></script>
     <script src="js/modules/ranking/RankingController.js" defer></script>
+
+    <!-- Partidas Abiertas Module -->
+    <script src="js/modules/open_matches/OpenMatchesView.js" defer></script>
+    <script src="js/modules/open_matches/OpenMatchesController.js" defer></script>
 
     <!-- Teams Module -->
     <script src="js/modules/teams/teams_data.js?v=11" defer></script>

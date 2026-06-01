@@ -131,33 +131,43 @@ window.AdminViews.entrenos_create = async function () {
     if (titleEl) titleEl.textContent = 'Crear Nuevo Entreno';
 
     content.innerHTML = `
-        <div style="max-width: 600px; margin: 0 auto;">
-            <div class="glass-card-enterprise" style="padding: 2.5rem;">
-                <h3 style="color: var(--primary); margin-bottom: 2rem; display: flex; align-items: center; gap: 12px;">
-                    <i class="fas fa-plus-circle" style="font-size: 1.5rem;"></i> CONFIGURACIÓN DEL EVENTO
+        <div style="max-width: 650px; margin: 0 auto;">
+            <div class="glass-card-enterprise fade-in" style="padding: 2.5rem;">
+                <h3 style="color: var(--primary); margin-bottom: 2rem; display: flex; align-items: center; gap: 12px; font-weight:800; font-size: 1.2rem;">
+                    <i class="fas fa-plus-circle" style="font-size: 1.5rem; color: #CCFF00;"></i> CREAR NUEVO EVENTO DE ENTRENO
                 </h3>
                 
-                <form id="create-entreno-form" class="pro-form">
-                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                <form id="create-entreno-form" class="pro-form compact-admin-form">
+                    
+                    <h3 style="color: #CCFF00; font-size: 0.85rem; margin-bottom: 15px; border-bottom: 1px solid rgba(204,255,0,0.2); padding-bottom: 8px;">
+                        <i class="fas fa-sliders-h"></i> CONFIGURACIÓN GENERAL
+                    </h3>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
                         <label>NOMBRE DEL EVENTO</label>
-                        <input type="text" name="name" class="pro-input" placeholder="Ej: Entreno Mañanero Intensivo" required style="font-weight:800; font-size: 1.1rem; height: 50px;">
+                        <input type="text" name="name" class="pro-input" placeholder="Ej: Entreno Mañanero Intensivo" required
+                            style="font-weight: 800; font-size: 1rem;">
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px;">
                         <div class="form-group">
-                            <label>FECHA DEL EVENTO</label>
-                            <input type="date" name="date" class="pro-input" required style="height: 50px;">
+                            <label>FECHA</label>
+                            <input type="date" name="date" class="pro-input" required>
                         </div>
                         <div class="form-group">
-                            <label>HORA DE INICIO</label>
-                            <input type="time" name="time" class="pro-input" value="10:00" required style="height: 50px;">
+                            <label>INICIO</label>
+                            <input type="time" name="time" class="pro-input" value="10:00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>FIN</label>
+                            <input type="time" name="time_end" class="pro-input" value="11:30">
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
                         <div class="form-group">
-                            <label>CATEGORÍA / GÉNERO</label>
-                            <select name="category" class="pro-input" style="height: 50px;">
+                            <label>CATEGORÍA</label>
+                            <select name="category" class="pro-input">
                                 <option value="open">TODOS / OPEN</option>
                                 <option value="male">MASCULINO</option>
                                 <option value="female">FEMENINO</option>
@@ -165,41 +175,85 @@ window.AdminViews.entrenos_create = async function () {
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>SEDE / UBICACIÓN</label>
-                            <select name="location" class="pro-input" style="height: 50px;">
+                            <label>SEDE</label>
+                            <select name="location" class="pro-input">
                                 <option value="Barcelona Pádel el Prat">EL PRAT</option>
                                 <option value="Delfos Cornellá">DELFOS</option>
                             </select>
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
                         <div class="form-group">
-                            <label>NÚMERO DE PISTAS</label>
-                            <input type="number" name="max_courts" class="pro-input" value="4" min="1" style="height: 50px;">
+                            <label>MODO DE JUEGO</label>
+                            <select name="pair_mode" class="pro-input">
+                                <option value="fixed">🔒 PAREJA FIJA (Manual)</option>
+                                <option value="fixed_admin">👔 PAREJA FIJA (Admin)</option>
+                                <option value="fixed_auto">🤖 PAREJA FIJA (Auto)</option>
+                                <option value="rotating">🌪️ TWISTER / INDIVIDUAL</option>
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label>Nº PARTIDOS (RONDAS)</label>
-                            <input type="number" name="rounds_count" class="pro-input" value="6" min="1" style="height: 50px;">
-                        </div>
-                         <div class="form-group">
-                            <label>MODO DE JUEGO (PRO)</label>
-                            <select name="pair_mode" class="pro-input" style="height: 50px;">
-                                <option value="fixed">🔒 PAREJA FIJA (Elige pareja)</option>
-                                <option value="fixed_admin">👔 PAREJA FIJA (Admin elige)</option>
-                                <option value="fixed_auto">🤖 PAREJA FIJA (Automática)</option>
-                                <option value="rotating">🌪️ TWISTER (Individual)</option>
+                            <label>ESTADO</label>
+                            <select name="status" class="pro-input" style="font-weight: 800;">
+                                <option value="open" selected>🟢 ABIERTA</option>
+                                <option value="pairing">🔀 EMPAREJAMIENTO</option>
+                                <option value="live">🎾 EN JUEGO</option>
+                                <option value="finished">🏁 FINALIZADA</option>
+                                <option value="cancelled">⛔ ANULADO</option>
                             </select>
                         </div>
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 2rem;">
-                        <label>URL DE IMAGEN (OPCIONAL)</label>
-                        <input type="text" name="image_url" class="pro-input" placeholder="Se asignará una automática si se deja vacío" style="font-size: 0.85rem; height: 50px;">
+                    <h3 style="color: #60A5FA; font-size: 0.85rem; margin-bottom: 15px; border-bottom: 1px solid rgba(96,165,250,0.2); padding-bottom: 8px; margin-top: 20px;">
+                        <i class="fas fa-cogs"></i> LOGÍSTICA
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group">
+                            <label>PISTAS</label>
+                            <input type="number" name="max_courts" class="pro-input" value="4" placeholder="4">
+                        </div>
+                        <div class="form-group">
+                            <label>RONDAS</label>
+                            <input type="number" name="rounds_count" class="pro-input" value="6">
+                        </div>
+                        <div class="form-group">
+                            <label>€ SOCIO</label>
+                            <input type="number" name="price_members" step="0.1" class="pro-input" value="15">
+                        </div>
+                        <div class="form-group">
+                            <label>€ EXT.</label>
+                            <input type="number" name="price_external" step="0.1" class="pro-input" value="17">
+                        </div>
                     </div>
 
-                    <input type="hidden" name="status" value="open">
-                    
+                    <div class="form-group" style="margin-top: 15px; margin-bottom: 2rem;">
+                        <label>IMAGEN DE PORTADA</label>
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                            <input type="text" name="image_url" id="create-entreno-img-input" class="pro-input"
+                                placeholder="URL de la imagen...">
+                            <img id="create-entreno-img-preview" src=""
+                                style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: #333;">
+                        </div>
+
+                        <!-- Quick Image Selectors -->
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                            <button type="button" class="btn-micro"
+                                onclick="selectCreateEntrenoImage('img/entreno masculino prat.jpg')">Prat Masc</button>
+                            <button type="button" class="btn-micro"
+                                onclick="selectCreateEntrenoImage('img/entreno femenino prat.jpg')">Prat Fem</button>
+                            <button type="button" class="btn-micro" style="background: #ccff00; color: #000;"
+                                onclick="selectCreateEntrenoImage('img/entreno mixto prat.jpg')">Prat Mixto</button>
+                            <button type="button" class="btn-micro"
+                                onclick="selectCreateEntrenoImage('img/entreno masculino delfos.jpg')">Delfos Masc</button>
+                            <button type="button" class="btn-micro"
+                                onclick="selectCreateEntrenoImage('img/entreno femenino delfos.jpg')">Delfos Fem</button>
+                            <button type="button" class="btn-micro" style="background: #ccff00; color: #000;"
+                                onclick="selectCreateEntrenoImage('img/entreno mixto delfos.jpg')">Delfos Mixto</button>
+                        </div>
+                    </div>
+
                     <div style="display: flex; gap: 15px; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
                         <button type="button" class="btn-outline-pro" onclick="loadAdminView('entrenos_mgmt')" style="flex: 1; height: 55px; font-weight: 700;">
                             CANCELAR
@@ -358,6 +412,15 @@ function renderEntrenoCard(e) {
         </div>`;
 }
 
+window.selectCreateEntrenoImage = (url) => {
+    const input = document.getElementById('create-entreno-img-input');
+    if (input) {
+        input.value = url;
+        const preview = document.getElementById('create-entreno-img-preview');
+        if (preview) preview.src = url;
+    }
+};
+
 function setupCreateForm() {
     const form = document.getElementById('create-entreno-form');
     if (!form) return;
@@ -380,16 +443,25 @@ function setupCreateForm() {
 
         // Smart Default Image
         const autoImg = EventService.getAutoImage(lVal, cVal, 'entreno');
-        if (img && !img.value) img.value = autoImg; // Only set if empty
-
-        // Name Sync (Optional, only if user hasn't typed a custom name)
-        // if (!name.value || name.value.startsWith('ENTRENO')) {
-        //     name.value = `ENTRENO ${ cVal.toUpperCase() } `;
-        // }
+        if (img && !img.value) {
+            img.value = autoImg; // Only set if empty
+            const preview = document.getElementById('create-entreno-img-preview');
+            if (preview) preview.src = autoImg;
+        }
     };
 
     if (cat) cat.onchange = sync;
     if (loc) loc.onchange = sync;
+    
+    if (img) {
+        img.oninput = () => {
+            const preview = document.getElementById('create-entreno-img-preview');
+            if (preview) preview.src = img.value;
+        };
+    }
+
+    // Run initial sync to pre-populate default image
+    sync();
 
     form.onsubmit = async (e) => {
         e.preventDefault();

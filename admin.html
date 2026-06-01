@@ -285,6 +285,27 @@
                 -webkit-overflow-scrolling: touch !important;
             }
             
+            /* Estilizar la barra de scroll vertical del menú lateral móvil para que sea visible y premium */
+            .sidebar-pro::-webkit-scrollbar {
+                width: 6px !important;
+                display: block !important;
+            }
+            
+            .sidebar-pro::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.05) !important;
+                border-radius: 3px !important;
+            }
+            
+            .sidebar-pro::-webkit-scrollbar-thumb {
+                background: rgba(204, 255, 0, 0.4) !important; /* Amarillo neón translúcido */
+                border-radius: 3px !important;
+                border: 1px solid rgba(255, 255, 255, 0.8) !important;
+            }
+            
+            .sidebar-pro::-webkit-scrollbar-thumb:hover {
+                background: #ccff00 !important;
+            }
+            
             /* Habilitar scroll horizontal fluido en la barra horizontal móvil */
             .sidebar-pro .nav-menu {
                 display: flex !important;
@@ -293,14 +314,29 @@
                 overflow-x: auto !important;
                 overflow-y: hidden !important;
                 -webkit-overflow-scrolling: touch !important;
-                padding: 10px 15px !important;
+                padding: 10px 15px 12px 15px !important;
                 gap: 10px !important;
                 margin-top: 1rem !important;
-                scrollbar-width: none !important; /* Ocultar barra en Firefox */
             }
             
+            /* Estilizar barra de scroll horizontal en móviles para guiar la usabilidad */
             .sidebar-pro .nav-menu::-webkit-scrollbar {
-                display: none !important; /* Ocultar barra en Chrome/Safari */
+                height: 5px !important;
+                display: block !important;
+            }
+            
+            .sidebar-pro .nav-menu::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.02) !important;
+                border-radius: 4px !important;
+            }
+            
+            .sidebar-pro .nav-menu::-webkit-scrollbar-thumb {
+                background: rgba(204, 255, 0, 0.45) !important;
+                border-radius: 4px !important;
+            }
+            
+            .sidebar-pro .nav-menu::-webkit-scrollbar-thumb:hover {
+                background: #ccff00 !important;
             }
             
             /* Botones del menú móvil: Prevenir deformación (flex-shrink) y forzar white-space */
@@ -357,6 +393,591 @@
             .sidebar-pro .user-profile-widget * {
                 background: #ffffff !important;
                 color: #0f172a !important;
+            }
+            
+            /* Ocultar títulos de sección en móviles para ahorrar espacio */
+            .sidebar-section-title {
+                display: none !important;
+            }
+            
+            /* Las secciones en móviles fluyen en fila horizontal */
+            .sidebar-section {
+                display: contents !important;
+            }
+            
+            /* Envoltorio del submenú en móvil */
+            .submenu-wrapper {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 0 !important; /* Sin gap por defecto para evitar espacios fantasmas en móvil */
+                flex-shrink: 0 !important;
+                width: auto !important; /* IMPORTANTE: evitar que herede width: 100% y estire el contenedor */
+            }
+            .submenu-wrapper.expanded {
+                gap: 10px !important; /* Restablecer gap al expandirse */
+            }
+            
+            /* El disparador del submenú en móvil */
+            .sidebar-pro .submenu-trigger {
+                display: inline-flex !important;
+                flex: 0 0 auto !important;
+                width: auto !important;
+                min-width: max-content !important;
+                white-space: nowrap !important;
+                padding: 10px 16px !important;
+                border-radius: 14px !important;
+                align-items: center !important;
+                gap: 8px !important;
+                margin-bottom: 0 !important;
+                font-size: 0.85rem !important;
+            }
+            
+            /* Rotación de la flechita en móvil al estar expandido */
+            .submenu-wrapper.expanded .submenu-arrow {
+                transform: rotate(90deg) !important;
+            }
+            
+            /* Contenido del submenú en móvil: colapsado horizontalmente por defecto */
+            .submenu-content {
+                display: none !important; /* Solución definitiva WebKit: ocultar por completo para evitar espacios fantasmas en móvil */
+                flex-direction: row !important;
+                gap: 0 !important; /* Sin gap cuando está colapsado */
+                padding-left: 0 !important;
+                border: none !important;
+                margin: 0 !important;
+                width: 0 !important;
+                min-width: 0 !important; /* Forzar colapso absoluto sobre min-width automático */
+                
+                /* Colapso horizontal fluído */
+                max-width: 0 !important;
+                max-height: none !important;
+                overflow: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+                transition: max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, gap 0.35s ease !important;
+            }
+            
+            /* Cuando está expandido, se muestra horizontalmente */
+            .submenu-wrapper.expanded .submenu-content {
+                display: flex !important; /* Mostrar como flex al expandir */
+                max-width: 800px !important;
+                width: auto !important;
+                min-width: max-content !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                padding: 0 5px !important;
+                gap: 10px !important; /* Restablecer gap interno al expandirse */
+            }
+            
+            /* Los ítems del submenú se comportan como nav-item-pro en móvil */
+            .sidebar-pro .submenu-item {
+                flex: 0 0 auto !important;
+                width: auto !important;
+                min-width: max-content !important;
+                white-space: nowrap !important;
+                padding: 10px 16px !important;
+                border-radius: 14px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                margin-bottom: 0 !important;
+                font-size: 0.85rem !important;
+            }
+            
+            .sidebar-pro .submenu-item:not(.active) {
+                background: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                color: #475569 !important;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
+            }
+            
+            .sidebar-pro .submenu-item::before {
+                display: none !important;
+            }
+            
+            .sidebar-pro .submenu-item.active {
+                background: #ccff00 !important;
+                border: 1px solid #000000 !important;
+                color: #000000 !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+                font-weight: 900 !important;
+            }
+        }
+
+        /* --- 📂 ESTRUCTURACIÓN DE SUBMENÚS PREMIUM EN ESCRITORIO --- */
+        .sidebar-section {
+            margin-bottom: 1.5rem;
+            padding: 0 0.5rem;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.75rem;
+            padding-left: 0.75rem;
+            border-left: 3px solid #ccff00;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 1rem;
+        }
+
+        .submenu-wrapper {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0.5rem;
+            width: 100%;
+        }
+
+        .submenu-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100% !important;
+        }
+
+        .submenu-trigger-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .submenu-arrow {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-left: auto;
+            pointer-events: none;
+        }
+
+        /* Al expandir, rota la flecha e ilumina */
+        .submenu-wrapper.expanded .submenu-arrow {
+            transform: rotate(90deg);
+            color: #ccff00 !important;
+        }
+
+        .submenu-content {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+            padding-left: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            margin-top: 0;
+            border-left: 1px dashed #cbd5e1;
+            margin-left: 1.7rem;
+        }
+
+        .submenu-wrapper.expanded .submenu-content {
+            max-height: 500px;
+            opacity: 1;
+            pointer-events: auto;
+            margin-top: 0.4rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .submenu-item {
+            padding: 8px 14px !important;
+            font-size: 0.8rem !important;
+            border-radius: 12px !important;
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #475569 !important;
+            margin-bottom: 0 !important;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .submenu-item:hover {
+            background: rgba(204, 255, 0, 0.08) !important;
+            color: #0f172a !important;
+            transform: translateX(4px) !important;
+            border-color: rgba(204, 255, 0, 0.2) !important;
+        }
+
+        .submenu-item.active {
+            background: #ccff00 !important;
+            color: #000000 !important;
+            font-weight: 800 !important;
+            border-color: #000000 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .submenu-item.active::after {
+            display: none !important;
+        }
+
+        .submenu-item::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #94a3b8;
+            display: inline-block;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+
+        .submenu-item:hover::before {
+            background: #ccff00;
+            transform: scale(1.3);
+        }
+
+        /* --- 🎨 COLORACIÓN SELECTIVA POR BLOQUES CROMÁTICOS PREMIUM --- */
+        
+        /* 🏠 Bloque Inicio / Retorno */
+        .nav-item-pro.nav-item-back {
+            border: 1px solid rgba(15, 23, 42, 0.2) !important;
+            background: rgba(15, 23, 42, 0.03) !important;
+            color: #0f172a !important;
+            margin-bottom: 1rem !important;
+        }
+        .nav-item-pro.nav-item-back:hover {
+            background: rgba(15, 23, 42, 0.08) !important;
+            border-color: rgba(15, 23, 42, 0.4) !important;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1) !important;
+        }
+
+
+
+        /* Smart Analytics (Cian) */
+        .nav-item-pro.btn-analytics {
+            border: 1px solid rgba(6, 182, 212, 0.4) !important;
+            background: rgba(6, 182, 212, 0.05) !important;
+            color: #0891b2 !important;
+        }
+        .nav-item-pro.btn-analytics:hover,
+        .nav-item-pro.btn-analytics.active {
+            background: #0891b2 !important;
+            color: #ffffff !important;
+            border-color: #0891b2 !important;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.25) !important;
+        }
+        .nav-item-pro.btn-analytics i {
+            color: inherit !important;
+        }
+
+        /* Gestor de Blog (Azul cielo) */
+        .nav-item-pro.btn-blog {
+            border: 1px solid rgba(14, 165, 233, 0.4) !important;
+            background: rgba(14, 165, 233, 0.05) !important;
+            color: #0284c7 !important;
+        }
+        .nav-item-pro.btn-blog:hover,
+        .nav-item-pro.btn-blog.active {
+            background: #0284c7 !important;
+            color: #ffffff !important;
+            border-color: #0284c7 !important;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.25) !important;
+        }
+        .nav-item-pro.btn-blog i {
+            color: inherit !important;
+        }
+
+        /* 🎾 Bloque 2: Gestión Deportiva (Azul, Dorado, Verde, Naranja) */
+        /* Americanas (Azul Royal) */
+        .nav-group-americana {
+            border: 1px solid rgba(59, 130, 246, 0.4) !important;
+            background: rgba(59, 130, 246, 0.05) !important;
+            color: #2563eb !important;
+        }
+        .nav-group-americana:hover,
+        .nav-group-americana.expanded,
+        .nav-group-americana.active {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border-color: #2563eb !important;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25) !important;
+        }
+        .nav-group-americana i {
+            color: inherit !important;
+        }
+        /* Americanas Submenú Items */
+        .submenu-item.nav-group-americana-sub {
+            border: 1px solid rgba(59, 130, 246, 0.3) !important;
+            background: rgba(59, 130, 246, 0.02) !important;
+            color: #2563eb !important;
+        }
+        .submenu-item.nav-group-americana-sub:hover,
+        .submenu-item.nav-group-americana-sub.active {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border-color: #2563eb !important;
+        }
+        .submenu-item.nav-group-americana-sub::before {
+            background: #2563eb !important;
+        }
+        .submenu-item.nav-group-americana-sub.active::before {
+            background: #ffffff !important;
+        }
+
+        /* Torneos (Dorado Premium) */
+        .nav-item-pro.btn-tournaments {
+            border: 1px solid rgba(234, 179, 8, 0.5) !important;
+            background: rgba(234, 179, 8, 0.08) !important;
+            color: #ca8a04 !important;
+        }
+        .nav-item-pro.btn-tournaments:hover,
+        .nav-item-pro.btn-tournaments.active {
+            background: #ca8a04 !important;
+            color: #ffffff !important;
+            border-color: #ca8a04 !important;
+            box-shadow: 0 4px 15px rgba(234, 179, 8, 0.25) !important;
+        }
+        .nav-item-pro.btn-tournaments i {
+            color: inherit !important;
+        }
+
+        /* Entrenos (Verde Lima Padel Ball) */
+        .nav-group-entreno {
+            border: 1px solid rgba(101, 163, 13, 0.5) !important;
+            background: rgba(101, 163, 13, 0.05) !important;
+            color: #65a30d !important;
+        }
+        .nav-group-entreno:hover,
+        .nav-group-entreno.expanded,
+        .nav-group-entreno.active {
+            background: #84cc16 !important;
+            color: #000000 !important;
+            border-color: #84cc16 !important;
+            box-shadow: 0 4px 15px rgba(101, 163, 13, 0.25) !important;
+        }
+        .nav-group-entreno i {
+            color: inherit !important;
+        }
+        /* Entrenos Submenú Items */
+        .submenu-item.nav-group-entreno-sub {
+            border: 1px solid rgba(101, 163, 13, 0.3) !important;
+            background: rgba(101, 163, 13, 0.02) !important;
+            color: #65a30d !important;
+        }
+        .submenu-item.nav-group-entreno-sub:hover,
+        .submenu-item.nav-group-entreno-sub.active {
+            background: #84cc16 !important;
+            color: #000000 !important;
+            border-color: #84cc16 !important;
+        }
+        .submenu-item.nav-group-entreno-sub::before {
+            background: #65a30d !important;
+        }
+        .submenu-item.nav-group-entreno-sub.active::before {
+            background: #000000 !important;
+        }
+
+        /* Partidas Abiertas (Naranja Deportivo) */
+        .nav-group-open-matches {
+            border: 1px solid rgba(249, 115, 22, 0.5) !important;
+            background: rgba(249, 115, 22, 0.05) !important;
+            color: #ea580c !important;
+        }
+        .nav-group-open-matches:hover,
+        .nav-group-open-matches.expanded,
+        .nav-group-open-matches.active {
+            background: #f97316 !important;
+            color: #ffffff !important;
+            border-color: #f97316 !important;
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.25) !important;
+        }
+        .nav-group-open-matches i {
+            color: inherit !important;
+        }
+        /* Partidas Abiertas Submenú Items */
+        .submenu-item.nav-group-open-matches-sub {
+            border: 1px solid rgba(249, 115, 22, 0.3) !important;
+            background: rgba(249, 115, 22, 0.02) !important;
+            color: #ea580c !important;
+        }
+        .submenu-item.nav-group-open-matches-sub:hover,
+        .submenu-item.nav-group-open-matches-sub.active {
+            background: #f97316 !important;
+            color: #ffffff !important;
+            border-color: #f97316 !important;
+        }
+        .submenu-item.nav-group-open-matches-sub::before {
+            background: #ea580c !important;
+        }
+        .submenu-item.nav-group-open-matches-sub.active::before {
+            background: #ffffff !important;
+        }
+
+        /* 🛠️ Bloque 3: Administración & Datos (Esmeralda, Teal, Rojo) */
+        /* Base de Datos (Esmeralda) */
+        .nav-item-pro.btn-database {
+            border: 1px solid rgba(16, 185, 129, 0.4) !important;
+            background: rgba(16, 185, 129, 0.05) !important;
+            color: #059669 !important;
+        }
+        .nav-item-pro.btn-database:hover,
+        .nav-item-pro.btn-database.active {
+            background: #059669 !important;
+            color: #ffffff !important;
+            border-color: #059669 !important;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25) !important;
+        }
+        .nav-item-pro.btn-database i {
+            color: inherit !important;
+        }
+
+        /* Sincronización (Teal/Turquesa) */
+        .nav-item-pro.btn-sync-trigger {
+            border: 1px solid rgba(13, 148, 136, 0.4) !important;
+            background: rgba(13, 148, 136, 0.05) !important;
+            color: #0d9488 !important;
+        }
+        .nav-item-pro.btn-sync-trigger:hover,
+        .nav-item-pro.btn-sync-trigger.expanded,
+        .nav-item-pro.btn-sync-trigger.active {
+            background: #0d9488 !important;
+            color: #ffffff !important;
+            border-color: #0d9488 !important;
+            box-shadow: 0 4px 15px rgba(13, 148, 136, 0.25) !important;
+        }
+        .nav-item-pro.btn-sync-trigger i {
+            color: inherit !important;
+        }
+        /* Sincro Submenú Items */
+        .submenu-item.btn-sync-sub {
+            border: 1px solid rgba(13, 148, 136, 0.3) !important;
+            background: rgba(13, 148, 136, 0.02) !important;
+            color: #0d9488 !important;
+        }
+        .submenu-item.btn-sync-sub:hover,
+        .submenu-item.btn-sync-sub.active {
+            background: #0d9488 !important;
+            color: #ffffff !important;
+            border-color: #0d9488 !important;
+        }
+        .submenu-item.btn-sync-sub::before {
+            background: #0d9488 !important;
+        }
+        .submenu-item.btn-sync-sub.active::before {
+            background: #ffffff !important;
+        }
+
+        /* Mantenimiento (Rojo Carmesí) */
+        .nav-item-pro.btn-maint-trigger {
+            border: 1px solid rgba(239, 68, 68, 0.4) !important;
+            background: rgba(239, 68, 68, 0.05) !important;
+            color: #dc2626 !important;
+        }
+        .nav-item-pro.btn-maint-trigger:hover,
+        .nav-item-pro.btn-maint-trigger.expanded,
+        .nav-item-pro.btn-maint-trigger.active {
+            background: #dc2626 !important;
+            color: #ffffff !important;
+            border-color: #dc2626 !important;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.25) !important;
+        }
+        .nav-item-pro.btn-maint-trigger i {
+            color: inherit !important;
+        }
+        /* Mantenimiento Submenú Items */
+        .submenu-item.btn-maint-sub {
+            border: 1px solid rgba(239, 68, 68, 0.3) !important;
+            background: rgba(239, 68, 68, 0.02) !important;
+            color: #dc2626 !important;
+        }
+        .submenu-item.btn-maint-sub:hover,
+        .submenu-item.btn-maint-sub.active {
+            background: #dc2626 !important;
+            color: #ffffff !important;
+            border-color: #dc2626 !important;
+        }
+        .submenu-item.btn-maint-sub::before {
+            background: #dc2626 !important;
+        }
+        .submenu-item.btn-maint-sub.active::before {
+            background: #ffffff !important;
+        }
+
+        /* --- 📏 HOMOGENEIZACIÓN DE DISTANCIAS DE SEPARACIÓN UNIFORMES --- */
+        
+        /* Margen de los bloques y botones en Escritorio */
+        .sidebar-section {
+            margin-bottom: 1.25rem !important;
+            padding: 0 0.5rem;
+        }
+        
+        .nav-item-pro {
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .submenu-wrapper {
+            margin-bottom: 0.5rem !important;
+        }
+
+        .submenu-content {
+            gap: 0.4rem !important;
+            margin-top: 0.25rem !important;
+            margin-bottom: 0.25rem !important;
+        }
+        
+        .submenu-item {
+            margin-bottom: 0 !important;
+        }
+
+        /* Ajustes específicos en Móvil para garantizar separación 100% idéntica (12px estricto) */
+        @media (max-width: 1024px) {
+            .sidebar-pro .nav-menu {
+                gap: 12px !important;
+                padding: 10px 15px !important;
+                margin-top: 0.5rem !important;
+            }
+            
+            .submenu-wrapper {
+                gap: 0 !important; /* Evitar separación fantasma cuando está colapsado */
+                margin-bottom: 0 !important;
+                margin-top: 0 !important;
+                width: auto !important; /* IMPORTANTE: evitar que herede width: 100% y estire el contenedor */
+            }
+            .submenu-wrapper.expanded {
+                gap: 12px !important; /* Restablecer gap al expandirse */
+            }
+            
+            .submenu-content {
+                display: none !important; /* Ocultar por completo cuando está colapsado */
+                gap: 0 !important; /* Evitar gap interno cuando está colapsado */
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+                padding: 0 !important;
+            }
+            .submenu-wrapper.expanded .submenu-content {
+                display: flex !important; /* Mostrar como flex al expandirse */
+                gap: 12px !important; /* Restablecer gap interno al expandirse */
+            }
+            
+            .sidebar-pro .submenu-trigger {
+                margin-bottom: 0 !important;
+                margin-top: 0 !important;
+            }
+            
+            .sidebar-pro .submenu-item {
+                margin-bottom: 0 !important;
+                margin-top: 0 !important;
+            }
+            
+            .nav-item-pro {
+                margin-bottom: 0 !important;
+                margin-top: 0 !important;
+            }
+            
+            .nav-item-pro.nav-item-back {
+                margin-bottom: 0 !important;
+                margin-top: 0 !important;
+            }
+            
+            .nav-item-pro.nav-item-logout {
+                margin-bottom: 0 !important;
+                margin-top: 0 !important;
             }
         }
     </style>
@@ -448,163 +1069,173 @@
             </div>
 
             <nav class="nav-menu">
+                <!-- 🏠 INICIO RÁPIDO -->
                 <a href="index.html" class="nav-item-pro nav-item-back"
-                    style="text-decoration: none; margin-bottom: 2rem;">
+                    style="text-decoration: none; margin-bottom: 1.5rem;">
                     <span class="icon-box"><i class="fas fa-arrow-left"></i></span>
                     <span class="nav-text">Dashboard Jugador</span>
                 </a>
 
-                <button class="nav-item-pro active" data-view="users" onclick="loadAdminView('users')">
+                <!-- Entrenos (Submenú) -->
+                <div class="submenu-wrapper">
+                    <button class="nav-item-pro submenu-trigger nav-group-entreno" onclick="toggleSubmenu(this)">
+                        <span class="submenu-trigger-content">
+                            <span class="icon-box"><i class="fas fa-graduation-cap"></i></span>
+                            <span class="nav-text">Entrenos</span>
+                        </span>
+                        <span class="submenu-arrow"><i class="fas fa-chevron-right"></i></span>
+                    </button>
+                    <div class="submenu-content">
+                        <button class="submenu-item nav-group-entreno-sub" data-view="entrenos_mgmt" onclick="loadAdminView('entrenos_mgmt')">
+                            <span class="nav-text">Gestor</span>
+                        </button>
+                        <button class="submenu-item nav-group-entreno-sub" data-view="entrenos_create" onclick="loadAdminView('entrenos_create')">
+                            <span class="nav-text">Crear</span>
+                        </button>
+                        <button class="submenu-item nav-group-entreno-sub" data-view="entrenos_results" onclick="loadAdminView('entrenos_results')">
+                            <span class="nav-text">Resultados</span>
+                        </button>
+                        <button class="submenu-item nav-group-entreno-sub" data-view="entrenos_simulator" onclick="loadAdminView('entrenos_simulator')">
+                            <span class="nav-text">Simulador</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Base de Datos (Usuarios) -->
+                <button class="nav-item-pro btn-database" data-view="users" onclick="loadAdminView('users')">
                     <span class="icon-box"><i class="fas fa-users-gear"></i></span>
                     <span class="nav-text">Base de Datos</span>
                 </button>
 
-                <button class="nav-item-pro nav-group-americana" data-view="americanas_mgmt"
-                    onclick="loadAdminView('americanas_mgmt')">
-                    <span class="icon-box"><i class="fas fa-calendar-check"></i></span>
-                    <span class="nav-text">Gestión Americanas</span>
-                </button>
+                <!-- Americanas (Submenú) -->
+                <div class="submenu-wrapper">
+                    <button class="nav-item-pro submenu-trigger nav-group-americana" onclick="toggleSubmenu(this)">
+                        <span class="submenu-trigger-content">
+                            <span class="icon-box"><i class="fas fa-calendar-check"></i></span>
+                            <span class="nav-text">Americanas</span>
+                        </span>
+                        <span class="submenu-arrow"><i class="fas fa-chevron-right"></i></span>
+                    </button>
+                    <div class="submenu-content">
+                        <button class="submenu-item nav-group-americana-sub" data-view="americanas_mgmt" onclick="loadAdminView('americanas_mgmt')">
+                            <span class="nav-text">Gestión</span>
+                        </button>
+                        <button class="submenu-item nav-group-americana-sub" data-view="matches" onclick="loadAdminView('matches')">
+                            <span class="nav-text">Resultados</span>
+                        </button>
+                        <button class="submenu-item nav-group-americana-sub" data-view="simulator_empty" onclick="loadAdminView('simulator_empty')">
+                            <span class="nav-text">Simulador</span>
+                        </button>
+                    </div>
+                </div>
 
-                <button class="nav-item-pro nav-group-americana" data-view="matches" onclick="loadAdminView('matches')">
-                    <span class="icon-box"><i class="fas fa-trophy-award"></i></span>
-                    <span class="nav-text">Resultados Americanas</span>
-                </button>
-
-                <!-- 🏆 NEW: TOURNAMENTS MANAGEMENT -->
-                <button class="nav-item-pro" data-view="tournaments_mgmt" onclick="loadAdminView('tournaments_mgmt')"
-                        style="border: 1px solid rgba(255, 215, 0, 0.4); background: rgba(255, 215, 0, 0.1); margin-bottom: 0.5rem;">
-                    <span class="icon-box" style="color:#d97706;"><i class="fas fa-trophy"></i></span>
+                <!-- Gestor de Torneos -->
+                <button class="nav-item-pro btn-tournaments" data-view="tournaments_mgmt" onclick="loadAdminView('tournaments_mgmt')">
+                    <span class="icon-box"><i class="fas fa-trophy"></i></span>
                     <span class="nav-text" style="font-weight:700;">Gestor de Torneos</span>
                 </button>
 
-                <button class="nav-item-pro nav-group-americana" data-view="simulator_empty"
-                    onclick="loadAdminView('simulator_empty')">
-                    <span class="icon-box"><i class="fas fa-robot"></i></span>
-                    <span class="nav-text">Simulador de Americanas</span>
-                </button>
+                <!-- Partidas Abiertas (Submenú) -->
+                <div class="submenu-wrapper">
+                    <button class="nav-item-pro submenu-trigger nav-group-open-matches" onclick="toggleSubmenu(this)">
+                        <span class="submenu-trigger-content">
+                            <span class="icon-box"><i class="fas fa-table-tennis-paddle-ball"></i></span>
+                            <span class="nav-text">Partidas Abiertas</span>
+                        </span>
+                        <span class="submenu-arrow"><i class="fas fa-chevron-right"></i></span>
+                    </button>
+                    <div class="submenu-content">
+                        <button class="submenu-item nav-group-open-matches-sub" data-view="open_matches_mgmt" onclick="loadAdminView('open_matches_mgmt')">
+                            <span class="nav-text">Gestor</span>
+                        </button>
+                        <button class="submenu-item nav-group-open-matches-sub" data-view="open_matches_create" onclick="loadAdminView('open_matches_create')">
+                            <span class="nav-text">Crear</span>
+                        </button>
+                    </div>
+                </div>
 
-                <!-- NEW AUTOPILOT TAB -->
-                <button class="nav-item-pro" data-view="autopilot" onclick="loadAdminView('autopilot')"
-                    style="border:1px solid rgba(204,255,0,0.6); background:rgba(204,255,0,0.2); margin-bottom: 0.5rem;">
-                    <span class="icon-box"><i class="fas fa-wand-magic-sparkles"
-                            style="color:#0f172a;"></i></span>
-                    <span class="nav-text" style="color:#0f172a; font-weight:800;">AUTOPILOT 🤖</span>
-                </button>
-
-                <button class="nav-item-pro" data-view="analytics" onclick="loadAdminView('analytics')"
-                    style="border:1px solid rgba(0,212,255,0.4); background:rgba(0,212,255,0.1);">
-                    <span class="icon-box" style="color:#0284c7;"><i class="fas fa-chart-pie"></i></span>
+                <!-- Smart Analytics -->
+                <button class="nav-item-pro btn-analytics" data-view="analytics" onclick="loadAdminView('analytics')">
+                    <span class="icon-box"><i class="fas fa-chart-pie"></i></span>
                     <span class="nav-text" style="font-weight:700;">Smart Analytics</span>
                 </button>
 
-                <button class="nav-item-pro" data-view="blog_posts" onclick="loadAdminView('blog_posts')"
-                        style="border: 1px solid rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.1); margin-bottom: 0.5rem;">
-                    <span class="icon-box" style="color:#0284c7;"><i class="fas fa-newspaper"></i></span>
+                <!-- Gestor de Blog -->
+                <button class="nav-item-pro btn-blog" data-view="blog_posts" onclick="loadAdminView('blog_posts')">
+                    <span class="icon-box"><i class="fas fa-newspaper"></i></span>
                     <span class="nav-text" style="font-weight:700;">Gestor de Blog</span>
                 </button>
 
-                <div
-                    style="margin: 15px 10px 5px 10px; padding: 10px; border-top: 1px solid #cbd5e1; color: #475569; font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
-                    Módulo Entrenos</div>
-
-                <button class="nav-item-pro nav-group-entreno" data-view="entrenos_mgmt"
-                    onclick="loadAdminView('entrenos_mgmt')">
-                    <span class="icon-box"><i class="fas fa-tasks"></i></span>
-                    <span class="nav-text">Gestor Entrenos</span>
-                </button>
-                <button class="nav-item-pro nav-group-entreno" data-view="entrenos_create"
-                    onclick="loadAdminView('entrenos_create')">
-                    <span class="icon-box"><i class="fas fa-plus-circle"></i></span>
-                    <span class="nav-text">Crear Entreno</span>
-                </button>
-
-                <button class="nav-item-pro nav-group-entreno" data-view="entrenos_results"
-                    onclick="loadAdminView('entrenos_results')">
-                    <span class="icon-box"><i class="fas fa-clipboard-check"></i></span>
-                    <span class="nav-text">Resultados Entrenos</span>
-                </button>
-
-                <button class="nav-item-pro nav-group-entreno" data-view="entrenos_simulator"
-                    onclick="loadAdminView('entrenos_simulator')">
-                    <span class="icon-box"><i class="fas fa-brain"></i></span>
-                    <span class="nav-text">Simulador de Entrenos</span>
-                </button>
-
-                <div
-                    style="margin: 15px 10px 5px 10px; padding: 10px; border-top: 1px solid #cbd5e1; color: #475569; font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
-                    Herramientas</div>
-
-                <button class="nav-item-pro" data-view="network_pulse" onclick="loadAdminView('network_pulse')"
-                    style="border:1px solid rgba(0, 227, 109, 0.4); background:rgba(0, 227, 109, 0.1); margin-bottom: 0.5rem;">
-                    <span class="icon-box"><i class="fas fa-tower-broadcast" style="color:#059669;"></i></span>
-                    <span class="nav-text" style="color:#059669; font-weight:800;">OP CENTER 🔬</span>
-                </button>
-
-                <button class="nav-item-pro" data-view="database_health" onclick="loadAdminView('database_health')"
-                    style="border:1px solid rgba(204, 255, 0, 0.6); background:rgba(204, 255, 0, 0.2); margin-bottom: 0.5rem;">
-                    <span class="icon-box"><i class="fas fa-microscope" style="color:#0f172a;"></i></span>
-                    <span class="nav-text" style="font-weight:700;">Diagnóstico & Limpieza 🔬</span>
-                </button>
-
-                <button class="nav-item-pro" data-view="fix_players" onclick="loadAdminView('fix_players')"
-                    style="border:1px solid rgba(255, 100, 0, 0.4); background:rgba(255, 100, 0, 0.1);">
-                    <span class="icon-box"><i class="fas fa-user-gear" style="color:#ea580c;"></i></span>
-                    <span class="nav-text" style="font-weight:700;">Reparar Jugadores 🔧</span>
-                </button>
-
-                <!-- NEW: SYNC EVERYTHING BUTTON -->
-                <button class="nav-item-pro"
-                    onclick="window.LevelAdjustmentService && window.LevelAdjustmentService.recalculateAllLevels()"
-                    style="border:1px solid rgba(0, 212, 255, 0.4); background:rgba(0, 212, 255, 0.1); margin-top: 15px; border-radius: 14px; padding: 12px 15px; margin-bottom: 5px;">
-                    <span class="icon-box"><i class="fas fa-sync-alt fa-spin" style="color:#0284c7;"></i></span>
-                    <span class="nav-text" style="font-weight:950; letter-spacing: 0.5px;">SINCRONIZAR TODO
-                        🔄</span>
-                </button>
-
-                <!-- 🤖 AI WEB SCRAPER INTEGRATION -->
-                <button class="nav-item-pro" onclick="syncSummapadelData(this)"
-                    style="border:1px solid rgba(204, 255, 0, 0.8); background:rgba(204, 255, 0, 0.3); border-radius: 14px; padding: 12px 15px; margin-bottom: 25px; cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 0 15px rgba(204,255,0,0.2);">
-                    <div
-                        style="position: absolute; top:0; left:-100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(204,255,0,0.5), transparent); animation: sweep 3s infinite;">
+                <!-- Sincronización (Submenú) -->
+                <div class="submenu-wrapper">
+                    <button class="nav-item-pro submenu-trigger btn-sync-trigger" onclick="toggleSubmenu(this)">
+                        <span class="submenu-trigger-content">
+                            <span class="icon-box"><i class="fas fa-rotate"></i></span>
+                            <span class="nav-text">Sincronización</span>
+                        </span>
+                        <span class="submenu-arrow"><i class="fas fa-chevron-right"></i></span>
+                    </button>
+                    <div class="submenu-content">
+                        <!-- Recalcular todo -->
+                        <button class="submenu-item btn-sync-sub" onclick="window.LevelAdjustmentService && window.LevelAdjustmentService.recalculateAllLevels()">
+                            <span class="nav-text">Sincronizar Todo 🔄</span>
+                        </button>
+                        
+                        <!-- Robot Summapadel -->
+                        <button class="submenu-item btn-sync-sub" onclick="syncSummapadelData(this)" style="position: relative; overflow: hidden;">
+                            <span class="nav-text">Summapadel 🕷️</span>
+                        </button>
                     </div>
-                    <style>
-                        @keyframes sweep {
-                            0% {
-                                left: -100%
-                            }
+                </div>
 
-                            50% {
-                                left: 100%
-                            }
+                <!-- Mantenimiento & Diagnóstico (Submenú) -->
+                <div class="submenu-wrapper">
+                    <button class="nav-item-pro submenu-trigger btn-maint-trigger" onclick="toggleSubmenu(this)">
+                        <span class="submenu-trigger-content">
+                            <span class="icon-box"><i class="fas fa-shield-halved"></i></span>
+                            <span class="nav-text">Mantenimiento</span>
+                        </span>
+                        <span class="submenu-arrow"><i class="fas fa-chevron-right"></i></span>
+                    </button>
+                    <div class="submenu-content">
+                        <!-- OP CENTER -->
+                        <button class="submenu-item btn-maint-sub" data-view="network_pulse" onclick="loadAdminView('network_pulse')">
+                            <span class="nav-text">OP Center 🔬</span>
+                        </button>
+                        
+                        <!-- Diagnóstico & Limpieza -->
+                        <button class="submenu-item btn-maint-sub" data-view="database_health" onclick="loadAdminView('database_health')">
+                            <span class="nav-text">Diagnóstico BD 🔬</span>
+                        </button>
+                        
+                        <!-- Reparar Jugadores -->
+                        <button class="submenu-item btn-maint-sub" data-view="fix_players" onclick="loadAdminView('fix_players')">
+                            <span class="nav-text">Reparar Jugadores 🔧</span>
+                        </button>
+                    </div>
+                </div>
 
-                            100% {
-                                left: 100%
-                            }
-                        }
-                    </style>
-                    <span class="icon-box"><i class="fas fa-spider" style="color:#CCFF00;"></i></span>
-                    <span class="nav-text" style="color:#CCFF00; font-weight:950; letter-spacing: 1px;">SINCRO SUMMAPADEL</span>
-                </button>
-
+                <!-- Robot Summapadel inline script (conservamos el script existente para que no se rompa la lógica!) -->
                 <script>
                     async function syncSummapadelData(btn) {
                         btn.style.opacity = '0.5';
-                        btn.querySelector('.nav-text').innerText = 'LEYENDO ROBOT...';
+                        const textSpan = btn.querySelector('.nav-text') || btn;
+                        const originalText = textSpan.innerText;
+                        textSpan.innerText = 'LEYENDO ROBOT...';
                         
                         const isLocal = location.hostname === 'localhost' || 
-                                        location.hostname === '127.0.0.1' || 
-                                        location.protocol === 'file:';
+                                         location.hostname === '127.0.0.1' || 
+                                         location.protocol === 'file:';
                         
                         function resetBtn() {
                             btn.style.opacity = '1';
-                            btn.querySelector('.nav-text').innerText = 'SINCRO SUMMAPADEL';
+                            textSpan.innerText = originalText;
                         }
                         
                         if (isLocal) {
-                            // MODO LOCAL AUTOMÁTICO (Lee el archivo directamente desde el sistema de archivos)
                             try {
                                 const script = document.createElement('script');
-                                script.src = 'scraper/teams_data_auto.js?t=' + new Date().getTime(); // Cache buster
+                                script.src = 'scraper/teams_data_auto.js?t=' + new Date().getTime();
 
                                 script.onload = async () => {
                                     if (!window.ExtractedTeamsData) {
@@ -613,10 +1244,9 @@
                                         return;
                                     }
 
-                                    btn.querySelector('.nav-text').innerText = 'LIMPIANDO NUBE...';
+                                    textSpan.innerText = 'LIMPIANDO NUBE...';
                                     const db = window.db || firebase.firestore();
 
-                                    // Limpieza de duplicados/corruptos antiguos
                                     try {
                                         const snapshot = await db.collection('club_teams').get();
                                         const batch = db.batch();
@@ -626,7 +1256,7 @@
                                         console.warn("Aviso: Falló la limpieza previa:", err);
                                     }
 
-                                    btn.querySelector('.nav-text').innerText = 'SUBIENDO NUBE...';
+                                    textSpan.innerText = 'SUBIENDO NUBE...';
                                     let count = 0;
                                     for (const equipo of window.ExtractedTeamsData) {
                                         await db.collection('club_teams').doc(equipo.id).set(equipo);
@@ -638,7 +1268,6 @@
                                 };
 
                                 script.onerror = () => {
-                                    // Si falla en local, pasamos al selector de archivos manual
                                     promptManualUpload("No se pudo cargar 'teams_data_auto.js' automáticamente. Por favor, selecciónalo manualmente.");
                                 };
 
@@ -648,7 +1277,6 @@
                                 promptManualUpload("Error en lectura directa. Selecciónalo manualmente.");
                             }
                         } else {
-                            // MODO INTERNET/PRODUCCIÓN (Selector de archivos HTML5 seguro contra CORS)
                             promptManualUpload("Estás en la Web Online de Internet. Por favor, selecciona el archivo 'teams_data_auto.js' generado por tu Robot local.");
                         }
 
@@ -666,13 +1294,11 @@
                                     return;
                                 }
                                 
-                                btn.querySelector('.nav-text').innerText = 'PROCESANDO...';
+                                textSpan.innerText = 'PROCESANDO...';
                                 const reader = new FileReader();
                                 reader.onload = async event => {
                                     try {
                                         const content = event.target.result;
-                                        
-                                        // Extraer el JSON del script
                                         const jsonMatch = content.match(/window\.ExtractedTeamsData\s*=\s*(\[[\s\S]*?\])\s*(?:;)?/);
                                         if (!jsonMatch) {
                                             alert("❌ Error: El archivo seleccionado no contiene la variable 'window.ExtractedTeamsData'. Asegúrate de subir 'teams_data_auto.js'.");
@@ -681,11 +1307,9 @@
                                         }
                                         
                                         const parsedData = JSON.parse(jsonMatch[1]);
-                                        
-                                        btn.querySelector('.nav-text').innerText = 'LIMPIANDO NUBE...';
+                                        textSpan.innerText = 'LIMPIANDO NUBE...';
                                         const db = window.db || firebase.firestore();
                                         
-                                        // Limpieza de duplicados/corruptos antiguos
                                         try {
                                             const snapshot = await db.collection('club_teams').get();
                                             const batch = db.batch();
@@ -695,7 +1319,7 @@
                                             console.warn("Aviso: Falló la limpieza previa:", err);
                                         }
 
-                                        btn.querySelector('.nav-text').innerText = 'SUBIENDO NUBE...';
+                                        textSpan.innerText = 'SUBIENDO NUBE...';
                                         let count = 0;
                                         for (const equipo of parsedData) {
                                             await db.collection('club_teams').doc(equipo.id).set(equipo);
@@ -721,7 +1345,8 @@
                     }
                 </script>
 
-                <button class="nav-item-pro nav-item-logout" style="margin-top: auto;" onclick="AdminAuth.logout()">
+                <!-- BOTÓN LOGOUT -->
+                <button class="nav-item-pro nav-item-logout" style="margin-top: 1.5rem;" onclick="AdminAuth.logout()">
                     <span class="icon-box"><i class="fas fa-power-off"></i></span>
                     <span class="nav-text">Cerrar Sesión</span>
                 </button>
@@ -1431,6 +2056,7 @@
             <script src="js/modules/admin-analytics.js"></script>
             <script src="js/modules/common/WhatsAppService.js?v=7015"></script>
             <script src="js/modules/admin-entrenos.js?v=5010"></script>
+            <script src="js/modules/admin-open-matches.js" defer></script>
             <script src="js/modules/admin-database-health.js"></script>
             <script src="js/modules/admin-fix-players.js"></script>
 
@@ -2265,6 +2891,83 @@
                     /* Keep connection blue */
                 }
             </style>
+            
+    <!-- 📂 JAVASCRIPT DE INTERACTIVIDAD DE SUBMENÚS PREMIUM -->
+    <script>
+        // Función para abrir/cerrar submenús en escritorio y móvil
+        function toggleSubmenu(button) {
+            const wrapper = button.closest('.submenu-wrapper');
+            if (!wrapper) return;
+            
+            const isExpanded = wrapper.classList.contains('expanded');
+            
+            // Efecto acordeón: cerrar otros submenús del mismo nivel
+            document.querySelectorAll('.submenu-wrapper').forEach(w => {
+                if (w !== wrapper) {
+                    w.classList.remove('expanded');
+                }
+            });
+            
+            if (isExpanded) {
+                wrapper.classList.remove('expanded');
+            } else {
+                wrapper.classList.add('expanded');
+            }
+        }
+        
+        // Auto-expande el submenú que contenga el elemento activo
+        function autoExpandActiveSubmenu() {
+            // Buscamos cualquier opción activa de submenú
+            const activeItem = document.querySelector('.submenu-item.active, .nav-item-pro.active');
+            if (activeItem) {
+                const wrapper = activeItem.closest('.submenu-wrapper');
+                if (wrapper) {
+                    wrapper.classList.add('expanded');
+                }
+            }
+        }
+        
+        // Decorador e interceptor de loadAdminView para mantener los submenús actualizados al navegar
+        (function() {
+            // Esperar a que window.loadAdminView esté disponible
+            const checkRouterInterval = setInterval(() => {
+                if (typeof window.loadAdminView === 'function') {
+                    clearInterval(checkRouterInterval);
+                    
+                    const originalLoadAdminView = window.loadAdminView;
+                    window.loadAdminView = async function(viewName) {
+                        // Llamamos a la navegación original
+                        if (originalLoadAdminView) {
+                            await originalLoadAdminView(viewName);
+                        }
+                        
+                        // Añadimos nuestro comportamiento reactivo
+                        setTimeout(() => {
+                            // Sincronizar clases active en los submenús correspondientes si es necesario
+                            document.querySelectorAll('.submenu-item').forEach(el => {
+                                if (el.getAttribute('data-view') === viewName) {
+                                    el.classList.add('active');
+                                } else {
+                                    el.classList.remove('active');
+                                }
+                            });
+                            
+                            // Auto expandir
+                            autoExpandActiveSubmenu();
+                        }, 50); // Pequeño delay para que la vista renderice y las clases se actualicen
+                    };
+                    
+                    console.log("🛡️ Hook de Submenús inyectado con éxito en loadAdminView.");
+                    
+                    // Ejecución inicial al cargar
+                    setTimeout(autoExpandActiveSubmenu, 1000);
+                }
+            }, 100);
+            
+            // Limitar la búsqueda de inicialización a 15 segundos para no consumir recursos
+            setTimeout(() => clearInterval(checkRouterInterval), 15000);
+        })();
+    </script>
 </body>
 
 </html>

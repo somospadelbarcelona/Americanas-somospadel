@@ -183,6 +183,11 @@
                             <span style="font-weight: 700;">RANKING</span>
                         </div>
 
+                        <div class="drawer-item" onclick="window.smartNavigate('partidas_abiertas', null)">
+                            <i class="fab fa-whatsapp" style="color: #25d366; text-shadow: 0 0 10px rgba(37,211,102,0.3);"></i>
+                            <span style="font-weight: 700;">PARTIDAS ABIERTAS</span>
+                        </div>
+
                         <div class="drawer-item" onclick="window.smartNavigate('records', null)">
                             <i class="fas fa-award" style="color: #FF2D55; text-shadow: 0 0 10px rgba(255,45,85,0.3);"></i>
                             <span style="font-weight: 700;">RÉCORDS</span>
