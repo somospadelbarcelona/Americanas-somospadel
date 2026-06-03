@@ -719,20 +719,55 @@
 
         <!-- Navigation Dock - LIGHT COURT BLUE STYLE -->
         <style>
+            /* 🌈 BOTTOM NAVIGATION BAR (AI COLORFUL EDITION) */
             .bottom-nav-bar {
                 position: fixed;
                 bottom: 0;
                 left: 0;
                 width: 100%;
                 height: 75px;
-                background: #000000 !important;
-                border-top: 1px solid rgba(255, 255, 255, 0.05);
+                background: rgba(10, 10, 12, 0.9) !important;
+                backdrop-filter: blur(25px) saturate(180%);
+                -webkit-backdrop-filter: blur(25px) saturate(180%);
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
                 display: flex;
                 justify-content: space-around;
                 align-items: center;
                 z-index: 10000;
                 padding-bottom: env(safe-area-inset-bottom);
-                box-shadow: 0 -10px 30px rgba(10, 25, 47, 0.05);
+                /* Sombra neón dinámica controlada por Javascript */
+                box-shadow: 0 -8px 30px var(--nav-glow-color, rgba(204, 255, 0, 0.15));
+                transition: box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            }
+
+            /* Configuración individual de colores y sombras para cada pestaña */
+            #nav-dashboard {
+                --item-color: #00f0ff;
+                --item-color-rgb: 0, 240, 255;
+            }
+            #nav-entrenos {
+                --item-color: #ff007f;
+                --item-color-rgb: 255, 0, 127;
+            }
+            #nav-ranking {
+                --item-color: #ffd700;
+                --item-color-rgb: 255, 215, 0;
+            }
+            #nav-partidas_abiertas {
+                --item-color: #25d366;
+                --item-color-rgb: 37, 211, 102;
+            }
+            #nav-teams {
+                --item-color: #ff5e00;
+                --item-color-rgb: 255, 94, 0;
+            }
+            #nav-tournaments {
+                --item-color: #ff2a2a;
+                --item-color-rgb: 255, 42, 42;
+            }
+            #nav-profile {
+                --item-color: #00f5d4;
+                --item-color-rgb: 0, 245, 212;
             }
 
             .nav-item {
@@ -742,14 +777,17 @@
                 justify-content: center;
                 gap: 4px;
                 color: #8892b0;
-                transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
                 text-decoration: none;
                 flex: 1;
                 height: 100%;
+                position: relative;
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
             }
 
             .nav-item.active {
-                color: #0a192f;
+                color: var(--item-color) !important;
             }
 
             .nav-item i {
@@ -761,6 +799,7 @@
                 justify-content: center;
                 line-height: 1;
                 flex-shrink: 0;
+                transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s;
             }
 
             .nav-item span {
@@ -770,15 +809,100 @@
                 letter-spacing: 0.5px;
                 line-height: 1;
                 text-align: center;
+                transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), text-shadow 0.3s;
             }
 
+            /* Icono activo flotante y brillante */
             .nav-item.active i {
-                color: #99cc00;
-                filter: drop-shadow(0 4px 10px rgba(153, 204, 0, 0.3));
+                color: var(--item-color) !important;
+                transform: translateY(-5px) scale(1.2);
+                filter: drop-shadow(0 0 10px rgba(var(--item-color-rgb), 0.7));
             }
 
+            /* Texto activo */
             .nav-item.active span {
-                color: #0a192f;
+                color: var(--item-color) !important;
+                text-shadow: 0 0 8px rgba(var(--item-color-rgb), 0.4);
+                font-weight: 900;
+            }
+
+            /* Cápsula de fondo activa (Active Pill) */
+            .nav-item::before {
+                content: '';
+                position: absolute;
+                bottom: 15px;
+                width: 42px;
+                height: 42px;
+                border-radius: 14px;
+                background: rgba(var(--item-color-rgb), 0.08);
+                z-index: 0;
+                opacity: 0;
+                transform: scale(0.5);
+                transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+                pointer-events: none;
+            }
+
+            .nav-item.active::before {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            /* Los iconos del item se posicionan sobre el pseudo-elemento */
+            .nav-item i, .nav-item span {
+                position: relative;
+                z-index: 1;
+            }
+
+            /* HUD Mensaje flotante del menú */
+            .nav-hud-msg {
+                position: fixed;
+                bottom: 85px;
+                left: 50%;
+                transform: translateX(-50%) translateY(10px);
+                background: rgba(10, 10, 12, 0.85);
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: #ffffff;
+                padding: 6px 16px;
+                border-radius: 20px;
+                font-size: 0.65rem;
+                font-weight: 800;
+                letter-spacing: 0.8px;
+                text-transform: uppercase;
+                z-index: 9999;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.3s, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            }
+
+            .nav-hud-msg.show {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+
+            /* Micropartículas al hacer clic */
+            .nav-click-particle {
+                position: fixed;
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 99999;
+                opacity: 1;
+                animation: navParticleFly 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+                will-change: transform, opacity;
+                box-shadow: 0 0 8px currentColor;
+            }
+            
+            @keyframes navParticleFly {
+                0% {
+                    transform: translate(0, 0) scale(1);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translate(var(--tx), var(--ty)) scale(0.2);
+                    opacity: 0;
+                }
             }
 
             /* Premium Team Cards */
@@ -793,6 +917,8 @@
                 background: rgba(255, 255, 255, 0.08) !important;
             }
         </style>
+        <!-- HUD Mensaje flotante para el menú -->
+        <div id="nav-hud-msg" class="nav-hud-msg"></div>
         <nav class="bottom-nav-bar">
             <div class="nav-item active haptic-feedback"
                 onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('dashboard')"
@@ -811,7 +937,7 @@
                 <i class="fas fa-trophy"></i>
                 <span>Ranking</span>
             </div>
-            <div class="nav-item haptic-feedback" onclick="window.PlayerView?.haptic?.(20); window._showEnConstruccion()" id="nav-partidas_abiertas">
+            <div class="nav-item haptic-feedback" onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('partidas_abiertas')" id="nav-partidas_abiertas">
                 <i class="fab fa-whatsapp"></i>
                 <span>Partidas Abiertas</span>
             </div>
@@ -1610,6 +1736,7 @@
     <script src="js/modules/dashboard/GeoRadarWidget.js" defer></script>
     <script src="js/modules/dashboard/StoryFeedWidget.js?v=6" defer></script>
     <script src="js/modules/dashboard/PadelPulse.js?v=6.0" defer></script>
+    <script src="js/modules/dashboard/OpenMatchesWidget.js?v=1.0" defer></script>
     <script src="js/modules/dashboard/DashboardView_hotfix.js?v=COMPACT_V5" defer></script>
     <script src="js/modules/dashboard/DashboardController.js" defer></script>
     <script src="js/utils/RoleService.js" defer></script>
@@ -2255,6 +2382,90 @@
     // Show badge to attract attention
     if (badge) badge.style.display = 'flex';
   }, 45000);
+
+})();
+</script>
+<script>
+(function() {
+    // 🌈 SISTEMA DE PARTICULAS Y HUD PARA EL MENÚ COLORIDO (AI PREMIUM)
+    
+    // Función global para mostrar el HUD motivacional
+    window.showNavHudMessage = function(route) {
+        const hud = document.getElementById('nav-hud-msg');
+        if (!hud) return;
+        
+        const messages = {
+            'dashboard': '¡A por tus objetivos de hoy! 🎾',
+            'entrenos': 'Mejora tu técnica en las pistas 📅',
+            'ranking': '¡Asciende y domina el ranking! 🏆',
+            'partidas_abiertas': '¡Únete a la partida y juega ya! 💬',
+            'teams': 'Compite con tu equipo y gana 👥',
+            'tournaments': 'El gran trofeo te espera 🔥',
+            'profile': 'Tus estadísticas al siguiente nivel 📈'
+        };
+        
+        const msg = messages[route] || '¡A por el partido! 🎾';
+        hud.innerText = msg;
+        hud.classList.add('show');
+        
+        if (window._hudTimeout) clearTimeout(window._hudTimeout);
+        window._hudTimeout = setTimeout(() => {
+            hud.classList.remove('show');
+        }, 2000);
+    };
+
+    // Función para crear partículas coloridas
+    function createNavParticles(x, y, color) {
+        const particleCount = 10;
+        const container = document.body;
+        
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'nav-click-particle';
+            particle.style.color = color;
+            particle.style.background = color;
+            particle.style.left = `${x}px`;
+            particle.style.top = `${y}px`;
+            
+            const size = Math.random() * 4 + 4; // de 4px a 8px
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = Math.random() * 50 + 20;
+            const tx = Math.cos(angle) * velocity;
+            const ty = Math.sin(angle) * velocity - 10; // tendiendo ligeramente hacia arriba
+            
+            particle.style.setProperty('--tx', `${tx}px`);
+            particle.style.setProperty('--ty', `${ty}px`);
+            
+            container.appendChild(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+            }, 600);
+        }
+    }
+
+    // Escuchar clics en los elementos del menú
+    document.addEventListener('click', function(e) {
+        const navItem = e.target.closest('.nav-item');
+        if (navItem) {
+            const style = getComputedStyle(navItem);
+            const color = style.getPropertyValue('--item-color').trim() || '#CCFF00';
+            createNavParticles(e.clientX, e.clientY, color);
+        }
+    });
+
+    // Escuchar toques en dispositivos táctiles
+    document.addEventListener('touchstart', function(e) {
+        const navItem = e.target.closest('.nav-item');
+        if (navItem && e.touches && e.touches[0]) {
+            const style = getComputedStyle(navItem);
+            const color = style.getPropertyValue('--item-color').trim() || '#CCFF00';
+            createNavParticles(e.touches[0].clientX, e.touches[0].clientY, color);
+        }
+    }, { passive: true });
 
 })();
 </script>

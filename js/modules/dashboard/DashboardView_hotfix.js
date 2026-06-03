@@ -89,6 +89,9 @@
                         <!-- Cargado vía JS (StoryFeedWidget) -->
                     </div>
 
+                    <!-- 🎾 PARTIDAS ABIERTAS — Widget de publicidad interactivo -->
+                    <div id="open-matches-widget-root" style="animation: floatUp 0.8s ease-out forwards;"></div>
+
 
 
 
@@ -416,6 +419,11 @@
             // 🏓 PADEL PULSE — Widget personalizado
             if (window.PadelPulse) {
                 window.PadelPulse.render('padel-pulse-widget-root');
+            }
+
+            // 🎾 PARTIDAS ABIERTAS — Widget de publicidad en tiempo real
+            if (window.OpenMatchesWidget) {
+                window.OpenMatchesWidget.render('open-matches-widget-root');
             }
 
 
@@ -2784,6 +2792,9 @@
             if (this.unsubUser) {
                 this.unsubUser();
                 this.unsubUser = null;
+            }
+            if (window.OpenMatchesWidget && typeof window.OpenMatchesWidget.destroy === 'function') {
+                window.OpenMatchesWidget.destroy();
             }
         }
     }

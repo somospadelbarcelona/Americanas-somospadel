@@ -20,7 +20,7 @@
                 'agenda': () => this.handleControllerTab('EventsController', 'agenda'),
                 'results': () => this.handleControllerTab('EventsController', 'results'),
                 'entrenos': () => this.handleControllerTab('EventsController', 'entrenos'),
-                'partidas_abiertas': () => window.OpenMatchesController?.init(),
+                'partidas_abiertas': () => this.handleControllerTab('EventsController', 'open_matches'),
                 'records': () => {
                     console.log("🛣️ [Router] Executing records route...");
                     if (window.RecordsController) {
@@ -97,7 +97,7 @@
             const controllersToCleanup = [
                 { name: 'DashboardView', routes: ['dashboard'] },
                 { name: 'DashboardController', routes: ['dashboard'] },
-                { name: 'EventsController', routes: ['events', 'americanas', 'results', 'agenda', 'entrenos'] },
+                { name: 'EventsController', routes: ['events', 'americanas', 'results', 'agenda', 'entrenos', 'partidas_abiertas', 'open_matches'] },
                 { name: 'ControlTowerView', routes: ['live'] },
                 { name: 'TVView', routes: ['tv'] },
                 { name: 'PlayerController', routes: ['profile'] },
@@ -120,6 +120,8 @@
 
         updateNavUI(route) {
             // 1. Bottom Nav Dock (New System)
+            let activeColor = 'rgba(204, 255, 0, 0.15)'; // color por defecto (lime)
+            
             document.querySelectorAll('.nav-item').forEach(btn => {
                 // Determine if this nav-item corresponds to the current route
                 // We check if the ID contains the route name or if it's a direct match
@@ -127,10 +129,30 @@
                 const isActive = navRoute === route;
                 btn.classList.toggle('active', isActive);
 
-                if (isActive && window.navigator.vibrate) {
-                    window.navigator.vibrate(10);
+                if (isActive) {
+                    if (window.navigator.vibrate) {
+                        window.navigator.vibrate(10);
+                    }
+                    
+                    // Obtener el color propio del elemento activo para el glow general de la barra
+                    const style = getComputedStyle(btn);
+                    const itemColorRgb = style.getPropertyValue('--item-color-rgb').trim();
+                    if (itemColorRgb) {
+                        activeColor = `rgba(${itemColorRgb}, 0.25)`;
+                    }
                 }
             });
+
+            // Aplicar el color de resplandor dinámico a la barra
+            const navBar = document.querySelector('.bottom-nav-bar');
+            if (navBar) {
+                navBar.style.setProperty('--nav-glow-color', activeColor);
+            }
+
+            // Mostrar el HUD flotante con mensajes motivacionales del Asistente
+            if (typeof window.showNavHudMessage === 'function') {
+                window.showNavHudMessage(route);
+            }
 
             // 2. Legacy Bottom Nav Dock (Support for other views if any)
             document.querySelectorAll('.p-nav-item').forEach(btn => {

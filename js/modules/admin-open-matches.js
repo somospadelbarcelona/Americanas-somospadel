@@ -48,11 +48,11 @@ window.renderSelectedClubCardHtml = function(name, comarca, address, courts) {
     if (isCustom) {
         return `
             <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 8px;">
-                    <span style="font-weight: 950; font-size: 0.95rem; color: #f1f5f9; text-transform: uppercase; letter-spacing: 0.5px;">${name.toUpperCase()}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(15, 23, 42, 0.08); padding-bottom: 8px;">
+                    <span style="font-weight: 950; font-size: 0.95rem; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">${name.toUpperCase()}</span>
                     <span style="background: #64748b; color: #ffffff; font-size: 0.62rem; font-weight: 900; padding: 2px 8px; border-radius: 6px; text-transform: uppercase;">MANUAL</span>
                 </div>
-                <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                <div style="font-size: 0.72rem; color: #64748B; font-weight: 600; display: flex; align-items: center; gap: 6px;">
                     <i class="fas fa-info-circle" style="color: #64748b; font-size: 0.85rem;"></i>
                     Este club no está registrado en la base de datos oficial.
                 </div>
@@ -63,26 +63,189 @@ window.renderSelectedClubCardHtml = function(name, comarca, address, courts) {
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ", " + address)}`;
     return `
         <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 8px;">
-                <span style="font-weight: 950; font-size: 0.95rem; color: #ccff00; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%;">${name.toUpperCase()}</span>
-                <span style="background: #ccff00; color: #000000; font-size: 0.62rem; font-weight: 900; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; flex-shrink: 0;">${comarca.toUpperCase()}</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(15, 23, 42, 0.08); padding-bottom: 8px;">
+                <span style="font-weight: 950; font-size: 0.95rem; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%;">${name.toUpperCase()}</span>
+                <span style="background: #10B981; color: #ffffff; font-size: 0.62rem; font-weight: 900; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; flex-shrink: 0;">${comarca.toUpperCase()}</span>
             </div>
             <div style="display: flex; flex-direction: column; gap: 6px;">
-                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.76rem; color: #e2e8f0; font-weight: 600;">
-                    <i class="fas fa-location-dot" style="color: #ccff00; flex-shrink: 0;"></i>
-                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">${address}</span>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.76rem; color: #475569; font-weight: 600;">
+                    <i class="fas fa-location-dot" style="color: #10B981; flex-shrink: 0;"></i>
+                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; color: #475569;">${address}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; flex-wrap: wrap; gap: 8px;">
-                    <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 700; display: flex; align-items: center; gap: 4px;">
-                        <i class="fas fa-table-tennis-paddle-ball" style="color: #ccff00;"></i> <span style="color: #ffffff; font-weight: 900;">${courts}</span> pistas
+                    <span style="font-size: 0.72rem; color: #64748B; font-weight: 700; display: flex; align-items: center; gap: 4px;">
+                        <i class="fas fa-table-tennis-paddle-ball" style="color: #10B981;"></i> <span style="color: #0F172A; font-weight: 900;">${courts}</span> pistas
                     </span>
-                    <a href="${mapsUrl}" target="_blank" style="background: rgba(204, 255, 0, 0.15); border: 1.5px solid #ccff00; color: #ccff00; font-size: 0.65rem; font-weight: 900; padding: 4px 10px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; cursor: pointer;">
+                    <a href="${mapsUrl}" target="_blank" style="background: rgba(16, 185, 129, 0.08); border: 1.5px solid #10B981; color: #10B981; font-size: 0.65rem; font-weight: 900; padding: 4px 10px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; cursor: pointer;">
                         <i class="fas fa-map-location-dot"></i> Ver en Maps
                     </a>
                 </div>
             </div>
         </div>
     `;
+};
+
+window.generateAdminLevelOptionTags = function(selectedVal) {
+    let html = '';
+    for (let lvl = 1.0; lvl <= 6.0; lvl = parseFloat((lvl + 0.1).toFixed(1))) {
+        const selected = Math.abs(lvl - parseFloat(selectedVal)) < 0.05 ? 'selected' : '';
+        html += `<option value="${lvl.toFixed(1)}" ${selected}>Nivel ${lvl.toFixed(1)}</option>`;
+    }
+    return html;
+};
+
+window.updateAdminLiveSpotsBadge = function() {
+    const isEdit = document.getElementById('edit-open-match-form') !== null;
+    const formId = isEdit ? 'edit-open-match-form' : 'create-open-match-form';
+    const badgeId = isEdit ? 'admin-edit-live-spots-needed-badge' : 'admin-live-spots-needed-badge';
+    const form = document.getElementById(formId);
+    if (!form) return;
+    
+    const p1 = form.querySelector('[name=player_1]')?.value.trim() || '';
+    const p2 = form.querySelector('[name=player_2]')?.value.trim() || '';
+    const p3 = form.querySelector('[name=player_3]')?.value.trim() || '';
+    const p4 = form.querySelector('[name=player_4]')?.value.trim() || '';
+    
+    let count = 0;
+    if (p1) count++;
+    if (p2) count++;
+    if (p3) count++;
+    if (p4) count++;
+    
+    const spots = Math.max(0, 4 - count);
+    const badge = document.getElementById(badgeId);
+    if (badge) {
+        if (spots === 0) {
+            badge.textContent = "COMPLETO";
+            badge.style.background = "#ef4444";
+        } else if (spots === 1) {
+            badge.textContent = "¡ÚLTIMO HUECO!";
+            badge.style.background = "#ff9500";
+        } else {
+            badge.textContent = `FALTAN ${spots} PLAZAS`;
+            badge.style.background = "#2E61FF";
+        }
+    }
+};
+
+window.loadAdminPlayersCache = async function() {
+    if (window.adminPlayersCache && window.adminPlayersCache.length > 0) return window.adminPlayersCache;
+    window.adminPlayersCache = [];
+    if (!window.db) return [];
+    try {
+        const snap = await window.db.collection('players').get();
+        snap.forEach(doc => {
+            const data = doc.data();
+            if (data.name) {
+                window.adminPlayersCache.push({
+                    name: data.name.trim(),
+                    level: parseFloat(data.level || 3.0),
+                    phone: data.phone || data.phoneNumber || ""
+                });
+            }
+        });
+        console.log(`🧠 [AdminOpenMatches] Loaded ${window.adminPlayersCache.length} players for autocomplete.`);
+    } catch (err) {
+        console.warn("Error loading admin players cache:", err);
+    }
+    return window.adminPlayersCache;
+};
+
+window.bindAdminPlayerAutocomplete = async function(formId) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    const playersList = await window.loadAdminPlayersCache();
+
+    const playerInputs = [
+        form.querySelector('[name=player_1]'),
+        form.querySelector('[name=player_2]'),
+        form.querySelector('[name=player_3]'),
+        form.querySelector('[name=player_4]')
+    ];
+
+    playerInputs.forEach((inputEl, idx) => {
+        if (!inputEl) return;
+
+        let suggestionsContainer = form.querySelector(`#admin-player-suggestions-container-${formId}-${idx + 1}`);
+        if (!suggestionsContainer) {
+            suggestionsContainer = document.createElement('div');
+            suggestionsContainer.id = `admin-player-suggestions-container-${formId}-${idx + 1}`;
+            suggestionsContainer.className = 'autocomplete-suggestions';
+            suggestionsContainer.style.cssText = 'display:none; position:absolute; top:100%; left:0; right:0; max-height:180px; overflow-y:auto; margin-top:4px; z-index:99999;';
+            const parent = inputEl.parentElement;
+            if (parent) {
+                parent.style.position = 'relative';
+                parent.appendChild(suggestionsContainer);
+            }
+        }
+
+        const showSuggestions = () => {
+            const val = inputEl.value;
+            const query = val.toLowerCase().trim();
+            let matches = [];
+            if (!query) {
+                matches = playersList.slice(0, 5);
+            } else {
+                matches = playersList.filter(p => p.name.toLowerCase().includes(query));
+            }
+
+            if (matches.length === 0) {
+                suggestionsContainer.style.display = 'none';
+                return;
+            }
+
+            let html = '';
+            matches.slice(0, 5).forEach(p => {
+                html += `
+                    <div class="autocomplete-item select-player-suggestion-item" 
+                         style="padding: 10px 14px; cursor: pointer; border-bottom: 1px solid rgba(15, 23, 42, 0.04); text-align: left;"
+                         data-name="${p.name}" 
+                         data-level="${p.level}" 
+                         data-phone="${p.phone}">
+                        <div style="font-weight: 850; color: #0F172A; font-size: 0.82rem;">${p.name}</div>
+                        <div style="font-size: 0.65rem; color: #64748B; font-weight: 600;">⚡ Nivel: ${p.level.toFixed(2)} ${p.phone ? `• 📞 ${p.phone}` : ''}</div>
+                    </div>
+                `;
+            });
+
+            suggestionsContainer.innerHTML = html;
+            suggestionsContainer.style.display = 'block';
+        };
+
+        inputEl.addEventListener('focus', showSuggestions);
+        inputEl.addEventListener('input', showSuggestions);
+
+        suggestionsContainer.onmousedown = (e) => {
+            const item = e.target.closest('.select-player-suggestion-item');
+            if (!item) return;
+
+            const name = item.getAttribute('data-name');
+            const phone = item.getAttribute('data-phone');
+
+            inputEl.value = name;
+            
+            if (idx === 0) {
+                const creatorNameEl = form.querySelector('[name=creator_name]');
+                const creatorPhoneEl = form.querySelector('[name=creator_phone]');
+                if (creatorNameEl && !creatorNameEl.value.trim()) {
+                    creatorNameEl.value = name;
+                }
+                if (creatorPhoneEl && !creatorPhoneEl.value.trim() && phone) {
+                    creatorPhoneEl.value = phone;
+                }
+            }
+
+            window.updateAdminLiveSpotsBadge();
+            suggestionsContainer.style.display = 'none';
+        };
+
+        document.addEventListener('click', (e) => {
+            if (!inputEl.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                suggestionsContainer.style.display = 'none';
+            }
+        });
+    });
 };
 
 window.AdminViews = window.AdminViews || {};
@@ -639,96 +802,120 @@ window.AdminViews.open_matches_create = async function () {
 
         content.innerHTML = `
             <div style="max-width: 600px; margin: 0 auto;">
-                <div class="glass-card-enterprise" style="padding: 2.5rem; background: #ffffff;">
-                    <h3 style="color: var(--primary); margin-bottom: 2rem; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #cbd5e1; padding-bottom: 12px;">
-                        <i class="fas fa-plus-circle" style="font-size: 1.5rem; color: #2E61FF;"></i> DETALLES DE LA PARTIDA ABIERTA
+                <div class="glass-card-enterprise" style="padding: 2.5rem; background: #ffffff; border-radius: 24px; box-shadow: 0 8px 32px rgba(10,25,47,0.04); border: 1px solid rgba(15,23,42,0.08);">
+                    <h3 style="color: #0F172A; margin-bottom: 2rem; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(15,23,42,0.08); padding-bottom: 12px; font-weight: 950; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fas fa-plus-circle" style="font-size: 1.5rem; color: #2E61FF;"></i> Detalles de la Partida Abierta
                     </h3>
                     
-                    <form id="create-open-match-form" class="pro-form">
+                    <!-- Help Guide Card for New Users -->
+                    <div style="background: rgba(204, 255, 0, 0.08); border: 1.5px solid rgba(204, 255, 0, 0.25); border-radius: 18px; padding: 16px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 24px;">
+                        <i class="fas fa-lightbulb" style="color: #85a600; font-size: 1.25rem; margin-top: 2px; flex-shrink: 0;"></i>
+                        <div style="display: flex; flex-direction: column; gap: 4px; text-align: left;">
+                            <span style="font-size: 0.75rem; color: #85a600; font-weight: 950; text-transform: uppercase; letter-spacing: 0.5px;">💡 Guía para nuevas partidas</span>
+                            <span style="font-size: 0.75rem; color: #334155; font-weight: 600; line-height: 1.45;">
+                                Rellena los detalles de la partida. Para inscribir jugadores, escribe sus nombres en la sección del roster. Las plazas libres se calcularán automáticamente.
+                            </span>
+                        </div>
+                    </div>
+
+                    <form id="create-open-match-form" class="pro-form" style="text-align: left;">
                         <!-- Autocomplete Club Search Box -->
                         <div class="form-group" style="margin-bottom: 1.5rem; position: relative;">
-                            <label>CLUB / UBICACIÓN (BUSCADOR INTELIGENTE)</label>
+                            <label style="font-size:0.75rem; font-weight:850; color:#64748B; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">📍 Club / Ubicación (Buscador Inteligente)</label>
                             <div style="position: relative; display: flex; align-items: center;">
-                                <i class="fas fa-search" style="position: absolute; left: 16px; color: #ccff00; font-size: 0.9rem; z-index: 10;"></i>
-                                <input type="text" id="club-search-autocomplete" class="pro-input" style="padding-left: 46px !important; height: 50px; width: 100%;" placeholder="Escribe para buscar club (ej. Nick, Polo, Can Via...)" autocomplete="off" required>
+                                <i class="fas fa-search" style="position: absolute; left: 16px; color: #2E61FF; font-size: 0.9rem; z-index: 10;"></i>
+                                <input type="text" id="club-search-autocomplete" class="pro-input" style="padding-left: 46px !important; height: 50px; width: 100%; font-size: 0.85rem; font-weight: 800; border-radius: 12px;" placeholder="Escribe para buscar club..." autocomplete="off" required>
                                 <input type="hidden" name="club" id="create-match-club-hidden-value">
                             </div>
                             
                             <!-- Suggestions Dropdown -->
-                            <div id="create-club-suggestions" class="autocomplete-suggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1.5px solid #000000; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 2000; max-height: 220px; overflow-y: auto; margin-top: 6px;"></div>
+                            <div id="create-club-suggestions" class="autocomplete-suggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1.5px solid rgba(15,23,42,0.08); border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 2000; max-height: 220px; overflow-y: auto; margin-top: 6px;"></div>
                             
                             <!-- Selected Club Info Badge -->
-                            <div id="selected-club-badge" style="display: none; margin-top: 15px; padding: 16px; background: #000000; border: 2px solid #ccff00; outline: 1px solid rgba(204, 255, 0, 0.4); outline-offset: -4px; border-radius: 16px; color: #ffffff; flex-direction: column; gap: 8px; position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.15); transition: all 0.3s ease;"></div>
+                            <div id="selected-club-badge" style="display: none; margin-top: 15px; padding: 16px; background: rgba(46,97,255,0.02); border: 1.5px solid #2E61FF; border-radius: 16px; color: #0F172A; flex-direction: column; gap: 8px; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s ease;"></div>
                         </div>
 
+                        <!-- Date & Time -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 1.5rem;">
-                            <div class="form-group">
-                                <label>FECHA DEL PARTIDO</label>
-                                <input type="date" name="date" class="pro-input" required style="height: 50px;">
+                            <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                                <label style="font-size:0.75rem; font-weight:850; color:#64748B; text-transform:uppercase; letter-spacing:0.5px;">📅 Fecha del partido</label>
+                                <input type="date" name="date" class="pro-input" required style="height: 50px; font-size: 0.85rem; font-weight: 800; border-radius: 12px;">
                             </div>
-                            <div class="form-group">
-                                <label>HORA DE INICIO</label>
-                                <input type="time" name="time" class="pro-input" value="19:00" required style="height: 50px;">
+                            <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                                <label style="font-size:0.75rem; font-weight:850; color:#64748B; text-transform:uppercase; letter-spacing:0.5px;">⏰ Hora de inicio</label>
+                                <input type="time" name="time" class="pro-input" value="19:00" required style="height: 50px; font-size: 0.85rem; font-weight: 800; border-radius: 12px;">
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 1.5rem;">
-                            <div class="form-group">
-                                <label>DURACIÓN (MINUTOS)</label>
-                                <select name="duration" class="pro-input" style="height: 50px;">
+                        <!-- Duration & Levels Group -->
+                        <div style="display: flex; flex-direction: column; gap: 20px; margin-bottom: 1.5rem;">
+                            <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                                <label style="font-size:0.75rem; font-weight:850; color:#64748B; text-transform:uppercase; letter-spacing:0.5px;">⏱ Duración (Minutos)</label>
+                                <select name="duration" class="pro-input" style="height: 50px; font-size: 0.85rem; font-weight: 800; border-radius: 12px; padding: 0 16px;">
                                     <option value="90">90 min</option>
                                     <option value="60">60 min</option>
                                     <option value="120">120 min</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label>PLAZAS LIBRES (RESTANTES)</label>
-                                <select name="spots_needed" class="pro-input" style="height: 50px;">
-                                    <option value="4">4 libres (Partido vacío)</option>
-                                    <option value="3">3 libres</option>
-                                    <option value="2" selected>2 libres</option>
-                                    <option value="1">1 libre</option>
-                                    <option value="0">0 libres (Completo)</option>
-                                </select>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                                    <label style="font-size:0.75rem; font-weight:850; color:#64748B; text-transform:uppercase; letter-spacing:0.5px;">📊 Nivel Mínimo</label>
+                                    <select name="level_min" class="pro-input" style="height: 50px; font-size: 0.85rem; font-weight: 800; border-radius: 12px; padding: 0 16px;">
+                                        ${window.generateAdminLevelOptionTags(3.0)}
+                                    </select>
+                                </div>
+                                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                                    <label style="font-size:0.75rem; font-weight:850; color:#64748B; text-transform:uppercase; letter-spacing:0.5px;">📈 Nivel Máximo</label>
+                                    <select name="level_max" class="pro-input" style="height: 50px; font-size: 0.85rem; font-weight: 800; border-radius: 12px; padding: 0 16px;">
+                                        ${window.generateAdminLevelOptionTags(3.5)}
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
+                        <!-- Playtomic Link -->
+                        <div class="form-group" style="margin-bottom: 1.5rem; display:flex; flex-direction:column; gap:6px;">
+                            <label style="font-size:0.75rem; font-weight:850; color:#64748B; text-transform:uppercase; letter-spacing:0.5px;">🔗 Enlace de Playtomic (Opcional)</label>
+                            <input type="text" name="playtomic_url" class="pro-input" placeholder="https://playtomic.io/matches/..." style="font-size: 0.82rem; height: 50px; border-radius: 12px;">
+                        </div>
+
+                        <!-- Creator Details -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 1.5rem;">
-                            <div class="form-group">
-                                <label>NIVEL MÍNIMO</label>
-                                <input type="number" name="level_min" class="pro-input" value="3.0" step="0.1" min="1.0" max="6.0" style="height: 50px;">
+                            <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                                <label style="font-size:0.75rem; font-weight:850; color:#64748B; text-transform:uppercase; letter-spacing:0.5px;">👤 Nombre Organizador (Opcional)</label>
+                                <input type="text" name="creator_name" id="admin-create-match-creator" class="pro-input" placeholder="Nombre..." style="height: 50px; font-size: 0.85rem; font-weight: 800; border-radius: 12px;" oninput="document.getElementById('create-match-player-1').value = this.value; window.updateAdminLiveSpotsBadge();">
                             </div>
-                            <div class="form-group">
-                                <label>NIVEL MÁXIMO</label>
-                                <input type="number" name="level_max" class="pro-input" value="3.5" step="0.1" min="1.0" max="6.0" style="height: 50px;">
+                            <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                                <label style="font-size:0.75rem; font-weight:850; color:#64748B; text-transform:uppercase; letter-spacing:0.5px;">📞 Teléfono Organizador (Opcional)</label>
+                                <input type="tel" name="creator_phone" class="pro-input" placeholder="Ej: 600123456..." style="height: 50px; font-size: 0.85rem; font-weight: 800; border-radius: 12px;">
                             </div>
                         </div>
 
-                        <div class="form-group" style="margin-bottom: 1.5rem;">
-                            <label>ENLACE DE PLAYTOMIC (OPCIONAL)</label>
-                            <input type="text" name="playtomic_url" class="pro-input" placeholder="https://playtomic.io/matches/..." style="font-size: 0.85rem; height: 50px;">
-                        </div>
-
-                        <div style="border-top: 1px solid #cbd5e1; padding-top: 15px; margin-bottom: 2rem;">
-                            <h4 style="font-weight: 800; font-size: 0.8rem; color: #475569; margin-bottom: 15px; text-transform: uppercase;">
-                                <i class="fas fa-users"></i> JUGADORES APUNTADOS (Máx 4)
-                            </h4>
+                        <!-- Players Roster Section -->
+                        <div style="border-top: 1px solid rgba(15,23,42,0.06); padding-top: 15px; margin-bottom: 2rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                                <h4 style="font-weight: 850; font-size: 0.75rem; color: #64748B; text-transform: uppercase; margin: 0; letter-spacing:0.5px;">
+                                    <i class="fas fa-users"></i> Jugadores Apuntados (Máx 4)
+                                </h4>
+                                <span id="admin-live-spots-needed-badge" style="background:#2E61FF; color:#ffffff; font-size:0.62rem; font-weight:900; padding:2px 8px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px;">FALTAN 4 PLAZAS</span>
+                            </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                                <div class="form-group">
-                                    <label>JUGADOR 1 (CREADOR)</label>
-                                    <input type="text" name="player_1" class="pro-input" placeholder="Nombre completo...">
+                                <div class="form-group" style="display:flex; flex-direction:column; gap:4px;">
+                                    <span style="font-size:0.65rem; font-weight:800; color:#64748B;">Jugador 1 (Creador)</span>
+                                    <input type="text" name="player_1" id="create-match-player-1" class="pro-input" style="border-radius:10px; height:44px;" placeholder="Nombre..." oninput="window.updateAdminLiveSpotsBadge()">
                                 </div>
-                                <div class="form-group">
-                                    <label>JUGADOR 2</label>
-                                    <input type="text" name="player_2" class="pro-input" placeholder="Nombre completo...">
+                                <div class="form-group" style="display:flex; flex-direction:column; gap:4px;">
+                                    <span style="font-size:0.65rem; font-weight:800; color:#64748B;">Jugador 2</span>
+                                    <input type="text" name="player_2" id="create-match-player-2" class="pro-input" style="border-radius:10px; height:44px;" placeholder="Nombre..." oninput="window.updateAdminLiveSpotsBadge()">
                                 </div>
-                                <div class="form-group">
-                                    <label>JUGADOR 3</label>
-                                    <input type="text" name="player_3" class="pro-input" placeholder="Nombre completo...">
+                                <div class="form-group" style="display:flex; flex-direction:column; gap:4px;">
+                                    <span style="font-size:0.65rem; font-weight:800; color:#64748B;">Jugador 3</span>
+                                    <input type="text" name="player_3" id="create-match-player-3" class="pro-input" style="border-radius:10px; height:44px;" placeholder="Nombre..." oninput="window.updateAdminLiveSpotsBadge()">
                                 </div>
-                                <div class="form-group">
-                                    <label>JUGADOR 4</label>
-                                    <input type="text" name="player_4" class="pro-input" placeholder="Nombre completo...">
+                                <div class="form-group" style="display:flex; flex-direction:column; gap:4px;">
+                                    <span style="font-size:0.65rem; font-weight:800; color:#64748B;">Jugador 4</span>
+                                    <input type="text" name="player_4" id="create-match-player-4" class="pro-input" style="border-radius:10px; height:44px;" placeholder="Nombre..." oninput="window.updateAdminLiveSpotsBadge()">
                                 </div>
                             </div>
                         </div>
@@ -736,10 +923,10 @@ window.AdminViews.open_matches_create = async function () {
                         <input type="hidden" name="status" value="active">
                         
                         <div style="display: flex; gap: 15px; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(0,0,0,0.08);">
-                            <button type="button" class="btn-outline-pro" onclick="window.loadAdminView('open_matches_mgmt')" style="flex: 1; height: 55px; font-weight: 700; color: #000;">
+                            <button type="button" class="btn-outline-pro" onclick="window.loadAdminView('open_matches_mgmt')" style="flex: 1; height: 55px; font-weight: 700; color: #000; border-radius:12px;">
                                 CANCELAR
                             </button>
-                            <button type="submit" class="btn-primary-pro" style="flex: 2; height: 55px; font-weight: 900; font-size: 1.1rem; background: #2E61FF; color: white !important; box-shadow: 0 8px 25px rgba(46,97,255,0.25);">
+                            <button type="submit" class="btn-primary-pro" style="flex: 2; height: 55px; font-weight: 900; font-size: 1.1rem; background: #2E61FF; color: white !important; box-shadow: 0 8px 25px rgba(46,97,255,0.25); border-radius:12px;">
                                 PUBLICAR PARTIDA 🚀
                             </button>
                         </div>
@@ -832,7 +1019,13 @@ window.AdminViews.open_matches_create = async function () {
             });
         }
 
+        // Initialize Live Spots Badge
+        window.updateAdminLiveSpotsBadge();
+
         setupCreateOpenMatchFormUpgraded();
+
+        // Bind Player Autocomplete
+        window.bindAdminPlayerAutocomplete('create-open-match-form');
 
     } catch (e) {
         console.error(e);
@@ -856,9 +1049,9 @@ function setupCreateOpenMatchFormUpgraded() {
         const data = Object.fromEntries(fd.entries());
 
         try {
-            const clubSelect = data.club;
-            const clubCustom = document.getElementById('create-match-club-custom-input')?.value || '';
-            const finalClub = clubSelect === 'custom' ? clubCustom.trim() : clubSelect;
+            // Use autocomplete text value directly for club
+            const autocompleteInput = document.getElementById('club-search-autocomplete');
+            const finalClub = autocompleteInput ? autocompleteInput.value.trim() : (data.club || 'Somos Pádel BCN');
 
             if (!finalClub) throw new Error("Debe seleccionar o escribir un club.");
             if (!data.date) throw new Error("La fecha es obligatoria");
@@ -870,6 +1063,8 @@ function setupCreateOpenMatchFormUpgraded() {
             if (data.player_3 && data.player_3.trim()) players.push(data.player_3.trim());
             if (data.player_4 && data.player_4.trim()) players.push(data.player_4.trim());
 
+            const spotsVal = Math.max(0, 4 - players.length);
+
             // Build match payload
             const payload = {
                 club: finalClub,
@@ -879,10 +1074,13 @@ function setupCreateOpenMatchFormUpgraded() {
                 level_min: parseFloat(data.level_min) || 3.0,
                 level_max: parseFloat(data.level_max) || 3.5,
                 players: players,
-                spots_needed: parseInt(data.spots_needed),
+                spots_needed: spotsVal,
                 playtomic_url: data.playtomic_url || '',
                 status: 'active',
-                created_at: firebase.firestore.FieldValue.serverTimestamp()
+                created_at: firebase.firestore.FieldValue.serverTimestamp(),
+                creator_uid: "",
+                creator_name: (data.creator_name || "").trim() || (players[0] || ""),
+                creator_phone: (data.creator_phone || "").replace(/[^0-9]/g, "")
             };
 
             await window.db.collection(OPEN_MATCHES_COLLECTION).add(payload);
@@ -985,6 +1183,9 @@ window.duplicateOpenMatch = async (m) => {
         copy.status = 'active';
         copy.players = [];
         copy.spots_needed = 4; // Clear players list and spots
+        copy.creator_uid = "";
+        copy.creator_name = "";
+        copy.creator_phone = "";
 
         // Add 7 days to date
         if (copy.date) {
@@ -1010,6 +1211,35 @@ window.duplicateOpenMatch = async (m) => {
     }
 };
 
+let adminPlayersCache = null;
+
+async function loadAdminPlayersCache() {
+    if (adminPlayersCache) return adminPlayersCache;
+    adminPlayersCache = {};
+    if (!window.db) return adminPlayersCache;
+    try {
+        const snap = await window.db.collection('players').get();
+        snap.forEach(doc => {
+            const data = doc.data();
+            if (data.name) {
+                adminPlayersCache[data.name.toLowerCase().trim()] = parseFloat(data.level || 3.0);
+            }
+        });
+    } catch (err) {
+        console.warn("Error loading admin players cache:", err);
+    }
+    return adminPlayersCache;
+}
+
+function formatShareDate(dateStr) {
+    if (!dateStr) return '---';
+    const d = new Date(`${dateStr}T00:00:00`);
+    if (isNaN(d.getTime())) return dateStr;
+    const options = { weekday: 'long', day: 'numeric', month: 'long' };
+    let formatted = d.toLocaleDateString('es-ES', options);
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+}
+
 window.launchWhatsAppShareOpenMatch = async (id) => {
     try {
         if (!window.db) throw new Error("Base de datos no inicializada.");
@@ -1017,20 +1247,41 @@ window.launchWhatsAppShareOpenMatch = async (id) => {
         if (!doc.exists) throw new Error("Partida no encontrada.");
 
         const m = doc.data();
-        const dateFormatted = formatOpenMatchDate(m.date);
+        const dateFormatted = formatShareDate(m.date);
         const playersList = m.players || [];
         const levelRange = `${parseFloat(m.level_min || 3.0).toFixed(2)} - ${parseFloat(m.level_max || 3.5).toFixed(2)}`;
         
-        let playersText = playersList.map(p => `✔️ ${p}`).join('\n');
-        // Pad blank spots
-        const blanksCount = 4 - playersList.length;
-        for (let i = 0; i < blanksCount; i++) {
-            playersText += `\n✔️ ??`;
+        // Cargar caché de niveles de jugadores
+        const cache = await loadAdminPlayersCache();
+
+        let playersLines = [];
+        for (let idx = 0; idx < 4; idx++) {
+            if (idx < playersList.length) {
+                const fullName = playersList[idx];
+                const cleanName = fullName.replace(/\s*\(\d+(?:\.\d+)?\)\s*$/, '').trim();
+                
+                // Intentar obtener nivel
+                let levelVal = (parseFloat(m.level_min || 3.0) + (idx * 0.15)).toFixed(2);
+                const parenthesizedMatch = fullName.match(/\((\d+(?:\.\d+)?)\)/);
+                const parenthesizedLevel = parenthesizedMatch ? parseFloat(parenthesizedMatch[1]) : null;
+                const cachedLevel = cache[cleanName.toLowerCase()];
+                
+                if (cachedLevel !== null && cachedLevel !== undefined) {
+                    levelVal = cachedLevel.toFixed(2);
+                } else if (parenthesizedLevel !== null) {
+                    levelVal = parenthesizedLevel.toFixed(2);
+                }
+                
+                playersLines.push(`✔️ ${cleanName} (${levelVal})`);
+            } else {
+                playersLines.push(`⏳ Slot Libre`);
+            }
         }
+        const playersText = playersLines.join('\n');
 
         const link = m.playtomic_url || `https://wa.me/34600000000?text=Hola,%20me%20gustaria%20apuntarme%20a%20la%20partida%20de%20padel%20del%20${encodeURIComponent(m.date)}`;
 
-        const messageText = `🎾 *PARTIDO ABIERTO SOMOSPADEL BCN* 🎾\n\n📍 *Club:* ${m.club || 'Somos Pádel BCN'}\n📅 *Fecha:* ${dateFormatted}\n⏰ *Hora:* ${m.time || '19:00'} (${m.duration || 90} min)\n📊 *Nivel:* ${levelRange}\n\n👥 *Jugadores:* \n${playersText}\n\n👉 *¡Reserva tu plaza aquí!* \n${link}`;
+        const messageText = `🎾 *PARTIDO ABIERTO • SOMOSPADEL BCN* 🎾\n\n📍 *Club:* ${m.club || 'Somos Pádel BCN'}\n📅 *Fecha:* ${dateFormatted}\n⏰ *Hora:* ${m.time || '19:00'} (${m.duration || 90} min)\n📊 *Nivel Requerido:* ${levelRange}\n\n👥 *Jugadores apuntados:* \n${playersText}\n\n🔥 _¡Únete al partido y reserva tu plaza aquí!_ 👇\n${link}`;
 
         const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(messageText)}`;
         window.open(waUrl, '_blank');
@@ -1088,7 +1339,7 @@ window.openEditOpenMatchModal = async function (m) {
                     <div id="edit-club-suggestions" class="autocomplete-suggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1.5px solid #000000; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 2000; max-height: 200px; overflow-y: auto; margin-top: 6px;"></div>
                     
                     <!-- Selected Club Info Badge -->
-                    <div id="edit-selected-club-badge" style="display: none; margin-top: 15px; padding: 16px; background: #000000; border: 2px solid #ccff00; outline: 1px solid rgba(204, 255, 0, 0.4); outline-offset: -4px; border-radius: 16px; color: #ffffff; flex-direction: column; gap: 8px; position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.15); transition: all 0.3s ease;"></div>
+                    <div id="edit-selected-club-badge" style="display: none; margin-top: 15px; padding: 16px; background: #ffffff; border: 1.5px solid #10B981; border-radius: 16px; color: #0F172A; flex-direction: column; gap: 8px; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s ease;"></div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
@@ -1111,32 +1362,40 @@ window.openEditOpenMatchModal = async function (m) {
                             <option value="120" ${m.duration == 120 ? 'selected' : ''}>120 min</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>PLAZAS LIBRES</label>
-                        <select name="spots_needed" class="pro-input">
-                            <option value="4" ${m.spots_needed == 4 ? 'selected' : ''}>4 libres (Partido vacío)</option>
-                            <option value="3" ${m.spots_needed == 3 ? 'selected' : ''}>3 libres</option>
-                            <option value="2" ${m.spots_needed == 2 ? 'selected' : ''}>2 libres</option>
-                            <option value="1" ${m.spots_needed == 1 ? 'selected' : ''}>1 libre</option>
-                            <option value="0" ${m.spots_needed == 0 ? 'selected' : ''}>0 libres (Completo)</option>
-                        </select>
+                    <div class="form-group" style="display: flex; flex-direction: column; justify-content: flex-end;">
+                        <!-- Manual spaces needed dropdown removed, calculated dynamically instead -->
                     </div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                     <div class="form-group">
                         <label>NIVEL MÍNIMO</label>
-                        <input type="number" name="level_min" class="pro-input" value="${m.level_min || 3.0}" step="0.1" min="1.0" max="6.0">
+                        <select name="level_min" class="pro-input">
+                            ${window.generateAdminLevelOptionTags(m.level_min || 3.0)}
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>NIVEL MÁXIMO</label>
-                        <input type="number" name="level_max" class="pro-input" value="${m.level_max || 3.5}" step="0.1" min="1.0" max="6.0">
+                        <select name="level_max" class="pro-input">
+                            ${window.generateAdminLevelOptionTags(m.level_max || 3.5)}
+                        </select>
                     </div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label>URL ENLACE DE PLAYTOMIC</label>
                     <input type="text" name="playtomic_url" class="pro-input" value="${m.playtomic_url || ''}" placeholder="https://...">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>NOMBRE ORGANIZADOR (OPCIONAL)</label>
+                        <input type="text" name="creator_name" class="pro-input" value="${m.creator_name || ''}" placeholder="Nombre del organizador...">
+                    </div>
+                    <div class="form-group">
+                        <label>TELÉFONO ORGANIZADOR (OPCIONAL)</label>
+                        <input type="tel" name="creator_phone" class="pro-input" value="${m.creator_phone || ''}" placeholder="Ej: 600123456...">
+                    </div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 15px;">
@@ -1149,23 +1408,26 @@ window.openEditOpenMatchModal = async function (m) {
                 </div>
 
                 <div style="border-top:1px solid #cbd5e1; padding-top:15px; margin-top:15px;">
-                    <h4 style="margin:0 0 10px 0; font-weight:800; font-size:0.75rem; color:#475569;">JUGADORES APUNTADOS (MÁX 4)</h4>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h4 style="margin:0; font-weight:800; font-size:0.75rem; color:#475569;">JUGADORES APUNTADOS (MÁX 4)</h4>
+                        <span id="admin-edit-live-spots-needed-badge" style="background:#2E61FF; color:#ffffff; font-size:0.62rem; font-weight:900; padding:2px 8px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px;">FALTAN 4 PLAZAS</span>
+                    </div>
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                         <div class="form-group">
                             <label>JUGADOR 1</label>
-                            <input type="text" name="player_1" class="pro-input" value="${p1}" placeholder="Libre...">
+                            <input type="text" name="player_1" class="pro-input" value="${p1}" placeholder="Libre..." oninput="window.updateAdminLiveSpotsBadge()">
                         </div>
                         <div class="form-group">
                             <label>JUGADOR 2</label>
-                            <input type="text" name="player_2" class="pro-input" value="${p2}" placeholder="Libre...">
+                            <input type="text" name="player_2" class="pro-input" value="${p2}" placeholder="Libre..." oninput="window.updateAdminLiveSpotsBadge()">
                         </div>
                         <div class="form-group">
                             <label>JUGADOR 3</label>
-                            <input type="text" name="player_3" class="pro-input" value="${p3}" placeholder="Libre...">
+                            <input type="text" name="player_3" class="pro-input" value="${p3}" placeholder="Libre..." oninput="window.updateAdminLiveSpotsBadge()">
                         </div>
                         <div class="form-group">
                             <label>JUGADOR 4</label>
-                            <input type="text" name="player_4" class="pro-input" value="${p4}" placeholder="Libre...">
+                            <input type="text" name="player_4" class="pro-input" value="${p4}" placeholder="Libre..." oninput="window.updateAdminLiveSpotsBadge()">
                         </div>
                     </div>
                 </div>
@@ -1184,6 +1446,9 @@ window.openEditOpenMatchModal = async function (m) {
     `;
 
     document.body.appendChild(modal);
+
+    // Initialize the live spots badge dynamically based on initial player fields
+    window.updateAdminLiveSpotsBadge();
 
     // Initial badge values using premium component card
     const bdgBox = document.getElementById('edit-selected-club-badge');
@@ -1311,9 +1576,11 @@ window.openEditOpenMatchModal = async function (m) {
                 level_min: parseFloat(data.level_min) || 3.0,
                 level_max: parseFloat(data.level_max) || 3.5,
                 players: players,
-                spots_needed: parseInt(data.spots_needed),
+                spots_needed: Math.max(0, 4 - players.length),
                 playtomic_url: data.playtomic_url || '',
-                status: data.status || 'active'
+                status: data.status || 'active',
+                creator_name: (data.creator_name || "").trim(),
+                creator_phone: (data.creator_phone || "").replace(/[^0-9]/g, "")
             };
 
             await window.db.collection(OPEN_MATCHES_COLLECTION).doc(id).update(updatedData);
@@ -1331,6 +1598,9 @@ window.openEditOpenMatchModal = async function (m) {
             alert("Error al guardar cambios: " + err.message);
         }
     };
+
+    // Bind Player Autocomplete
+    window.bindAdminPlayerAutocomplete('edit-open-match-form');
 };
 
 window.closeOpenMatchModal = function () {
