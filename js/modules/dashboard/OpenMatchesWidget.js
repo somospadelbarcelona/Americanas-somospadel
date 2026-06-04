@@ -107,15 +107,15 @@
                         gap: 22px;
                     }
                     .widget-left-column {
-                        flex: 1 1 58%;
+                        flex: 1 1 100%;
                     }
                     .widget-right-column {
-                        flex: 0 0 38%;
-                        min-width: 250px;
-                        border-top: none;
-                        padding-top: 0;
-                        border-left: 1px solid #e2e8f0;
-                        padding-left: 22px;
+                        display: none;
+                    }
+                    .match-promo-card {
+                        flex: 0 0 100% !important;
+                        width: 100% !important;
+                        max-width: 100% !important;
                     }
                 }
                 
@@ -148,9 +148,10 @@
                 /* Tarjeta individual de partida (MODO CLARO) */
                 .match-promo-card {
                     scroll-snap-align: start;
-                    flex: 0 0 85%;
-                    width: 85%;
-                    max-width: 320px;
+                    flex: 0 0 100%;
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
                     background: #ffffff;
                     border: 1.5px solid #e2e8f0;
                     border-radius: 22px;

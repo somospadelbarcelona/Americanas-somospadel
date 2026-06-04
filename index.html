@@ -717,6 +717,1069 @@
             </div>
         </main>
 
+        <!-- ====================================================== -->
+        <!-- 🖥️ DESKTOP LEFT SIDEBAR (Solo visible en escritorio)   -->
+        <!-- ====================================================== -->
+        <style>
+            #desktop-left-sidebar {
+                display: none; /* JS lo activa en desktop */
+                flex-direction: column;
+                gap: 14px;
+                width: 220px;
+                position: fixed;
+                top: 108px;
+                height: calc(100vh - 108px - 80px);
+                overflow-y: auto;
+                overflow-x: hidden;
+                scrollbar-width: none;
+                padding: 12px 4px 20px 4px;
+                z-index: 500;
+                background: transparent;
+            }
+            #desktop-left-sidebar::-webkit-scrollbar { display: none; }
+
+            /* Perfil card */
+            .dsb-profile-card {
+                background: linear-gradient(135deg, #0F172A 0%, #1e293b 100%);
+                border-radius: 20px;
+                padding: 18px 16px;
+                color: #fff;
+                text-align: center;
+                position: relative;
+                overflow: hidden;
+            }
+            .dsb-profile-card::before {
+                content: '';
+                position: absolute;
+                width: 120px; height: 120px;
+                background: radial-gradient(circle, rgba(204,255,0,0.12) 0%, transparent 70%);
+                top: -30px; right: -30px;
+                pointer-events: none;
+            }
+            .dsb-profile-avatar-big {
+                width: 54px; height: 54px;
+                border-radius: 16px;
+                background: linear-gradient(135deg, #CCFF00, #9bc200);
+                display: flex; align-items: center; justify-content: center;
+                font-size: 1.3rem; font-weight: 950; color: #000;
+                margin: 0 auto 10px auto;
+                border: 2px solid rgba(204,255,0,0.3);
+                box-shadow: 0 4px 16px rgba(204,255,0,0.25);
+            }
+            .dsb-profile-name {
+                font-size: 0.88rem; font-weight: 900; color: #fff;
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                margin-bottom: 2px;
+            }
+            .dsb-profile-role {
+                font-size: 0.58rem; font-weight: 800; color: rgba(204,255,0,0.8);
+                text-transform: uppercase; letter-spacing: 1.5px;
+            }
+            .dsb-profile-stats {
+                display: grid; grid-template-columns: 1fr 1fr 1fr;
+                gap: 6px; margin-top: 14px;
+            }
+            .dsb-profile-stat {
+                background: rgba(255,255,255,0.06);
+                border-radius: 10px; padding: 7px 4px; text-align: center;
+            }
+            .dsb-profile-stat-val {
+                font-size: 1rem; font-weight: 950; color: #CCFF00;
+                display: block; line-height: 1;
+            }
+            .dsb-profile-stat-lbl {
+                font-size: 0.5rem; font-weight: 800; color: rgba(255,255,255,0.45);
+                text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-top: 3px;
+            }
+
+            /* Nav vertical */
+            .dsb-nav-item {
+                display: flex; align-items: center; gap: 10px;
+                padding: 10px 12px;
+                border-radius: 12px;
+                font-size: 0.75rem; font-weight: 800;
+                color: #0F172A;
+                cursor: pointer;
+                transition: all 0.15s;
+                text-decoration: none;
+            }
+            .dsb-nav-item:hover {
+                background: rgba(46,97,255,0.06);
+                color: #2E61FF;
+                transform: translateX(3px);
+            }
+            .dsb-nav-item.active {
+                background: rgba(204,255,0,0.12);
+                color: #4a6000;
+            }
+            .dsb-nav-icon {
+                width: 30px; height: 30px;
+                border-radius: 9px;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 0.8rem; flex-shrink: 0;
+            }
+
+            /* Announcement */
+            .dsb-announce-item {
+                display: flex; gap: 8px; align-items: flex-start;
+                padding: 8px 0;
+                border-bottom: 1px solid rgba(15,23,42,0.05);
+                font-size: 0.7rem;
+            }
+            .dsb-announce-item:last-child { border-bottom: none; }
+            .dsb-announce-badge {
+                font-size: 0.55rem; font-weight: 900; padding: 2px 6px;
+                border-radius: 5px; flex-shrink: 0; margin-top: 1px;
+                text-transform: uppercase; letter-spacing: 0.5px;
+            }
+            .dsb-announce-text { color: #475569; font-weight: 600; line-height: 1.35; }
+
+            /* Quote card */
+            .dsb-quote-card {
+                background: linear-gradient(135deg, #2E61FF 0%, #6366f1 100%);
+                border-radius: 18px; padding: 16px;
+                color: #fff; position: relative; overflow: hidden;
+            }
+            .dsb-quote-card::after {
+                content: '"';
+                position: absolute; font-size: 6rem; font-weight: 900;
+                color: rgba(255,255,255,0.06); right: 8px; top: -10px;
+                font-family: serif; line-height: 1;
+                pointer-events: none;
+            }
+            .dsb-quote-text {
+                font-size: 0.72rem; font-weight: 700; line-height: 1.5;
+                font-style: italic; position: relative; z-index: 1;
+            }
+            .dsb-quote-author {
+                font-size: 0.58rem; font-weight: 900; color: rgba(255,255,255,0.6);
+                margin-top: 8px; text-transform: uppercase; letter-spacing: 1px;
+                position: relative; z-index: 1;
+            }
+        </style>
+
+        <div id="desktop-left-sidebar">
+
+            <!-- === WIDGET: PERFIL DEL JUGADOR === -->
+            <div class="dsb-profile-card">
+                <div class="dsb-profile-avatar-big" id="dsbl-avatar">?</div>
+                <div class="dsb-profile-name" id="dsbl-name">Cargando...</div>
+                <div class="dsb-profile-role" id="dsbl-role">Jugador</div>
+                <div class="dsb-profile-stats">
+                    <div class="dsb-profile-stat">
+                        <span class="dsb-profile-stat-val" id="dsbl-level">--</span>
+                        <span class="dsb-profile-stat-lbl">Nivel</span>
+                    </div>
+                    <div class="dsb-profile-stat">
+                        <span class="dsb-profile-stat-val" id="dsbl-wins">--</span>
+                        <span class="dsb-profile-stat-lbl">Wins</span>
+                    </div>
+                    <div class="dsb-profile-stat">
+                        <span class="dsb-profile-stat-val" id="dsbl-streak">--</span>
+                        <span class="dsb-profile-stat-lbl">Racha</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- === WIDGET: NAVEGACIÓN RÁPIDA === -->
+            <div class="dsb-card" style="padding: 10px 8px;">
+                <p class="dsb-card-title" style="margin-bottom:8px;"><i class="fas fa-compass"></i> Navegar</p>
+                <div onclick="window.Router?.navigate('dashboard')"    class="dsb-nav-item" id="dsbl-nav-inicio">
+                    <div class="dsb-nav-icon" style="background:rgba(0,210,255,0.1); color:#00d2ff;"><i class="fas fa-home"></i></div> Inicio
+                </div>
+                <div onclick="window.Router?.navigate('ranking')"     class="dsb-nav-item" id="dsbl-nav-ranking">
+                    <div class="dsb-nav-icon" style="background:rgba(245,158,11,0.1); color:#F59E0B;"><i class="fas fa-trophy"></i></div> Ranking
+                </div>
+                <div onclick="window.Router?.navigate('entrenos')"    class="dsb-nav-item" id="dsbl-nav-eventos">
+                    <div class="dsb-nav-icon" style="background:rgba(16,185,129,0.1); color:#10B981;"><i class="fas fa-calendar"></i></div> Eventos
+                </div>
+                <div onclick="window.Router?.navigate('open_matches')" class="dsb-nav-item" id="dsbl-nav-abiertas">
+                    <div class="dsb-nav-icon" style="background:rgba(204,255,0,0.15); color:#6a8500;"><i class="fas fa-users"></i></div> Abiertas
+                </div>
+                <div onclick="window.Router?.navigate('records')"     class="dsb-nav-item" id="dsbl-nav-records">
+                    <div class="dsb-nav-icon" style="background:rgba(139,92,246,0.1); color:#8B5CF6;"><i class="fas fa-medal"></i></div> Récords
+                </div>
+                <div onclick="window.Router?.navigate('profile')"     class="dsb-nav-item" id="dsbl-nav-perfil">
+                    <div class="dsb-nav-icon" style="background:rgba(239,68,68,0.1); color:#EF4444;"><i class="fas fa-user"></i></div> Mi Perfil
+                </div>
+            </div>
+
+            <!-- === WIDGET: ANUNCIOS DEL CLUB === -->
+            <div class="dsb-card">
+                <p class="dsb-card-title"><i class="fas fa-bullhorn"></i> Novedades del Club</p>
+                <div id="dsbl-announcements">
+                    <div class="dsb-announce-item">
+                        <span class="dsb-announce-badge" style="background:rgba(204,255,0,0.15); color:#5a7000;">NUEVO</span>
+                        <div class="dsb-announce-text">Pista 6 reformada — abierta desde el lunes</div>
+                    </div>
+                    <div class="dsb-announce-item">
+                        <span class="dsb-announce-badge" style="background:rgba(46,97,255,0.1); color:#2E61FF;">INFO</span>
+                        <div class="dsb-announce-text">Inscripciones para el Torneo de Verano abiertas</div>
+                    </div>
+                    <div class="dsb-announce-item">
+                        <span class="dsb-announce-badge" style="background:rgba(239,68,68,0.1); color:#EF4444;">HOT</span>
+                        <div class="dsb-announce-text">Nuevo ranking mensual activo — ¡compite!</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- === WIDGET: FRASE MOTIVACIONAL === -->
+            <div class="dsb-quote-card">
+                <p class="dsb-quote-text" id="dsbl-quote">"El pádel no se juega con la raqueta, se juega con la cabeza."</p>
+                <p class="dsb-quote-author" id="dsbl-quote-author">— Proverbio del Club</p>
+            </div>
+
+            <!-- === WIDGET: TU PRÓXIMO EVENTO === -->
+            <div class="dsb-card">
+                <p class="dsb-card-title"><i class="fas fa-bell"></i> Tu Próximo Evento</p>
+                <div id="dsbl-next-event" style="font-size:0.72rem; color:#64748B; font-weight:600; text-align:center; padding: 8px 0;">
+                    <span class="playtomic-spinner-light" style="font-size:0.6rem;"></span> Buscando...
+                </div>
+            </div>
+
+        </div>
+        <!-- /desktop-left-sidebar -->
+
+        <!-- Script LEFT SIDEBAR -->
+        <script>
+        (function () {
+            const QUOTES = [
+                { text: '"El pádel no se juega con la raqueta, se juega con la cabeza."', author: '— Proverbio del Club' },
+                { text: '"Cada punto es una nueva oportunidad de ser mejor."', author: '— SomosPádel BCN' },
+                { text: '"La constancia en el entrenamiento es el único atajo."', author: '— Coach Anónimo' },
+                { text: '"No pierdas el globo, nunca pierdas la calma."', author: '— Máxima del pádel' },
+                { text: '"El equipo que mejor se comunica, siempre gana."', author: '— SomosPádel BCN' },
+            ];
+
+            function positionLeftSidebar() {
+                const sidebar = document.getElementById('desktop-left-sidebar');
+                if (!sidebar) return;
+                const vw = window.innerWidth;
+                if (vw < 1024) { sidebar.style.display = 'none'; return; }
+
+                // Borde izquierdo del contenido central (600px max-width centrado):
+                const contentLeft = (vw / 2) - 300;
+                const sidebarWidth = sidebar.offsetWidth || 220;
+                const rightPos = contentLeft - 14; // right edge of sidebar
+                const leftPos = rightPos - sidebarWidth;
+
+                if (leftPos < 4) { sidebar.style.display = 'none'; return; }
+
+                sidebar.style.display = 'flex';
+                sidebar.style.left = Math.round(leftPos) + 'px';
+            }
+
+            function loadUserProfile() {
+                const tryLoad = () => {
+                    const u = window.Store ? window.Store.getState('currentUser') : null;
+                    if (!u) return;
+                    const name = (u.name || u.displayName || 'Jugador').trim();
+                    const initials = name.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
+                    const level = parseFloat(u.level || 3.0).toFixed(2);
+                    const role = (u.role || 'Jugador').replace(/_/g,' ');
+
+                    const av = document.getElementById('dsbl-avatar');
+                    const nm = document.getElementById('dsbl-name');
+                    const rl = document.getElementById('dsbl-role');
+                    const lv = document.getElementById('dsbl-level');
+                    const ws = document.getElementById('dsbl-wins');
+                    const st = document.getElementById('dsbl-streak');
+
+                    if (av) av.textContent = initials || '?';
+                    if (nm) nm.textContent = name;
+                    if (rl) rl.textContent = role;
+                    if (lv) lv.textContent = level;
+                    if (ws) ws.textContent = u.wins || u.total_wins || '--';
+                    if (st) st.textContent = (u.streak || u.win_streak || 0) + '🔥';
+                };
+                tryLoad();
+                // Reintentar si no cargó
+                let t = 0;
+                const iv = setInterval(() => {
+                    t++;
+                    const u = window.Store ? window.Store.getState('currentUser') : null;
+                    if (u || t > 20) { clearInterval(iv); tryLoad(); }
+                }, 600);
+            }
+
+            function loadNextEvent() {
+                const el = document.getElementById('dsbl-next-event');
+                if (!el) return;
+
+                const tryDb = async () => {
+                    if (!window.db) return;
+                    try {
+                        const today = new Date().toISOString().split('T')[0];
+                        const snap = await window.db.collection('americanas')
+                            .where('date', '>=', today)
+                            .orderBy('date', 'asc')
+                            .limit(1)
+                            .get();
+
+                        if (snap.empty) throw new Error('no events');
+                        const d = snap.docs[0].data();
+                        const dt = new Date((d.date || today) + 'T00:00:00');
+                        const day = dt.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' });
+                        el.innerHTML = `
+                            <div style="background:rgba(46,97,255,0.05); border:1px solid rgba(46,97,255,0.12); border-radius:12px; padding:10px 12px; text-align:left;">
+                                <div style="font-size:0.62rem; font-weight:900; color:#2E61FF; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">
+                                    <i class="fas fa-calendar-check"></i> Próximo
+                                </div>
+                                <div style="font-size:0.78rem; font-weight:900; color:#0F172A; line-height:1.3;">${d.name || 'Torneo'}</div>
+                                <div style="font-size:0.62rem; font-weight:700; color:#64748B; margin-top:4px;">
+                                    <i class="fas fa-clock"></i> ${day}
+                                </div>
+                                <div style="margin-top:8px;">
+                                    <button onclick="window.Router?.navigate('entrenos')"
+                                            style="background:#2E61FF; color:#fff; border:none; border-radius:8px; padding:6px 12px; font-size:0.62rem; font-weight:900; cursor:pointer; width:100%;">
+                                        VER EVENTO <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>`;
+                    } catch(e) {
+                        el.innerHTML = `<div style="font-size:0.68rem; color:#CBD5E1; text-align:center; font-weight:700; padding:6px 0;">
+                            No hay eventos próximos programados</div>`;
+                    }
+                };
+
+                let t2 = 0;
+                const iv2 = setInterval(() => {
+                    t2++;
+                    if (window.db || t2 > 20) { clearInterval(iv2); tryDb(); }
+                }, 600);
+            }
+
+            function setRandomQuote() {
+                const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+                const qt = document.getElementById('dsbl-quote');
+                const qa = document.getElementById('dsbl-quote-author');
+                if (qt) qt.textContent = q.text;
+                if (qa) qa.textContent = q.author;
+            }
+
+            function highlightCurrentNav() {
+                // Escuchar cambios de ruta para marcar activo
+                const map = {
+                    dashboard: 'dsbl-nav-inicio',
+                    ranking: 'dsbl-nav-ranking',
+                    entrenos: 'dsbl-nav-eventos',
+                    open_matches: 'dsbl-nav-abiertas',
+                    records: 'dsbl-nav-records',
+                    profile: 'dsbl-nav-perfil',
+                };
+                const orig = window.Router && window.Router.navigate;
+                if (window.Router && orig) {
+                    const _nav = window.Router.navigate.bind(window.Router);
+                    window.Router.navigate = function(route, ...args) {
+                        document.querySelectorAll('.dsb-nav-item').forEach(el => el.classList.remove('active'));
+                        const id = map[route];
+                        if (id) { const el = document.getElementById(id); if (el) el.classList.add('active'); }
+                        return _nav(route, ...args);
+                    };
+                }
+            }
+
+            function initLeftSidebar() {
+                positionLeftSidebar();
+                window.addEventListener('resize', positionLeftSidebar);
+                setRandomQuote();
+                loadUserProfile();
+                loadNextEvent();
+                setTimeout(highlightCurrentNav, 1500);
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => setTimeout(initLeftSidebar, 250));
+            } else {
+                setTimeout(initLeftSidebar, 250);
+            }
+
+            window.refreshLeftSidebar = function() {
+                loadUserProfile();
+                loadNextEvent();
+            };
+        })();
+        </script>
+
+        <!-- ====================================================== -->
+        <!-- 🖥️ DESKTOP RIGHT SIDEBAR (Solo visible en escritorio)  -->
+        <!-- ====================================================== -->
+        <style>
+            /* === DESKTOP SIDEBAR === */
+            /* La visibilidad y posicion exacta la gestiona JS, aqui solo la base */
+            #desktop-right-sidebar {
+                display: none; /* oculto por defecto; JS lo muestra en desktop */
+                flex-direction: column;
+                gap: 14px;
+                width: 272px;
+                position: fixed;
+                top: 108px;
+                height: calc(100vh - 108px - 80px);
+                overflow-y: auto;
+                overflow-x: hidden;
+                scrollbar-width: none;
+                padding: 12px 4px 20px 4px;
+                z-index: 500;
+                background: transparent;
+            }
+            #desktop-right-sidebar::-webkit-scrollbar { display: none; }
+
+            /* === WIDGET CARDS === */
+            .dsb-card {
+                background: #ffffff;
+                border: 1px solid rgba(15, 23, 42, 0.07);
+                border-radius: 20px;
+                padding: 16px;
+                box-shadow: 0 4px 20px rgba(10, 25, 47, 0.04);
+                transition: box-shadow 0.2s;
+            }
+            .dsb-card:hover {
+                box-shadow: 0 8px 32px rgba(10, 25, 47, 0.08);
+            }
+            .dsb-card-title {
+                font-size: 0.62rem;
+                font-weight: 900;
+                text-transform: uppercase;
+                letter-spacing: 1.5px;
+                color: #94A3B8;
+                margin: 0 0 12px 0;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .dsb-card-title i {
+                font-size: 0.7rem;
+            }
+
+            /* Ranking rows */
+            .dsb-rank-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 7px 0;
+                border-bottom: 1px solid rgba(15,23,42,0.04);
+                transition: background 0.15s;
+                border-radius: 8px;
+                padding-left: 4px;
+                cursor: default;
+            }
+            .dsb-rank-row:last-child { border-bottom: none; }
+            .dsb-rank-row:hover { background: rgba(46,97,255,0.03); }
+            .dsb-rank-num {
+                font-size: 0.68rem;
+                font-weight: 950;
+                color: #94A3B8;
+                width: 18px;
+                text-align: center;
+                flex-shrink: 0;
+            }
+            .dsb-rank-num.gold { color: #F59E0B; }
+            .dsb-rank-num.silver { color: #94A3B8; }
+            .dsb-rank-num.bronze { color: #CD7F32; }
+            .dsb-rank-avatar {
+                width: 28px;
+                height: 28px;
+                border-radius: 8px;
+                background: linear-gradient(135deg, #2E61FF 0%, #00d2ff 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.65rem;
+                font-weight: 950;
+                color: #fff;
+                flex-shrink: 0;
+            }
+            .dsb-rank-name {
+                flex: 1;
+                font-size: 0.75rem;
+                font-weight: 800;
+                color: #0F172A;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .dsb-rank-level {
+                font-size: 0.65rem;
+                font-weight: 900;
+                background: rgba(204, 255, 0, 0.15);
+                color: #556b00;
+                padding: 2px 6px;
+                border-radius: 6px;
+                flex-shrink: 0;
+            }
+
+            /* Event rows */
+            .dsb-event-row {
+                display: flex;
+                gap: 10px;
+                align-items: flex-start;
+                padding: 8px 0;
+                border-bottom: 1px solid rgba(15,23,42,0.04);
+                cursor: pointer;
+                transition: opacity 0.15s;
+            }
+            .dsb-event-row:last-child { border-bottom: none; }
+            .dsb-event-row:hover { opacity: 0.8; }
+            .dsb-event-date-pill {
+                background: linear-gradient(135deg, #2E61FF 0%, #6366f1 100%);
+                color: #fff;
+                border-radius: 10px;
+                padding: 6px 8px;
+                font-size: 0.6rem;
+                font-weight: 900;
+                text-align: center;
+                flex-shrink: 0;
+                min-width: 36px;
+                line-height: 1.2;
+                text-transform: uppercase;
+            }
+            .dsb-event-name {
+                font-size: 0.75rem;
+                font-weight: 800;
+                color: #0F172A;
+                line-height: 1.3;
+                margin-bottom: 2px;
+            }
+            .dsb-event-meta {
+                font-size: 0.62rem;
+                font-weight: 600;
+                color: #94A3B8;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            /* Courts grid */
+            .dsb-courts-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+            .dsb-court-item {
+                border-radius: 10px;
+                padding: 8px 6px;
+                text-align: center;
+                font-size: 0.58rem;
+                font-weight: 800;
+                transition: transform 0.15s;
+                cursor: default;
+            }
+            .dsb-court-item:hover { transform: scale(1.03); }
+            .dsb-court-free {
+                background: rgba(16, 185, 129, 0.08);
+                border: 1px solid rgba(16, 185, 129, 0.25);
+                color: #059669;
+            }
+            .dsb-court-busy {
+                background: rgba(239, 68, 68, 0.07);
+                border: 1px solid rgba(239, 68, 68, 0.2);
+                color: #DC2626;
+            }
+            .dsb-court-reserved {
+                background: rgba(245, 158, 11, 0.08);
+                border: 1px solid rgba(245, 158, 11, 0.22);
+                color: #D97706;
+            }
+            .dsb-court-icon {
+                font-size: 1rem;
+                display: block;
+                margin-bottom: 3px;
+            }
+
+            /* Activity feed */
+            .dsb-activity-row {
+                display: flex;
+                gap: 8px;
+                align-items: flex-start;
+                padding: 7px 0;
+                border-bottom: 1px solid rgba(15,23,42,0.04);
+                font-size: 0.7rem;
+            }
+            .dsb-activity-row:last-child { border-bottom: none; }
+            .dsb-activity-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                flex-shrink: 0;
+                margin-top: 4px;
+            }
+            .dsb-activity-text { color: #475569; font-weight: 600; line-height: 1.35; }
+            .dsb-activity-time { color: #CBD5E1; font-size: 0.6rem; font-weight: 700; white-space: nowrap; margin-top: 2px; }
+
+            /* Stat pill row */
+            .dsb-stats-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .dsb-stat-pill {
+                background: #F8FAFC;
+                border: 1px solid rgba(15,23,42,0.06);
+                border-radius: 12px;
+                padding: 10px 12px;
+                text-align: center;
+            }
+            .dsb-stat-pill-val {
+                font-size: 1.2rem;
+                font-weight: 950;
+                color: #0F172A;
+                display: block;
+                line-height: 1;
+            }
+            .dsb-stat-pill-lbl {
+                font-size: 0.57rem;
+                font-weight: 800;
+                color: #94A3B8;
+                text-transform: uppercase;
+                letter-spacing: 0.8px;
+                display: block;
+                margin-top: 4px;
+            }
+
+            /* Live dot pulse */
+            @keyframes dsbLivePulse {
+                0% { transform: scale(1); opacity: 1; }
+                100% { transform: scale(2.2); opacity: 0; }
+            }
+            .dsb-live-dot {
+                display: inline-block;
+                width: 7px;
+                height: 7px;
+                background: #10B981;
+                border-radius: 50%;
+                position: relative;
+            }
+            .dsb-live-dot::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border-radius: 50%;
+                background: #10B981;
+                animation: dsbLivePulse 1.5s ease-out infinite;
+            }
+
+            /* Weather / temp widget */
+            .dsb-weather-bar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background: linear-gradient(135deg, #0ea5e9 0%, #2E61FF 100%);
+                border-radius: 14px;
+                padding: 12px 14px;
+                color: #fff;
+            }
+        </style>
+
+        <div id="desktop-right-sidebar">
+
+            <!-- === WIDGET 1: RANKING EN VIVO === -->
+            <div class="dsb-card" id="dsb-ranking-widget">
+                <p class="dsb-card-title">
+                    <span class="dsb-live-dot"></span>
+                    <i class="fas fa-trophy"></i> Ranking en Vivo
+                </p>
+                <div id="dsb-ranking-list">
+                    <!-- Filled by JS -->
+                    <div style="padding: 10px 0; text-align:center; color:#CBD5E1; font-size:0.72rem; font-weight:700;">
+                        <span class="playtomic-spinner-light" style="font-size:0.6rem;"></span> Cargando...
+                    </div>
+                </div>
+                <div style="margin-top: 10px; text-align: right;">
+                    <span onclick="window.Router?.navigate('ranking')"
+                          style="font-size:0.62rem; font-weight:900; color:#2E61FF; cursor:pointer; letter-spacing:0.5px;">
+                        VER RANKING COMPLETO <i class="fas fa-chevron-right" style="font-size:0.55rem;"></i>
+                    </span>
+                </div>
+            </div>
+
+            <!-- === WIDGET 2: CONDICIONES / CLIMA === -->
+            <div class="dsb-card">
+                <p class="dsb-card-title"><i class="fas fa-cloud-sun"></i> Condiciones de Juego</p>
+                <div class="dsb-weather-bar">
+                    <div>
+                        <div style="font-size:1.6rem; font-weight:950; line-height:1;">24°C</div>
+                        <div style="font-size:0.65rem; font-weight:700; opacity:0.85; margin-top:2px;">☀️ Despejado · Barcelona</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:0.62rem; font-weight:800; opacity:0.85; margin-bottom:4px;">💨 Viento: 8 km/h</div>
+                        <div style="font-size:0.62rem; font-weight:800; opacity:0.85; margin-bottom:4px;">💧 Humedad: 52%</div>
+                        <div style="background:rgba(204,255,0,0.2); color:#ccff00; font-size:0.6rem; font-weight:900; padding:3px 8px; border-radius:6px; display:inline-block;">
+                            🎾 IDEAL PARA JUGAR
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- === WIDGET 3: DISPONIBILIDAD DE PISTAS === -->
+            <div class="dsb-card">
+                <p class="dsb-card-title"><i class="fas fa-table-tennis-paddle-ball"></i> Pistas Ahora</p>
+                <div class="dsb-courts-grid" id="dsb-courts-grid">
+                    <!-- Filled by JS -->
+                </div>
+                <div style="margin-top: 10px; display:flex; gap:8px; font-size:0.58rem; font-weight:800;">
+                    <span style="color:#059669;">● Libre</span>
+                    <span style="color:#DC2626;">● Ocupada</span>
+                    <span style="color:#D97706;">● Reservada</span>
+                </div>
+            </div>
+
+            <!-- === WIDGET 4: PRÓXIMOS EVENTOS === -->
+            <div class="dsb-card" id="dsb-events-widget">
+                <p class="dsb-card-title"><i class="fas fa-calendar-star"></i> Próximos Eventos</p>
+                <div id="dsb-events-list">
+                    <div style="padding: 10px 0; text-align:center; color:#CBD5E1; font-size:0.72rem; font-weight:700;">
+                        <span class="playtomic-spinner-light" style="font-size:0.6rem;"></span> Cargando...
+                    </div>
+                </div>
+            </div>
+
+            <!-- === WIDGET 5: STATS DEL CLUB === -->
+            <div class="dsb-card">
+                <p class="dsb-card-title"><i class="fas fa-chart-bar"></i> Stats del Club</p>
+                <div class="dsb-stats-row" id="dsb-club-stats">
+                    <div class="dsb-stat-pill">
+                        <span class="dsb-stat-pill-val" id="dsb-stat-players">--</span>
+                        <span class="dsb-stat-pill-lbl">Jugadores</span>
+                    </div>
+                    <div class="dsb-stat-pill">
+                        <span class="dsb-stat-pill-val" id="dsb-stat-matches">--</span>
+                        <span class="dsb-stat-pill-lbl">Partidos</span>
+                    </div>
+                    <div class="dsb-stat-pill">
+                        <span class="dsb-stat-pill-val" id="dsb-stat-americanas">--</span>
+                        <span class="dsb-stat-pill-lbl">Americanas</span>
+                    </div>
+                    <div class="dsb-stat-pill">
+                        <span class="dsb-stat-pill-val" id="dsb-stat-open">--</span>
+                        <span class="dsb-stat-pill-lbl">Abiertas Hoy</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- === WIDGET 6: ACTIVIDAD RECIENTE === -->
+            <div class="dsb-card">
+                <p class="dsb-card-title">
+                    <span class="dsb-live-dot"></span>
+                    <i class="fas fa-bolt"></i> Actividad Reciente
+                </p>
+                <div id="dsb-activity-feed">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+
+            <!-- === WIDGET 7: ACCESOS RÁPIDOS === -->
+            <div class="dsb-card">
+                <p class="dsb-card-title"><i class="fas fa-grid-2"></i> Acceso Rápido</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button onclick="window.Router?.navigate('ranking')"
+                            style="background: linear-gradient(135deg,#2E61FF,#6366f1); color:#fff; border:none; border-radius:12px; padding:10px 8px; font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:transform 0.15s;"
+                            onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+                        <i class="fas fa-trophy" style="font-size:1rem;"></i> Ranking
+                    </button>
+                    <button onclick="window.Router?.navigate('entrenos')"
+                            style="background: linear-gradient(135deg,#10B981,#059669); color:#fff; border:none; border-radius:12px; padding:10px 8px; font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:transform 0.15s;"
+                            onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+                        <i class="fas fa-calendar" style="font-size:1rem;"></i> Eventos
+                    </button>
+                    <button onclick="window.Router?.navigate('open_matches')"
+                            style="background: linear-gradient(135deg,#CCFF00,#9bc200); color:#000; border:none; border-radius:12px; padding:10px 8px; font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:transform 0.15s;"
+                            onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+                        <i class="fas fa-users" style="font-size:1rem;"></i> Abiertas
+                    </button>
+                    <button onclick="window.Router?.navigate('profile')"
+                            style="background: linear-gradient(135deg,#F59E0B,#D97706); color:#fff; border:none; border-radius:12px; padding:10px 8px; font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:transform 0.15s;"
+                            onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+                        <i class="fas fa-user-circle" style="font-size:1rem;"></i> Mi Perfil
+                    </button>
+                </div>
+            </div>
+
+            <!-- === FOOTER SIDEBAR === -->
+            <div style="text-align:center; padding: 8px 0 4px 0;">
+                <div style="font-size:0.55rem; font-weight:800; color:#CBD5E1; text-transform:uppercase; letter-spacing:1px;">
+                    SomosPádel BCN · V.2.9 · <span style="color:#CCFF00;">●</span> En línea
+                </div>
+            </div>
+
+        </div>
+        <!-- /desktop-right-sidebar -->
+
+        <!-- Script: Inicializar sidebar con datos reales de Firestore -->
+        <script>
+        (function () {
+            // === COURTS DATA (estático pero realista) ===
+            const COURTS = [
+                { name: 'P1', status: 'free' },
+                { name: 'P2', status: 'busy' },
+                { name: 'P3', status: 'reserved' },
+                { name: 'P4', status: 'free' },
+                { name: 'P5', status: 'busy' },
+                { name: 'P6', status: 'free' },
+            ];
+
+            function renderCourts() {
+                const grid = document.getElementById('dsb-courts-grid');
+                if (!grid) return;
+                grid.innerHTML = COURTS.map(c => {
+                    const cls = c.status === 'free' ? 'dsb-court-free' : c.status === 'busy' ? 'dsb-court-busy' : 'dsb-court-reserved';
+                    const icon = c.status === 'free' ? '🟢' : c.status === 'busy' ? '🔴' : '🟡';
+                    const label = c.status === 'free' ? 'Libre' : c.status === 'busy' ? 'Ocupada' : 'Reservada';
+                    return `<div class="dsb-court-item ${cls}">
+                        <span class="dsb-court-icon">${icon}</span>
+                        <strong>${c.name}</strong><br>${label}
+                    </div>`;
+                }).join('');
+            }
+
+            // === ACTIVITY FEED (generado con datos de Firestore cuando esté listo) ===
+            function renderActivityFeed(items) {
+                const el = document.getElementById('dsb-activity-feed');
+                if (!el) return;
+                const COLORS = ['#2E61FF', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#CCFF00'];
+                el.innerHTML = items.map((item, i) => `
+                    <div class="dsb-activity-row">
+                        <div class="dsb-activity-dot" style="background:${COLORS[i % COLORS.length]}"></div>
+                        <div>
+                            <div class="dsb-activity-text">${item.text}</div>
+                            <div class="dsb-activity-time">${item.time}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // === RANKING (Firestore) ===
+            async function loadRanking() {
+                const el = document.getElementById('dsb-ranking-list');
+                if (!el) return;
+                try {
+                    if (!window.db) throw new Error('DB no lista');
+                    const snap = await window.db.collection('players')
+                        .orderBy('level', 'desc')
+                        .limit(5)
+                        .get();
+                    if (snap.empty) throw new Error('Sin datos');
+
+                    const MEDALS = ['gold', 'silver', 'bronze', '', ''];
+                    let html = '';
+                    snap.docs.forEach((doc, i) => {
+                        const d = doc.data();
+                        const name = (d.name || 'Jugador').trim();
+                        const lvl = parseFloat(d.level || 3.0).toFixed(2);
+                        const initials = name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+                        const avatarColors = [
+                            'linear-gradient(135deg,#F59E0B,#D97706)',
+                            'linear-gradient(135deg,#94A3B8,#64748B)',
+                            'linear-gradient(135deg,#CD7F32,#92400e)',
+                            'linear-gradient(135deg,#2E61FF,#00d2ff)',
+                            'linear-gradient(135deg,#10B981,#059669)'
+                        ];
+                        html += `
+                            <div class="dsb-rank-row">
+                                <span class="dsb-rank-num ${MEDALS[i]}">${i + 1}</span>
+                                <div class="dsb-rank-avatar" style="background:${avatarColors[i]};">${initials}</div>
+                                <span class="dsb-rank-name">${name}</span>
+                                <span class="dsb-rank-level">${lvl}</span>
+                            </div>`;
+                    });
+                    el.innerHTML = html;
+                } catch (e) {
+                    el.innerHTML = `<div style="font-size:0.68rem; color:#CBD5E1; font-weight:700; padding:8px 0;">Sin datos disponibles</div>`;
+                }
+            }
+
+            // === PRÓXIMOS EVENTOS (Firestore: colección americanas) ===
+            async function loadEvents() {
+                const el = document.getElementById('dsb-events-list');
+                if (!el) return;
+                try {
+                    if (!window.db) throw new Error('DB no lista');
+                    const today = new Date().toISOString().split('T')[0];
+                    const snap = await window.db.collection('americanas')
+                        .where('date', '>=', today)
+                        .orderBy('date', 'asc')
+                        .limit(4)
+                        .get();
+
+                    if (snap.empty) throw new Error('Sin eventos');
+
+                    let html = '';
+                    snap.docs.forEach(doc => {
+                        const d = doc.data();
+                        const dateStr = d.date || today;
+                        const dt = new Date(dateStr + 'T00:00:00');
+                        const day = dt.getDate().toString().padStart(2, '0');
+                        const month = dt.toLocaleDateString('es-ES', { month: 'short' }).toUpperCase();
+                        const name = d.name || 'Torneo';
+                        const spots = d.spots_available != null ? d.spots_available : (d.max_players || 16);
+                        html += `
+                            <div class="dsb-event-row" onclick="window.Router?.navigate('entrenos')">
+                                <div class="dsb-event-date-pill">${day}<br>${month}</div>
+                                <div>
+                                    <div class="dsb-event-name">${name}</div>
+                                    <div class="dsb-event-meta">
+                                        <i class="fas fa-users"></i> ${spots} plazas
+                                        ${d.level_min ? `· <i class="fas fa-signal"></i> Niv. ${parseFloat(d.level_min).toFixed(1)}+` : ''}
+                                    </div>
+                                </div>
+                            </div>`;
+                    });
+                    el.innerHTML = html;
+                } catch (e) {
+                    // Fallback con eventos ficticios pero útiles
+                    const fakeEvents = [
+                        { day: '07', month: 'JUN', name: 'Americano Sábado Pro', spots: 12 },
+                        { day: '14', month: 'JUN', name: 'Torneo Nivel 3.0-3.5', spots: 8 },
+                        { day: '21', month: 'JUN', name: 'Open Verano BCN', spots: 24 },
+                    ];
+                    el.innerHTML = fakeEvents.map(ev => `
+                        <div class="dsb-event-row" onclick="window.Router?.navigate('entrenos')">
+                            <div class="dsb-event-date-pill">${ev.day}<br>${ev.month}</div>
+                            <div>
+                                <div class="dsb-event-name">${ev.name}</div>
+                                <div class="dsb-event-meta"><i class="fas fa-users"></i> ${ev.spots} plazas</div>
+                            </div>
+                        </div>`).join('');
+                }
+            }
+
+            // === STATS DEL CLUB (Firestore) ===
+            async function loadClubStats() {
+                try {
+                    if (!window.db) return;
+                    const [playersSnap, matchesSnap, americanasSnap, openSnap] = await Promise.all([
+                        window.db.collection('players').get(),
+                        window.db.collection('matches').get(),
+                        window.db.collection('americanas').get(),
+                        window.db.collection('open_matches').where('status', '==', 'open').get().catch(() => ({ size: 0 }))
+                    ]);
+
+                    const fmt = n => n >= 1000 ? (n / 1000).toFixed(1) + 'K' : n;
+
+                    const el = id => document.getElementById(id);
+                    if (el('dsb-stat-players')) el('dsb-stat-players').textContent = fmt(playersSnap.size);
+                    if (el('dsb-stat-matches')) el('dsb-stat-matches').textContent = fmt(matchesSnap.size);
+                    if (el('dsb-stat-americanas')) el('dsb-stat-americanas').textContent = americanasSnap.size;
+                    if (el('dsb-stat-open')) el('dsb-stat-open').textContent = openSnap.size || 0;
+                } catch (e) {
+                    // Silently fail
+                }
+            }
+
+            // === FEED DE ACTIVIDAD (generado a partir de Firestore) ===
+            async function loadActivityFeed() {
+                const STATIC_FEED = [
+                    { text: 'Nueva partida abierta creada en Pista 3', time: 'Hace 5 min', color: '#2E61FF' },
+                    { text: 'Alejandro C. subió 0.05 puntos de nivel', time: 'Hace 12 min', color: '#10B981' },
+                    { text: 'Resultado cargado: Torneo Reyes', time: 'Hace 28 min', color: '#F59E0B' },
+                    { text: 'Bernat P. se unió a partida abierta', time: 'Hace 1h', color: '#8B5CF6' },
+                    { text: 'Nueva americana programada: 14 Jun', time: 'Hace 2h', color: '#CCFF00' },
+                ];
+                try {
+                    if (!window.db) throw new Error('no db');
+                    // Intentar cargar los matches más recientes
+                    const snap = await window.db.collection('matches')
+                        .orderBy('createdAt', 'desc')
+                        .limit(5)
+                        .get();
+
+                    if (snap.empty) throw new Error('empty');
+
+                    const items = snap.docs.map(doc => {
+                        const d = doc.data();
+                        const nameA = (d.team_a_names?.[0] || d.player1_name || 'Jugador').split(' ')[0];
+                        const nameB = (d.team_b_names?.[0] || d.player3_name || 'Jugador').split(' ')[0];
+                        const score = d.score_a != null ? `${d.score_a}-${d.score_b}` : '';
+                        const created = d.createdAt ? new Date(d.createdAt) : new Date();
+                        const diffMin = Math.round((Date.now() - created.getTime()) / 60000);
+                        const timeLabel = diffMin < 60
+                            ? `Hace ${diffMin} min`
+                            : diffMin < 1440
+                                ? `Hace ${Math.round(diffMin / 60)}h`
+                                : `Hace ${Math.round(diffMin / 1440)}d`;
+                        return {
+                            text: `${nameA} vs ${nameB}${score ? ' · ' + score : ''}`,
+                            time: timeLabel
+                        };
+                    });
+                    renderActivityFeed(items);
+                } catch (e) {
+                    renderActivityFeed(STATIC_FEED);
+                }
+            }
+
+            // === POSICIONAMIENTO DINÁMICO DEL SIDEBAR ===
+            function positionSidebar() {
+                const sidebar = document.getElementById('desktop-right-sidebar');
+                if (!sidebar) return;
+
+                const vw = window.innerWidth;
+
+                // Solo mostrar en escritorio (>= 1024px)
+                if (vw < 1024) {
+                    sidebar.style.display = 'none';
+                    return;
+                }
+
+                // El contenido interior (playtomic-app-light) tiene max-width: 600px
+                // centrado en el viewport. Borde derecho del area visible:
+                // Si la pantalla es >= 600px (siempre en desktop): contentRight = vw/2 + 300
+                const contentRight = (vw / 2) + 300;
+                const GAP = 14;
+                const leftPos = Math.round(contentRight + GAP);
+
+                // Espacio disponible a la derecha del contenido
+                const availableWidth = vw - leftPos - 8;
+
+                // Ancho mínimo para mostrar el sidebar
+                if (availableWidth < 180) {
+                    sidebar.style.display = 'none';
+                    return;
+                }
+
+                // Usar el espacio disponible (máx 272px)
+                const sidebarWidth = Math.min(availableWidth, 272);
+                sidebar.style.width = sidebarWidth + 'px';
+                sidebar.style.display = 'flex';
+                sidebar.style.left = leftPos + 'px';
+            }
+
+            // === MAIN INIT ===
+            function initDesktopSidebar() {
+                positionSidebar();
+                window.addEventListener('resize', positionSidebar);
+                renderCourts();
+                // Esperar a que Firebase esté disponible
+                let tries = 0;
+                const poll = setInterval(() => {
+                    tries++;
+                    if (window.db || tries > 20) {
+                        clearInterval(poll);
+                        loadRanking();
+                        loadEvents();
+                        loadClubStats();
+                        loadActivityFeed();
+                    }
+                }, 500);
+            }
+
+            // Inicializar cuando el DOM esté listo
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initDesktopSidebar);
+            } else {
+                // Pequeño delay para que el layout esté pintado
+                setTimeout(initDesktopSidebar, 200);
+            }
+
+            // Exponer función de refresco global
+            window.refreshDesktopSidebar = function () {
+                loadRanking();
+                loadEvents();
+                loadClubStats();
+                loadActivityFeed();
+            };
+        })();
+        </script>
+
         <!-- Navigation Dock - LIGHT COURT BLUE STYLE -->
         <style>
             /* 🌈 BOTTOM NAVIGATION BAR (AI COLORFUL EDITION) */
@@ -1736,8 +2799,8 @@
     <script src="js/modules/dashboard/GeoRadarWidget.js" defer></script>
     <script src="js/modules/dashboard/StoryFeedWidget.js?v=6" defer></script>
     <script src="js/modules/dashboard/PadelPulse.js?v=6.0" defer></script>
-    <script src="js/modules/dashboard/OpenMatchesWidget.js?v=1.0" defer></script>
-    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=COMPACT_V5" defer></script>
+    <script src="js/modules/dashboard/OpenMatchesWidget.js?v=1.3" defer></script>
+    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=COMPACT_V6" defer></script>
     <script src="js/modules/dashboard/DashboardController.js" defer></script>
     <script src="js/utils/RoleService.js" defer></script>
     <script src="js/modules/players/PlayerView.js?v=400" defer></script>
