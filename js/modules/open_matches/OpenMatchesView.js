@@ -2797,6 +2797,9 @@
                 "4\uFE0F\u20E3"  // 4️⃣
             ];
 
+            const dividerThick = "━━━━━━━━━━━━━━━━━━━━━━━━━";
+            const dividerThin = "─────────────────────────";
+
             let playersLines = [];
             for (let idx = 0; idx < 4; idx++) {
                 if (idx < playersArray.length) {
@@ -2815,15 +2818,49 @@
                     }
                     playersLines.push(`${emojisNumbers[idx]} *${cleanName}* (${levelVal}) ${emojiUser}`);
                 } else {
-                    playersLines.push(`${emojisNumbers[idx]} _Libre_ ${emojiQuestion}`);
+                    playersLines.push(`${emojisNumbers[idx]} _Slot Libre_ \u23F3`);
                 }
             }
             const playersText = playersLines.join('\n');
             const spotsLeft = Math.max(0, 4 - playersArray.length);
 
-            const link = match.playtomic_url || `https://wa.me/34600000000?text=Hola,%20me%20gustaria%20apuntarme%20a%20la%20partida%20de%20padel%20del%20${encodeURIComponent(match.date)}`;
+            // Generar enlace dinámico de la propia App
+            const appLink = `${window.location.origin}${window.location.pathname}#partidas_abiertas`;
+            
+            // Detectar si es un enlace de Playtomic real
+            const isPlaytomicReal = match.playtomic_url && (match.playtomic_url.includes('playtomic') || match.playtomic_url.includes('app.playtomic'));
+            
+            let linksSection = '';
+            if (isPlaytomicReal) {
+                linksSection += `🎾 *Playtomic:* ${match.playtomic_url}\n`;
+            }
+            
+            linksSection += `${emojiFingerRight} *Apúntate aquí:* ${appLink}`;
+            
+            if (match.creator_phone) {
+                let cleanPhone = match.creator_phone.replace(/[^0-9]/g, "");
+                if (cleanPhone && cleanPhone.length === 9 && (cleanPhone.startsWith('6') || cleanPhone.startsWith('7'))) {
+                    cleanPhone = "34" + cleanPhone;
+                }
+                if (cleanPhone) {
+                    linksSection += `\n💬 *Contacto Organizador:* https://wa.me/${cleanPhone}`;
+                }
+            }
 
-            const messageText = `${emojiTennis} *PARTIDA ABIERTA • SOMOSPADEL BCN* ${emojiTennis}\n\n${emojiPin} *Club:* ${match.club || 'Somos Pádel BCN'}\n${emojiCalendar} *Fecha:* ${dateFormatted}\n${emojiClock} *Hora:* ${match.time || '19:00'} (${match.duration || 90} min)\n${emojiChart} *Nivel Requerido:* ${levelRange}\n\n${emojiGroup} *Roster de Jugadores:* \n${playersText}\n\n${spotsLeft > 0 ? `${emojiFire} *¡Solo quedan ${spotsLeft} plazas libres!*` : `${emojiForbidden} *¡Partido Completo!*`}\n${emojiFingerRight} Apúntate aquí: ${link}`;
+            const messageText = 
+                `${emojiTennis} *PARTIDA ABIERTA • SOMOSPADEL BCN* ${emojiTennis}\n` +
+                `${dividerThick}\n\n` +
+                `${emojiPin} *Club:* ${match.club || 'Somos Pádel BCN'}\n` +
+                `${emojiCalendar} *Fecha:* ${dateFormatted}\n` +
+                `${emojiClock} *Hora:* ${match.time || '19:00'} (${match.duration || 90} min)\n` +
+                `${emojiChart} *Nivel Requerido:* ${levelRange}\n\n` +
+                `${emojiGroup} *ROSTER DE JUGADORES (${playersArray.length}/4)*\n` +
+                `${dividerThin}\n` +
+                `${playersText}\n` +
+                `${dividerThin}\n\n` +
+                `${spotsLeft > 0 ? `${emojiFire} *¡Solo quedan ${spotsLeft} plazas libres!*` : `${emojiForbidden} *¡Partido Completo!*`}\n\n` +
+                `${linksSection}\n` +
+                `${dividerThick}`;
 
             // Crear el modal de opciones de compartir premium
             let shareModal = document.getElementById('share-options-modal');
