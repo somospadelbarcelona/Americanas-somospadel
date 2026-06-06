@@ -2,6 +2,194 @@
     // VISUAL VERIFICATION
     setTimeout(() => console.log("%c 🚀 DASHBOARD ENGINE V9: CLEAN MODE ", "background: #CCFF00; color: #000; font-size: 14px; padding: 4px; font-weight: bold;"), 1000);
 
+    window.SomosPadelNewsEngine = {
+        templates: [
+            {
+                title: "Táctica: Cómo defender el rebote de pared lateral",
+                category: "💡 CONSEJOS",
+                catColor: "#CCFF00",
+                imageUrl: "img/blog_racket_ball.png",
+                snippet: "Claves de posicionamiento y empuñadura para devolver las bolas más difíciles que rozan el cristal lateral.",
+                contentTemplate: "La pared lateral suele ser el terror de los jugadores de nivel iniciación y medio. Para defenderla con éxito, la clave es anticipar la jugada: no esperes a que la bola bote, colócate siempre detrás de ella con la pala baja y prepara un armado corto. El jugador {PLAYER1} nos compartía su truco esta semana: 'Si flexionas bien las rodillas y mantienes la pala cerca del suelo, el cristal se convierte en tu aliado, no en tu enemigo'. Intenta acompañar la bola en su trayectoria de rebote en lugar de golpearla con prisa. {PLAYER2} también destaca la importancia de mantener la calma y buscar un globo defensivo alto para recuperar la red. ¡Pon en práctica estos consejos en tu próximo partido americano!",
+                readTime: "3 min"
+            },
+            {
+                title: "Suela Omni vs. Suela Clay: ¿Qué zapatillas elegir?",
+                category: "👟 MATERIAL",
+                catColor: "#fb923c",
+                imageUrl: "img/blog_action_smash.png",
+                snippet: "Analizamos las diferencias de agarre y durabilidad en pistas con mucha o poca arena.",
+                contentTemplate: "Elegir el calzado correcto es fundamental para evitar resbalones y lesiones en el pádel. La suela Clay (o espiga) ofrece el máximo agarre, especialmente en pistas con bastante arena, permitiendo deslizar con control. Por otro lado, la suela Omni (con pequeños puntos) es ideal para pistas más secas o con menos arena, ofreciendo un agarre más en seco. El jugador {PLAYER1} comentaba tras su último torneo: 'Desde que cambié a zapatillas con suela Clay, siento mucha más seguridad en las arrancadas hacia la red y mis tobillos sufren menos'. Su compañero {PLAYER2} añade que la duración de la suela Clay suele ser mayor en pistas de césped artificial moderno. Asegúrate de revisar el desgaste de tus zapatillas para evitar caídas innecesarias.",
+                readTime: "2 min"
+            },
+            {
+                title: "Cómo prevenir la Epicondilitis o codo de tenista",
+                category: "💪 SALUD",
+                catColor: "#ef4444",
+                imageUrl: "img/blog_club_lounge.png",
+                snippet: "Ejercicios de estiramiento y consejos sobre la elección del peso de tu pala para proteger tu articulación.",
+                contentTemplate: "La epicondilitis es una de las lesiones más comunes entre los jugadores de pádel. Se produce por la sobrecarga de los tendones del codo debido a impactos repetitivos o gestos técnicos incorrectos. Para prevenirla, es vital realizar un buen calentamiento de articulaciones antes de entrar a pista y realizar estiramientos específicos de antebrazo al terminar. Además, elegir una pala con un peso adecuado y que no sea excesivamente rígida ayuda a absorber las vibraciones. 'Añadir un overgrip extra a mi pala me ayudó a relajar el agarre de la mano y alivió las molestias que tenía en el codo', nos aconsejaba {PLAYER1}. Su compañero {PLAYER2} también recalca la importancia de no jugar con pelotas excesivamente pesadas o húmedas, ya que aumentan la vibración transmitida al brazo.",
+                readTime: "3 min"
+            },
+            {
+                title: "Nutrición y energía para Americanas de larga duración",
+                category: "🍎 NUTRICIÓN",
+                catColor: "#22c55e",
+                imageUrl: "img/blog_player_victory.png",
+                snippet: "Pautas de hidratación y suplementos recomendados antes y durante competiciones de más de 2 horas.",
+                contentTemplate: "Jugar una americana de pádel de dos horas o más exige un rendimiento físico constante. Para evitar bajones de energía, la preparación empieza antes de pisar la pista. Es recomendable consumir hidratos de carbono complejos unas horas antes del juego y asegurar una buena hidratación previa. Durante el torneo, llevar agua mezclada con sales minerales o isotónicas marca la diferencia frente a beber solo agua sola. {PLAYER1} suele llevar plátanos o frutos secos en su bolsa para picar entre sets: 'Una pequeña dosis de potasio y energía a mitad de la americana evita los calambres en las últimas partidas'. Su compañero {PLAYER2} coincide en que la clave es hidratarse a pequeños sorbos en cada cambio de pista, incluso si no se siente sed inmediata.",
+                readTime: "3 min"
+            },
+            {
+                title: "El Globo: El golpe táctico más subestimado del pádel",
+                category: "💡 CONSEJOS",
+                catColor: "#38bdf8",
+                imageUrl: "img/blog_ball_glass.png",
+                snippet: "Por qué tirar un buen globo es más efectivo para ganar la red que buscar un remate arriesgado.",
+                contentTemplate: "Muchos jugadores asocian el pádel con remates espectaculares y golpes potentes, pero tácticamente el globo es el golpe más importante de este deporte. Un globo alto y profundo obliga a los rivales a abandonar la red, nos da tiempo para colocarnos en posición de ataque y desgasta físicamente a la pareja contraria. {PLAYER1} nos explicaba su táctica: 'Un buen globo al rincón del rival suele abrir el centro de la pista para definir la siguiente bola con una volea cómoda'. Para tirarlo con precisión, flexiona las piernas y acompaña la bola con un movimiento ascendente y suave. Su compañero {PLAYER2} nos recuerda que es mejor fallar un globo por alto (dando tiempo de reacción) que tirarlo plano y corto, facilitando el remate cómodo de los contrarios.",
+                readTime: "2 min"
+            },
+            {
+                title: "Fair Play: Cómo gestionar los cantos de bola dudosos",
+                category: "🤝 COMUNIDAD",
+                catColor: "#a855f7",
+                imageUrl: "img/blog_court_night.png",
+                snippet: "Consejos de convivencia y reglamento amistoso para mantener el buen ambiente en los torneos del club.",
+                contentTemplate: "El pádel es un deporte social y el buen ambiente es la seña de identidad de nuestras americanas en SomosPadel. En partidos sin árbitro, es habitual que surjan dudas sobre si una bola ha botado dentro o ha tocado la pared antes. El reglamento establece que cada pareja canta las bolas de su propio campo con honestidad. Ante la duda, lo más deportivo es siempre repetir el punto ('dos bolas'). El jugador {PLAYER1} destaca: 'Venimos a disfrutar y a hacer deporte; un punto dudoso no vale la pena si genera mal ambiente en la pista'. Su compañero {PLAYER2} añade que mantener una actitud positiva y aplaudir los buenos golpes de los rivales hace que la experiencia del torneo sea mucho mejor para todos. ¡Disfrutemos del juego limpio!"
+            }
+        ],
+
+        async getRealPlayers() {
+            try {
+                const db = window.db || firebase.firestore();
+                const snapshot = await db.collection('players').limit(15).get();
+                if (!snapshot.empty) {
+                    return snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return data.name || data.displayName || "Alejandro Coscolín";
+                    });
+                }
+            } catch (e) {
+                console.warn("Fallo al leer jugadores reales para noticias, usando fallbacks reales:", e);
+            }
+            return ["Alejandro Coscolín", "Bernat Pecharromán", "Alberto Javier Martín", "Jordi Díaz", "Carlos Jiménez", "Jordi Díaz"];
+        },
+
+        async checkAndGenerateNews() {
+            try {
+                const db = window.db || firebase.firestore();
+                const todayStr = new Date().toISOString().split('T')[0];
+                let shouldGenerate = false;
+                
+                const localLastGen = localStorage.getItem('somospadel_last_news_gen_date');
+                if (localLastGen !== todayStr) {
+                    try {
+                        const controlDoc = await db.collection('system_metadata').doc('blog_control').get();
+                        if (controlDoc.exists) {
+                            const controlData = controlDoc.data();
+                            if (controlData.lastGeneratedDate !== todayStr) {
+                                shouldGenerate = true;
+                            }
+                        } else {
+                            shouldGenerate = true;
+                        }
+                    } catch (err) {
+                        console.warn("Fallo al leer control de noticias en Firestore, usando LocalStorage:", err);
+                        shouldGenerate = true;
+                    }
+                }
+
+                if (shouldGenerate) {
+                    console.log("📰 [NewsEngine] Iniciando auto-generación de noticia del día...");
+                    const players = await this.getRealPlayers();
+                    const p1Idx = Math.floor(Math.random() * players.length);
+                    let p2Idx = Math.floor(Math.random() * players.length);
+                    if (p2Idx === p1Idx) p2Idx = (p1Idx + 1) % players.length;
+                    const player1 = players[p1Idx];
+                    const player2 = players[p2Idx];
+
+                    const dayOfMonth = new Date().getDate();
+                    const template = this.templates[dayOfMonth % this.templates.length];
+
+                    const title = template.title;
+                    const snippet = template.snippet;
+                    const content = template.contentTemplate
+                        .replace(/{PLAYER1}/g, player1)
+                        .replace(/{PLAYER2}/g, player2);
+
+                    const newPost = {
+                        title: title,
+                        category: template.category,
+                        catColor: template.catColor,
+                        imageUrl: template.imageUrl,
+                        snippet: snippet,
+                        content: content,
+                        date: 'Hoy',
+                        readTime: template.readTime,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        viewsCount: 0,
+                        lastReaderName: 'Ninguno'
+                    };
+
+                    try {
+                        const newDocRef = await db.collection('blog_posts').add(newPost);
+                        console.log(`📰 [NewsEngine] Nueva noticia autónoma publicada con ID: ${newDocRef.id}`);
+                        
+                        await db.collection('system_metadata').doc('blog_control').set({
+                            lastGeneratedDate: todayStr,
+                            lastPostId: newDocRef.id,
+                            lastPostTitle: title
+                        });
+                    } catch (fsErr) {
+                        console.warn("Fallo al guardar noticia en Firestore (posible falta de permisos de escritura):", fsErr);
+                    }
+                    localStorage.setItem('somospadel_last_news_gen_date', todayStr);
+                }
+            } catch (e) {
+                console.error("Fallo general en SomosPadelNewsEngine:", e);
+            }
+        },
+
+        getDeterministicFallbackPosts() {
+            const today = new Date();
+            const posts = [];
+            for (let i = 0; i < 4; i++) {
+                const targetDate = new Date(today);
+                targetDate.setDate(today.getDate() - i);
+                const daySeed = targetDate.getDate() + targetDate.getMonth() * 31 + targetDate.getFullYear();
+                const templateIdx = daySeed % this.templates.length;
+                const template = this.templates[templateIdx];
+                
+                let dateStr = "Hoy";
+                if (i === 1) dateStr = "Ayer";
+                else if (i > 1) dateStr = `Hace ${i} días`;
+                
+                const fallbackPlayers = ["Alejandro Coscolín", "Bernat Pecharromán", "Alberto Javier Martín", "Jordi Díaz", "Carlos Jiménez", "Jordi Díaz"];
+                const p1 = fallbackPlayers[daySeed % fallbackPlayers.length];
+                const p2 = fallbackPlayers[(daySeed + 2) % fallbackPlayers.length];
+                
+                const title = template.title;
+                const snippet = template.snippet;
+                const content = template.contentTemplate
+                    .replace(/{PLAYER1}/g, p1)
+                    .replace(/{PLAYER2}/g, p2);
+
+                posts.push({
+                    id: `auto-post-${targetDate.getFullYear()}-${targetDate.getMonth() + 1}-${targetDate.getDate()}`,
+                    title: title,
+                    category: template.category,
+                    catColor: template.catColor,
+                    imageUrl: template.imageUrl,
+                    snippet: snippet,
+                    content: content,
+                    date: dateStr,
+                    readTime: template.readTime,
+                    timestamp: targetDate.getTime()
+                });
+            }
+            return posts;
+        }
+    };
 
     class DashboardView {
         constructor() {
@@ -660,169 +848,381 @@
                 const container = document.getElementById('dynamic-blog-posts-container');
                 if (!container) return;
                 try {
+                    // Generar automáticamente la noticia de hoy en segundo plano si es necesario
+                    if (window.SomosPadelNewsEngine) {
+                        try {
+                            await window.SomosPadelNewsEngine.checkAndGenerateNews();
+                        } catch (genErr) {
+                            console.warn("Fallo al autogenerar noticias:", genErr);
+                        }
+                    }
+
                     const db = window.db || firebase.firestore();
                     const snapshot = await db.collection('blog_posts').orderBy('timestamp', 'desc').get();
                     let posts = [];
                     if (!snapshot.empty) {
                         posts = snapshot.docs.map(doc => {
                             const data = doc.data();
-                            const localKey = 'local_post_stats_' + doc.id;
-                            const localStats = JSON.parse(localStorage.getItem(localKey) || 'null');
                             return {
                                 id: doc.id,
                                 ...data
                             };
                         });
                     } else {
-                        posts = [
-                            { id: 'torneo-primavera', category: '🏆 TORNEOS', catColor: '#CCFF00', title: 'Gran Torneo de Primavera 2026', emoji: '🎾', imgGrad: 'linear-gradient(135deg, #CCFF00 0%, #84cc16 100%)', snippet: '¡Inscripciones abiertas! 120 plazas, Welcome Pack premium y barbacoa final.', content: 'Llega el evento más esperado del año. El 15 de Junio celebraremos el Gran Torneo de Primavera con categorías masculina, femenina y mixta. ¡Reserva tu plaza!', date: 'Hoy', readTime: '2 min' },
-                            { id: 'ranking-actualizado', category: '📊 RANKING', catColor: '#38bdf8', title: 'Ranking Actualizado: Top 5 de la Temporada', emoji: '🏅', imgGrad: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)', snippet: 'El ranking se ha recalculado. ¿Has subido posiciones esta semana?', content: 'Consulta tu posición actualizada en la sección Ranking. Nuevos puntos asignados tras la última jornada.', date: 'Ayer', readTime: '2 min' },
-                            { id: 'tactica-centro', category: '💡 CONSEJOS', catColor: '#f59e0b', title: 'Táctica: Jugar al Centro de la Pista', emoji: '⚡', imgGrad: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)', snippet: 'Jugar al medio reduce los ángulos del rival y genera dudas en la pareja contraria.', content: 'El centro de la pista es la clave táctica más potente del pádel. Al tirar al centro reduces ángulos y generas confusión.', date: 'Hace 3 días', readTime: '3 min' }
+                        // Usar fallback determinista autónomo en lugar de posts estáticos fijos
+                        posts = window.SomosPadelNewsEngine ? window.SomosPadelNewsEngine.getDeterministicFallbackPosts() : [
+                            { id: 'torneo-primavera', category: '🏆 TORNEOS', catColor: '#CCFF00', title: 'Gran Torneo de Primavera 2026', snippet: '¡Inscripciones abiertas! 120 plazas, Welcome Pack premium y barbacoa final.', content: 'Llega el evento más esperado del año. El 15 de Junio celebraremos el Gran Torneo de Primavera con categorías masculina, femenina y mixta. ¡Reserva tu plaza!', date: 'Hoy', readTime: '2 min', imageUrl: 'img/blog_action_smash.png' },
+                            { id: 'ranking-actualizado', category: '📊 RANKING', catColor: '#38bdf8', title: 'Ranking Actualizado: Top 5 de la Temporada', snippet: 'El ranking se ha recalculado. ¿Has subido posiciones esta semana?', content: 'Consulta tu posición actualizada en la sección Ranking. Nuevos puntos asignados tras la última jornada.', date: 'Ayer', readTime: '2 min', imageUrl: 'img/blog_court_night.png' },
+                            { id: 'tactica-centro', category: '💡 CONSEJOS', catColor: '#f59e0b', title: 'Táctica: Jugar al Centro de la Pista', snippet: 'Jugar al medio reduce los ángulos del rival y genera dudas en la pareja contraria.', content: 'El centro de la pista es la clave táctica más potente del pádel. Al tirar al centro reduces ángulos y generas confusión.', date: 'Hace 3 días', readTime: '3 min', imageUrl: 'img/blog_racket_ball.png' }
                         ];
-                        // Fallbacks listos
                     }
                     if (posts.length === 0) { container.innerHTML = ''; return; }
-                    const featured = posts[0];
-                    const rest = posts.slice(1, 5);
+                    
+                    const visiblePosts = posts.slice(0, 4);
+                    
+                    const postImagesMap = (() => {
+                        const pool = [
+                            'img/blog_action_smash.png', 
+                            'img/blog_court_night.png', 
+                            'img/blog_racket_ball.png', 
+                            'img/blog_ball_glass.png', 
+                            'img/blog_player_victory.png', 
+                            'img/blog_club_lounge.png'
+                        ];
+                        const assigned = {};
+                        const used = new Set();
+                        
+                        // 1. Asignar imageUrls explícitas si son únicas
+                        visiblePosts.forEach(post => {
+                            if (post.imageUrl && !used.has(post.imageUrl)) {
+                                assigned[post.id] = post.imageUrl;
+                                used.add(post.imageUrl);
+                            }
+                        });
+                        
+                        // 2. Asignar preferred según palabras clave (si no se ha usado)
+                        visiblePosts.forEach(post => {
+                            if (assigned[post.id]) return;
+                            const title = (post.title || '').toLowerCase();
+                            const content = (post.content || '').toLowerCase();
+                            let preferred = null;
+                            if (title.includes('torneo') || title.includes('americana') || title.includes('evento') || content.includes('torneo') || content.includes('inscrip')) {
+                                preferred = 'img/blog_action_smash.png';
+                            } else if (title.includes('ranking') || title.includes('clasifica') || title.includes('puntos') || title.includes('elo') || title.includes('racha')) {
+                                preferred = 'img/blog_court_night.png';
+                            } else if (title.includes('táctica') || title.includes('tactica') || title.includes('consejo') || title.includes('clase') || content.includes('centro') || content.includes('pista')) {
+                                preferred = 'img/blog_racket_ball.png';
+                            } else if (title.includes('tienda') || title.includes('sudadera') || title.includes('merch') || title.includes('compra')) {
+                                preferred = 'img/blog_club_lounge.png';
+                            } else if (title.includes('victoria') || title.includes('ganador') || title.includes('campeon')) {
+                                preferred = 'img/blog_player_victory.png';
+                            }
+                            if (preferred && !used.has(preferred)) {
+                                assigned[post.id] = preferred;
+                                used.add(preferred);
+                            }
+                        });
+                        
+                        // 3. Asignar imágenes libres del pool
+                        visiblePosts.forEach((post, idx) => {
+                            if (assigned[post.id]) return;
+                            const available = pool.find(img => !used.has(img));
+                            if (available) {
+                                assigned[post.id] = available;
+                                used.add(available);
+                            } else {
+                                assigned[post.id] = pool[idx % pool.length];
+                            }
+                        });
+                        
+                        return assigned;
+                    })();
+                    
+                    const featured = visiblePosts[0];
+                    const rest = visiblePosts.slice(1);
 
-                    const premiumIcon = (post, size = 60) => {
-                        const grad = post.imgGrad || 'linear-gradient(135deg, #CCFF00, #84cc16)';
-                        const em = post.emoji || '📰';
-                        return `<div style="width:${size}px;height:${size}px;border-radius:${Math.round(size*0.27)}px;background:${grad};display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(77,124,15,0.18),inset 0 1px 0 rgba(255,255,255,0.35);"><div style="position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.25) 0%,transparent 100%);border-radius:inherit;pointer-events:none;"></div><div style="position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,0.12) 1px,transparent 1px);background-size:${Math.round(size/7)}px ${Math.round(size/7)}px;pointer-events:none;"></div><span style="font-size:${Math.round(size*0.42)}px;position:relative;z-index:2;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.15));line-height:1;">${em}</span></div>`;
-                    };
 
                     const featuredCard = `
                         <div onclick="window.DashboardView.openBlogPost('${featured.id}')"
                              class="premium-blog-3d-card"
-                             style="border-radius: 24px; overflow: hidden; cursor: pointer; background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(16px) saturate(120%); -webkit-backdrop-filter: blur(16px) saturate(120%); position: relative; min-height: 170px; box-shadow: 0 10px 30px rgba(0,0,0,0.03), 0 1px 2px rgba(255,255,255,0.8), inset 0 1px 0 rgba(255,255,255,0.9); transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid rgba(255, 255, 255, 0.7); transform-style: preserve-3d; perspective: 1000px;"
-                             onmouseover="this.style.transform='translateY(-6px) translateZ(10px) rotateX(1.5deg) rotateY(-0.8deg)';this.style.boxShadow='0 25px 50px rgba(56,113,0,0.12), 0 8px 20px rgba(0,0,0,0.02)';this.style.borderColor='rgba(255,255,255,0.95)';"
-                             onmouseout="this.style.transform='translateY(0) translateZ(0) rotateX(0) rotateY(0)';this.style.boxShadow='0 10px 30px rgba(0,0,0,0.03)';this.style.borderColor='rgba(255, 255, 255, 0.7)';"
+                             style="border-radius: 20px; overflow: hidden; cursor: pointer; position: relative; min-height: 220px; box-shadow: 0 12px 30px rgba(0,0,0,0.06); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid rgba(0, 0, 0, 0.05); transform-style: preserve-3d; perspective: 1000px;"
+                             onmouseover="this.style.transform='translateY(-5px) scale(1.005)';"
+                             onmouseout="this.style.transform='translateY(0) scale(1)';"
                         >
-                            <div style="position: absolute; inset: 0; background-image: radial-gradient(rgba(132,204,22,0.06) 1px, transparent 1px); background-size: 15px 15px; pointer-events: none;"></div>
+                            <!-- Imagen de fondo con zoom fluido -->
+                            <div class="featured-blog-bg-image" style="position: absolute; inset: 0; background-image: url('${postImagesMap[featured.id]}'); background-size: cover; background-position: center; transition: transform 0.6s ease;"></div>
                             
-                            <div style="position: relative; padding: 20px; display: flex; gap: 18px; align-items: center; min-height: 170px;">
-                                <div style="width: 80px; height: 80px; border-radius: 20px; background: ${featured.imgGrad || 'linear-gradient(135deg, #CCFF00, #84cc16)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 8px 24px rgba(77,124,15,0.2), inset 0 1px 0 rgba(255,255,255,0.4); animation: premiumEmojiFloat 3.8s ease-in-out infinite;">
-                                    <span style="font-size: 2.4rem; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.15)); line-height: 1;">${featured.emoji||'📰'}</span>
+                            <!-- Overlay degradado oscuro para legibilidad -->
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.35) 40%, rgba(15, 23, 42, 0.95) 100%); z-index: 2;"></div>
+                            
+                            <!-- Contenido interior -->
+                            <div style="position: relative; z-index: 3; padding: 20px; display: flex; flex-direction: column; justify-content: flex-end; min-height: 220px; box-sizing: border-box;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                    <span style="font-size: 0.52rem; font-weight: 1000; color: #000; background: #CCFF00; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(204,255,0,0.25);">${featured.category||'TORNEOS'}</span>
+                                    <span style="font-size: 0.5rem; font-weight: 900; color: rgba(255,255,255,0.85); letter-spacing: 0.5px; text-transform: uppercase;">• DESTACADO</span>
                                 </div>
-                                <div style="flex: 1; min-width: 0; padding-right: 20px;">
-                                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
-                                        <span style="font-size: 0.52rem; font-weight: 1000; color: #000; background: #CCFF00; border: 1px solid #84cc16; padding: 2.5px 8px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(132,204,22,0.15);">${featured.category||'REVISTA'}</span>
-                                        <span style="font-size: 0.48rem; font-weight: 1000; color: #475569; letter-spacing: 0.5px; text-transform: uppercase; opacity: 0.85;">• DESTACADO</span>
+                                <h3 style="margin: 0 0 6px 0; color: #ffffff; font-weight: 950; font-size: 1.15rem; line-height: 1.25; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.6);">${featured.title}</h3>
+                                <p style="margin: 0 0 12px 0; color: rgba(255,255,255,0.85); font-size: 0.72rem; font-weight: 500; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${featured.snippet}</p>
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <span style="font-size: 0.6rem; color: rgba(255,255,255,0.7); font-weight: 700; display: flex; align-items: center; gap: 4px;"><i class="far fa-calendar" style="font-size: 0.55rem; color: #CCFF00;"></i>${featured.date||'Hoy'}</span>
+                                        <span style="font-size: 0.6rem; color: rgba(255,255,255,0.7); font-weight: 700; display: flex; align-items: center; gap: 4px;"><i class="far fa-clock" style="font-size: 0.55rem; color: #CCFF00;"></i>${featured.readTime||'3 min'}</span>
                                     </div>
-                                    <h3 style="margin: 0 0 6px 0; color: #000000; font-weight: 1000; font-size: 1.1rem; line-height: 1.3; letter-spacing: -0.3px; font-family: 'Outfit';">${featured.title}</h3>
-                                    <p style="margin: 0 0 12px 0; color: #334155; font-size: 0.74rem; font-weight: 600; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter';">${featured.snippet}</p>
-                                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                                        <span style="font-size: 0.6rem; color: #475569; font-weight: 800; display: flex; align-items: center; gap: 4px;"><i class="far fa-calendar" style="font-size: 0.55rem; color: #84cc16;"></i>${featured.date||'Hoy'}</span>
-                                        <span style="font-size: 0.6rem; color: #475569; font-weight: 800; display: flex; align-items: center; gap: 4px;"><i class="far fa-clock" style="font-size: 0.55rem; color: #84cc16;"></i>${featured.readTime||'3 min'}</span>
-                                        <div style="margin-left: auto; background: #000000; border: 1px solid #000000; border-radius: 20px; padding: 6px 15px; font-size: 0.62rem; font-weight: 1000; color: #CCFF00; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.2); transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; overflow: hidden;"
-                                             onmouseover="this.style.background='#CCFF00';this.style.color='#000';this.style.transform='scale(1.05) translateY(-1px)';this.style.boxShadow='0 6px 15px rgba(204,255,0,0.3)';"
-                                             onmouseout="this.style.background='#000';this.style.color='#CCFF00';this.style.transform='scale(1) translateY(0)';this.style.boxShadow='0 4px 10px rgba(0,0,0,0.18)';">
-                                            LEER AHORA <i class="fas fa-arrow-right" style="font-size: 0.5rem;"></i>
-                                        </div>
+                                    <div style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 20px; padding: 6px 14px; font-size: 0.6rem; font-weight: 950; color: #ffffff; display: flex; align-items: center; gap: 5px; transition: all 0.25s;"
+                                         class="featured-blog-btn">
+                                        LEER MÁS <i class="fas fa-arrow-right" style="font-size: 0.5rem; transition: transform 0.2s;"></i>
                                     </div>
                                 </div>
                             </div>
                         </div>`;
- 
-                     const compactCards = rest.map(post => `
+  
+                    const compactCards = rest.map(post => `
                         <div onclick="window.DashboardView.openBlogPost('${post.id}')"
-                             class="premium-blog-3d-card"
-                             style="display: flex; gap: 14px; align-items: center; padding: 14px 16px; border-radius: 18px; cursor: pointer; background: rgba(255, 255, 255, 0.74); backdrop-filter: blur(12px) saturate(120%); -webkit-backdrop-filter: blur(12px) saturate(120%); border: 1px solid rgba(255, 255, 255, 0.65); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.01), inset 0 1px 0 rgba(255,255,255,0.8); transform-style: preserve-3d; perspective: 1000px;"
-                             onmouseover="this.style.background='rgba(255, 255, 255, 0.88)';this.style.borderColor='rgba(255,255,255,0.95)';this.style.transform='translateX(6px) rotateY(-1deg)';this.style.boxShadow='0 12px 28px rgba(56,113,0,0.08), 0 2px 6px rgba(0,0,0,0.01)';"
-                             onmouseout="this.style.background='rgba(255, 255, 255, 0.74)';this.style.borderColor='rgba(255, 255, 255, 0.65)';this.style.transform='translateX(0) rotateY(0)';this.style.boxShadow='0 4px 15px rgba(0,0,0,0.01)';"
+                             class="premium-blog-compact-card"
+                             style="display: flex; gap: 14px; align-items: center; padding: 12px; border-radius: 18px; cursor: pointer; background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.015);"
+                             onmouseover="this.style.background='#f8fafc';this.style.borderColor='rgba(0,0,0,0.08)';this.style.transform='translateX(4px)';"
+                             onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(0,0,0,0.05)';this.style.transform='translateX(0)';"
                         >
-                            <div style="position: absolute; left: 0; top: 15%; bottom: 15%; width: 4.5px; background: ${post.catColor||'#CCFF00'}; border-radius: 0 4px 4px 0; opacity: 0.9; box-shadow: 0 0 8px ${post.catColor||'#CCFF00'}80;"></div>
-                            ${premiumIcon(post, 58)}
-                            <div style="flex: 1; min-width: 0; transform: translateZ(5px);">
+                            <!-- Miniatura Realista de la Imagen -->
+                            <div style="width: 76px; height: 76px; border-radius: 12px; background-image: url('${postImagesMap[post.id]}'); background-size: cover; background-position: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05);"></div>
+                            
+                            <div style="flex: 1; min-width: 0;">
                                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                                    <span style="font-size: 0.52rem; font-weight: 1000; letter-spacing: 0.8px; color: #4d7c0f; text-transform: uppercase; background: rgba(132,204,22,0.12); padding: 2px 7px; border-radius: 5px; border: 1.5px solid rgba(132,204,22,0.08);">${(post.category||'REVISTA').replace(/^[^\s]+\s/,'')}</span>
-                                    <span style="font-size: 0.55rem; color: #475569; font-weight: 800; display: flex; align-items: center; gap: 3px;"><i class="far fa-clock" style="font-size: 0.48rem; color: #84cc16;"></i>${post.readTime||'3 min'}</span>
+                                    <span style="font-size: 0.52rem; font-weight: 1000; letter-spacing: 0.8px; color: #4d7c0f; text-transform: uppercase; background: rgba(204,255,0,0.12); border: 1px solid rgba(204,255,0,0.25); padding: 2px 7px; border-radius: 5px;">${(post.category||'NOTICIAS').replace(/^[^\s]+\s/,'')}</span>
+                                    <span style="font-size: 0.55rem; color: #64748b; font-weight: 800; display: flex; align-items: center; gap: 3px;"><i class="far fa-clock" style="font-size: 0.48rem; color: #4d7c0f;"></i>${post.readTime||'3 min'}</span>
                                 </div>
-                                <h4 style="margin: 0 0 4px 0; color: #000000; font-weight: 900; font-size: 0.9rem; line-height: 1.25; letter-spacing: -0.2px; font-family: 'Outfit';">${post.title}</h4>
-                                <p style="margin: 0; color: #475569; font-size: 0.68rem; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter';">${post.snippet}</p>
+                                <h4 style="margin: 0 0 4px 0; color: #0f172a; font-weight: 900; font-size: 0.88rem; line-height: 1.25; letter-spacing: -0.2px; font-family: 'Outfit', sans-serif;">${post.title}</h4>
+                                <p style="margin: 0; color: #475569; font-size: 0.68rem; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${post.snippet}</p>
                             </div>
-                            <div style="flex-shrink: 0; color: #94a3b8; font-size: 0.7rem; transition: transform 0.2s; transform: translateZ(5px);" class="compact-chevron"><i class="fas fa-chevron-right"></i></div>
+                            <div style="flex-shrink: 0; color: #94a3b8; font-size: 0.7rem; transition: transform 0.2s;" class="compact-chevron"><i class="fas fa-chevron-right"></i></div>
                         </div>
                     `).join('');
- 
-                     container.innerHTML = featuredCard + `<div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">${compactCards}</div>`;
- 
-                 } catch (err) {
-                     console.error("Fallo al inyectar blog posts dinámicos:", err);
-                     container.innerHTML = '';
-                 }
-             }, 100);
- 
-             return `
-                <div style="background: linear-gradient(135deg, #ffffff 0%, #edfdb5 35%, #bbf200 68%, #3b82f6 100%); border: 1px solid rgba(132,204,22,0.35); border-radius: 28px; padding: 20px; box-shadow: 0 20px 45px rgba(56,113,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9); position: relative; overflow: hidden; perspective: 1000px; transform-style: preserve-3d;">
-                    <div style="position: absolute; top: -60px; right: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(204,255,0,0.2) 0%, transparent 70%); pointer-events: none; filter: blur(25px);"></div>
-                    <div style="position: absolute; bottom: -60px; left: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(59,130,246,0.22) 0%, transparent 70%); pointer-events: none; filter: blur(25px);"></div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid rgba(132,204,22,0.15); transform-style: preserve-3d; transform: translateZ(5px);">
+  
+                    const historyButtonHtml = `
+                        <div style="margin-top: 15px; text-align: center;">
+                            <button onclick="window.DashboardView.openBlogHistory()"
+                                    id="blog-history-open-btn"
+                                    style="background: rgba(15, 23, 42, 0.03); border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 8px 18px; border-radius: 14px; font-size: 0.65rem; font-weight: 850; cursor: pointer; transition: all 0.25s; display: inline-flex; align-items: center; gap: 6px; font-family: 'Outfit', sans-serif;"
+                                    onmouseover="this.style.background='rgba(15, 23, 42, 0.06)';this.style.color='#0f172a';this.style.borderColor='rgba(15, 23, 42, 0.15)';this.style.transform='scale(1.02)';"
+                                    onmouseout="this.style.background='rgba(15, 23, 42, 0.03)';this.style.color='#475569';this.style.borderColor='rgba(15, 23, 42, 0.08)';this.style.transform='scale(1)';"
+                            >
+                                <i class="fas fa-history" style="font-size: 0.6rem; color: #4d7c0f;"></i> VER MÁS NOTICIAS (HISTÓRICO)
+                            </button>
+                        </div>
+                    `;
+                    container.innerHTML = featuredCard + `<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">${compactCards}</div>` + historyButtonHtml;
+
+  
+                } catch (err) {
+                    console.error("Fallo al inyectar blog posts dinámicos:", err);
+                    container.innerHTML = '';
+                }
+            }, 100);
+  
+            return `
+                <div class="blog-widget-main-container" style="background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(10, 25, 47, 0.03); position: relative; overflow: hidden; perspective: 1000px; transform-style: preserve-3d;">
+                    <!-- Efectos de brillo de fondo ultra sutiles (marca SomosPadel) -->
+                    <div style="position: absolute; top: -60px; right: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(204,255,0,0.06) 0%, transparent 70%); pointer-events: none; filter: blur(25px);"></div>
+                    <div style="position: absolute; bottom: -60px; left: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(46,97,255,0.04) 0%, transparent 70%); pointer-events: none; filter: blur(25px);"></div>
+                    
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid rgba(15, 23, 42, 0.06);">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 34px; height: 34px; border-radius: 50%; background: #000000; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(204,255,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4); border: 2px solid #CCFF00; animation: shieldPulse 3s infinite;">
-                                <i class="fas fa-feather-alt" style="font-size: 0.75rem; color: #CCFF00;"></i>
+                            <div style="width: 32px; height: 32px; border-radius: 10px; background: #000000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(204,255,0,0.2); border: 1.5px solid #CCFF00;">
+                                <i class="fas fa-newspaper" style="font-size: 0.8rem; color: #CCFF00;"></i>
                             </div>
                             <div>
-                                <div style="font-size: 0.78rem; font-weight: 1000; color: #000000; letter-spacing: 0.8px; text-transform: uppercase; font-family: 'Outfit';">Somos Pádel Journal</div>
-                                <div style="font-size: 0.52rem; color: #4d7c0f; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">ANÁLISIS, CONSEJOS Y NOVEDADES</div>
+                                <div style="font-size: 0.82rem; font-weight: 1000; color: #0f172a; letter-spacing: -0.3px; text-transform: uppercase; font-family: 'Outfit', sans-serif;">Somos Pádel Journal</div>
+                                <div style="font-size: 0.52rem; color: #64748b; font-weight: 900; letter-spacing: 0.8px; text-transform: uppercase;">NOTICIAS, TÁCTICA Y NOVEDADES</div>
                             </div>
                         </div>
-                        <div style="background: #000000; border: 1px solid #CCFF00; padding: 4.5px 12px; border-radius: 20px; font-size: 0.52rem; font-weight: 1000; color: #CCFF00; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.2);">
-                            <span style="width: 5px; height: 5px; background: #CCFF00; border-radius: 50%; display: inline-block; animation: neonPulse 1.5s infinite alternate;"></span>INFO OFICIAL
+                        <div style="background: rgba(204,255,0,0.12); border: 1px solid rgba(132,204,22,0.25); padding: 4px 10px; border-radius: 20px; font-size: 0.52rem; font-weight: 1000; color: #4d7c0f; letter-spacing: 0.8px; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
+                            <span style="width: 4px; height: 4px; background: #CCFF00; border-radius: 50%; display: inline-block; animation: neonPulseGreen 1.5s infinite alternate; box-shadow: 0 0 4px #CCFF00;"></span>OFICIAL
                         </div>
                     </div>
-                    <div id="dynamic-blog-posts-container" style="display: flex; flex-direction: column; gap: 10px; transform-style: preserve-3d;">
+                    <div id="dynamic-blog-posts-container" style="display: flex; flex-direction: column; gap: 10px;">
                         ${[0,1,2].map(i => `
-                            <div style="display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 14px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
-                                <div style="width: 60px; height: 60px; border-radius: 14px; background: rgba(255,255,255,0.3); flex-shrink: 0;"></div>
+                            <div style="display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 14px; background: #f8fafc; border: 1px solid rgba(0,0,0,0.03);">
+                                <div style="width: 76px; height: 76px; border-radius: 12px; background: rgba(0,0,0,0.04); flex-shrink: 0;" class="skeleton-shim"></div>
                                 <div style="flex: 1;">
-                                    <div style="height: 8px; width: 40%; background: rgba(0,0,0,0.06); border-radius: 4px; margin-bottom: 8px;"></div>
-                                    <div style="height: 11px; width: 85%; background: rgba(0,0,0,0.08); border-radius: 4px; margin-bottom: 6px;"></div>
-                                    <div style="height: 8px; width: 65%; background: rgba(0,0,0,0.04); border-radius: 4px;"></div>
+                                    <div style="height: 8px; width: 30%; background: rgba(0,0,0,0.04); border-radius: 4px; margin-bottom: 8px;" class="skeleton-shim"></div>
+                                    <div style="height: 12px; width: 80%; background: rgba(0,0,0,0.06); border-radius: 4px; margin-bottom: 6px;" class="skeleton-shim"></div>
+                                    <div style="height: 8px; width: 60%; background: rgba(0,0,0,0.04); border-radius: 4px;" class="skeleton-shim"></div>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
                 </div>
+                
                 <style>
-                    @keyframes pulseGlowLight {
-                        0%, 100% { box-shadow: 0 0 5px rgba(204,255,0,0.15); transform: scale(1); }
-                        50% { box-shadow: 0 0 12px rgba(204,255,0,0.3); transform: scale(1.01); }
+                    @keyframes neonPulseGreen {
+                        0% { opacity: 0.6; }
+                        100% { opacity: 1; }
                     }
-                    @keyframes neonPulse {
-                        0% { opacity: 0.6; box-shadow: 0 0 4px rgba(204,255,0,0.4); }
-                        100% { opacity: 1; box-shadow: 0 0 12px rgba(204,255,0,0.8); }
+                    .premium-blog-3d-card:hover .featured-blog-bg-image {
+                        transform: scale(1.04);
                     }
-                    @keyframes shieldPulse {
-                        0%, 100% { box-shadow: 0 0 12px rgba(204,255,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4); }
-                        50% { box-shadow: 0 0 25px rgba(204,255,0,0.7), inset 0 1px 0 rgba(255,255,255,0.4); }
+                    .premium-blog-3d-card:hover .featured-blog-btn {
+                        background: #CCFF00 !important;
+                        color: #000000 !important;
+                        border-color: #CCFF00 !important;
+                        box-shadow: 0 4px 12px rgba(204,255,0,0.3);
                     }
-                    @keyframes premiumEmojiFloat {
-                        0%, 100% { transform: translateY(0) rotate(-2deg) scale(1); filter: drop-shadow(0 6px 12px rgba(77,124,15,0.25)); }
-                        50% { transform: translateY(-5px) rotate(2deg) scale(1.04); filter: drop-shadow(0 12px 20px rgba(77,124,15,0.35)); }
+                    .premium-blog-3d-card:hover .featured-blog-btn i {
+                        transform: translateX(3px);
                     }
-                    .premium-blog-3d-card {
-                        position: relative;
-                    }
-                    .premium-blog-3d-card::after {
-                        content: '';
-                        position: absolute;
-                        top: 0; left: 0; width: 200%; height: 100%;
-                        background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.25) 50%, transparent 60%);
-                        transform: translateX(-100%);
-                        transition: transform 0.65s ease-in-out;
-                        z-index: 100;
-                        pointer-events: none;
-                    }
-                    .premium-blog-3d-card:hover::after {
-                        transform: translateX(50%);
-                    }
-                    .premium-blog-3d-card:hover .compact-chevron {
-                        transform: translateZ(5px) translateX(3px) !important;
-                        color: #4d7c0f !important;
+                    .premium-blog-compact-card:hover .compact-chevron {
+                        transform: translateX(3px);
+                        color: #CCFF00 !important;
                     }
                 </style>
             `;
+        }
+
+        async openBlogHistory() {
+            try {
+                const btn = document.getElementById('blog-history-open-btn');
+                if (btn) btn.innerHTML = `<i class="fas fa-spinner fa-spin" style="font-size: 0.6rem;"></i> CARGANDO HISTÓRICO...`;
+
+                const db = window.db || firebase.firestore();
+                let posts = [];
+                try {
+                    const snapshot = await db.collection('blog_posts').orderBy('timestamp', 'desc').get();
+                    if (!snapshot.empty) {
+                        posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    }
+                } catch (dbErr) {
+                    console.warn("Fallo al leer histórico de Firestore, usando fallbacks:", dbErr);
+                }
+
+                if (posts.length === 0) {
+                    posts = window.SomosPadelNewsEngine ? window.SomosPadelNewsEngine.getDeterministicFallbackPosts() : [];
+                }
+
+                if (btn) btn.innerHTML = `<i class="fas fa-history" style="font-size: 0.6rem; color: #4d7c0f;"></i> VER MÁS NOTICIAS (HISTÓRICO)`;
+
+                const historyModal = document.createElement('div');
+                historyModal.id = 'blog-history-modal';
+                historyModal.style = `
+                    position: fixed; inset: 0; z-index: 99999999 !important;
+                    background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(14px);
+                    -webkit-backdrop-filter: blur(14px);
+                    display: flex; align-items: center; justify-content: center;
+                    padding: 16px; font-family: 'Outfit', sans-serif;
+                    box-sizing: border-box;
+                    animation: fadeIn 0.25s ease-out;
+                `;
+
+                const renderListItems = (filterText = '') => {
+                    const filtered = posts.filter(p => {
+                        const term = filterText.toLowerCase();
+                        return (p.title || '').toLowerCase().includes(term) ||
+                               (p.snippet || '').toLowerCase().includes(term) ||
+                               (p.category || '').toLowerCase().includes(term);
+                    });
+
+                    if (filtered.length === 0) {
+                        return `<div style="text-align: center; padding: 40px 20px; color: #94a3b8;">
+                                    <span style="font-size: 2rem; display: block; margin-bottom: 10px;">🔍</span>
+                                    <span style="font-weight: 700; font-size: 0.85rem;">No se encontraron noticias que coincidan.</span>
+                                </div>`;
+                    }
+
+                    const pool = [
+                        'img/blog_action_smash.png', 
+                        'img/blog_court_night.png', 
+                        'img/blog_racket_ball.png', 
+                        'img/blog_ball_glass.png', 
+                        'img/blog_player_victory.png', 
+                        'img/blog_club_lounge.png'
+                    ];
+
+                    return filtered.map((post, idx) => {
+                        const img = post.imageUrl || pool[idx % pool.length];
+                        const catClean = (post.category || 'REVISTA').replace(/^[^\s]+\s/, '');
+                        return `
+                            <div onclick="document.getElementById('blog-history-modal').remove(); window.DashboardView.openBlogPost('${post.id}')"
+                                 class="history-news-row-card"
+                                 style="display: flex; gap: 14px; align-items: center; padding: 12px; border-radius: 16px; cursor: pointer; background: #ffffff; border: 1px solid rgba(15,23,42,0.06); transition: all 0.2s ease; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.01);"
+                                 onmouseover="this.style.background='#f8fafc';this.style.borderColor='rgba(15,23,42,0.12)';this.style.transform='translateX(3px)';"
+                                 onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(15,23,42,0.06)';this.style.transform='translateX(0)';"
+                            >
+                                <div style="width: 60px; height: 60px; border-radius: 10px; background-image: url('${img}'); background-size: cover; background-position: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05);"></div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px;">
+                                        <span style="font-size: 0.5rem; font-weight: 950; letter-spacing: 0.5px; color: #4d7c0f; text-transform: uppercase; background: rgba(204,255,0,0.15); border: 1px solid rgba(204,255,0,0.3); padding: 1.5px 6px; border-radius: 4px;">${catClean}</span>
+                                        <span style="font-size: 0.55rem; color: #64748b; font-weight: 700; display: flex; align-items: center; gap: 3px;"><i class="far fa-clock" style="font-size: 0.45rem;"></i>${post.readTime || '3 min'}</span>
+                                    </div>
+                                    <h4 style="margin: 0 0 2px 0; color: #0f172a; font-weight: 850; font-size: 0.82rem; line-height: 1.25; letter-spacing: -0.2px; font-family: 'Outfit'; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${post.title}</h4>
+                                    <p style="margin: 0; color: #64748b; font-size: 0.65rem; font-weight: 500; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${post.snippet}</p>
+                                </div>
+                                <div style="flex-shrink: 0; color: #cbd5e1; font-size: 0.65rem;"><i class="fas fa-chevron-right"></i></div>
+                            </div>
+                        `;
+                    }).join('');
+                };
+
+                historyModal.innerHTML = `
+                    <div style="background: #090f1e; border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; width: 100%; max-width: 480px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 30px 70px rgba(0,0,0,0.85); position: relative; animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); overflow: hidden; box-sizing: border-box;">
+                        <div style="padding: 20px 24px 14px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); position: relative; display: flex; flex-direction: column; gap: 8px;">
+                            <button id="history-modal-close-btn" 
+                                    style="position: absolute; top: 18px; right: 18px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s;"
+                                    onmouseover="this.style.background='rgba(255,255,255,0.15)'"
+                                    onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+                                <i class="fas fa-times" style="font-size: 0.8rem;"></i>
+                            </button>
+                            
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-newspaper" style="font-size: 1.1rem; color: #CCFF00;"></i>
+                                <h4 style="color: white; font-weight: 950; font-size: 1.15rem; margin: 0; letter-spacing: -0.4px;">Archivo de Noticias</h4>
+                            </div>
+                            <p style="color: rgba(255,255,255,0.5); font-size: 0.7rem; line-height: 1.3; margin: 0;">Consulta y busca todos los artículos, consejos de juego y guías oficiales de SomosPadel BCN.</p>
+                        </div>
+                        
+                        <div style="padding: 12px 20px; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-search" style="color: rgba(255,255,255,0.4); font-size: 0.8rem;"></i>
+                            <input id="news-search-input" 
+                                   type="text" 
+                                   placeholder="Buscar por título, categoría o palabra clave..." 
+                                   style="background: transparent; border: none; outline: none; color: white; font-size: 0.78rem; font-weight: 600; width: 100%; font-family: 'Inter';"
+                            />
+                        </div>
+                        
+                        <div id="history-items-container" 
+                             style="padding: 20px; overflow-y: auto; flex: 1; background: #f1f5f9; min-height: 180px;">
+                            ${renderListItems()}
+                        </div>
+                        
+                        <div style="padding: 14px 20px; border-top: 1px solid rgba(255,255,255,0.08); background: #090f1e; text-align: center;">
+                            <span style="font-size: 0.58rem; color: rgba(255,255,255,0.4); font-weight: 700; letter-spacing: 0.8px;">SOMOSPADEL BCN JOURNAL OFICIAL</span>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(historyModal);
+
+                const searchInput = historyModal.querySelector('#news-search-input');
+                const itemsContainer = historyModal.querySelector('#history-items-container');
+                if (searchInput && itemsContainer) {
+                    searchInput.addEventListener('input', (e) => {
+                        itemsContainer.innerHTML = renderListItems(e.target.value);
+                    });
+                }
+
+                const closeBtn = historyModal.querySelector('#history-modal-close-btn');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        historyModal.remove();
+                    });
+                }
+
+                historyModal.onclick = (e) => {
+                    if (e.target === historyModal) historyModal.remove();
+                };
+
+            } catch (err) {
+                console.error("Fallo al abrir histórico de noticias:", err);
+            }
         }
 
         async openBlogPost(postId) {
