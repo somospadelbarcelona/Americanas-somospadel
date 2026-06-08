@@ -87,10 +87,13 @@ async def scrape_group(page, cat, division, group_name):
             elif len(p) > 3 and not contains_club(p) and not any(char.isdigit() for char in p[:2]): opponent = p
         if len(score_parts) >= 2: score = f"{score_parts[0]} - {score_parts[1]}"
 
+        status_val = "completed" if (score != "Pendiente" or opponent == "BYE") else "upcoming"
+        score_val = "Descansa" if opponent == "BYE" else score
+
         schedule.append({
             "j": j + 1, "date": parts[0] if parts else "TBD", "time": "TBD",
-            "opponent": opponent, "score": score, "venue": "Por confirmar", "isHome": True,
-            "status": "completed" if score != "Pendiente" else "upcoming"
+            "opponent": opponent, "score": score_val, "venue": "Por confirmar", "isHome": True,
+            "status": status_val
         })
 
     return {

@@ -268,7 +268,7 @@
             if (hasSchedule) {
                 const sortedMatches = [...team.schedule].sort((a, b) => parseInt(a.j) - parseInt(b.j));
                 const completedMatches = sortedMatches.filter(m => m.status === 'completed' && m.score);
-                const pendingMatches = sortedMatches.filter(m => m.status === 'pending' || m.status === 'scheduled' || m.status === 'upcoming');
+                const pendingMatches = sortedMatches.filter(m => (m.status === 'pending' || m.status === 'scheduled' || m.status === 'upcoming') && m.opponent !== 'BYE' && !m.opponent.includes('BYE'));
                 
                 if (pendingMatches.length > 0) {
                     pendingMatchInfo = pendingMatches[0];
@@ -864,7 +864,7 @@
                 let nextMatch = null;
                 if (team.schedule && team.schedule.length > 0) {
                     const sortedMatches = [...team.schedule].sort((a, b) => parseInt(a.j) - parseInt(b.j));
-                    const pendingMatches = sortedMatches.filter(m => m.status === 'pending' || m.status === 'scheduled' || m.status === 'upcoming');
+                    const pendingMatches = sortedMatches.filter(m => (m.status === 'pending' || m.status === 'scheduled' || m.status === 'upcoming') && m.opponent !== 'BYE' && !m.opponent.includes('BYE'));
                     if (pendingMatches.length > 0) {
                         nextMatch = pendingMatches[0];
                     }
@@ -1156,7 +1156,7 @@
                 let nextMatch = null;
                 if (team.schedule && team.schedule.length > 0) {
                     const sortedMatches = [...team.schedule].sort((a, b) => parseInt(a.j) - parseInt(b.j));
-                    const pendingMatches = sortedMatches.filter(m => m.status === 'pending' || m.status === 'scheduled' || m.status === 'upcoming');
+                    const pendingMatches = sortedMatches.filter(m => (m.status === 'pending' || m.status === 'scheduled' || m.status === 'upcoming') && m.opponent !== 'BYE' && !m.opponent.includes('BYE'));
                     if (pendingMatches.length > 0) {
                         nextMatch = pendingMatches[0];
                     }

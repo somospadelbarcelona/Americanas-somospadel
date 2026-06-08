@@ -26,7 +26,7 @@
 
             // 1. Obtener total real de usuarios registrados
             try {
-                const snap = await this.db.collection('users').get();
+                const snap = await this.db.collection('players').get();
                 this.totalUsersCount = snap.size || 0;
             } catch (e) {
                 console.error('[NetworkPulse] Error counting users:', e);
@@ -52,8 +52,8 @@
             const updatePresence = async () => {
                 const randomCity = this.cities[Math.floor(Math.random() * this.cities.length)];
                 try {
-                    await this.db.collection('users').doc(userId).update({
-                        last_online: Date.now(),
+                    await this.db.collection('players').doc(userId).update({
+                        lastActive: firebase.firestore.FieldValue.serverTimestamp(),
                         city: randomCity,
                         device_node: navigator.platform || 'WEB-CLIENT'
                     });
@@ -72,16 +72,17 @@
         listenToActiveNodes() {
             // Obtenemos los últimos 20 usuarios que han tenido actividad, sin límite de tiempo estricto
             // para asegurar que la lista siempre contenga nombres de personas reales del club.
-            this.db.collection('users')
-                .orderBy('last_online', 'desc')
+            this.db.collection('players')
+                .orderBy('lastActive', 'desc')
                 .limit(20)
                 .onSnapshot(snapshot => {
                     this.activeNodes = snapshot.docs.map(doc => {
                         const data = doc.data();
+                        const lastActiveDate = data.lastActive?.toDate?.() || new Date(data.lastLogin) || new Date();
                         return {
                             id: doc.id,
                             name: data.name || 'JUGADOR SOMOSPADEL',
-                            last_online: data.last_online,
+                            last_online: lastActiveDate.getTime(),
                             city: data.city || 'Barcelona',
                             node: data.device_node || 'APP'
                         };
@@ -92,7 +93,7 @@
                     console.error('[NetworkPulse] Snap error:', err);
                     // Fallback silencioso si el índice de Firestore aún no está creado
                     if (err.message && err.message.includes('index')) {
-                        console.warn('Recomendación: Crear índice compuesto en Firestore para [last_online DESC]');
+                        console.warn('Recomendación: Crear índice compuesto en Firestore para [lastActive DESC]');
                     }
                 });
         }

@@ -1,122 +1,177 @@
 /**
  * Tactical3DWidget.js
- * Advanced WebGL 3D Visualization for Player Tactics and Stats.
- * Deepmind AI Prototyping Engine.
+ * Widget de previsualización en 3D animado de la pizarra táctica (War Room 3D) en el Dashboard.
  */
 
 window.Tactical3DWidget = {
-    init(containerId, stats = { power: 85, control: 70, speed: 90, stamina: 75, technique: 88 }) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
+    scene: null,
+    camera: null,
+    renderer: null,
+    courtGroup: null,
+    container: null,
+
+    init(containerId) {
+        this.container = document.getElementById(containerId);
+        if (!this.container) return;
+
+        // Limpiar contenedor
+        this.container.innerHTML = '';
 
         // 1. SCENE SETUP
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        container.innerHTML = ''; // Clear container
-        container.appendChild(renderer.domElement);
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x0f172a); // Fondo oscuro slate
 
-        // 2. TACTICAL SPHERE (Wireframe + Glow)
-        const geometry = new THREE.IcosahedronGeometry(2, 2);
-        const material = new THREE.MeshPhongMaterial({
-            color: 0xCCFF00,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.3,
-            emissive: 0xCCFF00,
-            emissiveIntensity: 0.5
-        });
-        const sphere = new THREE.Mesh(geometry, material);
-        scene.add(sphere);
+        this.camera = new THREE.PerspectiveCamera(50, this.container.clientWidth / this.container.clientHeight, 0.1, 100);
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.container.appendChild(this.renderer.domElement);
 
-        // 3. INTERNAL DATA CORE (Pulsing solid)
-        const coreGeo = new THREE.IcosahedronGeometry(1.2, 1);
-        const coreMat = new THREE.MeshPhongMaterial({
-            color: 0xCCFF00,
-            transparent: true,
-            opacity: 0.6,
-            shininess: 100
-        });
-        const core = new THREE.Mesh(coreGeo, coreMat);
-        scene.add(core);
+        // 2. CREAR MINI PISTA
+        this.courtGroup = new THREE.Group();
+        
+        // Césped azul
+        const turf = new THREE.Mesh(new THREE.PlaneGeometry(6, 12), new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.8 }));
+        turf.rotation.x = -Math.PI / 2;
+        this.courtGroup.add(turf);
 
-        // 4. LIGHTING
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        scene.add(ambientLight);
-        const pointLight = new THREE.PointLight(0xCCFF00, 1);
-        pointLight.position.set(5, 5, 5);
-        scene.add(pointLight);
-
-        camera.position.z = 5;
-
-        // 5. ANIMATION LOOP
-        let frame = 0;
-        const animate = () => {
-            requestAnimationFrame(animate);
-            frame += 0.01;
-
-            sphere.rotation.y += 0.005;
-            sphere.rotation.x += 0.002;
-
-            core.rotation.y -= 0.008;
-            core.scale.setScalar(1 + Math.sin(frame * 2) * 0.05);
-
-            renderer.render(scene, camera);
+        // Líneas rápidas
+        const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const addL = (w, h, x, z) => {
+            const l = new THREE.Mesh(new THREE.PlaneGeometry(w, h), lineMat);
+            l.rotation.x = -Math.PI / 2;
+            l.position.set(x, 0.01, z);
+            this.courtGroup.add(l);
         };
+        addL(6, 0.05, 0, 6);
+        addL(6, 0.05, 0, -6);
+        addL(0.05, 12, 3, 0);
+        addL(0.05, 12, -3, 0);
+        addL(6, 0.05, 0, 4.1);
+        addL(6, 0.05, 0, -4.1);
+        addL(0.05, 8.2, 0, 0);
 
+        // Red
+        const net = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, wireframe: true }));
+        net.position.y = 0.3;
+        this.courtGroup.add(net);
+
+        // Mini Jugadores (Esferas sencillas de colores para el preview animado)
+        const addMiniPlayer = (color, x, z) => {
+            const g = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.4), new THREE.MeshStandardMaterial({ color: color }));
+            body.position.y = 0.2;
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
+            head.position.y = 0.45;
+            g.add(body, head);
+            g.position.set(x, 0, z);
+            this.courtGroup.add(g);
+        };
+        addMiniPlayer(0xCCFF00, -1.2, 4); // Nosotros
+        addMiniPlayer(0xCCFF00, 1.2, 4);  // Compañero
+        addMiniPlayer(0xef4444, -1.2, -2); // Rival 1
+        addMiniPlayer(0xef4444, 1.2, -2);  // Rival 2
+
+        this.scene.add(this.courtGroup);
+
+        // ILUMINACIÓN
+        this.scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        const light = new THREE.DirectionalLight(0xffffff, 0.8);
+        light.position.set(5, 10, 5);
+        this.scene.add(light);
+
+        // Posición de la cámara
+        this.camera.position.set(0, 7, 8);
+        this.camera.lookAt(0, 0, 0);
+
+        // 3. BUCLE DE ROTACIÓN AUTOMÁTICA
+        let angle = 0;
+        const animate = () => {
+            if (!this.renderer) return;
+            requestAnimationFrame(animate);
+            angle += 0.006;
+            
+            // Órbita lenta
+            this.camera.position.x = 8.5 * Math.sin(angle);
+            this.camera.position.z = 8.5 * Math.cos(angle);
+            this.camera.lookAt(0, 0.3, 0);
+
+            this.renderer.render(this.scene, this.camera);
+        };
         animate();
 
-        // Handle Resize
-        const resizeObserver = new ResizeObserver(() => {
-            if (container.clientWidth > 0 && container.clientHeight > 0) {
-                camera.aspect = container.clientWidth / container.clientHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(container.clientWidth, container.clientHeight);
+        // Redimensionamiento responsivo
+        const observer = new ResizeObserver(() => {
+            if (this.container.clientWidth > 0 && this.container.clientHeight > 0 && this.renderer) {
+                this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
             }
         });
-        resizeObserver.observe(container);
+        observer.observe(this.container);
     },
 
     renderHTML() {
         return `
-            <div class="glass-card-enterprise animate-fade-in" style="padding: 20px; position: relative; overflow: hidden; min-height: 250px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%);">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+            <div class="glass-card-enterprise animate-fade-in" style="
+                margin: 0 15px 12px !important;
+                padding: 20px;
+                position: relative;
+                overflow: hidden;
+                min-height: 270px;
+                background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 28px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+                cursor: pointer;
+            " onclick="window.DashboardView.openTacticalWarRoom()">
+                
+                <!-- Fondo cuadriculado táctico -->
+                <div style="position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(204, 255, 0, 0.02) 0px, transparent 1px, transparent 4px); opacity: 0.5;"></div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                     <div>
-                        <div style="font-size: 0.65rem; font-weight: 800; color: #CCFF00; letter-spacing: 2px; text-transform: uppercase;">
-                            AI Tactical Analysis
+                        <div style="font-size: 0.6rem; font-weight: 1000; color: #CCFF00; letter-spacing: 2px; text-transform: uppercase;">
+                            Pizarra de Estrategia
                         </div>
-                        <div style="font-size: 1.1rem; font-weight: 900; color: white; margin-top: 4px;">
-                            NEURAL SPHERE <span style="font-weight: 300; opacity: 0.5;">V1.0</span>
+                        <div style="font-size: 1.15rem; font-weight: 950; color: white; margin-top: 4px; font-family: 'Outfit';">
+                            WAR ROOM 3D INTERACTIVO
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <span style="background: rgba(204, 255, 0, 0.1); color: #CCFF00; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; border: 1px solid rgba(204, 255, 0, 0.2);">LIVE TELEMETRY</span>
+                        <span style="background: rgba(204, 255, 0, 0.12); color: #CCFF00; padding: 4px 10px; border-radius: 8px; font-size: 0.58rem; font-weight: 950; border: 1px solid rgba(204, 255, 0, 0.25);">PROBA LA PIZARRA</span>
                     </div>
                 </div>
 
-                <div id="three-tactical-canvas" style="width: 100%; height: 180px; position: relative; cursor: grab;">
-                    <!-- WebGL Canvas here -->
+                <!-- Canvas de Three.js en miniatura -->
+                <div id="three-tactical-canvas" style="width: 100%; height: 140px; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05); background: #090f1e; pointer-events: none;">
+                    <!-- Canvas de Three.js cargado vía JS -->
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
-                    <div style="text-align: center;">
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase;">Précisión</div>
-                        <div style="font-size: 0.9rem; font-weight: 900; color: white;">92%</div>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase;">Agresión</div>
-                        <div style="font-size: 0.9rem; font-weight: 900; color: #FF2D55;">ALTA</div>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase;">Consistencia</div>
-                        <div style="font-size: 0.9rem; font-weight: 900; color: #CCFF00;">8.4</div>
-                    </div>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px;">
+                    <span style="font-size: 0.68rem; color: rgba(255,255,255,0.5); font-weight: 600; max-width: 60%; line-height: 1.2;">
+                        Arrastra a tus jugadores, calcula huecos y visualiza tácticas de ataque y defensa.
+                    </span>
+                    <button style="
+                        background: #CCFF00;
+                        color: #000000;
+                        border: none;
+                        outline: none;
+                        padding: 8px 16px;
+                        border-radius: 12px;
+                        font-size: 0.68rem;
+                        font-weight: 950;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        box-shadow: 0 4px 10px rgba(204, 255, 0, 0.3);
+                        transition: transform 0.2s;
+                        font-family: 'Outfit';
+                    ">
+                        DISEÑAR TÁCTICA <i class="fas fa-play" style="font-size: 0.6rem;"></i>
+                    </button>
                 </div>
-
-                <!-- OVERLAY SCAN LINES -->
-                <div style="position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(204, 255, 0, 0.03) 0px, transparent 1px, transparent 4px); opacity: 0.5;"></div>
             </div>
         `;
     }

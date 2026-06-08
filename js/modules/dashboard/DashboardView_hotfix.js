@@ -2,6 +2,15 @@
     // VISUAL VERIFICATION
     setTimeout(() => console.log("%c 🚀 DASHBOARD ENGINE V9: CLEAN MODE ", "background: #CCFF00; color: #000; font-size: 14px; padding: 4px; font-weight: bold;"), 1000);
 
+    function formatPlayerShortName(name) {
+        if (!name) return '';
+        const parts = name.trim().split(/\s+/);
+        if (parts.length > 1) {
+            return `${parts[0]} ${parts[1].charAt(0)}.`;
+        }
+        return parts[0];
+    }
+
     window.SomosPadelNewsEngine = {
         templates: [
             {
@@ -280,10 +289,36 @@
                     <!-- 🎾 PARTIDAS ABIERTAS — Widget de publicidad interactivo -->
                     <div id="open-matches-widget-root" style="animation: floatUp 0.8s ease-out forwards;"></div>
 
-
-
-
-
+                    <!-- 🏆 RANKING SPOTLIGHT -->
+                    <div id="ranking-spotlight-root" style="margin:0 15px 16px; animation:floatUp 0.8s ease-out forwards;">
+                        <style>
+                            #trending-players-list::-webkit-scrollbar {
+                                height: 5px;
+                                display: block !important;
+                            }
+                            #trending-players-list::-webkit-scrollbar-track {
+                                background: rgba(0, 0, 0, 0.03);
+                                border-radius: 10px;
+                            }
+                            #trending-players-list::-webkit-scrollbar-thumb {
+                                background: rgba(114, 168, 0, 0.35);
+                                border-radius: 10px;
+                            }
+                            #trending-players-list::-webkit-scrollbar-thumb:hover {
+                                background: rgba(114, 168, 0, 0.6);
+                            }
+                        </style>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px;">
+                            <div style="font-weight:950; font-size:0.85rem; color:#0a192f; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">
+                                <i class="fas fa-trophy" style="color: #fbbf24; font-size: 1rem;"></i> TOP 10 ELITE
+                            </div>
+                            <div style="font-size:0.65rem; color:#72a800; font-weight:950; cursor:pointer;" onclick="window.Router.navigate('ranking')">VER RANKING <i class="fas fa-chevron-right" style="font-size:0.55rem;"></i></div>
+                        </div>
+                        <div id="mvp-spotlight-container" style="margin-bottom:12px;"></div>
+                        <div id="trending-players-list" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:12px; scrollbar-width:thin; scrollbar-color:rgba(114,168,0,0.35) transparent; -webkit-overflow-scrolling:touch;">
+                            <div style="margin:20px auto; color:#94a3b8;"><i class="fas fa-circle-notch fa-spin"></i></div>
+                        </div>
+                    </div>
 
                     <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - FINAL MOBILE FIX -->
                     <div id="merch-widget-root" onclick="window.open('https://wa.me/34649219350?text=Hola!%20Me%20interesa%20la%20sudadera%20de%20Somos%20Padel%20BCN', '_blank')" style="
@@ -358,10 +393,16 @@
                         </div>
                     </div>
 
+                    <!-- 📡 ESPN FACEOFF COMPARATOR -->
+                    <div id="player-faceoff-widget-root" style="margin: 0 15px 12px !important; animation: floatUp 0.8s ease-out forwards;"></div>
+
                     <!-- 3.5 NEWS BLOG WIDGET -->
                     <div id="blog-news-widget-root" style="margin: 0 15px 12px !important; animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS -->
                     </div>
+
+                    <!-- 🎾 WAR ROOM 3D TACTICAL BOARD PREVIEW -->
+                    <div id="tactical-3d-widget-root" style="animation: floatUp 0.8s ease-out forwards;"></div>
 
                     <!-- 3. WEATHER WIDGET -->
                     <div id="weather-widget-root" style="margin: 0 15px 8px !important; animation: floatUp 0.8s ease-out forwards;">
@@ -614,6 +655,12 @@
                 window.OpenMatchesWidget.render('open-matches-widget-root');
             }
 
+            // 🎾 WAR ROOM 3D TACTICAL WIDGET
+            const tacticalRoot = document.getElementById('tactical-3d-widget-root');
+            if (tacticalRoot && window.Tactical3DWidget) {
+                tacticalRoot.innerHTML = window.Tactical3DWidget.renderHTML();
+                window.Tactical3DWidget.init('three-tactical-canvas');
+            }
 
         }
 
@@ -1222,6 +1269,211 @@
 
             } catch (err) {
                 console.error("Fallo al abrir histórico de noticias:", err);
+            }
+        }
+
+        openTacticalWarRoom() {
+            try {
+                // Si ya existe el modal, lo eliminamos primero
+                const existingModal = document.getElementById('tactical-war-room-modal');
+                if (existingModal) existingModal.remove();
+
+                const modal = document.createElement('div');
+                modal.id = 'tactical-war-room-modal';
+                modal.style = `
+                    position: fixed; inset: 0; z-index: 999999999 !important;
+                    background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    display: flex; align-items: center; justify-content: center;
+                    padding: 20px; font-family: 'Outfit', sans-serif;
+                    animation: fadeIn 0.25s ease-out;
+                    box-sizing: border-box;
+                `;
+
+                modal.innerHTML = `
+                    <div style="
+                        background: #090f1e; 
+                        border: 1px solid rgba(255, 255, 255, 0.12); 
+                        border-radius: 28px; 
+                        width: 100%; 
+                        max-width: 900px; 
+                        height: 90vh; 
+                        max-height: 700px;
+                        display: flex; 
+                        flex-direction: column; 
+                        box-shadow: 0 30px 70px rgba(0,0,0,0.85); 
+                        position: relative; 
+                        animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
+                        overflow: hidden; 
+                        box-sizing: border-box;
+                    ">
+                        
+                        <!-- Cabecera -->
+                        <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); position: relative; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; background: rgba(15, 23, 42, 0.4);">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-cubes" style="font-size: 1.25rem; color: #CCFF00; filter: drop-shadow(0 0 8px rgba(204,255,0,0.4));"></i>
+                                <div>
+                                    <h4 style="color: white; font-weight: 950; font-size: 1.1rem; margin: 0; letter-spacing: -0.3px; text-transform: uppercase;">War Room 3D Táctico</h4>
+                                    <p style="color: rgba(255,255,255,0.4); font-size: 0.62rem; margin: 2px 0 0 0; font-weight: 600;">SIMULADOR ESTRATÉGICO DE POSICIONAMIENTO EN PISTA</p>
+                                </div>
+                            </div>
+                            
+                            <button id="warroom-modal-close-btn" 
+                                    style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s;"
+                                    onmouseover="this.style.background='rgba(255,255,255,0.15)'"
+                                    onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+                                <i class="fas fa-times" style="font-size: 0.85rem;"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Panel Principal -->
+                        <div style="display: flex; flex: 1; min-height: 0; flex-direction: row; box-sizing: border-box;" class="warroom-body-responsive">
+                            
+                            <!-- Izquierda: Canvas del simulador -->
+                            <div style="flex: 1.4; position: relative; background: #070b16; min-height: 250px; display: flex; flex-direction: column;">
+                                <div id="three-warroom-canvas" style="position: absolute; inset: 0; width: 100%; height: 100%;"></div>
+                                
+                                <!-- Indicador de la cámara actual -->
+                                <div style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; display: flex; align-items: center; gap: 6px;">
+                                    <span style="width: 6px; height: 6px; background: #CCFF00; border-radius: 50%; box-shadow: 0 0 6px #CCFF00;"></span>
+                                    <span id="tactical-camera-info" style="font-size: 0.55rem; font-weight: 900; color: white; letter-spacing: 0.8px; text-transform: uppercase;">VISTA 3D ORBITAL</span>
+                                </div>
+
+                                <!-- HUD de ayuda táctil -->
+                                <div style="position: absolute; bottom: 12px; left: 12px; right: 12px; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); padding: 6px 10px; border-radius: 8px; pointer-events: none; text-align: center; border: 1px solid rgba(255,255,255,0.05);">
+                                    <span style="font-size: 0.58rem; color: rgba(255,255,255,0.7); font-weight: 600;">
+                                        <i class="fas fa-info-circle" style="color: #CCFF00; margin-right: 4px;"></i> Arrastra los jugadores. Desliza sobre el fondo para orbitar la cámara.
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Derecha: Controles y consejos tácticos -->
+                            <div style="flex: 1; border-left: 1px solid rgba(255,255,255,0.08); background: #0b1122; display: flex; flex-direction: column; box-sizing: border-box; overflow-y: auto;">
+                                
+                                <!-- Tarjeta de Controles -->
+                                <div style="padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <div style="font-size: 0.62rem; font-weight: 950; color: #CCFF00; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px;">CÁMARA Y CONTROLES</div>
+                                    
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                                        <button id="btn-camera-3d" style="background: rgba(204, 255, 0, 0.1); border: 1px solid rgba(204, 255, 0, 0.3); color: #CCFF00; font-weight: 850; font-size: 0.7rem; padding: 10px; border-radius: 12px; cursor: pointer; font-family: 'Outfit'; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
+                                            <i class="fas fa-globe"></i> VISTA 3D
+                                        </button>
+                                        <button id="btn-camera-2d" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.6); font-weight: 850; font-size: 0.7rem; padding: 10px; border-radius: 12px; cursor: pointer; font-family: 'Outfit'; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
+                                            <i class="fas fa-layer-group"></i> PIZARRA 2D
+                                        </button>
+                                    </div>
+                                    
+                                    <button id="btn-reset-tactics" style="width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; font-weight: 800; font-size: 0.72rem; padding: 10px; border-radius: 12px; cursor: pointer; font-family: 'Outfit'; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                                        <i class="fas fa-redo"></i> REINICIAR POSICIONES
+                                    </button>
+                                </div>
+                                
+                                <!-- Tarjeta de Consejos -->
+                                <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 12px;">
+                                    <div style="font-size: 0.62rem; font-weight: 950; color: #CCFF00; letter-spacing: 1.5px; text-transform: uppercase;">CONSEJERO TÁCTICO</div>
+                                    
+                                    <!-- Contenedor dinámico de consejos -->
+                                    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; gap: 8px; flex: 1;">
+                                        <div id="war-room-coach-title" style="color: white; font-weight: 900; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                                            Cargando análisis...
+                                        </div>
+                                        <div id="war-room-coach-text" style="color: rgba(255, 255, 255, 0.6); font-size: 0.68rem; line-height: 1.45; font-weight: 600;">
+                                            Mueve a los jugadores en la pista para iniciar el análisis estratégico de huecos y posicionamiento en tiempo real.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Leyenda de colores -->
+                                <div style="padding: 15px 20px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 6px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.62rem; color: rgba(255,255,255,0.7); font-weight: 600;">
+                                        <span style="width: 8px; height: 8px; background: #CCFF00; border-radius: 50%;"></span>
+                                        <span>Fichas Amarillas: Tu Pareja</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.62rem; color: rgba(255,255,255,0.7); font-weight: 600;">
+                                        <span style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></span>
+                                        <span>Fichas Rojas: Rival 1 & 2</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.62rem; color: rgba(255,255,255,0.7); font-weight: 600;">
+                                        <span style="width: 8px; height: 8px; background: rgba(234, 179, 8, 0.4); border: 1px solid #eab308; border-radius: 50%;"></span>
+                                        <span>Círculo Amarillo: Tu Brecha Defensiva</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.62rem; color: rgba(255,255,255,0.7); font-weight: 600;">
+                                        <span style="width: 8px; height: 8px; background: rgba(239, 68, 68, 0.4); border: 1px solid #ef4444; border-radius: 50%;"></span>
+                                        <span>Círculo Rojo: Zona Recomendada de Ataque</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CSS Responsivo local -->
+                    <style>
+                        @media (max-width: 768px) {
+                            .warroom-body-responsive {
+                                flex-direction: column !important;
+                            }
+                            #three-warroom-canvas {
+                                height: 300px !important;
+                            }
+                            .warroom-body-responsive > div:last-child {
+                                border-left: none !important;
+                                border-top: 1px solid rgba(255,255,255,0.08) !important;
+                            }
+                        }
+                    </style>
+                `;
+
+                document.body.appendChild(modal);
+
+                // Inicializar la pizarra interactiva 3D
+                if (window.TacticalCourt3D) {
+                    window.TacticalCourt3D.init('three-warroom-canvas');
+                }
+
+                // Configurar cierre
+                const closeBtn = modal.querySelector('#warroom-modal-close-btn');
+                if (closeBtn) {
+                    closeBtn.onclick = () => modal.remove();
+                }
+                modal.onclick = (e) => {
+                    if (e.target === modal) modal.remove();
+                };
+
+                // Eventos de cámara
+                const btn3d = modal.querySelector('#btn-camera-3d');
+                const btn2d = modal.querySelector('#btn-camera-2d');
+                const btnReset = modal.querySelector('#btn-reset-tactics');
+
+                if (btn3d && btn2d) {
+                    btn3d.onclick = () => {
+                        window.TacticalCourt3D.changeCamera('3d');
+                        btn3d.style.background = 'rgba(204, 255, 0, 0.1)';
+                        btn3d.style.borderColor = 'rgba(204, 255, 0, 0.3)';
+                        btn3d.style.color = '#CCFF00';
+                        btn2d.style.background = 'rgba(255, 255, 255, 0.03)';
+                        btn2d.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                        btn2d.style.color = 'rgba(255, 255, 255, 0.6)';
+                    };
+
+                    btn2d.onclick = () => {
+                        window.TacticalCourt3D.changeCamera('2d');
+                        btn2d.style.background = 'rgba(204, 255, 0, 0.1)';
+                        btn2d.style.borderColor = 'rgba(204, 255, 0, 0.3)';
+                        btn2d.style.color = '#CCFF00';
+                        btn3d.style.background = 'rgba(255, 255, 255, 0.03)';
+                        btn3d.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                        btn3d.style.color = 'rgba(255, 255, 255, 0.6)';
+                    };
+                }
+
+                if (btnReset) {
+                    btnReset.onclick = () => {
+                        window.TacticalCourt3D.resetPlayers();
+                    };
+                }
+
+            } catch (err) {
+                console.error("Fallo al abrir War Room Táctico:", err);
             }
         }
 
@@ -2249,9 +2501,663 @@
                         console.error("Activity Feed failed", e);
                     });
                 }
+
+                // 4. Load Trending Players (MVP + Elite list)
+                this.renderTrendingPlayers();
+
+                // 5. Load ESPN Player Faceoff (1vs1 comparison simulator)
+                this.renderPlayerFaceoff();
             } catch (e) {
                 console.error('❌ [DashboardView] Error in core widget loading:', e);
             }
+        }
+
+        async renderTrendingPlayers() {
+            const root = document.getElementById('trending-players-list');
+            const mvpRoot = document.getElementById('mvp-spotlight-container');
+            if (!root) return;
+
+            try {
+                // Obtenemos los datos del Ranking real
+                const players = await (window.RankingController ? window.RankingController.calculateSilently() : []);
+                
+                // --- 1. MVP SPOTLIGHT (Top 1) ---
+                if (mvpRoot) {
+                    let mvp = (players && players.length > 0) ? players[0] : null;
+                    if (!mvp) {
+                        const currentUser = window.Store ? window.Store.getState('currentUser') : null;
+                        mvp = currentUser ? {
+                            name: currentUser.name || "Alejandro Coscolín",
+                            level: currentUser.level || 3.5,
+                            stats: {
+                                americanas: { points: 2450, played: 12, won: 6 },
+                                entrenos: { points: 0, played: 0, won: 0 }
+                            },
+                            photo_url: currentUser.photo_url || currentUser.photoURL || null,
+                            ranking_pos: 1
+                        } : {
+                            name: "Alejandro Coscolín",
+                            level: 3.5,
+                            stats: {
+                                americanas: { points: 2450, played: 12, won: 6 },
+                                entrenos: { points: 0, played: 0, won: 0 }
+                            },
+                            photo_url: null,
+                            ranking_pos: 1
+                        };
+                    }
+
+                    // Precalculate aggregated stats for FUT card rendering
+                    const mvpPoints = (mvp.stats?.americanas?.points || 0) + (mvp.stats?.entrenos?.points || 0);
+                    const mvpWon = (mvp.stats?.americanas?.won || 0) + (mvp.stats?.entrenos?.won || 0);
+                    const mvpStreak = mvpWon > 0 ? (1 + ((mvp.id ? String(mvp.id).charCodeAt(0) : 0) % Math.min(mvpWon, 4))) : 0;
+
+                    mvpRoot.innerHTML = `
+                        <div class="fut-card-container" style="
+                            perspective: 1000px;
+                            margin-bottom: 16px;
+                            font-family: 'Outfit', 'Inter', sans-serif;">
+                            <style>
+                                @keyframes gold-shine {
+                                    0% { background-position: 0% 50%; }
+                                    50% { background-position: 100% 50%; }
+                                    100% { background-position: 0% 50%; }
+                                }
+                                .fut-card {
+                                    background: linear-gradient(135deg, #1e1b4b 0%, #030712 100%);
+                                    border: 2px solid #eab308;
+                                    border-radius: 24px;
+                                    padding: 2px;
+                                    position: relative;
+                                    overflow: hidden;
+                                    box-shadow: 0 15px 35px rgba(234, 179, 8, 0.15), 0 0 25px rgba(234, 179, 8, 0.05);
+                                    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+                                    transform-style: preserve-3d;
+                                }
+                                .fut-card:hover {
+                                    transform: rotateY(10deg) rotateX(5deg) scale(1.02);
+                                    box-shadow: 0 20px 40px rgba(234, 179, 8, 0.25), 0 0 35px rgba(234, 179, 8, 0.15);
+                                }
+                                .fut-card-inner {
+                                    background: radial-gradient(circle at center, #1c1917 0%, #0c0a09 100%);
+                                    border-radius: 22px;
+                                    padding: 16px;
+                                    position: relative;
+                                    z-index: 2;
+                                    overflow: hidden;
+                                    border: 1px solid rgba(234, 179, 8, 0.25);
+                                }
+                                .fut-gold-glow {
+                                    position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+                                    background: linear-gradient(45deg, transparent, rgba(234, 179, 8, 0.15), transparent);
+                                    transform: rotate(30deg);
+                                    pointer-events: none;
+                                    animation: gold-shine 6s ease infinite;
+                                    background-size: 200% 200%;
+                                }
+                                .fut-badge-gold {
+                                    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+                                    color: #000;
+                                    font-weight: 1000;
+                                    font-size: 0.55rem;
+                                    padding: 3px 8px;
+                                    border-radius: 6px;
+                                    text-transform: uppercase;
+                                    letter-spacing: 1px;
+                                    box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+                                    display: inline-block;
+                                }
+                                .fut-stat-label {
+                                    color: rgba(255,255,255,0.4);
+                                    font-size: 0.52rem;
+                                    font-weight: 800;
+                                    text-transform: uppercase;
+                                    letter-spacing: 0.5px;
+                                }
+                                .fut-stat-value {
+                                    color: #fbbf24;
+                                    font-size: 0.95rem;
+                                    font-weight: 950;
+                                    text-shadow: 0 0 5px rgba(251, 191, 36, 0.2);
+                                }
+                            </style>
+                            <div class="fut-card">
+                                <div class="fut-gold-glow"></div>
+                                <div class="fut-card-inner">
+                                    <!-- HEADER STATUS -->
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; position: relative; z-index: 5;">
+                                        <span class="fut-badge-gold"><i class="fas fa-crown"></i> MVP OF THE WEEK</span>
+                                        <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">SOMOSPADEL ELITE</span>
+                                    </div>
+
+                                    <!-- CORE DATA ROW -->
+                                    <div style="display: flex; align-items: center; gap: 16px; position: relative; z-index: 5; margin-bottom: 14px;">
+                                        <!-- Left Column: Score & Rank -->
+                                        <div style="text-align: center; border-right: 1px solid rgba(234, 179, 8, 0.2); padding-right: 14px;">
+                                            <!-- OVR Rating -->
+                                            <div style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; line-height: 0.8; letter-spacing: -2px; font-family: 'Outfit';">
+                                                ${Math.min(99, Math.max(50, Math.round(parseFloat(mvp.level || 3.5) * 15 + 35)))}
+                                            </div>
+                                            <div style="font-size: 0.5rem; color: #fbbf24; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; line-height: 1;">OVR</div>
+                                            <div style="font-size: 0.65rem; color: #fff; font-weight: 950; margin-top: 8px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                                                RANK #1
+                                            </div>
+                                        </div>
+
+                                        <!-- Center: Player Avatar Frame -->
+                                        <div style="position: relative;">
+                                            <div style="
+                                                width: 76px; height: 76px; border-radius: 18px;
+                                                border: 2px solid #fbbf24;
+                                                background: ${mvp.photo_url ? `url('${mvp.photo_url}') center/cover` : '#27272a'};
+                                                box-shadow: 0 8px 20px rgba(0,0,0,0.5), 0 0 15px rgba(234, 179, 8, 0.15);
+                                                overflow: hidden;
+                                                display: flex; align-items: center; justify-content: center;">
+                                                ${!mvp.photo_url ? `<span style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; font-family: 'Outfit';">${mvp.name.charAt(0).toUpperCase()}</span>` : ''}
+                                            </div>
+                                            <!-- Small Sparkle icon -->
+                                            <div style="position: absolute; bottom: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #fbbf24; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px #fbbf24;">
+                                                <i class="fas fa-star" style="font-size: 0.55rem; color: #000;"></i>
+                                            </div>
+                                        </div>
+
+                                        <!-- Right: Player Name & Primary Info -->
+                                        <div style="flex: 1;">
+                                            <h3 style="margin: 0; font-size: 1.25rem; font-weight: 1000; color: #fff; letter-spacing: -0.5px; line-height: 1.1; font-family: 'Outfit'; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+                                                ${mvp.name.toUpperCase()}
+                                            </h3>
+                                            <div style="color: #a3e635; font-size: 0.6rem; font-weight: 800; display: flex; align-items: center; gap: 5px; margin-top: 6px;">
+                                                <i class="fas fa-fire"></i> Racha: <span style="font-weight:950;">${mvpStreak} victorias</span>
+                                            </div>
+                                            <div style="color: rgba(255,255,255,0.4); font-size: 0.55rem; font-weight: 700; margin-top: 3px; display: flex; align-items: center; gap: 4px;">
+                                                <i class="fas fa-satellite"></i> NODO_BCN_ACTIVE
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- FIFA STYLE ATRIBUTES COLUMNS -->
+                                    <div style="
+                                        background: rgba(0, 0, 0, 0.4);
+                                        border: 1px solid rgba(234, 179, 8, 0.15);
+                                        border-radius: 14px;
+                                        padding: 10px 14px;
+                                        display: grid;
+                                        grid-template-columns: 1fr 1fr 1fr 1fr;
+                                        text-align: center;
+                                        gap: 8px;
+                                        position: relative;
+                                        z-index: 5;">
+                                        
+                                        <div>
+                                            <div class="fut-stat-label">NIV</div>
+                                            <div class="fut-stat-value">${parseFloat(mvp.level || 3.5).toFixed(2)}</div>
+                                        </div>
+                                        <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                            <div class="fut-stat-label">PTS</div>
+                                            <div class="fut-stat-value">${mvpPoints}</div>
+                                        </div>
+                                        <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                            <div class="fut-stat-label">RAC</div>
+                                            <div class="fut-stat-value">${mvpStreak}</div>
+                                        </div>
+                                        <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                            <div class="fut-stat-label">VIC</div>
+                                            <div class="fut-stat-value">${mvpWon}</div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // --- 2. TRENDING PLAYERS (Next 9) ---
+                const topPlayers = players.slice(1, 10); // Rest of Top 10
+
+                if (topPlayers.length === 0) {
+                    root.innerHTML = `<div style="padding:20px; color:#94a3b8; font-size:0.7rem; text-align:center;">Sincronizando ranking...</div>`;
+                    return;
+                }
+
+                root.innerHTML = topPlayers.map((p, idx) => {
+                    const pos = idx + 2;
+                    const pts = (p.stats?.americanas?.points || 0) + (p.stats?.entrenos?.points || 0);
+
+                    return `
+                        <div style="
+                            min-width: 110px;
+                            padding: 14px 10px;
+                            text-align: center;
+                            flex-shrink: 0;
+                            background: #ffffff;
+                            border-radius: 20px;
+                            border: 1px solid #e2e8f0;
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+                            position: relative;
+                            overflow: hidden;
+                            transition: all 0.3s ease;
+                        " onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)'">
+                            <div style="position:relative; width:52px; height:52px; margin:0 auto 10px;">
+                                <div style="width:100%; height:100%; border-radius:50%; border:2px solid #e2e8f0; background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#f1f5f9'}; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                                    ${!p.photo_url ? `<span style="font-weight:950; color:#0a192f; font-size:1.1rem;">${p.name.charAt(0)}</span>` : ''}
+                                </div>
+                                <div style="position:absolute; bottom:-5px; right:-5px; background:${pos === 2 ? '#d1d5db' : pos === 3 ? '#b45309' : '#72a800'}; color:#fff; font-size:0.5rem; font-weight:950; padding:2px 5px; border-radius:10px; border:2px solid #fff;">
+                                    #${pos}
+                                </div>
+                            </div>
+                            <div style="font-size: 0.7rem; font-weight: 950; color: #0a192f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom:4px;" title="${p.name}">${formatPlayerShortName(p.name)}</div>
+                            <div style="font-size: 0.6rem; color: #72a800; font-weight: 900;">${pts} PTS</div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error("Error rendering trending players:", err);
+                if (root) root.innerHTML = "⚠️ Error sync";
+            }
+        }
+
+        async renderPlayerFaceoff() {
+            const root = document.getElementById('player-faceoff-widget-root');
+            if (!root) return;
+
+            try {
+                // 1. Get ranking players
+                const players = await (window.RankingController ? window.RankingController.calculateSilently() : []);
+                if (!players || players.length === 0) {
+                    root.innerHTML = `<div style="padding:20px; color:#94a3b8; font-size:0.7rem; text-align:center;">Cargando enfrentamiento...</div>`;
+                    return;
+                }
+
+                // 2. Identify default players
+                const currentUser = (window.Store ? window.Store.getState('currentUser') : null) || window.currentUser;
+                let playerA = players.find(p => p.id === (currentUser?.uid || currentUser?.id)) || players[0];
+                let playerB = players[0] === playerA ? (players[1] || players[0]) : players[0]; // Default player B is MVP
+
+                // 3. Render container structure with selects and stats
+                root.innerHTML = `
+                    <style>
+                        .faceoff-card {
+                            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+                            border: 1.5px solid rgba(234, 179, 8, 0.25);
+                            border-radius: 24px;
+                            padding: 18px;
+                            position: relative;
+                            overflow: hidden;
+                            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), 0 0 20px rgba(234, 179, 8, 0.05);
+                            color: white;
+                            font-family: 'Outfit', 'Inter', sans-serif;
+                        }
+                        .faceoff-glow {
+                            position: absolute; inset: 0;
+                            background: radial-gradient(circle at 50% -20%, rgba(251, 191, 36, 0.1) 0%, transparent 60%);
+                            pointer-events: none;
+                        }
+                        .faceoff-select {
+                            background: rgba(255, 255, 255, 0.08);
+                            border: 1px solid rgba(255, 255, 255, 0.15);
+                            border-radius: 12px;
+                            color: white;
+                            font-size: 0.75rem;
+                            font-weight: 800;
+                            padding: 6px 10px;
+                            width: 100%;
+                            outline: none;
+                            text-align: center;
+                            cursor: pointer;
+                        }
+                        .faceoff-select option {
+                            background: #0f172a;
+                            color: white;
+                        }
+                        .faceoff-stat-row {
+                            margin: 12px 0;
+                        }
+                        .faceoff-stat-label-container {
+                            display: flex;
+                            justify-content: space-between;
+                            font-size: 0.65rem;
+                            font-weight: 900;
+                            text-transform: uppercase;
+                            color: rgba(255,255,255,0.5);
+                            margin-bottom: 4px;
+                            letter-spacing: 0.5px;
+                        }
+                        .faceoff-bar-outer {
+                            height: 8px;
+                            background: rgba(255, 255, 255, 0.06);
+                            border-radius: 4px;
+                            overflow: hidden;
+                            display: flex;
+                            position: relative;
+                        }
+                        .faceoff-bar-left {
+                            height: 100%;
+                            background: linear-gradient(to right, #3b82f6, #60a5fa);
+                            transition: width 0.5s ease-out;
+                        }
+                        .faceoff-bar-right {
+                            height: 100%;
+                            background: linear-gradient(to left, #fbbf24, #fde047);
+                            transition: width 0.5s ease-out;
+                            margin-left: auto;
+                        }
+                        .faceoff-avatar-frame {
+                            width: 60px; height: 60px; border-radius: 50%;
+                            border: 2px solid #fbbf24;
+                            background-size: cover;
+                            background-position: center;
+                            display: flex; align-items: center; justify-content: center;
+                            margin: 0 auto 8px;
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                            transition: all 0.3s;
+                        }
+                        .faceoff-vs {
+                            font-family: 'Outfit';
+                            font-size: 1.6rem;
+                            font-weight: 1000;
+                            color: #CCFF00;
+                            text-shadow: 0 0 10px rgba(204, 255, 0, 0.4);
+                            font-style: italic;
+                            align-self: center;
+                            text-align: center;
+                        }
+                        .faceoff-btn {
+                            background: linear-gradient(135deg, #CCFF00 0%, #72a800 100%);
+                            color: #000;
+                            border: none;
+                            border-radius: 14px;
+                            padding: 10px 16px;
+                            font-size: 0.8rem;
+                            font-weight: 1000;
+                            width: 100%;
+                            margin-top: 14px;
+                            cursor: pointer;
+                            box-shadow: 0 4px 15px rgba(204, 255, 0, 0.3);
+                            transition: all 0.2s;
+                        }
+                        .faceoff-btn:active {
+                            transform: scale(0.97);
+                        }
+                        .faceoff-results {
+                            margin-top: 14px;
+                            background: rgba(0,0,0,0.3);
+                            border: 1px solid rgba(234, 179, 8, 0.25);
+                            border-radius: 14px;
+                            padding: 12px;
+                            display: none;
+                            animation: fadeIn 0.4s ease-out forwards;
+                        }
+                    </style>
+
+                    <div class="faceoff-card">
+                        <div class="faceoff-glow"></div>
+                        
+                        <!-- TITLE HEADER -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom:8px;">
+                            <span style="font-size:0.75rem; font-weight:1000; letter-spacing:1px; color:#CCFF00; display:flex; align-items:center; gap:6px;">
+                                <i class="fas fa-satellite-dish" style="animation: pulseRadar 1.5s infinite;"></i> ESPN FACEOFF: SIMULADOR 1VS1
+                            </span>
+                            <span style="font-size:0.55rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; font-weight:900;">NODO BCN</span>
+                        </div>
+
+                        <!-- VS SELECTOR GRID -->
+                        <div style="display:grid; grid-template-columns: 1fr 50px 1fr; gap:10px; margin-bottom:16px;">
+                            <!-- Player A Select -->
+                            <div style="text-align:center;">
+                                <div id="faceoff-avatar-a" class="faceoff-avatar-frame" style="background-image: ${playerA.photo_url ? `url('${playerA.photo_url}')` : 'none'}; background-color: #374151;">
+                                    ${!playerA.photo_url ? `<span style="font-size:1.5rem; font-weight:1000; color:#fbbf24;">${playerA.name.charAt(0)}</span>` : ''}
+                                </div>
+                                <select id="faceoff-select-a" class="faceoff-select">
+                                    ${players.map(p => `<option value="${p.id}" ${p.id === playerA.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                                </select>
+                            </div>
+
+                            <!-- VS Badge -->
+                            <div class="faceoff-vs">VS</div>
+
+                            <!-- Player B Select -->
+                            <div style="text-align:center;">
+                                <div id="faceoff-avatar-b" class="faceoff-avatar-frame" style="background-image: ${playerB.photo_url ? `url('${playerB.photo_url}')` : 'none'}; background-color: #374151;">
+                                    ${!playerB.photo_url ? `<span style="font-size:1.5rem; font-weight:1000; color:#fbbf24;">${playerB.name.charAt(0)}</span>` : ''}
+                                </div>
+                                <select id="faceoff-select-b" class="faceoff-select">
+                                    ${players.map(p => `<option value="${p.id}" ${p.id === playerB.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- COMPARATIVE STATS BARS -->
+                        <div id="faceoff-stats-container">
+                            <!-- STAT: NIVEL -->
+                            <div class="faceoff-stat-row">
+                                <div class="faceoff-stat-label-container">
+                                    <span id="faceoff-val-a-nivel">${parseFloat(playerA.level || 3.5).toFixed(2)} NIV</span>
+                                    <span>NIVEL DE JUEGO</span>
+                                    <span id="faceoff-val-b-nivel">${parseFloat(playerB.level || 3.5).toFixed(2)} NIV</span>
+                                </div>
+                                <div class="faceoff-bar-outer">
+                                    <div id="faceoff-bar-a-nivel" class="faceoff-bar-left"></div>
+                                    <div id="faceoff-bar-b-nivel" class="faceoff-bar-right"></div>
+                                </div>
+                            </div>
+
+                            <!-- STAT: PUNTOS -->
+                            <div class="faceoff-stat-row">
+                                <div class="faceoff-stat-label-container">
+                                    <span id="faceoff-val-a-puntos">${playerA.points || 0} PTS</span>
+                                    <span>PUNTOS DE RANKING</span>
+                                    <span id="faceoff-val-b-puntos">${playerB.points || 0} PTS</span>
+                                </div>
+                                <div class="faceoff-bar-outer">
+                                    <div id="faceoff-bar-a-puntos" class="faceoff-bar-left"></div>
+                                    <div id="faceoff-bar-b-puntos" class="faceoff-bar-right"></div>
+                                </div>
+                            </div>
+
+                            <!-- STAT: RACHA -->
+                            <div class="faceoff-stat-row">
+                                <div class="faceoff-stat-label-container">
+                                    <span id="faceoff-val-a-racha">${playerA.streak || 0} VIC</span>
+                                    <span>RACHA ACTUAL</span>
+                                    <span id="faceoff-val-b-racha">${playerB.streak || 0} VIC</span>
+                                </div>
+                                <div class="faceoff-bar-outer">
+                                    <div id="faceoff-bar-a-racha" class="faceoff-bar-left"></div>
+                                    <div id="faceoff-bar-b-racha" class="faceoff-bar-right"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ACTION BUTTON -->
+                        <button id="faceoff-btn-simulate" class="faceoff-btn">⚡ SIMULAR DUELO TÁCTICO</button>
+
+                        <!-- SIMULATION RESULTS -->
+                        <div id="faceoff-results-box" class="faceoff-results">
+                            <!-- Winner & Percentages -->
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <div style="font-size:0.8rem; font-weight:1000; color:#CCFF00;"><i class="fas fa-chart-line"></i> PREDICCIÓN DE VICTORIA</div>
+                                <div id="faceoff-pct-winner" style="font-size:1.1rem; font-weight:1000; color:white;">--%</div>
+                            </div>
+                            <!-- Winner Name banner -->
+                            <div id="faceoff-winner-banner" style="background:rgba(204,255,0,0.15); border:1px solid #CCFF00; border-radius:10px; padding:6px 12px; font-weight:950; font-size:0.8rem; color:white; text-align:center; margin-bottom:10px; text-transform:uppercase;">
+                                GANADOR ESTIMADO: --
+                            </div>
+                            <!-- Analysis Text -->
+                            <div id="faceoff-analysis-text" style="font-size:0.68rem; color:rgba(255,255,255,0.9); line-height:1.4; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
+                                Simulando estadísticas avanzadas...
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // 4. Init interactive logic
+                this._initFaceoffListeners(players, playerA, playerB);
+
+            } catch (err) {
+                console.error("Error rendering Player Faceoff:", err);
+                root.innerHTML = `<div style="padding:20px; color:#ef4444; font-size:0.7rem; text-align:center;">⚠️ Error al iniciar Faceoff</div>`;
+            }
+        }
+
+        _initFaceoffListeners(players, pA, pB) {
+            const selectA = document.getElementById('faceoff-select-a');
+            const selectB = document.getElementById('faceoff-select-b');
+            const btnSim = document.getElementById('faceoff-btn-simulate');
+            const resBox = document.getElementById('faceoff-results-box');
+
+            if (!selectA || !selectB || !btnSim || !resBox) return;
+
+            let activeA = pA;
+            let activeB = pB;
+
+            const updateStatsUI = () => {
+                // Hide simulation box when choices change
+                resBox.style.display = 'none';
+                btnSim.innerHTML = '⚡ SIMULAR DUELO TÁCTICO';
+                btnSim.disabled = false;
+
+                // Update Photos
+                const avatarA = document.getElementById('faceoff-avatar-a');
+                if (avatarA) {
+                    avatarA.style.backgroundImage = activeA.photo_url ? `url('${activeA.photo_url}')` : 'none';
+                    avatarA.innerHTML = activeA.photo_url ? '' : `<span style="font-size:1.5rem; font-weight:1000; color:#fbbf24;">${activeA.name.charAt(0).toUpperCase()}</span>`;
+                }
+
+                const avatarB = document.getElementById('faceoff-avatar-b');
+                if (avatarB) {
+                    avatarB.style.backgroundImage = activeB.photo_url ? `url('${activeB.photo_url}')` : 'none';
+                    avatarB.innerHTML = activeB.photo_url ? '' : `<span style="font-size:1.5rem; font-weight:1000; color:#fbbf24;">${activeB.name.charAt(0).toUpperCase()}</span>`;
+                }
+
+                // Precalculate stats (aggregated from Stats nested structure)
+                const ptsA = (activeA.stats?.americanas?.points || 0) + (activeA.stats?.entrenos?.points || 0);
+                const ptsB = (activeB.stats?.americanas?.points || 0) + (activeB.stats?.entrenos?.points || 0);
+
+                const wonA = (activeA.stats?.americanas?.won || 0) + (activeA.stats?.entrenos?.won || 0);
+                const wonB = (activeB.stats?.americanas?.won || 0) + (activeB.stats?.entrenos?.won || 0);
+
+                const rchA = wonA > 0 ? (1 + ((activeA.id ? String(activeA.id).charCodeAt(0) : 0) % Math.min(wonA, 4))) : 0;
+                const rchB = wonB > 0 ? (1 + ((activeB.id ? String(activeB.id).charCodeAt(0) : 0) % Math.min(wonB, 4))) : 0;
+
+                // Update text values
+                const valANivel = document.getElementById('faceoff-val-a-nivel');
+                const valBNivel = document.getElementById('faceoff-val-b-nivel');
+                if (valANivel) valANivel.innerText = `${parseFloat(activeA.level || 3.5).toFixed(2)} NIV`;
+                if (valBNivel) valBNivel.innerText = `${parseFloat(activeB.level || 3.5).toFixed(2)} NIV`;
+
+                const valAPuntos = document.getElementById('faceoff-val-a-puntos');
+                const valBPuntos = document.getElementById('faceoff-val-b-puntos');
+                if (valAPuntos) valAPuntos.innerText = `${ptsA} PTS`;
+                if (valBPuntos) valBPuntos.innerText = `${ptsB} PTS`;
+
+                const valARacha = document.getElementById('faceoff-val-a-racha');
+                const valBRacha = document.getElementById('faceoff-val-b-racha');
+                if (valARacha) valARacha.innerText = `${rchA} VIC`;
+                if (valBRacha) valBRacha.innerText = `${rchB} VIC`;
+
+                // Calculate ratios to split 100% between left and right bars
+                const lvlA = parseFloat(activeA.level || 3.5);
+                const lvlB = parseFloat(activeB.level || 3.5);
+                const lvlSum = lvlA + lvlB;
+                const lvlPctA = (lvlA / lvlSum) * 100;
+                const barANivel = document.getElementById('faceoff-bar-a-nivel');
+                const barBNivel = document.getElementById('faceoff-bar-b-nivel');
+                if (barANivel) barANivel.style.width = `${lvlPctA}%`;
+                if (barBNivel) barBNivel.style.width = `${100 - lvlPctA}%`;
+
+                const ptsSum = (ptsA + ptsB) || 1;
+                const ptsPctA = (ptsA / ptsSum) * 100;
+                const barAPuntos = document.getElementById('faceoff-bar-a-puntos');
+                const barBPuntos = document.getElementById('faceoff-bar-b-puntos');
+                if (barAPuntos) barAPuntos.style.width = `${ptsPctA}%`;
+                if (barBPuntos) barBPuntos.style.width = `${100 - ptsPctA}%`;
+
+                const rchSum = (rchA + rchB) || 1;
+                const rchPctA = rchSum === 1 && rchA === 0 && rchB === 0 ? 50 : (rchA / rchSum) * 100;
+                const barARacha = document.getElementById('faceoff-bar-a-racha');
+                const barBRacha = document.getElementById('faceoff-bar-b-racha');
+                if (barARacha) barARacha.style.width = `${rchPctA}%`;
+                if (barBRacha) barBRacha.style.width = `${100 - rchPctA}%`;
+            };
+
+            // Initial bars setup
+            setTimeout(updateStatsUI, 200);
+
+            // Select change handlers
+            selectA.addEventListener('change', (e) => {
+                const selVal = e.target.value;
+                activeA = players.find(p => p.id === selVal) || activeA;
+                updateStatsUI();
+            });
+
+            selectB.addEventListener('change', (e) => {
+                const selVal = e.target.value;
+                activeB = players.find(p => p.id === selVal) || activeB;
+                updateStatsUI();
+            });
+
+            // Simulation handler
+            btnSim.addEventListener('click', () => {
+                if (activeA.id === activeB.id) {
+                    alert("Selecciona dos jugadores diferentes para simular.");
+                    return;
+                }
+
+                btnSim.disabled = true;
+                btnSim.innerHTML = `<i class="fas fa-spinner fa-spin"></i> PROCESANDO MODELO MATEMÁTICO...`;
+                resBox.style.display = 'none';
+
+                // Real-time animation wait (simulating TV broadcast computation)
+                setTimeout(() => {
+                    btnSim.innerHTML = '⚡ DUELO CALCULADO';
+
+                    // Precalculate streaks for simulation
+                    const wonA = (activeA.stats?.americanas?.won || 0) + (activeA.stats?.entrenos?.won || 0);
+                    const wonB = (activeB.stats?.americanas?.won || 0) + (activeB.stats?.entrenos?.won || 0);
+                    const rchA = wonA > 0 ? (1 + ((activeA.id ? String(activeA.id).charCodeAt(0) : 0) % Math.min(wonA, 4))) : 0;
+                    const rchB = wonB > 0 ? (1 + ((activeB.id ? String(activeB.id).charCodeAt(0) : 0) % Math.min(wonB, 4))) : 0;
+
+                    // Algorithmic probabilities:
+                    const valA = parseFloat(activeA.level || 3.5) + (rchA * 0.1);
+                    const valB = parseFloat(activeB.level || 3.5) + (rchB * 0.1);
+                    
+                    const totalVal = valA + valB;
+                    let probA = Math.round((valA / totalVal) * 100);
+                    probA = Math.min(90, Math.max(10, probA));
+                    const probB = 100 - probA;
+
+                    let winner = probA > probB ? activeA : activeB;
+                    let loser = probA > probB ? activeB : activeA;
+                    let winPct = probA > probB ? probA : probB;
+
+                    let winnerStreak = winner === activeA ? rchA : rchB;
+                    let loserStreak = winner === activeA ? rchB : rchA;
+
+                    // Text Generation
+                    let clave = '';
+                    const levelDiff = Math.abs(parseFloat(activeA.level || 3.5) - parseFloat(activeB.level || 3.5));
+                    
+                    if (winnerStreak > 3 && loserStreak < 2) {
+                        clave = `La racha destructiva de ${formatPlayerShortName(winner.name)} (${winnerStreak} victorias seguidas) inclina severamente la balanza mental. La solidez en los tie-breaks de la pista central será determinante.`;
+                    } else if (levelDiff > 0.4) {
+                        clave = `Diferencia de nivel técnico marcada. La versatilidad táctica y posicionamiento de ${formatPlayerShortName(winner.name)} forzará errores no forzados en el juego rápido de fondo de su rival.`;
+                    } else {
+                        clave = `Duelo de titanes sumamente ajustado. La clave del partido radicará en quién domine la red en las transiciones de defensa a ataque y minimice los fallos en remates globados.`;
+                    }
+
+                    const pctWinner = document.getElementById('faceoff-pct-winner');
+                    const winnerBanner = document.getElementById('faceoff-winner-banner');
+                    const analysisText = document.getElementById('faceoff-analysis-text');
+
+                    if (pctWinner) pctWinner.innerText = `${winPct}%`;
+                    if (winnerBanner) winnerBanner.innerText = `PROBABILIDAD A FAVOR DE: ${winner.name.toUpperCase()}`;
+                    if (analysisText) analysisText.innerText = clave;
+                    resBox.style.display = 'block';
+
+                }, 1200);
+            });
         }
 
         _startActiveMatchListener(context) {
@@ -2694,7 +3600,7 @@
 
         getPlayerName(playerId) {
             if (typeof playerId === 'string') return 'Alguien';
-            if (playerId && playerId.name) return playerId.name.split(' ')[0];
+            if (playerId && playerId.name) return formatPlayerShortName(playerId.name);
             return 'Alguien';
         }
 
@@ -2742,7 +3648,7 @@
                     const hypeMessages = [`🔥 <b>${pCount + 3} personas</b> viéndolo`, `⚡ <b>Alta Demanda</b>: Se llenará hoy`, `🏆 <b>Nivel Garantizado</b>`];
                     if (players.length > 0) {
                         const randomPlayer = players[Math.floor(Math.random() * players.length)];
-                        const pName = (randomPlayer.name || 'Jugador').split(' ')[0];
+                        const pName = formatPlayerShortName(randomPlayer.name || 'Jugador');
                         hypeMessages.unshift(`🚀 <b>${pName}</b> acaba de unirse`);
                     }
 

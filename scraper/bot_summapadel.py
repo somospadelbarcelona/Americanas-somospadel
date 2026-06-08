@@ -332,6 +332,10 @@ async def scrape_group(page, cat, division, group_name, team_slug, target_name):
             if not opponent or len(opponent) < 3:
                 opponent = "RIVAL POR DEFINIR"
                 
+            if opponent == "BYE":
+                status = "completed"
+                score = "Descansa"
+                
             schedule.append({
                 "j": j_num,
                 "date": date,

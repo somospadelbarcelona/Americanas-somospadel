@@ -63,6 +63,41 @@
                         ${this.renderPodium(rankedData)}
                     </div>
 
+                    <!-- 2.5 COMPARACIÓN DE RENDIMIENTO (Powerful Radar Chart) -->
+                    <div id="ranking-performance-chart-container" style="padding: 0 25px 20px; position: relative; z-index: 4; display: none;">
+                        <div style="
+                            background: #ffffff;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 32px;
+                            padding: 24px;
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+                        ">
+                            <div style="font-weight:950; font-size:0.75rem; color:#0a192f; letter-spacing:1px; text-transform:uppercase; margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+                                <i class="fas fa-chart-pie" style="color: #84cc16; font-size: 1.15rem;"></i>
+                                PREDICCIÓN & MÉTRICAS COMPARATIVAS
+                            </div>
+                            
+                            <div style="position: relative; height: 260px; width: 100%; display: flex; justify-content: center; align-items: center;">
+                                <canvas id="ranking-performance-radar-chart"></canvas>
+                            </div>
+                            
+                            <div style="margin-top: 15px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 6px; font-size: 0.65rem; font-weight: 800; color: #475569;">
+                                    <span style="width: 12px; height: 12px; background: #84cc16; border-radius: 3px; display: inline-block;"></span>
+                                    TÚ (JUGADOR PRO)
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px; font-size: 0.65rem; font-weight: 800; color: #475569;">
+                                    <span style="width: 12px; height: 12px; background: #FFD700; border-radius: 3px; display: inline-block;"></span>
+                                    LÍDER RANKING (MVP)
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px; font-size: 0.65rem; font-weight: 800; color: #475569;">
+                                    <span style="width: 12px; height: 12px; background: #3b82f6; border-radius: 3px; display: inline-block;"></span>
+                                    PROMEDIO CLUB
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 3. MI RENDIMIENTO (High-Tech Card) -->
                     <div style="padding: 0 25px 30px; position: relative; z-index: 4;">
                         <div style="
@@ -174,6 +209,232 @@
                     </div>
                 </div>
             `;
+
+            // Initialize the powerful radar chart comparing user vs MVP vs average
+            this.initPerformanceChart(rankedData);
+        }
+
+        initPerformanceChart(rankedData) {
+            const chartContainer = document.getElementById('ranking-performance-chart-container');
+            const canvas = document.getElementById('ranking-performance-radar-chart');
+            if (!chartContainer || !canvas || !rankedData || rankedData.length === 0) return;
+
+            const currentUser = window.Store?.getState('currentUser');
+            if (!currentUser) {
+                chartContainer.style.display = 'none';
+                return;
+            }
+
+            const myData = rankedData.find(p => p.id === currentUser.uid || p.id === currentUser.id);
+            if (!myData) {
+                chartContainer.style.display = 'none';
+                return;
+            }
+
+            const mvpData = rankedData[0]; // The top player
+            
+            // Calculate averages of all active players in rankedData
+            let totalLevel = 0;
+            let totalPoints = 0;
+            let totalPlayed = 0;
+            let totalWins = 0;
+            let totalWinRate = 0;
+            
+            rankedData.forEach(p => {
+                const s = p.stats[this.currentView] || { played: 0, won: 0, points: 0 };
+                const displayStats = this.currentCategory === 'todas' ? s : (s.categories[this.currentCategory] || { points: 0, played: 0, won: 0 });
+                
+                totalLevel += parseFloat(p.level || 3.5);
+                totalPoints += (displayStats.points || 0);
+                totalPlayed += (displayStats.played || 0);
+                totalWins += (displayStats.won || 0);
+                totalWinRate += (displayStats.played > 0 ? (displayStats.won / displayStats.played) * 100 : 0);
+            });
+
+            const count = rankedData.length;
+            const avgLevel = totalLevel / count;
+            const avgPoints = totalPoints / count;
+            const avgPlayed = totalPlayed / count;
+            const avgWins = totalWins / count;
+            const avgWinRate = totalWinRate / count;
+
+            // Get current user stats
+            const sMy = myData.stats[this.currentView] || { played: 0, won: 0, points: 0 };
+            const myDisplay = this.currentCategory === 'todas' ? sMy : (sMy.categories[this.currentCategory] || { points: 0, played: 0, won: 0 });
+            const myLevel = parseFloat(myData.level || 3.5);
+            const myPoints = myDisplay.points || 0;
+            const myPlayed = myDisplay.played || 0;
+            const myWins = myDisplay.won || 0;
+            const myWinRate = myDisplay.played > 0 ? (myDisplay.won / myDisplay.played) * 100 : 0;
+
+            // Get MVP stats
+            const sMvp = mvpData.stats[this.currentView] || { played: 0, won: 0, points: 0 };
+            const mvpDisplay = this.currentCategory === 'todas' ? sMvp : (sMvp.categories[this.currentCategory] || { points: 0, played: 0, won: 0 });
+            const mvpLevel = parseFloat(mvpData.level || 3.5);
+            const mvpPoints = mvpDisplay.points || 0;
+            const mvpPlayed = mvpDisplay.played || 0;
+            const mvpWins = mvpDisplay.won || 0;
+            const mvpWinRate = mvpDisplay.played > 0 ? (mvpDisplay.won / mvpDisplay.played) * 100 : 0;
+
+            // Normalize stats between 0 and 100 for comparison
+            // Normalize level: 2.0 to 6.0 maps to 0-100
+            const normalizeLvl = (lvl) => Math.min(100, Math.max(0, ((lvl - 2.0) / 4.0) * 100));
+            
+            // Normalize points: 0 to max points in category maps to 0-100
+            const maxPoints = Math.max(1, mvpPoints, ...rankedData.map(p => {
+                const s = p.stats[this.currentView] || { points: 0 };
+                return this.currentCategory === 'todas' ? s.points : (s.categories[this.currentCategory]?.points || 0);
+            }));
+            const normalizePts = (pts) => (pts / maxPoints) * 100;
+            
+            // Normalize played: 0 to max played maps to 0-100
+            const maxPlayed = Math.max(1, mvpPlayed, ...rankedData.map(p => {
+                const s = p.stats[this.currentView] || { played: 0 };
+                return this.currentCategory === 'todas' ? s.played : (s.categories[this.currentCategory]?.played || 0);
+            }));
+            const normalizePlayed = (pld) => (pld / maxPlayed) * 100;
+            
+            // Normalize wins: 0 to max wins maps to 0-100
+            const maxWins = Math.max(1, mvpWins, ...rankedData.map(p => {
+                const s = p.stats[this.currentView] || { won: 0 };
+                return this.currentCategory === 'todas' ? s.won : (s.categories[this.currentCategory]?.won || 0);
+            }));
+            const normalizeWins = (wns) => (wns / maxWins) * 100;
+
+            // Datasets
+            const myNorm = [normalizeLvl(myLevel), myWinRate, normalizePts(myPoints), normalizeWins(myWins), normalizePlayed(myPlayed)];
+            const mvpNorm = [normalizeLvl(mvpLevel), mvpWinRate, normalizePts(mvpPoints), normalizeWins(mvpWins), normalizePlayed(mvpPlayed)];
+            const avgNorm = [normalizeLvl(avgLevel), avgWinRate, normalizePts(avgPoints), normalizeWins(avgWins), normalizePlayed(avgPlayed)];
+
+            // Show container
+            chartContainer.style.display = 'block';
+
+            // Wait for Chart.js to load fully if it's deferred
+            const initChartInstance = () => {
+                if (typeof Chart === 'undefined') {
+                    setTimeout(initChartInstance, 100);
+                    return;
+                }
+
+                // Destroy old instance if exists to avoid hover glitches
+                if (this.radarChartInstance) {
+                    this.radarChartInstance.destroy();
+                }
+
+                const ctx = canvas.getContext('2d');
+                this.radarChartInstance = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Nivel de Juego', 'Efectividad %', 'Puntos Ranking', 'Victorias', 'Partidos Jugados'],
+                        datasets: [
+                            {
+                                label: 'Tú',
+                                data: myNorm,
+                                backgroundColor: 'rgba(132, 204, 22, 0.2)',
+                                borderColor: '#84cc16',
+                                borderWidth: 3,
+                                pointBackgroundColor: '#84cc16',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: '#84cc16',
+                                pointRadius: 4
+                            },
+                            {
+                                label: 'Líder (MVP)',
+                                data: mvpNorm,
+                                backgroundColor: 'rgba(255, 215, 0, 0.08)',
+                                borderColor: '#FFD700',
+                                borderWidth: 2,
+                                borderDash: [2, 2],
+                                pointBackgroundColor: '#FFD700',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: '#FFD700',
+                                pointRadius: 3
+                            },
+                            {
+                                label: 'Promedio Club',
+                                data: avgNorm,
+                                backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                                borderColor: '#3b82f6',
+                                borderWidth: 1.5,
+                                borderDash: [5, 5],
+                                pointBackgroundColor: '#3b82f6',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: '#3b82f6',
+                                pointRadius: 3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const datasetLabel = context.dataset.label;
+                                        const idx = context.dataIndex;
+                                        
+                                        // Show real value instead of normalized
+                                        let realVal = '';
+                                        if (datasetLabel === 'Tú') {
+                                            if (idx === 0) realVal = myLevel.toFixed(2);
+                                            else if (idx === 1) realVal = `${myWinRate.toFixed(0)}%`;
+                                            else if (idx === 2) realVal = `${myPoints} pts`;
+                                            else if (idx === 3) realVal = `${myWins} victorias`;
+                                            else if (idx === 4) realVal = `${myPlayed} jugados`;
+                                        } else if (datasetLabel === 'Líder (MVP)') {
+                                            if (idx === 0) realVal = mvpLevel.toFixed(2);
+                                            else if (idx === 1) realVal = `${mvpWinRate.toFixed(0)}%`;
+                                            else if (idx === 2) realVal = `${mvpPoints} pts`;
+                                            else if (idx === 3) realVal = `${mvpWins} victorias`;
+                                            else if (idx === 4) realVal = `${mvpPlayed} jugados`;
+                                        } else {
+                                            if (idx === 0) realVal = avgLevel.toFixed(2);
+                                            else if (idx === 1) realVal = `${avgWinRate.toFixed(0)}%`;
+                                            else if (idx === 2) realVal = `${avgPoints.toFixed(1)} pts`;
+                                            else if (idx === 3) realVal = `${avgWins.toFixed(1)} victorias`;
+                                            else if (idx === 4) realVal = `${avgPlayed.toFixed(1)} jugados`;
+                                        }
+                                        return `${datasetLabel}: ${realVal}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            r: {
+                                angleLines: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                },
+                                pointLabels: {
+                                    color: '#475569',
+                                    font: {
+                                        family: 'Outfit',
+                                        size: 9,
+                                        weight: '900'
+                                    }
+                                },
+                                ticks: {
+                                    display: false,
+                                    maxTicksLimit: 5
+                                },
+                                min: 0,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            };
+
+            initChartInstance();
         }
 
         renderPodium(players) {

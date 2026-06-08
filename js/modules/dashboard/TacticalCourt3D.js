@@ -1,312 +1,463 @@
 /**
- * TacticalCourt3D.js - COACH & MASTER EDITION 🎾🎓
- * Ultra-realistic Padel simulation with Mesh Fences, Pro Clothing, and Tactical Analysis pauses.
+ * TacticalCourt3D.js - WAR ROOM 3D 🎾🎓
+ * Pizarra táctica interactiva tridimensional con arrastre de jugadores por Raycasting,
+ * cálculo geométrico de huecos (zonas de sombra) y consejos tácticos en tiempo real.
  */
 
 window.TacticalCourt3D = {
+    scene: null,
+    camera: null,
+    renderer: null,
+    draggables: [],
+    draggedPlayer: null,
+    raycaster: null,
+    mouse: null,
+    plane: null,
+    offset: null,
+    intersection: null,
+    zoneVisualizer: null,
+    gapVisualizer: null,
+    viewMode: '3d',
+    cameraAngleX: 0,
+    cameraAngleY: 0.6,
+    isPanning: false,
+    prevMousePos: { x: 0, y: 0 },
+    container: null,
+
+    // Mallas de jugadores de fácil acceso
+    p1: null, // Alejandro (Tú)
+    p2: null, // Compañero
+    p3: null, // Rival 1
+    p4: null, // Rival 2
+
     init(containerId) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
+        this.container = document.getElementById(containerId);
+        if (!this.container) return;
 
-        // 1. SCENE SETUP
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB); // Sky Blue
+        // Limpiar contenedor y observadores previos
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+            this.resizeObserver = null;
+        }
+        this.container.innerHTML = '';
+        this.draggables = [];
+        this.draggedPlayer = null;
 
-        const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        container.innerHTML = '';
-        container.appendChild(renderer.domElement);
+        // 1. CREAR ESCENA, CÁMARA Y RENDERER
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x0f172a); // Fondo oscuro premium slate
 
-        // 2. ENVIRONMENT (BARCELONA PADEL EL PRAT VIBE)
-        const ground = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshStandardMaterial({ color: 0x999999 }));
+        const initialWidth = this.container.clientWidth || 300;
+        const initialHeight = this.container.clientHeight || 200;
+
+        this.camera = new THREE.PerspectiveCamera(40, initialWidth / initialHeight, 0.1, 1000);
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        this.renderer.setSize(initialWidth, initialHeight);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.container.appendChild(this.renderer.domElement);
+
+        // Redimensionamiento responsivo para el simulador táctico completo
+        const observer = new ResizeObserver(() => {
+            if (this.container.clientWidth > 0 && this.container.clientHeight > 0 && this.renderer) {
+                this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+            }
+        });
+        observer.observe(this.container);
+        this.resizeObserver = observer;
+
+        // 2. ENTORNO Y SUELO GRIS CLARO
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9 }));
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
-        scene.add(ground);
+        this.scene.add(ground);
 
-        // Trees & Ambient Fans
-        for (let i = 0; i < 30; i++) {
-            const tree = new THREE.Group();
-            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.2, 4), new THREE.MeshStandardMaterial({ color: 0x4d2600 }));
-            const leaves = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5, 1), new THREE.MeshStandardMaterial({ color: 0x2d5a27 }));
-            leaves.position.y = 3;
-            tree.add(trunk, leaves);
-            tree.position.set((Math.random() - 0.5) * 60, 0, (Math.random() - 0.5) * 60);
-            if (Math.abs(tree.position.x) > 8) scene.add(tree);
-        }
-
-        // 3. THE COURT (PRO SPECS)
+        // 3. LA PISTA DE PÁDEL (Azul oficial)
         const court = new THREE.Group();
-        const turf = new THREE.Mesh(new THREE.PlaneGeometry(10, 20), new THREE.MeshStandardMaterial({ color: 0x005cb8, roughness: 0.8 }));
+        const turf = new THREE.Mesh(new THREE.PlaneGeometry(10, 20), new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.75, metalness: 0.1 })); // Azul premium
         turf.rotation.x = -Math.PI / 2;
         turf.position.y = 0.01;
         turf.receiveShadow = true;
         court.add(turf);
 
-        // Marks
+        // Líneas de juego de la pista (blancas)
         const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        const mkL = (w, h, x, z) => {
+        const addLine = (w, h, x, z) => {
             const l = new THREE.Mesh(new THREE.PlaneGeometry(w, h), lineMat);
-            l.rotation.x = -Math.PI / 2; l.position.set(x, 0.02, z); court.add(l);
+            l.rotation.x = -Math.PI / 2;
+            l.position.set(x, 0.02, z);
+            court.add(l);
         };
-        mkL(10, 0.1, 0, 10); mkL(10, 0.1, 0, -10);
-        mkL(0.1, 20, 5, 0); mkL(0.1, 20, -5, 0);
-        mkL(10, 0.1, 0, 6.95); mkL(10, 0.1, 0, -6.95);
-        mkL(0.08, 13.9, 0, 0);
+        addLine(10, 0.08, 0, 10);      // Fondo A
+        addLine(10, 0.08, 0, -10);     // Fondo B
+        addLine(0.08, 20, 5, 0);       // Lateral derecho
+        addLine(0.08, 20, -5, 0);      // Lateral izquierdo
+        addLine(10, 0.08, 0, 6.95);    // Línea de saque A
+        addLine(10, 0.08, 0, -6.95);   // Línea de saque B
+        addLine(0.08, 13.9, 0, 0);     // Línea central de saque
 
-        // GLASS WALLS
-        const glassMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transmission: 0.9, opacity: 0.3, transparent: true, thickness: 0.1, ior: 1.5 });
-        const createWall = (w, h, x, z, ry = 0) => {
-            const g = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.08), glassMat);
-            g.position.set(x, h / 2, z); g.rotation.y = ry;
+        // Paredes de cristal (Glass walls)
+        const glassMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transmission: 0.9, opacity: 0.25, transparent: true, thickness: 0.15, ior: 1.5 });
+        const addGlassWall = (w, h, x, z, ry = 0) => {
+            const g = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.06), glassMat);
+            g.position.set(x, h / 2, z);
+            g.rotation.y = ry;
             court.add(g);
         };
-        createWall(10, 3, 0, 10.04); createWall(10, 3, 0, -10.04);
-        createWall(4, 3, 5.04, 8, Math.PI / 2); createWall(4, 3, -5.04, 8, Math.PI / 2);
-        createWall(4, 3, 5.04, -8, Math.PI / 2); createWall(4, 3, -5.04, -8, Math.PI / 2);
+        addGlassWall(10, 3, 0, 10.03);      // Cristal fondo A
+        addGlassWall(10, 3, 0, -10.03);     // Cristal fondo B
+        addGlassWall(4, 3, 5.03, 8, Math.PI / 2);  // Cristal lateral derecho A
+        addGlassWall(4, 3, -5.03, 8, Math.PI / 2); // Cristal lateral izquierdo A
+        addGlassWall(4, 3, 5.03, -8, Math.PI / 2); // Cristal lateral derecho B
+        addGlassWall(4, 3, -5.03, -8, Math.PI / 2);// Cristal lateral izquierdo B
 
-        // --- NEW: SIDE MESH FENCING (REJAS) ---
-        const meshMat = new THREE.MeshStandardMaterial({ color: 0x111111, wireframe: true, transparent: true, opacity: 0.4 });
-        const createFence = (w, h, x, z) => {
-            const f = new THREE.Mesh(new THREE.PlaneGeometry(w, h), meshMat);
+        // Rejas laterales (Mesh fences)
+        const fenceMat = new THREE.MeshStandardMaterial({ color: 0x475569, wireframe: true, transparent: true, opacity: 0.35 });
+        const addFence = (w, h, x, z) => {
+            const f = new THREE.Mesh(new THREE.PlaneGeometry(w, h), fenceMat);
             f.rotation.y = Math.PI / 2;
             f.position.set(x, h / 2, z);
             court.add(f);
 
-            // Post for fence
-            const p = new THREE.Mesh(new THREE.BoxGeometry(0.15, 3, 0.15), new THREE.MeshStandardMaterial({ color: 0x111111 }));
-            p.position.set(x, 1.5, z - w / 2);
-            court.add(p);
-        }
-        createFence(12, 3, 5.06, 0);
-        createFence(12, 3, -5.06, 0);
+            // Postes negros de estructura
+            const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3, 0.12), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
+            post.position.set(x, 1.5, z - w / 2);
+            court.add(post);
+        };
+        addFence(12, 3, 5.04, 0);
+        addFence(12, 3, -5.04, 0);
 
-        // THE NET
+        // La Red (Net)
         const netGroup = new THREE.Group();
-        const netMesh = new THREE.Mesh(new THREE.PlaneGeometry(10, 0.88), new THREE.MeshStandardMaterial({ color: 0x111111, transparent: true, opacity: 0.6, wireframe: true }));
+        const netMesh = new THREE.Mesh(new THREE.PlaneGeometry(10, 0.88), new THREE.MeshStandardMaterial({ color: 0x1e293b, transparent: true, opacity: 0.5, wireframe: true }));
         netMesh.position.y = 0.44;
-        const netTop = new THREE.Mesh(new THREE.BoxGeometry(10.1, 0.08, 0.08), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+        const netTop = new THREE.Mesh(new THREE.BoxGeometry(10.05, 0.06, 0.06), new THREE.MeshStandardMaterial({ color: 0xffffff }));
         netTop.position.y = 0.88;
         netGroup.add(netMesh, netTop);
         court.add(netGroup);
 
-        // CURVED LIGHT POLES (El Prat Style)
-        const mkPole = (x, z, ry) => {
-            const g = new THREE.Group();
-            const post = new THREE.Mesh(new THREE.BoxGeometry(0.2, 5, 0.2), new THREE.MeshStandardMaterial({ color: 0x111111 }));
-            post.position.y = 2.5;
-            const arc = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.06, 16, 32, Math.PI), new THREE.MeshStandardMaterial({ color: 0x111111 }));
-            arc.position.set(-1.5, 5, 0); arc.rotation.z = -Math.PI / 2;
-            g.add(post, arc); g.position.set(x, 0, z); g.rotation.y = ry; return g;
-        };
-        scene.add(mkPole(5.6, 6, 0), mkPole(5.6, -6, 0), mkPole(-5.6, 6, Math.PI), mkPole(-5.6, -6, Math.PI));
+        this.scene.add(court);
 
-        scene.add(court);
+        // 4. CREAR JUGADORES (Team A Amarillo, Team B Rojo)
+        const createPlayerMesh = (color, name) => {
+            const playerGroup = new THREE.Group();
+            
+            // Cuerpo principal (Capsule)
+            const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.25, 0.7, 8, 16), new THREE.MeshStandardMaterial({ color: color, roughness: 0.5 }));
+            body.position.y = 0.6;
+            body.castShadow = true;
+            playerGroup.add(body);
 
-        // 4. PRO PLAYERS (REAL CLOTHING & RACKETS)
-        const createProPlayer = (shirtColor, brandIdx) => {
-            const p = new THREE.Group();
-            const model = new THREE.Group();
+            // Cabeza (Sphere)
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
+            head.position.y = 1.25;
+            head.castShadow = true;
+            playerGroup.add(head);
 
-            // Shorts (Real Mesh)
-            const shorts = new THREE.Mesh(new THREE.CapsuleGeometry(0.18, 0.3, 4, 8), new THREE.MeshStandardMaterial({ color: 0x222222 }));
-            shorts.position.y = 0.4;
-            model.add(shorts);
-
-            // T-Shirt (Pro Fit)
-            const shirt = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.6, 4, 8), new THREE.MeshStandardMaterial({ color: shirtColor }));
-            shirt.position.y = 1.0;
-            model.add(shirt);
-
-            // Head & Cap
-            const head = new THREE.Group();
-            const skull = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 16), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
-            const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.04, 16), new THREE.MeshStandardMaterial({ color: 0x111111 }));
-            cap.position.y = 0.1;
-            head.add(skull, cap);
-            head.position.y = 1.5;
-            model.add(head);
-
-            // Detailed Racket (Bullpadel/Head Style)
+            // Pala (Racket)
             const racket = new THREE.Group();
-            const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3), new THREE.MeshStandardMaterial({ color: 0x0 }));
+            const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
             racket.add(handle);
-
-            const heart = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.05), new THREE.MeshStandardMaterial({ color: 0x333333 }));
-            heart.position.y = 0.15;
-            racket.add(heart);
-
-            const frame = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.05, 32), new THREE.MeshStandardMaterial({ color: 0x111111 }));
-            frame.rotation.x = Math.PI / 2; frame.position.y = 0.35;
-            const logo = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.15), new THREE.MeshBasicMaterial({ color: brandIdx === 0 ? 0xff6600 : 0x00ffff, transparent: true, opacity: 0.8 }));
-            logo.position.set(0, 0.35, 0.03);
-            racket.add(frame, logo);
-
-            racket.position.set(0.35, 1.2, 0.2);
+            const frame = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.04, 16), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
+            frame.rotation.x = Math.PI / 2;
+            frame.position.y = 0.3;
+            racket.add(frame);
+            racket.position.set(0.4, 0.7, 0.1);
             racket.rotation.x = -Math.PI / 4;
-            model.add(racket);
-            p.racket = racket;
+            playerGroup.add(racket);
 
-            p.add(model);
-            p.model = model;
-            p.castShadow = true;
-            return p;
+            // Añadir caja de colisión invisible más grande para facilitar el arrastre en móviles
+            const clickBox = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.8, 1.0), new THREE.MeshBasicMaterial({ visible: false }));
+            clickBox.position.y = 0.9;
+            playerGroup.add(clickBox);
+            playerGroup.clickBox = clickBox;
+
+            playerGroup.playerName = name;
+            return playerGroup;
         };
 
-        const teamA = [createProPlayer(0xCCFF00, 0), createProPlayer(0xCCFF00, 1)];
-        const teamB = [createProPlayer(0xFF3333, 0), createProPlayer(0xFF3333, 1)];
-        scene.add(...teamA, ...teamB);
+        // Equipo A: Tú (Amarillo) y Compañero (Amarillo)
+        this.p1 = createPlayerMesh(0xCCFF00, "Tú (Alejandro)");
+        this.p1.position.set(-2, 0, 6.5);
+        this.p2 = createPlayerMesh(0xCCFF00, "Tu Compañero");
+        this.p2.position.set(2, 0, 6.5);
 
-        // BALL
-        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), new THREE.MeshStandardMaterial({ color: 0xCCFF00, emissive: 0xCCFF00 }));
-        ball.castShadow = true;
-        scene.add(ball);
+        // Equipo B: Rival 1 y Rival 2 (Rojos)
+        this.p3 = createPlayerMesh(0xef4444, "Rival 1");
+        this.p3.position.set(-2, 0, -3);
+        this.p4 = createPlayerMesh(0xef4444, "Rival 2");
+        this.p4.position.set(2, 0, -3);
 
-        // 5. MATCH & COACH ENGINE
-        let match = {
-            t: 0,
-            duration: 1.2,
-            attacker: teamA[0], defender: teamB[0],
-            start: new THREE.Vector3(0, 5, 8),
-            bounce: new THREE.Vector3(2, 0, -4),
-            end: new THREE.Vector3(2, 1, -8),
-            shot: "SAQUE",
-            isPaused: false,
-            coachTips: [
-                { type: "SAQUE", text: "Saque profundo hacia el cristal para forzar el error del rival." },
-                { type: "BANDEJA", text: "Bandeja: Mantén la posición de red sin arriesgar, buscando profundidad." },
-                { type: "VOLEA", text: "Volea: Ataca la reja lateral para que el rebote sea impredecible." },
-                { type: "REMATE", text: "Remate X3: Golpea la bola en su punto más alto para sacarla por el lateral." }
-            ]
+        this.scene.add(this.p1, this.p2, this.p3, this.p4);
+        this.draggables.push(this.p1, this.p2, this.p3, this.p4);
+
+        // 5. VISUALIZADORES DE ZONAS TÁCTICAS (En el suelo de la pista)
+        // Zona recomendada de ataque (Rojo)
+        const zoneGeo = new THREE.RingGeometry(0.01, 1.4, 32);
+        const zoneMat = new THREE.MeshBasicMaterial({ color: 0xef4444, side: THREE.DoubleSide, transparent: true, opacity: 0.0 });
+        this.zoneVisualizer = new THREE.Mesh(zoneGeo, zoneMat);
+        this.zoneVisualizer.rotation.x = -Math.PI / 2;
+        this.zoneVisualizer.position.y = 0.025;
+        this.scene.add(this.zoneVisualizer);
+
+        // Zona desprotegida propia (Amarillo)
+        const gapGeo = new THREE.RingGeometry(0.01, 1.2, 32);
+        const gapMat = new THREE.MeshBasicMaterial({ color: 0xeab308, side: THREE.DoubleSide, transparent: true, opacity: 0.0 });
+        this.gapVisualizer = new THREE.Mesh(gapGeo, gapMat);
+        this.gapVisualizer.rotation.x = -Math.PI / 2;
+        this.gapVisualizer.position.y = 0.025;
+        this.scene.add(this.gapVisualizer);
+
+        // 6. ILUMINACIÓN
+        this.scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+        const sun = new THREE.DirectionalLight(0xffffff, 1.1);
+        sun.position.set(15, 25, 10);
+        sun.castShadow = true;
+        this.scene.add(sun);
+
+        // 7. INICIALIZAR RAYCASTER E INTERSECCIONES
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
+        this.plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // Plano Y=0 para el arrastre
+        this.offset = new THREE.Vector3();
+        this.intersection = new THREE.Vector3();
+
+        // 8. CONFIGURAR EVENTOS DE INTERACCIÓN
+        this.setupEvents();
+
+        // 9. RENDER INITIAL FRAME & UPDATE ENGINE
+        this.updateTacticalEngine();
+        this.animate();
+    },
+
+    setupEvents() {
+        const dom = this.renderer.domElement;
+
+        const getCoords = (e) => {
+            const rect = dom.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: ((clientX - rect.left) / dom.clientWidth) * 2 - 1,
+                y: -((clientY - rect.top) / dom.clientHeight) * 2 + 1,
+                rawX: clientX,
+                rawY: clientY
+            };
         };
 
-        const showCoachTip = (type) => {
-            const tip = match.coachTips.find(t => t.type === type) || match.coachTips[0];
-            const overlay = document.getElementById('coach-overlay');
-            if (overlay) {
-                overlay.style.display = 'flex';
-                overlay.querySelector('#coach-title').innerText = `💡 TÁCTICA: ${type}`;
-                overlay.querySelector('#coach-text').innerText = tip.text;
-                match.isPaused = true;
-                setTimeout(() => {
-                    overlay.style.display = 'none';
-                    match.isPaused = false;
-                }, 4000);
-            }
-        };
+        const onDown = (e) => {
+            const coords = getCoords(e);
+            this.mouse.set(coords.x, coords.y);
+            this.raycaster.setFromCamera(this.mouse, this.camera);
 
-        const nextStroke = () => {
-            const isA = teamA.includes(match.attacker);
-            match.start.copy(ball.position);
+            // Intersectar con los clickBoxes de los jugadores draggables
+            const intersects = this.raycaster.intersectObjects(this.draggables.map(d => d.clickBox));
 
-            const rnd = Math.random();
-            if (rnd > 0.8) {
-                match.shot = "REMATE";
-                match.bounce.set((Math.random() - 0.5) * 4, 0, isA ? -2 : 2);
-                match.end.set((Math.random() - 0.5) * 10, 6, isA ? -8 : 8);
-                showCoachTip("REMATE");
-            } else if (rnd > 0.6) {
-                match.shot = "BANDEJA";
-                match.bounce.set((Math.random() - 0.5) * 8, 0, isA ? -7 : 7);
-                match.end.copy(match.bounce).add(new THREE.Vector3(0, 1.2, isA ? -3 : 3));
-                if (Math.random() < 0.3) showCoachTip("BANDEJA");
-            } else {
-                match.shot = "VOLEA";
-                match.bounce.set((Math.random() > 0.5 ? 4.8 : -4.8), 0, isA ? -4 : 4);
-                match.end.copy(match.bounce).add(new THREE.Vector3(0, 1.2, isA ? -2 : 2));
-                if (Math.random() < 0.2) showCoachTip("VOLEA");
-            }
-
-            match.defender = isA ? teamB[Math.floor(Math.random() * 2)] : teamA[Math.floor(Math.random() * 2)];
-            match.t = 0;
-            match.duration = match.shot === "REMATE" ? 0.6 : 1.2;
-        };
-
-        // 6. LIGHTING & RENDER
-        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-        const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-        sun.position.set(20, 30, 10); sun.castShadow = true;
-        scene.add(sun);
-
-        const animate = () => {
-            requestAnimationFrame(animate);
-            if (match.isPaused) return renderer.render(scene, camera);
-
-            match.t += 0.016;
-            const p = Math.min(match.t / match.duration, 1);
-
-            // Ball Physics
-            if (p < 0.5) {
-                const a = p * 2;
-                ball.position.lerpVectors(match.start, match.bounce, a);
-                ball.position.y += Math.sin(a * Math.PI) * (match.shot === "REMATE" ? 1.5 : 3);
-            } else {
-                const a = (p - 0.5) * 2;
-                ball.position.lerpVectors(match.bounce, match.end, a);
-                ball.position.y += Math.sin(a * Math.PI) * 1.5;
-            }
-
-            if (p >= 1) {
-                match.attacker = match.defender;
-                nextStroke();
-            }
-
-            // PRO MOVEMENTS (Split Step & Rotation)
-            [...teamA, ...teamB].forEach(plr => {
-                const isDef = (plr === match.defender);
-                if (isDef) {
-                    plr.position.lerp(new THREE.Vector3(match.end.x, 0, match.end.z), 0.15);
-                    plr.model.position.y = Math.abs(Math.sin(match.t * 18)) * 0.12;
-                    if (p > 0.8) {
-                        plr.racket.rotation.x = -Math.PI + Math.sin(match.t * 20) * 1.5;
-                        plr.rotation.y = Math.atan2(ball.position.x - plr.position.x, ball.position.z - plr.position.z);
-                    }
-                } else {
-                    const targetZ = teamA.includes(plr) ? 7 : -7;
-                    const targetX = (plr === teamA[0] || plr === teamB[0]) ? -2.5 : 2.5;
-                    plr.position.lerp(new THREE.Vector3(targetX, 0, targetZ), 0.05);
+            if (intersects.length > 0) {
+                // El padre del clickBox es el grupo del jugador
+                this.draggedPlayer = intersects[0].object.parent;
+                
+                // Hallar offset en el plano
+                if (this.raycaster.ray.intersectPlane(this.plane, this.intersection)) {
+                    this.offset.copy(this.draggedPlayer.position).sub(this.intersection);
                 }
-            });
-
-            // Camera Cinematic
-            const time = Date.now() * 0.0003;
-            camera.position.set(Math.sin(time) * 20, 12, Math.cos(time) * 18);
-            camera.lookAt(0, 0, 0);
-
-            renderer.render(scene, camera);
+                dom.style.cursor = 'grabbing';
+            } else {
+                // Iniciar paneo de cámara (órbita)
+                this.isPanning = true;
+                this.prevMousePos.x = coords.rawX;
+                this.prevMousePos.y = coords.rawY;
+                dom.style.cursor = 'move';
+            }
         };
 
-        nextStroke();
-        animate();
+        const onMove = (e) => {
+            if (this.draggedPlayer) {
+                const coords = getCoords(e);
+                this.mouse.set(coords.x, coords.y);
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+
+                if (this.raycaster.ray.intersectPlane(this.plane, this.intersection)) {
+                    const targetPos = this.intersection.clone().add(this.offset);
+                    
+                    // Límites de la pista para que no salgan al exterior
+                    targetPos.x = Math.max(-4.9, Math.min(4.9, targetPos.x));
+                    targetPos.z = Math.max(-9.9, Math.min(9.9, targetPos.z));
+                    targetPos.y = 0; // Pegados al suelo
+
+                    this.draggedPlayer.position.copy(targetPos);
+                    this.updateTacticalEngine();
+                }
+            } else if (this.isPanning && this.viewMode === '3d') {
+                const coords = getCoords(e);
+                const deltaX = coords.rawX - this.prevMousePos.x;
+                const deltaY = coords.rawY - this.prevMousePos.y;
+
+                this.cameraAngleX -= deltaX * 0.007;
+                this.cameraAngleY = Math.max(0.15, Math.min(Math.PI / 2 - 0.08, this.cameraAngleY + deltaY * 0.007));
+
+                this.prevMousePos.x = coords.rawX;
+                this.prevMousePos.y = coords.rawY;
+            }
+        };
+
+        const onUp = () => {
+            this.draggedPlayer = null;
+            this.isPanning = false;
+            dom.style.cursor = 'grab';
+        };
+
+        dom.addEventListener('mousedown', onDown);
+        dom.addEventListener('mousemove', onMove);
+        dom.addEventListener('mouseup', onUp);
+        dom.addEventListener('mouseleave', onUp);
+
+        dom.addEventListener('touchstart', onDown, { passive: true });
+        dom.addEventListener('touchmove', onMove, { passive: true });
+        dom.addEventListener('touchend', onUp);
+    },
+
+    changeCamera(mode) {
+        this.viewMode = mode;
+        const panelInfo = document.getElementById('tactical-camera-info');
+        if (panelInfo) {
+            panelInfo.innerText = mode === '3d' ? 'VISTA 3D ORBITAL' : 'PIZARRA 2D CENITAL';
+        }
+    },
+
+    resetPlayers() {
+        if (!this.p1 || !this.p2 || !this.p3 || !this.p4) return;
+        this.p1.position.set(-2, 0, 6.5);
+        this.p2.position.set(2, 0, 6.5);
+        this.p3.position.set(-2, 0, -3);
+        this.p4.position.set(2, 0, -3);
+        this.updateTacticalEngine();
+    },
+
+    updateTacticalEngine() {
+        if (!this.p1 || !this.p2 || !this.p3 || !this.p4) return;
+
+        // Coordenadas de los jugadores
+        const posP1 = this.p1.position; // Tú
+        const posP2 = this.p2.position; // Compañero
+        const posR1 = this.p3.position; // Rival 1
+        const posR2 = this.p4.position; // Rival 2
+
+        let tipTitle = "Posicionamiento Básico";
+        let tipText = "Arrastra a los jugadores para simular situaciones de juego. Los círculos en la pista te indicarán las mejores opciones tácticas.";
+        
+        // Colores y visibilidad de los visualizadores
+        let zoneVisible = false;
+        let gapVisible = false;
+
+        // 1. ANÁLISIS DE NUESTRA DEFENSA (Brecha o Pasillo Central)
+        const distPartner = Math.hypot(posP1.x - posP2.x, posP1.z - posP2.z);
+        if (distPartner > 3.9) {
+            gapVisible = true;
+            // Situar el círculo amarillo en el medio de nosotros
+            this.gapVisualizer.position.set((posP1.x + posP2.x) / 2, 0.025, (posP1.z + posP2.z) / 2);
+            this.gapVisualizer.scale.setScalar(distPartner * 0.35);
+            this.gapVisualizer.material.opacity = 0.45;
+            
+            tipTitle = "⚠️ ¡Brecha en el Centro!";
+            tipText = "Hay demasiada separación entre tu compañero y tú en la pista. El rival podrá definir fácilmente tirando una bola rápida al medio. Uno de los dos debe cerrar hacia el centro.";
+        } else {
+            this.gapVisualizer.material.opacity = 0.0;
+        }
+
+        // 2. ANÁLISIS DE ATAQUE (Zonas de Sombra del Rival)
+        // ¿Están los rivales en la red? (Z < 0 representa el campo rival de red)
+        const rival1AtNet = posR1.z > -4.5;
+        const rival2AtNet = posR2.z > -4.5;
+
+        // Si hay una brecha propia, priorizamos el aviso de defensa, pero si no, calculamos el ataque:
+        if (distPartner <= 3.9) {
+            if (rival1AtNet && rival2AtNet) {
+                // Ambos en la red: Atacar al fondo con un globo
+                zoneVisible = true;
+                this.zoneVisualizer.position.set(0, 0.025, -7.8); // Fondo de su pista
+                this.zoneVisualizer.scale.setScalar(1.5);
+                this.zoneVisualizer.material.opacity = 0.45;
+                
+                tipTitle = "🎯 Rivales en la Red (Lanzar Globo)";
+                tipText = "Tus oponentes han subido a la red y tienen la posición de ataque dominada. Juega un GLOBO alto y profundo hacia las esquinas para obligarles a retroceder y ganar vosotros la red.";
+            } 
+            else if (!rival1AtNet && !rival2AtNet) {
+                // Ambos al fondo: Atacar al centro o volear cruzado
+                zoneVisible = true;
+                
+                // Si nosotros estamos arriba (atacando)
+                if (posP1.z < 3 && posP2.z < 3) {
+                    this.zoneVisualizer.position.set(0, 0.025, -3.5); // Zona corta/centro
+                    this.zoneVisualizer.scale.setScalar(1.3);
+                    this.zoneVisualizer.material.opacity = 0.45;
+                    
+                    tipTitle = "🔥 Tenéis la Red (Volea al Centro)";
+                    tipText = "Los rivales están defendiendo en el fondo y vosotros tenéis la red ganada. Presiona con una VOLEA baja al centro de la pista para provocar dudas en su comunicación.";
+                } else {
+                    // Ambos al fondo (peloteo de fondo)
+                    this.zoneVisualizer.position.set((posR1.x + posR2.x) / 2, 0.025, (posR1.z + posR2.z) / 2 + 1);
+                    this.zoneVisualizer.scale.setScalar(1.0);
+                    this.zoneVisualizer.material.opacity = 0.3;
+                    
+                    tipTitle = "⚖️ Peloteo de Fondo";
+                    tipText = "Todos los jugadores están al fondo de la pista. Mantén un peloteo cruzado seguro y sin prisa, esperando una bola cómoda para lanzar un globo profundo y subir a atacar.";
+                }
+            } 
+            else {
+                // Pista descompensada: Uno arriba y otro abajo
+                zoneVisible = true;
+                const forwardRival = posR1.z > posR2.z ? posR1 : posR2;
+                const backwardRival = posR1.z > posR2.z ? posR2 : posR1;
+                
+                // Atacar la diagonal del jugador retrasado o el pasillo
+                this.zoneVisualizer.position.set(backwardRival.x, 0.025, backwardRival.z + 1.5);
+                this.zoneVisualizer.scale.setScalar(1.2);
+                this.zoneVisualizer.material.opacity = 0.45;
+                
+                tipTitle = "⚡ Rival Descompensado";
+                tipText = "Hay un oponente en la red y otro al fondo. Ataca jugando en paralelo a la espalda del jugador de red o busca una bola profunda cruzada a la esquina del jugador retrasado.";
+            }
+        }
+
+        if (!zoneVisible) {
+            this.zoneVisualizer.material.opacity = 0.0;
+        }
+
+        // Actualizar textos en el panel lateral si existe en el DOM
+        const coachTitleDom = document.getElementById('war-room-coach-title');
+        const coachTextDom = document.getElementById('war-room-coach-text');
+        
+        if (coachTitleDom) coachTitleDom.innerText = tipTitle;
+        if (coachTextDom) coachTextDom.innerHTML = tipText;
+    },
+
+    animate() {
+        requestAnimationFrame(() => this.animate());
+
+        // Actualizar cámara en modo 3D orbital
+        if (this.viewMode === '3d' && this.camera) {
+            const radius = 21;
+            this.camera.position.x = radius * Math.sin(this.cameraAngleX) * Math.cos(this.cameraAngleY);
+            this.camera.position.z = radius * Math.cos(this.cameraAngleX) * Math.cos(this.cameraAngleY);
+            this.camera.position.y = radius * Math.sin(this.cameraAngleY);
+            this.camera.lookAt(0, 0, 0);
+        } else if (this.viewMode === '2d' && this.camera) {
+            // Pizarra 2D Zenital limpia
+            this.camera.position.set(0, 23, 0.001); // Pequeño offset en Z para evitar gimbal lock
+            this.camera.lookAt(0, 0, 0);
+        }
+
+        if (this.renderer && this.scene && this.camera) {
+            this.renderer.render(this.scene, this.camera);
+        }
     },
 
     renderHTML() {
-        return `
-            <div class="glass-card-enterprise" style="padding: 0; background: #000; border-radius: 28px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); position: relative; box-shadow: 0 40px 100px rgba(0,0,0,0.8);">
-                <!-- COACH OVERLAY -->
-                <div id="coach-overlay" style="position: absolute; inset: 0; z-index: 100; background: rgba(0,0,0,0.8); display: none; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; backdrop-filter: blur(10px);">
-                    <div style="background: #CCFF00; color: #000; padding: 4px 12px; border-radius: 4px; font-weight: 900; font-size: 0.7rem; margin-bottom: 15px;">COACH MODE</div>
-                    <h3 id="coach-title" style="color: white; font-size: 1.5rem; font-weight: 950; margin: 0 0 10px 0;"></h3>
-                    <p id="coach-text" style="color: rgba(255,255,255,0.8); font-size: 1rem; line-height: 1.5; max-width: 80%; font-weight: 500;"></p>
-                    <div style="margin-top: 20px; font-size: 0.7rem; color: #CCFF00; font-weight: 900; letter-spacing: 2px;">REANUDANDO EN 3s...</div>
-                </div>
-
-                <div style="position: absolute; top: 20px; left: 25px; z-index: 10;">
-                    <div style="font-size: 0.6rem; font-weight: 950; color: #CCFF00; letter-spacing: 2px;">LIVE SIMULATION</div>
-                    <div style="font-size: 1rem; color: white; font-weight: 900;">BARCELONA PADEL EL PRAT</div>
-                </div>
-
-                <div id="tactical-court-canvas" style="width: 100%; height: 500px;"></div>
-
-                <div style="position: absolute; bottom: 25px; width: 100%; display: flex; justify-content: center; z-index: 5; pointer-events: none;">
-                    <div style="background: rgba(0,0,0,0.7); backdrop-filter: blur(15px); padding: 10px 40px; border-radius: 60px; display: flex; gap: 20px; align-items: center; border: 1px solid rgba(255,255,255,0.2);">
-                        <div style="color: #00E36D; font-size: 0.65rem; font-weight: 900;"><i class="fas fa-chalkboard-teacher"></i> COACH ANALYSIS ACTIVE</div>
-                    </div>
-                </div>
-            </div>
-        `;
+        // Obsoleto: Usamos el inyector del modal y el renderLiveWidget interactivo desde DashboardView
+        return '';
     }
 };

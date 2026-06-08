@@ -48,6 +48,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/mobile-header-fix.css?v=1.2">
 
+    <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js" defer></script>
 
@@ -1491,6 +1492,11 @@
                             onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
                         <i class="fas fa-user-circle" style="font-size:1rem;"></i> Mi Perfil
                     </button>
+                    <button onclick="window.DashboardView.openTacticalWarRoom()"
+                            style="grid-column: span 2; background: linear-gradient(135deg, #0f172a, #1e293b); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.3); border-radius: 12px; padding: 10px 8px; font-size: 0.65rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.15s;"
+                            onmouseover="this.style.transform='scale(1.02)'; this.style.background='rgba(204, 255, 0, 0.05)'" onmouseout="this.style.transform='scale(1)'; this.style.background='linear-gradient(135deg, #0f172a, #1e293b)'">
+                        <i class="fas fa-cubes" style="font-size: 1rem; color: #CCFF00;"></i> Pizarra Táctica 3D
+                    </button>
                 </div>
             </div>
 
@@ -2800,7 +2806,9 @@
     <script src="js/modules/dashboard/StoryFeedWidget.js?v=6" defer></script>
     <script src="js/modules/dashboard/PadelPulse.js?v=6.0" defer></script>
     <script src="js/modules/dashboard/OpenMatchesWidget.js?v=1.3" defer></script>
-    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=COMPACT_V10" defer></script>
+    <script src="js/modules/dashboard/TacticalCourt3D.js?v=1.1" defer></script>
+    <script src="js/modules/dashboard/Tactical3DWidget.js?v=1.1" defer></script>
+    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=COMPACT_V12" defer></script>
     <script src="js/modules/dashboard/DashboardController.js" defer></script>
     <script src="js/utils/RoleService.js" defer></script>
     <script src="js/modules/players/PlayerView.js?v=400" defer></script>

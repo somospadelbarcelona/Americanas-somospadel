@@ -298,7 +298,7 @@
                 box-shadow: 0 4px 10px rgba(37, 211, 102, 0.2);
             `;
             
-            const nextMatch = team.schedule?.find(m => m.status !== 'completed') || {};
+            const nextMatch = team.schedule?.find(m => m.status !== 'completed' && m.opponent !== 'BYE' && !m.opponent.includes('BYE')) || {};
             const groupText = team.group || '';
 
             // --- CÁLCULOS BIG DATA Y RENDIMIENTO EN TIEMPO REAL ---
@@ -2301,7 +2301,7 @@
             const team = this.teams.find(t => t.id === teamId);
             if (!team) return;
 
-            const nextMatch = team.schedule?.find(m => m.status !== 'completed') || {};
+            const nextMatch = team.schedule?.find(m => m.status !== 'completed' && m.opponent !== 'BYE' && !m.opponent.includes('BYE')) || {};
             const parsedDate = parseDateText(nextMatch.date);
             const matchTime = (nextMatch.time || 'TBD').replace(/h/gi, '');
             const convTime = getConvocatoriaTime(matchTime);
@@ -2422,7 +2422,7 @@ ${E.check} *ESTADO DE LA PLANTILLA:*\n`;
                 return p ? p.pts : 0;
             };
 
-            const nextMatch = team.schedule?.find(m => m.status !== 'completed') || {};
+            const nextMatch = team.schedule?.find(m => m.status !== 'completed' && m.opponent !== 'BYE' && !m.opponent.includes('BYE')) || {};
             const parsedDate = parseDateText(nextMatch.date);
             const matchTime = (nextMatch.time || 'TBD').replace(/h/gi, '');
             const convTime = getConvocatoriaTime(matchTime);
@@ -2649,7 +2649,7 @@ ${E.check} *ESTADO DE LA PLANTILLA:*\n`;
             
             if (isLimpia) {
                 // Generar convocatoria limpia básica (sin lista de confirmados/bajas ni logística extendida)
-                const nextMatch = team.schedule?.find(m => m.status !== 'completed') || {};
+                const nextMatch = team.schedule?.find(m => m.status !== 'completed' && m.opponent !== 'BYE' && !m.opponent.includes('BYE')) || {};
                 const parsedDate = parseDateText(nextMatch.date);
                 const matchTime = (nextMatch.time || 'TBD').replace(/h/gi, '');
                 const convTime = getConvocatoriaTime(matchTime);
@@ -2678,7 +2678,7 @@ Responde con un *SÍ* o un *NO* en este grupo.
                 finalText = sessionStorage.getItem(`conv_text_${teamId}`) || "";
                 if (!finalText) {
                     // Fallback
-                    const nextMatch = team.schedule?.find(m => m.status !== 'completed') || {};
+                    const nextMatch = team.schedule?.find(m => m.status !== 'completed' && m.opponent !== 'BYE' && !m.opponent.includes('BYE')) || {};
                     const parsedDate = parseDateText(nextMatch.date);
                     const matchTime = (nextMatch.time || 'TBD').replace(/h/gi, '');
                     const convTime = getConvocatoriaTime(matchTime);

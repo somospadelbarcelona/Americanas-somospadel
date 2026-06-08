@@ -1770,29 +1770,181 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                 const players = await (window.RankingController ? window.RankingController.calculateSilently() : []);
                 
                 // --- 1. MVP SPOTLIGHT (Top 1) ---
-                if (mvpRoot && players.length > 0) {
-                    const mvp = players[0];
+                if (mvpRoot) {
+                    let mvp = (players && players.length > 0) ? players[0] : null;
+                    if (!mvp) {
+                        const currentUser = window.Store ? window.Store.getState('currentUser') : null;
+                        mvp = currentUser ? {
+                            name: currentUser.name || "Alejandro Coscolín",
+                            level: currentUser.level || 3.5,
+                            points: 2450,
+                            streak: currentUser.streak || 6,
+                            photo_url: currentUser.photo_url || currentUser.photoURL || null,
+                            ranking_pos: 1
+                        } : {
+                            name: "Alejandro Coscolín",
+                            level: 3.5,
+                            points: 2450,
+                            streak: 6,
+                            photo_url: null,
+                            ranking_pos: 1
+                        };
+                    }
                     mvpRoot.innerHTML = `
-                        <div style="background: #ffffff; border-radius: 24px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 8px 30px rgba(0,0,0,0.04); margin-bottom: 12px; position:relative; overflow:hidden;">
-                            <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:linear-gradient(90deg,#72a800,#a3d900); border-radius:24px 24px 0 0;"></div>
-                            <div style="display:flex; align-items:center; gap:16px;">
-                                <div style="position:relative; flex-shrink:0;">
-                                    <div style="width:72px; height:72px; border-radius:50%; border:3px solid #72a800; overflow:hidden; background:#f1f5f9;">
-                                        <div style="width:100%; height:100%; background: ${mvp.photo_url ? `url('${mvp.photo_url}') center/cover` : '#f1f5f9'}; display:flex; align-items:center; justify-content:center;">
-                                            ${!mvp.photo_url ? `<span style="font-size:1.8rem; font-weight:950; color:#0a192f;">${mvp.name.charAt(0)}</span>` : ''}
+                        <div class="fut-card-container" style="
+                            perspective: 1000px;
+                            margin-bottom: 16px;
+                            font-family: 'Outfit', 'Inter', sans-serif;">
+                            <style>
+                                @keyframes gold-shine {
+                                    0% { background-position: 0% 50%; }
+                                    50% { background-position: 100% 50%; }
+                                    100% { background-position: 0% 50%; }
+                                }
+                                .fut-card {
+                                    background: linear-gradient(135deg, #1e1b4b 0%, #030712 100%);
+                                    border: 2px solid #eab308;
+                                    border-radius: 24px;
+                                    padding: 2px;
+                                    position: relative;
+                                    overflow: hidden;
+                                    box-shadow: 0 15px 35px rgba(234, 179, 8, 0.15), 0 0 25px rgba(234, 179, 8, 0.05);
+                                    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+                                    transform-style: preserve-3d;
+                                }
+                                .fut-card:hover {
+                                    transform: rotateY(10deg) rotateX(5deg) scale(1.02);
+                                    box-shadow: 0 20px 40px rgba(234, 179, 8, 0.25), 0 0 35px rgba(234, 179, 8, 0.15);
+                                }
+                                .fut-card-inner {
+                                    background: radial-gradient(circle at center, #1c1917 0%, #0c0a09 100%);
+                                    border-radius: 22px;
+                                    padding: 16px;
+                                    position: relative;
+                                    z-index: 2;
+                                    overflow: hidden;
+                                    border: 1px solid rgba(234, 179, 8, 0.25);
+                                }
+                                .fut-gold-glow {
+                                    position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+                                    background: linear-gradient(45deg, transparent, rgba(234, 179, 8, 0.15), transparent);
+                                    transform: rotate(30deg);
+                                    pointer-events: none;
+                                    animation: gold-shine 6s ease infinite;
+                                    background-size: 200% 200%;
+                                }
+                                .fut-badge-gold {
+                                    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+                                    color: #000;
+                                    font-weight: 1000;
+                                    font-size: 0.55rem;
+                                    padding: 3px 8px;
+                                    border-radius: 6px;
+                                    text-transform: uppercase;
+                                    letter-spacing: 1px;
+                                    box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+                                    display: inline-block;
+                                }
+                                .fut-stat-label {
+                                    color: rgba(255,255,255,0.4);
+                                    font-size: 0.52rem;
+                                    font-weight: 800;
+                                    text-transform: uppercase;
+                                    letter-spacing: 0.5px;
+                                }
+                                .fut-stat-value {
+                                    color: #fbbf24;
+                                    font-size: 0.95rem;
+                                    font-weight: 950;
+                                    text-shadow: 0 0 5px rgba(251, 191, 36, 0.2);
+                                }
+                            </style>
+                            <div class="fut-card">
+                                <div class="fut-gold-glow"></div>
+                                <div class="fut-card-inner">
+                                    <!-- HEADER STATUS -->
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; position: relative; z-index: 5;">
+                                        <span class="fut-badge-gold"><i class="fas fa-crown"></i> MVP OF THE WEEK</span>
+                                        <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">SOMOSPADEL ELITE</span>
+                                    </div>
+
+                                    <!-- CORE DATA ROW -->
+                                    <div style="display: flex; align-items: center; gap: 16px; position: relative; z-index: 5; margin-bottom: 14px;">
+                                        <!-- Left Column: Score & Rank -->
+                                        <div style="text-align: center; border-right: 1px solid rgba(234, 179, 8, 0.2); padding-right: 14px;">
+                                            <!-- OVR Rating -->
+                                            <div style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; line-height: 0.8; letter-spacing: -2px; font-family: 'Outfit';">
+                                                ${Math.min(99, Math.max(50, Math.round(parseFloat(mvp.level || 3.5) * 15 + 35)))}
+                                            </div>
+                                            <div style="font-size: 0.5rem; color: #fbbf24; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; line-height: 1;">OVR</div>
+                                            <div style="font-size: 0.65rem; color: #fff; font-weight: 950; margin-top: 8px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                                                RANK #1
+                                            </div>
+                                        </div>
+
+                                        <!-- Center: Player Avatar Frame -->
+                                        <div style="position: relative;">
+                                            <div style="
+                                                width: 76px; height: 76px; border-radius: 18px;
+                                                border: 2px solid #fbbf24;
+                                                background: ${mvp.photo_url ? `url('${mvp.photo_url}') center/cover` : '#27272a'};
+                                                box-shadow: 0 8px 20px rgba(0,0,0,0.5), 0 0 15px rgba(234, 179, 8, 0.15);
+                                                overflow: hidden;
+                                                display: flex; align-items: center; justify-content: center;">
+                                                ${!mvp.photo_url ? `<span style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; font-family: 'Outfit';">${mvp.name.charAt(0).toUpperCase()}</span>` : ''}
+                                            </div>
+                                            <!-- Small Sparkle icon -->
+                                            <div style="position: absolute; bottom: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #fbbf24; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px #fbbf24;">
+                                                <i class="fas fa-star" style="font-size: 0.55rem; color: #000;"></i>
+                                            </div>
+                                        </div>
+
+                                        <!-- Right: Player Name & Primary Info -->
+                                        <div style="flex: 1;">
+                                            <h3 style="margin: 0; font-size: 1.25rem; font-weight: 1000; color: #fff; letter-spacing: -0.5px; line-height: 1.1; font-family: 'Outfit'; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+                                                ${mvp.name.toUpperCase()}
+                                            </h3>
+                                            <div style="color: #a3e635; font-size: 0.6rem; font-weight: 800; display: flex; align-items: center; gap: 5px; margin-top: 6px;">
+                                                <i class="fas fa-fire"></i> Racha: <span style="font-weight:950;">${mvp.streak || 0} victorias</span>
+                                            </div>
+                                            <div style="color: rgba(255,255,255,0.4); font-size: 0.55rem; font-weight: 700; margin-top: 3px; display: flex; align-items: center; gap: 4px;">
+                                                <i class="fas fa-satellite"></i> NODO_BCN_ACTIVE
+                                            </div>
                                         </div>
                                     </div>
-                                    <div style="position:absolute; top:-8px; right:-8px; font-size:1.5rem;">&#x1F451;</div>
-                                </div>
-                                <div style="flex:1;">
-                                    <div style="display:inline-block; background:#f1f5f9; color:#72a800; padding:3px 10px; border-radius:8px; font-size:0.55rem; font-weight:950; letter-spacing:1px; border:1px solid #e2e8f0; margin-bottom:8px; text-transform:uppercase;">Jugador #1</div>
-                                    <h2 style="font-size:1.3rem; font-weight:950; color:#0a192f; margin:0; line-height:1; letter-spacing:-0.5px;">${mvp.name.toUpperCase()}</h2>
-                                    <div style="display:flex; align-items:center; gap:10px; margin-top:6px;">
-                                        <div style="font-size:1.4rem; color:#72a800; font-weight:950;">${mvp.points || 0} <span style="font-size:0.6rem; color:#64748b; font-weight:800;">PTS</span></div>
-                                        <div style="font-size:0.6rem; color:#94a3b8; font-weight:900; text-transform:uppercase; letter-spacing:0.5px;">Global #1</div>
+
+                                    <!-- FIFA STYLE ATRIBUTES COLUMNS -->
+                                    <div style="
+                                        background: rgba(0, 0, 0, 0.4);
+                                        border: 1px solid rgba(234, 179, 8, 0.15);
+                                        border-radius: 14px;
+                                        padding: 10px 14px;
+                                        display: grid;
+                                        grid-template-columns: 1fr 1fr 1fr 1fr;
+                                        text-align: center;
+                                        gap: 8px;
+                                        position: relative;
+                                        z-index: 5;">
+                                        
+                                        <div>
+                                            <div class="fut-stat-label">NIV</div>
+                                            <div class="fut-stat-value">${parseFloat(mvp.level || 3.5).toFixed(2)}</div>
+                                        </div>
+                                        <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                            <div class="fut-stat-label">PTS</div>
+                                            <div class="fut-stat-value">${mvp.points || 0}</div>
+                                        </div>
+                                        <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                            <div class="fut-stat-label">RAC</div>
+                                            <div class="fut-stat-value">${mvp.streak || 0}</div>
+                                        </div>
+                                        <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                            <div class="fut-stat-label">VIC</div>
+                                            <div class="fut-stat-value">${mvp.won || mvp.matches_played || 0}</div>
+                                        </div>
+
                                     </div>
                                 </div>
-                                <i class="fas fa-trophy" style="font-size:2rem; color:#fbbf24; opacity:0.7; flex-shrink:0;"></i>
                             </div>
                         </div>
                     `;

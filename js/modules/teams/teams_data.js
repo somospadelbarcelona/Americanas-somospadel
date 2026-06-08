@@ -139,10 +139,10 @@
         "date": "Dium 31 May",
         "time": "00:00h",
         "opponent": "BYE",
-        "score": "Pendiente",
+        "score": "Descansa",
         "venue": "Padel bcn - el prat",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 5,
@@ -209,10 +209,10 @@
         "date": "Diss 26 Set",
         "time": "13:30h",
         "opponent": "BYE",
-        "score": "Pendiente",
+        "score": "Descansa",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 12,
@@ -246,13 +246,13 @@
       }
     ],
     "nextMatch": {
-      "j": 4,
-      "date": "Dium 31 May",
-      "time": "00:00h",
-      "opponent": "BYE",
+      "j": 5,
+      "date": "Diss 06 Jun",
+      "time": "13:30h",
+      "opponent": "XTREM PADEL 3M",
       "score": "Pendiente",
       "venue": "Padel bcn - el prat",
-      "isHome": false,
+      "isHome": true,
       "status": "upcoming"
     },
     "groupStandings": [
@@ -850,10 +850,10 @@
         "date": "Diss 06 Jun",
         "time": "16:30h",
         "opponent": "BYE",
-        "score": "Pendiente",
+        "score": "Descansa",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 6,
@@ -920,10 +920,10 @@
         "date": "Dium 04 Oct",
         "time": "00:00h",
         "opponent": "BYE",
-        "score": "Pendiente",
+        "score": "Descansa",
         "venue": "Padel bcn - el prat",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 13,
@@ -1932,10 +1932,10 @@
         "date": "Dill 22 Jun",
         "time": "00:00h",
         "opponent": "BYE",
-        "score": "Pendiente",
+        "score": "Descansa",
         "venue": "Padel bcn - el prat",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 8,
@@ -2002,10 +2002,10 @@
         "date": "Dium 18 Oct",
         "time": "13:30h",
         "opponent": "BYE",
-        "score": "Pendiente",
+        "score": "Descansa",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "completed"
       }
     ],
     "nextMatch": {

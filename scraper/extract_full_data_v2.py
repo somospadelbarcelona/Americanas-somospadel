@@ -148,6 +148,11 @@ async def scrape_group_data(page):
             if(opponent && opponent.length > 30) opponent = opponent.substring(0, 30);
             if(!opponent || opponent.length < 3) opponent = "Rival por definir";
 
+            if (opponent && opponent.toUpperCase() === 'BYE') {
+                status = "completed";
+                score = "Descansa";
+            }
+
             data.push({
                 j: jNum++,
                 date: date,
