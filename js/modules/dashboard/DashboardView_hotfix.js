@@ -2775,6 +2775,9 @@
                 let playerA = players.find(p => p.id === (currentUser?.uid || currentUser?.id)) || players[0];
                 let playerB = players[0] === playerA ? (players[1] || players[0]) : players[0]; // Default player B is MVP
 
+                // Sort players alphabetically A-Z for the select dropdowns
+                const sortedPlayers = [...players].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es', { sensitivity: 'base' }));
+
                 // 3. Render container structure with selects and stats
                 root.innerHTML = `
                     <style>
@@ -2910,7 +2913,7 @@
                                     ${!playerA.photo_url ? `<span style="font-size:1.5rem; font-weight:1000; color:#fbbf24;">${playerA.name.charAt(0)}</span>` : ''}
                                 </div>
                                 <select id="faceoff-select-a" class="faceoff-select">
-                                    ${players.map(p => `<option value="${p.id}" ${p.id === playerA.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                                    ${sortedPlayers.map(p => `<option value="${p.id}" ${p.id === playerA.id ? 'selected' : ''}>${p.name}</option>`).join('')}
                                 </select>
                             </div>
 
@@ -2923,7 +2926,7 @@
                                     ${!playerB.photo_url ? `<span style="font-size:1.5rem; font-weight:1000; color:#fbbf24;">${playerB.name.charAt(0)}</span>` : ''}
                                 </div>
                                 <select id="faceoff-select-b" class="faceoff-select">
-                                    ${players.map(p => `<option value="${p.id}" ${p.id === playerB.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                                    ${sortedPlayers.map(p => `<option value="${p.id}" ${p.id === playerB.id ? 'selected' : ''}>${p.name}</option>`).join('')}
                                 </select>
                             </div>
                         </div>
