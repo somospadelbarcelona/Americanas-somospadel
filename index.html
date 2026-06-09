@@ -2130,12 +2130,12 @@
     <!-- Force Login Modal on Load (Removido por la persistencia local de sesión en StateManager y App) -->
 
     <div id="auth-modal" class="modal-overlay auth-overlay-enterprise"
-        style="backdrop-filter: blur(35px); background: radial-gradient(circle at center, #1a3a1a 0%, #0d1f2d 30%, #050a0f 60%, #000000 100%); display: flex !important; z-index: 2147483647 !important; align-items: center; justify-content: center; position: fixed; inset: 0;">
+        style="backdrop-filter: blur(35px); background: radial-gradient(circle at center, #170e30 0%, #080515 40%, #000000 100%); display: flex !important; z-index: 2147483647 !important; align-items: center; justify-content: center; position: fixed; inset: 0;">
 
         <!-- 🚀 NEURAL LOGIN V2.0 ENGINE -->
         <style>
             .auth-overlay-enterprise {
-                background: radial-gradient(circle at 50% 50%, #1a3a1a, #050a0f, #000000) !important;
+                background: radial-gradient(circle at 50% 50%, #1a0f3d, #070312, #000000) !important;
                 background-size: 200% 200% !important;
                 animation: auraFlow 15s ease infinite !important;
             }
@@ -2155,11 +2155,11 @@
             }
 
             .glass-card-pro {
-                background: rgba(10, 10, 15, 0.75) !important;
-                backdrop-filter: blur(25px) saturate(150%) !important;
-                -webkit-backdrop-filter: blur(25px) saturate(150%) !important;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                background: rgba(13, 10, 25, 0.78) !important;
+                backdrop-filter: blur(25px) saturate(160%) !important;
+                -webkit-backdrop-filter: blur(25px) saturate(160%) !important;
+                border: 1.5px solid rgba(139, 92, 246, 0.2) !important;
+                box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.7) !important;
                 position: relative;
                 overflow: hidden;
                 transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease, border-color 0.5s ease;
@@ -2169,8 +2169,28 @@
 
             .glass-card-pro:hover {
                 transform: translateY(-6px) rotateX(1.5deg) rotateY(-0.8deg);
-                box-shadow: 0 45px 95px rgba(0, 0, 0, 0.85), 0 0 35px rgba(204, 255, 0, 0.06);
-                border-color: rgba(204, 255, 0, 0.25);
+                box-shadow: 0 45px 95px rgba(0, 0, 0, 0.9), 0 0 40px rgba(139, 92, 246, 0.2), 0 0 15px rgba(204, 255, 0, 0.08) !important;
+                border-color: rgba(139, 92, 246, 0.5) !important;
+            }
+
+            /* Feedback de error sísmico */
+            .glass-card-pro.shake-error {
+                animation: loginShake 0.4s ease-in-out !important;
+                border-color: #ff4d6d !important;
+                box-shadow: 0 0 40px rgba(255, 77, 109, 0.45) !important;
+            }
+
+            @keyframes loginShake {
+                0%, 100% { transform: translateX(0); }
+                20%, 60% { transform: translateX(-8px); }
+                40%, 80% { transform: translateX(8px); }
+            }
+
+            /* Desmaterialización Láser al Loguear */
+            .modal-overlay.dematerialize {
+                opacity: 0 !important;
+                pointer-events: none !important;
+                transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1) !important;
             }
 
             .bio-scanner-line {
@@ -2666,6 +2686,92 @@
                         if (!_mouseActive) { var ring = document.getElementById('ball-neon-ring'); if (ring) ring.style.opacity = '0'; }
                     });
                 }
+
+                // === SIMULATED BIOMETRIC FACEID LOGIN ===
+                window._triggerBiometricLogin = function() {
+                    const phoneInput = document.querySelector('#login-form input[name="phone"]');
+                    const pwdInput = document.querySelector('#login-form input[name="password"]');
+                    const loginForm = document.getElementById('login-form');
+                    
+                    if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
+                    
+                    // Activar el escáner láser de biometría
+                    const scanner = document.getElementById('login-bio-scanner');
+                    if (scanner) {
+                        scanner.style.display = 'block';
+                        scanner.style.animation = 'scanLineSweep 1.2s ease-in-out infinite';
+                    }
+                    
+                    // Actualizar telemetría HUD
+                    _updateTelemetry([
+                        'SYS: BIO-SCANNING',
+                        'GRAV: 9.81G',
+                        'VEL: 0.00m/s',
+                        'BIOMETRIC: FACEID'
+                    ], [
+                        'TRAJ: SCANNING',
+                        'RAD: 1.02mSv',
+                        'ENERGY: 100%',
+                        'VERIFICATION: ACTIVE'
+                    ]);
+                    
+                    setTimeout(() => {
+                        // Intentar recuperar teléfono y clave guardados
+                        const savedPhone = localStorage.getItem('remembered_phone');
+                        const savedPwd = localStorage.getItem('remembered_pwd');
+                        
+                        if (savedPhone && savedPwd) {
+                            if (phoneInput) phoneInput.value = savedPhone;
+                            if (pwdInput) pwdInput.value = savedPwd;
+                            
+                            _updateTelemetry([
+                                'SYS: BIO-MATCH',
+                                'GRAV: 9.81G',
+                                'VEL: 0.00m/s',
+                                'BIOMETRIC: OK'
+                            ], [
+                                'TRAJ: MATCHED',
+                                'USER: VERIFIED',
+                                'ENERGY: 100%',
+                                'SESSION: RECOVERED'
+                            ]);
+                            
+                            // Haptic éxito
+                            if (navigator.vibrate) navigator.vibrate([60, 30, 100]);
+                            
+                            // Enviar formulario (disparará el handler de submit)
+                            if (loginForm) {
+                                const btnSubmit = loginForm.querySelector('button[type="submit"]');
+                                if (btnSubmit) btnSubmit.click();
+                            }
+                        } else {
+                            if (scanner) scanner.style.display = 'none';
+                            
+                            _updateTelemetry([
+                                'SYS: BIO-FAILED',
+                                'GRAV: 9.81G',
+                                'VEL: 0.00m/s',
+                                'BIOMETRIC: NO DATA'
+                            ], [
+                                'TRAJ: ABORTED',
+                                'ERROR: NO SESSION',
+                                'ENERGY: 100%',
+                                'REQUIRE: MANUAL LOGIN'
+                            ]);
+                            
+                            // Alerta de vibración de fallo
+                            const card = document.querySelector('.glass-card-pro');
+                            if (card) {
+                                card.classList.add('shake-error');
+                                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                                setTimeout(() => card.classList.remove('shake-error'), 500);
+                            }
+                            
+                            alert("🔐 Biometría: No hay ninguna sesión memorizada en este dispositivo. Por favor, inicia sesión manualmente una vez para registrar tus datos biométricos.");
+                        }
+                    }, 1800);
+                };
+
             })();
             </script>
 
@@ -2695,6 +2801,15 @@
                     style="width: 100%; height: 60px; background: #CCFF00; color: #000; border: none; border-radius: 18px; font-weight: 900; font-size: 1.1rem; cursor: pointer; box-shadow: 0 10px 30px rgba(204, 255, 0, 0.3); text-transform: uppercase; letter-spacing: 1px; font-family: 'Montserrat'; transition: 0.3s;">
                     INICIAR SESIÓN 🎾
                 </button>
+
+                <!-- Botón de FaceID / Huella Dactilar Holográfica Simulado -->
+                <div style="margin-top: 15px;">
+                    <button type="button" onclick="window._triggerBiometricLogin()" class="shimmer-btn"
+                        style="width: 100%; height: 50px; background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1.5px solid rgba(139, 92, 246, 0.4); border-radius: 16px; font-weight: 850; font-size: 0.82rem; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Outfit'; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fas fa-fingerprint" style="font-size: 1.25rem;"></i>
+                        <span>Acceso Biométrico (FaceID)</span>
+                    </button>
+                </div>
 
                 <div style="margin-top: 40px; display: flex; flex-direction: column; gap: 15px;">
                     <a href="#" style="color: #CCFF00; font-weight: 800; text-decoration: none; font-size: 0.9rem;"
