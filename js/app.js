@@ -94,6 +94,23 @@
 
             // 2. Setup Navigation
             this.setupNavigation();
+
+            // 3. Resiliencia al recuperar foco (Desbloqueo de pantalla a pie de pista)
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    console.log("📱 [App] Pestaña recuperada (visibilitychange). Verificando sesión...");
+                    const user = window.Store ? window.Store.getState('currentUser') : null;
+                    if (user) {
+                        this.handleAuthorized();
+                        // Revalidar silenciosamente en background si existe el servicio
+                        if (window.AuthService && typeof window.AuthService.revalidateSession === 'function') {
+                            window.AuthService.revalidateSession();
+                        }
+                    } else {
+                        this.handleGuest();
+                    }
+                }
+            });
         }
 
         handleAuthorized() {

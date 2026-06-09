@@ -638,28 +638,48 @@
             }
 
             // 4. INIT HEADER TICKER SYNC
-            this.initHeaderTickerSync();
+            try {
+                this.initHeaderTickerSync();
+            } catch (e) {
+                console.error("Error running initHeaderTickerSync:", e);
+            }
 
             // 5. FORCE LOAD NETWORK PULSE & STORIES
-            if (window.StoryFeedWidget) {
-                window.StoryFeedWidget.render('story-feed-root');
+            try {
+                if (window.StoryFeedWidget) {
+                    window.StoryFeedWidget.render('story-feed-root');
+                }
+            } catch (e) {
+                console.error("Error rendering StoryFeedWidget:", e);
             }
 
             // 🏓 PADEL PULSE — Widget personalizado
-            if (window.PadelPulse) {
-                window.PadelPulse.render('padel-pulse-widget-root');
+            try {
+                if (window.PadelPulse) {
+                    window.PadelPulse.render('padel-pulse-widget-root');
+                }
+            } catch (e) {
+                console.error("Error rendering PadelPulse:", e);
             }
 
             // 🎾 PARTIDAS ABIERTAS — Widget de publicidad en tiempo real
-            if (window.OpenMatchesWidget) {
-                window.OpenMatchesWidget.render('open-matches-widget-root');
+            try {
+                if (window.OpenMatchesWidget) {
+                    window.OpenMatchesWidget.render('open-matches-widget-root');
+                }
+            } catch (e) {
+                console.error("Error rendering OpenMatchesWidget:", e);
             }
 
             // 🎾 WAR ROOM 3D TACTICAL WIDGET
-            const tacticalRoot = document.getElementById('tactical-3d-widget-root');
-            if (tacticalRoot && window.Tactical3DWidget) {
-                tacticalRoot.innerHTML = window.Tactical3DWidget.renderHTML();
-                window.Tactical3DWidget.init('three-tactical-canvas');
+            try {
+                const tacticalRoot = document.getElementById('tactical-3d-widget-root');
+                if (tacticalRoot && window.Tactical3DWidget) {
+                    tacticalRoot.innerHTML = window.Tactical3DWidget.renderHTML();
+                    window.Tactical3DWidget.init('three-tactical-canvas');
+                }
+            } catch (e) {
+                console.error("Error rendering Tactical3DWidget:", e);
             }
 
         }
@@ -2118,9 +2138,8 @@
                 }
 
                 // 5. STATS & ARCHIVE (Calculated silently in background)
-                if (window.RankingController) {
-                    const ranked = await window.RankingController.calculateSilently();
-                    const me = ranked.find(p => p.id === userId);
+                if (rankedPlayers && rankedPlayers.length > 0) {
+                    const me = rankedPlayers.find(p => p.id === userId);
                     if (me) {
                         context.myRank = me.rank;
                         context.rankStatus = me.trend || 'stable';
@@ -2236,6 +2255,23 @@
             return `${days[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`;
         }
 
+        _withTimeout(promise, ms, defaultValue = null) {
+            let timeoutId;
+            const timeoutPromise = new Promise((resolve) => {
+                timeoutId = setTimeout(() => {
+                    console.warn(`⏳ [DashboardView] Promesa de red expirada tras ${ms}ms.`);
+                    resolve(defaultValue);
+                }, ms);
+            });
+            return Promise.race([
+                promise.then(val => {
+                    clearTimeout(timeoutId);
+                    return val;
+                }),
+                timeoutPromise
+            ]);
+        }
+
         async fetchMatchDetails(userId, eventId, type, status = 'scheduled') {
             try {
                 const collectionName = (type === 'entreno') ? 'entrenos_matches' : 'matches';
@@ -2247,19 +2283,27 @@
                 // We fetch matches for this event where the user participates
                 // Removed .orderBy('round') because it requires a composite index in Firestore
                 // which causes the query to fail silently if it doesn't exist
-                let snapshot = await window.db.collection(collectionName)
-                    .where('americana_id', '==', eventId)
-                    .get();
+                let snapshot = await this._withTimeout(
+                    window.db.collection(collectionName)
+                        .where('americana_id', '==', eventId)
+                        .get(),
+                    3000,
+                    null
+                );
 
                 // FALLBACK: Sometimes entreno matches get saved to 'matches' collection or vice-versa
-                if (snapshot.empty) {
+                if (!snapshot || snapshot.empty) {
                     const fallbackCollection = (collectionName === 'entrenos_matches') ? 'matches' : 'entrenos_matches';
-                    snapshot = await window.db.collection(fallbackCollection)
-                        .where('americana_id', '==', eventId)
-                        .get();
+                    snapshot = await this._withTimeout(
+                        window.db.collection(fallbackCollection)
+                            .where('americana_id', '==', eventId)
+                            .get(),
+                        3000,
+                        null
+                    );
                 }
 
-                if (snapshot.empty) return null;
+                if (!snapshot || snapshot.empty) return null;
 
                 const allMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -2345,10 +2389,16 @@
                 const userId = user.uid || user.id;
                 const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-                const pulls = await Promise.all([
-                    window.db.collection('matches').where('status', '==', 'finished').where('created_at', '>', yesterday).get(),
-                    window.db.collection('entrenos_matches').where('status', '==', 'finished').where('created_at', '>', yesterday).get()
-                ]);
+                const pulls = await this._withTimeout(
+                    Promise.all([
+                        window.db.collection('matches').where('status', '==', 'finished').where('created_at', '>', yesterday).get(),
+                        window.db.collection('entrenos_matches').where('status', '==', 'finished').where('created_at', '>', yesterday).get()
+                    ]),
+                    3000,
+                    [null, null]
+                );
+
+                if (!pulls || !pulls[0] || !pulls[1]) return null;
 
                 const allRecentMatches = [...pulls[0].docs, ...pulls[1].docs].map(doc => doc.data());
 

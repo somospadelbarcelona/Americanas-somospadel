@@ -71,14 +71,38 @@
         }
 
         /**
+         * Enuelve una promesa con un tiempo límite de expiración (timeout)
+         */
+        _withTimeout(promise, ms, defaultValue = []) {
+            let timeoutId;
+            const timeoutPromise = new Promise((resolve) => {
+                timeoutId = setTimeout(() => {
+                    console.warn(`⏳ [AmericanaService] Promesa expirada tras ${ms}ms. Usando valor por defecto.`);
+                    resolve(defaultValue);
+                }, ms);
+            });
+            return Promise.race([
+                promise.then(val => {
+                    clearTimeout(timeoutId);
+                    return val;
+                }),
+                timeoutPromise
+            ]);
+        }
+
+        /**
          * Unified method to fetch both Americanas and Entrenos for Dashboard
          */
         async getAllActiveEvents() {
             try {
-                const results = await Promise.all([
-                    this._getCollectionService('americana')?.getAll() || [],
-                    this._getCollectionService('entreno')?.getAll() || []
-                ]);
+                const results = await this._withTimeout(
+                    Promise.all([
+                        this._getCollectionService('americana')?.getAll() || [],
+                        this._getCollectionService('entreno')?.getAll() || []
+                    ]),
+                    4000,
+                    [[], []]
+                );
 
                 const [ams, ents] = results;
 

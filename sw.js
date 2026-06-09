@@ -4,7 +4,7 @@
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
 
-const CACHE_NAME = 'somospadel-ultra-cache-v819';
+const CACHE_NAME = 'somospadel-ultra-cache-v822';
 
 // Recursos críticos para el "App Shell"
 const CORE_ASSETS = [
@@ -90,6 +90,31 @@ self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
 
     const url = new URL(event.request.url);
+
+    // 1. Estrategia Network-First para peticiones de navegación y páginas HTML
+    const isNavigate = event.request.mode === 'navigate';
+    const isHtml = url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname.endsWith('/');
+
+    if (isNavigate || isHtml) {
+        event.respondWith(
+            fetch(event.request).then(networkResponse => {
+                if (networkResponse && networkResponse.status === 200) {
+                    const responseClone = networkResponse.clone();
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(event.request, responseClone);
+                    });
+                }
+                return networkResponse;
+            }).catch(() => {
+                // Fallback a la caché si falla la red (offline)
+                return caches.match(event.request).then(cachedResponse => {
+                    if (cachedResponse) return cachedResponse;
+                    return caches.match('./index.html');
+                });
+            })
+        );
+        return;
+    }
 
     // Ignorar APIs externas, Firebase y Analytics
     if (url.origin.includes('firestore.googleapis.com') ||

@@ -805,6 +805,26 @@
                             border-color: #CCFF00 !important;
                             z-index: 5;
                         }
+                        .entreno-premium-card {
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                            cursor: pointer;
+                        }
+                        .entreno-premium-card:hover, .entreno-premium-card:active {
+                            transform: translateY(-4px) scale(1.01) !important;
+                            border-color: rgba(139, 92, 246, 0.45) !important;
+                            box-shadow: 0 25px 50px rgba(0,0,0,0.85), 0 0 35px rgba(139, 92, 246, 0.25) !important;
+                        }
+                        .entreno-tile-interactive {
+                            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                            cursor: pointer;
+                        }
+                        .entreno-tile-interactive:hover, .entreno-tile-interactive:active {
+                            background: rgba(255,255,255,0.15) !important;
+                            transform: translateY(-2px) scale(1.02);
+                            box-shadow: 0 8px 20px rgba(139,92,246,0.2), inset 0 0 15px rgba(139, 92, 246, 0.05) !important;
+                            border-color: #a855f7 !important;
+                            z-index: 5;
+                        }
                     </style>
                     <div style="padding: 20px 20px 16px; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 24px; margin: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; position: relative; overflow: hidden;">
                         <!-- Subtle accent line -->
@@ -1127,6 +1147,7 @@
             const isLive = evt.status === 'live' || (evt.status === 'open' && hasStarted);
             const isPairing = evt.status === 'pairing';
             const isCancelled = evt.status === 'cancelled';
+            const isEntreno = evt.type === 'entreno';
 
             // Waitlist Logic
             const waitlist = evt.waitlist || [];
@@ -1154,10 +1175,11 @@
 
             const mode = (evt.pair_mode || evt.format || '').toLowerCase();
             const nameUpper = (evt.name || '').toUpperCase();
-            let isTwister = nameUpper.includes('TWISTER') || mode.includes('twister');
-            let isRotating = nameUpper.includes('ROTATIVO') || mode.includes('rotating') || mode.includes('rotativo');
+            let isTwister = nameUpper.includes('TWISTER') || mode.includes('twister') || mode.includes('rotating') || mode.includes('rotativo');
+            let isFixed = mode === 'fixed' || nameUpper.includes('FIJA');
+
             let formatLabel = 'PAREJA FIJA', formatColor = '#a855f7';
-            if (isTwister || isRotating) { formatLabel = 'TWISTER'; formatColor = '#38bdf8'; }
+            if (isTwister) { formatLabel = 'TWISTER'; formatColor = '#38bdf8'; }
 
             // Time Formatting
             const times = this._parseDate(evt.date, evt.time);
@@ -1215,19 +1237,77 @@
             const progressColor = isFull ? '#FF3B30' : (progress > 80 ? '#eab308' : '#CCFF00');
 
             // 🌈 BROADCAST V7: HYPER-COMPACT & ULTRA-COLORFUL (MATTE AESTHETIC)
-            const themeColor = isLive ? '#FF2D55' : (isCancelled ? '#ef4444' : categoryColor);
+            const themeColor = isLive ? '#FF2D55' : (isCancelled ? '#ef4444' : (isEntreno ? '#8b5cf6' : categoryColor));
             
+            // Estilos específicos para entrenos
+            const cardBg = isEntreno ? 'linear-gradient(145deg, #18112b 0%, #0c0914 100%)' : '#141414';
+            const cardBorder = isEntreno ? '1px solid rgba(139, 92, 246, 0.15)' : '1px solid rgba(255,255,255,0.04)';
+            const cardGlow = isEntreno ? '0 20px 40px rgba(0,0,0,0.8), 0 0 25px rgba(139, 92, 246, 0.1)' : '0 20px 40px rgba(0,0,0,0.6)';
+            const tileClass = isEntreno ? 'entreno-tile-interactive' : 'premium-tile-interactive';
+            const cardClass = isEntreno ? 'entreno-premium-card' : '';
+            
+            // Iconos y colores por tipo
+            const timeIconBg = isEntreno ? 'rgba(139, 92, 246, 0.15)' : 'rgba(204, 255, 0, 0.12)';
+            const timeIconColor = isEntreno ? '#a855f7' : '#CCFF00';
+            const capacityIconColor = isEntreno ? '#06b6d4' : '#FF2D55';
+            const locIconBg = isEntreno ? 'rgba(139, 92, 246, 0.15)' : 'rgba(255, 45, 85, 0.15)';
+            const locIconColor = isEntreno ? '#8b5cf6' : '#FF2D55';
+
+            // Estado dinámico
+            let statusBg = '';
+            let statusColorText = '#fff';
+            let statusGlowColor = 'rgba(0,0,0,0.3)';
+
+            if (isLive) {
+                statusBg = 'linear-gradient(135deg, #FF2D55, #ff0844)';
+                statusGlowColor = '#FF2D5566';
+            } else if (isCancelled) {
+                statusBg = 'linear-gradient(135deg, #666, #444)';
+            } else if (isFinished || evt.status === 'finished') {
+                statusBg = 'linear-gradient(135deg, #555, #333)';
+            } else {
+                if (isEntreno) {
+                    statusBg = 'linear-gradient(135deg, #8b5cf6, #6366f1)';
+                    statusColorText = '#fff';
+                    statusGlowColor = 'rgba(139,92,246,0.4)';
+                } else {
+                    statusBg = 'linear-gradient(135deg, #CCFF00, #a3e600)';
+                    statusColorText = '#000';
+                    statusGlowColor = '#CCFF0055';
+                }
+            }
+
+            // Analizar e integrar feedback de nivel (solo para Entrenos)
+            const levelMatch = evt.name.match(/\b[1-7]\.[0-9]\b/);
+            let levelBadgeHtml = '';
+            let levelFeedbackHtml = '';
+            if (levelMatch) {
+                levelBadgeHtml = `<span style="background: rgba(255,255,255,0.08); color: #fff; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.6rem; font-weight: 700; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-graduation-cap"></i> NIVEL ${levelMatch[0]}</span>`;
+                
+                if (user && user.level) {
+                    const eventLvl = parseFloat(levelMatch[0]);
+                    const userLvl = parseFloat(user.level);
+                    const diff = Math.abs(userLvl - eventLvl);
+                    if (diff <= 0.35) {
+                        levelFeedbackHtml = `<span style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-check-circle"></i> ¡TU NIVEL!</span>`;
+                    } else if (userLvl > eventLvl) {
+                        levelFeedbackHtml = `<span style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-angle-double-up"></i> NIVEL FÁCIL</span>`;
+                    } else {
+                        levelFeedbackHtml = `<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-exclamation-triangle"></i> EXIGENTE</span>`;
+                    }
+                }
+            }
+
             return `
-                <div id="event-card-${evt.id}" onclick="${cardAction}" style="
-                    background: #141414;
+                <div id="event-card-${evt.id}" class="${cardClass}" onclick="${cardAction}" style="
+                    background: ${cardBg};
                     border-radius: 24px;
                     overflow: hidden;
                     margin-bottom: 18px;
-                    border: 1px solid rgba(255,255,255,0.04);
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+                    border: ${cardBorder};
+                    box-shadow: ${cardGlow};
                     font-family: 'Outfit', sans-serif;
                     position: relative;
-                    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                 ">
                     <!-- HEADER STRIPE -->
                     <div style="height: 4px; background: ${themeColor}; opacity: 0.9;"></div>
@@ -1251,9 +1331,19 @@
                                 <span style="color: #CCFF00;">${priceSoc}€</span>
                             </div>
 
-                            <div style="position: absolute; bottom: 12px; left: 12px; display: flex; align-items: center; gap: 6px;">
-                                <span style="background: ${themeColor}; color: #000; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">${formatLabel}</span>
-                                <span style="background: rgba(255,255,255,0.1); color: #fff; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.6rem; font-weight: 700; backdrop-filter: blur(4px);">${maxCourts} PISTAS</span>
+                            <div style="position: absolute; bottom: 12px; left: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; z-index: 5;">
+                                ${isEntreno ? `
+                                    <span style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.45); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-user-ninja"></i> ACADEMIA PRO</span>
+                                    ${isTwister ? 
+                                        `<span style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 10px rgba(6, 182, 212, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-wind"></i> TWISTER INDIVIDUAL</span>` :
+                                        `<span style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-lock"></i> PAREJA FIJA</span>`
+                                    }
+                                    ${levelBadgeHtml}
+                                    ${levelFeedbackHtml}
+                                ` : `
+                                    <span style="background: ${themeColor}; color: #000; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">${formatLabel}</span>
+                                    <span style="background: rgba(255,255,255,0.1); color: #fff; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.6rem; font-weight: 700; backdrop-filter: blur(4px);">${maxCourts} PISTAS</span>
+                                `}
                             </div>
 
                             <!-- ACTION BUTTON (FAB) -->
@@ -1271,14 +1361,14 @@
                             <!-- 💎 THE 4 PREMIUM TILES (UNIFIED LIGHT THEME) -->
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
                                 <!-- Time Tile -->
-                                <div class="premium-tile-interactive" style="background: rgba(255,255,255,0.08); border-radius: 14px; padding: 10px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-                                    <div style="width: 28px; height: 28px; background: rgba(204,255,0,0.12); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                        <i class="far fa-clock" style="color: #CCFF00; font-size: 0.85rem;"></i>
+                                <div class="${tileClass}" style="background: rgba(255,255,255,0.08); border-radius: 14px; padding: 10px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                    <div style="width: 28px; height: 28px; background: ${timeIconBg}; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="far fa-clock" style="color: ${timeIconColor}; font-size: 0.85rem;"></i>
                                     </div>
                                     <span style="font-weight: 900; font-size: 0.85rem; color: #eee;">${timeLabel}</span>
                                 </div>
                                 <!-- Category Tile -->
-                                <div class="premium-tile-interactive" style="background: rgba(255,255,255,0.08); border-radius: 14px; padding: 10px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                <div class="${tileClass}" style="background: rgba(255,255,255,0.08); border-radius: 14px; padding: 10px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
                                     <div style="width: 28px; height: 28px; background: ${categoryColor}20; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                                         <i class="fas ${categoryIcon}" style="color: ${categoryColor}; font-size: 0.85rem;"></i>
                                     </div>
@@ -1287,13 +1377,13 @@
                             </div>
 
                             <!-- CAPACITY & PROGRESS (LIGHT THEME) -->
-                            <div class="premium-tile-interactive" onclick="event.stopPropagation(); window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')" style="background: rgba(255,255,255,0.08); border-radius: 16px; padding: 12px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 12px;">
+                            <div class="${tileClass}" onclick="event.stopPropagation(); window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')" style="background: rgba(255,255,255,0.08); border-radius: 16px; padding: 12px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 12px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; position: relative;">
                                     <div style="display: flex; align-items: center; gap: 8px;">
-                                        <i class="fas fa-users" style="color: #FF2D55; font-size: 0.9rem;"></i>
+                                        <i class="fas fa-users" style="color: ${capacityIconColor}; font-size: 0.9rem;"></i>
                                         <span style="font-weight: 950; font-size: 0.95rem; color: #fff;">${playerCount} <small style="color:#666;">/ ${maxPlayers}</small></span>
                                     </div>
-                                    <span style="font-size: 0.65rem; font-weight: 950; color: ${isFull ? '#FF3B30' : '#CCFF00'}; text-transform: uppercase; letter-spacing: 0.5px;">${isFull ? 'COMPLETO' : 'DISPONIBLE'}</span>
+                                    <span style="font-size: 0.65rem; font-weight: 950; color: ${isFull ? '#FF3B30' : (isEntreno ? '#a855f7' : '#CCFF00')}; text-transform: uppercase; letter-spacing: 0.5px;">${isFull ? 'COMPLETO' : 'DISPONIBLE'}</span>
                                 </div>
                                 <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden;">
                                     <div style="width: ${progress}%; height: 100%; background: ${progressColor}; box-shadow: 0 0 10px ${progressColor}55;"></div>
@@ -1304,10 +1394,10 @@
                             <!-- 📍 SUPER CHULO FOOTER (LIGHT LOCATION + PREMIUM STATUS) -->
                             <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 5px; gap: 10px;">
                                 <!-- Location Box (Light Theme + Interactive) -->
-                                <div class="premium-tile-interactive" onclick="event.stopPropagation(); window.PremiumModal.alert({ title: '📍 UBICACIÓN', message: 'Sede: ${evt.sede || evt.location || 'Barcelona Pádel el Prat'}<br><br>Este evento se disputa en las instalaciones oficiales del club.', type: 'info' })" 
+                                <div class="${tileClass}" onclick="event.stopPropagation(); window.PremiumModal.alert({ title: '📍 UBICACIÓN', message: 'Sede: ${evt.sede || evt.location || 'Barcelona Pádel el Prat'}<br><br>Este evento se disputa en las instalaciones oficiales del club.', type: 'info' })" 
                                      style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.08); padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); flex: 1; min-width: 0; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-                                    <div style="width: 32px; height: 32px; background: rgba(255,45,85,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <i class="fas fa-map-marker-alt" style="color: #FF2D55; font-size: 0.9rem;"></i>
+                                    <div style="width: 32px; height: 32px; background: ${locIconBg}; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i class="fas fa-map-marker-alt" style="color: ${locIconColor}; font-size: 0.9rem;"></i>
                                     </div>
                                     <div style="display: flex; flex-direction: column; min-width: 0;">
                                         <span style="font-size: 0.55rem; font-weight: 800; color: #888; text-transform: uppercase; letter-spacing: 1px;">Sede Oficial</span>
@@ -1318,11 +1408,11 @@
                                 <!-- 🔥 DYNAMIC STATUS BADGE -->
                                 <div style="position: relative; flex-shrink: 0;">
                                     ${isLive ? `<div style="position: absolute; inset: -4px; border-radius: 16px; background: #FF2D55; opacity: 0.4; animation: status-breathe 1.2s ease-in-out infinite; filter: blur(6px);"></div>` : ''}
-                                    ${!isLive && !isCancelled && !isFinished ? `<div style="position: absolute; inset: -3px; border-radius: 16px; background: #CCFF00; opacity: 0.3; animation: status-breathe 2s ease-in-out infinite; filter: blur(5px);"></div>` : ''}
+                                    ${!isLive && !isCancelled && !isFinished ? `<div style="position: absolute; inset: -3px; border-radius: 16px; background: ${isEntreno ? '#a855f7' : '#CCFF00'}; opacity: 0.3; animation: status-breathe 2s ease-in-out infinite; filter: blur(5px);"></div>` : ''}
                                     <div style="
                                         position: relative;
-                                        background: ${isLive ? 'linear-gradient(135deg, #FF2D55, #ff0844)' : (isCancelled ? 'linear-gradient(135deg, #666, #444)' : (isFinished ? 'linear-gradient(135deg, #555, #333)' : 'linear-gradient(135deg, #CCFF00, #a3e600)'))};
-                                        color: ${isLive || isCancelled || isFinished ? '#fff' : '#000'};
+                                        background: ${statusBg};
+                                        color: ${statusColorText};
                                         padding: 10px 18px;
                                         border-radius: 14px;
                                         font-size: 0.7rem;
@@ -1332,7 +1422,7 @@
                                         display: flex;
                                         align-items: center;
                                         gap: 8px;
-                                        box-shadow: 0 6px 20px ${isLive ? '#FF2D5566' : (isFinished || isCancelled ? 'rgba(0,0,0,0.3)' : '#CCFF0055')};
+                                        box-shadow: 0 6px 20px ${statusGlowColor};
                                         ${isLive ? 'animation: status-shake 0.5s ease-in-out infinite alternate;' : ''}
                                     ">
                                         <i class="fas ${isLive ? 'fa-broadcast-tower' : (isCancelled ? 'fa-skull-crossbones' : (isFinished ? 'fa-flag-checkered' : 'fa-bolt'))}" style="
