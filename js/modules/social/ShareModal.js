@@ -182,7 +182,15 @@
                     const captureArea = document.getElementById('capture-area');
 
                     if (typeof html2canvas === 'undefined') {
-                        throw new Error("Librería de captura no cargada");
+                        if (window.loadExternalScript) {
+                            try {
+                                await window.loadExternalScript('https://html2canvas.hertzen.com/dist/html2canvas.min.js', 'html2canvas');
+                            } catch (err) {
+                                throw new Error("No se pudo iniciar el generador de imágenes.");
+                            }
+                        } else {
+                            throw new Error("Librería de captura no cargada");
+                        }
                     }
 
                     const canvas = await html2canvas(captureArea, {

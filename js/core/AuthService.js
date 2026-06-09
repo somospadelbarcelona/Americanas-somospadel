@@ -12,6 +12,11 @@
         }
 
         init() {
+            // Revalidar la sesión de fondo al iniciar
+            setTimeout(() => {
+                this.revalidateSession();
+            }, 1000);
+
             if (auth) {
                 auth.onAuthStateChanged(user => {
                     console.log("Firebase Auth State Changed:", user ? user.uid : "No user");
@@ -21,19 +26,78 @@
                         if (user) {
                             this.handleAuthStateChange(user);
                         } else {
-                            window.Store.setState('currentUser', null);
+                            // No cerrar sesión si hay un usuario logueado por vía local fallback
+                            const current = window.Store.getState('currentUser');
+                            if (current && current.localAuth) {
+                                console.log("🔒 Keeping local auth session active, ignoring Firebase Auth null state.");
+                            } else {
+                                window.Store.setState('currentUser', null);
+                            }
                         }
                     } else {
                         console.warn("⚠️ window.Store not ready during Auth session change.");
                         // Retry once after a small delay
                         setTimeout(() => {
                             if (window.Store && window.Store.setState) {
-                                if (user) this.handleAuthStateChange(user);
-                                else window.Store.setState('currentUser', null);
+                                if (user) {
+                                    this.handleAuthStateChange(user);
+                                } else {
+                                    const current = window.Store.getState('currentUser');
+                                    if (current && current.localAuth) {
+                                        console.log("🔒 Keeping local auth session active, ignoring Firebase Auth null state (retry).");
+                                    } else {
+                                        window.Store.setState('currentUser', null);
+                                    }
+                                }
                             }
                         }, 500);
                     }
                 });
+            }
+        }
+
+        async revalidateSession() {
+            if (!window.Store) return;
+            const current = window.Store.getState('currentUser');
+            if (!current) return;
+
+            console.log("🔄 [AuthService] Revalidando sesión activa en segundo plano...");
+            try {
+                const phone = current.phone || (current.email ? current.email.split('@')[0] : '');
+                if (!phone) return;
+
+                const playerData = await window.FirebaseDB.players.getByPhone(phone);
+                if (!playerData) {
+                    console.warn("⚠️ Usuario no encontrado en base de datos. Cerrando sesión...");
+                    this.logout();
+                    return;
+                }
+
+                if (playerData.status === 'blocked' || playerData.status === 'pending') {
+                    console.warn(`⚠️ Usuario con estado '${playerData.status}'. Cerrando sesión...`);
+                    this.logout();
+                    if (window.PremiumModal) {
+                        window.PremiumModal.alert({
+                            title: "🔒 SESIÓN EXPIRADA",
+                            message: playerData.status === 'blocked' 
+                                ? "Tu cuenta ha sido bloqueada." 
+                                : "Tu cuenta está pendiente de validación por un administrador.",
+                            type: 'warning'
+                        });
+                    }
+                    return;
+                }
+
+                // Si todo está bien, actualizamos el Store con los datos más recientes de la BD
+                const updatedUser = {
+                    ...current,
+                    ...playerData
+                };
+                window.Store.setState('currentUser', updatedUser);
+                console.log("✅ [AuthService] Sesión revalidada y actualizada con éxito.");
+
+            } catch (e) {
+                console.error("❌ Error al revalidar sesión (posiblemente offline):", e);
             }
         }
 

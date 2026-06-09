@@ -5,7 +5,6 @@
 (function () {
     class Router {
         constructor() {
-            this.currentRoute = 'dashboard';
             this.routes = {
                 'dashboard': () => this.renderDashboard(),
                 'americanas': () => this.handleControllerTab('EventsController', 'events'),
@@ -35,10 +34,18 @@
                 }
             };
 
+            // Determinar la ruta inicial desde el hash de la URL (Deep Linking)
+            const initialHash = window.location.hash.replace('#', '');
+            this.currentRoute = this.routes[initialHash] ? initialHash : 'dashboard';
+
             // Handle browser navigation
             window.onpopstate = (event) => {
                 if (event.state && event.state.route) {
                     this.navigate(event.state.route, true);
+                } else {
+                    const currentHash = window.location.hash.replace('#', '');
+                    const targetRoute = this.routes[currentHash] ? currentHash : 'dashboard';
+                    this.navigate(targetRoute, true);
                 }
             };
 

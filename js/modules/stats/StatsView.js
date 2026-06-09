@@ -296,7 +296,12 @@
             // Destroy previous charts if any
             Object.values(this.chartInstances).forEach(c => c.destroy());
 
-            setTimeout(() => {
+            const initChartInstance = () => {
+                if (typeof Chart === 'undefined') {
+                    setTimeout(initChartInstance, 100);
+                    return;
+                }
+
                 // 1. Points Chart (Area)
                 const ctxPoints = document.getElementById('pointsChart')?.getContext('2d');
                 if (ctxPoints) {
@@ -397,7 +402,16 @@
                         }
                     });
                 }
-            }, 100);
+            };
+
+            // Trigger dynamic script load before initializing charts
+            if (window.loadExternalScript) {
+                window.loadExternalScript('https://cdn.jsdelivr.net/npm/chart.js', 'Chart')
+                    .then(() => initChartInstance())
+                    .catch(err => console.error("❌ Error loading Chart.js dinámicamente en StatsView:", err));
+            } else {
+                setTimeout(initChartInstance, 100);
+            }
         }
     }
 

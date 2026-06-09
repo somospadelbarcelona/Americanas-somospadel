@@ -5,8 +5,19 @@
 (function () {
     class StateManager {
         constructor() {
+            let initialUser = null;
+            try {
+                const cached = localStorage.getItem('currentUser');
+                if (cached) {
+                    initialUser = JSON.parse(cached);
+                    console.log("💾 [StateManager] Sesión recuperada de localStorage:", initialUser.email);
+                }
+            } catch (e) {
+                console.error("Error loading cached user:", e);
+            }
+
             this.state = {
-                currentUser: null,
+                currentUser: initialUser,
                 dashboardData: null,
                 // ... más estado inicial
             };
@@ -19,6 +30,18 @@
 
         setState(key, value) {
             this.state[key] = value;
+            if (key === 'currentUser') {
+                window.currentUser = value; // Sincronización global
+                try {
+                    if (value) {
+                        localStorage.setItem('currentUser', JSON.stringify(value));
+                    } else {
+                        localStorage.removeItem('currentUser');
+                    }
+                } catch (e) {
+                    console.error("Error updating localStorage for currentUser:", e);
+                }
+            }
             // Notificar suscriptores
             if (this.listeners[key]) {
                 this.listeners[key].forEach(callback => callback(value));

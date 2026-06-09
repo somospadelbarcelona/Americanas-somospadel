@@ -434,7 +434,14 @@
                 });
             };
 
-            initChartInstance();
+            // Iniciar la carga dinámica de Chart.js en demanda
+            if (window.loadExternalScript) {
+                window.loadExternalScript('https://cdn.jsdelivr.net/npm/chart.js', 'Chart')
+                    .then(() => initChartInstance())
+                    .catch(err => console.error("❌ Error al cargar Chart.js dinámicamente:", err));
+            } else {
+                initChartInstance();
+            }
         }
 
         renderPodium(players) {

@@ -684,48 +684,62 @@
             // Chart Rendering
             if (tabName === 'stats') {
                 const ctx = document.getElementById(`chart-${teamId}`);
-                if (ctx && !ctx.dataset.rendered && window.Chart) {
-                    ctx.dataset.rendered = 'true';
-                    const chartData = this.chartsData[teamId];
-                    if (chartData && chartData.labels.length > 1) {
-                        new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: chartData.labels,
-                                datasets: [{
-                                    label: 'Puntos Totales',
-                                    data: chartData.data,
-                                    borderColor: '#38b000',
-                                    backgroundColor: 'rgba(56, 176, 0, 0.1)',
-                                    borderWidth: 3,
-                                    pointBackgroundColor: '#ffffff',
-                                    pointBorderColor: '#38b000',
-                                    pointBorderWidth: 2,
-                                    pointRadius: 4,
-                                    pointHoverRadius: 6,
-                                    tension: 0.3,
-                                    fill: true
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: { legend: { display: false } },
-                                scales: {
-                                    y: { 
-                                        beginAtZero: true, 
-                                        ticks: { 
-                                            stepSize: 1, 
-                                            precision: 0,
-                                            font: { size: 10, family: 'Outfit' } 
-                                        }, 
-                                        grid: { borderDash: [4, 4] } 
-                                    },
-                                    x: { ticks: { font: { size: 10, family: 'Outfit' } }, grid: { display: false } }
+                if (ctx && !ctx.dataset.rendered) {
+                    const renderChartInstance = () => {
+                        if (typeof Chart === 'undefined') {
+                            setTimeout(renderChartInstance, 100);
+                            return;
+                        }
+                        ctx.dataset.rendered = 'true';
+                        const chartData = this.chartsData[teamId];
+                        if (chartData && chartData.labels.length > 1) {
+                            new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: chartData.labels,
+                                    datasets: [{
+                                        label: 'Puntos Totales',
+                                        data: chartData.data,
+                                        borderColor: '#38b000',
+                                        backgroundColor: 'rgba(56, 176, 0, 0.1)',
+                                        borderWidth: 3,
+                                        pointBackgroundColor: '#ffffff',
+                                        pointBorderColor: '#38b000',
+                                        pointBorderWidth: 2,
+                                        pointRadius: 4,
+                                        pointHoverRadius: 6,
+                                        tension: 0.3,
+                                        fill: true
+                                    }]
                                 },
-                                animation: { duration: 800, easing: 'easeOutQuart' }
-                            }
-                        });
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: { legend: { display: false } },
+                                    scales: {
+                                        y: { 
+                                            beginAtZero: true, 
+                                            ticks: { 
+                                                stepSize: 1, 
+                                                precision: 0,
+                                                font: { size: 10, family: 'Outfit' } 
+                                            }, 
+                                            grid: { borderDash: [4, 4] } 
+                                        },
+                                        x: { ticks: { font: { size: 10, family: 'Outfit' } }, grid: { display: false } }
+                                    },
+                                    animation: { duration: 800, easing: 'easeOutQuart' }
+                                }
+                            });
+                        }
+                    };
+
+                    if (window.loadExternalScript) {
+                        window.loadExternalScript('https://cdn.jsdelivr.net/npm/chart.js', 'Chart')
+                            .then(() => renderChartInstance())
+                            .catch(err => console.error("❌ Error al cargar Chart.js en TeamView:", err));
+                    } else {
+                        renderChartInstance();
                     }
                 }
             }
@@ -1499,6 +1513,20 @@
                 btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> GENERANDO...`;
             }
 
+            if (window.loadExternalScript) {
+                try {
+                    await window.loadExternalScript('https://html2canvas.hertzen.com/dist/html2canvas.min.js', 'html2canvas');
+                } catch (err) {
+                    console.error("❌ Error loading html2canvas:", err);
+                    alert("Error: No se pudo iniciar el generador de imágenes. Reintente.");
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> REINTENTAR`;
+                    }
+                    return;
+                }
+            }
+
             const teams = this.lastTeams || [];
 
             try {
@@ -1555,6 +1583,20 @@
             if (btn) {
                 btn.disabled = true;
                 btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> PREPARANDO...`;
+            }
+
+            if (window.loadExternalScript) {
+                try {
+                    await window.loadExternalScript('https://html2canvas.hertzen.com/dist/html2canvas.min.js', 'html2canvas');
+                } catch (err) {
+                    console.error("❌ Error loading html2canvas:", err);
+                    alert("Error: No se pudo iniciar el generador de imágenes. Reintente.");
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> REINTENTAR`;
+                    }
+                    return;
+                }
             }
 
             const teams = this.lastTeams || [];
@@ -2422,6 +2464,20 @@
                 btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> GENERANDO...`;
             }
 
+            if (window.loadExternalScript) {
+                try {
+                    await window.loadExternalScript('https://html2canvas.hertzen.com/dist/html2canvas.min.js', 'html2canvas');
+                } catch (err) {
+                    console.error("❌ Error loading html2canvas:", err);
+                    alert("Error: No se pudo iniciar el generador de imágenes. Reintente.");
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> REINTENTAR`;
+                    }
+                    return;
+                }
+            }
+
             const team = this.lastTeams.find(t => t.id === teamId);
             if (!team) return;
 
@@ -2479,6 +2535,20 @@
             if (btn) {
                 btn.disabled = true;
                 btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> PREPARANDO...`;
+            }
+
+            if (window.loadExternalScript) {
+                try {
+                    await window.loadExternalScript('https://html2canvas.hertzen.com/dist/html2canvas.min.js', 'html2canvas');
+                } catch (err) {
+                    console.error("❌ Error loading html2canvas:", err);
+                    alert("Error: No se pudo iniciar el generador de imágenes. Reintente.");
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> REINTENTAR`;
+                    }
+                    return;
+                }
             }
 
             const team = this.lastTeams.find(t => t.id === teamId);

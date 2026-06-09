@@ -48,6 +48,15 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
         db = firebase.firestore();
         auth = firebase.auth();
 
+        // Forzar persistencia local en Firebase Auth
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+            .then(() => {
+                console.log("🔒 [FirebaseInit] Persistencia de Auth establecida en LOCAL");
+            })
+            .catch(err => {
+                console.error("❌ [FirebaseInit] Error al establecer la persistencia de Auth:", err);
+            });
+
         // Export to window for global access across scripts
         window.db = db;
         window.auth = auth;
@@ -55,7 +64,11 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
 
         // Listen for auth state changes and expose globally
         firebase.auth().onAuthStateChanged(user => {
-            window.currentUser = user;
+            // Evitar sobreescribir con null si hay una sesión local activa
+            const currentStoreUser = window.Store ? window.Store.getState('currentUser') : null;
+            if (user || !(currentStoreUser && currentStoreUser.localAuth)) {
+                window.currentUser = user;
+            }
             console.log('🔐 Auth state changed:', user ? `uid=${user.uid}` : 'no user');
         });
 

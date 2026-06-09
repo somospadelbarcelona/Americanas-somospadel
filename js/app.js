@@ -3,6 +3,50 @@
  * Entry Point de la aplicación compatible con file://
  */
 (function () {
+    // 🚀 Cargador dinámico de scripts externos para optimización de rendimiento (Lazy Loading)
+    window.loadExternalScript = (url, globalName) => {
+        return new Promise((resolve, reject) => {
+            if (globalName && window[globalName]) {
+                resolve(window[globalName]);
+                return;
+            }
+            // Comprobar si ya existe la etiqueta script
+            const existingScript = document.querySelector(`script[src="${url}"]`);
+            if (existingScript) {
+                // Si ya existe pero aún no se ha cargado en window, esperamos a su disponibilidad
+                const checkInterval = setInterval(() => {
+                    if (window[globalName]) {
+                        clearInterval(checkInterval);
+                        resolve(window[globalName]);
+                    }
+                }, 50);
+                // Timeout de seguridad de 10s
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    if (window[globalName]) {
+                        resolve(window[globalName]);
+                    } else {
+                        reject(new Error(`Timeout esperando a la carga del script existente: ${url}`));
+                    }
+                }, 10000);
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = url;
+            script.defer = true;
+            script.onload = () => {
+                console.log(`📦 [LazyLoader] Script cargado con éxito: ${url}`);
+                resolve(window[globalName]);
+            };
+            script.onerror = (err) => {
+                console.error(`❌ [LazyLoader] Error al cargar script: ${url}`, err);
+                reject(new Error(`Error cargando el script: ${url}`));
+            };
+            document.head.appendChild(script);
+        });
+    };
+
     /**
      * Calcula la hora exacta de un partido basándose en:
      * - startTime: hora de inicio del evento (ej: "10:00")
@@ -92,7 +136,10 @@
             }
 
             const authModal = document.getElementById('auth-modal');
-            if (authModal) authModal.classList.add('hidden');
+            if (authModal) {
+                authModal.classList.add('hidden');
+                authModal.style.setProperty('display', 'none', 'important');
+            }
 
             const appShell = document.getElementById('app-shell');
             if (appShell) appShell.classList.remove('hidden');
@@ -248,7 +295,10 @@
         handleGuest() {
             this.updateGlobalHeader(null);
             const authModal = document.getElementById('auth-modal');
-            if (authModal) authModal.classList.remove('hidden');
+            if (authModal) {
+                authModal.classList.remove('hidden');
+                authModal.style.setProperty('display', 'flex', 'important');
+            }
 
             const appShell = document.getElementById('app-shell');
             if (appShell) appShell.classList.add('hidden');
