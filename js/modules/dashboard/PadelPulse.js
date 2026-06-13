@@ -8,7 +8,7 @@
 
     const PadelPulse = {
 
-        async render(rootId) {
+        async render(rootId, mode = 'scoreboard_only') {
             const root = document.getElementById(rootId);
             if (!root) return;
             const user = window.Store?.getState('currentUser');
@@ -16,10 +16,10 @@
             root.innerHTML = this._skeleton();
             try {
                 const data = await this._buildData(user);
-                root.innerHTML = this._template(data, user);
-                this._initAnimations(data);
+                root.innerHTML = this._template(data, user, mode);
+                this._initAnimations(data, mode);
             } catch (err) {
-                console.error('[PadelPulse] Error:', err);
+                console.error('[PadelPulse] Error:', err, 'mode:', mode);
                 root.innerHTML = '';
             }
         },
@@ -227,7 +227,7 @@
             return { greeting, nextEvent, wins, losses, winRate, myRank, rivalName, streak, streakType, recentForm, totalMatches, totalPlayers, recentActivePlayers, totalAccesses };
         },
 
-        _template(data, user) {
+        _template(data, user, mode) {
             const { greeting, nextEvent, wins, losses, winRate, myRank, rivalName, streak, streakType, recentForm, totalMatches, totalPlayers, recentActivePlayers, totalAccesses } = data;
             const firstName = (user.name || 'Jugador').split(' ')[0];
             const level = parseFloat(user.level || 3.5).toFixed(2);
@@ -318,7 +318,7 @@
     <div class="pp6-blob" style="width:140px;height:140px;background:#00e5ff;bottom:-30px;left:-30px;animation:pp6-blob2 10s ease-in-out infinite;"></div>
 
     <!-- ═══════════════ HEADER ═══════════════ -->
-    <div style="padding: 18px 16px 14px; display:flex; justify-content:space-between; align-items:flex-start; position:relative; z-index:2;">
+    <div style="padding: 18px 16px 14px; display: ${mode === 'scoreboard_only' ? 'none' : 'flex'}; justify-content:space-between; align-items:flex-start; position:relative; z-index:2;">
 
         <!-- Avatar + name -->
         <div style="display:flex; align-items:center; gap:13px;">
@@ -389,7 +389,7 @@
 
     <!-- ═══════════════ FORM DOTS ═══════════════ -->
     ${recentForm.length > 0 ? `
-    <div style="padding: 0 16px 15px; display:flex; align-items:center; gap:10px; position:relative; z-index:2;">
+    <div style="padding: 0 16px 15px; display: ${mode === 'welcome_and_event' ? 'none' : 'flex'}; align-items:center; gap:10px; position:relative; z-index:2;">
         <span style="color: #64748b; font-size:0.5rem; font-weight:950; text-transform:uppercase; letter-spacing:1px; white-space:nowrap; min-width:40px;">Forma</span>
         <div style="display:flex; gap:6px; flex:1;">
             ${recentForm.map((r, i) => `
@@ -408,10 +408,10 @@
     </div>` : '<div style="height:10px; position:relative; z-index:2;"></div>'}
 
     <!-- ═══════════════ DIVIDER ═══════════════ -->
-    <div style="height:1px; background: #f1f5f9; margin: 0 16px 15px; position:relative; z-index:2;"></div>
+    <div style="height:1px; background: #f1f5f9; margin: 0 16px 15px; position:relative; z-index:2; display: ${mode === 'scoreboard_only' ? 'none' : 'block'};"></div>
 
     <!-- ═══════════════ STADIUM SCOREBOARD (SUPERBOWL EDITION) ═══════════════ -->
-    <div onclick="window.Router?.navigate('ranking')" style="
+    <div onclick="window.Router?.navigate('ranking')" style="display: ${mode === 'welcome_and_event' ? 'none' : 'block'};
         margin: 0 14px 16px;
         background: radial-gradient(circle at top, #111827 0%, #030712 100%);
         border-radius: 24px;
@@ -578,7 +578,7 @@
 
     <!-- ═══════════════ NEXT EVENT ═══════════════ -->
     ${nextEvent ? `
-    <div style="padding: 0 16px 16px; position:relative; z-index:2;">
+    <div style="padding: 0 16px 16px; position:relative; z-index:2; display: ${mode === 'scoreboard_only' ? 'none' : 'block'};">
         <div class="pp6-event-card" onclick="window.Router?.navigate('${nextEvent.route}')" style="
             background: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -630,7 +630,7 @@
                   </div>`}
         </div>
     </div>` : `
-    <div style="padding:0 16px 14px; position:relative; z-index:2;">
+    <div style="padding:0 16px 14px; position:relative; z-index:2; display: ${mode === 'scoreboard_only' ? 'none' : 'block'};">
         <div onclick="window.Router?.navigate('entrenos')" style="
             background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px;
             padding: 18px; text-align: center; cursor: pointer; transition: all 0.2s;"
@@ -642,7 +642,7 @@
     </div>`}
 
     <!-- ═══════════════ STATS GRID ═══════════════ -->
-    <div style="padding: 0 16px 20px; display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; position:relative; z-index:2;">
+    <div style="padding: 0 16px 20px; display: ${mode === 'welcome_and_event' ? 'none' : 'grid'}; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; position:relative; z-index:2;">
 
         <!-- VICTORIAS -->
         <div class="pp6-tile" onclick="window.Router?.navigate('profile')"
@@ -676,7 +676,8 @@
 </div>`;
         },
 
-        _initAnimations(data) {
+        _initAnimations(data, mode) {
+            if (mode === 'welcome_and_event') return; // Sin contadores numéricos en el modo bienvenida
             const animCount = (id, target, suffix = '', delay = 0) => {
                 setTimeout(() => {
                     const el = document.getElementById(id);
