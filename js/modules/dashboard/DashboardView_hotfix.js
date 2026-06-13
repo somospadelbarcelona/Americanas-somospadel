@@ -273,8 +273,6 @@
                     padding-top: 0;
                 ">
 
-                    <!-- 🏓 PADEL PULSE — Widget personalizado en tiempo real -->
-                    <div id="padel-pulse-widget-root" style="animation: floatUp 0.5s ease-out forwards;"></div>
 
                     <!-- 0. HERO CARD (CONTEXT AWARE) -->
                     <div id="hero-card-root" style="animation: floatUp 0.8s ease-out forwards;">
@@ -651,15 +649,6 @@
                 }
             } catch (e) {
                 console.error("Error rendering StoryFeedWidget:", e);
-            }
-
-            // 🏓 PADEL PULSE — Widget personalizado
-            try {
-                if (window.PadelPulse) {
-                    window.PadelPulse.render('padel-pulse-widget-root');
-                }
-            } catch (e) {
-                console.error("Error rendering PadelPulse:", e);
             }
 
             // 🎾 PARTIDAS ABIERTAS — Widget de publicidad en tiempo real
