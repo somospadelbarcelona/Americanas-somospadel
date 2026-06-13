@@ -324,8 +324,15 @@
             chartContainer.style.display = 'block';
 
             // Wait for Chart.js to load fully if it's deferred
+            let retries = 0;
             const initChartInstance = () => {
                 if (typeof Chart === 'undefined') {
+                    retries++;
+                    if (retries > 20) {
+                        console.warn("⚠️ [RankingView] Chart.js could not be loaded. Showing fallback UI.");
+                        canvas.parentNode.innerHTML = `<div style="color: #64748b; font-size: 0.7rem; font-weight: 700; height: 260px; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center;">Gráfico de rendimiento no disponible (sin conexión)</div>`;
+                        return;
+                    }
                     setTimeout(initChartInstance, 100);
                     return;
                 }

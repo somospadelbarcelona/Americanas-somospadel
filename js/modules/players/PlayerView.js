@@ -477,6 +477,19 @@
             // Destroy previous instances
             Object.values(this.charts).forEach(c => c && c.destroy && c.destroy());
 
+            if (typeof Chart === 'undefined') {
+                console.warn("⚠️ [PlayerView] Chart.js is not loaded. Skipping chart rendering.");
+                const winCanvas = document.getElementById('profileWinRateChart');
+                if (winCanvas) {
+                    winCanvas.parentNode.innerHTML = `<div style="color: #64748b; font-size: 0.7rem; font-weight: 700; height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center;">Gráfico no disponible (sin conexión)</div>`;
+                }
+                const levelCanvas = document.getElementById('profileLevelChart');
+                if (levelCanvas) {
+                    levelCanvas.parentNode.innerHTML = `<div style="color: #64748b; font-size: 0.7rem; font-weight: 700; height: 150px; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center;">Historial no disponible (sin conexión)</div>`;
+                }
+                return;
+            }
+
             // 1. Win Rate Donut
             const ctxWin = document.getElementById('profileWinRateChart')?.getContext('2d');
             if (ctxWin) {

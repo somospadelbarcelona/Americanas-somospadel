@@ -294,10 +294,28 @@
 
         initCharts(stats, history) {
             // Destroy previous charts if any
-            Object.values(this.chartInstances).forEach(c => c.destroy());
+            Object.values(this.chartInstances).forEach(c => c && c.destroy && c.destroy());
 
+            let retries = 0;
             const initChartInstance = () => {
                 if (typeof Chart === 'undefined') {
+                    retries++;
+                    if (retries > 20) {
+                        console.warn("⚠️ [StatsView] Chart.js could not be loaded. Showing fallback UI.");
+                        const pointsCanvas = document.getElementById('pointsChart');
+                        if (pointsCanvas) {
+                            pointsCanvas.parentNode.innerHTML = `<div style="color: #64748b; font-size: 0.7rem; font-weight: 700; height: 180px; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center;">Gráfico de puntos no disponible (sin conexión)</div>`;
+                        }
+                        const winCanvas = document.getElementById('statsWinRateChart');
+                        if (winCanvas) {
+                            winCanvas.parentNode.innerHTML = `<div style="color: #64748b; font-size: 0.7rem; font-weight: 700; height: 180px; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center;">Gráfico de victorias no disponible (sin conexión)</div>`;
+                        }
+                        const radarCanvas = document.getElementById('radarChart');
+                        if (radarCanvas) {
+                            radarCanvas.parentNode.innerHTML = `<div style="color: #64748b; font-size: 0.7rem; font-weight: 700; height: 200px; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center;">Métricas de rendimiento no disponibles (sin conexión)</div>`;
+                        }
+                        return;
+                    }
                     setTimeout(initChartInstance, 100);
                     return;
                 }
