@@ -28,3 +28,13 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Agent & Temp Folders
+.agent/
+.antigravity/
+brain/
+chrome_data/
+backups/
+scratch/
+summapadel_test.txt
+temp.html

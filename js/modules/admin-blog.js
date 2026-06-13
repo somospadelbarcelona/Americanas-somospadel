@@ -106,6 +106,21 @@
                     `).join('')}
                 </div>
 
+                <!-- Configuración de IA (Gemini) -->
+                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 14px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.15rem;">🧠</span>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 0.72rem; font-weight: 800; color: #334155; text-transform: uppercase;">Inteligencia Artificial Gemini</span>
+                            <span style="font-size: 0.65rem; color: #64748b;">Escribe artículos 100% únicos y creativos con tu API Key.</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center; flex: 1; min-width: 250px; justify-content: flex-end;">
+                        <input type="password" id="admin-gemini-key" placeholder="API Key de Gemini (Opcional)..." style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.75rem; width: 60%; max-width: 250px; box-sizing: border-box;" onchange="localStorage.setItem('somospadel_gemini_api_key', this.value); if(window.OpenMatchesController) window.OpenMatchesController.geminiApiKey = this.value; if(window.SomosPadelNewsEngine) window.SomosPadelNewsEngine.geminiApiKey = this.value;">
+                        <button onclick="const input = document.getElementById('admin-gemini-key'); input.type = input.type === 'password' ? 'text' : 'password'; this.innerHTML = input.type === 'password' ? '<i class=\'fas fa-eye\'></i>' : '<i class=\'fas fa-eye-slash\'></i>';" style="background: white; border: 1px solid #cbd5e1; padding: 8px 10px; border-radius: 10px; cursor: pointer; color: #475569;"><i class="fas fa-eye"></i></button>
+                    </div>
+                </div>
+
                 <!-- Log de actividad -->
                 <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;">
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
@@ -269,6 +284,19 @@
                 if (window.AutoBlogEngine) window.AutoBlogEngine._addLog(`❌ ${e.message}`, 'error');
             }
         };
+
+        // Inicializar API Key de Gemini desde localStorage y propagar
+        setTimeout(() => {
+            const savedKey = localStorage.getItem('somospadel_gemini_api_key') || '';
+            const keyInput = document.getElementById('admin-gemini-key');
+            if (keyInput) {
+                keyInput.value = savedKey;
+            }
+            if (savedKey) {
+                if (window.OpenMatchesController) window.OpenMatchesController.geminiApiKey = savedKey;
+                if (window.SomosPadelNewsEngine) window.SomosPadelNewsEngine.geminiApiKey = savedKey;
+            }
+        }, 100);
 
         // Cargar tabla de posts
         await refreshBlogPosts();

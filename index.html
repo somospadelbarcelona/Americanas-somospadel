@@ -3,6 +3,87 @@
 
 <head>
     <meta charset="UTF-8">
+    <script>
+        // 🩺 DEBUGGER FLOTANTE PREMIUM PARA DISPOSITIVOS MÓVILES
+        (function() {
+            const errors = [];
+            function showDebugBanner(title, message, errorObj) {
+                let banner = document.getElementById('global-debug-banner');
+                if (!banner) {
+                    banner = document.createElement('div');
+                    banner.id = 'global-debug-banner';
+                    banner.style = "position:fixed; bottom:20px; left:15px; right:15px; background:rgba(15, 23, 42, 0.95); border:2px solid #ef4444; border-radius:20px; padding:18px; color:white; z-index:99999; font-family:'Outfit',sans-serif; font-size:0.75rem; box-shadow:0 15px 35px rgba(0,0,0,0.5); backdrop-filter:blur(10px); animation:slideUp 0.3s ease-out both;";
+                    
+                    const style = document.createElement('style');
+                    style.innerHTML = `
+                        @keyframes slideUp { from { transform: translateY(100px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+                    `;
+                    document.head.appendChild(style);
+                    document.body.appendChild(banner);
+                }
+                
+                errors.push({ title, message, stack: errorObj ? errorObj.stack : '' });
+                
+                banner.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; color:#ef4444; font-weight:950; text-transform:uppercase; font-size:0.8rem;">
+                        <i class="fas fa-exclamation-triangle"></i> ERROR DE CARGA EN MÓVIL (${errors.length})
+                    </div>
+                    <div id="debug-error-list" style="max-height:120px; overflow-y:auto; margin-bottom:14px; display:flex; flex-direction:column; gap:8px;">
+                        ${errors.map((e, idx) => `
+                            <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); padding:10px; border-radius:10px;">
+                                <div style="font-weight:800; color:#ff8080;">[${idx+1}] ${e.title}</div>
+                                <div style="color:rgba(255,255,255,0.85); font-family:monospace; margin-top:4px; font-size:0.68rem; word-break:break-all;">${e.message}</div>
+                                ${e.stack ? `<details style="margin-top:6px;"><summary style="color:#38bdf8; cursor:pointer; font-weight:800; font-size:0.6rem;">VER DETALLES</summary><pre style="font-size:0.6rem; color:#ccc; overflow-x:auto; margin:5px 0 0 0; white-space:pre-wrap; font-family:monospace; word-break:break-all;">${e.stack}</pre></details>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <button onclick="window.location.reload(true)" style="background:rgba(255,255,255,0.08); color:white; border:1px solid rgba(255,255,255,0.15); padding:10px; border-radius:12px; font-weight:800; font-size:0.7rem; cursor:pointer;">RECARGAR</button>
+                        <button onclick="window.forceUpdateApp()" style="background:#CCFF00; color:black; border:none; padding:10px; border-radius:12px; font-weight:950; font-size:0.7rem; cursor:pointer;">LIMPIAR CACHÉ PWA</button>
+                    </div>
+                `;
+            }
+
+            window.forceUpdateApp = async function() {
+                try {
+                    console.log("🧹 [Debug] Forzando actualización y limpieza de caché...");
+                    if ('caches' in window) {
+                        const keys = await caches.keys();
+                        for (const key of keys) {
+                            await caches.delete(key);
+                        }
+                        console.log("✅ Cachés eliminadas.");
+                    }
+                    if ('serviceWorker' in navigator) {
+                        const regs = await navigator.serviceWorker.getRegistrations();
+                        for (const reg of regs) {
+                            await reg.unregister();
+                        }
+                        console.log("✅ Service workers desregistrados.");
+                    }
+                    localStorage.removeItem('somospadel_last_news_gen_date');
+                    localStorage.removeItem('local_ranking_cache');
+                    window.location.reload(true);
+                } catch (err) {
+                    alert("Error al actualizar: " + err.message);
+                }
+            };
+
+            window.onerror = function(message, source, lineno, colno, error) {
+                if (source && (source.includes('chrome-extension') || source.includes('safari-extension'))) return;
+                const title = "Crash en Script";
+                const msg = `${message}<br><small>en ${source ? source.split('/').pop() : 'inline'}:${lineno}:${colno}</small>`;
+                showDebugBanner(title, msg, error);
+                return false;
+            };
+
+            window.onunhandledrejection = function(event) {
+                const title = "Promesa Rechazada (Promise Rejection)";
+                const msg = event.reason ? (event.reason.message || String(event.reason)) : "Error desconocido en promesa";
+                showDebugBanner(title, msg, event.reason);
+            };
+        })();
+    </script>
     <script src="js/security-core.js?v=2" defer></script>
     <script src="js/core/SecurityArmor.js?v=2" defer></script>
     <meta name="viewport"
@@ -43,7 +124,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@700;800;900&family=Caveat:wght@700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Inter:wght@400;500;700;900&family=Montserrat:wght@700;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/mobile-header-fix.css?v=1.2">
@@ -2901,14 +2982,14 @@
 
     <script src="js/modules/dashboard/GeoRadarWidget.js" defer></script>
     <script src="js/modules/dashboard/StoryFeedWidget.js?v=6" defer></script>
-    <script src="js/modules/dashboard/PadelPulse.js?v=6.0" defer></script>
+    <script src="js/modules/dashboard/PadelPulse.js?v=6.2" defer></script>
     <script src="js/modules/dashboard/OpenMatchesWidget.js?v=1.3" defer></script>
     <script src="js/modules/dashboard/TacticalCourt3D.js?v=1.1" defer></script>
     <script src="js/modules/dashboard/Tactical3DWidget.js?v=1.1" defer></script>
-    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=COMPACT_V14" defer></script>
+    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=COMPACT_V19" defer></script>
     <script src="js/modules/dashboard/DashboardController.js" defer></script>
     <script src="js/utils/RoleService.js" defer></script>
-    <script src="js/modules/players/PlayerView.js?v=400" defer></script>
+    <script src="js/modules/players/PlayerView.js?v=401" defer></script>
     <script src="js/modules/players/PlayerController.js?v=400" defer></script>
     <script src="js/modules/americanas/ControlTowerStandings.js" defer></script>
     <script src="js/modules/americanas/ControlTowerBrackets.js" defer></script>
@@ -2919,7 +3000,7 @@
     <script src="js/modules/chat/ChatService.js?v=1.1" defer></script>
     <script src="js/modules/chat/ChatView.js?v=1.1" defer></script>
     <script src="js/modules/americanas/EntrenoLiveView.js" defer></script>
-    <script src="js/modules/americanas/EventsController_V6.js?v=9.8" defer></script>
+    <script src="js/modules/americanas/EventsController_V6.js?v=10.1" defer></script>
     <script src="js/modules/common/SocialShareService.js" defer></script>
     <script src="js/modules/admin/SocialShareView.js" defer></script>
 
@@ -2935,9 +3016,12 @@
     <script src="js/modules/ui/MatchCard.js" defer></script>
     <script src="js/modules/ui/EventHeader.js" defer></script>
 
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+
     <!-- Ranking Module -->
-    <script src="js/modules/ranking/RankingView.js" defer></script>
-    <script src="js/modules/ranking/RankingController.js" defer></script>
+    <script src="js/modules/ranking/RankingView.js?v=2.1" defer></script>
+    <script src="js/modules/ranking/RankingController.js?v=2" defer></script>
 
     <!-- Partidas Abiertas Module -->
     <script src="js/modules/open_matches/OpenMatchesView.js" defer></script>
@@ -2945,7 +3029,7 @@
 
     <!-- Teams Module -->
     <script src="js/modules/teams/teams_data.js?v=12" defer></script>
-    <script src="js/modules/teams/TeamView.js?v=14" defer></script>
+    <script src="js/modules/teams/TeamView.js?v=15" defer></script>
     <script src="js/modules/teams/TeamController.js?v=31" defer></script>
     <script src="js/modules/tournaments/TournamentView.js?v=11" defer></script>
     <script src="js/modules/tournaments/TournamentController.js?v=11" defer></script>
@@ -2955,7 +3039,7 @@
     <script src="js/modules/records/RecordsController.js?v=2" defer></script>
 
     <!-- Stats Module -->
-    <script src="js/modules/stats/StatsView.js" defer></script>
+    <script src="js/modules/stats/StatsView.js?v=1.1" defer></script>
     <script src="js/modules/stats/StatsController.js" defer></script>
 
     <!-- Agenda Module -->
@@ -3051,18 +3135,32 @@
         }
     }
 </script>
-<!-- AI Copilot v4 (Autonomous Engine) -->
-<script src="js/modules/admin/AICopilot_v4.js" defer></script>
+<!-- Módulos de IA Admin -->
 <script src="js/modules/admin/NeuralAgent_v6.js" defer></script>
-<div id="initial-loader" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;z-index:9999;">
-    <span style="color:#CCFF00;font-size:1.5rem;font-weight:900;">CARGANDO...</span>
+<div id="initial-loader" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;z-index:9999;transition: opacity 0.4s ease, visibility 0.4s;">
+    <span style="color:#CCFF00;font-size:1.5rem;font-weight:900;letter-spacing:2px;animation: pulse-soft 1.5s infinite;">CARGANDO...</span>
 </div>
 <script>
+    // Desvanecer el cargador negro de inmediato en DOMContentLoaded para acelerar el inicio percibido
+    document.addEventListener('DOMContentLoaded', () => {
+        const loader = document.getElementById('initial-loader');
+        if (loader) {
+            loader.style.opacity = '0';
+            loader.style.visibility = 'hidden';
+            setTimeout(() => { loader.style.display = 'none'; }, 400);
+        }
+    });
+    // Respaldo de seguridad por si el DOMContentLoaded ya ocurrió o tarda
     window.addEventListener('load', () => {
         const loader = document.getElementById('initial-loader');
-        if (loader) loader.style.display = 'none';
+        if (loader && loader.style.display !== 'none') {
+            loader.style.opacity = '0';
+            loader.style.visibility = 'hidden';
+            setTimeout(() => { loader.style.display = 'none'; }, 400);
+        }
     });
 </script>
+
 
 <!-- ============================================================ -->
 <!-- 🎾 MASCOTA FLOTANTE SOMOSPADEL V1.0 — Dashboard Companion   -->

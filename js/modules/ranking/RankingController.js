@@ -124,7 +124,7 @@
             console.log("📊 [RankingController] Silent calculation starting...");
 
             const now = Date.now();
-            if (this._cachedRanking && (now - this._lastCacheTime < 45000)) {
+            if (this._cachedRanking && (now - this._lastCacheTime < 600000)) {
                 console.log("⚡ [RankingController] Returning recently cached ranking data (saving Firestore queries)");
                 return this._cachedRanking;
             }

@@ -4,7 +4,7 @@
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
 
-const CACHE_NAME = 'somospadel-ultra-cache-v822';
+const CACHE_NAME = 'somospadel-ultra-cache-v827';
 
 // Recursos críticos para el "App Shell"
 const CORE_ASSETS = [
@@ -16,7 +16,7 @@ const CORE_ASSETS = [
     './js/app.js?v=3004',
     './js/core/AuthService.js?v=12.2',
     './js/modules/admin/AICopilot_v4.js?v=4.1',
-    './js/modules/dashboard/PadelPulse.js?v=6001'
+    './js/modules/dashboard/PadelPulse.js?v=6.2'
 ];
 
 // Initialize Firebase Messaging

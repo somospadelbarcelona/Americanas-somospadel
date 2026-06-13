@@ -685,8 +685,15 @@
             if (tabName === 'stats') {
                 const ctx = document.getElementById(`chart-${teamId}`);
                 if (ctx && !ctx.dataset.rendered) {
+                    let retries = 0;
                     const renderChartInstance = () => {
                         if (typeof Chart === 'undefined') {
+                            retries++;
+                            if (retries > 20) {
+                                console.warn("⚠️ [TeamView] Chart.js could not be loaded. Showing fallback UI.");
+                                ctx.parentNode.innerHTML = `<div style="color: #64748b; font-size: 0.7rem; font-weight: 700; height: 180px; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center;">Gráfico de equipo no disponible (sin conexión)</div>`;
+                                return;
+                            }
                             setTimeout(renderChartInstance, 100);
                             return;
                         }

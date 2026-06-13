@@ -138,6 +138,11 @@
                         </div>
                     </div>
 
+                    <!-- 🏓 PADEL PULSE / GLOBAL BROADCAST — Widget personalizado -->
+                    <div style="padding: 0 25px 20px; position: relative; z-index: 4;">
+                        <div id="padel-pulse-widget-root" style="animation: floatUp 0.5s ease-out forwards;"></div>
+                    </div>
+
                     <!-- STICKY HEADER: TABS + SEARCH -->
                     <div style="position: sticky; top: 154px; z-index: 1001; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 15px 25px 20px;">
                         
@@ -212,6 +217,15 @@
 
             // Initialize the powerful radar chart comparing user vs MVP vs average
             this.initPerformanceChart(rankedData);
+
+            // Initialize PadelPulse / Global Broadcast widget
+            try {
+                if (window.PadelPulse) {
+                    window.PadelPulse.render('padel-pulse-widget-root');
+                }
+            } catch (e) {
+                console.error("Error rendering PadelPulse in RankingView:", e);
+            }
         }
 
         initPerformanceChart(rankedData) {
@@ -310,8 +324,15 @@
             chartContainer.style.display = 'block';
 
             // Wait for Chart.js to load fully if it's deferred
+            let retries = 0;
             const initChartInstance = () => {
                 if (typeof Chart === 'undefined') {
+                    retries++;
+                    if (retries > 20) {
+                        console.warn("⚠️ [RankingView] Chart.js could not be loaded. Showing fallback UI.");
+                        canvas.parentNode.innerHTML = `<div style="color: #64748b; font-size: 0.7rem; font-weight: 700; height: 260px; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center;">Gráfico de rendimiento no disponible (sin conexión)</div>`;
+                        return;
+                    }
                     setTimeout(initChartInstance, 100);
                     return;
                 }
