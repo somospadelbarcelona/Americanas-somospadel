@@ -286,6 +286,11 @@
                         <!-- Cargado vía JS (StoryFeedWidget) -->
                     </div>
 
+                    <!-- 3.5 NEWS BLOG WIDGET -->
+                    <div id="blog-news-widget-root" style="margin: 0 15px 12px !important; animation: floatUp 0.8s ease-out forwards;">
+                        <!-- Content loaded via JS -->
+                    </div>
+
                     <!-- 🎾 PARTIDAS ABIERTAS — Widget de publicidad interactivo -->
                     <div id="open-matches-widget-root" style="animation: floatUp 0.8s ease-out forwards;"></div>
 
@@ -395,11 +400,6 @@
 
                     <!-- 📡 ESPN FACEOFF COMPARATOR -->
                     <div id="player-faceoff-widget-root" style="margin: 0 15px 12px !important; animation: floatUp 0.8s ease-out forwards;"></div>
-
-                    <!-- 3.5 NEWS BLOG WIDGET -->
-                    <div id="blog-news-widget-root" style="margin: 0 15px 12px !important; animation: floatUp 0.8s ease-out forwards;">
-                        <!-- Content loaded via JS -->
-                    </div>
 
                     <!-- 🎾 WAR ROOM 3D TACTICAL BOARD PREVIEW -->
                     <div id="tactical-3d-widget-root" style="animation: floatUp 0.8s ease-out forwards;"></div>
