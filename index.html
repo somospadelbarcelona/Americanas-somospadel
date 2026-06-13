@@ -3,6 +3,87 @@
 
 <head>
     <meta charset="UTF-8">
+    <script>
+        // 🩺 DEBUGGER FLOTANTE PREMIUM PARA DISPOSITIVOS MÓVILES
+        (function() {
+            const errors = [];
+            function showDebugBanner(title, message, errorObj) {
+                let banner = document.getElementById('global-debug-banner');
+                if (!banner) {
+                    banner = document.createElement('div');
+                    banner.id = 'global-debug-banner';
+                    banner.style = "position:fixed; bottom:20px; left:15px; right:15px; background:rgba(15, 23, 42, 0.95); border:2px solid #ef4444; border-radius:20px; padding:18px; color:white; z-index:99999; font-family:'Outfit',sans-serif; font-size:0.75rem; box-shadow:0 15px 35px rgba(0,0,0,0.5); backdrop-filter:blur(10px); animation:slideUp 0.3s ease-out both;";
+                    
+                    const style = document.createElement('style');
+                    style.innerHTML = `
+                        @keyframes slideUp { from { transform: translateY(100px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+                    `;
+                    document.head.appendChild(style);
+                    document.body.appendChild(banner);
+                }
+                
+                errors.push({ title, message, stack: errorObj ? errorObj.stack : '' });
+                
+                banner.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; color:#ef4444; font-weight:950; text-transform:uppercase; font-size:0.8rem;">
+                        <i class="fas fa-exclamation-triangle"></i> ERROR DE CARGA EN MÓVIL (${errors.length})
+                    </div>
+                    <div id="debug-error-list" style="max-height:120px; overflow-y:auto; margin-bottom:14px; display:flex; flex-direction:column; gap:8px;">
+                        ${errors.map((e, idx) => `
+                            <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); padding:10px; border-radius:10px;">
+                                <div style="font-weight:800; color:#ff8080;">[${idx+1}] ${e.title}</div>
+                                <div style="color:rgba(255,255,255,0.85); font-family:monospace; margin-top:4px; font-size:0.68rem; word-break:break-all;">${e.message}</div>
+                                ${e.stack ? `<details style="margin-top:6px;"><summary style="color:#38bdf8; cursor:pointer; font-weight:800; font-size:0.6rem;">VER DETALLES</summary><pre style="font-size:0.6rem; color:#ccc; overflow-x:auto; margin:5px 0 0 0; white-space:pre-wrap; font-family:monospace; word-break:break-all;">${e.stack}</pre></details>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <button onclick="window.location.reload(true)" style="background:rgba(255,255,255,0.08); color:white; border:1px solid rgba(255,255,255,0.15); padding:10px; border-radius:12px; font-weight:800; font-size:0.7rem; cursor:pointer;">RECARGAR</button>
+                        <button onclick="window.forceUpdateApp()" style="background:#CCFF00; color:black; border:none; padding:10px; border-radius:12px; font-weight:950; font-size:0.7rem; cursor:pointer;">LIMPIAR CACHÉ PWA</button>
+                    </div>
+                `;
+            }
+
+            window.forceUpdateApp = async function() {
+                try {
+                    console.log("🧹 [Debug] Forzando actualización y limpieza de caché...");
+                    if ('caches' in window) {
+                        const keys = await caches.keys();
+                        for (const key of keys) {
+                            await caches.delete(key);
+                        }
+                        console.log("✅ Cachés eliminadas.");
+                    }
+                    if ('serviceWorker' in navigator) {
+                        const regs = await navigator.serviceWorker.getRegistrations();
+                        for (const reg of regs) {
+                            await reg.unregister();
+                        }
+                        console.log("✅ Service workers desregistrados.");
+                    }
+                    localStorage.removeItem('somospadel_last_news_gen_date');
+                    localStorage.removeItem('local_ranking_cache');
+                    window.location.reload(true);
+                } catch (err) {
+                    alert("Error al actualizar: " + err.message);
+                }
+            };
+
+            window.onerror = function(message, source, lineno, colno, error) {
+                if (source && (source.includes('chrome-extension') || source.includes('safari-extension'))) return;
+                const title = "Crash en Script";
+                const msg = `${message}<br><small>en ${source ? source.split('/').pop() : 'inline'}:${lineno}:${colno}</small>`;
+                showDebugBanner(title, msg, error);
+                return false;
+            };
+
+            window.onunhandledrejection = function(event) {
+                const title = "Promesa Rechazada (Promise Rejection)";
+                const msg = event.reason ? (event.reason.message || String(event.reason)) : "Error desconocido en promesa";
+                showDebugBanner(title, msg, event.reason);
+            };
+        })();
+    </script>
     <script src="js/security-core.js?v=2" defer></script>
     <script src="js/core/SecurityArmor.js?v=2" defer></script>
     <meta name="viewport"
