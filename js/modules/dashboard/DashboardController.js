@@ -33,11 +33,18 @@
             };
 
             // Start a default session if none active
-            setTimeout(() => {
+            this.initTimeout = setTimeout(() => {
                 if (window.AmericanaLogic && !window.AmericanaLogic.state.active) {
                     window.AmericanaLogic.startTournament({ courts: 5 });
                 }
             }, 1000);
+        }
+
+        destroy() {
+            if (this.initTimeout) {
+                clearTimeout(this.initTimeout);
+                this.initTimeout = null;
+            }
         }
     }
 

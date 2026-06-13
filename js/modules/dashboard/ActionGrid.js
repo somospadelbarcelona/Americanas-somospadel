@@ -43,7 +43,7 @@
                     badge: context.activeTournaments || 0,
                     badgeText: context.activeTournaments === 1 ? 'activo' : 'activos',
                     route: 'americanas',
-                    color: '#CCFF00',
+                    color: '#72a800',
                     highlight: context.activeTournaments > 0
                 },
                 {
@@ -53,7 +53,7 @@
                     badge: null,
                     badgeText: 'Global SP',
                     route: 'ranking',
-                    color: '#FFD700'
+                    color: '#fbbf24'
                 },
                 {
                     id: 'profile',
@@ -62,7 +62,7 @@
                     badge: null,
                     badgeText: 'Mis Datos',
                     route: 'profile',
-                    color: '#FF9500'
+                    color: '#64748b'
                 }
             ];
         }
@@ -129,9 +129,9 @@
                     </div>
 
                     <div style="
-                        font-size: 0.95rem;
-                        font-weight: 800;
-                        color: #000;
+                        font-size: 1rem;
+                        font-weight: 950;
+                        color: #0a192f;
                         margin-bottom: 4px;
                     ">
                         ${action.title}
@@ -139,8 +139,10 @@
 
                     <div style="
                         font-size: 0.7rem;
-                        color: ${hasNotification && typeof action.badge === 'string' ? action.color : '#666'};
-                        font-weight: ${hasNotification ? '700' : '600'};
+                        color: ${hasNotification && typeof action.badge === 'string' ? action.color : '#64748b'};
+                        font-weight: 950;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
                     ">
                         ${action.badge && typeof action.badge === 'number' && action.badge > 0
                     ? `${action.badge} ${action.badgeText}`

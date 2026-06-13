@@ -9,19 +9,15 @@
             if (!window.StandingsService) return '<div style="padding:40px; text-align:center; color:white;">Cargando servicio de posiciones...</div>';
 
             const isEntreno = eventDoc?.isEntreno;
-            const ranking = window.StandingsService.calculate(matches, isEntreno ? 'entreno' : 'americana');
+            const isFixedPairs = eventDoc?.is_fija || (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventDoc?.name || '').toUpperCase().includes('FIJA');
+            const ranking = window.StandingsService.calculate(matches, isEntreno ? 'entreno' : 'americana', isFixedPairs, eventDoc?.players || []);
             window.ControlTowerStandings.lastRankingData = ranking;
 
             return `
                 <style>
-                    @keyframes neonPulseStandings {
-                        0% { text-shadow: 0 0 10px #CCFF00, 0 0 20px rgba(204,255,0,0.5); }
-                        50% { text-shadow: 0 0 20px #CCFF00, 0 0 30px rgba(204,255,0,0.8); }
-                        100% { text-shadow: 0 0 10px #CCFF00, 0 0 20px rgba(204,255,0,0.5); }
-                    }
                     .neon-winner-text {
-                        color: #CCFF00 !important;
-                        animation: neonPulseStandings 2s infinite alternate;
+                        color: #72a800 !important;
+                        font-weight: 950 !important;
                     }
                     .standings-row-enter {
                         animation: slideInRow 0.4s ease-out forwards;
@@ -33,25 +29,25 @@
                     }
                 </style>
 
-                <div class="standings-container fade-in" style="padding: 10px; background: #050505; min-height: 80vh; padding-bottom: 100px;">
+                <div class="standings-container fade-in" style="padding: 10px; background: #f8fafc; min-height: 80vh; padding-bottom: 100px;">
                     
                     <!-- HERO HEADER FOR RANKING -->
                      <div style="text-align: center; margin-bottom: 25px; padding-top: 20px;">
-                        <h2 style="font-family: 'Montserrat', sans-serif; font-weight: 950; font-size: 1.8rem; text-transform: uppercase; color: #fff; margin: 0; letter-spacing: -1px; text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);">
+                        <h2 style="font-family: 'Outfit', sans-serif; font-weight: 950; font-size: 1.8rem; text-transform: uppercase; color: #0a192f; margin: 0; letter-spacing: -1px;">
                             CLASIFICACIÓN
                         </h2>
-                        <div style="font-size: 0.7rem; color: #CCFF00; letter-spacing: 2px; text-transform: uppercase; font-weight: 800; margin-top: 5px;">TIEMPO REAL 🔥</div>
+                        <div style="font-size: 0.7rem; color: #72a800; letter-spacing: 2px; text-transform: uppercase; font-weight: 900; margin-top: 5px;">TIEMPO REAL 🔥</div>
                     </div>
 
-                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.03);">
                         
                         <!-- ACTIONS -->
-                        <div style="padding: 15px; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <button onclick="window.ControlTowerView.switchTab('results')" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: #ccc; padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <div style="padding: 15px; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #e2e8f0;">
+                            <button onclick="window.ControlTowerView.switchTab('results')" style="background: #f1f5f9; border: 1px solid #e2e8f0; color: #64748b; padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
                                 <i class="fas fa-arrow-left"></i> VOLVER
                             </button>
-                            <button onclick="window.ShareModal.open('ranking', window.ControlTowerStandings.lastRankingData, window.ControlTowerView?.currentAmericanaDoc)" 
-                                    style="background: linear-gradient(135deg, #CCFF00 0%, #B8E600 100%); color: black; border: none; padding: 6px 14px; border-radius: 10px; font-size: 0.7rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 0 15px rgba(204,255,0,0.4);">
+                            <button onclick="window.ControlTowerStandings.shareStandings(window.ControlTowerStandings.lastRankingData, window.ControlTowerView?.currentAmericanaDoc)" 
+                                    style="background: #72a800; color: white; border: none; padding: 6px 14px; border-radius: 10px; font-size: 0.7rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(114,168,0,0.2);">
                                 <i class="fas fa-camera"></i> COMPARTIR
                             </button>
                         </div>
@@ -70,31 +66,32 @@
 
                 // 🏆 GOLD LEADER
                 if (i === 0) {
-                    rowStyle = 'background: linear-gradient(90deg, rgba(204,255,0,0.15), rgba(0,0,0,0)); border-left: 4px solid #CCFF00; margin-bottom: 10px; border-radius: 12px; border: 1px solid rgba(204,255,0,0.3); box-shadow: 0 0 20px rgba(204,255,0,0.1);';
+                    rowStyle = 'background: #f1f5f9; border-left: 6px solid #72a800; margin-bottom: 10px; border-radius: 12px; border: 1px solid #e2e8f0;';
                     posContent = '🏆';
                     nameClass = 'neon-winner-text';
-                    nameStyle = 'font-weight: 950; font-size: 1.1rem; letter-spacing: -0.5px;';
-                    statColor = '#CCFF00';
-                    leaderBadge = '<span style="background: #CCFF00; color: #000; padding: 2px 8px; border-radius: 6px; font-size: 0.6rem; font-weight: 900; box-shadow: 0 0 10px rgba(204,255,0,0.5);">LÍDER</span>';
+                    nameStyle = 'font-weight: 950; font-size: 1.1rem; letter-spacing: -0.5px; color: #0a192f;';
+                    statColor = '#72a800';
+                    leaderBadge = '<span style="background: #72a800; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 0.6rem; font-weight: 900;">LÍDER</span>';
                 }
                 // 🥈 SILVER
                 else if (i === 1) {
-                    rowStyle = 'background: rgba(255,255,255,0.08); border-left: 4px solid #C0C0C0; margin-bottom: 5px; border-radius: 12px;';
+                    rowStyle = 'background: #ffffff; border-left: 4px solid #94a3b8; margin-bottom: 5px; border-radius: 12px; border: 1px solid #e2e8f0;';
                     posContent = '🥈';
-                    nameStyle = 'color: #fff; font-weight: 900; font-size: 1rem;';
-                    statColor = '#white';
+                    nameStyle = 'color: #0a192f; font-weight: 900; font-size: 1rem;';
+                    statColor = '#64748b';
                 }
                 // 🥉 BRONZE
                 else if (i === 2) {
-                    rowStyle = 'background: rgba(255,255,255,0.05); border-left: 4px solid #CD7F32; margin-bottom: 5px; border-radius: 12px;';
+                    rowStyle = 'background: #ffffff; border-left: 4px solid #b45309; margin-bottom: 5px; border-radius: 12px; border: 1px solid #e2e8f0;';
                     posContent = '🥉';
-                    nameStyle = 'color: #eee; font-weight: 800; font-size: 0.95rem;';
+                    nameStyle = 'color: #0a192f; font-weight: 800; font-size: 0.95rem;';
+                    statColor = '#64748b';
                 }
 
                 const delay = i * 0.05;
 
                 return `
-                                <div class="standings-row-enter" style="padding: 16px 14px; display: flex; align-items: center; ${rowStyle} animation-delay: ${delay}s;">
+                                <div class="standings-row-enter" style="padding: 16px 14px; display: flex; align-items: center; ${rowStyle} animation-delay: ${delay}s; border-bottom: 1px solid #f1f5f9;">
                                     <div style="width: 40px; font-weight: 950; font-size: 1.2rem; text-align: center;">
                                         ${posContent}
                                     </div>
@@ -104,15 +101,52 @@
                                     </div>
                                     <div style="width: 50px; text-align: center; font-weight: 700; color: ${statColor}; font-size: 0.85rem;">${p.won} V</div>
                                     <div style="width: 60px; text-align: center;">
-                                        <div style="font-weight: 950; color: #fff; font-size: 1.2rem; letter-spacing: -0.5px;">${p.points}</div>
-                                        <div style="font-size: 0.5rem; color: #666; font-weight: 800; text-transform: uppercase;">PTS</div>
+                                        <div style="font-weight: 950; color: #0a192f; font-size: 1.2rem; letter-spacing: -0.5px;">${p.points}</div>
+                                        <div style="font-size: 0.5rem; color: #64748b; font-weight: 800; text-transform: uppercase;">PTS</div>
                                     </div>
-                                </div>`;
+                                </div>
+`;
             }).join('')}
                         </div>
                     </div>
                 </div>
             `;
+        }
+
+        static async shareStandings(rankingData, eventDoc) {
+            try {
+                const eventName = eventDoc?.name || 'Entreno / Americana';
+                const eventDate = eventDoc?.date || 'Hoy';
+                const isFixedPairs = (eventDoc?.pair_mode || '').toLowerCase().includes('fix') || (eventName).toUpperCase().includes('FIJA');
+
+                let shareText = `🏆 CLASIFICACIÓN: ${eventName}\n📅 ${eventDate}\n\n`;
+
+                if (isFixedPairs) {
+                     // Need to calculate pairs just like in end of training modal
+                     const medals = ['🥇', '🥈', '🥉'];
+                     rankingData.slice(0, 10).forEach((p, i) => {
+                         const prefix = i < 3 ? medals[i] : `${i + 1}.`;
+                         shareText += `${prefix} ${p.name} — ${p.won} V\n`;
+                     });
+                } else {
+                     const medals = ['🥇', '🥈', '🥉'];
+                     rankingData.slice(0, 10).forEach((p, i) => {
+                         const prefix = i < 3 ? medals[i] : `${i + 1}.`;
+                         shareText += `${prefix} ${p.name} — ${p.points} pts\n`;
+                     });
+                }
+                
+                shareText += `\n🎾 ¡Sigue todos los resultados en SomosPadel!`;
+
+                if (navigator.share) {
+                    await navigator.share({ title: `Clasificación ${eventName}`, text: shareText });
+                } else {
+                    await navigator.clipboard.writeText(shareText);
+                    window.PremiumModal.alert({ title: '✅ COPIADO', message: 'Clasificación copiada al portapapeles.' });
+                }
+            } catch (err) {
+                console.error("Error sharing standings:", err);
+            }
         }
     }
     window.ControlTowerStandings = ControlTowerStandings;

@@ -1,0 +1,119 @@
+/* ==========================================================================
+   PLAYER APP ENTERPRISE - LUXURY LIGHT (AIR EDITION)
+   Estética: Clean, Apple-style, Vibrant
+   ========================================================================== */
+
+:root {
+    --player-bg: #f8fafc;
+    --player-card: #ffffff;
+    --player-accent: #000000;
+    --player-neon: #ccff00;
+    --player-text: #0f172a;
+    --player-text-muted: #64748b;
+}
+
+body {
+    background-color: var(--player-bg) !important;
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(204, 255, 0, 0.1), transparent 400px),
+        radial-gradient(circle at 90% 80%, rgba(0, 212, 255, 0.05), transparent 400px) !important;
+    color: var(--player-text) !important;
+    font-family: 'Outfit', sans-serif;
+}
+
+/* --------------------------------------------------------------------------
+   TOP COMMAND BAR (LIGHT)
+   -------------------------------------------------------------------------- */
+.cmd-bar {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+    border-radius: 0 0 24px 24px !important;
+}
+
+.cmd-brand span {
+    color: #000 !important;
+}
+
+#header-user-name {
+    color: #000 !important;
+}
+
+/* --------------------------------------------------------------------------
+   BOTTOM NAVIGATION DOCK (LIGHT)
+   -------------------------------------------------------------------------- */
+.bottom-nav-bar {
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.05) !important;
+}
+
+.bottom-nav-bar .nav-item {
+    color: var(--player-text-muted) !important;
+}
+
+.bottom-nav-bar .nav-item.active {
+    color: #000 !important;
+    font-weight: 900 !important;
+}
+
+.bottom-nav-bar .nav-item.active i {
+    color: #000 !important;
+    filter: drop-shadow(0 0 5px rgba(204, 255, 0, 0.5)) !important;
+}
+
+/* --------------------------------------------------------------------------
+   CARDS & CONTENT
+   -------------------------------------------------------------------------- */
+.glass-card, .americana-card, .event-card, .dashboard-card {
+    background: var(--player-card) !important;
+    border: 1px solid #f1f5f9 !important;
+    border-radius: 24px !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.03) !important;
+    padding: 1.5rem !important;
+}
+
+.badge-status {
+    background: #000 !important;
+    color: var(--player-neon) !important;
+    font-weight: 900 !important;
+}
+
+/* --------------------------------------------------------------------------
+   AUTHENTICATION MODAL (LIGHT)
+   -------------------------------------------------------------------------- */
+.auth-overlay-enterprise {
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), 
+                url('https://images.unsplash.com/photo-1626248294249-19943fce2657?q=80&w=2070&auto=format&fit=crop') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    backdrop-filter: blur(8px);
+}
+
+.modal-content.admin-login-card {
+    background: #ffffff !important;
+    box-shadow: 0 30px 70px rgba(0,0,0,0.1) !important;
+    border: 1px solid #f1f5f9 !important;
+}
+
+.modal-content h1, .modal-content h2 {
+    color: #000 !important;
+}
+
+.neon-btn {
+    background: #000 !important;
+    color: var(--player-neon) !important;
+    font-weight: 900 !important;
+    border-radius: 18px !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+/* Form Inputs Light */
+.clean-input {
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #000 !important;
+}

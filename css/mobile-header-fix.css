@@ -1,0 +1,341 @@
+/* 
+ * UNIVERSAL PREMIUM HEADER OPTIMIZATION
+ * Guaranteed zero overlap on any device size.
+ */
+
+/* --- 1. GLOBAL OVERRIDES (DESKTOP & MOBILE) --- */
+.cmd-bar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    overflow: visible !important; /* Allow icons to pop out */
+    gap: 10px;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.cmd-brand {
+    display: flex !important;
+    align-items: center !important;
+    min-width: 0 !important; /* Allow shrinking */
+    flex: 1 !important;
+}
+
+.cmd-avatar-container {
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    min-width: 0 !important;
+    max-width: fit-content !important;
+}
+
+#header-user-name {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* --- 2. SMART RESPONSIVE ADAPTATION --- */
+
+/* TABLETS & SMALL LAPTOPS */
+@media (max-width: 992px) {
+    #header-user-name {
+        max-width: 120px !important;
+    }
+}
+
+/* PHONES (GENERAL) */
+@media (max-width: 600px) {
+    .cmd-bar {
+        padding: 0 12px !important;
+        height: 64px !important;
+        gap: 8px !important;
+    }
+
+    /* Show slogan with ultra-compact font */
+    .cmd-brand span[style*="font-size: 0.6rem"] {
+        display: block !important;
+        font-size: 0.45rem !important; /* Smaller but visible */
+        letter-spacing: 1px !important;
+        white-space: nowrap !important;
+    }
+
+    /* Reduce brand text size */
+    .cmd-brand span[style*="font-size: 1.1rem"] {
+        font-size: 0.9rem !important;
+    }
+
+    /* User Widget compaction */
+    .cmd-avatar-container {
+        padding: 4px 4px 4px 10px !important;
+        gap: 8px !important;
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+
+    #header-user-name {
+        max-width: 85px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Badge sizes */
+    #header-user-level {
+        padding: 4px 8px !important;
+        font-size: 0.8rem !important;
+        border-radius: 6px !important;
+    }
+
+    .cmd-avatar {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 0.7rem !important;
+    }
+
+    /* Logout Button Compact */
+    .cmd-avatar-container div[style*="background: rgba(255, 71, 87, 0.15)"] {
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 0.85rem !important;
+        border-radius: 8px !important;
+    }
+}
+
+/* SMALL PHONES (PORTRAIT) */
+@media (max-width: 414px) {
+    .cmd-bar {
+        padding: 0 8px !important;
+        gap: 5px !important;
+    }
+
+    /* Hide redundant badges (flame, trophy) as requested for ultra-polish */
+    .cmd-avatar-container div div[style*="justify-content: flex-end"] {
+        display: none !important;
+    }
+
+    /* Hide brand separator */
+    .cmd-brand div[style*="width: 2px"] {
+        display: none !important;
+    }
+
+    .cmd-brand {
+        gap: 8px !important;
+    }
+
+    .cmd-brand img {
+        height: 30px !important;
+    }
+
+    #header-user-name {
+        max-width: 70px !important;
+    }
+}
+
+/* ULTRA TINY SCREENS (iPhone SE, etc.) */
+@media (max-width: 340px) {
+    .cmd-brand span[style*="font-size: 1.1rem"] {
+        display: none !important; /* Hide "SOMOSPADEL BCN" on tiny screens to fit slogan */
+    }
+    
+    .cmd-brand span[style*="font-size: 0.6rem"] {
+        display: block !important;
+        font-size: 0.4rem !important;
+    }
+    
+    #header-user-name {
+        max-width: 55px !important;
+        font-size: 0.7rem !important;
+    }
+
+    .cmd-avatar-container {
+        padding: 2px 2px 2px 6px !important;
+        gap: 4px !important;
+    }
+}
+
+/* --- 3. LAYOUT INTEGRITY --- */
+
+/* Ensure the ticker doesn't hide content */
+.dashboard-fixed-header {
+    height: auto !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+}
+
+/* Content Area Fix - Dynamic padding based on header height */
+main#content-area {
+    padding-top: 112px !important;
+}
+
+/* Fix for possible duplicated scrollbars */
+body {
+    overflow-x: hidden !important;
+}
+/* --- 4. PLAYER PROFILE DROPDOWN (PREMIUM DARK EDITION) --- */
+.user-dropdown-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    z-index: 10005;
+}
+
+.user-dropdown-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #ffffff;
+    padding: 5px 12px 5px 6px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.user-dropdown-trigger:hover {
+    border-color: #CCFF00;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 25px rgba(204, 255, 0, 0.15);
+}
+
+.user-dropdown-trigger:active {
+    transform: scale(0.96);
+}
+
+.user-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 15px);
+    right: 0;
+    width: 280px;
+    background: #ffffff !important; /* Force light background */
+    backdrop-filter: blur(25px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(25px) saturate(150%) !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 24px !important;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(255,255,255,0.02) !important;
+    padding: 24px !important;
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+    transform: translateY(-15px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+}
+
+.user-dropdown-container.open .user-dropdown-menu {
+    display: flex;
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.user-dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding-bottom: 18px;
+}
+
+.user-dropdown-name-container {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-dropdown-name {
+    font-size: 1.1rem;
+    font-weight: 950;
+    color: #0a192f !important;
+    letter-spacing: -0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-dropdown-role {
+    font-size: 0.6rem;
+    color: #CCFF00;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+.user-dropdown-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.user-dropdown-stat-card {
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.user-dropdown-stat-card:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.1);
+}
+
+.user-dropdown-stat-label {
+    font-size: 0.55rem;
+    color: rgba(255,255,255,0.4);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.user-dropdown-stat-value {
+    font-size: 1rem;
+    font-weight: 900;
+    color: #0a192f;
+}
+
+.user-dropdown-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.user-dropdown-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 16px;
+    text-align: center;
+    font-weight: 850;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 1px solid transparent;
+}
+
+.user-dropdown-btn-profile {
+    background: #f1f5f9;
+    color: #0a192f !important;
+    border-color: rgba(255,255,255,0.1);
+}
+
+.user-dropdown-btn-profile:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.2);
+}
+
+.user-dropdown-btn-logout {
+    background: rgba(255, 71, 87, 0.1);
+    color: #ff4757 !important;
+    border-color: rgba(255, 71, 87, 0.2);
+}
+
+.user-dropdown-btn-logout:hover {
+    background: rgba(255, 71, 87, 0.15);
+    border-color: rgba(255, 71, 87, 0.3);
+}

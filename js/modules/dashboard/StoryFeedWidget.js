@@ -1,7 +1,8 @@
 /**
- * StoryFeedWidget.js - V3 (Professional Edition)
+ * StoryFeedWidget.js - V3 (Professional & Premium Edition)
  * 📱 Real-Time Data Stories Engine
  * Arquitectura de alto rendimiento para visualización de Big Data.
+ * Rediseñado con estética de esferas 3D de clase mundial y optimización móvil premium.
  */
 (function () {
     'use strict';
@@ -9,37 +10,80 @@
     class StoryFeedWidget {
         constructor() {
             this.containerId = 'story-feed-root';
+            this.currentStoryIndex = 0;
+            this.storyTimeout = null;
+            this.storyDuration = 5000; // 5 segundos por historia
+            this.timerStart = 0;
+            this.timerRemaining = 5000;
+            this.currentRankingData = [];
 
-            // POOL OF ALL AVAILABLE STORIES
-            const contentPool = [
-                { id: 'ranking', label: 'RANKING 🔍', icon: 'fa-trophy', color: '#fb7185' },
-                { id: 'clinica', label: 'ESCUELA', icon: 'fa-graduation-cap', color: '#f472b6' },
-                { id: 'weather', label: 'VELOCIDAD', icon: 'fa-bolt', color: '#fbbf24' },
-                { id: 'matches', label: 'EVENTOS', icon: 'fa-star', color: '#ca8a04' },
-                { id: 'growth', label: 'OBJETIVO', icon: 'fa-chart-line', color: '#0ea5e9' },
-                { id: 'security', label: 'SEGURIDAD', icon: 'fa-shield-alt', color: '#8b5cf6' },
-                { id: 'partners', label: 'PARTNERS', icon: 'fa-handshake', color: '#34d399' },
-                { id: 'shop', label: 'TIENDA', icon: 'fa-shopping-bag', color: '#6366f1' }
+            // Static premium order for consistent user experience and low CPU/memory footprint
+            this.stories = [
+                { id: 'noticias', label: 'NOTICIAS 📰', icon: 'fa-bullhorn', color: '#00E36D' },
+                { id: 'ranking', label: 'RANKING 🏆', icon: 'fa-trophy', color: '#fb7185' },
+                { id: 'equipos', label: 'EQUIPOS 👥', icon: 'fa-users', color: '#38bdf8' },
+                { id: 'shop', label: 'TIENDA 🛍️', icon: 'fa-shopping-bag', color: '#6366f1' },
+                { id: 'tournaments', label: 'TORNEOS 🏆', icon: 'fa-award', color: '#fb923c' },
+                { id: 'records', label: 'RÉCORDS 📊', icon: 'fa-history', color: '#10b981' }
+            ];
+        }
+
+        async loadDynamicStories() {
+            // Start with base stories
+            const dynamicStories = [
+                { id: 'noticias', label: 'NOTICIAS 📰', icon: 'fa-bullhorn', color: '#00E36D' },
+                { id: 'ranking', label: 'RANKING 🏆', icon: 'fa-trophy', color: '#fb7185' }
             ];
 
-            // RANDOMIZE SELECTION (Pick 5 unique random stories each time)
-            // FORCE RANKING TO BE FIRST (User Request for Search Visibility)
-            const shuffled = this.shuffleArray(contentPool.filter(s => s.id !== 'ranking'));
-            this.stories = [contentPool.find(s => s.id === 'ranking'), ...shuffled].slice(0, 5);
-        }
+            // 1. Fetch Active Events dynamically from the database
+            try {
+                if (window.AmericanaService) {
+                    const events = await window.AmericanaService.getAllActiveEvents();
+                    const openEvents = events.filter(e => ['open', 'upcoming', 'scheduled', 'live'].includes(e.status));
+                    
+                    // Add up to 3 active events as custom story bubbles!
+                    openEvents.slice(0, 3).forEach(event => {
+                        let color = '#38bdf8'; // Blue for male/default
+                        const nameLower = event.name.toLowerCase();
+                        if (nameLower.includes('fem') || nameLower.includes('chicas')) color = '#f472b6'; // Pink
+                        else if (nameLower.includes('mix')) color = '#fbbf24'; // Orange/Yellow
+                        else if (event.type === 'entreno') color = '#a3d900'; // Green
 
-        shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
+                        // Extract a concise single-word label for the Instagram bubble
+                        let label = event.name.split(' ')[0].toUpperCase();
+                        if (label.length > 9) label = label.substring(0, 8) + '…';
+
+                        dynamicStories.push({
+                            id: `event_${event.id}`,
+                            label: `${label} 🎾`,
+                            icon: event.type === 'entreno' ? 'fa-graduation-cap' : 'fa-medal',
+                            color: color,
+                            isEvent: true,
+                            eventData: event
+                        });
+                    });
+                }
+            } catch (e) {
+                console.warn("Error loading dynamic event stories", e);
             }
-            return array;
+
+            // 2. Add remaining base stories
+            dynamicStories.push(
+                { id: 'equipos', label: 'EQUIPOS 👥', icon: 'fa-users', color: '#38bdf8' },
+                { id: 'shop', label: 'TIENDA 🛍️', icon: 'fa-shopping-bag', color: '#6366f1' },
+                { id: 'tournaments', label: 'TORNEOS 🏆', icon: 'fa-award', color: '#fb923c' },
+                { id: 'records', label: 'RÉCORDS 📊', icon: 'fa-history', color: '#10b981' }
+            );
+
+            this.stories = dynamicStories;
         }
 
-        render(containerId) {
+        async render(containerId) {
             this.containerId = containerId || this.containerId;
             const container = document.getElementById(this.containerId);
             if (!container) return;
+
+            await this.loadDynamicStories(); // Fetch live news/events dynamically
 
             this.injectStyles();
             this.updateUI();
@@ -50,104 +94,183 @@
             const style = document.createElement('style');
             style.id = 'story-feed-v3-styles';
             style.textContent = `
-                /* Story Bar Layout */
+                /* Story Bar Layout with Premium Fade Edge Indication */
                 .story-feed-v3-wrapper {
-                    padding: 5px 0; /* Reduced top padding to balance with bottom label space */
+                    position: relative;
+                    padding: 0;
                     user-select: none;
-                    perspective: 1200px;
+                    width: 100%;
+                    overflow: visible;
+                    background: transparent;
                 }
+                .story-feed-v3-wrapper::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    height: calc(100% - 10px);
+                    width: 40px;
+                    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.98));
+                    pointer-events: none;
+                    z-index: 10;
+                }
+                
                 .story-h-scroll {
-                    display: flex;
-                    justify-content: center;
-                    gap: 16px;
-                    padding: 10px 5px;
-                    overflow-x: auto;
+                    display: flex !important;
+                    flex-direction: row !important;
+                    justify-content: flex-start;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 6px 16px 10px;
+                    overflow-x: auto !important;
+                    overflow-y: visible !important;
                     scrollbar-width: none;
                     -ms-overflow-style: none;
+                    -webkit-overflow-scrolling: touch;
+                    width: 100%;
+                    box-sizing: border-box;
+                    scroll-snap-type: x mandatory;
                 }
                 .story-h-scroll::-webkit-scrollbar { display: none; }
                 
+                @media (max-width: 600px) {
+                    .story-h-scroll {
+                        gap: 8px;
+                        padding: 4px 12px 8px;
+                    }
+                }
+                
+                @media (min-width: 768px) {
+                    .story-h-scroll {
+                        justify-content: center;
+                    }
+                    .story-feed-v3-wrapper::after {
+                        display: none;
+                    }
+                }
+                
+                /* Story Bubble Base */
                 .story-v3-item {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    gap: 8px;
+                    gap: 5px;
                     cursor: pointer;
-                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    transform-style: preserve-3d;
-                    animation: sphereFloat 6s ease-in-out infinite;
+                    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                    scroll-snap-align: start;
+                    flex-shrink: 0 !important;
+                    min-width: 66px !important;
                 }
-                .story-v3-item:nth-child(odd) { animation-delay: 0s; }
-                .story-v3-item:nth-child(even) { animation-delay: 1.5s; }
+                @media (max-width: 600px) {
+                    .story-v3-item {
+                        min-width: 58px !important;
+                        gap: 3px;
+                    }
+                }
                 
                 .story-v3-item:hover { 
-                    transform: translateY(-8px) scale(1.1) rotateX(10deg); 
-                    z-index: 10;
+                    transform: translateY(-2px) scale(1.03); 
                 }
 
-                @keyframes sphereFloat {
-                    0%, 100% { transform: translateY(0) rotateX(0); }
-                    50% { transform: translateY(-6px) rotateX(10deg); }
+                @keyframes pulseDot {
+                    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 45, 85, 0.8); }
+                    70% { transform: scale(1.2); box-shadow: 0 0 0 6px rgba(255, 45, 85, 0); }
+                    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 45, 85, 0); }
                 }
 
+                /* Sphere 3D Outer & Inner Glow Engine */
                 .story-v3-outer {
                     width: 54px;
                     height: 54px;
                     border-radius: 50%;
                     padding: 2.5px;
-                    background: linear-gradient(135deg, #f09433 0%, #dc2743 50%, #bc1888 100%);
                     position: relative;
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 2px 10px rgba(255,255,255,0.4);
-                    transition: box-shadow 0.3s;
+                    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
                 }
+                @media (max-width: 600px) {
+                    .story-v3-outer {
+                        width: 48px;
+                        height: 48px;
+                        padding: 2px;
+                    }
+                }
+                
+                /* Interactive ambient glow */
                 .story-v3-item:hover .story-v3-outer {
-                    box-shadow: 0 20px 40px rgba(220, 39, 67, 0.6), inset 0 2px 10px rgba(255,255,255,0.6);
+                    transform: rotate(15deg);
                 }
                 
                 .story-v3-inner {
                     width: 100%;
                     height: 100%;
                     border-radius: 50%;
-                    background: radial-gradient(circle at 30% 30%, #333, #000);
+                    background: radial-gradient(circle at 35% 35%, #232d3f 0%, #0f172a 75%, #020617 100%);
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    border: 1.5px solid rgba(0,0,0,0.5);
+                    border: 1px solid rgba(255,255,255,0.06);
                     overflow: hidden;
                     position: relative;
+                    box-shadow: inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -2px 4px rgba(0,0,0,0.6);
                 }
-                /* Glare effect on inner sphere */
+                
+                /* Specular Glare Layer for 3D realism */
                 .story-v3-inner::after {
                     content: '';
                     position: absolute;
-                    top: 10%;
-                    left: 20%;
-                    width: 25%;
-                    height: 15%;
+                    top: 5%;
+                    left: 15%;
+                    width: 40%;
+                    height: 25%;
                     border-radius: 50%;
-                    background: rgba(255,255,255,0.1);
-                    filter: blur(2px);
-                    transform: skewX(-20deg);
+                    background: linear-gradient(to bottom, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 100%);
+                    filter: blur(0.5px);
+                    transform: rotate(-15deg);
+                    pointer-events: none;
                 }
                 
+                .story-v3-inner i {
+                    font-size: 1.15rem;
+                    transition: all 0.25s ease;
+                }
+                @media (max-width: 600px) {
+                    .story-v3-inner i {
+                        font-size: 1rem;
+                    }
+                }
+                
+                .story-v3-item:hover .story-v3-inner i {
+                    transform: scale(1.15);
+                }
+                
+                /* Precise Typography styling */
                 .story-v3-label {
-                    font-size: 0.55rem;
-                    font-weight: 950; /* Ultra Bold */
-                    color: #000000; /* Pure Black */
-                    letter-spacing: 0.5px;
+                    font-size: 0.6rem;
+                    font-weight: 900; 
+                    color: #0f172a !important; 
+                    letter-spacing: 0.3px;
                     text-transform: uppercase;
                     white-space: nowrap;
-                    margin-top: 6px;
+                    margin-top: 4px;
+                    text-align: center;
+                    font-family: 'Outfit', sans-serif;
                     
-                    /* SHARPNESS FIXES */
+                    /* Sharp anti-aliasing */
                     transform: translateZ(0); 
                     backface-visibility: hidden;
                     -webkit-font-smoothing: antialiased;
                     -moz-osx-font-smoothing: grayscale;
                     text-rendering: optimizeLegibility;
-                    text-shadow: none; /* No shadow for clean black look */
+                }
+                @media (max-width: 600px) {
+                    .story-v3-label {
+                        font-size: 0.55rem;
+                        margin-top: 3px;
+                    }
                 }
 
+                /* Stories Fullscreen Modal */
                 .story-v3-modal {
                     position: fixed;
                     inset: 0;
@@ -156,26 +279,30 @@
                     display: none;
                     flex-direction: column;
                     overflow: hidden;
-                    animation: storyEnter 0.4s both cubic-bezier(0.19, 1, 0.22, 1);
+                    animation: storyEnter 0.35s both cubic-bezier(0.19, 1, 0.22, 1);
                 }
                 @keyframes storyEnter {
-                    from { transform: scale(1.2); opacity: 0; }
-                    to { transform: scale(1); opacity: 1; }
+                    from { transform: scale(0.9) translateY(40px); opacity: 0; }
+                    to { transform: scale(1) translateY(0); opacity: 1; }
+                }
+                @keyframes storyExit {
+                    from { transform: scale(1) translateY(0); opacity: 1; }
+                    to { transform: scale(0.9) translateY(40px); opacity: 0; }
                 }
 
                 .story-progress-v3 {
                     position: absolute;
                     top: env(safe-area-inset-top, 20px);
-                    left: 10px;
-                    right: 10px;
+                    left: 12px;
+                    right: 12px;
                     height: 3px;
                     display: flex;
-                    gap: 4px;
-                    z-index: 100;
+                    gap: 5px;
+                    z-index: 1002;
                 }
                 .story-bar-v3 {
                     flex: 1;
-                    background: rgba(255,255,255,0.25);
+                    background: rgba(255,255,255,0.22);
                     border-radius: 10px;
                     height: 100%;
                     overflow: hidden;
@@ -185,8 +312,12 @@
                     height: 100%;
                     background: #fff;
                     transform-origin: left;
-                    transition: transform 5s linear;
                     transform: scaleX(0);
+                }
+                
+                @keyframes enterStoryCard {
+                    from { opacity: 0; transform: translateY(15px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
             `;
             document.head.appendChild(style);
@@ -197,102 +328,66 @@
             if (!container) return;
 
             container.innerHTML = `
-                <div class="story-feed-v3-wrapper" style="position: relative; padding: 5px 0 10px;">
-                    <!-- FLEX LAYOUT FOR MOBILE (5 SPHERES + LIVE) -->
-                    <div style="
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        gap: 12px;
-                        padding: 10px 20px;
-                        max-width: 100%;
-                        overflow: visible;
-                    ">
-                        <!-- STORY ITEMS (LIMIT TO 5) -->
-                        ${this.stories.slice(0, 5).map(story => `
-                            <div class="story-v3-item" style="flex: 1; min-width: 0;" onclick="window.StoryFeedWidget.showStory('${story.id}')">
-                                <div class="story-v3-outer" style="margin: 0 auto;">
-                                    <div class="story-v3-inner">
-                                        <i class="fas ${story.icon}" style="color: ${story.color}; font-size: 1.1rem; filter: drop-shadow(0 0 5px ${story.color});"></i>
-                                    </div>
-                                </div>
-                                <span class="story-v3-label">${story.label}</span>
-                            </div>
-                        `).join('')}
+                <div class="story-feed-v3-wrapper">
+                    <!-- FLEX LAYOUT FOR MOBILE (SWIPEABLE ROW WITH SNAP EFFECT) -->
+                    <div class="story-h-scroll">
+                        <!-- STORY ITEMS -->
+                        ${this.stories.map(story => {
+                            let baseColor = story.color || '#38bdf8';
+                            let ringBg = `linear-gradient(135deg, ${baseColor} 0%, rgba(15,23,42,0.8) 100%)`;
+                            let outerShadow = `0 4px 12px rgba(15,23,42,0.15), 0 0 10px ${baseColor}25`;
 
-                        <!-- INSTAGRAM STYLE LIVE HUB (6th Position) -->
-                        <div class="story-v3-item" style="flex: 1; min-width: 0;" onclick="window.StoryFeedWidget.showStory('live')">
-                            <div style="
-                                width: 54px; 
-                                height: 54px; 
-                                background: linear-gradient(135deg, #f09433, #dc2743, #bc1888); 
-                                border-radius: 20px; 
-                                display: flex; 
-                                flex-direction: column; 
-                                align-items: center; 
-                                justify-content: center; 
-                                box-shadow: 0 10px 25px rgba(220, 39, 67, 0.4);
-                                position: relative;
-                                cursor: pointer;
-                                border: 1.5px solid rgba(255,255,255,0.1);
-                                margin: 0 auto;
-                                animation: livePulse 2s infinite;
-                            ">
-                                <i class="fas fa-video" style="font-size: 1.2rem; color: #fff; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));"></i>
-                                <div style="
-                                    position: absolute;
-                                    bottom: -6px;
-                                    background: #ed4956;
-                                    color: #fff;
-                                    font-size: 0.45rem;
-                                    font-weight: 950;
-                                    padding: 1px 5px;
-                                    border-radius: 4px;
-                                    border: 2px solid #0f172a;
-                                    letter-spacing: 0.5px;
-                                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-                                ">LIVE</div>
-                            </div>
-                            <span class="story-v3-label">DIRECTO</span>
-                        </div>
+                            if (story.id === 'noticias') {
+                                ringBg = 'linear-gradient(135deg, #00E36D 0%, #00b050 100%)';
+                                outerShadow = '0 4px 15px rgba(0,227,109,0.2), 0 0 15px rgba(0,227,109,0.45)';
+                            } else if (story.id === 'ranking') {
+                                ringBg = 'linear-gradient(135deg, #fb7185 0%, #e11d48 100%)';
+                                outerShadow = '0 4px 15px rgba(251,113,133,0.2), 0 0 15px rgba(251,113,133,0.45)';
+                            } else if (story.id === 'equipos') {
+                                ringBg = 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)';
+                                outerShadow = '0 4px 15px rgba(56,189,248,0.2), 0 0 15px rgba(56,189,248,0.45)';
+                            } else if (story.id === 'shop') {
+                                ringBg = 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)';
+                                outerShadow = '0 4px 15px rgba(99,102,241,0.2), 0 0 15px rgba(99,102,241,0.45)';
+                            } else if (story.id === 'tournaments') {
+                                ringBg = 'linear-gradient(135deg, #fb923c 0%, #ea580c 100%)';
+                                outerShadow = '0 4px 15px rgba(251,146,60,0.2), 0 0 15px rgba(251,146,60,0.45)';
+                            } else if (story.id === 'records') {
+                                ringBg = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                                outerShadow = '0 4px 15px rgba(16,185,129,0.2), 0 0 15px rgba(16,185,129,0.45)';
+                            } else if (story.isEvent) {
+                                ringBg = `linear-gradient(135deg, ${baseColor} 0%, rgba(15,23,42,0.8) 100%)`;
+                                outerShadow = `0 4px 15px rgba(15,23,42,0.15), 0 0 12px ${baseColor}35`;
+                            }
+
+                            // Dynamic label display (Concise text only)
+                            const displayLabel = story.label.split(' ')[0];
+
+                            return `
+                                <div class="story-v3-item" onclick="window.StoryFeedWidget.showStory('${story.id}')">
+                                    <div class="story-v3-outer" style="background: ${ringBg}; box-shadow: ${outerShadow};">
+                                        <div class="story-v3-inner">
+                                            <i class="fas ${story.icon}" style="color: ${baseColor}; filter: drop-shadow(0 0 4px ${baseColor}80);"></i>
+                                        </div>
+                                        ${story.id === 'noticias' ? `<div style="position: absolute; top: -2px; right: -2px; width: 11px; height: 11px; background: #FF2D55; border-radius: 50%; border: 2.2px solid #0f172a; animation: pulseDot 1.4s infinite;"></div>` : ''}
+                                    </div>
+                                    <span class="story-v3-label">${displayLabel}</span>
+                                </div>
+                            `;
+                        }).join('')}
                     </div>
                 </div>
-                <div id="story-v3-modal" class="story-v3-modal"></div>
-                
-                <style>
-                    @keyframes livePulse {
-                        0% { opacity: 1; transform: scale(1); }
-                        50% { opacity: 0.7; transform: scale(1.05); }
-                        100% { opacity: 1; transform: scale(1); }
-                    }
-                    
-                    /* Responsive para pantallas muy pequeñas (iPhone SE, etc) */
-                    @media (max-width: 375px) {
-                        .story-feed-v3-wrapper > div {
-                            grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)) !important;
-                            gap: 10px !important;
-                            padding: 8px 10px !important;
-                        }
-                        .story-v3-label {
-                            font-size: 0.5rem !important;
-                        }
-                    }
-                    
-                    /* Para tablets y pantallas más grandes */
-                    @media (min-width: 768px) {
-                        .story-feed-v3-wrapper > div {
-                            grid-template-columns: repeat(7, 1fr) !important;
-                            max-width: 600px;
-                            margin: 0 auto;
-                        }
-                    }
-                </style>
             `;
         }
 
         async showStory(id) {
-            const modal = document.getElementById('story-v3-modal');
-            if (!modal) return;
+            let modal = document.getElementById('story-v3-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'story-v3-modal';
+                modal.className = 'story-v3-modal';
+                document.body.appendChild(modal);
+            }
 
             const index = this.stories.findIndex(s => s.id === id);
             if (index === -1) return;
@@ -325,12 +420,133 @@
             const topRanked = rankedData.length > 0 ? rankedData : allPlayers.sort((a, b) => (b.points || 0) - (a.points || 0));
 
             // CONTENT INJECTION
-            switch (id) {
+            if (id.startsWith('event_')) {
+                const event = story.eventData;
+                if (event) {
+                    const regCount = (event.players || event.registeredPlayers || []).length;
+                    const maxPlazas = (event.max_courts || 0) * 4;
+                    const percent = maxPlazas > 0 ? Math.min(100, Math.round((regCount / maxPlazas) * 100)) : 0;
+                    
+                    let catColor = '#00E36D';
+                    const lowerName = event.name.toLowerCase();
+                    if (lowerName.includes('fem') || lowerName.includes('chicas')) catColor = '#FF2D55';
+                    else if (lowerName.includes('mix')) catColor = '#FFD700';
+                    else if (lowerName.includes('masc') || lowerName.includes('chicos')) catColor = '#00C4FF';
+
+                    const playersHtml = (event.players || event.registeredPlayers || []).slice(0, 8).map(p => `
+                        <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase;">${p.name || 'Jugador'}</span>
+                            <span style="font-size: 0.7rem; color: #fbbf24; font-weight: 800;">${p.level ? `NIVEL ${p.level}` : 'READY'}</span>
+                        </div>
+                    `).join('');
+
+                    contentHtml = `
+                        <div style="color: white; width: 100%; display: flex; flex-direction: column;">
+                            <div style="text-align: center; margin-bottom: 20px; animation: fadeIn 0.4s ease-out;">
+                                <span style="background: ${catColor}; color: #000; padding: 4px 14px; border-radius: 50px; font-weight: 950; font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 0 15px ${catColor}50;">${event.type === 'entreno' ? 'ENTRENAMIENTO' : 'AMERICANAS'}</span>
+                                <h2 style="font-size: 2.2rem; font-weight: 1000; margin: 12px 0 5px; font-family: 'Outfit', sans-serif; line-height: 1.1; text-transform: uppercase;">${event.name}</h2>
+                                <p style="color: rgba(255,255,255,0.4); font-size: 0.75rem; margin: 0; font-weight: 700; text-transform: uppercase;">${event.date} • ${event.time || '18:00'}</p>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px;">
+                                <!-- CAPACITY PROGRESS -->
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 18px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                        <span style="font-size: 0.75rem; font-weight: 900; color: rgba(255,255,255,0.6);">PLAZAS OCUPADAS</span>
+                                        <span style="font-size: 0.95rem; font-weight: 1000; color: ${catColor};">${regCount} / ${maxPlazas}</span>
+                                    </div>
+                                    <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                                        <div style="width: ${percent}%; height: 100%; background: ${catColor}; border-radius: 10px; box-shadow: 0 0 10px ${catColor};"></div>
+                                    </div>
+                                </div>
+
+                                <!-- REGISTERED PLAYERS LIST -->
+                                ${regCount > 0 ? `
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <h4 style="margin: 0 0 4px; font-size: 0.85rem; font-weight: 900; color: rgba(255,255,255,0.5); text-transform: uppercase;">JUGADORES INSCRITOS</h4>
+                                        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;">
+                                            ${playersHtml}
+                                        </div>
+                                    </div>
+                                ` : `
+                                    <div style="text-align: center; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
+                                        <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.4); font-weight: 700;">¡Inaugura la lista! Sé el primero en inscribirse.</p>
+                                    </div>
+                                `}
+
+                                <!-- ACTION BUTTON -->
+                                <button onclick="event.stopPropagation(); window.dashNavigate('entrenos', 'event_story')" style="width: 100%; background: ${catColor}; color: #000; border: none; padding: 14px; border-radius: 15px; font-size: 0.85rem; font-weight: 1000; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 5px 15px ${catColor}40; margin-top: 10px;">
+                                    ${event.status === 'live' ? 'VER PISTAS EN VIVO' : 'RESERVAR PLAZA AHORA'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    contentHtml = `<div style="padding:40px; color:white; text-align:center;"><h2 style="font-weight:950; font-size:2rem;">EVENTO</h2><p style="opacity:0.6; margin-top:20px;">Detalles no disponibles.</p></div>`;
+                }
+            } else switch (id) {
+                case 'noticias':
+                    contentHtml = `
+                        <div style="color: white; width: 100%; display: flex; flex-direction: column;">
+                            <div style="text-align: center; margin-bottom: 25px; animation: fadeIn 0.4s ease-out;">
+                                <span style="background: #00E36D; color: #000; padding: 4px 14px; border-radius: 50px; font-weight: 950; font-size: 0.65rem; letter-spacing: 1px; box-shadow: 0 0 15px rgba(0,227,109,0.3);">BOLETÍN OFICIAL</span>
+                                <h2 style="font-size: 2.2rem; font-weight: 1000; margin: 12px 0 5px; font-family: 'Outfit', sans-serif;">SOMOSPADEL <span style="color: #00E36D;">BCN</span></h2>
+                                <p style="color: rgba(255,255,255,0.4); font-size: 0.75rem; margin: 0; font-weight: 700; text-transform: uppercase;">Últimas novedades y accesos rápidos</p>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px;">
+                                <!-- 1. DESTACADO (ENTRENOS EN GRUPO) -->
+                                <div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1.5px solid #6366f1; border-radius: 20px; padding: 18px; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(99,102,241,0.25);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <span style="font-size: 0.55rem; font-weight: 950; color: #818cf8; background: rgba(99,102,241,0.2); padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">🎾 ENTRENOS</span>
+                                        <i class="fas fa-graduation-cap" style="color: #818cf8;"></i>
+                                    </div>
+                                    <h4 style="margin: 0 0 6px; font-size: 1.05rem; font-weight: 900; color: white;">ENTRENAMIENTOS DE GRUPO</h4>
+                                    <p style="margin: 0 0 14px; font-size: 0.72rem; color: rgba(255,255,255,0.6); line-height: 1.3;">Apúntate hoy a nuestros entrenamientos de grupo y pozos por niveles para perfeccionar tu técnica.</p>
+                                    <button onclick="event.stopPropagation(); window.dashNavigate('entrenos', 'noticias_story')" style="width: 100%; background: #6366f1; color: white; border: none; padding: 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s;">VER ENTRENOS</button>
+                                </div>
+
+                                <!-- 2. TIENDA VIP (MIGRATION TO INTEGRATED SHOP) -->
+                                <div style="background: linear-gradient(135deg, #172554 0%, #0f172a 100%); border: 1.5px solid #3b82f6; border-radius: 20px; padding: 18px; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(59,130,246,0.25);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <span style="font-size: 0.55rem; font-weight: 950; color: #60a5fa; background: rgba(59,130,246,0.2); padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">🛍️ TIENDA VIP</span>
+                                        <i class="fas fa-shopping-bag" style="color: #60a5fa;"></i>
+                                    </div>
+                                    <h4 style="margin: 0 0 6px; font-size: 1.05rem; font-weight: 900; color: white;">Tienda Oficial (En Breve)</h4>
+                                    <p style="margin: 0 0 14px; font-size: 0.72rem; color: rgba(255,255,255,0.6); line-height: 1.3;">Muy pronto estará disponible la tienda online oficial integrada directamente en esta app.</p>
+                                    <button onclick="event.stopPropagation(); window.StoryFeedWidget.showStory('shop')" style="width: 100%; background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s;">VER DETALLES</button>
+                                </div>
+
+                                <!-- 3. PERFIL Y STATS -->
+                                <div style="background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); border: 1.5px solid #10b981; border-radius: 20px; padding: 18px; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(16,185,129,0.25);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <span style="font-size: 0.55rem; font-weight: 950; color: #34d399; background: rgba(16,185,129,0.2); padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">📊 MI EVOLUCIÓN</span>
+                                        <i class="fas fa-chart-line" style="color: #34d399;"></i>
+                                    </div>
+                                    <h4 style="margin: 0 0 6px; font-size: 1.05rem; font-weight: 900; color: white;">Progreso y Nivel Power</h4>
+                                    <p style="margin: 0 0 14px; font-size: 0.72rem; color: rgba(255,255,255,0.6); line-height: 1.3;">Visualiza tu evolución de nivel, ELO y últimas estadísticas competitivas.</p>
+                                    <button onclick="event.stopPropagation(); window.dashNavigate('profile', 'noticias_story')" style="width: 100%; background: #10b981; color: white; border: none; padding: 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s;">VER MIS ESTADÍSTICAS</button>
+                                </div>
+
+                                <!-- 4. SMART TIP -->
+                                <div style="background: rgba(255, 255, 255, 0.03); border: 1px dashed rgba(255,255,255,0.15); border-radius: 20px; padding: 18px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <i class="fas fa-lightbulb" style="color: #fbbf24; font-size: 1.1rem;"></i>
+                                        <h4 style="margin: 0; font-size: 0.9rem; font-weight: 900; color: white; text-transform: uppercase; letter-spacing: 0.5px;">💡 SMART TIP</h4>
+                                    </div>
+                                    <p style="margin: 0; font-size: 0.72rem; color: rgba(255,255,255,0.5); line-height: 1.4;">
+                                        Desliza hacia abajo para cerrar esta pantalla de historias en cualquier momento o pulsa en los lados izquierdo/derecho para cambiar de canal.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
                 case 'ranking':
                     this.currentRankingData = topRanked; // Store for search
                     const top3 = topRanked.slice(0, 3);
                     contentHtml = `
-                        <div style="padding: 40px; color:white; height:100%; display:flex; flex-direction:column;">
+                        <div style="color: white; width: 100%; display: flex; flex-direction: column;">
                             <div id="ranking-default-view">
                                 <span style="background:#fb7185; color:#000; padding:4px 12px; border-radius:50px; font-weight:950; font-size:0.6rem;">RANKING ACTUALIZADO</span>
                                 <h2 style="font-size: 2.2rem; font-weight: 950; margin: 15px 0;">LOS REYES<br>DE <span style="color:#fb7185">LA PISTA</span></h2>
@@ -365,367 +581,293 @@
                         </div>
                     `;
                     break;
-                case 'clinica':
-                    contentHtml = `
-                        <div style="padding: 40px; text-align:center; color: white;">
-                            <div style="width:100px; height:100px; background:#f472b6; border-radius:30px; display:flex; align-items:center; justify-content:center; margin:0 auto 30px; box-shadow:0 15px 40px rgba(244,114,182,0.4);">
-                                <i class="fas fa-graduation-cap" style="color:black; font-size:3rem;"></i>
-                            </div>
-                            <h2 style="font-size: 2rem; font-weight: 1000;">ESCUELA DE<br><span style="color:#f472b6">PÁDEL</span></h2>
-                            <p style="color:rgba(255,255,255,0.8); margin-top:15px; line-height:1.6; font-weight:600;">Mejora tu técnica con clases personalizadas y grupos adaptados a todos los niveles.</p>
-                            <div style="margin-top:40px; background:rgba(255,255,255,0.05); padding:20px; border-radius:20px; border: 1px dashed #f472b6;">
-                                <p style="color:#f472b6; font-weight:900; font-size:0.85rem; margin:0; line-height:1.4;">
-                                    Escríbenos por privado para ponerte en contacto con el profesor de pádel.
-                                </p>
-                            </div>
-                        </div>
-                    `;
-                    break;
-                case 'live':
-                    const onlinePlayers = Math.floor(allPlayers.length * 0.4) + 5;
-                    contentHtml = `
-                        <div style="padding: 40px; text-align: left; color: white;">
-                            <span style="background:#00E36D; color:#000; padding:4px 12px; border-radius:50px; font-weight:950; font-size:0.6rem;">ESTADO EN VIVO</span>
-                            <h2 style="font-size: 2.2rem; font-weight: 950; margin: 15px 0;">COMUNIDAD<br>EN AUGE</h2>
-                            <div style="background:white; border-radius:30px; padding:30px; color:#000;">
-                                <div style="font-size:3rem; font-weight:950;">${onlinePlayers}</div>
-                                <div style="font-weight:900; opacity:0.5; font-size:0.7rem; text-transform:uppercase;">Jugadores hoy</div>
-                            </div>
-                        </div>
-                    `;
-                    break;
-                case 'weather':
-                    const w = weatherData[0] || { temp: '--', icon: '☁️', intelligence: { ballSpeed: 'MEDIA' } };
-                    contentHtml = `
-                        <div style="padding: 40px; color: white;">
-                            <span style="background:#fbbf24; color:#000; padding:4px 12px; border-radius:50px; font-weight:950; font-size:0.6rem;">CONSEJO TÁCTICO</span>
-                            <h2 style="font-size: 2rem; font-weight: 950; margin-top:15px;">ESTRATEGIA<br>DE <span style="color:#fbbf24">PISTA</span></h2>
-                            <p style="color:rgba(255,255,255,0.6); margin-top:10px;">Basado en condiciones de ${w.name || 'Barcelona'}:</p>
-                            <div style="margin-top:40px; background:rgba(251,191,36,0.1); border:1px solid #fbbf24; border-radius:30px; padding:30px; text-align:center;">
-                                <div style="font-size:4rem; margin-bottom:10px;">${w.icon}</div>
-                                <div style="color:#fbbf24; font-weight:1000; font-size:1.6rem;">${w.temp}ºC</div>
-                                <div style="color:white; font-weight:900; font-size:0.9rem; margin-top:10px; text-transform:uppercase;">BOLA ${w.intelligence?.ballSpeed || 'MEDIA'}</div>
-                                <p style="color:white; opacity:0.8; font-size:0.8rem; margin-top:15px; line-height:1.5;">${w.intelligence?.recommendation || 'Condiciones estables. Se recomienda juego de control desde el fondo.'}</p>
-                            </div>
-                        </div>
-                    `;
-                    break;
-                case 'matches':
-                    const openMatches = allEvents.filter(e => e.status === 'open').slice(0, 2);
-                    contentHtml = `
-                        <div style="padding: 40px; color: white;">
-                            <h2 style="font-size: 2rem; font-weight: 950;">PRÓXIMOS<br><span style="color:#ca8a04">RETOS</span></h2>
-                            <p style="color:rgba(255,255,255,0.6); margin-top:10px;">Inscríbete en los eventos oficiales de esta semana.</p>
-                            <div style="margin-top:30px; display:flex; flex-direction:column; gap:15px;">
-                                ${openMatches.length > 0 ? openMatches.map(m => `
-                                    <div style="background:#111; border:1px solid #ca8a04; border-radius:20px; padding:20px;">
-                                        <div style="color:#ca8a04; font-weight:900; font-size:0.7rem; text-transform:uppercase;">${m.date} • ${m.time}h</div>
-                                        <div style="color:white; font-weight:1000; font-size:1.1rem; text-transform:uppercase;">${m.name}</div>
-                                    </div>
-                                `).join('') : `
-                                    <div style="padding:40px; text-align:center; background:rgba(202,138,4,0.05); border:1px dashed #ca8a04; border-radius:20px;">
-                                        <div style="color:white; font-weight:900; font-size:1.1rem;">PRÓXIMAMENTE</div>
-                                        <p style="color:rgba(255,255,255,0.4); font-size:0.8rem; margin-top:8px;">Estamos preparando nuevos cuadros de competición.</p>
-                                    </div>
-                                `}
-                            </div>
-                        </div>
-                    `;
-                    break;
-                case 'growth':
-                    contentHtml = `
-                        <div style="padding: 40px; color:white;">
-                            <h2 style="font-size: 2.2rem; font-weight: 950;">RETO<br><span style="color:#0ea5e9">SOMOSPADEL BCN</span></h2>
-                            <div style="margin-top:40px; height:200px; display:flex; align-items:flex-end; gap:8px;">
-                                <div style="flex:1; height:30%; background:#0ea5e930; border-radius:10px;"></div>
-                                <div style="flex:1; height:50%; background:#0ea5e950; border-radius:10px;"></div>
-                                <div style="flex:1; height:80%; background:#0ea5e9; border-radius:10px; border:2px solid #fff;"></div>
-                                <div style="flex:1; height:100%; background:white; border-radius:10px;"></div>
-                            </div>
-                            <div style="margin-top:20px; font-size:1.4rem; font-weight:900;">OBJETIVO: ${allPlayers.length + 50} JUGADORES</div>
-                            <p style="opacity:0.6; font-size:0.8rem;">Proyección mensual estimada según el ritmo de nuevas altas.</p>
-                        </div>
-                    `;
-                    break;
-                case 'security':
-                    contentHtml = `
-                        <div style="padding: 40px; color: white;">
-                            <div style="text-align:center; margin-bottom:40px;">
-                                <i class="fas fa-shield-check" style="color:#8b5cf6; font-size:5rem;"></i>
-                            </div>
-                            <h2 style="font-size: 2rem; font-weight: 1000; text-align:center;">PRIVACIDAD<br>TOTAL</h2>
-                            <div style="margin-top:30px; background:rgba(255,255,255,0.05); border-radius:20px; padding:20px; border-left:4px solid #8b5cf6;">
-                                <div style="color:white; font-weight:900; font-size:0.9rem;">ENCRIPTACIÓN DE DATOS</div>
-                                <div style="color:rgba(255,255,255,0.6); font-size:0.75rem; margin-top:8px; line-height:1.4;">Tus resultados y estadísticas están protegidos bajo protocolos de alta seguridad.</div>
-                            </div>
-                        </div>
-                    `;
-                    break;
-                case 'partners':
-                    contentHtml = `
-                        <div style="padding: 40px; color: white;">
-                            <span style="background:#34d399; color:#000; padding:4px 12px; border-radius:50px; font-weight:950; font-size:0.6rem;">SOCIAL MATCH</span>
-                            <h2 style="font-size: 2rem; font-weight: 1000; margin-top:15px;">BUSCA<br><span style="color:#34d399">PAREJA</span></h2>
-                            <div style="margin-top:40px; background:rgba(52,211,153,0.1); border:2px dashed #34d399; border-radius:30px; padding:30px; display:flex; flex-direction:column; align-items:center;">
-                                <div style="display:flex; gap:-10px; margin-bottom:15px;">
-                                    ${Array(4).fill(0).map(() => `<div style="width:40px; height:40px; border-radius:50%; background:#111; border:2px solid #34d399; display:flex; align-items:center; justify-content:center; margin-left:-10px;"><i class="fas fa-user-ninja" style="font-size:1rem; color:#34d399;"></i></div>`).join('')}
-                                </div>
-                                <div style="color:white; font-weight:900; font-size:1.1rem; text-align:center;">12 JUGADORES BUSCANDO</div>
-                                <p style="color:rgba(255,255,255,0.6); font-size:0.8rem; text-align:center; margin-top:10px;">Encuentra el partner ideal para tu nivel en segundos.</p>
-                            </div>
-                        </div>
-                    `;
-                    break;
                 case 'shop':
                     contentHtml = `
-                        <div style="padding: 40px; text-align:center; color: white;">
-                            <i class="fas fa-shopping-bag" style="font-size:5rem; color:#6366f1; margin-bottom:20px;"></i>
-                            <h2 style="font-size: 2.2rem; font-weight: 950;">SOMOSPADEL<br><span style="color:#6366f1">.EU</span></h2>
-                            <p style="color:rgba(255,255,255,0.6); margin-top:15px;">Ofertas exclusivas en palas nuevas y ropa oficial.</p>
+                        <div style="padding: 40px; text-align:center; color: white; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
+                            <div style="width:100px; height:100px; background:#6366f1; border-radius:30px; display:flex; align-items:center; justify-content:center; margin:0 auto 30px; box-shadow:0 15px 40px rgba(99,102,241,0.4);">
+                                <i class="fas fa-shopping-bag" style="color:black; font-size:3rem;"></i>
+                            </div>
+                            <h2 style="font-size: 2.2rem; font-weight: 1000; font-family:'Outfit',sans-serif; color:#6366f1;">TIENDA VIP</h2>
+                            <p style="color:rgba(255,255,255,0.7); margin-top:15px; line-height:1.5; font-weight:600; max-width:280px;">
+                                Muy pronto estará disponible la tienda oficial online de SomosPadel. Ropa técnica, palas y accesorios exclusivos del club.
+                            </p>
                         </div>
                     `;
                     break;
-                default:
-                    contentHtml = `<div style="padding:40px; color:white; text-align:center;"><h2 style="font-weight:950; font-size:2rem;">SOMOSPADEL<br>LIFE</h2><p style="opacity:0.6; margin-top:20px;">Mantente al día con lo último del club.</p></div>`;
+                case 'records':
+                    contentHtml = `
+                        <div style="padding: 40px; text-align:center; color: white; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
+                            <div style="width:100px; height:100px; background:#10b981; border-radius:30px; display:flex; align-items:center; justify-content:center; margin:0 auto 30px; box-shadow:0 15px 40px rgba(16,185,129,0.4);">
+                                <i class="fas fa-history" style="color:black; font-size:3rem;"></i>
+                            </div>
+                            <h2 style="font-size: 2.2rem; font-weight: 1000; font-family:'Outfit',sans-serif; color:#10b981;">RÉCORDS</h2>
+                            <p style="color:rgba(255,255,255,0.7); margin-top:15px; line-height:1.5; font-weight:600; max-width:280px;">
+                                Explora el Hall of Fame del club, ganadores históricos y registros de competiciones pasadas.
+                            </p>
+                            <button onclick="event.stopPropagation(); window.dashNavigate('records', 'records_story')" style="width: 100%; background: #10b981; color: #000; border: none; padding: 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 1000; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 30px; box-shadow: 0 5px 15px rgba(16,185,129,0.3);">VER HISTORIAL COMPLETO</button>
+                        </div>
+                    `;
+                    break;
+                case 'equipos':
+                    contentHtml = `
+                        <div style="padding: 40px; text-align:center; color: white; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
+                            <div style="width:100px; height:100px; background:#38bdf8; border-radius:30px; display:flex; align-items:center; justify-content:center; margin:0 auto 30px; box-shadow:0 15px 40px rgba(56,189,248,0.4);">
+                                <i class="fas fa-users" style="color:black; font-size:3rem;"></i>
+                            </div>
+                            <h2 style="font-size: 2.2rem; font-weight: 1000; font-family:'Outfit',sans-serif; color:#38bdf8;">EQUIPOS</h2>
+                            <p style="color:rgba(255,255,255,0.7); margin-top:15px; line-height:1.5; font-weight:600; max-width:280px;">
+                                Forma parte de la liga oficial, representa a SomosPadel y compite contra otros clubes de la región.
+                            </p>
+                            <button onclick="event.stopPropagation(); window.dashNavigate('equipos', 'equipos_story')" style="width: 100%; background: #38bdf8; color: #000; border: none; padding: 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 1000; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 30px; box-shadow: 0 5px 15px rgba(56,189,248,0.3);">VER EQUIPOS Y LIGAS</button>
+                        </div>
+                    `;
+                    break;
+                case 'tournaments':
+                    contentHtml = `
+                        <div style="padding: 40px; text-align:center; color: white; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
+                            <div style="width:100px; height:100px; background:#fb923c; border-radius:30px; display:flex; align-items:center; justify-content:center; margin:0 auto 30px; box-shadow:0 15px 40px rgba(251,146,60,0.4);">
+                                <i class="fas fa-award" style="color:black; font-size:3rem;"></i>
+                            </div>
+                            <h2 style="font-size: 2.2rem; font-weight: 1000; font-family:'Outfit',sans-serif; color:#fb923c;">TORNEOS</h2>
+                            <p style="color:rgba(255,255,255,0.7); margin-top:15px; line-height:1.5; font-weight:600; max-width:280px;">
+                                Participa en nuestros torneos abiertos de fin de semana, suma puntos de ranking y gana grandes premios.
+                            </p>
+                            <button onclick="event.stopPropagation(); window.dashNavigate('tournaments', 'tournaments_story')" style="width: 100%; background: #fb923c; color: #000; border: none; padding: 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 1000; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 30px; box-shadow: 0 5px 15px rgba(251,146,60,0.3);">VER PRÓXIMOS TORNEOS</button>
+                        </div>
+                    `;
+                    break;
             }
 
             modal.innerHTML = `
-                <!-- SEGMENTED PROGRESS BARS (INSTAGRAM STYLE) -->
-                <div class="story-progress-v3" style="display: flex; gap: 4px; padding: 0 10px; position: absolute; top: env(safe-area-inset-top, 20px); width: 100%; box-sizing: border-box; z-index: 1000;">
+                <div class="story-progress-v3">
                     ${this.stories.map((s, i) => `
-                        <div class="story-bar-v3" style="flex: 1; height: 2.5px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden;">
-                            <div id="story-fill-${i}" class="story-fill-v3" style="
-                                width: 100%; height: 100%; background: #fff; 
-                                transform: scaleX(${i < index ? '1' : '0'}); 
-                                transform-origin: left;
-                                transition: ${i === index ? 'transform 5s linear' : 'none'};
-                            "></div>
+                        <div class="story-bar-v3">
+                            <div id="story-fill-${i}" class="story-fill-v3" style="transform: scaleX(${i < index ? 1 : 0})"></div>
                         </div>
                     `).join('')}
                 </div>
-                
-                <div style="position:absolute; top: env(safe-area-inset-top, 40px); right: 20px; color:white; font-size:1.8rem; z-index:1100; cursor:pointer;" onclick="window.StoryFeedWidget.hideStory()">
-                    <i class="fas fa-times-circle"></i>
+
+                <!-- TOP BAR INTERACTION -->
+                <div style="position: absolute; top: env(safe-area-inset-top, 20px); left: 0; right: 0; padding: 15px; display: flex; align-items: center; justify-content: space-between; z-index: 1001; background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 100%);">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 32px; height: 32px; border-radius: 50%; background: ${story.color}; display: flex; align-items: center; justify-content: center; border: 1.5px solid white; box-shadow: 0 0 10px ${story.color}80;">
+                            <i class="fas ${story.icon}" style="color: black; font-size: 0.95rem;"></i>
+                        </div>
+                        <span style="font-weight: 900; font-size: 0.85rem; text-transform: uppercase; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.6); font-family: 'Outfit', sans-serif;">${story.label}</span>
+                    </div>
+                    <button onclick="window.StoryFeedWidget.hideStory(event)" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.6); padding: 5px; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.08); backdrop-filter: blur(5px);">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
 
-                <!-- NAVIGATION LAYERS -->
-                <div id="story-navigation-layer" style="position: absolute; inset: 0; z-index: 900; display: flex;">
-                    <div id="story-nav-prev" style="width: 30%; height: 100%;"></div>
-                    <div id="story-nav-next" style="width: 70%; height: 100%;"></div>
-                </div>
-
-                <div id="story-content-container" style="flex:1; display:flex; flex-direction:column; justify-content:center; background: radial-gradient(circle at top right, #111, #000); position: relative;">
+                <!-- MAIN CARD CONTENT AREA -->
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 1000; position: relative;">
                     ${contentHtml}
                 </div>
 
-                <!-- Footer with fixed label -->
-                <div style="padding:24px; background:rgba(0,0,0,0.9); backdrop-filter:blur(20px); border-top:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:16px; position:relative; z-index:1000;">
-                    <div style="width:44px; height:44px; border-radius:12px; background:${story.color}; display:flex; align-items:center; justify-content:center;">
-                        <i class="fas ${story.icon}" style="color:black; font-size:1.4rem;"></i>
-                    </div>
-                    <div style="flex:1;">
-                        <div style="color:white; font-weight:1000; font-size:0.9rem;">${story.label}</div>
-                        <div style="color:rgba(255,255,255,0.5); font-size:0.65rem; font-weight:800;">SOMOSPADEL BCN • INFO</div>
-                    </div>
+                <!-- INTERACTION GESTURES (LEFT/RIGHT TAP AREAS) -->
+                <div style="position: absolute; inset: 0; display: flex; z-index: 999;">
+                    <div id="story-v3-prev-zone" style="flex: 1; cursor: w-resize;"></div>
+                    <div id="story-v3-next-zone" style="flex: 2; cursor: e-resize;"></div>
                 </div>
             `;
 
             modal.style.display = 'flex';
-            this.setupNavigationInteractions();
 
-            // Start Fill Animation
-            setTimeout(() => {
-                const fill = document.getElementById(`story-fill-${index}`);
-                if (fill) fill.style.transform = 'scaleX(1)';
-            }, 50);
+            // ATTACH REAL-TIME INTERACTION GESTURES
+            const prevZone = document.getElementById('story-v3-prev-zone');
+            const nextZone = document.getElementById('story-v3-next-zone');
 
-            // AUTO-NEXT TIMER
-            this.startStoryTimer(index);
-        }
-
-        setupNavigationInteractions() {
-            const nextArea = document.getElementById('story-nav-next');
-            const prevArea = document.getElementById('story-nav-prev');
-            const modal = document.getElementById('story-v3-modal');
-
-            if (!nextArea || !prevArea || !modal) return;
-
-            // Tip navigation
-            nextArea.onclick = (e) => {
-                e.stopPropagation();
-                this.nextStory();
-            };
-            prevArea.onclick = (e) => {
-                e.stopPropagation();
-                this.prevStory();
-            };
-
-            // Touch Swipe Detection
-            let touchStartX = 0;
-            let touchStartY = 0;
             let isHolding = false;
             let holdTimer = null;
 
-            modal.ontouchstart = (e) => {
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-
-                // Pause on hold
+            const onHoldStart = (e) => {
+                e.preventDefault();
                 holdTimer = setTimeout(() => {
                     isHolding = true;
                     this.pauseStory();
-                }, 150);
+                }, 200);
             };
 
-            modal.ontouchend = (e) => {
-                clearTimeout(holdTimer);
+            const onHoldEnd = (e, callback) => {
+                e.preventDefault();
+                if (holdTimer) clearTimeout(holdTimer);
                 if (isHolding) {
                     isHolding = false;
                     this.resumeStory();
-                    return;
-                }
-
-                const touchEndX = e.changedTouches[0].clientX;
-                const touchEndY = e.changedTouches[0].clientY;
-                const diffX = touchEndX - touchStartX;
-                const diffY = touchEndY - touchStartY;
-
-                // Horizontal Swipe (Instagram style)
-                if (Math.abs(diffX) > 50 && Math.abs(diffY) < 100) {
-                    if (diffX < 0) this.nextStory();
-                    else this.prevStory();
-                }
-                // Close on swipe down
-                else if (diffY > 100 && Math.abs(diffX) < 100) {
-                    this.hideStory();
+                } else {
+                    callback();
                 }
             };
 
-            // Long press for Desktop (testing)
-            modal.onmousedown = () => {
-                holdTimer = setTimeout(() => {
-                    isHolding = true;
-                    this.pauseStory();
-                }, 150);
-            };
-            modal.onmouseup = () => {
-                clearTimeout(holdTimer);
-                if (isHolding) {
-                    isHolding = false;
-                    this.resumeStory();
+            if (prevZone && nextZone) {
+                // Mobile Touch Events
+                prevZone.addEventListener('touchstart', onHoldStart, { passive: false });
+                prevZone.addEventListener('touchend', (e) => onHoldEnd(e, () => this.prevStory()), { passive: false });
+
+                nextZone.addEventListener('touchstart', onHoldStart, { passive: false });
+                nextZone.addEventListener('touchend', (e) => onHoldEnd(e, () => this.nextStory()), { passive: false });
+
+                // Desktop Mouse Events
+                prevZone.addEventListener('mousedown', onHoldStart);
+                prevZone.addEventListener('mouseup', (e) => onHoldEnd(e, () => this.prevStory()));
+
+                nextZone.addEventListener('mousedown', onHoldStart);
+                nextZone.addEventListener('mouseup', (e) => onHoldEnd(e, () => this.nextStory()));
+            }
+
+            // TRIGGER FILL TRANSITION & TIMER
+            setTimeout(() => {
+                const fill = document.getElementById(`story-fill-${index}`);
+                if (fill) {
+                    this.startStoryTimer(index);
                 }
-            };
+            }, 50);
+        }
+
+        startStoryTimer(index) {
+            if (this.storyTimeout) clearTimeout(this.storyTimeout);
+            this.timerStart = Date.now();
+            this.timerRemaining = this.storyDuration;
+            this.animateProgress(index, this.timerRemaining);
+        }
+
+        animateProgress(index, duration) {
+            const fill = document.getElementById(`story-fill-${index}`);
+            if (!fill) return;
+
+            fill.style.transition = `transform ${duration}ms linear`;
+            fill.style.transform = 'scaleX(1)';
+
+            this.storyTimeout = setTimeout(() => {
+                this.nextStory();
+            }, duration);
         }
 
         pauseStory() {
-            console.log("⏸ Story Paused");
-            if (this.storyTimer) clearTimeout(this.storyTimer);
-            const currentFill = document.getElementById(`story-fill-${this.currentStoryIndex}`);
-            if (currentFill) {
-                const computedStyle = window.getComputedStyle(currentFill);
-                const transform = computedStyle.getPropertyValue('transform');
-                currentFill.style.transition = 'none';
-                currentFill.style.transform = transform;
+            if (this.storyTimeout) {
+                clearTimeout(this.storyTimeout);
+                this.storyTimeout = null;
+            }
+
+            const index = this.currentStoryIndex;
+            const fill = document.getElementById(`story-fill-${index}`);
+            if (fill) {
+                const computedStyle = window.getComputedStyle(fill);
+                const transform = computedStyle.transform;
+                let scaleX = 0;
+                if (transform && transform !== 'none') {
+                    const values = transform.split('(')[1].split(')')[0].split(',');
+                    scaleX = parseFloat(values[0]) || 0;
+                }
+
+                fill.style.transition = 'none';
+                fill.style.transform = `scaleX(${scaleX})`;
+
+                const elapsed = Date.now() - this.timerStart;
+                this.timerRemaining = Math.max(0, this.timerRemaining - elapsed);
             }
         }
 
         resumeStory() {
-            console.log("▶ Story Resumed");
-            const index = this.currentStoryIndex;
-            const currentFill = document.getElementById(`story-fill-${index}`);
-            if (currentFill) {
-                const computedStyle = window.getComputedStyle(currentFill);
-                const transform = computedStyle.getPropertyValue('transform');
-                const matrix = new WebKitCSSMatrix(transform);
-                const currentScale = matrix.m11; // Extract scaleX
+            if (this.storyTimeout) return;
+            this.timerStart = Date.now();
+            this.animateProgress(this.currentStoryIndex, this.timerRemaining);
+        }
 
-                const remainingProgress = 1 - currentScale;
-                const remainingTime = remainingProgress * 5000;
+        prevStory() {
+            if (this.storyTimeout) clearTimeout(this.storyTimeout);
 
-                currentFill.style.transition = `transform ${remainingTime}ms linear`;
-                currentFill.style.transform = 'scaleX(1)';
+            const prevIndex = this.currentStoryIndex - 1;
+            if (prevIndex >= 0) {
+                const currentFill = document.getElementById(`story-fill-${this.currentStoryIndex}`);
+                if (currentFill) {
+                    currentFill.style.transition = 'none';
+                    currentFill.style.transform = 'scaleX(0)';
+                }
 
-                if (this.storyTimer) clearTimeout(this.storyTimer);
-                this.storyTimer = setTimeout(() => {
-                    this.nextStory();
-                }, remainingTime);
+                const prevFill = document.getElementById(`story-fill-${prevIndex}`);
+                if (prevFill) {
+                    prevFill.style.transition = 'none';
+                    prevFill.style.transform = 'scaleX(0)';
+                }
+
+                this.showStory(this.stories[prevIndex].id);
+            } else {
+                const currentFill = document.getElementById(`story-fill-${this.currentStoryIndex}`);
+                if (currentFill) {
+                    currentFill.style.transition = 'none';
+                    currentFill.style.transform = 'scaleX(0)';
+                }
+                this.showStory(this.stories[0].id);
             }
         }
 
         nextStory() {
+            if (this.storyTimeout) clearTimeout(this.storyTimeout);
+
             const nextIndex = this.currentStoryIndex + 1;
             if (nextIndex < this.stories.length) {
+                const currentFill = document.getElementById(`story-fill-${this.currentStoryIndex}`);
+                if (currentFill) {
+                    currentFill.style.transition = 'none';
+                    currentFill.style.transform = 'scaleX(1)';
+                }
                 this.showStory(this.stories[nextIndex].id);
             } else {
                 this.hideStory();
             }
         }
 
-        prevStory() {
-            const prevIndex = this.currentStoryIndex - 1;
-            if (prevIndex >= 0) {
-                this.showStory(this.stories[prevIndex].id);
-            } else {
-                // Restart current if it's the first
-                this.showStory(this.stories[0].id);
-            }
-        }
+        hideStory(event) {
+            if (event) event.stopPropagation();
+            if (this.storyTimeout) clearTimeout(this.storyTimeout);
 
-        startStoryTimer(index) {
-            if (this.storyTimer) clearTimeout(this.storyTimer);
-            this.storyTimer = setTimeout(() => {
-                if (index < this.stories.length - 1) {
-                    this.showStory(this.stories[index + 1].id);
-                } else {
-                    this.hideStory();
-                }
-            }, 5050);
+            const modal = document.getElementById('story-v3-modal');
+            if (modal) {
+                modal.style.animation = 'storyExit 0.3s both cubic-bezier(0.19, 1, 0.22, 1)';
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    modal.innerHTML = '';
+                }, 300);
+            }
         }
 
         onRankingSearch(query) {
-            const resultsContainer = document.getElementById('ranking-search-results');
-            const topList = document.getElementById('ranking-top-list');
-            const defaultHeader = document.getElementById('ranking-default-view');
+            const normalizedQuery = query.toLowerCase().trim();
+            const list = document.getElementById('ranking-top-list');
+            const searchResults = document.getElementById('ranking-search-results');
 
-            if (!resultsContainer || !topList || !this.currentRankingData) return;
-
-            if (query.length < 2) {
-                resultsContainer.style.display = 'none';
-                topList.style.display = 'flex';
-                if (defaultHeader) defaultHeader.style.display = 'block';
+            if (!normalizedQuery) {
+                if (list) list.style.display = 'flex';
+                if (searchResults) {
+                    searchResults.style.display = 'none';
+                    searchResults.innerHTML = '';
+                }
+                this.resumeStory();
                 return;
             }
 
-            // Perform search
-            const lowerQ = query.toLowerCase();
-            const matches = this.currentRankingData
-                .map((p, index) => ({ ...p, originalRank: index + 1 }))
-                .filter(p => (p.name || '').toLowerCase().includes(lowerQ));
+            this.pauseStory();
+            if (list) list.style.display = 'none';
+            if (searchResults && this.currentRankingData) {
+                const filtered = this.currentRankingData.filter(p => (p.name || '').toLowerCase().includes(normalizedQuery));
 
-            topList.style.display = 'none';
-            if (defaultHeader) defaultHeader.style.display = 'none';
-            resultsContainer.style.display = 'flex';
-
-            if (matches.length === 0) {
-                resultsContainer.innerHTML = '<div style="text-align:center; opacity:0.6; padding:20px;">No se encontraron jugadores</div>';
-            } else {
-                resultsContainer.innerHTML = matches.slice(0, 10).map(p => `
-                    <div style="display:flex; align-items:center; gap:15px; background:rgba(255,255,255,0.05); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); animation: fadeIn 0.3s ease-out;">
-                        <div style="font-size:1rem; font-weight:900; color:#fb7185; width:40px;">#${p.originalRank}</div>
-                        <div style="flex:1; font-weight:700; font-size:0.9rem; text-transform:uppercase;">${p.name}</div>
-                        <div style="font-weight:900; color:white; font-size:0.8rem;">${Math.round((p.stats?.americanas?.points || 0) + (p.stats?.entrenos?.points || 0))} PTS</div>
-                    </div>
-                `).join('');
+                if (filtered.length > 0) {
+                    searchResults.innerHTML = filtered.slice(0, 10).map((p, i) => `
+                        <div style="display:flex; align-items:center; gap:15px; background:rgba(251,113,133,0.1); padding:12px 15px; border-radius:15px; border:1px solid rgba(251,113,133,0.2);">
+                            <div style="font-weight:800; font-size:0.9rem; text-transform:uppercase; flex:1;">${p.name || 'Pro Player'}</div>
+                            <div style="font-weight:900; color:#fb7185; font-size:0.9rem;">${Math.round((p.stats?.americanas?.points || 0) + (p.stats?.entrenos?.points || 0))} PTS</div>
+                        </div>
+                    `).join('');
+                } else {
+                    searchResults.innerHTML = `<p style="color:rgba(255,255,255,0.4); text-align:center; font-size:0.8rem; padding:15px;">Ningún jugador coincide.</p>`;
+                }
+                searchResults.style.display = 'flex';
             }
-        }
-
-        hideStory() {
-            if (this.storyTimer) clearTimeout(this.storyTimer);
-            const modal = document.getElementById('story-v3-modal');
-            if (modal) modal.style.display = 'none';
         }
     }
 
     window.StoryFeedWidget = new StoryFeedWidget();
-    console.log('✅ Story Feed V3 Loaded');
+    console.log('🎯 StoryFeedWidget Component Loaded and Instantiated');
 })();

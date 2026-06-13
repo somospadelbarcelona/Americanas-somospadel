@@ -383,7 +383,85 @@ window.WhatsAppService = {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         if (isIOS) window.location.href = url;
         else window.open(url, '_blank');
+    },
+
+    /**
+     * Generic text sharer (V8.5+)
+     * Uses native share if available, otherwise falls back to WhatsApp link.
+     */
+    async shareText(text, title = 'Somospadel') {
+        if (!text) return;
+        
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || isIOS;
+
+        console.log("📤 WhatsAppService.shareText triggered", { isMobile, hasNativeShare: !!navigator.share });
+
+        if (isMobile && navigator.share) {
+            try {
+                await navigator.share({
+                    title: title,
+                    text: text
+                });
+                return;
+            } catch (e) { 
+                console.warn("Native share failed, falling back to WhatsApp link", e); 
+            }
+        }
+
+        // Fallback to WhatsApp Web/App link
+        const encodedText = encodeURIComponent(text);
+        const url = "https://api.whatsapp.com/send?text=" + encodedText;
+
+        if (isIOS) {
+            window.location.href = url;
+        } else {
+            window.open(url, '_blank');
+        }
+    },
+
+    /**
+     * Integración Nativa Automatizada (Concepto API Twilio/Cloud)
+     * Envía una notificación sin intervención del usuario a través de un Webhook.
+     * @param {string} phone - Formato internacional (ej: 34600000000)
+     * @param {Object} data - Información del evento/partido
+     */
+    async sendAutomatedNotification(phone, data) {
+        try {
+            console.log(`🤖 [WhatsAppService] Intentando envío automatizado a ${phone}...`);
+            
+            // Placeholder: Sustituir por URL de Cloud Function o Twilio API
+            const API_URL = "https://europe-west1-somospadel-bcn.cloudfunctions.net/api/whatsapp/send";
+            
+            // Construct the payload
+            const payload = {
+                to: phone,
+                template: data.template || 'match_confirmation',
+                components: [
+                    { type: 'header', text: data.title || 'PARTIDO CONFIRMADO' },
+                    { type: 'body', params: [data.userName, data.time, data.court] },
+                    { type: 'button', index: 0, payload: `confirm_${data.matchId}` }
+                ]
+            };
+
+            // En un entorno real asincrónico:
+            /*
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            return await response.json();
+            */
+
+            console.log("✅ [Mock] Notificación en cola de envío via API.");
+            return { success: true, messageId: "msg_" + Math.random().toString(36).substr(2, 9) };
+
+        } catch (e) {
+            console.error("❌ Error en envío automatizado:", e);
+            return { success: false, error: e.message };
+        }
     }
 };
 
-console.log("💬 WhatsAppService V7.0 Loaded");
+console.log("💬 WhatsAppService V8.5 PREMIUM Loaded (Hybrid API Support)");

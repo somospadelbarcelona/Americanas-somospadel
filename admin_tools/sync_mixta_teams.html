@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sincronizador de Equipos Mixtos a Firestore</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK (Compat v10) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <!-- Config & Init del Proyecto -->
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/firebase-init.js"></script>
+</head>
+
+<body style="font-family: 'Outfit', sans-serif; background: #09090b; color: white; margin: 0; padding: 40px; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow-x: hidden;">
+
+    <!-- Background Auras -->
+    <div style="position: absolute; top: -100px; left: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(112, 224, 0, 0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none; z-index: 1;"></div>
+    <div style="position: absolute; bottom: -100px; right: -100px; width: 450px; height: 450px; background: radial-gradient(circle, rgba(0, 227, 109, 0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none; z-index: 1;"></div>
+
+    <div style="max-width: 650px; width: 100%; background: rgba(24, 24, 27, 0.7); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 32px; box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 0 20px rgba(255,255,255,0.02); z-index: 10; position: relative;">
+        
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 35px;">
+            <div style="width: 70px; height: 70px; background: rgba(112, 224, 0, 0.1); border-radius: 22px; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid rgba(112, 224, 0, 0.3); margin-bottom: 20px; box-shadow: 0 0 30px rgba(112, 224, 0, 0.15);">
+                <i class="fas fa-satellite-dish" style="color: #72a800; font-size: 1.8rem;"></i>
+            </div>
+            <span style="font-size: 0.65rem; color: #72a800; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">ADMINISTRACIÓN DE PORTAL</span>
+            <h1 style="font-weight: 950; font-size: 2.2rem; margin: 5px 0 10px; letter-spacing: -1.2px; text-transform: uppercase; line-height: 1.05;">
+                Sincronizador <br><span style="background: linear-gradient(90deg, #CCFF00, #00E36D); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Equipos Mixtos</span>
+            </h1>
+            <p style="color: #94a3b8; font-size: 0.85rem; font-weight: 500; margin: 0 auto; max-width: 480px; line-height: 1.5;">
+                Sincroniza y guarda los dos equipos mixtos estáticos de la lliga Guinotprunera permanentemente en Firestore para conservar sus estadísticas dinámicas en la nube.
+            </p>
+        </div>
+
+        <!-- Terminal Status Output -->
+        <div style="margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 0 10px;">
+                <span style="font-size: 0.65rem; color: #64748b; font-weight: 900; letter-spacing: 0.5px;">ESTADO DE CONEXIÓN E IMPORTACIÓN</span>
+                <span style="font-size: 0.65rem; color: #64748b; font-weight: 900; letter-spacing: 0.5px;" id="record-count">0 REGISTROS</span>
+            </div>
+            <div id="status-terminal" style="background: #09090b; border: 1px solid rgba(255,255,255,0.06); padding: 22px; border-radius: 20px; font-family: monospace; font-size: 0.75rem; text-align: left; max-height: 250px; min-height: 150px; overflow-y: auto; line-height: 1.6; color: #a1a1aa; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);">
+                📡 Inicializando base de datos Firestore...
+            </div>
+        </div>
+
+        <!-- Call to Action Button -->
+        <button id="sync-btn" onclick="syncMixtaTeams()" style="width: 100%; border: none; background: linear-gradient(135deg, #CCFF00 0%, #00E36D 100%); color: #000; font-weight: 950; font-size: 0.9rem; padding: 18px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 15px 35px rgba(204, 255, 0, 0.25); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); letter-spacing: 0.5px; text-transform: uppercase;">
+            <i class="fas fa-cloud-upload-alt" style="font-size: 1.1rem;"></i> INICIAR SINCRONIZACIÓN PERMANENTE
+        </button>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="../index.html" style="color: #64748b; font-size: 0.75rem; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#64748b'">
+                <i class="fas fa-arrow-left"></i> Volver a la App Principal
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Los dos equipos mixtos estáticos de teams_data.js
+        const mixtaTeamsData = [
+            {
+                id: 'somos-padel-bcn-4xa',
+                name: 'SOMOS PÁDEL BCN 4XA',
+                category: 'Mixta',
+                division: 'Cuarta (4X)',
+                group: '4XB FASE 2 G1',
+                captain: 'Capitán por definir',
+                ranking: 3,
+                points: 3,
+                stats: { pj: 2, pg: 1, pp: 1, sf: 2, sc: 4 },
+                roster: [
+                    { name: 'Alejandro Coscolin Peregrin', pts: 54.0 },
+                    { name: 'Kevin Mancilla Serrano', pts: 48.0 },
+                    { name: 'Laura Martínez Ruiz', pts: 42.0 },
+                    { name: 'Marta Gómez Sánchez', pts: 36.0 },
+                    { name: 'David Asensio Guerrero', pts: 35.0 },
+                    { name: 'Cristina Soler Martín', pts: 28.0 },
+                    { name: 'Patricia Losa Cubero', pts: 24.0 }
+                ],
+                schedule: [
+                    { j: 1, date: '10 May', time: '12:00', opponent: 'SOMOS PÁDEL BCN 4XB', venue: 'Padel BCN - El Prat', isHome: true, score: '2 - 1', status: 'completed' },
+                    { j: 2, date: '17 May', time: '17:00', opponent: 'CLUB TENNIS VILANOVA 4X', venue: 'Vilanova', isHome: false, score: '0 - 3', status: 'completed' },
+                    { j: 3, date: '24 May', time: '16:30', opponent: 'PÁDEL OXIGEN 4X', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
+                    { j: 4, date: '31 May', time: '18:00', opponent: 'CEM TENNIS HOSPITALET 4X', venue: 'Hospitalet', isHome: false, score: 'Pendiente', status: 'upcoming' },
+                    { j: 5, date: '07 Jun', time: '16:30', opponent: 'PAPIOL PADEL CLUB 4X', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
+                    { j: 6, date: '14 Jun', time: '12:00', opponent: 'BYE', venue: '-', isHome: false, score: '-', status: 'upcoming' },
+                    { j: 7, date: '21 Jun', time: '16:30', opponent: 'CLUB PADEL VALLIRANA 4X', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' }
+                ],
+                groupStandings: [
+                    { pos: 1, team: 'CLUB TENNIS VILANOVA 4X', pj: 2, pg: 2, pp: 0, df: 4, pts: 6 },
+                    { pos: 2, team: 'PÁDEL OXIGEN 4X', pj: 2, pg: 1, pp: 1, df: 2, pts: 3 },
+                    { pos: 3, team: 'SOMOS PÁDEL BCN 4XA', pj: 2, pg: 1, pp: 1, df: -2, pts: 3, isCurrent: true },
+                    { pos: 4, team: 'SOMOS PÁDEL BCN 4XB', pj: 2, pg: 1, pp: 1, df: -1, pts: 3 },
+                    { pos: 5, team: 'CEM TENNIS HOSPITALET 4X', pj: 1, pg: 1, pp: 0, df: 1, pts: 3 },
+                    { pos: 6, team: 'PAPIOL PADEL CLUB 4X', pj: 1, pg: 0, pp: 1, df: -2, pts: 0 },
+                    { pos: 7, team: 'CLUB PADEL VALLIRANA 4X', pj: 2, pg: 0, pp: 2, df: -4, pts: 0 }
+                ],
+                logo: 'img/logo_somospadel.png',
+                link: 'https://summapadel.com/event/151'
+            },
+            {
+                id: 'somos-padel-bcn-4xb',
+                name: 'SOMOS PÁDEL BCN 4XB',
+                category: 'Mixta',
+                division: 'Cuarta (4X)',
+                group: '4XB FASE 2 G1',
+                captain: 'Capitán por definir',
+                ranking: 4,
+                points: 3,
+                stats: { pj: 2, pg: 1, pp: 1, sf: 3, sc: 3 },
+                roster: [
+                    { name: 'Miquel Muñoz Melero', pts: 46.0 },
+                    { name: 'Alex Cuadra Cabezas', pts: 44.0 },
+                    { name: 'Sandra Vilas Flores', pts: 38.0 },
+                    { name: 'Carla Domènech Solé', pts: 34.0 },
+                    { name: 'Oscar Coscolín Génova', pts: 22.0 },
+                    { name: 'Silvia Valls Vidal', pts: 20.0 },
+                    { name: 'Nuria Estévez Ruiz', pts: 18.0 }
+                ],
+                schedule: [
+                    { j: 1, date: '10 May', time: '12:00', opponent: 'SOMOS PÁDEL BCN 4XA', venue: 'Padel BCN - El Prat', isHome: false, score: '1 - 2', status: 'completed' },
+                    { j: 2, date: '17 May', time: '16:30', opponent: 'PAPIOL PADEL CLUB 4X', venue: 'Padel BCN - El Prat', isHome: true, score: '2 - 1', status: 'completed' },
+                    { j: 3, date: '24 May', time: '18:00', opponent: 'CLUB PADEL VALLIRANA 4X', venue: 'Vallirana', isHome: false, score: 'Pendiente', status: 'upcoming' },
+                    { j: 4, date: '31 May', time: '16:30', opponent: 'PÁDEL OXIGEN 4X', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
+                    { j: 5, date: '07 Jun', time: '13:30', opponent: 'CLUB TENNIS VILANOVA 4X', venue: 'Vilanova', isHome: false, score: 'Pendiente', status: 'upcoming' },
+                    { j: 6, date: '14 Jun', time: '16:30', opponent: 'CEM TENNIS HOSPITALET 4X', venue: 'Padel BCN - El Prat', isHome: true, score: 'Pendiente', status: 'upcoming' },
+                    { j: 7, date: '21 Jun', time: '12:00', opponent: 'BYE', venue: '-', isHome: false, score: '-', status: 'upcoming' }
+                ],
+                groupStandings: [
+                    { pos: 1, team: 'CLUB TENNIS VILANOVA 4X', pj: 2, pg: 2, pp: 0, df: 4, pts: 6 },
+                    { pos: 2, team: 'PÁDEL OXIGEN 4X', pj: 2, pg: 1, pp: 1, df: 2, pts: 3 },
+                    { pos: 3, team: 'SOMOS PÁDEL BCN 4XA', pj: 2, pg: 1, pp: 1, df: -2, pts: 3 },
+                    { pos: 4, team: 'SOMOS PÁDEL BCN 4XB', pj: 2, pg: 1, pp: 1, df: -1, pts: 3, isCurrent: true },
+                    { pos: 5, team: 'CEM TENNIS HOSPITALET 4X', pj: 1, pg: 1, pp: 0, df: 1, pts: 3 },
+                    { pos: 6, team: 'PAPIOL PADEL CLUB 4X', pj: 1, pg: 0, pp: 1, df: -2, pts: 0 },
+                    { pos: 7, team: 'CLUB PADEL VALLIRANA 4X', pj: 2, pg: 0, pp: 2, df: -4, pts: 0 }
+                ],
+                logo: 'img/logo_somospadel.png',
+                link: 'https://summapadel.com/event/151'
+            }
+        ];
+
+        // Verificar el estado inicial al cargar
+        window.addEventListener('DOMContentLoaded', () => {
+            const term = document.getElementById('status-terminal');
+            const countBadge = document.getElementById('record-count');
+            
+            term.innerHTML = "🔌 Esperando inicialización de Firebase...\n";
+            countBadge.innerHTML = mixtaTeamsData.length + " EQUIPOS LISTOS";
+
+            setTimeout(() => {
+                if (window.db) {
+                    term.innerHTML += "🟢 Conexión con Firestore establecida correctamente.\n";
+                    term.innerHTML += "📊 Listo para iniciar la sincronización.\n";
+                } else {
+                    term.innerHTML += "🔴 Error: No se pudo establecer conexión con Firestore. Por favor, verifica tu conexión a internet.\n";
+                }
+            }, 1500);
+        });
+
+        async function syncMixtaTeams() {
+            const btn = document.getElementById('sync-btn');
+            const term = document.getElementById('status-terminal');
+            
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> SINCRONIZANDO CON FIRESTORE...`;
+            
+            term.innerHTML = "⚡ Iniciando proceso de sincronización permanente...\n";
+            
+            if (!window.db) {
+                term.innerHTML += "❌ Error crítico: Firebase DB no inicializada. Abortando.\n";
+                resetButton(btn);
+                return;
+            }
+
+            try {
+                let successCount = 0;
+                for (const team of mixtaTeamsData) {
+                    term.innerHTML += `📤 Subiendo equipo: "${team.name}" (ID: ${team.id})...\n`;
+                    term.scrollTop = term.scrollHeight;
+
+                    // Subir a la colección 'club_teams' usando el ID como documento para evitar duplicados
+                    await window.db.collection('club_teams').doc(team.id).set({
+                        ...team,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    term.innerHTML += `<span style="color: #69f0ae">✅ Sincronizado: ${team.name} cargado con éxito en Firestore.</span>\n`;
+                    term.scrollTop = term.scrollHeight;
+                    successCount++;
+                }
+
+                term.innerHTML += `\n<span style="color: #CCFF00; font-weight: 900;">🏁 ¡PROCESO COMPLETADO SATISFACTORIAMENTE!</span>\n`;
+                term.innerHTML += `🎉 Se han sincronizado permanentemente ${successCount} de ${mixtaTeamsData.length} equipos mixtos en la nube.`;
+                term.scrollTop = term.scrollHeight;
+
+                btn.style.background = 'linear-gradient(135deg, #00E36D 0%, #38b000 100%)';
+                btn.innerHTML = `<i class="fas fa-check-double"></i> ¡Sincronizado Con Éxito!`;
+
+            } catch (error) {
+                term.innerHTML += `\n<span style="color: #ff5252">❌ ERROR DURANTE LA SINCRONIZACIÓN: ${error.message}</span>\n`;
+                term.scrollTop = term.scrollHeight;
+                resetButton(btn);
+            }
+        }
+
+        function resetButton(btn) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.background = 'linear-gradient(135deg, #CCFF00 0%, #00E36D 100%)';
+            btn.innerHTML = `<i class="fas fa-cloud-upload-alt"></i> REINTENTAR SINCRONIZACIÓN`;
+        }
+    </script>
+</body>
+</html>

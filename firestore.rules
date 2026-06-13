@@ -112,6 +112,46 @@ service cloud.firestore {
       }
     }
 
+    // ==========================================
+    // EQUIPOS DEL CLUB (REAL-TIME TEAMS & SCRAPER)
+    // ==========================================
+    match /club_teams/{teamId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ==========================================
+    // TORNEOS (GESTOR DE TORNEOS)
+    // ==========================================
+    match /tournaments/{tournamentId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ==========================================
+    // PARTIDOS ABIERTOS (COMUNIDAD)
+    // ==========================================
+    match /open_matches/{matchId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // ==========================================
+    // MENÚS Y ELEMENTOS DE NAVEGACIÓN
+    // ==========================================
+    match /menu_items/{menuId} {
+      allow read: if true; // Permitir lectura incluso sin autenticar para la UI inicial
+      allow write: if isAdmin();
+    }
+
+    // ==========================================
+    // HISTORIAL DE NIVELES (GRÁFICOS DE EVOLUCIÓN)
+    // ==========================================
+    match /level_history/{historyId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
     // Regla global de cierre
     match /{allPaths=**} {
       allow read, write: if isAdmin();

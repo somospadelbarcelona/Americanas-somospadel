@@ -242,6 +242,17 @@ window.AdminViews.config = async function () {
     const titleEl = document.getElementById('page-title');
 
     if (titleEl) titleEl.textContent = 'Ajustes del Sistema';
+    
+    let currentGroupLink = '';
+    try {
+        const doc = await window.db.collection('system_config').doc('whatsapp').get();
+        if (doc.exists && doc.data().group_link) {
+            currentGroupLink = doc.data().group_link;
+        }
+    } catch (e) {
+        console.error("Error cargando enlace de WhatsApp en admin:", e);
+    }
+
     content.innerHTML = `
         <div class="glass-card-enterprise" style="border-left: 4px solid var(--primary);">
             <h3>⚙️ HERRAMIENTAS DE MANTENIMIENTO</h3>
@@ -264,11 +275,64 @@ window.AdminViews.config = async function () {
             </div>
         </div>
 
+        <!-- 💬 CONFIGURACIÓN DE WHATSAPP -->
+        <div class="glass-card-enterprise" style="border-left: 4px solid #25D366; margin-top: 2rem;">
+            <h3>💬 AJUSTES DE WHATSAPP</h3>
+            <p style="color:var(--text-muted); margin-bottom: 1.5rem;">Configura el enlace de invitación oficial del grupo de WhatsApp para las Partidas Abiertas y notificaciones.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
+                <label style="font-size: 0.8rem; font-weight: 800; color: #fff;">Enlace del Grupo de WhatsApp</label>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <input type="url" id="wa-group-url-input" class="playtomic-input" 
+                        style="flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 12px; border-radius: 12px; font-size: 0.85rem;" 
+                        placeholder="https://chat.whatsapp.com/..." value="${currentGroupLink}">
+                    <button class="btn-primary-pro" style="background: #25D366; color: #000; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 900; cursor: pointer; text-transform: uppercase;" onclick="saveWhatsAppGroupLink()">
+                        Guardar
+                    </button>
+                </div>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">Dejar vacío para usar el enlace de soporte por defecto.</span>
+            </div>
+        </div>
+
+        <!-- 🎾 SINCRONIZADOR DE EQUIPOS MIXTOS -->
+        <div class="glass-card-enterprise" style="border-left: 4px solid #72a800; margin-top: 2rem;">
+            <h3>🎾 SINCRONIZACIÓN DE EQUIPOS MIXTOS</h3>
+            <p style="color:var(--text-muted); margin-bottom: 1.5rem;">Sincroniza de forma definitiva los dos equipos mixtos estáticos de Somos Pádel BCN para que conserven sus estadísticas en tiempo real en la nube.</p>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+                <div>
+                    <div style="font-weight: 700; color: #0f172a;">Equipos mixtos: 4XA y 4XB</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">
+                        Guarda los rosters, jornadas y clasificaciones en la colección <code>club_teams</code> de Firestore.
+                    </div>
+                </div>
+                <button class="btn-primary-pro" style="background: linear-gradient(135deg, #CCFF00 0%, #00E36D 100%); color: black !important; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 900; cursor: pointer; text-transform: uppercase;" onclick="window.open('admin_tools/sync_mixta_teams.html', '_blank')">
+                    <i class="fas fa-sync-alt" style="margin-right: 6px;"></i> Abrir Sincronizador
+                </button>
+            </div>
+        </div>
+
         <div class="glass-card-enterprise" style="margin-top: 2rem;">
             <h3>📊 DIAGNÓSTICO DE ROLES</h3>
             <button class="btn-outline-pro" onclick="checkRoleDistribution()">VER DISTRIBUCIÓN DE ROLES</button>
         </div>
     `;
+
+    window.saveWhatsAppGroupLink = async () => {
+        const input = document.getElementById('wa-group-url-input');
+        if (!input) return;
+        const newLink = input.value.trim();
+
+        try {
+            await window.db.collection('system_config').doc('whatsapp').set({
+                group_link: newLink,
+                updated_at: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+            alert("✅ Enlace del grupo de WhatsApp actualizado correctamente.");
+        } catch (err) {
+            alert("❌ Error al guardar el enlace: " + err.message);
+        }
+    };
 
     window.resetAllPasswords = async () => {
         if (!confirm("⚠️ PELIGRO CRÍTICO\\n\\n¿Estás SEGURO de que quieres cambiar la contraseña de TODOS los usuarios a 'PADEL26'?\\n\\nEsta acción no se puede deshacer. Tu usuario Admin (NOA21) NO se verá afectado.")) return;
@@ -287,15 +351,32 @@ window.AdminViews.config = async function () {
             let count = 0;
             let skipped = 0;
 
+            let batch = window.db.batch();
+            let opCount = 0;
+
             for (const u of users) {
                 if (u.phone === '649219350' || (u.phone && u.phone.endsWith('649219350'))) {
                     console.log(`🛡️ SKIPPING SUPER ADMIN: ${u.name}`);
                     skipped++;
                     continue;
                 }
-                await FirebaseDB.players.update(u.id, { password: 'PADEL26' });
+                batch.update(window.db.collection('players').doc(u.id), { password: 'PADEL26' });
                 count++;
+                opCount++;
+
+                if (opCount >= 450) {
+                    await batch.commit();
+                    batch = window.db.batch();
+                    opCount = 0;
+                }
             }
+
+            if (opCount > 0) {
+                await batch.commit();
+            }
+
+            // Invalidate Cache after batch operation
+            if (window.CacheService) window.CacheService.remove('players', 'all');
 
             alert(`✅ OPERACIÓN COMPLETADA\\n\\n - ${count} contraseñas cambiadas a PADEL26\\n - ${skipped} usuarios admin protegidos (NOA21)\\n\\nAhora todos pueden entrar con 'PADEL26'.`);
             loadAdminView('config');

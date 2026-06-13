@@ -42,7 +42,7 @@ window.AdminAuth = {
     hasAdminRole(role) {
         if (!role) return false;
         const r = role.toString().toLowerCase().trim();
-        return ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain', 'capitan', 'capitanes'].includes(r);
+        return ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain', 'capitan', 'capitanes', 'organizador', 'organizadores'].includes(r);
     },
 
     async init() {
@@ -86,20 +86,42 @@ window.AdminAuth = {
             if (!isAuto) await new Promise(r => setTimeout(r, 600));
 
             if (ACCESS_CODES[pin]) {
-                const user = { ...ACCESS_CODES[pin], status: 'active', lastLogin: new Date().toISOString() };
+                const sessionData = ACCESS_CODES[pin];
+                const user = { ...sessionData, status: 'active', lastLogin: new Date().toISOString() };
 
                 // NEW: Ensure Firebase Auth baseline even for PIN login
                 if (window.firebase && firebase.auth) {
                     try {
                         console.log("🔐 [Mission Control] Authenticating Infrastructure (Anonymous)...");
-                        await firebase.auth().signInAnonymously();
-                        console.log("✅ [Telemetry] Infrastructure link established.");
+                        const creds = await firebase.auth().signInAnonymously();
+                        const uid = creds.user.uid;
+                        console.log("✅ [Telemetry] Infrastructure link established. Session UID:", uid);
+
+                        // ELEVATION OF PRIVILEGES: Register this session UID as an Admin in the DB
+                        // This allows firestore.rules to recognize this session as authorized.
+                        if (window.db) {
+                            console.log(`🛡️ [Mission Control] Elevating privileges for ${sessionData.name}...`);
+                            try {
+                                await window.db.collection('players').doc(uid).set({
+                                    id: uid,
+                                    uid: uid,
+                                    name: `[Session] ${sessionData.name}`,
+                                    role: sessionData.role,
+                                    status: 'active',
+                                    isSessionAdmin: true,
+                                    createdAt: new Date().toISOString()
+                                });
+                                console.log(`🚀 [Mission Control] Session elevated to ${sessionData.role.toUpperCase()} successfully.`);
+                            } catch (elevErr) {
+                                console.warn("⚠️ Local elevation failed (it might already have it or rules blocked it):", elevErr.message);
+                            }
+                        }
                     } catch (authErr) {
                         console.error("🛑 [CRITICAL] Firebase Infra Auth failed:", authErr);
                         if (window.PremiumModal) {
                             window.PremiumModal.alert({
                                 title: "⚠️ FALLO DE TELEMETRÍA",
-                                message: "El enlace con Firebase falló. No podrás realizar cambios en la base de datos (escritura bloqueada).",
+                                message: "El enlace con Firebase falló o los permisos están bloqueados. No podrás realizar cambios en la base de datos.",
                                 type: 'warning'
                             });
                         }
@@ -189,10 +211,7 @@ window.loadAdminView = async function (viewName) {
         else if (viewName === 'americanas_mgmt' && window.AdminViews.americanas_mgmt) {
             await window.AdminViews.americanas_mgmt();
         }
-        else if (viewName === 'autopilot') {
-            if (window.AutopilotView) window.AutopilotView.render();
-            else console.error("AutopilotView not loaded");
-        }
+
         else if (viewName === 'network_pulse') {
             if (window.NetworkPulseView) window.NetworkPulseView.render();
             else console.error("NetworkPulseView not loaded");
@@ -202,6 +221,12 @@ window.loadAdminView = async function (viewName) {
         }
         else if (viewName === 'entrenos_create' && window.AdminViews && window.AdminViews.entrenos_create) {
             await window.AdminViews.entrenos_create();
+        }
+        else if (viewName === 'open_matches_mgmt' && window.AdminViews && window.AdminViews.open_matches_mgmt) {
+            await window.AdminViews.open_matches_mgmt();
+        }
+        else if (viewName === 'open_matches_create' && window.AdminViews && window.AdminViews.open_matches_create) {
+            await window.AdminViews.open_matches_create();
         }
         else if (viewName === 'matches') {
             if (window.loadResultsView) await window.loadResultsView('americana');
@@ -215,9 +240,17 @@ window.loadAdminView = async function (viewName) {
             if (window.AdminViews.analytics) await window.AdminViews.analytics();
             else throw new Error("Analytics Module not loaded");
         }
+        else if (viewName === 'blog_posts') {
+            if (window.AdminViews.blog_posts) await window.AdminViews.blog_posts();
+            else throw new Error("Blog Module not loaded");
+        }
         else if (viewName === 'database_health') {
             if (window.AdminViews.database_health) await window.AdminViews.database_health();
             else throw new Error("Health Module not loaded");
+        }
+        else if (viewName === 'tournaments_mgmt') {
+            if (window.AdminTournaments) window.AdminTournaments.init();
+            else throw new Error("Tournaments Module not loaded");
         }
         else {
             // Fallback for Simulator or others not yet refactored logic
@@ -235,6 +268,8 @@ window.loadAdminView = async function (viewName) {
 
 
 // --- INITIALIZATION ---
-document.addEventListener('DOMContentLoaded', () => {
+// Sync with AppInit Controller
+document.addEventListener('AppReady', () => {
+    console.log("💎 [Admin] AppReady signal received. Launching Auth...");
     window.AdminAuth.init();
 });

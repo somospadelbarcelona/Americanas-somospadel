@@ -23,7 +23,7 @@ window.PairsUI = {
         container.style.display = 'block';
         container.innerHTML = `
             <div style="background: rgba(255,255,255,0.5); padding: 15px; border-radius: 12px; margin-top: 15px; border: 1px dashed #000000;">
-                <h4 style="margin:0 0 10px 0; color: #000000; font-weight:900;">🔐 GESTIÓN DE PAREJAS FIJAS (POZO)</h4>
+                <h4 style="margin:0 0 10px 0; color: #000000; font-weight:900;">🔐 GESTIÓN DE PAREJAS FIJAS</h4>
                 
                 <div id="pairs-list-${eventId}" style="margin-bottom: 15px;"></div>
                 

@@ -21,7 +21,7 @@
             if (!document.querySelector('.ticker-brand-badge')) {
                 const badge = document.createElement('div');
                 badge.className = 'ticker-brand-badge';
-                badge.innerHTML = '<i class="fas fa-bolt"></i> ULTIMA HORA';
+                badge.innerHTML = '<i class="fas fa-lightbulb"></i> CONSEJO';
                 this.container.appendChild(badge);
             }
 
@@ -192,7 +192,7 @@
                 if (window.NotificationService && window.NotificationService.notifications) {
                     const notifs = window.NotificationService.notifications.filter(n => !n.read).slice(0, 3);
                     notifs.forEach(n => {
-                        insights.unshift({ label: 'ULTIMA HORA', icon: 'fa-bolt', text: `${n.title}: ${n.body}`, class: 'tag-breaking' });
+                        insights.unshift({ label: 'CONSEJO', icon: 'fa-lightbulb', text: `${n.title}: ${n.body}`, class: 'tag-breaking' });
                     });
                 }
             } catch (e) { }

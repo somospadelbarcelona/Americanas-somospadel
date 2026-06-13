@@ -5,7 +5,6 @@
 (function () {
     class Router {
         constructor() {
-            this.currentRoute = 'dashboard';
             this.routes = {
                 'dashboard': () => this.renderDashboard(),
                 'americanas': () => this.handleControllerTab('EventsController', 'events'),
@@ -14,9 +13,13 @@
                 'live': () => window.ControlTowerView?.handleLiveRoute(),
                 'live-entreno': () => window.EntrenoLiveView?.handleRoute(),
                 'ranking': () => window.RankingController?.init(),
+                'equipos': () => window.TeamController?.init(),
+                'teams': () => window.TeamController?.init(),
+                'tournaments': () => window.TournamentController?.init(),
                 'agenda': () => this.handleControllerTab('EventsController', 'agenda'),
                 'results': () => this.handleControllerTab('EventsController', 'results'),
                 'entrenos': () => this.handleControllerTab('EventsController', 'entrenos'),
+                'partidas_abiertas': () => this.handleControllerTab('EventsController', 'open_matches'),
                 'records': () => {
                     console.log("🛣️ [Router] Executing records route...");
                     if (window.RecordsController) {
@@ -31,10 +34,18 @@
                 }
             };
 
+            // Determinar la ruta inicial desde el hash de la URL (Deep Linking)
+            const initialHash = window.location.hash.replace('#', '');
+            this.currentRoute = this.routes[initialHash] ? initialHash : 'dashboard';
+
             // Handle browser navigation
             window.onpopstate = (event) => {
                 if (event.state && event.state.route) {
                     this.navigate(event.state.route, true);
+                } else {
+                    const currentHash = window.location.hash.replace('#', '');
+                    const targetRoute = this.routes[currentHash] ? currentHash : 'dashboard';
+                    this.navigate(targetRoute, true);
                 }
             };
 
@@ -91,9 +102,16 @@
 
         cleanupPreviousRoute() {
             const controllersToCleanup = [
-                { name: 'EventsController', routes: ['events', 'americanas', 'results', 'agenda', 'entrenos'] },
+                { name: 'DashboardView', routes: ['dashboard'] },
+                { name: 'DashboardController', routes: ['dashboard'] },
+                { name: 'EventsController', routes: ['events', 'americanas', 'results', 'agenda', 'entrenos', 'partidas_abiertas', 'open_matches'] },
                 { name: 'ControlTowerView', routes: ['live'] },
-                { name: 'TVView', routes: ['tv'] }
+                { name: 'TVView', routes: ['tv'] },
+                { name: 'PlayerController', routes: ['profile'] },
+                { name: 'RecordsController', routes: ['records'] },
+                { name: 'RankingController', routes: ['ranking'] },
+                { name: 'OpenMatchesController', routes: ['partidas_abiertas'] },
+                { name: 'TeamController', routes: ['teams', 'equipos'] }
             ];
 
             controllersToCleanup.forEach(ctrl => {
@@ -108,17 +126,48 @@
         }
 
         updateNavUI(route) {
-            // 1. Bottom Nav Dock
-            document.querySelectorAll('.p-nav-item').forEach(btn => {
-                const isActive = btn.dataset.view === route;
+            // 1. Bottom Nav Dock (New System)
+            let activeColor = 'rgba(204, 255, 0, 0.15)'; // color por defecto (lime)
+            
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                // Determine if this nav-item corresponds to the current route
+                // We check if the ID contains the route name or if it's a direct match
+                const navRoute = btn.id.replace('nav-', '');
+                const isActive = navRoute === route;
                 btn.classList.toggle('active', isActive);
 
-                if (isActive && window.navigator.vibrate) {
-                    window.navigator.vibrate(10);
+                if (isActive) {
+                    if (window.navigator.vibrate) {
+                        window.navigator.vibrate(10);
+                    }
+                    
+                    // Obtener el color propio del elemento activo para el glow general de la barra
+                    const style = getComputedStyle(btn);
+                    const itemColorRgb = style.getPropertyValue('--item-color-rgb').trim();
+                    if (itemColorRgb) {
+                        activeColor = `rgba(${itemColorRgb}, 0.25)`;
+                    }
                 }
             });
 
-            // 2. Top Header Tabs (Smart selection)
+            // Aplicar el color de resplandor dinámico a la barra
+            const navBar = document.querySelector('.bottom-nav-bar');
+            if (navBar) {
+                navBar.style.setProperty('--nav-glow-color', activeColor);
+            }
+
+            // Mostrar el HUD flotante con mensajes motivacionales del Asistente
+            if (typeof window.showNavHudMessage === 'function') {
+                window.showNavHudMessage(route);
+            }
+
+            // 2. Legacy Bottom Nav Dock (Support for other views if any)
+            document.querySelectorAll('.p-nav-item').forEach(btn => {
+                const isActive = btn.dataset.view === route;
+                btn.classList.toggle('active', isActive);
+            });
+
+            // 3. Top Header Tabs (Smart selection)
             document.querySelectorAll('.header-tab').forEach(tab => {
                 const onclickAttr = tab.getAttribute('onclick') || '';
                 const match = onclickAttr.match(/'([^']+)'/);

@@ -2,29 +2,29 @@
  * NotificationService.js
  * 
  * Gestiona el sistema de notificaciones híbrido (Push + In-App).
- * - Escucha cambios en Firestore (notifications/{userId}/items)
- * - Gestiona permisos y tokens de FCM
- * - Provee métodos para enviar notificaciones (que el admin usa)
  */
-class NotificationService {
+window.NotificationServiceClass = class NotificationService {
     constructor() {
         this.unsubscribe = null;
         this.notifications = [];
         this.unreadCount = 0;
-        this.callbacks = []; // Suscriptores UI (Dashboard, etc)
-        this.chatNotifications = []; // Notificaciones de chat temporales (en memoria)
-        this.chatUnsubscribes = new Map(); // Usar Map para trackear por EventID
+        this.callbacks = [];
+        this.chatNotifications = [];
+        this.chatUnsubscribes = new Map();
         this.serviceStartTime = Date.now();
         this.token = null;
         this.hasLoadedInitialBatch = false;
-        this.init();
+        
+        // El arranque ahora lo gestiona AppInit
+        console.log("🔔 NotificationServiceClass defined.");
     }
 
     init() {
-        // 1. Verificar si window.auth existe, si no, esperar un poco (Fix para Mobile Race Conditions)
+        console.log("🔔 [NotificationService] Initializing...");
+        
+        // 1. Verificar si window.auth existe
         if (!window.auth) {
-            console.warn("⏳ [NotificationService] window.auth not ready, retrying in 500ms...");
-            setTimeout(() => this.init(), 500);
+            console.error("❌ [NotificationService] window.auth missing at init!");
             return;
         }
 
@@ -36,7 +36,6 @@ class NotificationService {
                 this.subscribeToFirestore(user.uid);
                 this.checkPermissionStatus();
             } else {
-                // Si no hay sesión Firebase, comprobamos si hay sesión Local en el Store
                 const localUser = window.Store ? window.Store.getState('currentUser') : null;
                 if (localUser && localUser.uid) {
                     console.log("🔔 [NotificationService] Local session detected:", localUser.uid);
@@ -49,7 +48,7 @@ class NotificationService {
             }
         });
 
-        // 2. Escuchar cambios en el Store por si la sesión local se inicia después
+        // 2. Escuchar cambios en el Store
         if (window.Store) {
             window.Store.subscribe('currentUser', (user) => {
                 if (user && user.uid) {
@@ -58,7 +57,7 @@ class NotificationService {
                         console.log("🔔 [NotificationService] Session started/changed in Store");
                         this.subscribeToFirestore(user.uid);
                     }
-                    this.initChatObserver(); // Iniciar observación de chats
+                    this.initChatObserver();
                 } else if (!user) {
                     this.currentUserUid = null;
                     this.unsubscribeFirestore();
@@ -67,6 +66,8 @@ class NotificationService {
             });
         }
     }
+    // ... rest of the methods remain same ...
+
 
     /**
      * Suscribe una función de callback para recibir actualizaciones de UI
@@ -689,5 +690,5 @@ class NotificationService {
     }
 }
 
-// Inicializar y exportar
-window.NotificationService = new NotificationService();
+// No auto-init. Managed by AppInit.
+console.log("🔔 NotificationService Module Loaded (Class definition)");

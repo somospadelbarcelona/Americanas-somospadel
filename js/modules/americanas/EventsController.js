@@ -7,6 +7,7 @@
         constructor() {
             this.state = {
                 activeTab: 'events',
+                eventTabs: {}, // NEW: Store active tab per event { eventId: 'standings' | 'brackets' | 'schedule' }
                 americanas: [],
                 entrenos: [],
                 users: [], // For ranking
@@ -667,6 +668,11 @@
             `;
         }
 
+        async setEventTab(eventId, tab) {
+            this.state.eventTabs[eventId] = tab;
+            this.render();
+        }
+
         renderPlayerStatsView() {
             // Replaces old 'standings' view
             return `
@@ -757,6 +763,47 @@
                 btnContent = '<span style="font-size:0.65rem; font-weight:800; letter-spacing:0.5px;">LLENO</span>';
                 btnStyle = 'background: #FF2D55; color: white; border: none; box-shadow: 0 4px 15px rgba(255, 45, 85, 0.4);';
                 btnDisabled = true;
+            }
+
+            // --- 5. SUB-TABS LOGIC (Summa Padel Style) ---
+            const activeSubTab = this.state.eventTabs[evt.id] || 'info';
+            const subTabsHtml = `
+                <div style="display: flex; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 12px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                    <button onclick="event.stopPropagation(); window.EventsController.setEventTab('${evt.id}', 'info')" 
+                            style="flex: 1; border: none; padding: 6px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; background: ${activeSubTab === 'info' ? 'rgba(255,255,255,0.1)' : 'transparent'}; color: ${activeSubTab === 'info' ? '#CCFF00' : '#888'};">
+                        INFO
+                    </button>
+                    <button onclick="event.stopPropagation(); window.EventsController.setEventTab('${evt.id}', 'standings')" 
+                            style="flex: 1; border: none; padding: 6px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; background: ${activeSubTab === 'standings' ? 'rgba(255,255,255,0.1)' : 'transparent'}; color: ${activeSubTab === 'standings' ? '#CCFF00' : '#888'};">
+                        RANK
+                    </button>
+                    <button onclick="event.stopPropagation(); window.EventsController.setEventTab('${evt.id}', 'brackets')" 
+                            style="flex: 1; border: none; padding: 6px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; background: ${activeSubTab === 'brackets' ? 'rgba(255,255,255,0.1)' : 'transparent'}; color: ${activeSubTab === 'brackets' ? '#CCFF00' : '#888'};">
+                        CUADROS
+                    </button>
+                </div>
+            `;
+
+            let subTabContent = '';
+            if (activeSubTab === 'standings') {
+                const standings = evt.standings || [];
+                subTabContent = `
+                    <div style="margin-top: 12px; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 10px;">
+                        ${standings.slice(0, 3).map((s, idx) => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.7rem;">
+                                <span style="font-weight: 800; color: #fff;">${idx + 1}. ${s.name}</span>
+                                <span style="font-weight: 950; color: #CCFF00;">${s.points} PTS</span>
+                            </div>
+                        `).join('') || '<div style="font-size:0.6rem; color:#666; text-align:center;">Ranking no disponible todavía</div>'}
+                    </div>
+                `;
+            } else if (activeSubTab === 'brackets') {
+                subTabContent = `
+                    <div style="margin-top: 12px; text-align: center; padding: 10px; background: rgba(204,255,0,0.05); border-radius: 12px; border: 1px dashed rgba(204,255,0,0.2);">
+                        <i class="fas fa-sitemap" style="color: #CCFF00; margin-bottom: 5px;"></i>
+                        <div style="font-size: 0.65rem; font-weight: 800; color: #fff;">Ver cruces en tiempo real</div>
+                    </div>
+                `;
             }
 
             // OPTION C HTML STRUCTURE: THE HYBRID (REFINED - DARK MODE & ICONS)

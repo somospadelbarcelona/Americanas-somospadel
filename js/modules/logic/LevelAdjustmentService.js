@@ -7,12 +7,12 @@
 (function () {
     const LevelAdjustmentService = {
 
-        // Configuración de sensibilidad (AUMENTADA v2)
+        // Configuración de sensibilidad (AUMENTADA v3 - MÁS DINÁMICO)
         CONFIG: {
-            BASE_GAIN: 0.010,    // (Antes 0.005) Ganancia estándar
-            MAX_ADJUST: 0.025,   // (Antes 0.010) Máximo por partido
-            MIN_ADJUST: 0.005,   // Mínimo
-            LEVEL_K_FACTOR: 0.01 // (Antes 0.005) Más sensible a ganar a gente mejor
+            BASE_GAIN: 0.05,     // (Antes 0.010) Ganancia estándar mucho más visible
+            MAX_ADJUST: 0.10,    // (Antes 0.025) Máximo por partido
+            MIN_ADJUST: 0.02,    // (Antes 0.005) Mínimo garantizado
+            LEVEL_K_FACTOR: 0.05 // (Antes 0.01) Mayor impacto al ganar a gente superior
         },
 
         /**
@@ -80,12 +80,76 @@
 
             // 4. Feedback Visual
             if (window.NotificationService) {
-                const winnerNames = wonA ? namesA : namesB;
                 const deltaWin = wonA ? adjustA : adjustB;
                 window.NotificationService.showInAppToast(`🏆 NIVEL ACTUALIZADO`, `Ganadores: +${deltaWin.toFixed(3)} | Perdedores: -${deltaWin.toFixed(3)}`);
-            } else {
-                // Fallback alert (console only to avoid annoying popups)
-                // console.log(`Alert: Niveles actualizados`);
+            }
+        },
+
+        /**
+         * Realiza un Rollback de los ajustes de nivel para un partido específico
+         */
+        async rollbackMatchResults(matchId) {
+            console.log(`🧹 LevelAdjustmentService: Revirtiendo ajustes del partido ${matchId}`);
+
+            try {
+                // 1. Buscar entradas en level_history asociadas a este matchId
+                const historySnap = await window.db.collection('level_history')
+                    .where('matchId', '==', matchId)
+                    .get();
+
+                if (historySnap.empty) {
+                    console.log("ℹ️ No se encontraron registros históricos para revertir.");
+                    return;
+                }
+
+                const batch = window.db.batch();
+                const now = new Date().toISOString();
+
+                // 2. Para cada registro, revertir en el jugador
+                for (const doc of historySnap.docs) {
+                    const entry = doc.data();
+                    const uid = entry.userId;
+                    const delta = entry.delta || 0;
+                    const isWin = delta > 0;
+
+                    // Obtener datos actuales del jugador
+                    const playerDoc = await window.db.collection('players').doc(uid).get();
+                    if (playerDoc.exists) {
+                        const pData = playerDoc.data();
+
+                        // Calculamos reversión lenta pero segura
+                        const currentLvl = parseFloat(pData.level || 3.5);
+                        const rolledLvl = parseFloat((currentLvl - delta).toFixed(2));
+
+                        const wins = Math.max(0, (pData.wins || 0) - (isWin ? 1 : 0));
+                        const losses = Math.max(0, (pData.losses || 0) - (isWin ? 0 : 1));
+
+                        // No podemos revertir el streak fácilmente sin saber el historial completo,
+                        // pero podemos ponerlo a 0 si era una victoria o dejarlo si era derrota (aproximación).
+                        // El Recalcular lo arreglará todo al final si es necesario.
+
+                        batch.update(window.db.collection('players').doc(uid), {
+                            level: rolledLvl,
+                            wins: wins,
+                            losses: losses,
+                            total_matches: wins + losses,
+                            lastLevelUpdate: now
+                        });
+                    }
+
+                    // 3. Borrar la entrada del historial
+                    batch.delete(doc.ref);
+                }
+
+                await batch.commit();
+                console.log(`✅ Rollback completado para ${historySnap.size} registros.`);
+
+                if (window.NotificationService) {
+                    window.NotificationService.showInAppToast(`🧹 AJUSTE REVERTIDO`, `Se han desecho los cambios de nivel del partido reabierto.`);
+                }
+            } catch (e) {
+                console.error("❌ Error en rollbackMatchResults:", e);
+                throw e;
             }
         },
 
@@ -96,9 +160,9 @@
             // 1. Bonus por dificultad (Diferencial de ELO)
             delta += (levelDiff * this.CONFIG.LEVEL_K_FACTOR);
 
-            // 2. Bonus por marcador (Cada juego de diferencia suma 0.0005 al ajuste)
+            // 2. Bonus por marcador (Cada juego de diferencia suma 0.005 al ajuste)
             // Esto cumple con: "si ganas/pierdes por más juegos, que suba (la magnitud) algo más"
-            delta += (Math.abs(diffGames || 0) * 0.0005);
+            delta += (Math.abs(diffGames || 0) * 0.005);
 
             // 3. Asegurar límites (Rango solicitado: 0.05 - 0.10)
             delta = Math.max(this.CONFIG.MIN_ADJUST, Math.min(this.CONFIG.MAX_ADJUST, delta));
@@ -112,11 +176,26 @@
 
             const oldLevel = parseFloat(currentData.level || 3.5);
             const newLevel = parseFloat((oldLevel + delta).toFixed(2));
+            const isWin = delta > 0;
+
+            // Stats Update logic
+            const wins = (currentData.wins || 0) + (isWin ? 1 : 0);
+            const losses = (currentData.losses || 0) + (isWin ? 0 : 1);
+            let streak = currentData.streak || 0;
+            if (isWin) {
+                streak = streak >= 0 ? streak + 1 : 1;
+            } else {
+                streak = 0; // Streak breaks on loss
+            }
 
             const playerRef = window.db.collection('players').doc(uid);
             batch.update(playerRef, {
                 level: newLevel,
-                lastLevelUpdate: date
+                lastLevelUpdate: date,
+                wins: wins,
+                losses: losses,
+                streak: streak,
+                total_matches: wins + losses
             });
 
             // Registrar en historial
@@ -204,7 +283,10 @@
                     players[doc.id] = {
                         ...data,
                         id: doc.id,
-                        level: parseFloat(data.self_rate_level || 3.50)
+                        level: parseFloat(data.self_rate_level || 3.50),
+                        wins: 0,
+                        losses: 0,
+                        streak: 0
                     };
                 });
 
@@ -277,6 +359,16 @@
                         players[id].level = parseFloat((oldLvl + delta).toFixed(2));
                         players[id].lastUpdate = dateStr;
 
+                        // Sync Stats
+                        const isWin = delta > 0;
+                        if (isWin) {
+                            players[id].wins++;
+                            players[id].streak++;
+                        } else {
+                            players[id].losses++;
+                            players[id].streak = 0;
+                        }
+
                         const hRef = window.db.collection('level_history').doc();
                         opBatch.set(hRef, {
                             userId: id,
@@ -306,7 +398,11 @@
                     const pRef = window.db.collection('players').doc(id);
                     opBatch.update(pRef, {
                         level: players[id].level,
-                        lastLevelUpdate: players[id].lastUpdate || new Date().toISOString()
+                        lastLevelUpdate: players[id].lastUpdate || new Date().toISOString(),
+                        wins: players[id].wins,
+                        losses: players[id].losses,
+                        streak: players[id].streak,
+                        total_matches: players[id].wins + players[id].losses
                     });
                     opCount++;
                     if (opCount >= 450) {

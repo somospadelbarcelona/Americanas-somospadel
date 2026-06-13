@@ -228,7 +228,7 @@
                                 <div style="font-size: 1.6rem; font-weight: 900; color: white;">${stats.totalPlayed}</div>
                             </div>
                             <div style="background: rgba(255,255,255,0.03); border-radius: 20px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); flex:1; display:flex; flex-direction:column; justify-content:center;">
-                                <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">PISTA 1 WINS</div>
+                                <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">GANADOS PISTA 1</div>
                                 <div style="font-size: 1.6rem; font-weight: 900; color: #ccff00;">${stats.court1Wins}</div>
                             </div>
                         </div>
@@ -296,7 +296,12 @@
             // Destroy previous charts if any
             Object.values(this.chartInstances).forEach(c => c.destroy());
 
-            setTimeout(() => {
+            const initChartInstance = () => {
+                if (typeof Chart === 'undefined') {
+                    setTimeout(initChartInstance, 100);
+                    return;
+                }
+
                 // 1. Points Chart (Area)
                 const ctxPoints = document.getElementById('pointsChart')?.getContext('2d');
                 if (ctxPoints) {
@@ -342,7 +347,7 @@
                     this.chartInstances.win = new Chart(ctxWin, {
                         type: 'doughnut',
                         data: {
-                            labels: ['Wins', 'Losses'],
+                            labels: ['Victorias', 'Derrotas'],
                             datasets: [{
                                 data: [stats.totalWon, stats.totalPlayed - stats.totalWon],
                                 backgroundColor: ['#ccff00', 'rgba(255,255,255,0.1)'],
@@ -397,7 +402,16 @@
                         }
                     });
                 }
-            }, 100);
+            };
+
+            // Trigger dynamic script load before initializing charts
+            if (window.loadExternalScript) {
+                window.loadExternalScript('https://cdn.jsdelivr.net/npm/chart.js', 'Chart')
+                    .then(() => initChartInstance())
+                    .catch(err => console.error("❌ Error loading Chart.js dinámicamente en StatsView:", err));
+            } else {
+                setTimeout(initChartInstance, 100);
+            }
         }
     }
 

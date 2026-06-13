@@ -10,7 +10,7 @@
             const records = window.RecordsController ? window.RecordsController.getRecords() : null;
 
             if (!records && window.RecordsController) {
-                container.innerHTML = `<div style="height:80vh; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; background:#000;">
+                container.innerHTML = `<div style="height:80vh; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#0a192f; background:#ffffff;">
                     <i class="fas fa-bolt fa-spin" style="color: #FFD700; font-size: 4rem; filter: drop-shadow(0 0 20px #FFD700);"></i><br><br>
                     <span style="font-family:'Outfit'; text-transform:uppercase; letter-spacing:2px; font-weight:900;">Procesando Big Data...</span>
                 </div>`;
@@ -19,10 +19,10 @@
             }
 
             container.innerHTML = `
-                <div class="records-wrapper" style="background: #080808; min-height: 100vh; padding-bottom: 200px; font-family: 'Outfit', sans-serif; color: white; overflow-x: hidden;">
+                <div class="records-wrapper" style="background: #ffffff; min-height: 100vh; padding-bottom: 200px; font-family: 'Outfit', sans-serif; color: #0a192f; overflow-x: hidden;">
                     
                     <!-- HERO HEADER -->
-                    <div style="background: radial-gradient(circle at center, #2a2a2a 0%, #000 100%); padding: 60px 24px; text-align: center; border-bottom: 1px solid #333; position: relative; overflow: hidden;">
+                    <div style="background: #f8fafc; padding: 60px 24px; text-align: center; border-bottom: 1px solid #e2e8f0; position: relative; overflow: hidden;">
                         <div class="hero-glow"></div>
                         <h1 class="fame-title">SALÓN DE LA FAMA</h1>
                         <p style="color: #bbb; margin-top: 10px; font-size: 0.7rem; letter-spacing: 4px; text-transform: uppercase; font-weight: 800; position:relative; z-index:2;">
@@ -60,7 +60,7 @@
                     @keyframes writing { from { width: 0; opacity: 0; } to { width: 170px; opacity: 1; } }
                     
                     .handwritten-seal { font-family: 'Caveat', cursive; font-size: 1.8rem; color: #CCFF00; position: relative; z-index: 5; width: 170px; white-space: nowrap; overflow: hidden; border-right: 2px solid transparent; animation: writing 2s cubic-bezier(0.4, 0, 0.2, 1) forwards; text-shadow: 0 0 10px rgba(204,255,0,0.4); transform: rotate(-3deg); }
-                    .fame-title { font-family: 'Montserrat', sans-serif; font-weight: 950; font-size: 2.8rem; text-transform: uppercase; color: #fff; margin: 0; letter-spacing: -2px; animation: neonTitle 3s infinite alternate; position: relative; z-index: 2; }
+                    .fame-title { font-family: 'Montserrat', sans-serif; font-weight: 950; font-size: 2.8rem; text-transform: uppercase; color: #0a192f; margin: 0; letter-spacing: -2px; position: relative; z-index: 2; }
                     .hero-glow { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 60%); pointer-events: none; }
                     
                     .record-card-wow { 
@@ -71,12 +71,12 @@
                         border: 1px solid rgba(255,255,255,0.05); 
                         animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; 
                         opacity: 0;
-                        box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
                     }
 
                     .neon-name { font-weight: 950; text-transform: uppercase; font-size: 1.8rem; letter-spacing: -1px; margin-bottom: 5px; line-height: 1.1; }
-                    .deep-analysis-box { max-height: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(0,0,0,0.3); border-radius: 20px; }
-                    .deep-analysis-box.open { max-height: 600px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); margin-top: 20px; }
+                    .deep-analysis-box { max-height: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: #f8fafc; border-radius: 20px; }
+                    .deep-analysis-box.open { max-height: 600px; padding: 20px; border: 1px solid #e2e8f0; margin-top: 20px; }
                     .action-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 12px 24px; border-radius: 50px; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; transition: all 0.3s; }
                     .action-btn:hover { background: white; color: black; transform: scale(1.05); }
                 </style>
@@ -98,29 +98,29 @@
             }
 
             return `
-                <div class="record-card-wow" style="background: linear-gradient(145deg, rgba(${r},${g},${b}, 0.25) 0%, rgba(15,15,15,1) 100%); border-left: 6px solid ${color}; animation-delay: ${index * 0.15}s;">
+                <div class="record-card-wow" style="background: #ffffff; border-left: 6px solid ${color}; animation-delay: ${index * 0.15}s; border: 1px solid #e2e8f0;">
                     <!-- Floating Giant Icon -->
                     <div style="position: absolute; right: -20px; top: -20px; font-size: 10rem; opacity: 0.12; color: ${color}; pointer-events: none; animation: iconFloat 6s ease-in-out infinite;">${data.icon}</div>
                     
                     <div style="position: relative; z-index: 2;">
                         <div style="color: ${color}; font-size: 0.75rem; font-weight: 950; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; opacity: 0.8;">${data.title}</div>
-                        <div class="neon-name" style="color: ${isVacant ? '#444' : '#fff'}; text-shadow: ${isVacant ? 'none' : `0 0 25px rgba(${r},${g},${b},0.6)`};">${data.name}</div>
+                        <div class="neon-name" style="color: ${isVacant ? '#cbd5e1' : '#0a192f'};">${data.name}</div>
                         
                         <div style="display: flex; align-items: center; gap: 12px; margin: 20px 0;">
-                            <div style="background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 15px; display: flex; align-items: center; gap: 12px;">
+                            <div style="background: #f1f5f9; border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 15px; display: flex; align-items: center; gap: 12px;">
                                 <span style="font-size: 1.8rem; font-weight: 900; color: ${color};">${data.value}</span>
                                 <span style="font-size: 0.7rem; font-weight: 800; color: #aaa; text-transform: uppercase;">${suffix}</span>
                             </div>
                         </div>
 
-                        <p style="color: rgba(255,255,255,0.6); font-size: 0.9rem; line-height: 1.6; margin-bottom: 25px; font-weight: 500;">${data.desc}</p>
+                        <p style="color: #64748b; font-size: 0.9rem; line-height: 1.6; margin-bottom: 25px; font-weight: 500;">${data.desc}</p>
 
                         ${!isVacant ? `
                             <button onclick="document.getElementById('${id}').classList.toggle('open')" class="action-btn">
                                 <i class="fas fa-chart-line"></i> VER ANÁLISIS
                             </button>
                             <div id="${id}" class="deep-analysis-box">
-                                <div style="font-size: 0.9rem; color: #eee; line-height: 1.7; padding-bottom: 20px; font-style: italic; border-left: 3px solid ${color}; padding-left: 15px;">
+                                <div style="font-size: 0.9rem; color: #1e293b; line-height: 1.7; padding-bottom: 20px; font-style: italic; border-left: 3px solid ${color}; padding-left: 15px;">
                                     <i class="fas fa-quote-left" style="color:${color}; opacity:0.6; margin-right: 10px; font-size: 1.2rem;"></i>${data.deepAnalysis}
                                 </div>
                                 

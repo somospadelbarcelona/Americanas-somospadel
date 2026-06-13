@@ -6,7 +6,7 @@ echo   AUDITANDO CALIDAD DEL PROYECTO
 echo ========================================
 echo.
 
-node VALIDAR_PROYECTO.js
+node tools/VALIDAR_PROYECTO.js
 
 if %errorlevel% neq 0 (
     echo.

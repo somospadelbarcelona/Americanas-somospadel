@@ -1,0 +1,200 @@
+/* ==========================================================================
+   DASHBOARD ENTERPRISE - LUXURY LIGHT (AIR EDITION)
+   Estética: Clean, Apple-style, High Contrast, Glassmorphism
+   ========================================================================== */
+
+:root {
+    /* Color Palette */
+    --bg-main: #f4f7fa;
+    --bg-side: #ffffff;
+    --primary-neon: #ccff00;
+    --primary-dark: #000000;
+    
+    /* Glassmorphism Variables */
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(0, 0, 0, 0.05);
+    --glass-hover: rgba(0, 0, 0, 0.02);
+    --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+    
+    /* Typography */
+    --text-main: #1a1a1a;
+    --text-muted: #64748b;
+    
+    /* Transitions */
+    --trans-fast: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base Override */
+body {
+    background-color: var(--bg-main);
+    background-image: 
+        radial-gradient(circle at 0% 0%, rgba(204, 255, 0, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 100% 100%, rgba(0, 212, 255, 0.05) 0%, transparent 40%);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+}
+
+/* App Shell Layout */
+.app-shell {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background: transparent;
+}
+
+/* --------------------------------------------------------------------------
+   SIDEBAR (CLEAN WHITE)
+   -------------------------------------------------------------------------- */
+.sidebar-pro {
+    width: 280px;
+    background: var(--bg-side);
+    border-right: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1rem;
+    z-index: 100;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.02);
+}
+
+.brand-top-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.5rem 1rem 2rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 1.5rem;
+}
+
+.brand-logo-main {
+    height: 40px;
+    filter: none;
+}
+
+.brand-text-main .name {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 1.1rem;
+    color: #000;
+}
+
+.brand-text-main .location {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+/* Navigation Items */
+.nav-item-pro {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: transparent;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all var(--trans-fast);
+    text-decoration: none;
+    margin-bottom: 4px;
+}
+
+.nav-item-pro:hover {
+    background: #f8fafc;
+    color: #000;
+}
+
+.nav-item-pro.active {
+    background: #000;
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.nav-item-pro.active .icon-box {
+    color: var(--primary-neon);
+}
+
+/* --------------------------------------------------------------------------
+   MAIN WRAPPER & TOP BAR
+   -------------------------------------------------------------------------- */
+.top-bar {
+    height: 70px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--glass-border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.top-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    color: #000 !important;
+}
+
+.conn-status {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    padding: 6px 12px;
+    border-radius: 20px;
+}
+
+/* --------------------------------------------------------------------------
+   WORKSPACE & CARDS
+   -------------------------------------------------------------------------- */
+.workspace-area {
+    padding: 2rem;
+}
+
+.glass-card-enterprise {
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    border-radius: 24px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    transition: all 0.3s ease;
+}
+
+.glass-card-enterprise:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+}
+
+/* Buttons */
+.btn-primary-pro {
+    background: #000;
+    color: var(--primary-neon) !important;
+    font-weight: 900;
+    border-radius: 14px;
+    padding: 12px 24px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+/* Auth Modal Override for Light */
+.admin-login-card {
+    background: #ffffff !important;
+    border-radius: 32px !important;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.1) !important;
+}
+
+.admin-login-card h2 {
+    color: #000 !important;
+}
+
+.pro-input {
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #000 !important;
+}
+
+.pro-input:focus {
+    border-color: #000 !important;
+    background: #fff !important;
+}

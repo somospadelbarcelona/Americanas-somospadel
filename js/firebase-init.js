@@ -48,13 +48,51 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
         db = firebase.firestore();
         auth = firebase.auth();
 
+        // Forzar persistencia local en Firebase Auth
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+            .then(() => {
+                console.log("🔒 [FirebaseInit] Persistencia de Auth establecida en LOCAL");
+            })
+            .catch(err => {
+                console.error("❌ [FirebaseInit] Error al establecer la persistencia de Auth:", err);
+            });
+
         // Export to window for global access across scripts
         window.db = db;
         window.auth = auth;
         window.FirebaseFirestore = firebase.firestore; // ADDED: Global access to FieldPath, etc.
 
-        // Initialize Messaging
-        let messaging;
+        // Listen for auth state changes and expose globally
+        firebase.auth().onAuthStateChanged(user => {
+            // Evitar sobreescribir con null si hay una sesión local activa
+            const currentStoreUser = window.Store ? window.Store.getState('currentUser') : null;
+            if (user || !(currentStoreUser && currentStoreUser.localAuth)) {
+                window.currentUser = user;
+            }
+            console.log('🔐 Auth state changed:', user ? `uid=${user.uid}` : 'no user');
+        });
+
+        // Verify Firestore connection immediately
+        db.collection('players').limit(1).get()
+            .then(snapshot => {
+                console.log(`✅ Conexión Firestore OK, ${snapshot.size} documentos en 'players'`);
+            })
+            .catch(err => {
+                console.error('❌ Error al conectar con Firestore al iniciar:', err);
+                const isPermissionError = err.code === 'permission-denied' || 
+                                          (err.message && err.message.toLowerCase().includes('permission-denied')) ||
+                                          (err.message && err.message.toLowerCase().includes('missing or insufficient permissions'));
+                
+                if (isPermissionError) {
+                    console.log("ℹ️ Firestore connection requires authentication (normal behavior before login).");
+                } else if (window.PremiumModal) {
+                    window.PremiumModal.alert({
+                        title: "🔴 FIREBASE CONN ERROR",
+                        message: err.message || 'Error de conexión a Firestore',
+                        type: 'danger'
+                    });
+                }
+            });
         try {
             if (firebase.messaging.isSupported()) {
                 messaging = firebase.messaging();

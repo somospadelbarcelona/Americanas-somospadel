@@ -46,7 +46,7 @@ window.AdminViews.users = async function () {
         if (!tbody) return;
 
         if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem;">No se encontraron jugadores.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 2rem;">No se encontraron jugadores.</td></tr>';
             return;
         }
 
@@ -62,50 +62,30 @@ window.AdminViews.users = async function () {
                 window._roleWarned = true;
             }
 
-            let roleBadge = (u.role || 'player').toUpperCase();
-            if (u.role === 'super_admin') roleBadge = '👑 SUPER ADMIN';
-            else if (u.role === 'admin_player') roleBadge = '🎖️ ADMIN + JUGADOR';
+            let roleBadge = window.RoleService ? window.RoleService.getBadgeHtml(u.role) : String(u.role || 'player').toUpperCase();
 
             const isSuper = u.role === 'super_admin';
             // Safe URL construction
-            const safePhone = (u.phone || '').replace(/\D/g, '');
+            const safePhone = String(u.phone || '').replace(/\D/g, '');
 
             // Teams Badge List
             const teams = Array.isArray(u.team_somospadel) ? u.team_somospadel : (u.team_somospadel ? [u.team_somospadel] : []);
             const availableTeams = Object.keys(AppConstants.TEAM_LEVELS || {});
 
-            const teamsHTML = `
-                <div style="display:flex; flex-direction:column; gap:4px;">
-                    <div style="display:flex; flex-wrap:wrap; gap:4px;">
-                        ${teams.map(t => `
-                            <span style="font-size:0.6rem; background: #6366f1; color:white; padding: 2px 6px; border-radius:4px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px;" 
-                                  title="Clic para quitar" onclick="quickRemoveTeam('${u.id}', '${t}')">
-                                ${t.toUpperCase()} <span style="opacity:0.6;">x</span>
-                            </span>`
-            ).join('')}
-                    </div>
-                    ${canManageUsers ? `
-                    <select class="pro-input-micro" style="width:100%; font-size:0.65rem; color: var(--text-muted);" onchange="quickAddTeam('${u.id}', this.value); this.value='';">
-                        <option value="" style="color:black;">+ Añadir equipo...</option>
-                        ${availableTeams.map(at => `<option value="${at}" style="color:black;">${at}</option>`).join('')}
-                    </select>` : ''}
-                </div>
-            `;
-
             return `
                 <tr class="pro-table-row" style="background: ${isPending ? 'rgba(255,165,0,0.12)' : 'transparent'}; border-left: ${isPending ? '4px solid #ff9800' : 'none'};">
-                <td>
-                    <div class="pro-player-cell">
-                        <div class="pro-avatar" style="background: ${isSuper ? 'linear-gradient(135deg, #FFD700, #FFA500)' : (u.role === 'admin_player' ? 'var(--primary-glow)' : (isPending ? '#ff9800' : ''))}; color: ${isSuper ? 'black' : 'white'}; box-shadow: ${isSuper ? '0 0 10px #FFD700' : 'none'};">
-                            ${isPending ? '⏳' : (u.name || '?').charAt(0)}
+                <td data-col="identidad">
+                    <div style="display: flex; align-items: center; gap: 12px; min-width: 0; padding: 6px 0;">
+                        <div class="pro-avatar" style="flex-shrink: 0; background: ${isSuper ? 'linear-gradient(135deg, #FFD700, #FFA500)' : (u.role === 'admin_player' ? 'var(--primary-glow)' : (isPending ? '#ff9800' : '#f1f5f9'))}; color: ${isSuper ? 'black' : '#0f172a'}; border: 1px solid #cbd5e1; box-shadow: ${isSuper ? '0 0 10px #FFD700' : 'none'}; font-weight: 800; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            ${isPending ? '⏳' : String(u.name || '?').charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <div style="font-weight: 700; color: ${isSuper ? '#FFD700' : 'var(--text)'};">${u.name || 'Sin Nombre'}</div>
-                                ${u.membership === 'somospadel_bcn' ? '<span style="font-size:0.6rem; background: var(--primary); color:black; padding: 2px 5px; border-radius:4px; font-weight:700;">COMUNIDAD BCN</span>' : ''}
-                                ${isPending ? '<span style="font-size:0.55rem; background: #ff9800; color:black; padding: 2px 5px; border-radius:4px; font-weight:800; letter-spacing:1px; animation: blink 1.5s infinite;">SOLICITUD</span>' : ''}
+                        <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0; text-align: left;">
+                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                <div style="font-weight: 800; color: ${isSuper ? '#d97706' : '#0f172a'}; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;" title="${String(u.name || 'Sin Nombre')}">${String(u.name || 'Sin Nombre')}</div>
+                                ${u.membership === 'somospadel_bcn' ? '<span style="font-size:0.55rem; background: #ccff00; color:black; padding: 2px 6px; border-radius:4px; font-weight:800; white-space: nowrap; display: inline-block;">COMUNIDAD BCN</span>' : ''}
+                                ${isPending ? '<span style="font-size:0.5rem; background: #ff9800; color:black; padding: 2px 5px; border-radius:4px; font-weight:800; letter-spacing:1px; animation: blink 1.5s infinite; white-space: nowrap; display: inline-block;">SOLICITUD</span>' : ''}
                             </div>
-                            <div style="font-size: 0.7rem; font-weight: 500; color: ${isSuper ? '#FFD700' : (u.role === 'admin_player' ? 'var(--primary)' : 'var(--text-muted)')};">
+                            <div style="display: flex; align-items: center;">
                                 ${roleBadge}
                             </div>
                         </div>
@@ -116,68 +96,99 @@ window.AdminViews.users = async function () {
                 </td>
                 
                 <!-- NEW TEAMS COLUMN -->
-                <td>${teamsHTML}</td>
+                <td data-col="equipos">
+                    <div style="display:flex; flex-direction:column; gap:4px; max-width: 150px;">
+                        <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                            ${teams.map(t => `
+                                <span style="font-size:0.58rem; background: #6366f1; color:white; padding: 2px 6px; border-radius:4px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space: nowrap;" 
+                                      title="Clic para quitar" onclick="quickRemoveTeam('${u.id}', '${t}')">
+                                    ${String(t).toUpperCase()} <span style="opacity:0.6; font-size: 0.5rem;">✕</span>
+                                </span>`
+                            ).join('')}
+                        </div>
+                        ${canManageUsers ? `
+                        <select class="pro-input-micro" style="width: 100%; max-width: 120px; font-size:0.65rem; color: var(--text-muted); padding: 2px; border-radius: 6px; border: 1px solid #cbd5e1;" onchange="quickAddTeam('${u.id}', this.value); this.value='';">
+                            <option value="" style="color:black;">+ Añadir...</option>
+                            ${availableTeams.map(at => `<option value="${at}" style="color:black;">${at}</option>`).join('')}
+                        </select>` : ''}
+                    </div>
+                </td>
 
-                <td>
-                    <div style="display:flex; align-items:center; gap:0.8rem;">
-                         <span style="color: var(--primary); font-family: 'Outfit'; font-weight: 600;">${u.phone || '-'}</span>
-                         <button onclick="window.openWhatsAppActions('${safePhone}', '')" title="Abrir Chat de WhatsApp" style="cursor:pointer; background: rgba(37, 211, 102, 0.1); color: #25D366; border: 1px solid #25D366; padding: 6px 12px; border-radius: 8px; font-weight: 700; display: flex; align-items: center; gap: 6px; font-size: 0.75rem; transition: all 0.2s;">
-                            <span style="font-size: 1rem;">💬</span>
+                <td data-col="contacto">
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap: nowrap; white-space: nowrap;">
+                         <span style="color: #0f172a; font-family: 'Outfit'; font-weight: 700; font-size: 0.85rem; letter-spacing: 0.5px;">${String(u.phone || '-')}</span>
+                         <button onclick="window.openWhatsAppActions('${safePhone}', '')" title="Abrir Chat de WhatsApp" style="cursor:pointer; background: rgba(37, 211, 102, 0.1); color: #16a34a; border: 1px solid rgba(37, 211, 102, 0.4); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; transition: all 0.2s; flex-shrink: 0;" onmouseover="this.style.background='rgba(37,211,102,0.2)'; this.style.borderColor='#25d366';" onmouseout="this.style.background='rgba(37,211,102,0.1)'; this.style.borderColor='rgba(37,211,102,0.4)';">
+                            <i class="fab fa-whatsapp"></i>
                          </button>
                     </div>
                 </td>
-                <td>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span class="pro-category-badge" style="background: var(--surface-hover);">${u.level || u.self_rate_level || '3.5'}</span>
+                <td data-col="nivel">
+                    <div style="display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                        <span style="background: #e2e8f0; color: #0f172a; font-family: 'Outfit'; font-weight: 800; font-size: 0.82rem; padding: 3px 7px; border-radius: 6px; border: 1px solid #cbd5e1; display: inline-block;">
+                            ${(() => {
+                                const l = parseFloat(u.level || u.self_rate_level || 3.5);
+                                return isNaN(l) ? '3.50' : l.toFixed(2);
+                            })()}
+                        </span>
                         ${(() => {
-                    if (window.LevelReliabilityService) {
-                        const rel = window.LevelReliabilityService.getReliability(u);
-                        return `<i class="fas ${rel.icon}" style="color: ${rel.color} !important; font-size: 0.8rem; cursor: help;" title="${rel.label}"></i>`;
-                    }
-                    return '';
-                })()}
+                            if (window.LevelReliabilityService) {
+                                const rel = window.LevelReliabilityService.getReliability(u);
+                                return `<i class="fas ${rel.icon}" style="color: ${rel.color} !important; font-size: 0.75rem; cursor: help;" title="${rel.label}"></i>`;
+                            }
+                            return '';
+                        })()}
                         
                         <!-- SMART ATTRIBUTE ICONS -->
-                        ${u.side_preference === 'DRIVE' ? '<i class="fas fa-arrow-right" style="color: #60a5fa !important; font-size: 0.75rem;" title="Lado: Drive"></i>' : ''}
-                        ${u.side_preference === 'REVES' ? '<i class="fas fa-arrow-left" style="color: #f87171 !important; font-size: 0.75rem;" title="Lado: Revés"></i>' : ''}
-                        ${u.play_style === 'POTENCIA' ? '<i class="fas fa-bolt" style="color: #fbbf24 !important; font-size: 0.75rem;" title="Estilo: Potencia"></i>' : ''}
-                        ${u.play_style === 'CONTROL' ? '<i class="fas fa-shield-halved" style="color: #34d399 !important; font-size: 0.75rem;" title="Estilo: Control"></i>' : ''}
+                        ${u.side_preference === 'DRIVE' ? '<i class="fas fa-arrow-right" style="color: #60a5fa !important; font-size: 0.7rem;" title="Lado: Drive"></i>' : ''}
+                        ${u.side_preference === 'REVES' ? '<i class="fas fa-arrow-left" style="color: #f87171 !important; font-size: 0.7rem;" title="Lado: Revés"></i>' : ''}
+                        ${u.play_style === 'POTENCIA' ? '<i class="fas fa-bolt" style="color: #fbbf24 !important; font-size: 0.7rem;" title="Estilo: Potencia"></i>' : ''}
+                        ${u.play_style === 'CONTROL' ? '<i class="fas fa-shield-halved" style="color: #34d399 !important; font-size: 0.7rem;" title="Estilo: Control"></i>' : ''}
                     </div>
                 </td>
-                <td>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span class="pro-category-badge" style="background: ${u.gender === 'chica' ? 'rgba(236, 72, 153, 0.1)' : 'rgba(59, 130, 246, 0.1)'}; color: ${u.gender === 'chica' ? '#ec4899' : '#3b82f6'}; border: 1px solid ${u.gender === 'chica' ? '#ec4899' : '#3b82f6'}; font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem;">
-                            ${(u.gender || '?').toUpperCase()}
-                        </span>
-                    </div>
+                <td data-col="genero">
+                    <span style="display: inline-flex; align-items: center; white-space: nowrap; background: ${u.gender === 'chica' ? 'rgba(236, 72, 153, 0.08)' : 'rgba(59, 130, 246, 0.08)'}; color: ${u.gender === 'chica' ? '#ec4899' : '#3b82f6'}; border: 1px solid ${u.gender === 'chica' ? 'rgba(236, 72, 153, 0.25)' : 'rgba(59, 130, 246, 0.25)'}; font-weight: 800; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; letter-spacing: 0.5px;">
+                        ${u.gender === 'chica' ? '👩 CHICA' : '👨 CHICO'}
+                    </span>
                 </td>
 
                 <!-- NEW MATCHES PLAYED COLUMN -->
-                <td>
+                <td data-col="partidos" style="text-align: center;">
                      <input type="number" 
                             class="pro-input-micro" 
-                            style="width: 60px; text-align:center; font-weight:bold; ${canManageUsers ? '' : 'pointer-events:none; border:none;'}"
+                            style="width: 52px; text-align:center; font-family: 'Outfit'; font-weight:800; font-size:0.8rem; padding: 3px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; ${canManageUsers ? '' : 'pointer-events:none; border:none; background:transparent;'}"
                             value="${u.matches_played || 0}"
                             min="0"
                             onchange="quickUpdateMatches('${u.id}', this.value)"
                      >
                 </td>
 
-                <td>
-                     <span class="pro-category-badge" style="background: ${isPending ? '#ff9800' : (u.status === 'active' ? 'var(--primary)' : 'transparent')}; color: ${isPending ? 'black' : (u.status === 'active' ? 'black' : 'var(--warning)')}; border-color: ${isPending ? '#ff9800' : (u.status === 'active' ? 'var(--primary)' : 'var(--warning)')}; font-weight: 800;">
-                        ${(u.status === 'active' ? 'ACTIVO' : (u.status || 'PENDIENTE')).toUpperCase()}
-                    </span>
+                <td data-col="estado">
+                     <span style="display: inline-flex; align-items: center; white-space: nowrap; background: ${isPending ? 'rgba(245, 158, 11, 0.08)' : (u.status === 'active' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)')}; color: ${isPending ? '#d97706' : (u.status === 'active' ? '#059669' : '#dc2626')}; border: 1px solid ${isPending ? 'rgba(245, 158, 11, 0.25)' : (u.status === 'active' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)')}; font-weight: 800; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; letter-spacing: 0.5px;">
+                        ${isPending ? '⏳ PENDIENTE' : (u.status === 'active' ? '🟢 ACTIVO' : '🚫 BLOQUEADO')}
+                     </span>
                 </td>
-                <td style="text-align: right;">
-                    <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                <td data-col="acciones" style="text-align: right; width: 140px;">
+                    <div style="display: flex; gap: 5px; justify-content: flex-end; align-items: center; white-space: nowrap; flex-wrap: nowrap;">
                         ${canManageUsers ? `
-                            ${isPending ? `<button class="btn-primary-pro" style="padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 950; background: #00E36D; color: black; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 227, 109, 0.4);" onclick="approveUser('${u.id}')">🚀 VALIDAR</button>` : ''}
-                            <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; display: flex; align-items: center; gap: 4px;" onclick="window.showPlayerLevelChart('${u.id}', '${u.name}')">📉 <span class="hide-mobile">GRÁFICO</span></button>
-                            <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick='openEditUserModal(${JSON.stringify(u).replace(/'/g, "&#39;")})'>EDITAR</button>
-                            <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; color: var(--danger); border-color: var(--danger-dim);" onclick="deleteUser('${u.id}', event)">🗑️</button>
+                            ${isPending ? `
+                                <button class="btn-primary-pro" style="padding: 5px 9px; font-size: 0.68rem; font-weight: 850; background: #10b981; color: white; border: none; border-radius: 8px; box-shadow: 0 2px 6px rgba(16,185,129,0.25); display: inline-flex; align-items: center; gap: 4px; height: 28px; cursor: pointer;" onclick="approveUser('${u.id}')" title="Validar Jugador">
+                                    <i class="fas fa-check"></i> <span class="hide-mobile">VALIDAR</span>
+                                </button>
+                            ` : ''}
+                            <button class="btn-outline-pro" style="padding: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #475569; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onclick="window.showPlayerLevelChart('${u.id}', '${u.name}')" title="Ver Gráfico de Evolución">
+                                <i class="fas fa-chart-line" style="font-size: 0.75rem;"></i>
+                            </button>
+                            <button class="btn-outline-pro" style="padding: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #475569; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onclick='openEditUserModal(${JSON.stringify(u).replace(/'/g, "&#39;")})' title="Editar Jugador">
+                                <i class="fas fa-edit" style="font-size: 0.75rem;"></i>
+                            </button>
+                            <button class="btn-outline-pro" style="padding: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05); color: #ef4444; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(239,68,68,0.05);" onclick="deleteUser('${u.id}', event)" title="Eliminar Jugador">
+                                <i class="fas fa-trash-alt" style="font-size: 0.75rem;"></i>
+                            </button>
                         ` : `
-                            <button class="btn-outline-pro" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; display: flex; align-items: center; gap: 4px;" onclick="window.showPlayerLevelChart('${u.id}', '${u.name}')">📉 GRÁFICO</button>
-                            <span style="color:var(--text-muted); font-size:0.7rem;">👁️ SOLO LECTURA</span>
+                            <button class="btn-outline-pro" style="padding: 5px 10px; font-size: 0.68rem; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #475569; display: inline-flex; align-items: center; gap: 4px; height: 28px; cursor: pointer;" onclick="window.showPlayerLevelChart('${u.id}', '${u.name}')">
+                                <i class="fas fa-chart-line"></i> <span class="hide-mobile">GRÁFICO</span>
+                            </button>
+                            <span style="color:#64748b; font-size:0.62rem; font-weight:700; margin-left: 4px;">👁️ LECTURA</span>
                         `}
                     </div>
                 </td>
@@ -186,31 +197,48 @@ window.AdminViews.users = async function () {
     };
 
     content.innerHTML = `
-        <div class="glass-card-enterprise" style="padding: 0; overflow: hidden;">
+        <div class="glass-card-enterprise" style="padding: 0; overflow-x: auto; overflow-y: hidden;">
             <div style="padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: var(--border-pro); flex-wrap: wrap; gap: 1rem;">
-                <h3 style="margin:0;">GOBERNANZA DE JUGADORES <span style="color:var(--text-muted); font-size: 0.8rem; margin-left: 10px;">TOTAL: ${users.length}</span></h3>
+                <h3 style="margin:0; font-weight: 900; color: #0f172a;">GOBERNANZA DE JUGADORES <span style="color:var(--text-muted); font-size: 0.8rem; margin-left: 10px;">TOTAL: ${users.length}</span></h3>
                 <div style="display:flex; gap: 0.8rem; flex-wrap: wrap;">
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #107c10; color: #107c10; background: rgba(16, 124, 16, 0.05);" onclick="exportToExcel()">
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #16a34a; color: #16a34a; background: rgba(22, 163, 74, 0.05); font-weight: 800;" onclick="exportToExcel()">
                         📗 EXPORTAR EXCEL
                     </button>
                     <!-- NEW RESET BUTTON -->
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05);" onclick="batchUpdateTeamLevels()">
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #dc2626; color: #dc2626; background: rgba(220, 38, 38, 0.05); font-weight: 800;" onclick="batchUpdateTeamLevels()">
                         ⚠️ SYNC NIVELES EQ
                     </button>
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #3b82f6; color: #3b82f6; background: rgba(59, 130, 246, 0.05);" onclick="window.Actions.runRescue1101()">
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #2563eb; color: #2563eb; background: rgba(37, 99, 235, 0.05); font-weight: 800;" onclick="window.Actions.runRescue1101()">
                         🚑 RESCATAR PARTIDOS
                     </button>
                     <!-- NEW RECALC STATS BUTTON -->
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #eab308; color: #eab308; background: rgba(234, 179, 8, 0.05); margin-left: auto;" onclick="recalculateMatchesPlayed()">
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #d97706; color: #d97706; background: rgba(217, 119, 6, 0.05); margin-left: auto; font-weight: 800;" onclick="recalculateMatchesPlayed()">
                         🔄 REPARAR STATS
                     </button>
                     <!-- NEW GLOBAL RECALC BUTTON -->
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #CCFF00; color: #CCFF00; background: rgba(204, 255, 0, 0.05);" onclick="handleGlobalLevelRecalc()">
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #0f172a; color: #0f172a; background: #f8fafc; font-weight: 800;" onclick="handleGlobalLevelRecalc()">
                         🏆 RECALCULAR NIVELES (GLOBAL)
                     </button>
 
-                    <input type="text" id="global-search" placeholder="Buscar globalmente..." class="pro-input" style="width: 200px; padding: 0.5rem 1rem;" onkeyup="multiFilterUsers()">
-                    <button class="btn-primary-pro" style="padding: 0.5rem 1.5rem;" onclick="openCreateUserModal()">+ REGISTRAR</button>
+                    <!-- BOTÓN Y DESPLEGABLE SELECTOR DE COLUMNAS -->
+                    <div style="position: relative; display: inline-block; margin-right: 4px;">
+                        <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #cbd5e1; color: #475569; background: white; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; height: 42px; cursor: pointer; transition: all 0.2s;" onclick="window.toggleColumnSelector(event)">
+                            <i class="fas fa-columns"></i> <span>👁️ COLUMNAS</span>
+                        </button>
+                        <div id="column-selector-dropdown" class="glass-card-enterprise hidden" style="position: absolute; right: 0; top: 110%; z-index: 1000; width: 230px; padding: 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: white !important; border: 1px solid #cbd5e1 !important; border-radius: 12px; margin-top: 5px;">
+                             <div style="font-weight: 900; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; color: #0f172a;">
+                                 <span>Mostrar Columnas</span>
+                                 <i class="fas fa-times" style="cursor:pointer; color: #64748b;" onclick="window.toggleColumnSelector(event)"></i>
+                             </div>
+                             <input type="text" id="column-search-input" placeholder="Buscar columna..." class="pro-input-micro" style="margin: 6px 0 8px 0; height: 32px !important; padding: 4px 8px !important; font-size: 0.75rem !important;" onkeyup="window.filterColumnsInSelector()">
+                             <div id="column-checkboxes-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; text-align: left; padding-right: 4px;">
+                                 <!-- Se llena dinámicamente -->
+                             </div>
+                        </div>
+                    </div>
+
+                    <input type="text" id="global-search" placeholder="Buscar globalmente..." class="pro-input" style="width: 200px; padding: 0.5rem 1rem; font-weight: 600; color: #0f172a; background: white;" onkeyup="multiFilterUsers()">
+                    <button class="btn-primary-pro" style="padding: 0.5rem 1.5rem; background: #ccff00; color: black; font-weight: 900;" onclick="openCreateUserModal()">+ REGISTRAR</button>
                 </div>
             </div>
             <div class="filters-row" style="padding: 1rem 2rem; background: rgba(255,255,255,0.02); display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 1fr 1fr; gap: 1rem; border-bottom: var(--border-pro);">
@@ -246,19 +274,35 @@ window.AdminViews.users = async function () {
                     <option value="red">🔴 Oxidado (Rojo)</option>
                     <option value="gray">⚪ Sin datos (Gris)</option>
                 </select>
-                <button class="btn-micro" onclick="resetFilters()" style="background: rgba(255,255,255,0.1);">Limpiar</button>
+                <button class="btn-micro" onclick="resetFilters()" style="background: #e2e8f0; color: #0f172a; font-weight: 800; border: 1px solid #cbd5e1;">LIMPIAR</button>
             </div>
-            <table class="pro-table">
+            
+            <style>
+                .sortable-header {
+                    cursor: pointer;
+                    position: relative;
+                    transition: background-color 0.2s ease, color 0.2s ease;
+                }
+                .sortable-header:hover {
+                    background-color: rgba(15, 23, 42, 0.04) !important;
+                    color: #2563eb !important;
+                }
+                .sort-icon i {
+                    transition: all 0.2s ease;
+                }
+            </style>
+
+            <table class="pro-table" style="width: 100%; table-layout: auto; border-collapse: collapse;">
                 <thead>
                     <tr>
-                        <th>IDENTIDAD</th>
-                        <th>EQUIPOS</th>
-                        <th>CONTACTO</th>
-                        <th>NIVEL</th>
-                        <th>GÉNERO</th>
-                        <th>TOTAL P.</th> <!-- Matches Played -->
-                        <th>ESTADO</th>
-                        <th style="text-align:right;">ACCIONES</th>
+                        <th data-col="identidad" onclick="window.sortUsersByColumn('name')" style="width: 25%; min-width: 210px; text-align: left; user-select: none;" class="sortable-header">IDENTIDAD</th>
+                        <th data-col="equipos" onclick="window.sortUsersByColumn('teams')" style="width: 18%; min-width: 140px; text-align: left; user-select: none;" class="sortable-header">EQUIPOS</th>
+                        <th data-col="contacto" onclick="window.sortUsersByColumn('phone')" style="width: 15%; min-width: 130px; text-align: left; user-select: none;" class="sortable-header">CONTACTO</th>
+                        <th data-col="nivel" onclick="window.sortUsersByColumn('level')" style="width: 10%; min-width: 90px; text-align: left; user-select: none;" class="sortable-header">NIVEL</th>
+                        <th data-col="genero" onclick="window.sortUsersByColumn('gender')" style="width: 10%; min-width: 90px; text-align: left; user-select: none;" class="sortable-header">GÉNERO</th>
+                        <th data-col="partidos" onclick="window.sortUsersByColumn('matches')" style="width: 7%; min-width: 70px; text-align: center; user-select: none;" class="sortable-header">PARTIDOS</th>
+                        <th data-col="estado" onclick="window.sortUsersByColumn('status')" style="width: 10%; min-width: 100px; text-align: left; user-select: none;" class="sortable-header">ESTADO</th>
+                        <th data-col="acciones" style="width: 15%; min-width: 130px; text-align: right; user-select: none;">ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody id="users-tbody"></tbody>
@@ -434,14 +478,14 @@ window.AdminViews.users = async function () {
         const fTeam = document.getElementById('filter-team').value;
         const fRel = document.getElementById('filter-reliability').value;
 
-        window.filteredUsers = window.allUsersCache.filter(u => {
+         window.filteredUsers = window.allUsersCache.filter(u => {
             const matchesGlobal = !search ||
-                (u.name || '').toLowerCase().includes(search) ||
-                (u.phone || '').includes(search);
+                String(u.name || '').toLowerCase().includes(search) ||
+                String(u.phone || '').includes(search);
 
-            const matchesName = !fName || (u.name || '').toLowerCase().includes(fName);
-            const matchesPhone = !fPhone || (u.phone || '').includes(fPhone);
-            const matchesLevel = !fLevel || (u.level || u.self_rate_level || '3.5').toString().includes(fLevel);
+            const matchesName = !fName || String(u.name || '').toLowerCase().includes(fName);
+            const matchesPhone = !fPhone || String(u.phone || '').includes(fPhone);
+            const matchesLevel = !fLevel || String(u.level || u.self_rate_level || '3.5').includes(fLevel);
             const matchesGender = !fGender || u.gender === fGender;
             const matchesStatus = !fStatus || u.status === fStatus;
             const matchesTeam = !fTeam || (Array.isArray(u.team_somospadel) ? u.team_somospadel.includes(fTeam) : u.team_somospadel === fTeam);
@@ -554,6 +598,243 @@ window.AdminViews.users = async function () {
     window.resetFilters = resetFilters;
     window.approveUser = approveUser;
     window.exportToExcel = exportToExcel;
+
+    // ========================================================
+    // 👁️ PREMIUM COLUMN SELECTOR & SEARCH LOGIC
+    // ========================================================
+    
+    // Mapeo de identificadores de columna a nombres legibles en español
+    const COLUMN_LABELS = {
+        identidad: "Identidad (Jugador)",
+        equipos: "Equipos",
+        contacto: "Contacto (WhatsApp)",
+        nivel: "Nivel de Juego",
+        genero: "Género",
+        partidos: "Partidos Jugados",
+        estado: "Estado de Acceso",
+        acciones: "Acciones"
+    };
+
+    // Inicializar estado de visibilidad desde localStorage
+    window.columnVisibility = JSON.parse(localStorage.getItem('admin_users_columns_visibility')) || {
+        identidad: true,
+        equipos: true,
+        contacto: true,
+        nivel: true,
+        genero: true,
+        partidos: true,
+        estado: true,
+        acciones: true
+    };
+
+    window.toggleColumnSelector = (event) => {
+        if (event) event.stopPropagation();
+        const dropdown = document.getElementById('column-selector-dropdown');
+        if (!dropdown) return;
+        dropdown.classList.toggle('hidden');
+        if (!dropdown.classList.contains('hidden')) {
+            window.populateColumnSelector();
+            const searchInput = document.getElementById('column-search-input');
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.focus();
+            }
+        }
+    };
+
+    window.populateColumnSelector = () => {
+        const listContainer = document.getElementById('column-checkboxes-list');
+        if (!listContainer) return;
+
+        listContainer.innerHTML = Object.keys(COLUMN_LABELS).map(key => {
+            const isVisible = window.columnVisibility[key] !== false;
+            return `
+                <label class="col-checkbox-label" data-col-key="${key}" style="display: flex !important; align-items: center !important; gap: 10px !important; margin: 4px 0 !important; cursor: pointer; color: #0f172a !important; font-weight: 600 !important; text-transform: none !important; font-size: 0.82rem !important; user-select: none; width: 100%;">
+                    <input type="checkbox" id="col-checkbox-${key}" ${isVisible ? 'checked' : ''} onchange="window.toggleColumnVisibility('${key}')" style="width: 16px !important; height: 16px !important; margin: 0 !important; cursor: pointer; accent-color: #2563eb;">
+                    <span>${COLUMN_LABELS[key]}</span>
+                </label>
+            `;
+        }).join('');
+    };
+
+    window.filterColumnsInSelector = () => {
+        const searchVal = document.getElementById('column-search-input').value.toLowerCase();
+        const labels = document.querySelectorAll('.col-checkbox-label');
+        labels.forEach(label => {
+            const key = label.getAttribute('data-col-key');
+            const text = COLUMN_LABELS[key].toLowerCase();
+            if (text.includes(searchVal)) {
+                label.style.setProperty('display', 'flex', 'important');
+            } else {
+                label.style.setProperty('display', 'none', 'important');
+            }
+        });
+    };
+
+    window.toggleColumnVisibility = (colName) => {
+        window.columnVisibility[colName] = !window.columnVisibility[colName];
+        window.applyColumnVisibility();
+    };
+
+    window.applyColumnVisibility = () => {
+        let css = '';
+        Object.keys(COLUMN_LABELS).forEach(col => {
+            const isVisible = window.columnVisibility[col] !== false;
+            if (!isVisible) {
+                css += `[data-col="${col}"] { display: none !important; }\n`;
+            }
+            const cb = document.getElementById(`col-checkbox-${col}`);
+            if (cb) cb.checked = isVisible;
+        });
+
+        let styleEl = document.getElementById('dynamic-column-styles');
+        if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.id = 'dynamic-column-styles';
+            document.head.appendChild(styleEl);
+        }
+        styleEl.innerHTML = css;
+
+        localStorage.setItem('admin_users_columns_visibility', JSON.stringify(window.columnVisibility));
+    };
+
+    // Cerrar dropdown al hacer clic fuera de él
+    document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('column-selector-dropdown');
+        if (!dropdown || dropdown.classList.contains('hidden')) return;
+
+        const button = e.target.closest('button');
+        const isClickInside = dropdown.contains(e.target) || (button && button.onclick && button.onclick.toString().includes('toggleColumnSelector'));
+        
+        if (!isClickInside) {
+            dropdown.classList.add('hidden');
+        }
+    });
+
+    // ========================================================
+    // ↕️ INTERACTIVE COLUMN SORTING LOGIC
+    // ========================================================
+    window.currentSort = { key: 'name', asc: true };
+
+    window.sortUsersByColumn = (key) => {
+        const isSameKey = window.currentSort.key === key;
+        window.currentSort.asc = isSameKey ? !window.currentSort.asc : true;
+        window.currentSort.key = key;
+
+        // Mostrar indicador visual de carga rápida si hay muchos registros
+        const tbody = document.getElementById('users-tbody');
+        if (tbody && window.filteredUsers.length > 150) {
+            tbody.style.opacity = '0.5';
+        }
+
+        setTimeout(() => {
+            window.filteredUsers.sort((a, b) => {
+                let valA, valB;
+
+                switch (key) {
+                    case 'name':
+                        valA = String(a.name || '').toLowerCase();
+                        valB = String(b.name || '').toLowerCase();
+                        break;
+                    case 'teams':
+                        const tA = Array.isArray(a.team_somospadel) ? a.team_somospadel.join(', ') : String(a.team_somospadel || '');
+                        const tB = Array.isArray(b.team_somospadel) ? b.team_somospadel.join(', ') : String(b.team_somospadel || '');
+                        valA = tA.toLowerCase();
+                        valB = tB.toLowerCase();
+                        break;
+                    case 'phone':
+                        valA = String(a.phone || '').replace(/\D/g, '');
+                        valB = String(b.phone || '').replace(/\D/g, '');
+                        break;
+                    case 'level':
+                        valA = parseFloat(a.level || a.self_rate_level || 3.5);
+                        valB = parseFloat(b.level || b.self_rate_level || 3.5);
+                        if (isNaN(valA)) valA = 3.5;
+                        if (isNaN(valB)) valB = 3.5;
+                        break;
+                    case 'gender':
+                        valA = String(a.gender || '').toLowerCase();
+                        valB = String(b.gender || '').toLowerCase();
+                        break;
+                    case 'matches':
+                        valA = parseInt(a.matches_played) || 0;
+                        valB = parseInt(b.matches_played) || 0;
+                        break;
+                    case 'status':
+                        valA = String(a.status || '').toLowerCase();
+                        valB = String(b.status || '').toLowerCase();
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (valA < valB) return window.currentSort.asc ? -1 : 1;
+                if (valA > valB) return window.currentSort.asc ? 1 : -1;
+                return 0;
+            });
+
+            // Re-renderizar con el nuevo orden
+            window.renderUserRows(window.filteredUsers);
+            if (tbody) tbody.style.opacity = '1';
+
+            // Actualizar iconos e indicadores visuales de las cabeceras
+            window.updateSortHeaders();
+            
+            // Re-aplicar visibilidad de columnas por si acaso se redibujó
+            window.applyColumnVisibility();
+        }, 10);
+    };
+
+    window.updateSortHeaders = () => {
+        const headers = {
+            name: 'identidad',
+            teams: 'equipos',
+            phone: 'contacto',
+            level: 'nivel',
+            gender: 'genero',
+            matches: 'partidos',
+            status: 'estado'
+        };
+
+        Object.keys(headers).forEach(k => {
+            const colName = headers[k];
+            const th = document.querySelector(`th[data-col="${colName}"]`);
+            if (!th) return;
+
+            // Quitar o crear el contenedor del icono de ordenación
+            let iconSpan = th.querySelector('.sort-icon');
+            if (!iconSpan) {
+                iconSpan = document.createElement('span');
+                iconSpan.className = 'sort-icon';
+                iconSpan.style.marginLeft = '8px';
+                iconSpan.style.fontSize = '0.72rem';
+                iconSpan.style.display = 'inline-block';
+                th.appendChild(iconSpan);
+            }
+
+            if (window.currentSort.key === k) {
+                iconSpan.innerHTML = window.currentSort.asc 
+                    ? '<i class="fas fa-long-arrow-up" style="color: #2563eb;"></i>' 
+                    : '<i class="fas fa-long-arrow-down" style="color: #2563eb;"></i>';
+                iconSpan.style.opacity = '1';
+                th.style.color = '#2563eb';
+                th.style.fontWeight = '900';
+            } else {
+                iconSpan.innerHTML = '<i class="fas fa-arrows-alt-v" style="color: #cbd5e1;"></i>';
+                iconSpan.style.opacity = '0.35';
+                th.style.color = 'inherit';
+                th.style.fontWeight = '800';
+            }
+        });
+    };
+
+    // ========================================================
+    // ⚡ INITIALIZATION: VISIBILITY & SORT INDICATORS
+    // ========================================================
+    setTimeout(() => {
+        window.applyColumnVisibility();
+        window.updateSortHeaders();
+    }, 50);
 
     // ==========================================
     // MODULE: USER MODALS LOGIC

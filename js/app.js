@@ -3,6 +3,50 @@
  * Entry Point de la aplicación compatible con file://
  */
 (function () {
+    // 🚀 Cargador dinámico de scripts externos para optimización de rendimiento (Lazy Loading)
+    window.loadExternalScript = (url, globalName) => {
+        return new Promise((resolve, reject) => {
+            if (globalName && window[globalName]) {
+                resolve(window[globalName]);
+                return;
+            }
+            // Comprobar si ya existe la etiqueta script
+            const existingScript = document.querySelector(`script[src="${url}"]`);
+            if (existingScript) {
+                // Si ya existe pero aún no se ha cargado en window, esperamos a su disponibilidad
+                const checkInterval = setInterval(() => {
+                    if (window[globalName]) {
+                        clearInterval(checkInterval);
+                        resolve(window[globalName]);
+                    }
+                }, 50);
+                // Timeout de seguridad de 10s
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    if (window[globalName]) {
+                        resolve(window[globalName]);
+                    } else {
+                        reject(new Error(`Timeout esperando a la carga del script existente: ${url}`));
+                    }
+                }, 10000);
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = url;
+            script.defer = true;
+            script.onload = () => {
+                console.log(`📦 [LazyLoader] Script cargado con éxito: ${url}`);
+                resolve(window[globalName]);
+            };
+            script.onerror = (err) => {
+                console.error(`❌ [LazyLoader] Error al cargar script: ${url}`, err);
+                reject(new Error(`Error cargando el script: ${url}`));
+            };
+            document.head.appendChild(script);
+        });
+    };
+
     /**
      * Calcula la hora exacta de un partido basándose en:
      * - startTime: hora de inicio del evento (ej: "10:00")
@@ -50,6 +94,23 @@
 
             // 2. Setup Navigation
             this.setupNavigation();
+
+            // 3. Resiliencia al recuperar foco (Desbloqueo de pantalla a pie de pista)
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    console.log("📱 [App] Pestaña recuperada (visibilitychange). Verificando sesión...");
+                    const user = window.Store ? window.Store.getState('currentUser') : null;
+                    if (user) {
+                        this.handleAuthorized();
+                        // Revalidar silenciosamente en background si existe el servicio
+                        if (window.AuthService && typeof window.AuthService.revalidateSession === 'function') {
+                            window.AuthService.revalidateSession();
+                        }
+                    } else {
+                        this.handleGuest();
+                    }
+                }
+            });
         }
 
         handleAuthorized() {
@@ -59,13 +120,43 @@
             this.updateGlobalHeader(user);
 
             if (user && user.uid && window.db) {
-                window.db.collection('players').doc(user.uid).update({
-                    lastLogin: new Date().toISOString()
-                }).catch(e => console.warn("⏳ [App] Error actualizando lastLogin:", e));
+                // Evitar duplicar logs en la misma sesión/pestaña del navegador
+                if (!sessionStorage.getItem('somospadel_session_logged')) {
+                    sessionStorage.setItem('somospadel_session_logged', 'true');
+                    
+                    const telemetryData = {
+                        userId: user.uid,
+                        userName: user.name || user.displayName || "Jugador Pro",
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        device: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
+                        language: navigator.language || 'es',
+                        appVersion: 'v9.1-Premium'
+                    };
+
+                    // Guardar log en la colección raíz de Firestore para análisis global de DAU/MAU
+                    window.db.collection('access_logs').add(telemetryData)
+                        .then(() => console.log(`📡 [TELEMETRÍA] Acceso registrado con éxito para: ${telemetryData.userName}`))
+                        .catch(e => console.warn("⏳ [App] Telemetría omitida por red lenta o bloqueador:", e));
+
+                    // Actualizar el perfil del jugador con contadores en tiempo real
+                    window.db.collection('players').doc(user.uid).update({
+                        lastLogin: new Date().toISOString(),
+                        lastActive: firebase.firestore.FieldValue.serverTimestamp(),
+                        sessionCount: firebase.firestore.FieldValue.increment(1)
+                    }).catch(e => console.warn("⏳ [App] Error actualizando actividad en base de datos:", e));
+                } else {
+                    // Si ya se registró en esta sesión, solo actualizamos el timestamp de último login activo
+                    window.db.collection('players').doc(user.uid).update({
+                        lastLogin: new Date().toISOString()
+                    }).catch(e => console.warn("⏳ [App] Error actualizando timestamp activo:", e));
+                }
             }
 
             const authModal = document.getElementById('auth-modal');
-            if (authModal) authModal.classList.add('hidden');
+            if (authModal) {
+                authModal.classList.add('hidden');
+                authModal.style.setProperty('display', 'none', 'important');
+            }
 
             const appShell = document.getElementById('app-shell');
             if (appShell) appShell.classList.remove('hidden');
@@ -126,57 +217,62 @@
 
                 // A. Render Side Menu (Hamburger) - STATIC
                 if (menuContainer) {
-                    // NEW MENU STRUCTURE
+                    // NEW MENU STRUCTURE (COLORFUL EDITION)
                     menuContainer.innerHTML = `
-                        <!-- BRANDING HEADER IN MENU -->
-                        <div style="padding: 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
-                            <img src="img/logo_somospadel.png" style="width: 60px; height: auto; margin-bottom: 10px; filter: drop-shadow(0 0 8px rgba(204,255,0,0.4));">
-                            <div style="font-weight: 900; color: white; letter-spacing: 1px; font-size: 1.1rem;">SOMOS<span style="color: #CCFF00;">PADEL</span></div>
-                            <div style="font-size: 0.6rem; color: #888; font-weight: 700; letter-spacing: 2px;">BARCELONA</div>
+                        <!-- BRANDING HEADER -->
+                        <div class="drawer-brand">
+                            <img src="img/logo_somospadel.png" style="width: 70px; height: auto; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(204,255,0,0.5));">
+                            <div style="font-weight: 900; color: #0a192f; letter-spacing: 1.5px; font-size: 1.2rem; font-family: 'Outfit';">SOMOS<span style="color: #CCFF00;">PADEL</span></div>
+                            <div style="font-size: 0.65rem; color: #666; font-weight: 800; letter-spacing: 3px; margin-top: 2px;">BARCELONA</div>
                         </div>
 
-                        <!-- 1. MAIN NAVIGATION -->
-                        <div style="padding: 0 10px; margin-bottom: 15px;">
-                            <div style="color: #666; font-size: 0.65rem; font-weight: 800; padding: 5px 15px; letter-spacing: 1px; text-transform:uppercase;">Accesos Directos</div>
-                            
-                            <div class="drawer-item" onclick="window.smartNavigate('dashboard', null)">
-                                <i class="fas fa-home" style="color: #CCFF00;"></i>
-                                <span style="font-weight: 700;">INICIO</span>
-                            </div>
-
-                            <div class="drawer-item" onclick="window.smartNavigate('americanas', 'events')">
-                                <i class="fas fa-trophy" style="color: #CCFF00;"></i>
-                                <span style="font-weight: 700;">AMERICANAS DISPONIBLES</span>
-                            </div>
+                        <!-- 1. EXPLORACIÓN -->
+                        <div class="drawer-section-header">EXPLORAR</div>
+                        
+                        <div class="drawer-item" onclick="window.smartNavigate('dashboard', null)">
+                            <i class="fas fa-th-large" style="color: #00E36D; text-shadow: 0 0 10px rgba(0,227,109,0.3);"></i>
+                            <span style="font-weight: 800;">INICIO</span>
                         </div>
 
-                        <!-- 2. PLAYER ZONE -->
-                        <div style="padding: 0 10px; margin-bottom: 15px;">
-                            <div style="color: #666; font-size: 0.65rem; font-weight: 800; padding: 5px 15px; letter-spacing: 1px; text-transform:uppercase;">Zona Jugador</div>
-
-                            <div class="drawer-item" onclick="window.smartNavigate('americanas', 'results')">
-                                <i class="fas fa-chart-pie" style="color: #0ea5e9;"></i>
-                                <span>MIS RESULTADOS</span>
-                            </div>
-
-                            <div class="drawer-item" onclick="window.smartNavigate('ranking', null)">
-                                <i class="fas fa-medal" style="color: #f59e0b;"></i>
-                                <span>RANKING</span>
-                            </div>
-
-                            <div class="drawer-item" onclick="window.smartNavigate('profile', null)">
-                                <i class="fas fa-user-circle" style="color: #ec4899;"></i>
-                                <span>MI PERFIL</span>
-                            </div>
+                        <div class="drawer-item" onclick="window.smartNavigate('entrenos', null)">
+                            <i class="fas fa-calendar-check" style="color: #CCFF00; text-shadow: 0 0 10px rgba(204,255,0,0.3);"></i>
+                            <span style="font-weight: 800;">ENTRENOS</span>
                         </div>
 
-                        <!-- 3. SYSTEMS -->
+                        <!-- 2. COMPETICIÓN -->
+                        <div class="drawer-section-header">COMPETICIÓN</div>
+
+                        <div class="drawer-item" onclick="window.smartNavigate('ranking', null)">
+                            <i class="fas fa-trophy" style="color: #FFD700; text-shadow: 0 0 10px rgba(255,215,0,0.3);"></i>
+                            <span style="font-weight: 700;">RANKING</span>
+                        </div>
+
+                        <div class="drawer-item" onclick="window.smartNavigate('partidas_abiertas', null)">
+                            <i class="fab fa-whatsapp" style="color: #25d366; text-shadow: 0 0 10px rgba(37,211,102,0.3);"></i>
+                            <span style="font-weight: 700;">PARTIDAS ABIERTAS</span>
+                        </div>
+
+                        <div class="drawer-item" onclick="window.smartNavigate('records', null)">
+                            <i class="fas fa-award" style="color: #FF2D55; text-shadow: 0 0 10px rgba(255,45,85,0.3);"></i>
+                            <span style="font-weight: 700;">RÉCORDS</span>
+                        </div>
+
+                        <div class="drawer-item" onclick="window.smartNavigate('teams', null)">
+                            <i class="fas fa-users" style="color: #72a800; text-shadow: 0 0 10px rgba(114,168,0,0.3);"></i>
+                            <span style="font-weight: 700;">EQUIPOS</span>
+                        </div>
+
+                        <div class="drawer-item" onclick="window.smartNavigate('profile', null)">
+                            <i class="fas fa-user-astronaut" style="color: #3b82f6; text-shadow: 0 0 10px rgba(59,130,246,0.3);"></i>
+                            <span style="font-weight: 700;">MI PERFIL</span>
+                        </div>
+
+                        <!-- 3. SISTEMAS -->
                         ${isAdmin ? `
-                        <div style="padding: 0 10px;">
-                            <div class="drawer-item" onclick="window.location.href='admin.html'" style="opacity: 0.8;">
-                                <i class="fas fa-user-shield" style="color: #ccc;"></i>
-                                <span>PANEL ADMIN</span>
-                            </div>
+                        <div class="drawer-section-header">SISTEMA</div>
+                        <div class="drawer-item" onclick="window.location.href='admin.html'" style="background: rgba(255,255,255,0.02); margin-top: 10px;">
+                            <i class="fas fa-user-shield" style="color: #94a3b8;"></i>
+                            <span style="font-size: 0.8rem; font-weight: 600; opacity: 0.7;">PANEL ADMIN</span>
                         </div>
                         ` : ''}
                     `;
@@ -216,7 +312,10 @@
         handleGuest() {
             this.updateGlobalHeader(null);
             const authModal = document.getElementById('auth-modal');
-            if (authModal) authModal.classList.remove('hidden');
+            if (authModal) {
+                authModal.classList.remove('hidden');
+                authModal.style.setProperty('display', 'flex', 'important');
+            }
 
             const appShell = document.getElementById('app-shell');
             if (appShell) appShell.classList.add('hidden');
@@ -225,24 +324,60 @@
         updateGlobalHeader(user) {
             const headerName = document.getElementById('header-user-name');
             const headerAvatar = document.getElementById('header-user-avatar');
+            const headerAvatarMenu = document.getElementById('header-user-avatar-menu');
+            const headerLevel = document.getElementById('header-user-level');
+            const headerStreak = document.getElementById('header-user-streak');
+            const headerRank = document.getElementById('header-user-rank');
+            const headerMatches = document.getElementById('header-user-matches');
+            const headerWinRate = document.getElementById('header-user-winrate');
+
+            const stats = window.Store ? window.Store.getState('playerStats') : null;
 
             if (headerName) {
-                // Prioritize user.name from DB, then displayName from Auth, then placeholder
                 const rawName = user ? (user.name || user.displayName || "Jugador") : "Invitado";
-                const level = user ? (user.level || 3.5).toFixed(2) : "--";
                 const roleIcon = user?.role === 'super_admin' ? ' 👑' : '';
-                headerName.innerHTML = `${rawName.split(' ')[0].toUpperCase()} <span style="color: #CCFF00; font-size: 0.7rem; margin-left: 4px;">[${level}${roleIcon}]</span>`;
+                headerName.innerHTML = `${rawName.split(' ')[0].toUpperCase()}${roleIcon}`;
             }
 
-            if (headerAvatar) {
-                if (user && user.photoURL) {
-                    headerAvatar.innerHTML = `<img src="${user.photoURL}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+            const level = user ? parseFloat(user.level || 3.5).toFixed(2) : "--";
+            if (headerLevel) headerLevel.innerText = level;
+            
+            const headerLevelMenu = document.getElementById('header-user-level-menu');
+            if (headerLevelMenu) headerLevelMenu.innerText = `LVL ${level}`;
+
+            if (headerStreak) {
+                const streak = user ? (user.streak || 0) : 0;
+                headerStreak.innerText = `🔥 ${streak}`;
+            }
+
+            if (headerRank) {
+                const rank = user ? (user.ranking_pos || '--') : '--';
+                headerRank.innerText = `🏆 #${rank}`;
+            }
+
+            if (headerMatches) {
+                const matches = user ? (user.matches_played || (stats?.stats?.matches) || 0) : 0;
+                headerMatches.innerText = matches;
+            }
+
+            if (headerWinRate) {
+                const wr = stats?.stats?.winRate || (user?.win_rate) || "--";
+                headerWinRate.innerText = wr !== "--" ? `${wr}%` : "--";
+            }
+
+            const updateAvatar = (el) => {
+                if (!el) return;
+                if (user && (user.photo_url || user.photoURL)) {
+                    el.innerHTML = `<img src="${user.photo_url || user.photoURL}" style="width:100%; height:100%; border-radius:inherit; object-fit:cover;">`;
                 } else {
                     const rawName = user ? (user.name || user.displayName || "J") : "I";
                     const initials = rawName.substring(0, 2).toUpperCase();
-                    headerAvatar.innerHTML = initials;
+                    el.innerHTML = initials;
                 }
-            }
+            };
+
+            updateAvatar(headerAvatar);
+            updateAvatar(headerAvatarMenu);
         }
 
         setupNavigation() {
@@ -252,9 +387,9 @@
     }
 
     // Init App when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => window.AppInstance = new App());
-    } else {
+    // Sync with AppInit Controller
+    document.addEventListener('AppReady', () => {
+        console.log("🎾 [App] AppReady signal received. Launching Core App...");
         window.AppInstance = new App();
-    }
+    });
 })();

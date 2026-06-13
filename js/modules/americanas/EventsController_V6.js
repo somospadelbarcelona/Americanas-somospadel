@@ -71,12 +71,16 @@
                 filters: {
                     month: 'all',
                     category: 'all'
-                }
+                },
+                eventTabs: {},
+                matchCache: {} // { eventId: { matches: [], lastFetch: timestamp } }
             };
             this.unsubscribeEvents = null;
             this.unsubscribeEntrenos = null;
             this.unsubscribeUsers = null;
             this.autoStartInterval = null;
+            this._onDataUpdateDebounce = null;
+            this._personalMatchesDebounce = null;
 
             // AUTO-INIT: Start Background Services Immediately
             this.startBackgroundService();
@@ -96,9 +100,15 @@
             if (this.unsubscribeEntrenosA) this.unsubscribeEntrenosA();
             if (this.unsubscribeEntrenosB) this.unsubscribeEntrenosB();
             if (this.autoStartInterval) clearInterval(this.autoStartInterval);
+            if (this._onDataUpdateDebounce) clearTimeout(this._onDataUpdateDebounce);
+            if (this._personalMatchesDebounce) clearTimeout(this._personalMatchesDebounce);
 
             if (window.GeoService) window.GeoService.stopTracking();
             window.removeEventListener('geo_update', this._onGeoUpdate);
+
+            if (window.OpenMatchesController) {
+                window.OpenMatchesController.destroy();
+            }
 
             this.state.bgInitialized = false;
         }
@@ -107,7 +117,12 @@
             // Check if we have received at least one update for each main collection
             if (this.state.americanas && this.state.entrenos) {
                 this.state.loading = false;
-                if (this.state.viewInitialized) this.render();
+                if (this.state.viewInitialized) {
+                    if (this._onDataUpdateDebounce) clearTimeout(this._onDataUpdateDebounce);
+                    this._onDataUpdateDebounce = setTimeout(() => {
+                        this.render();
+                    }, 50); // 50ms batch window
+                }
             }
         }
 
@@ -129,14 +144,14 @@
                     this.onDataUpdate();
                 }, err => console.error("Error loading entrenos:", err));
 
-            // 2. Automation Loop (Check every 30s)
+            // 2. Automation Loop (Check every 120s to save quota)
             if (this.autoStartInterval) clearInterval(this.autoStartInterval);
             this.autoStartInterval = setInterval(() => {
                 this.checkAutoStartEvents();
                 if (window.AmericanaService?.processWaitlistTimeouts) {
                     window.AmericanaService.processWaitlistTimeouts();
                 }
-            }, 30000);
+            }, 120000); // 2 minutes (optimized for quota)
         }
 
         init() {
@@ -335,6 +350,11 @@
                 window.navigator.vibrate(15);
             }
 
+            // Cleanup open matches synchronization if switching away from open_matches
+            if (tabName !== 'open_matches' && window.OpenMatchesController) {
+                window.OpenMatchesController.destroy();
+            }
+
             if (tabName === 'results' && this.state.currentUser) {
                 if (this.state.resultsInitialized) {
                     // Already initialized and listening. Just render.
@@ -369,7 +389,11 @@
 
                         this.state.personalMatches = unique.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                         this.state.loadingResults = false;
-                        this.render();
+                        
+                        if (this._personalMatchesDebounce) clearTimeout(this._personalMatchesDebounce);
+                        this._personalMatchesDebounce = setTimeout(() => {
+                            this.render();
+                        }, 50); // 50ms batch window
                     };
 
                     this.unsubscribeMatchesA = window.db.collection('matches').where('team_a_ids', 'array-contains', uid).onSnapshot(snap => {
@@ -391,6 +415,41 @@
                 }
             } else {
                 await this.render();
+            }
+        }
+
+        async setEventTab(eventId, tab) {
+            console.log(` [EventsController] Changing sub-tab for ${eventId} to ${tab}`);
+            this.state.eventTabs[eventId] = tab;
+            
+            // Si es Rank o Draws, cargar partidos si no están en caché
+            if ((tab === 'rank' || tab === 'draws') && !this.state.matchCache[eventId]) {
+                await this.loadEventMatches(eventId);
+            }
+            
+            this.render();
+        }
+
+        async loadEventMatches(eventId) {
+            console.log(`📡 [EventsController] Loading matches for event: ${eventId}`);
+            try {
+                // Buscar tipo de evento
+                const all = this.getAllSortedEvents();
+                const evt = all.find(e => e.id === eventId);
+                const type = evt ? evt.type : 'americana';
+                const coll = type === 'entreno' ? 'entrenos_matches' : 'matches';
+
+                const snap = await window.db.collection(coll).where('americanaId', '==', eventId).get();
+                const matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                
+                this.state.matchCache[eventId] = {
+                    matches: matches,
+                    lastFetch: Date.now()
+                };
+                console.log(`✅ Loaded ${matches.length} matches for ${eventId}`);
+            } catch (e) {
+                console.error("Error loading event matches:", e);
+                this.state.matchCache[eventId] = { matches: [], lastFetch: Date.now() };
             }
         }
 
@@ -432,45 +491,123 @@
             const container = document.getElementById('content-area');
             if (!container) return;
 
+            // --- ZERO-LATENCY SMART PATCHING (Audit Point 1) ---
+            const currentTab = this.state.activeTab;
+            if (!this.state.loading && (currentTab === 'events' || currentTab === 'entrenos')) {
+                const todayStr = this.getTodayStr();
+                const events = this.getAllSortedEvents().filter(e => {
+                    const isCorrectType = (currentTab === 'entrenos' ? e.type === 'entreno' : e.type === 'americana');
+                    if (e.status === 'finished' || e.status === 'cancelled') return false;
+                    return isCorrectType && (e.status === 'live' || e.normDate >= todayStr);
+                });
+
+                // Check if we already have the grid rendered
+                if (document.getElementById(`event-card-${events[0]?.id}`)) {
+                    if (this.smartUpdate(events)) {
+                        console.log("⚡ [EventsController] Zero-Latency Update Applied.");
+                        return; // Successfully updated DOM without full re-render
+                    }
+                }
+            }
+
             const tabs = [
                 { id: 'entrenos', label: 'ENTRENOS', icon: 'fa-user-ninja' },
                 { id: 'events', label: 'AMERICANAS', icon: 'fa-trophy' },
+                { id: 'open_matches', label: 'PARTIDAS ABIERTAS', icon: 'fa-table-tennis-paddle-ball' },
                 { id: 'agenda', label: 'AGENDA', icon: 'fa-circle' },
                 { id: 'help', label: 'INFO', icon: 'fa-info-circle' },
                 { id: 'finished', label: 'FINALIZADOS', icon: 'fa-history' }
             ];
 
             const navHtml = `
-                <div class="events-submenu-container" style="background: #232a32; padding: 10px 4px; border-bottom: 2px solid #CCFF00; margin-bottom: 0px; display: flex; justify-content: space-around; box-shadow: 0 8px 32px rgba(0,0,0,0.5); position: sticky; top: 148px; z-index: 12000; backdrop-filter: blur(10px);">
+                <style>
+                    @keyframes esm-ripple {
+                        0%   { transform: translate(-50%,-50%) scale(0); opacity: 0.5; }
+                        100% { transform: translate(-50%,-50%) scale(4); opacity: 0; }
+                    }
+                    @keyframes esm-bounce {
+                        0%   { transform: scale(1); }
+                        30%  { transform: scale(0.82); }
+                        60%  { transform: scale(1.12); }
+                        80%  { transform: scale(0.96); }
+                        100% { transform: scale(1); }
+                    }
+                    @keyframes esm-label-pop {
+                        0%   { letter-spacing:0.3px; }
+                        50%  { letter-spacing:2px; }
+                        100% { letter-spacing:0.3px; }
+                    }
+                    .esm-btn { position:relative; overflow:hidden; }
+                    .esm-btn:active .esm-icon-box { animation: esm-bounce 0.42s cubic-bezier(0.22,1,0.36,1); }
+                    .esm-ripple-el {
+                        position:absolute; width:50px; height:50px;
+                        background:rgba(0,0,0,0.18); border-radius:50%;
+                        pointer-events:none;
+                        animation: esm-ripple 0.55s ease-out forwards;
+                    }
+                </style>
+                <div class="events-submenu-container" style="
+                    background: #CCFF00;
+                    padding: 8px 4px 6px;
+                    border-bottom: 3px solid rgba(0,0,0,0.12);
+                    margin-bottom: 0;
+                    display: flex;
+                    justify-content: space-around;
+                    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+                    position: sticky;
+                    top: 108px;
+                    z-index: 9500;
+                ">
                     ${tabs.map(tab => {
                 const isActive = this.state.activeTab === tab.id;
                 const isPadelBall = tab.id === 'agenda';
 
                 return `
-                <button onclick="window.EventsController.setTab('${tab.id}')" 
-                                style="background: transparent; border: none; display: flex; flex-direction: column; align-items: center; gap: 8px; color: ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.4)'}; font-weight: 800; padding: 8px 4px; font-size: 0.55rem; cursor: pointer; transition: all 0.2s ease; flex: 1; letter-spacing: 0.3px; position: relative; min-width: 0;">
-                            <div style="width: 44px; height: 44px; border-radius: 14px; background: ${isActive ? 'rgba(204,255,0,0.1)' : 'rgba(255,255,255,0.05)'}; display: flex; align-items: center; justify-content: center; border: 1.5px solid ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.1)'}; transition: all 0.3s; box-shadow: ${isActive ? '0 0 15px rgba(204,255,0,0.3)' : 'none'}; margin-bottom: 2px;">
-                                ${isPadelBall ?
-                        `<div style="width: 22px; height: 22px; background: ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.5)'}; border-radius: 50%; position: relative; border: 2px solid ${isActive ? '#000' : 'transparent'};">
-                                        <div style="position:absolute; top:20%; left:10%; width:80%; height:60%; border:1.5px solid rgba(0,0,0,0.2); border-radius:50%; border-top:none; border-bottom:none;"></div>
-                                    </div>` :
-                        `<i class="fas ${tab.icon}" style="font-size: 1.1rem; color: ${isActive ? '#CCFF00' : '#888'};"></i>`
+                <button class="esm-btn"
+                    onclick="(function(btn){
+                        var r=document.createElement('span');
+                        r.className='esm-ripple-el';
+                        r.style.left='50%'; r.style.top='50%';
+                        btn.appendChild(r);
+                        setTimeout(()=>r.remove(),600);
+                        window.EventsController.setTab('${tab.id}');
+                    })(this)"
+                    style="background: transparent; border: none; display: flex; flex-direction: column; align-items: center; gap: 5px; color: ${isActive ? '#000' : 'rgba(0,0,0,0.45)'}; font-weight: 900; padding: 6px 4px 4px; font-size: 0.52rem; cursor: pointer; transition: color 0.18s; flex: 1; letter-spacing: 0.3px; min-width: 0;">
+
+                    <div class="esm-icon-box" style="
+                        width: 40px; height: 40px; border-radius: 12px;
+                        background: ${isActive ? '#000' : 'rgba(0,0,0,0.08)'};
+                        display: flex; align-items: center; justify-content: center;
+                        border: none;
+                        transition: background 0.2s, transform 0.2s;
+                        margin-bottom: 1px;
+                    ">
+                        ${isPadelBall ?
+                        `<div style="width:20px;height:20px;background:${isActive?'#CCFF00':'rgba(0,0,0,0.55)'};border-radius:50%;position:relative;border:2px solid ${isActive?'#000':'transparent'};">
+                            <div style="position:absolute;top:20%;left:10%;width:80%;height:60%;border:1.5px solid rgba(0,0,0,0.25);border-radius:50%;border-top:none;border-bottom:none;"></div>
+                         </div>` :
+                        `<i class="fas ${tab.icon}" style="font-size: 1rem; color: ${isActive ? '#CCFF00' : 'rgba(0,0,0,0.6)'};"></i>`
                     }
-                            </div>
-                            <span style="text-transform: uppercase; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${tab.label}</span>
-                            ${isActive ? `<div style="width: 16px; height: 3px; background: #CCFF00; border-radius: 10px; margin-top: 4px; box-shadow: 0 0 10px #CCFF00;"></div>` : ''}
-                        </button>
-                    `}).join('')}
+                    </div>
+
+                    <span style="text-transform:uppercase;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;
+                        ${isActive ? 'animation: esm-label-pop 0.4s ease;' : ''}">
+                        ${tab.label}
+                    </span>
+                    ${isActive ? `<div style="width:18px;height:3px;background:#000;border-radius:10px;margin-top:1px;"></div>` : ''}
+                </button>
+                `}).join('')}
                 </div>
             `;
 
             let contentHtml = '';
             if (this.state.loading) {
-                contentHtml = '<div style="padding:40px; text-align:center;"><div class="loader"></div><p style="color:#888; margin-top:10px;">Cargando datos...</p></div>';
+                contentHtml = '<div style="padding: 100px; text-align: center;"><div class="loader"></div><p style="margin-top:20px; font-weight:900; letter-spacing:2px;">CARGANDO AMERICANAS...</p></div>';
             } else {
                 switch (this.state.activeTab) {
                     case 'events': contentHtml = this.renderEventsList(false, false); break;
                     case 'entrenos': contentHtml = this.renderEventsList(false, true); break;
+                    case 'open_matches': contentHtml = '<div id="events-tab-content" style="min-height: 80vh;"></div>'; break;
                     case 'agenda': contentHtml = this.renderAgendaView(); break;
                     case 'results': contentHtml = await this.renderResultsView(); break;
                     case 'finished': contentHtml = this.renderFinishedView(); break;
@@ -482,8 +619,15 @@
 
             // TRIGGER ASYNC CONTENT
             this.loadGeoRadarWidget();
-            if (this.state.activeTab === 'entrenos') {
+            if (this.state.activeTab === 'entrenos' || this.state.activeTab === 'events') {
                 this.loadSynergyWidget();
+            }
+            if (this.state.activeTab === 'open_matches') {
+                if (window.OpenMatchesView && window.OpenMatchesController) {
+                    window.OpenMatchesView.containerId = 'events-tab-content';
+                    window.OpenMatchesView.renderLayout();
+                    window.OpenMatchesController.init();
+                }
             }
         }
 
@@ -594,8 +738,16 @@
                 });
             }
 
-            if (month !== 'all') events = events.filter(e => e.normDate.startsWith(month));
-            if (category !== 'all') events = events.filter(e => e.category === category);
+            if (month !== 'all') events = events.filter(e => e.normDate && e.normDate.startsWith(month));
+            if (category !== 'all') {
+                events = events.filter(e => {
+                    const cat = (e.category || '').toLowerCase();
+                    if (category === 'male') return cat === 'male' || cat === 'masculina';
+                    if (category === 'female') return cat === 'female' || cat === 'femenina';
+                    if (category === 'mixed') return cat === 'mixed' || cat === 'mixta' || cat === 'mixto';
+                    return cat === category;
+                });
+            }
 
             const eventsHtml = events.map(evt => this.renderCard(evt)).join('');
             const filterBarHtml = !onlyMine ? this.renderFilterBar(this.getAllSortedEvents().filter(e => e.status !== 'finished' && (e.status === 'live' || e.normDate >= todayStr))) : '';
@@ -603,13 +755,29 @@
             return `
                 <div style="min-height: 80vh; padding-top: 5px;">
                     <style>
+                        
+                        @keyframes status-breathe {
+                            0% { box-shadow: 0 0 8px rgba(255,45,85,0.4); }
+                            50% { box-shadow: 0 0 16px rgba(255,45,85,0.8); }
+                            100% { box-shadow: 0 0 8px rgba(255,45,85,0.4); }
+                        }
+                        @keyframes status-shake {
+                            0% { transform: translateX(0); }
+                            50% { transform: translateX(-2px); }
+                            100% { transform: translateX(2px); }
+                        }
+                        @keyframes status-dot-ping {
+                            0% { transform: scale(1); opacity:0.8; }
+                            70% { transform: scale(1.5); opacity:0; }
+                            100% { transform: scale(1); opacity:0.8; }
+                        }
                         @keyframes ball-physics {
-                            0% { transform: translateY(0) scale(1) rotate(0deg); box-shadow: 0 0 15px rgba(204,255,0,0.4); }
-                            15% { transform: translateY(-30px) scale(0.9, 1.1) rotate(45deg); box-shadow: 0 0 40px rgba(204,255,0,0.8); }
-                            30% { transform: translateY(0) scale(1.2, 0.8) rotate(90deg); box-shadow: 0 0 20px rgba(204,255,0,0.6); }
-                            45% { transform: translateY(-15px) scale(0.95, 1.05) rotate(135deg); box-shadow: 0 0 30px rgba(204,255,0,0.7); }
-                            60% { transform: translateY(0) scale(1.1, 0.9) rotate(180deg); box-shadow: 0 0 15px rgba(204,255,0,0.5); }
-                            100% { transform: translateY(0) scale(1) rotate(360deg); box-shadow: 0 0 15px rgba(204,255,0,0.4); }
+                            0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 0.8; }
+                            15% { transform: translateY(-30px) scale(0.9, 1.1) rotate(45deg); opacity: 1; }
+                            30% { transform: translateY(0) scale(1.2, 0.8) rotate(90deg); opacity: 0.8; }
+                            45% { transform: translateY(-15px) scale(0.95, 1.05) rotate(135deg); opacity: 1; }
+                            60% { transform: translateY(0) scale(1.1, 0.9) rotate(180deg); opacity: 0.8; }
+                            100% { transform: translateY(0) scale(1) rotate(360deg); opacity: 0.8; }
                         }
                         @keyframes internal-spin {
                             0% { transform: rotate(0deg) scale(1); filter: brightness(1); }
@@ -626,30 +794,59 @@
                         .ball-inner-spin {
                             animation: internal-spin 2s linear infinite;
                         }
+                        .premium-tile-interactive {
+                            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                            cursor: pointer;
+                        }
+                        .premium-tile-interactive:hover, .premium-tile-interactive:active {
+                            background: rgba(255,255,255,0.15) !important;
+                            transform: translateY(-2px) scale(1.02);
+                            box-shadow: 0 8px 20px rgba(204,255,0,0.2), inset 0 0 15px rgba(204,255,0,0.05) !important;
+                            border-color: #CCFF00 !important;
+                            z-index: 5;
+                        }
+                        .entreno-premium-card {
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                            cursor: pointer;
+                        }
+                        .entreno-premium-card:hover, .entreno-premium-card:active {
+                            transform: translateY(-4px) scale(1.01) !important;
+                            border-color: rgba(139, 92, 246, 0.45) !important;
+                            box-shadow: 0 25px 50px rgba(0,0,0,0.85), 0 0 35px rgba(139, 92, 246, 0.25) !important;
+                        }
+                        .entreno-tile-interactive {
+                            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                            cursor: pointer;
+                        }
+                        .entreno-tile-interactive:hover, .entreno-tile-interactive:active {
+                            background: rgba(255,255,255,0.15) !important;
+                            transform: translateY(-2px) scale(1.02);
+                            box-shadow: 0 8px 20px rgba(139,92,246,0.2), inset 0 0 15px rgba(139, 92, 246, 0.05) !important;
+                            border-color: #a855f7 !important;
+                            z-index: 5;
+                        }
                     </style>
-                    <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #0f172a 0%, #000000 100%); border-radius: 20px; margin: 15px; box-shadow: 0 0 25px rgba(204,255,0,0.25); border: 2px solid #CCFF00; position: relative; overflow: hidden;">
-                        <div style="display: flex; align-items: center; gap: 12px; position: relative; z-index: 1;">
-                            <div class="padel-ball-live" style="width: 44px; height: 44px; background: #000; border: 2.5px solid #CCFF00; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                <div class="ball-inner-spin" style="width: 28px; height: 28px; background: radial-gradient(circle at 30% 30%, #e5ff00, #CCFF00 60%, #b3e600); border-radius: 50%; position: relative; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.2);">
-                                    <!-- Padel Seams -->
-                                    <div style="position:absolute; top:0; left:20%; width:60%; height:100%; border:1.5px solid rgba(255,255,255,0.6); border-radius:50%; border-top:none; border-bottom:none; opacity: 0.7;"></div>
-                                    <div style="position:absolute; top:20%; left:0; width:100%; height:60%; border:1.5px solid rgba(255,255,255,0.6); border-radius:50%; border-left:none; border-right:none; opacity: 0.7;"></div>
-                                </div>
+                    <div style="padding: 20px 20px 16px; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 24px; margin: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; position: relative; overflow: hidden;">
+                        <!-- Subtle accent line -->
+                        <div style="position:absolute; top:0; left:0; width:100%; height:4px; background: linear-gradient(90deg, #72a800, #a3d900); border-radius:24px 24px 0 0;"></div>
+                        <div style="display: flex; align-items: center; gap: 14px; position: relative; z-index: 1;">
+                            <div style="width: 48px; height: 48px; background: #f1f5f9; border: 2px solid #e2e8f0; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                🎾
                             </div>
                             <div>
-                                <h2 style="font-size: 1.15rem; font-weight: 950; margin: 0; color: white;">Eventos <span style="color: #CCFF00;">App Somospadel BCN</span></h2>
-                                <p style="color: rgba(204,255,0,0.9); font-size: 0.65rem; font-weight: 850; text-transform: uppercase;">¡Apúntate en tiempo real!</p>
+                                <h2 style="font-size: 1.1rem; font-weight: 950; margin: 0; color: #0a192f; letter-spacing: -0.5px;">Eventos <span style="color: #72a800;">SomosPadel BCN</span></h2>
+                                <p style="color: #64748b; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin: 3px 0 0;">Inscripción en tiempo real</p>
                             </div>
                         </div>
-                        <div style="background: #000; padding: 6px 14px; border-radius: 14px; border: 1.5px solid #00E36D; color: white; font-weight: 950;"><i class="fas fa-bolt" style="color: #00E36D;"></i> ${events.length}</div>
+                        <div style="background: #f1f5f9; padding: 8px 16px; border-radius: 14px; border: 1px solid #e2e8f0; color: #0a192f; font-weight: 950; display:flex; align-items:center; gap:6px; font-size:1rem;"><span style="color:#72a800; font-size:0.7rem; font-weight:900;">TOTAL</span> ${events.length}</div>
                     </div>
                     ${filterBarHtml}
-                    <div style="padding-bottom: 120px; padding-left:10px; padding-right:10px;">
+                    <div style="padding-bottom: 80px; padding-left:10px; padding-right:10px;">
                         ${events.length === 0 ? `<div style="padding:100px 40px; text-align:center; color:#444;"><i class="fas fa-filter" style="font-size: 4rem; opacity: 0.1;"></i><h3 style="color:#666;">SIN RESULTADOS</h3></div>` : eventsHtml}
                         <div style="margin-top: 25px; display: flex; flex-direction: column; align-items: center; padding-bottom: 20px; gap: 20px;">
                             
                             <!-- GEOLOCALIZACIÓN RADAR -->
-                            <div id="geo-radar-root" style="width: 100%; max-width: 500px; margin: 10px auto; animation: floatUp 0.8s ease-out forwards;">
+                            <div id="geo-radar-root" style="width: 100%; max-width: 500px; margin: 5px auto; animation: floatUp 0.8s ease-out forwards;">
                                 <!-- Cargado vía JS -->
                             </div>
 
@@ -657,15 +854,15 @@
                             <button onclick="window.EventsController.renderEntrenoGuideModal()" style="background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); padding: 12px 25px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-info-circle" style="color: #CCFF00;"></i> ¿CÓMO FUNCIONAN LOS FORMATOS?
                             </button>
+                            ` : ''}
 
                             <!-- PREDICTIVE SYNERGY WIDGET (MIRROR FROM DASHBOARD) -->
-                            <div id="predictive-synergy-entrenos-root" style="width: 100%; max-width: 500px; margin: 0 auto;">
+                            <div id="predictive-synergy-entrenos-root" style="width: 100%; max-width: 500px; margin: 15px auto 0;">
                                 <div style="text-align: center; padding: 30px; color: rgba(255,255,255,0.2); font-weight: 800; background: rgba(0,0,0,0.1); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
                                     <i class="fas fa-brain fa-spin" style="margin-bottom: 10px; font-size: 1.2rem; color: #CCFF00;"></i><br>
                                     Cargando tu compatibilidad...
                                 </div>
                             </div>
-                            ` : ''}
                         </div>
                     </div>
                 </div>
@@ -748,19 +945,126 @@
         renderFinishedView() {
             const todayStr = this.getTodayStr();
             const { month, category } = this.state.filters;
-            let finishedEvents = this.getAllSortedEvents().filter(e => e.status === 'finished' || e.status === 'cancelled' || e.date < todayStr);
-            if (month !== 'all') finishedEvents = finishedEvents.filter(e => e.date.startsWith(month));
-            if (category !== 'all') finishedEvents = finishedEvents.filter(e => e.category === category);
+            
+            // ✅ Logic: Archive includes explicitly finished/cancelled events OR events that have passed the today marker
+            let finishedEvents = this.getAllSortedEvents().filter(e => {
+                const isPast = e.normDate && e.normDate < todayStr && e.normDate !== '9999-99-99';
+                const isExplicitlyFinished = e.status === 'finished' || e.status === 'cancelled';
+                return isExplicitlyFinished || isPast;
+            });
+            
+            const totalCount = finishedEvents.length;
+
+            // Apply Filters
+            if (month !== 'all') finishedEvents = finishedEvents.filter(e => e.normDate && e.normDate.startsWith(month));
+            if (category !== 'all') {
+                finishedEvents = finishedEvents.filter(e => {
+                    const cat = (e.category || '').toLowerCase();
+                    if (category === 'male') return cat === 'male' || cat === 'masculina';
+                    if (category === 'female') return cat === 'female' || cat === 'femenina';
+                    if (category === 'mixed') return cat === 'mixed' || cat === 'mixta' || cat === 'mixto';
+                    return cat === category;
+                });
+            }
+            
+            // Sort: Newest first (Descending order)
+            finishedEvents = finishedEvents.sort((a, b) => {
+                const dateCompare = (b.normDate || '').localeCompare(a.normDate || '');
+                if (dateCompare === 0) return (b.time || '').localeCompare(a.time || '');
+                return dateCompare;
+            });
+
+            // Custom Dark Filter Bar for Premium View
+            const monthsRaw = this.getAvailableMonths(this.getAllSortedEvents().filter(e => e.status === 'finished' || e.status === 'cancelled' || (e.normDate && e.normDate < todayStr)));
+            // ✅ Reorder: Newest month first (so it appears 2nd after 'Historial Completo')
+            const months = monthsRaw.sort((a, b) => b.localeCompare(a));
+            
+            const currentMonth = this.state.filters.month;
+            const currentCat = this.state.filters.category;
+            const monthLabels = { '01': 'ENE', '02': 'FEB', '03': 'MAR', '04': 'ABR', '05': 'MAY', '06': 'JUN', '07': 'JUL', '08': 'AGO', '09': 'SEP', '10': 'OCT', '11': 'NOV', '12': 'DIC' };
+
+            const darkFilterBar = `
+                <style>
+                    .custom-scroll-archive::-webkit-scrollbar {
+                        height: 4px;
+                    }
+                    .custom-scroll-archive::-webkit-scrollbar-track {
+                        background: rgba(255,255,255,0.05);
+                        border-radius: 10px;
+                    }
+                    .custom-scroll-archive::-webkit-scrollbar-thumb {
+                        background: #CCFF00;
+                        border-radius: 10px;
+                        box-shadow: 0 0 10px #CCFF00;
+                    }
+                </style>
+                <div class="archive-filters" style="padding: 10px 0 25px; display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 100vw; overflow: hidden;">
+                    <!-- Month Selectors (Dark) -->
+                    <div class="custom-scroll-archive" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; -webkit-overflow-scrolling: touch; width: 100%;">
+                        <button onclick="window.EventsController.setFilter('month', 'all')" 
+                                style="flex-shrink: 0; white-space: nowrap; padding: 12px 22px; border-radius: 12px; font-size: 0.75rem; font-weight: 950; border: 1.5px solid ${currentMonth === 'all' ? '#CCFF00' : 'rgba(255,255,255,0.1)'}; cursor: pointer; transition: all 0.2s; 
+                                ${currentMonth === 'all' ? 'background: #CCFF00; color: #000; box-shadow: 0 0 15px rgba(204,255,0,0.3);' : 'background: rgba(255,255,255,0.05); color: #888;'}">HISTORIAL COMPLETO</button>
+                        ${months.map(m => {
+                            const [year, month] = m.split('-');
+                            const label = `${monthLabels[month]} '${year.slice(2)}`;
+                            const isActive = currentMonth === m;
+                            return `<button onclick="window.EventsController.setFilter('month', '${m}')" style="flex-shrink: 0; white-space: nowrap; padding: 12px 22px; border-radius: 12px; font-size: 0.75rem; font-weight: 950; border: 1.5px solid ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.1)'}; cursor: pointer; transition: all 0.2s; ${isActive ? 'background: #CCFF00; color: #000; box-shadow: 0 0 15px rgba(204,255,0,0.3);' : 'background: rgba(255,255,255,0.05); color: #888;'}">${label}</button>`;
+                        }).join('')}
+                        <div style="flex-shrink: 0; width: 30px;"></div> <!-- Spacer -->
+                    </div>
+                    <!-- Category Selectors (Dark) -->
+                    <div class="custom-scroll-archive" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; width: 100%;">
+                        <button onclick="window.EventsController.setFilter('category', 'all')" style="flex-shrink: 0; white-space: nowrap; padding: 8px 18px; border-radius: 14px; font-size: 0.7rem; font-weight: 900; border: 1px solid ${currentCat === 'all' ? '#CCFF00' : 'rgba(255,255,255,0.1)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'all' ? 'background: #CCFF00; color: #000;' : 'background: transparent; color: #64748b;'}">TODAS</button>
+                        <button onclick="window.EventsController.setFilter('category', 'male')" style="flex-shrink: 0; white-space: nowrap; padding: 8px 18px; border-radius: 14px; font-size: 0.7rem; font-weight: 900; border: 1px solid ${currentCat === 'male' ? '#38bdf8' : 'rgba(255,255,255,0.1)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'male' ? 'background: #38bdf8; color: #000;' : 'background: transparent; color: #64748b;'}">MASCULINO</button>
+                        <button onclick="window.EventsController.setFilter('category', 'female')" style="flex-shrink: 0; white-space: nowrap; padding: 8px 18px; border-radius: 14px; font-size: 0.7rem; font-weight: 900; border: 1px solid ${currentCat === 'female' ? '#ec4899' : 'rgba(255,255,255,0.1)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'female' ? 'background: #ec4899; color: #000;' : 'background: transparent; color: #64748b;'}">FEMENINO</button>
+                        <button onclick="window.EventsController.setFilter('category', 'mixed')" style="flex-shrink: 0; white-space: nowrap; padding: 8px 18px; border-radius: 14px; font-size: 0.7rem; font-weight: 900; border: 1px solid ${currentCat === 'mixed' ? '#eab308' : 'rgba(255,255,255,0.1)'}; cursor: pointer; transition: all 0.2s; ${currentCat === 'mixed' ? 'background: #eab308; color: #000;' : 'background: transparent; color: #64748b;'}">MIXTA</button>
+                    </div>
+                </div>
+            `;
 
             return `
-                <div style="padding: 25px; background: #f8fafc; min-height: 80vh; font-family: 'Outfit', sans-serif;">
-                    <div style="margin-bottom: 10px;">
-                        <span style="background: rgba(100, 116, 139, 0.1); color: #64748b; padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800;">Archivo Histórico</span>
-                        <h2 style="font-size: 2rem; font-weight: 950; color: #0f172a; margin: 10px 0;">Eventos <span style="color: #64748b;">Pasados</span></h2>
+                <div style="background: #ffffff; min-height: 100vh; padding: 25px 20px 140px; font-family: 'Outfit', sans-serif; position: relative; overflow: hidden;">
+                    <!-- Ambient Glow Effects -->
+                    <div style="position: absolute; top: -100px; right: -100px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(204,255,0,0.05) 0%, transparent 70%); pointer-events: none;"></div>
+                    <div style="position: absolute; bottom: 100px; left: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(56,189,248,0.03) 0%, transparent 70%); pointer-events: none;"></div>
+
+                    <!-- ARCHIVE HEADER -->
+                    <div style="margin-bottom: 30px; position: relative; z-index: 2;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <div style="width: 32px; height: 32px; background: rgba(255,255,255,0.05); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
+                                <i class="fas fa-history" style="color: #64748b; font-size: 0.8rem;"></i>
+                            </div>
+                            <span style="color: #64748b; font-size: 0.75rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;">Archivo de Retransmisiones</span>
+                        </div>
+                        <h2 style="font-size: 2.2rem; font-weight: 950; color: #0a192f; margin: 0; line-height: 1; letter-spacing: -1px;">EVENTOS <span style="color: #72a800;">PASADOS</span></h2>
+                        <div style="display: flex; align-items: center; gap: 15px; margin-top: 15px;">
+                            <div style="background: rgba(255,255,255,0.05); padding: 8px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-database" style="color: #CCFF00; font-size: 0.7rem;"></i>
+                                <span style="color: #0a192f; font-weight: 800; font-size: 0.8rem;">${totalCount} REGISTROS</span>
+                            </div>
+                            <div style="height: 4px; flex: 1; background: rgba(255,255,255,0.05); border-radius: 10px;"></div>
+                        </div>
                     </div>
-                    ${this.renderFilterBar(this.getAllSortedEvents().filter(e => e.status === 'finished' || e.date < todayStr))}
-                    <div style="display: flex; flex-direction: column; gap: 15px; padding-bottom: 120px;">
-                        ${finishedEvents.length ? finishedEvents.map(evt => this.renderCard(evt, true)).join('') : '<p style="text-align:center; padding:40px; color:#94a3b8;">No hay eventos finalizados.</p>'}
+
+                    <!-- DARK FILTER BAR -->
+                    ${darkFilterBar}
+
+                    <!-- EVENTS GRID -->
+                    <div style="display: flex; flex-direction: column; gap: 20px; position: relative; z-index: 2;">
+                        ${finishedEvents.length ? 
+                            finishedEvents.map(evt => this.renderCard(evt, true)).join('') : 
+                            `
+                            <div style="padding: 100px 40px; text-align: center; background: rgba(255,255,255,0.02); border-radius: 30px; border: 2px dashed rgba(255,255,255,0.05); margin-top: 20px;">
+                                <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.03); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                    <i class="fas fa-search" style="font-size: 2rem; color: rgba(255,255,255,0.1);"></i>
+                                </div>
+                                <h3 style="color: white; font-weight: 800; margin: 0;">SIN REGISTROS</h3>
+                                <p style="color: #64748b; font-size: 0.9rem; margin-top: 10px;">No se encontraron eventos para los filtros seleccionados.</p>
+                                <button onclick="window.EventsController.setFilter('month', 'all'); window.EventsController.setFilter('category', 'all');" 
+                                        style="margin-top: 25px; background: transparent; border: 1.5px solid #CCFF00; color: #CCFF00; padding: 12px 25px; border-radius: 12px; font-weight: 800; cursor: pointer;">REINICIAR FILTROS</button>
+                            </div>
+                            `
+                        }
                     </div>
                 </div>
             `;
@@ -770,7 +1074,7 @@
             const matches = this.state.personalMatches || [];
             const user = this.state.currentUser;
 
-            if (this.state.loadingResults) return '<div style="padding:100px; text-align:center;"><div class="loader"></div></div>';
+            if (this.state.loadingResults) return '<div style="padding: 100px; text-align: center;"><div class="loader"></div><p style="margin-top:20px; font-weight:900; letter-spacing:2px;">CARGANDO RESULTADOS...</p></div>';
             if (!user) return '<div style="padding:80px; text-align:center; color:white;"><i class="fas fa-lock" style="font-size:3rem; margin-bottom:15px; opacity:0.2;"></i><p>Inicia sesión.</p></div>';
 
             const realMatches = matches.filter(m => {
@@ -820,7 +1124,6 @@
                 const isTeamA = m.team_a_ids && m.team_a_ids.includes(user.uid);
                 const won = (s1 === s2) ? null : ((isTeamA && s1 > s2) || (!isTeamA && s2 > s1));
                 const color = won === null ? '#888' : (won ? '#CCFF00' : '#FF3B30');
-
                 return `
                     <div style="background: #111; border-radius: 12px; height: 60px; display: flex; align-items: center; border-left: 5px solid ${color}; padding: 0 15px; justify-content: space-between;">
                         <span style="font-size:0.8rem;">${(m.team_a_names[0] || '').split(' ')[0]} vs ${(m.team_b_names[0] || '').split(' ')[0]}</span>
@@ -831,7 +1134,8 @@
         }
 
         renderCard(evt, isFinished = false) {
-            const players = evt.players || evt.registeredPlayers || [];
+            // ✅ LOGIC BLOCK (Restored)
+            const players = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
             const playerCount = players.length;
             const maxCourts = parseInt(evt.max_courts || evt.courts || 4);
             const maxPlayers = maxCourts * 4;
@@ -843,6 +1147,7 @@
             const isLive = evt.status === 'live' || (evt.status === 'open' && hasStarted);
             const isPairing = evt.status === 'pairing';
             const isCancelled = evt.status === 'cancelled';
+            const isEntreno = evt.type === 'entreno';
 
             // Waitlist Logic
             const waitlist = evt.waitlist || [];
@@ -855,7 +1160,7 @@
             const dayNum = dateObj ? dateObj.start.getDate() : '--';
             const dayName = dateObj ? dateObj.start.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase().replace('.', '') : '---';
 
-            // Prices (Unified Field Names with Admin Panel)
+            // Prices
             const priceSoc = evt.price_members || evt.price_socio || evt.price_member || '20€';
             const priceExt = evt.price_external || evt.price_externo || evt.price_external || '25€';
 
@@ -863,38 +1168,20 @@
             const catMap = { 'male': 'MASCULINO', 'female': 'FEMENINO', 'mixed': 'MIXTO', 'open': 'OPEN' };
             const categoryLabel = catMap[evt.category] || (evt.category || 'MASCULINO').toUpperCase();
 
-            // Dynamic Icons and Colors per Category
-            let categoryIcon = 'fa-mars';
-            let categoryColor = '#38bdf8'; // Blue Default
+            let categoryIcon = 'fa-mars', categoryColor = '#38bdf8';
+            if (evt.category === 'female') { categoryIcon = 'fa-venus'; categoryColor = '#ea4c89'; }
+            else if (evt.category === 'mixed') { categoryIcon = 'fa-venus-mars'; categoryColor = '#eab308'; }
+            else if (evt.category === 'open') { categoryIcon = 'fa-globe'; categoryColor = '#84cc16'; }
 
-            if (evt.category === 'female') {
-                categoryIcon = 'fa-venus';
-                categoryColor = '#ea4c89'; // Pink
-            } else if (evt.category === 'mixed') {
-                categoryIcon = 'fa-venus-mars';
-                categoryColor = '#eab308'; // Yellow
-            } else if (evt.category === 'open') {
-                categoryIcon = 'fa-globe';
-                categoryColor = '#84cc16'; // Green
-            }
-
-            // Event Format / Mode Logic (Robust detection)
             const mode = (evt.pair_mode || evt.format || '').toLowerCase();
             const nameUpper = (evt.name || '').toUpperCase();
+            let isTwister = nameUpper.includes('TWISTER') || mode.includes('twister') || mode.includes('rotating') || mode.includes('rotativo');
+            let isFixed = mode === 'fixed' || nameUpper.includes('FIJA');
 
-            let isTwister = nameUpper.includes('TWISTER') || mode.includes('twister');
-            let isRotating = nameUpper.includes('ROTATIVO') || mode.includes('rotating') || mode.includes('rotativo');
-            let isFixed = nameUpper.includes('FIJA') || mode.includes('fixed') || mode.includes('fija');
+            let formatLabel = 'PAREJA FIJA', formatColor = '#a855f7';
+            if (isTwister) { formatLabel = 'TWISTER'; formatColor = '#38bdf8'; }
 
-            let formatLabel = 'PAREJA FIJA';
-            let formatColor = '#a855f7'; // Purple for Fixed
-
-            if (isTwister || isRotating) {
-                formatLabel = 'TWISTER';
-                formatColor = '#38bdf8'; // Blue for Twister
-            }
-
-            // Time Formatting (Range)
+            // Time Formatting
             const times = this._parseDate(evt.date, evt.time);
             let timeLabel = evt.time;
             if (times && !evt.time.includes('-')) {
@@ -902,51 +1189,37 @@
                 timeLabel = `${pad(times.start.getHours())}:${pad(times.start.getMinutes())} - ${pad(times.end.getHours())}:${pad(times.end.getMinutes())}`;
             }
 
-            // Gender logical check
+            // Gender Check
             const userGender = user ? (user.gender || '').toLowerCase() : '';
-            const isChico = userGender === 'm' || userGender === 'chico';
-            const isChica = userGender === 'f' || userGender === 'chica';
+            const isChico = userGender === 'm' || userGender === 'chico' || userGender === 'male';
+            const isChica = userGender === 'f' || userGender === 'chica' || userGender === 'female';
             const cat = (evt.category || 'open').toLowerCase();
-            let isGenderMismatch = false;
-            let mismatchCase = ''; // 'male', 'female', 'none'
-            if (cat === 'male' && !isChico) { isGenderMismatch = true; mismatchCase = 'male'; }
-            if (cat === 'female' && !isChica) { isGenderMismatch = true; mismatchCase = 'female'; }
-            if (cat === 'mixed' && !isChico && !isChica) { isGenderMismatch = true; mismatchCase = 'none'; }
+            let isGenderMismatch = false, mismatchCase = '';
+            if ((cat === 'male' || cat === 'masculina') && !isChico) { isGenderMismatch = true; mismatchCase = 'male'; }
+            if ((cat === 'female' || cat === 'femenina') && !isChica) { isGenderMismatch = true; mismatchCase = 'female'; }
 
             // Button Logic
             let cardAction = `window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}')`;
-            let fabAction = cardAction;
-            let btnLabel = 'ENTRAR';
-            let btnIcon = 'fa-play';
-            let btnColor = '#CCFF00';
+            let fabAction = cardAction, btnLabel = 'ENTRAR', btnIcon = 'fa-play', btnColor = '#CCFF00';
 
             if (isCancelled) {
-                btnLabel = 'ANULADO'; btnIcon = 'fa-ban'; btnColor = '#ef4444'; // Red
-                cardAction = "window.PremiumModal.alert({ title: '⛔ ANULADO', message: 'Este evento ha sido cancelado por la organización.', type: 'error' })";
+                btnLabel = 'ANULADO'; btnIcon = 'fa-ban'; btnColor = '#ef4444';
+                cardAction = "window.PremiumModal.alert({ title: '⛔ ANULADO', message: 'Este evento ha sido cancelado.', type: 'error' })";
                 fabAction = cardAction;
             } else if (isFinished || evt.status === 'finished') {
                 btnLabel = 'VER'; btnIcon = 'fa-history'; btnColor = '#64748b';
                 cardAction = `window.openResultsView('${evt.id}', '${evt.type || 'americana'}')`;
                 fabAction = cardAction;
-            } else if (isPairing) {
-                btnLabel = 'VER PAREJAS'; btnIcon = 'fa-list-ol'; btnColor = '#38bdf8';
-                fabAction = cardAction;
             } else if (isLive) {
                 btnLabel = 'LIVE'; btnIcon = 'fa-broadcast-tower'; btnColor = '#FF2D55';
-                fabAction = cardAction;
             } else if (isWaitlistPending) {
-                btnLabel = '¡NUEVA PLAZA! CONFIRMAR'; btnIcon = 'fa-star'; btnColor = '#CCFF00';
+                btnLabel = 'CONFIRMAR'; btnIcon = 'fa-star'; btnColor = '#CCFF00';
                 fabAction = `window.EventsController.confirmWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
             } else if (isGenderMismatch && !isJoined) {
-                if (mismatchCase === 'male') { btnLabel = 'SOLO CHICOS'; btnIcon = 'fa-lock'; }
-                else if (mismatchCase === 'female') { btnLabel = 'SOLO CHICAS'; btnIcon = 'fa-lock'; }
-                else { btnLabel = 'GENERO?'; btnIcon = 'fa-user-cog'; }
-
-                btnColor = '#4b5563';
-                const msg = mismatchCase === 'none' ? 'Debes definir tu género en el perfil para apuntarte a un evento Mixto.' : `Este evento es exclusivo para ${mismatchCase === 'male' ? 'HOMBRES' : 'MUJERES'}.`;
-                fabAction = `window.PremiumModal.alert({ title: '⚠️ RESTRICCIÓN', message: '${msg}' })`;
+                btnLabel = mismatchCase === 'male' ? 'SOLO CHICOS' : 'SOLO CHICAS'; btnIcon = 'fa-lock'; btnColor = '#4b5563';
+                fabAction = `window.PremiumModal.alert({ title: '⚠️ RESTRICCIÓN', message: 'Género no válido.' })`;
             } else if (isInWaitlist) {
-                btnLabel = `ESPERA (Pos ${waitlistPos})`; btnIcon = 'fa-hourglass-half'; btnColor = '#94a3b8';
+                btnLabel = `ESPERA (${waitlistPos})`; btnIcon = 'fa-hourglass-half'; btnColor = '#94a3b8';
                 fabAction = `window.EventsController.leaveWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
             } else if (isFull && !isJoined) {
                 btnLabel = 'LISTA ESPERA'; btnIcon = 'fa-clock'; btnColor = '#eab308';
@@ -959,112 +1232,208 @@
                 fabAction = `window.EventsController.leaveEvent('${evt.id}', '${evt.type || 'americana'}')`;
             }
 
+            // Calculate progress for plazas bar
+            const progress = Math.min((playerCount / maxPlayers) * 100, 100);
+            const progressColor = isFull ? '#FF3B30' : (progress > 80 ? '#eab308' : '#CCFF00');
+
+            // 🌈 BROADCAST V7: HYPER-COMPACT & ULTRA-COLORFUL (MATTE AESTHETIC)
+            const themeColor = isLive ? '#FF2D55' : (isCancelled ? '#ef4444' : (isEntreno ? '#8b5cf6' : categoryColor));
+            
+            // Estilos específicos para entrenos
+            const cardBg = isEntreno ? 'linear-gradient(145deg, #18112b 0%, #0c0914 100%)' : '#141414';
+            const cardBorder = isEntreno ? '1px solid rgba(139, 92, 246, 0.15)' : '1px solid rgba(255,255,255,0.04)';
+            const cardGlow = isEntreno ? '0 20px 40px rgba(0,0,0,0.8), 0 0 25px rgba(139, 92, 246, 0.1)' : '0 20px 40px rgba(0,0,0,0.6)';
+            const tileClass = isEntreno ? 'entreno-tile-interactive' : 'premium-tile-interactive';
+            const cardClass = isEntreno ? 'entreno-premium-card' : '';
+            
+            // Iconos y colores por tipo
+            const timeIconBg = isEntreno ? 'rgba(139, 92, 246, 0.15)' : 'rgba(204, 255, 0, 0.12)';
+            const timeIconColor = isEntreno ? '#a855f7' : '#CCFF00';
+            const capacityIconColor = isEntreno ? '#06b6d4' : '#FF2D55';
+            const locIconBg = isEntreno ? 'rgba(139, 92, 246, 0.15)' : 'rgba(255, 45, 85, 0.15)';
+            const locIconColor = isEntreno ? '#8b5cf6' : '#FF2D55';
+
+            // Estado dinámico
+            let statusBg = '';
+            let statusColorText = '#fff';
+            let statusGlowColor = 'rgba(0,0,0,0.3)';
+
+            if (isLive) {
+                statusBg = 'linear-gradient(135deg, #FF2D55, #ff0844)';
+                statusGlowColor = '#FF2D5566';
+            } else if (isCancelled) {
+                statusBg = 'linear-gradient(135deg, #666, #444)';
+            } else if (isFinished || evt.status === 'finished') {
+                statusBg = 'linear-gradient(135deg, #555, #333)';
+            } else {
+                if (isEntreno) {
+                    statusBg = 'linear-gradient(135deg, #8b5cf6, #6366f1)';
+                    statusColorText = '#fff';
+                    statusGlowColor = 'rgba(139,92,246,0.4)';
+                } else {
+                    statusBg = 'linear-gradient(135deg, #CCFF00, #a3e600)';
+                    statusColorText = '#000';
+                    statusGlowColor = '#CCFF0055';
+                }
+            }
+
+            // Analizar e integrar feedback de nivel (solo para Entrenos)
+            const levelMatch = evt.name.match(/\b[1-7]\.[0-9]\b/);
+            let levelBadgeHtml = '';
+            let levelFeedbackHtml = '';
+            if (levelMatch) {
+                levelBadgeHtml = `<span style="background: rgba(255,255,255,0.08); color: #fff; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.6rem; font-weight: 700; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-graduation-cap"></i> NIVEL ${levelMatch[0]}</span>`;
+                
+                if (user && user.level) {
+                    const eventLvl = parseFloat(levelMatch[0]);
+                    const userLvl = parseFloat(user.level);
+                    const diff = Math.abs(userLvl - eventLvl);
+                    if (diff <= 0.35) {
+                        levelFeedbackHtml = `<span style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-check-circle"></i> ¡TU NIVEL!</span>`;
+                    } else if (userLvl > eventLvl) {
+                        levelFeedbackHtml = `<span style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-angle-double-up"></i> NIVEL FÁCIL</span>`;
+                    } else {
+                        levelFeedbackHtml = `<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-exclamation-triangle"></i> EXIGENTE</span>`;
+                    }
+                }
+            }
+
             return `
-                <div onclick="${cardAction}" style="background: #000; border-radius: 28px; overflow: hidden; margin-bottom: 25px; border: 1px solid #222; box-shadow: 0 15px 35px rgba(0,0,0,0.4); font-family: 'Outfit', sans-serif; cursor: pointer;">
-                    <!-- TOP IMAGE AREA -->
-                    <div style="height: 200px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative;">
-                        <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.3), transparent, rgba(0,0,0,0.8));"></div>
+                <div id="event-card-${evt.id}" class="${cardClass}" onclick="${cardAction}" style="
+                    background: ${cardBg};
+                    border-radius: 24px;
+                    overflow: hidden;
+                    margin-bottom: 18px;
+                    border: ${cardBorder};
+                    box-shadow: ${cardGlow};
+                    font-family: 'Outfit', sans-serif;
+                    position: relative;
+                ">
+                    <!-- HEADER STRIPE -->
+                    <div style="height: 4px; background: ${themeColor}; opacity: 0.9;"></div>
+
+                    <div style="display: flex; flex-direction: column;">
                         
-                        <!-- DATE BADGE -->
-                        <div style="position: absolute; top: 15px; left: 15px; background: #fff; width: 70px; height: 70px; border-radius: 20px; border: 3px solid #CCFF00; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
-                            <div style="font-size: 0.7rem; font-weight: 900; color: #84cc16;">${dayName}</div>
-                            <div style="font-size: 1.8rem; font-weight: 950; color: #000; line-height: 1;">${dayNum}</div>
-                        </div>
-
-                        <!-- PRICES -->
-                        <div style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); color: white; padding: 8px 15px; border-radius: 12px; font-size: 0.75rem; font-weight: 800; border: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px;">
-                            <span>${priceSoc}€ <small style="color:#888; font-size:0.6rem;">SOC</small></span>
-                            <span style="border-left: 1px solid #444; padding-left: 10px;">${priceExt}€ <small style="color:#888; font-size:0.6rem;">EXT</small></span>
-                        </div>
-
-                        <!-- STATUS / PAREJAS BADGE -->
-                        ${isCancelled ? `
-                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20,20,20,0.85); backdrop-filter: grayscale(100%); z-index: 5; display: flex; align-items: center; justify-content: center;">
-                            <div style="border: 4px solid #ef4444; color: #ef4444; padding: 10px 30px; border-radius: 12px; font-size: 2rem; font-weight: 900; transform: rotate(-15deg); text-transform: uppercase; letter-spacing: 5px; box-shadow: 0 0 30px rgba(239,68,68,0.3);">
-                                ANULADO
+                        <!-- IMAGE AREA -->
+                        <div style="height: 140px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative;">
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(20,20,20,0.1), #141414); mix-blend-mode: overlay;"></div>
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to top, #141414 2%, transparent 70%);"></div>
+                            
+                            <!-- FLOATING BADGES -->
+                            <div style="position: absolute; top: 12px; left: 12px; display: flex; gap: 8px;">
+                                <div style="background: rgba(20,20,20,0.6); width: 48px; height: 52px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(10px);">
+                                    <span style="font-size: 0.55rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;">${dayName}</span>
+                                    <span style="font-size: 1.3rem; font-weight: 900; color: #fff; line-height: 1;">${dayNum}</span>
+                                </div>
                             </div>
-                        </div>
-                        ` : ''}
 
-                        ${isPairing && !isCancelled ? `
-                        <div style="position: absolute; top: 60px; right: 15px; background: rgba(0,183,255,0.2); border: 1px solid #00B7FF; color: #00B7FF; padding: 6px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(5px);">
-                            <i class="fas fa-random"></i> EMPAREJAMIENTO
-                        </div>
-                        ` : ''}
-
-                        <!-- NEW FORMAT TAG -->
-                        <div style="position: absolute; bottom: 15px; left: 15px; background: rgba(0,0,0,0.8); border: 1.5px solid ${formatColor}; color: ${formatColor}; padding: 6px 16px; border-radius: 10px; font-size: 0.8rem; font-weight: 950; letter-spacing: 2px; box-shadow: 0 0 15px ${formatColor}44; backdrop-filter: blur(5px);">
-                            ${formatLabel}
-                        </div>
-
-                        <!-- MAIN FLOATING ACTION BUTTON -->
-                        <div onclick="event.stopPropagation(); ${fabAction}" style="position: absolute; top: 65px; right: 15px; width: 70px; height: 70px; background: ${btnColor === '#fff' ? '#CCFF00' : (btnColor === '#CCFF00' ? '#38bdf8' : btnColor)}; color: ${btnColor === '#CCFF00' ? '#fff' : (btnColor === '#fff' ? '#000' : 'white')}; border-radius: 50%; border: 4px solid #000; box-shadow: 0 5px 20px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transition: transform 0.2s;">
-                            <i class="fas ${btnIcon}" style="font-size: 1.1rem; margin-bottom: 3px;"></i>
-                            <span style="font-size: 0.5rem; font-weight: 950; text-align: center; line-height: 1;">${btnLabel}</span>
-                        </div>
-
-                        <!-- SECONDARY CHAT FAB (PINK) -->
-                        <div onclick="event.stopPropagation(); window.ChatView.init('${evt.id}', '${evt.name.replace(/'/g, "\\'")}', '${evt.category || 'open'}', [${players.map(p => `'${p.uid || p.id}'`).join(',')}])" 
-                             style="position: absolute; top: 145px; right: 22px; width: 56px; height: 56px; background: #FF2D55; color: white; border-radius: 50%; border: 3px solid #000; box-shadow: 0 5px 15px rgba(255,45,85,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 11; transition: all 0.2s;">
-                            <i class="fas fa-comment-dots" style="font-size: 0.9rem; margin-bottom: 2px;"></i>
-                            <span style="font-size: 0.45rem; font-weight: 950; text-align: center;">CHAT</span>
-                        </div>
-                    </div>
-
-                    <!-- CONTENT AREA -->
-                    <div style="padding: 35px 24px 25px; color: white;">
-                        <h3 style="margin: 0 0 20px; font-size: 1.4rem; font-weight: 950; line-height: 1.2; letter-spacing: -0.5px;">${evt.name}</h3>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <i class="far fa-clock" style="color: #CCFF00; font-size: 1.3rem;"></i>
-                                <span style="font-weight: 700; color: #ccc;">${timeLabel}</span>
+                            <div style="position: absolute; top: 12px; right: 12px; background: rgba(20,20,20,0.7); border-radius: 10px; padding: 6px 12px; border: 1px solid rgba(255,255,255,0.08); color: #fff; font-size: 0.8rem; font-weight: 900; display: flex; align-items: center; backdrop-filter: blur(10px);">
+                                <span style="color: #CCFF00;">${priceSoc}€</span>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <i class="fas ${categoryIcon}" style="color: ${categoryColor}; font-size: 1.3rem;"></i>
-                                <span style="font-weight: 700; color: #ccc; text-transform: uppercase;">${categoryLabel}</span>
+
+                            <div style="position: absolute; bottom: 12px; left: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; z-index: 5;">
+                                ${isEntreno ? `
+                                    <span style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.45); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-user-ninja"></i> ACADEMIA PRO</span>
+                                    ${isTwister ? 
+                                        `<span style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 10px rgba(6, 182, 212, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-wind"></i> TWISTER INDIVIDUAL</span>` :
+                                        `<span style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-lock"></i> PAREJA FIJA</span>`
+                                    }
+                                    ${levelBadgeHtml}
+                                    ${levelFeedbackHtml}
+                                ` : `
+                                    <span style="background: ${themeColor}; color: #000; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">${formatLabel}</span>
+                                    <span style="background: rgba(255,255,255,0.1); color: #fff; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.6rem; font-weight: 700; backdrop-filter: blur(4px);">${maxCourts} PISTAS</span>
+                                `}
                             </div>
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <i class="fas fa-th-large" style="color: #38bdf8; font-size: 1.3rem;"></i>
-                                <span style="font-weight: 700; color: #ccc;">${maxCourts} Pistas</span>
-                            </div>
-                            <div onclick="event.stopPropagation(); window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')" style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-                                <i class="fas fa-users" style="color: ${isFull ? '#FF3B30' : '#84cc16'}; font-size: 1.3rem;"></i>
-                                <span style="font-weight: 800; color: ${isFull ? '#FF3B30' : '#fff'}; text-decoration: underline; text-underline-offset: 4px;">${playerCount} / ${maxPlayers} Plazas</span>
-                                ${waitlist.length > 0 ? `<small style="color:#eab308; margin-left:5px;">(+${waitlist.length} en espera)</small>` : ''}
+
+                            <!-- ACTION BUTTON (FAB) -->
+                            <div id="event-fab-${evt.id}" onclick="event.stopPropagation(); ${fabAction}" style="position: absolute; bottom: -20px; right: 16px; width: 54px; height: 54px; background: ${btnColor === '#fff' ? '#CCFF00' : btnColor}; color: ${btnColor === '#fff' ? '#000' : 'white'}; border-radius: 16px; border: 3px solid #141414; box-shadow: 0 8px 15px rgba(0,0,0,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transform: rotate(-3deg); transition: transform 0.2s; ${isLive ? 'animation: pulse-border 2s infinite;' : ''}">
+                                <i class="fas ${btnIcon}" style="font-size: 1.1rem;"></i>
                             </div>
                         </div>
 
-                        ${isWaitlistPending ? `
-                        <div style="background: rgba(204,255,0,0.1); border: 1px dashed #CCFF00; padding: 12px; border-radius: 12px; margin-bottom: 20px; text-align: center; animation: pulse-soft 2s infinite;">
-                            <div style="color: #CCFF00; font-weight: 900; font-size: 0.85rem;">🕒 ¡TIENES UNA PLAZA LIBRE!</div>
-                            <div style="color: #ccc; font-size: 0.75rem; margin-top: 4px;">Confirma en menos de 10 min o pasará al siguiente.</div>
-                        </div>
-                        ` : ''}
+                        <!-- CONTENT AREA -->
+                        <div style="padding: 30px 18px 18px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 950; color: #fff; line-height: 1.1; letter-spacing: -0.5px; text-transform: uppercase;">${evt.name}</h3>
+                            </div>
+                            
+                            <!-- 💎 THE 4 PREMIUM TILES (UNIFIED LIGHT THEME) -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                                <!-- Time Tile -->
+                                <div class="${tileClass}" style="background: rgba(255,255,255,0.08); border-radius: 14px; padding: 10px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                    <div style="width: 28px; height: 28px; background: ${timeIconBg}; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="far fa-clock" style="color: ${timeIconColor}; font-size: 0.85rem;"></i>
+                                    </div>
+                                    <span style="font-weight: 900; font-size: 0.85rem; color: #eee;">${timeLabel}</span>
+                                </div>
+                                <!-- Category Tile -->
+                                <div class="${tileClass}" style="background: rgba(255,255,255,0.08); border-radius: 14px; padding: 10px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                    <div style="width: 28px; height: 28px; background: ${categoryColor}20; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas ${categoryIcon}" style="color: ${categoryColor}; font-size: 0.85rem;"></i>
+                                    </div>
+                                    <span style="font-weight: 900; font-size: 0.85rem; color: #eee; text-transform: uppercase;">${categoryLabel}</span>
+                                </div>
+                            </div>
 
-                        <div style="display: flex; align-items: center; gap: 12px; color: #666; font-size: 0.9rem; font-weight: 700; padding-top: 15px; border-top: 1px solid #222;">
-                            <div style="flex:1;">
-                                <i class="fas fa-map-marker-alt" style="color: #FF3B30;"></i> Sede: ${evt.sede || evt.location || 'Barcelona Pádel el Prat'}
+                            <!-- CAPACITY & PROGRESS (LIGHT THEME) -->
+                            <div class="${tileClass}" onclick="event.stopPropagation(); window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')" style="background: rgba(255,255,255,0.08); border-radius: 16px; padding: 12px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; position: relative;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-users" style="color: ${capacityIconColor}; font-size: 0.9rem;"></i>
+                                        <span style="font-weight: 950; font-size: 0.95rem; color: #fff;">${playerCount} <small style="color:#666;">/ ${maxPlayers}</small></span>
+                                    </div>
+                                    <span style="font-size: 0.65rem; font-weight: 950; color: ${isFull ? '#FF3B30' : (isEntreno ? '#a855f7' : '#CCFF00')}; text-transform: uppercase; letter-spacing: 0.5px;">${isFull ? 'COMPLETO' : 'DISPONIBLE'}</span>
+                                </div>
+                                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden;">
+                                    <div style="width: ${progress}%; height: 100%; background: ${progressColor}; box-shadow: 0 0 10px ${progressColor}55;"></div>
+                                </div>
+                                ${waitlist.length > 0 ? `<div style="margin-top: 5px; font-size: 0.65rem; font-weight: 900; color: #eab308; text-transform: uppercase;">+${waitlist.length} EN ESPERA</div>` : ''}
                             </div>
-                            <div style="
-                                background: ${isLive ? '#FF2D55' : (isCancelled ? '#ef4444' : (isPairing ? '#38bdf8' : (isFinished ? '#64748b' : '#84cc16')))};
-                                color: ${isLive || isCancelled || isPairing || isFinished ? '#fff' : '#000'};
-                                padding: 4px 10px;
-                                border-radius: 6px;
-                                font-size: 0.7rem;
-                                font-weight: 800;
-                                text-transform: uppercase;
-                                letter-spacing: 0.5px;
-                                box-shadow: 0 0 10px ${isLive ? 'rgba(255,45,85,0.4)' : 'transparent'};
-                            ">
-                                ${isLive ? '🔴 EN JUEGO' : (isCancelled ? '⛔ ANULADO' : (isPairing ? '🔀 EMPAREJAMIENTO' : (isFinished ? '🏁 FINALIZADA' : '🟢 ABIERTA')))}
+
+                            <!-- 📍 SUPER CHULO FOOTER (LIGHT LOCATION + PREMIUM STATUS) -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 5px; gap: 10px;">
+                                <!-- Location Box (Light Theme + Interactive) -->
+                                <div class="${tileClass}" onclick="event.stopPropagation(); window.PremiumModal.alert({ title: '📍 UBICACIÓN', message: 'Sede: ${evt.sede || evt.location || 'Barcelona Pádel el Prat'}<br><br>Este evento se disputa en las instalaciones oficiales del club.', type: 'info' })" 
+                                     style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.08); padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); flex: 1; min-width: 0; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                    <div style="width: 32px; height: 32px; background: ${locIconBg}; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i class="fas fa-map-marker-alt" style="color: ${locIconColor}; font-size: 0.9rem;"></i>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; min-width: 0;">
+                                        <span style="font-size: 0.55rem; font-weight: 800; color: #888; text-transform: uppercase; letter-spacing: 1px;">Sede Oficial</span>
+                                        <span style="font-size: 0.85rem; font-weight: 950; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${evt.sede || evt.location || 'Bcn Pádel'}</span>
+                                    </div>
+                                </div>
+
+                                <!-- 🔥 DYNAMIC STATUS BADGE -->
+                                <div style="position: relative; flex-shrink: 0;">
+                                    ${isLive ? `<div style="position: absolute; inset: -4px; border-radius: 16px; background: #FF2D55; opacity: 0.4; animation: status-breathe 1.2s ease-in-out infinite; filter: blur(6px);"></div>` : ''}
+                                    ${!isLive && !isCancelled && !isFinished ? `<div style="position: absolute; inset: -3px; border-radius: 16px; background: ${isEntreno ? '#a855f7' : '#CCFF00'}; opacity: 0.3; animation: status-breathe 2s ease-in-out infinite; filter: blur(5px);"></div>` : ''}
+                                    <div style="
+                                        position: relative;
+                                        background: ${statusBg};
+                                        color: ${statusColorText};
+                                        padding: 10px 18px;
+                                        border-radius: 14px;
+                                        font-size: 0.7rem;
+                                        font-weight: 950;
+                                        text-transform: uppercase;
+                                        letter-spacing: 1.5px;
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 8px;
+                                        box-shadow: 0 6px 20px ${statusGlowColor};
+                                        ${isLive ? 'animation: status-shake 0.5s ease-in-out infinite alternate;' : ''}
+                                    ">
+                                        <i class="fas ${isLive ? 'fa-broadcast-tower' : (isCancelled ? 'fa-skull-crossbones' : (isFinished ? 'fa-flag-checkered' : 'fa-bolt'))}" style="
+                                            font-size: 0.75rem;
+                                            ${isLive ? 'animation: status-dot-ping 0.8s ease-in-out infinite; text-shadow: 0 0 8px #fff;' : (!isFinished && !isCancelled ? 'animation: status-dot-ping 1.5s ease-in-out infinite; text-shadow: 0 0 6px #000;' : 'opacity: 0.6;')}
+                                        "></i>
+                                        ${isLive ? 'EN VIVO' : (isCancelled ? 'ANULADO' : (isFinished ? 'FINALIZADO' : 'ABIERTA'))}
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- BOTTOM PROGRESS BAR -->
-                    <div style="height: 6px; background: #222; width: 100%;">
-                        <div style="height: 100%; background: #CCFF00; width: ${Math.min((playerCount / maxPlayers) * 100, 100)}%; transition: width 0.5s ease;"></div>
                     </div>
                 </div>
             `;
@@ -1083,165 +1452,262 @@
         }
 
         async waitForService() {
-            for (let i = 0; i < 10; i++) {
-                if (window.AmericanaService && window.AmericanaService.db) return true;
+            if (window.AmericanaService && (window.AmericanaService.db || window.AmericanaService._getCollectionService)) return true;
+            
+            console.log("⏳ [EventsController] Waiting for AmericanaService...");
+            for (let i = 0; i < 50; i++) {
+                if (window.AmericanaService && (window.AmericanaService.db || window.AmericanaService._getCollectionService)) {
+                    console.log("✅ [EventsController] AmericanaService ready.");
+                    return true;
+                }
                 await new Promise(r => setTimeout(r, 200));
             }
+            console.error("❌ [EventsController] AmericanaService TIMEOUT. Check AppInit.");
+            window.PremiumModal.alert({
+                title: "⚠️ TIEMPO AGOTADO",
+                message: "Los servicios de inscripción no están respondiendo. Por favor, recarga la página.",
+                type: 'danger'
+            });
             return false;
         }
 
         async joinEvent(id, type = 'americana') {
-            if (!this.state.currentUser) {
-                window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión para inscribirte." });
-                return;
-            }
-
-            const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
-            const evt = events.find(e => e.id === id);
-            if (!evt) return;
-
-            const mode = (evt.pair_mode || evt.format || '').toLowerCase();
-            const isFixed = mode === 'fixed' || (evt.name || '').toUpperCase().includes('FIJA');
-
-            if (await this.waitForService()) {
-                let partnerName = null;
-                let partnerId = null;
-
-                if (isFixed) {
-                    const choice = await window.PremiumModal.confirm({
-                        title: "🎾 PAREJA FIJA",
-                        message: "¿Te apuntas solo o con tu compañero habitual?",
-                        confirmText: "ELEGIR PAREJA",
-                        cancelText: "SOLO"
-                    });
-
-                    if (choice) {
-                        // 1. Fetch Players
-                        const playersSvc = window.createService('players');
-                        const allPlayers = await playersSvc.getAll();
-
-                        // Filter out current user and map for selector
-                        const currentUid = this.state.currentUser.uid || this.state.currentUser.id;
-                        const items = allPlayers
-                            .filter(p => p.id !== currentUid)
-                            .map(p => ({
-                                id: p.id,
-                                name: p.name || 'Sin nombre',
-                                sub: `Nivel: ${p.level || p.self_rate_level || '3.5'} • ${p.phone || 'SP Player'}`,
-                                image: p.photo_url || p.photo
-                            }));
-
-                        const selectedPartner = await window.PremiumModal.selector({
-                            title: "🔍 BUSCAR COMPAÑERO",
-                            message: "Selecciona a tu compañero de la base de datos:",
-                            items: items,
-                            placeholder: "Escribe nombre o teléfono..."
-                        });
-
-                        if (!selectedPartner) return;
-
-                        partnerName = selectedPartner.name;
-                        partnerId = selectedPartner.id;
-                    } else {
-                        const confirmSolo = await window.PremiumModal.confirm({
-                            title: "⚖️ APUNTARSE SOLO",
-                            message: "Te apuntarás sin pareja. El sistema o el admin te asignarán una más adelante. ¿Continuar?",
-                            confirmText: "SÍ, APUNTARME"
-                        });
-                        if (!confirmSolo) return;
-                    }
-                } else {
-                    const confirmed = await window.PremiumModal.confirm({
-                        title: "🎾 INSCRIBIRSE",
-                        message: "¿Quieres apuntarte a este evento?",
-                        confirmText: "SÍ, APUNTARME"
-                    });
-                    if (!confirmed) return;
+            try {
+                if (!this.state.currentUser) {
+                    window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión para inscribirte." });
+                    return;
                 }
 
-                const res = await window.AmericanaService.addPlayer(id, this.state.currentUser, type, partnerName, partnerId);
-                window.PremiumModal.alert({
-                    title: res.success ? "✅ ÉXITO" : "❌ ERROR",
-                    message: res.success ? (partnerName ? `Inscrito correctamente con ${partnerName}.` : "Te has inscrito correctamente.") : "Error: " + res.error,
-                    type: res.success ? 'success' : 'error'
-                });
+                const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
+                const evt = events.find(e => e.id === id);
+                if (!evt) return;
+
+                const mode = (evt.pair_mode || evt.format || '').toLowerCase();
+                const isFixed = mode === 'fixed' || (evt.name || '').toUpperCase().includes('FIJA');
+
+                if (await this.waitForService()) {
+                    // 🛡️ PREVENT DOUBLE-CLICK SPAM (429 Protection)
+                    if (this.isJoining) return;
+                    this.isJoining = true;
+
+                    let partnerName = null;
+                    let partnerId = null;
+
+                    if (isFixed) {
+                        const choice = await window.PremiumModal.confirm({
+                            title: "🎾 PAREJA FIJA",
+                            message: "¿Te apuntas solo o con tu compañero habitual?",
+                            confirmText: "ELEGIR PAREJA",
+                            cancelText: "SOLO"
+                        });
+
+                        if (choice) {
+                            const playersSvc = window.createService('players');
+                            const allPlayers = await playersSvc.getAll();
+                            const currentUid = this.state.currentUser.uid || this.state.currentUser.id;
+                            const items = allPlayers
+                                .filter(p => p.id !== currentUid)
+                                .map(p => ({
+                                    id: p.id,
+                                    name: p.name || 'Sin nombre',
+                                    sub: `Nivel: ${p.level || p.self_rate_level || '3.5'} • ${p.phone || 'SP Player'}`,
+                                    image: p.photo_url || p.photo
+                                }));
+
+                            const selectedPartner = await window.PremiumModal.selector({
+                                title: "🔍 BUSCAR COMPAÑERO",
+                                message: "Selecciona a tu compañero de la base de datos:",
+                                items: items,
+                                placeholder: "Escribe nombre o teléfono..."
+                            });
+
+                            if (!selectedPartner) {
+                                this.isJoining = false;
+                                return;
+                            }
+                            partnerName = selectedPartner.name;
+                            partnerId = selectedPartner.id;
+                        } else {
+                            const confirmSolo = await window.PremiumModal.confirm({
+                                title: "⚖️ APUNTARSE SOLO",
+                                message: "Te apuntarás sin pareja. El sistema o el admin te asignarán una más adelante. ¿Continuar?",
+                                confirmText: "SÍ, APUNTARME"
+                            });
+                            if (!confirmSolo) {
+                                this.isJoining = false;
+                                return;
+                            }
+                        }
+                    } else {
+                        const confirmed = await window.PremiumModal.confirm({
+                            title: "🎾 INSCRIBIRSE",
+                            message: "¿Quieres apuntarte a este evento?",
+                            confirmText: "SÍ, APUNTARME"
+                        });
+                        if (!confirmed) {
+                            this.isJoining = false;
+                            return;
+                        }
+                    }
+
+                    const userToJoin = {
+                        ...this.state.currentUser,
+                        uid: this.state.currentUser.uid || this.state.currentUser.id,
+                        id: this.state.currentUser.uid || this.state.currentUser.id
+                    };
+
+                    const res = await window.AmericanaService.addPlayer(id, userToJoin, type, partnerName, partnerId);
+                    
+                    this.isJoining = false; 
+
+                    if (res.success) {
+                        this.onDataUpdate();
+                        // 🎊 CONFETTI FEEDBACK (Punto 6)
+                        if (window.confetti) {
+                            window.confetti({
+                                particleCount: 100,
+                                spread: 70,
+                                origin: { y: 0.6 },
+                                colors: ['#CCFF00', '#00E36D', '#ffffff']
+                            });
+                        }
+                    }
+
+                    window.PremiumModal.alert({
+                        title: res.success ? "✅ ÉXITO" : "❌ ERROR",
+                        message: res.success ? (partnerName ? `Inscrito correctamente con ${partnerName}.` : "Te has inscrito correctamente.") : "Error: " + res.error,
+                        type: res.success ? 'success' : 'error'
+                    });
+                }
+            } catch (err) {
+                this.isJoining = false; 
+                console.error("Error joining event:", err);
+                const msg = err.message || "Error desconocido";
+                window.PremiumModal.alert({ title: "❌ ERROR", message: "Error al intentar apuntarse: " + msg, type: 'error' });
             }
         }
 
         async leaveEvent(id, type = 'americana') {
-            if (!this.state.currentUser) {
-                window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión." });
-                return;
-            }
-            if (await this.waitForService()) {
-                const confirmed = await window.PremiumModal.confirm({
-                    title: "👋 DARSE DE BAJA",
-                    message: "¿Seguro que quieres borrarte del evento?",
-                    confirmText: "SÍ, BORRARME",
-                    confirmColor: "#FF3B30"
-                });
-                if (!confirmed) return;
+            try {
+                if (!this.state.currentUser) {
+                    window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión." });
+                    return;
+                }
+                if (await this.waitForService()) {
+                    const confirmed = await window.PremiumModal.confirm({
+                        title: "👋 DARSE DE BAJA",
+                        message: "¿Seguro que quieres borrarte del evento?",
+                        confirmText: "SÍ, BORRARME",
+                        confirmColor: "#FF3B30",
+                        type: 'danger'
+                    });
+                    if (!confirmed) return;
 
-                const res = await window.AmericanaService.removePlayer(id, this.state.currentUser.uid, type);
-                window.PremiumModal.alert({
-                    title: res.success ? "✅ TRÁMITE REALIZADO" : "❌ ERROR",
-                    message: res.success ? "Baja tramitada correctamente." : "Error: " + res.error,
-                    type: res.success ? 'success' : 'error'
-                });
+                    const userUid = this.state.currentUser.uid || this.state.currentUser.id;
+                    const res = await window.AmericanaService.removePlayer(id, userUid, type);
+                    
+                    if (res.success) {
+                        this.onDataUpdate(); // 🚀 REFRESH INSTANTÁNEO
+                    }
+
+                    window.PremiumModal.alert({
+                        title: res.success ? "✅ TRÁMITE REALIZADO" : "❌ ERROR",
+                        message: res.success ? "Baja tramitada correctamente." : "Error: " + res.error,
+                        type: res.success ? 'success' : 'error'
+                    });
+                }
+            } catch (err) {
+                console.error("Error leaving event:", err);
+                window.PremiumModal.alert({ title: "❌ ERROR", message: "Error al tramitar la baja: " + err.message, type: 'error' });
             }
         }
 
         async joinWaitlist(id, type = 'americana') {
-            if (!this.state.currentUser) {
-                window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión." });
-                return;
-            }
-            const confirmed = await window.PremiumModal.confirm({
-                title: "⏳ LISTA DE ESPERA",
-                message: "El evento está lleno. ¿Quieres entrar en lista de espera? Te avisaremos si queda una plaza libre.",
-                confirmText: "ENTRAR EN ESPERA"
-            });
-            if (confirmed) {
-                const res = await window.AmericanaService.addToWaitlist(id, this.state.currentUser, type);
-                window.PremiumModal.alert({
-                    title: res.success ? "✅ REGISTRADO" : "❌ ERROR",
-                    message: res.success ? "Estás en lista de espera. ¡Suerte!" : "Error: " + res.error,
-                    type: res.success ? 'success' : 'error'
+            try {
+                if (!this.state.currentUser) {
+                    window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión." });
+                    return;
+                }
+                const confirmed = await window.PremiumModal.confirm({
+                    title: "⏳ LISTA DE ESPERA",
+                    message: "El evento está lleno. ¿Quieres entrar en lista de espera? Te avisaremos si queda una plaza libre.",
+                    confirmText: "ENTRAR EN ESPERA",
+                    type: 'warning'
                 });
+                if (confirmed) {
+                    const userToJoin = {
+                        ...this.state.currentUser,
+                        uid: this.state.currentUser.uid || this.state.currentUser.id
+                    };
+                    const res = await window.AmericanaService.addToWaitlist(id, userToJoin, type);
+                    window.PremiumModal.alert({
+                        title: res.success ? "✅ REGISTRADO" : "❌ ERROR",
+                        message: res.success ? "Estás en lista de espera. ¡Suerte!" : "Error: " + res.error,
+                        type: res.success ? 'success' : 'error'
+                    });
+                }
+            } catch (err) {
+                window.PremiumModal.alert({ title: "❌ ERROR", message: err.message, type: 'error' });
             }
         }
 
         async confirmWaitlist(id, type = 'americana') {
-            if (!this.state.currentUser) {
-                window.PremiumModal.alert({ title: "🔒 ACCESO", message: "Inicia sesión." });
-                return;
-            }
-            const confirmed = await window.PremiumModal.confirm({
-                title: "✨ CONFIRMAR PLAZA",
-                message: "¡Ha quedado una plaza libre para ti! ¿Confirmas tu asistencia ahora?",
-                confirmText: "SÍ, CONFIRMAR YA"
-            });
-            if (confirmed) {
-                const res = await window.AmericanaService.confirmWaitlist(id, this.state.currentUser.uid, type);
-                window.PremiumModal.alert({
-                    title: res.success ? "🎾 ¡DENTRO!" : "❌ ERROR",
-                    message: res.success ? "¡Bienvenido al evento!" : "Error: " + res.error,
-                    type: res.success ? 'success' : 'error'
+            try {
+                if (!this.state.currentUser) return;
+                const confirmed = await window.PremiumModal.confirm({
+                    title: "✨ CONFIRMAR PLAZA",
+                    message: "¡Ha quedado una plaza libre para ti! ¿Confirmas tu asistencia ahora?",
+                    confirmText: "SÍ, CONFIRMAR YA",
+                    type: 'success'
                 });
+                if (confirmed) {
+                    const userUid = this.state.currentUser.uid || this.state.currentUser.id;
+                    const res = await window.AmericanaService.confirmWaitlist(id, userUid, type);
+                    
+                    if (res.success && window.confetti) {
+                        window.confetti({
+                            particleCount: 150,
+                            spread: 100,
+                            origin: { y: 0.6 },
+                            colors: ['#CCFF00', '#38bdf8', '#ffffff']
+                        });
+                    }
+
+                    window.PremiumModal.alert({
+                        title: res.success ? "🎾 ¡DENTRO!" : "❌ ERROR",
+                        message: res.success ? "¡Bienvenido al evento!" : "Error: " + res.error,
+                        type: res.success ? 'success' : 'error'
+                    });
+                }
+            } catch (err) {
+                window.PremiumModal.alert({ title: "❌ ERROR", message: err.message, type: 'error' });
             }
         }
 
         async leaveWaitlist(id, type = 'americana') {
-            const service = window.AmericanaService._getCollectionService(type);
-            const event = await service.getById(id);
-            const newWaitlist = (event.waitlist || []).filter(p => p.uid !== this.state.currentUser.uid);
-            await service.update(id, { waitlist: newWaitlist });
-            window.PremiumModal.alert({ title: "ℹ️ INFO", message: "Has salido de la lista de espera." });
+            try {
+                if (!this.state.currentUser) return;
+                const confirmed = await window.PremiumModal.confirm({
+                    title: "⏳ SALIR DE ESPERA",
+                    message: "¿Seguro que quieres salir de la lista de espera?",
+                    type: 'warning'
+                });
+                if (!confirmed) return;
+
+                const userUid = this.state.currentUser.uid || this.state.currentUser.id;
+                const res = await window.AmericanaService.leaveWaitlist(id, userUid, type);
+                window.PremiumModal.alert({
+                    title: "ℹ️ INFO",
+                    message: res.success ? "Has salido de la lista de espera." : "Error: " + res.error
+                });
+            } catch (err) {
+                console.error("Error leaving waitlist:", err);
+            }
         }
 
         async showInscritosModal(id, type) {
-            const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
-            const evt = events.find(e => e.id === id);
+            const localEvents = type === 'entreno' ? this.state.entrenos : this.state.americanas;
+            let evt = localEvents.find(e => e.id === id);
             if (!evt) return;
 
             let modal = document.getElementById('inscritos-modal');
@@ -1251,13 +1717,36 @@
                 document.body.appendChild(modal);
             }
             modal.style.cssText = `position: fixed; inset: 0; background: #000; z-index: 30000; overflow-y: auto; font-family: 'Outfit', sans-serif; color: white; display: flex; flex-direction: column;`;
-            modal.innerHTML = `<div style="padding: 100px; text-align: center;"><div class="loader"></div><p style="margin-top:20px; font-weight:900; letter-spacing:2px;">DETECTANDO EQUIPOS Y NIVELES EN TIEMPO REAL...</p></div>`;
+            modal.innerHTML = `
+<div style="padding: 100px; text-align: center;"><div class="loader"></div><p style="margin-top:20px; font-weight:900; letter-spacing:2px;">CARGANDO JUGADORES...</p></div>
+            `;
             modal.style.display = 'block';
 
-            // FETCH FRESH DATA FOR ALL REGISTERED PLAYERS
-            const rawList = evt.players || evt.registeredPlayers || [];
+            // ✅ FIX V2: LECTURA DIRECTA desde Firestore (evita datos stale del snapshot local)
+            try {
+                const collectionName = type === 'entreno' ? 'entrenos' : 'americanas';
+                const freshDoc = await window.db.collection(collectionName).doc(id).get();
+                if (freshDoc.exists) {
+                    const freshData = { id: freshDoc.id, ...freshDoc.data() };
+                    console.log(`✅ [Inscritos] Lectura fresca OK: players=${(freshData.players || []).length}, registeredPlayers=${(freshData.registeredPlayers || []).length}`);
+                    evt = freshData;
+                } else {
+                    console.warn(`⚠️ [Inscritos] Doc ${id} no existe en ${collectionName}. Usando snapshot local.`);
+                }
+            } catch (freshErr) {
+                console.warn(`⚠️ [Inscritos] Error lectura fresca, usando snapshot local:`, freshErr);
+            }
 
-            // DEDUPLICATE UNIQUE IDS FIRST
+            // ✅ FIX V2: Robust player list — prioriza players, luego registeredPlayers
+            const rawList = (evt.players && evt.players.length > 0)
+                ? evt.players
+                : (evt.registeredPlayers && evt.registeredPlayers.length > 0)
+                    ? evt.registeredPlayers
+                    : [];
+            
+            console.log(`📋 [Inscritos] rawList tiene ${rawList.length} entradas para evento: ${evt.name || id}`);
+
+            // DEDUPLICATE UNIQUE IDS
             const seenIds = new Set();
             const uniqueRawList = rawList.filter(p => {
                 const uid = (typeof p === 'string') ? p : (p.uid || p.id);
@@ -1266,43 +1755,97 @@
                 return true;
             });
 
+            modal.innerHTML = `
+<div style="padding: 100px; text-align: center;"><div class="loader"></div><p style="margin-top:20px; font-weight:900; letter-spacing:2px;">CARGANDO BASE DE DATOS...</p></div>
+            `;
+
             const dbPlayers = [];
             try {
-                const promises = uniqueRawList.map(p => {
-                    const uid = (typeof p === 'string') ? p : (p.uid || p.id);
-                    return window.db.collection('players').doc(uid).get();
-                });
+                // ✅ FIX V2: Referencia ultra-segura a FieldPath con triple fallback
+                let FieldPath = null;
+                if (window.FirebaseFirestore && window.FirebaseFirestore.FieldPath) {
+                    FieldPath = window.FirebaseFirestore.FieldPath;
+                } else if (window.firebase && window.firebase.firestore && window.firebase.firestore.FieldPath) {
+                    FieldPath = window.firebase.firestore.FieldPath;
+                } else if (typeof firebase !== 'undefined' && firebase.firestore && firebase.firestore.FieldPath) {
+                    FieldPath = firebase.firestore.FieldPath;
+                }
+                console.log(`🔑 [Inscritos] FieldPath disponible: ${!!FieldPath}`);
 
-                const snapshots = await Promise.all(promises);
+                // Extraer IDs para la consulta batch
+                const uids = uniqueRawList
+                    .map(p => (typeof p === 'string') ? p : (p.uid || p.id))
+                    .filter(id => id && typeof id === 'string' && id.length > 0); 
 
-                snapshots.forEach((snap, index) => {
-                    const registrationMeta = (typeof uniqueRawList[index] === 'object') ? uniqueRawList[index] : { joinedAt: null };
-
-                    let pData = null;
-                    if (snap.exists) {
-                        pData = { id: snap.id, ...snap.data() };
-                    } else {
-                        // Fallback
-                        const fallbackUid = (typeof uniqueRawList[index] === 'string') ? uniqueRawList[index] : (uniqueRawList[index].uid || uniqueRawList[index].id);
-                        pData = (typeof uniqueRawList[index] === 'object') ? uniqueRawList[index] : { id: fallbackUid, name: 'Usuario' };
+                if (uids.length > 0 && FieldPath && window.db) {
+                    const chunks = [];
+                    for (let i = 0; i < uids.length; i += 30) {
+                        chunks.push(uids.slice(i, i + 30));
                     }
 
-                    // CRITICAL: Copy event-specific partner data
-                    pData.joinedAt = registrationMeta.joinedAt || pData.joinedAt || null;
-                    pData.partner_name = registrationMeta.partner_name || pData.partner_name || null;
-                    pData.partner_id = registrationMeta.partner_id || pData.partner_id || null;
+                    for (const chunk of chunks) {
+                        if (chunk.length === 0) continue;
+                        try {
+                            const snap = await window.db.collection('players').where(FieldPath.documentId(), 'in', chunk).get();
+                            snap.forEach(doc => {
+                                dbPlayers.push({ id: doc.id, ...doc.data() });
+                            });
+                        } catch (chunkErr) { console.error("Error fetching chunk:", chunkErr); }
+                    }
+                } else if (uids.length > 0 && !FieldPath && window.db) {
+                    // ✅ FALLBACK EXTREMO: Si FieldPath no existe, buscar uno a uno por doc ID
+                    console.warn(`⚠️ [Inscritos] FieldPath no disponible, buscando jugadores uno a uno...`);
+                    for (const uid of uids) {
+                        try {
+                            const doc = await window.db.collection('players').doc(uid).get();
+                            if (doc.exists) {
+                                dbPlayers.push({ id: doc.id, ...doc.data() });
+                            }
+                        } catch (e) { /* skip */ }
+                    }
+                }
 
-                    dbPlayers.push(pData);
+                // ✅ FALLBACK: Si un jugador no está en dbPlayers, lo añadimos usando los datos del evento
+                const foundIds = new Set(dbPlayers.map(p => p.id));
+                uniqueRawList.forEach(raw => {
+                    const rid = (typeof raw === 'string') ? raw : (raw.uid || raw.id);
+                    if (rid && !foundIds.has(rid)) {
+                        if (typeof raw === 'object') {
+                            dbPlayers.push({
+                                id: rid, uid: rid,
+                                name: raw.name || 'Jugador',
+                                level: raw.level || '3.5',
+                                joinedAt: raw.joinedAt || null,
+                                partner_name: raw.partner_name || null,
+                                partner_id: raw.partner_id || null,
+                                team_somospadel: raw.team_somospadel || []
+                            });
+                        } else {
+                            dbPlayers.push({ id: rid, uid: rid, name: 'Jugador', level: '3.5', joinedAt: null });
+                        }
+                    }
                 });
 
-                // ORDENAR POR ORDEN DE INSCRIPCIÓN
+                // Sincronizar metadatos (unimos lo que venga de la BD con lo que venía en el evento)
+                dbPlayers.forEach(p => {
+                    const meta = uniqueRawList.find(r => ((typeof r === 'string') ? r : (r.uid || r.id)) === p.id);
+                    if (meta && typeof meta === 'object') {
+                        p.joinedAt = p.joinedAt || meta.joinedAt || null;
+                        p.partner_name = p.partner_name || meta.partner_name || null;
+                        p.partner_id = p.partner_id || meta.partner_id || null;
+                        if (!p.name || p.name === 'Jugador') p.name = meta.name || p.name;
+                    }
+                });
+
+                // Ordenar por hora de inscripción
                 dbPlayers.sort((a, b) => {
                     const timeA = a.joinedAt ? new Date(a.joinedAt).getTime() : 0;
                     const timeB = b.joinedAt ? new Date(b.joinedAt).getTime() : 0;
                     return timeA - timeB;
                 });
 
-            } catch (e) { console.error("Error fetching players:", e); }
+                console.log(`✅ [Inscritos] ${dbPlayers.length} jugadores procesados para el modal.`);
+            } catch (e) { console.error("Error fetching players in batch:", e); }
 
             // --- REDESIGN: NEON BROADCAST WITH PAIR GROUPING ---
             const maxCourts = parseInt(evt.max_courts || evt.courts || 4);
@@ -1465,7 +2008,7 @@
                         <div style="text-align: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(20px); border: 2px solid #CCFF00; padding: 15px 30px; border-radius: 20px; box-shadow: 0 0 30px rgba(204,255,0,0.2); min-width: 140px;">
                             <div style="font-size: 0.6rem; font-weight: 950; color: #CCFF00; margin-bottom: 5px; letter-spacing: 2px; text-transform: uppercase;">PLAYER COUNT</div>
                             <div style="font-size: 2.8rem; font-weight: 1000; color: #fff; text-shadow: 0 0 20px #CCFF00; line-height: 0.9;">
-                                ${dbPlayers.length}<span style="color: rgba(255,255,255,0.2); font-size: 1.4rem; font-weight: 700; margin-left: 2px;">/${maxPlayers}</span>
+                                ${uniqueRawList.length}<span style="color: rgba(255,255,255,0.2); font-size: 1.4rem; font-weight: 700; margin-left: 2px;">/${maxPlayers}</span>
                             </div>
                         </div>
                     </div>
@@ -1477,7 +2020,13 @@
                         gap: 15px; 
                         margin-bottom: 40px;
                     ">
-                        ${cardsHtml}
+                        ${cardsHtml || `
+                            <div style="grid-column: 1 / -1; padding: 60px; text-align: center; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
+                                <i class="fas fa-users-slash" style="font-size: 3rem; color: rgba(255,255,255,0.1); margin-bottom: 15px;"></i>
+                                <div style="color: #64748b; font-weight: 800; font-size: 1.1rem;">TODAVÍA NO HAY INSCRITOS</div>
+                                <div style="color: #475569; font-size: 0.9rem; margin-top: 5px;">¡Sé el primero en apuntarte!</div>
+                            </div>
+                        `}
                     </div>
 
                     <!-- FOOTER ACTIONS -->
@@ -1520,6 +2069,211 @@
                     }).catch(e => console.error('Synergy widget failed:', e));
                 }, 100);
             }
+        }
+
+        _renderEventTabHeader(eventId, tabId, label, icon) {
+            const activeTab = this.state.eventTabs[eventId] || 'info';
+            const isActive = activeTab === tabId;
+            return `
+                <button onclick="event.stopPropagation(); window.EventsController.setEventTab('${eventId}', '${tabId}')" 
+                        style="flex:1; background: ${isActive ? 'rgba(204,255,0,0.1)' : 'transparent'}; border: 1.5px solid ${isActive ? '#CCFF00' : 'transparent'}; color: ${isActive ? '#CCFF00' : '#888'}; padding: 8px 5px; border-radius: 10px; font-size: 0.65rem; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s;">
+                    <i class="fas ${icon}" style="font-size: 0.8rem;"></i> ${label}
+                </button>
+            `;
+        }
+
+        _renderEventTabContent(evt) {
+            const activeTab = this.state.eventTabs[evt.id] || 'info';
+
+            // Precios reales
+            const priceSoc = evt.price_members || evt.price_socio || evt.price_member || '18';
+            const priceExt = evt.price_external || evt.price_externo || evt.price_externa || '22';
+
+            if (activeTab === 'info') {
+                return `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.8rem; color: #ccc;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-calendar-check" style="color: #84cc16;"></i>
+                            <span>${(evt.players || evt.registeredPlayers || []).length} Apuntados</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-euro-sign" style="color: #eab308;"></i>
+                            <span style="font-size: 0.9rem; color: #fff;">Precio: <span style="color:#CCFF00; font-weight:950;">SOC ${priceSoc}€</span> / <span style="color:#FF2D55; font-weight:950;">EXT ${priceExt}€</span></span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const cache = this.state.matchCache[evt.id];
+
+            if (activeTab === 'rank') {
+                if (!cache) {
+                    return `<div style="text-align:center; padding:15px; color:#888;"><i class="fas fa-spinner fa-spin"></i> Cargando Ranking...</div>`;
+                }
+
+                let rankData = [];
+                if (window.StandingsService) {
+                    rankData = window.StandingsService.calculate(cache.matches).slice(0, 3);
+                }
+
+                if (rankData.length === 0) {
+                    return `<div style="text-align:center; padding:15px; color:#666; font-size:0.75rem;">No hay partidos finalizados todavía.</div>`;
+                }
+
+                return `
+                    <div style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 10px; font-size: 0.75rem;">
+                         <div style="display:flex; justify-content:space-between; margin-bottom: 8px; color: #CCFF00; font-weight: 900; font-size: 0.6rem; text-transform: uppercase; letter-spacing:1px;">
+                            <span>TOP 3 JUGADORES</span>
+                            <span>PTS</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${rankData.map((p, idx) => `
+                                <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,0.03); padding: 5px 10px; border-radius: 8px;">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <span style="color:#888; font-weight:900; width:15px;">${idx + 1}.</span>
+                                        <span style="color:#fff; font-weight:700;">${p.name.split(' ')[0]}</span>
+                                    </div>
+                                    <span style="color:#CCFF00; font-weight:900;">${p.points}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (activeTab === 'draws') {
+                if (!cache) {
+                    return `<div style="text-align:center; padding:15px; color:#888;"><i class="fas fa-spinner fa-spin"></i> Cargando Cuadros...</div>`;
+                }
+
+                const totalRounds = new Set(cache.matches.map(m => m.round)).size;
+                const totalMatches = cache.matches.length;
+
+                return `
+                    <div style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="text-align: left;">
+                            <div style="color: #fff; font-weight: 900; font-size: 0.8rem; margin-bottom: 2px;">ESTADO TORNEO</div>
+                            <div style="color: #888; font-size: 0.65rem;">${totalRounds} Rondas • ${totalMatches} Partidos</div>
+                        </div>
+                        <i class="fas fa-sitemap" style="font-size: 1.5rem; color: #CCFF00; opacity: 0.8;"></i>
+                    </div>
+                `;
+            }
+
+            return '';
+        }
+
+        smartUpdate(events) {
+            const user = this.state.currentUser;
+            const uid = user ? user.uid : '-';
+
+            let updatedCount = 0;
+            events.forEach(evt => {
+                const card = document.getElementById(`event-card-${evt.id}`);
+                if (!card) return;
+
+                // 1. Update Player Count
+                const players = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
+                const playerCount = players.length;
+                const maxCourts = parseInt(evt.max_courts || evt.courts || 4);
+                const maxPlayers = maxCourts * 4;
+                const isFull = playerCount >= maxPlayers;
+                const waitlist = evt.waitlist || [];
+
+                const playersLabel = document.getElementById(`event-players-label-${evt.id}`);
+                if (playersLabel) {
+                    const newText = `${playerCount} / ${maxPlayers} Plazas`;
+                    if (playersLabel.innerText !== newText) {
+                        playersLabel.innerText = newText;
+                        playersLabel.style.color = isFull ? '#FF3B30' : '#fff';
+                        const icon = document.getElementById(`event-players-icon-${evt.id}`);
+                        if (icon) icon.style.color = isFull ? '#FF3B30' : '#84cc16';
+                    }
+                }
+                const wlLabel = document.getElementById(`event-waitlist-label-${evt.id}`);
+                if (wlLabel) {
+                    const newWl = waitlist.length > 0 ? `<small style="color:#eab308; margin-left:5px;">(+${waitlist.length} en espera)</small>` : '';
+                    if (wlLabel.innerHTML !== newWl) wlLabel.innerHTML = newWl;
+                }
+
+                // 2. Update FAB (Join Button)
+                const isJoined = players.some(p => p.uid === uid || p.id === uid);
+                const hasStarted = this.hasEventStarted(evt.date, evt.time);
+                const isLive = evt.status === 'live' || (evt.status === 'open' && hasStarted);
+                const isFinished = evt.status === 'finished';
+                const isCancelled = evt.status === 'cancelled';
+                const isWaitlistPending = evt.waitlist_pending_user && (evt.waitlist_pending_user.uid === uid);
+                const isInWaitlist = waitlist.some(p => p.uid === uid);
+                const waitlistPos = waitlist.findIndex(p => p.uid === uid) + 1;
+
+                let btnLabel = 'ENTRAR';
+                let btnIcon = 'fa-play';
+                let btnColor = '#CCFF00';
+                let fabAction = `window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}')`;
+
+                if (isCancelled) {
+                    btnLabel = 'ANULADO'; btnIcon = 'fa-ban'; btnColor = '#ef4444';
+                    fabAction = "window.PremiumModal.alert({ title: '⛔ ANULADO', message: 'Este evento ha sido cancelado por la organización.', type: 'error' })";
+                } else if (isFinished) {
+                    btnLabel = 'VER'; btnIcon = 'fa-history'; btnColor = '#64748b';
+                    fabAction = `window.openResultsView('${evt.id}', '${evt.type || 'americana'}')`;
+                } else if (isLive) {
+                    btnLabel = 'LIVE'; btnIcon = 'fa-broadcast-tower'; btnColor = '#FF2D55';
+                } else if (isWaitlistPending) {
+                    btnLabel = '¡NUEVA PLAZA! CONFIRMAR'; btnIcon = 'fa-star'; btnColor = '#CCFF00';
+                    fabAction = `window.EventsController.confirmWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
+                } else if (isInWaitlist) {
+                    btnLabel = `ESPERA (Pos ${waitlistPos})`; btnIcon = 'fa-hourglass-half'; btnColor = '#94a3b8';
+                    fabAction = `window.EventsController.leaveWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
+                } else if (isFull && !isJoined) {
+                    btnLabel = 'LISTA ESPERA'; btnIcon = 'fa-clock'; btnColor = '#eab308';
+                    fabAction = `window.EventsController.joinWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
+                } else if (!isJoined && !isFull) {
+                    btnLabel = 'APUNTARME'; btnIcon = 'fa-plus'; btnColor = '#CCFF00';
+                    fabAction = `window.EventsController.joinEvent('${evt.id}', '${evt.type || 'americana'}')`;
+                } else if (isJoined) {
+                    btnLabel = 'DENTRO'; btnIcon = 'fa-check'; btnColor = '#fff';
+                    fabAction = `window.EventsController.leaveEvent('${evt.id}', '${evt.type || 'americana'}')`;
+                }
+
+                const fab = document.getElementById(`event-fab-${evt.id}`);
+                const fabLabel = document.getElementById(`event-fab-label-${evt.id}`);
+                const fabIcon = document.getElementById(`event-fab-icon-${evt.id}`);
+
+                if (fab && fabLabel) {
+                    if (fabLabel.innerText !== btnLabel) {
+                        fabLabel.innerText = btnLabel;
+                        fab.setAttribute('onclick', `event.stopPropagation(); ${fabAction}`);
+                        fab.style.background = btnColor === '#fff' ? '#CCFF00' : (btnColor === '#CCFF00' ? '#38bdf8' : btnColor);
+                        fab.style.color = btnColor === '#CCFF00' ? '#fff' : (btnColor === '#fff' ? '#000' : 'white');
+                        if (fabIcon) {
+                            fabIcon.className = `fas ${btnIcon}`;
+                        }
+                    }
+                }
+
+                // 3. Update Status Badge
+                const statusBadge = document.getElementById(`event-status-badge-${evt.id}`);
+                if (statusBadge) {
+                    const newBadgeText = isLive ? 'EN VIVO' : (isCancelled ? 'ANULADO' : (evt.status === 'pairing' ? 'EMPAREJANDO' : (isFinished ? 'FINALIZADO' : 'ABIERTA')));
+                    if (statusBadge.innerText.trim() !== newBadgeText) {
+                        statusBadge.innerText = newBadgeText;
+                        const bgColor = isLive ? '#FF2D55' : (isCancelled ? '#ef4444' : (evt.status === 'pairing' ? '#38bdf8' : (isFinished ? '#64748b' : '#84cc16')));
+                        statusBadge.style.background = bgColor;
+                        statusBadge.style.color = '#fff';
+                        // Add subtle pulse for live status
+                        if (isLive) {
+                            statusBadge.style.animation = 'pulse-soft 2s infinite';
+                        } else {
+                            statusBadge.style.animation = '';
+                        }
+                    }
+                }
+
+                updatedCount++;
+            });
+
+            return updatedCount > 0 && updatedCount === events.length;
         }
     }
 

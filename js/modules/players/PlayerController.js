@@ -7,10 +7,12 @@
         constructor() {
             this.db = window.FirebaseDB;
             this.state = {
-                stats: { matches: 0, won: 0, lost: 0, points: 0, winRate: 0, gamesWon: 0, gamesLost: 0 },
+                stats: { matches: 0, won: 0, lost: 0, points: 0, winRate: 0, gamesWon: 0, gamesLost: 0, events: 0 },
                 recentMatches: [],
                 levelHistory: [],
-                communityAvg: 3.5
+                communityAvg: 3.5,
+                formGuide: [], // Last 5 results: W, L, D
+                nextLevelProgress: 0
             };
         }
 
@@ -392,6 +394,12 @@
                 // Generate Context for Dash Widgets in Profile
                 const context = window.ContextService ? await window.ContextService.buildPlayerContext(userDoc) : { status: 'EMPTY' };
 
+                // Calculate next level progress
+                const currentLvl = parseFloat(userDoc?.level || 3.5);
+                const nextThreshold = (Math.floor(currentLvl * 2) + 1) / 2;
+                const prevThreshold = nextThreshold - 0.5;
+                const nextLevelProgress = Math.min(100, Math.max(0, ((currentLvl - prevThreshold) / 0.5) * 100));
+
                 this.state = {
                     stats,
                     context,
@@ -402,7 +410,9 @@
                     reliability: reliabilityStatus,
                     smartInsights: this.generateSmartInsights(matchesList, stats),
                     badges: this.calculateBadges(matchesList, stats),
-                    h2h: h2hData
+                    h2h: h2hData,
+                    formGuide: matchesList.slice(0, 5).map(m => m.result),
+                    nextLevelProgress: nextLevelProgress
                 };
 
                 window.Store.setState('playerStats', this.state);
@@ -525,7 +535,7 @@
 
         generateSmartInsights(matches, stats) {
             if (!matches || matches.length === 0) return {
-                summary: "Bienvenido a SomosPadel. Juega tus primeros partidos oficiales para que el Capitán SomosPadel analice tu estilo y te dé consejos tácticos.",
+                summary: "Bienvenido a SomosPadel. Juega tus primeros partidos oficiales para que el sistema analice tu estilo y te dé consejos tácticos.",
                 badge: "NUEVO RECLUTA 🎾",
                 advice: "Céntrate en mantener la bola en juego y divertirte hoy.",
                 insights: [{ icon: '💡', text: "Primeras batallas pendientes" }]
@@ -633,6 +643,14 @@
             const fis = Math.min(99, Math.round(baseline + Math.min(10, (stats.matches || 0) / 2)));
 
             return { atk, def, tec, fis, levelText: level.toFixed(2) };
+        }
+
+        destroy() {
+            console.log("🧹 [PlayerController] Cleaning up listeners...");
+            if (this.unsubMatches) { this.unsubMatches(); this.unsubMatches = null; }
+            if (this.unsubMatchesB) { this.unsubMatchesB(); this.unsubMatchesB = null; }
+            if (this.unsubEntrenos) { this.unsubEntrenos(); this.unsubEntrenos = null; }
+            if (this.unsubEntrenosB) { this.unsubEntrenosB(); this.unsubEntrenosB = null; }
         }
     }
 

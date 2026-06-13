@@ -9,7 +9,7 @@
             this.unsubscribe = null;
             this.matches = [];
             this.viewState = {
-                tab: 'matches', // matches, standings, stats
+                tab: 'matches', // matches, standings, brackets, stats
                 selectedRound: null,
                 editingMatchId: null
             };
@@ -224,11 +224,14 @@
                         <h1 style="color:#000; margin:0; font-size:1.1rem; font-weight:950; text-transform:uppercase;">${this.eventData.name || 'Entreno'}</h1>
                         <div style="width:30px;"></div>
                     </div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:8px; padding:0 15px; margin-bottom:15px;">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap:6px; padding:0 15px; margin-bottom:15px; overflow-x: auto;">
                         ${this._renderTabBtn('matches', 'PARTIDOS')}
-                        ${this._renderTabBtn('standings', 'POSICIONES')}
-                        ${this._renderTabBtn('stats', 'ESTADÍSTICAS')}
-                        ${this._renderTabBtn('report', 'INFORME')}
+                        ${this.eventData?.status !== 'scheduled' ? `
+                            ${this._renderTabBtn('standings', 'RANKING')}
+                            ${this.eventData?.type !== 'entreno' ? this._renderTabBtn('brackets', 'CUADROS') : ''}
+                            ${this._renderTabBtn('stats', 'STATS')}
+                        ` : ''}
+                        ${this.eventData?.status === 'finished' ? this._renderTabBtn('report', 'INFORME') : ''}
                     </div>
                     ${this.viewState.tab === 'matches' ? this._renderRoundSelector(maxRound) : ''}
                 </div>
@@ -237,6 +240,7 @@
             let contentHtml = '';
             if (this.viewState.tab === 'matches') contentHtml = this._renderMatchesContent(maxRound);
             else if (this.viewState.tab === 'standings') contentHtml = this._renderStandingsContent();
+            else if (this.viewState.tab === 'brackets') contentHtml = this._renderBracketsContent();
             else if (this.viewState.tab === 'stats') contentHtml = this._renderStatsContent();
             else contentHtml = this._renderReportContent();
 
@@ -276,6 +280,11 @@
                     <tbody>${data.map((p, i) => `<tr style="${i === 0 ? 'background:#CCFF00;' : ''}"><td style="padding:15px; font-weight:800;">${p.name.toUpperCase()}</td><td style="text-align:center;">${p.played}</td><td style="text-align:center;">${p.diff}</td><td style="text-align:center; font-weight:950;">${p.points}</td></tr>`).join('')}</tbody>
                 </table>
             </div></div>`;
+        }
+
+        _renderBracketsContent() {
+            if (!window.ControlTowerBrackets) return '<div style="padding:40px; text-align:center; color:#666;">Cargando cuadros...</div>';
+            return window.ControlTowerBrackets.render(this.matches, { ...this.eventData, isEntreno: true });
         }
 
         _renderStatsContent() { return '<div style="padding:20px; text-align:center;">Módulo de Estadísticas Centralizado Próximamente</div>'; }

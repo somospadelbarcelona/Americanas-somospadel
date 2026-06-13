@@ -38,6 +38,13 @@
                 const newLoginForm = loginForm.cloneNode(true);
                 loginForm.parentNode.replaceChild(newLoginForm, loginForm);
 
+                // 🧠 [PRO] MEMORIA DE USUARIO: Recuperar teléfono guardado
+                const savedPhone = localStorage.getItem('remembered_phone');
+                if (savedPhone && newLoginForm.phone) {
+                    console.log("📲 [Auth] Recuperando teléfono memorizado...");
+                    newLoginForm.phone.value = savedPhone;
+                }
+
                 newLoginForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -51,8 +58,12 @@
                     }
 
                     const btn = newLoginForm.querySelector('button[type="submit"]');
-                    const originalText = btn ? btn.textContent : "Entrar";
-                    if (btn) btn.textContent = "Verificando...";
+                    const originalText = btn ? btn.textContent : "INICIAR SESIÓN 🎾";
+                    if (btn) btn.textContent = "ESCANEANDO BIOMETRÍA...";
+
+                    // Activar Escáner Láser Cibernético de Biometría
+                    const scanner = document.getElementById('login-bio-scanner');
+                    if (scanner) scanner.style.display = 'block';
 
                     let email = phone;
                     if (!email.includes('@')) email = phone + '@somospadel.com';
@@ -60,27 +71,63 @@
                     try {
                         const result = await window.AuthService.login(email, password);
                         if (!result.success) {
+                            // Feedback de sacudida y alerta roja
+                            const card = document.querySelector('.glass-card-pro');
+                            if (card) {
+                                card.classList.add('shake-error');
+                                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                                setTimeout(() => card.classList.remove('shake-error'), 500);
+                            }
+                            
                             alert("❌ Error de acceso: " + result.error);
                             if (btn) btn.textContent = originalText;
+                            if (scanner) scanner.style.display = 'none';
                         } else {
                             console.log("✅ Login Success!");
 
-                            // Hide Modal & Show App
+                            // 🧠 [PRO] MEMORIA DE USUARIO: Guardar para la próxima vez
+                            if (phone) {
+                                localStorage.setItem('remembered_phone', phone);
+                                localStorage.setItem('remembered_pwd', password);
+                            }
+
+                            if (scanner) scanner.style.display = 'none';
+
+                            // Transición Premium Láser Fade-out
                             const authModal = document.getElementById('auth-modal');
                             const appShell = document.getElementById('app-shell');
-                            if (authModal) authModal.style.display = 'none'; // Force hide due to !important in CSS
-                            if (appShell) appShell.classList.remove('hidden');
+                            if (authModal) {
+                                if (scanner) {
+                                    scanner.style.display = 'block'; // láser para barrido final
+                                    scanner.style.animation = 'scanLineSweep 0.8s ease-in-out infinite';
+                                }
+                                authModal.classList.add('dematerialize');
+                                if (appShell) appShell.classList.remove('hidden');
 
-                            // Navigate to Dashboard
-                            if (window.Router) {
-                                window.Router.navigate('dashboard');
+                                setTimeout(() => {
+                                    authModal.style.setProperty('display', 'none', 'important');
+                                    if (scanner) scanner.style.display = 'none';
+
+                                    // Navigate to Dashboard
+                                    if (window.Router) {
+                                        window.Router.navigate('dashboard');
+                                    } else {
+                                        window.location.reload();
+                                    }
+                                }, 800);
                             } else {
-                                window.location.reload();
+                                if (appShell) appShell.classList.remove('hidden');
+                                if (window.Router) {
+                                    window.Router.navigate('dashboard');
+                                } else {
+                                    window.location.reload();
+                                }
                             }
                         }
                     } catch (err) {
                         alert("❌ Error Inesperado: " + err.message);
                         if (btn) btn.textContent = originalText;
+                        if (scanner) scanner.style.display = 'none';
                     }
                 });
             }

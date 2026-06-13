@@ -13,10 +13,27 @@
                 entrenos: {}
             };
 
+            // Cache properties for silent calculations to optimize Firestore read overhead
+            this._cachedRanking = null;
+            this._lastCacheTime = 0;
+
             // If FirebaseDB is not ready, wait for it
             if (!this.db) {
                 console.warn("⚠️ [RankingController] FirebaseDB not ready yet, will retry on init()");
             }
+        }
+
+        /**
+         * Get Level Range Template
+         * Maps numeric level to Star Rating and Category Name
+         */
+        getLevelBadge(level) {
+            const l = parseFloat(level || 3.5);
+            if (l >= 4.5) return { stars: 5, label: 'ELITE', color: '#CCFF00', shadow: '0 0 15px #CCFF00' };
+            if (l >= 4.0) return { stars: 4, label: 'PLATINUM', color: '#E5E4E2', shadow: '0 0 10px rgba(255,255,255,0.5)' };
+            if (l >= 3.5) return { stars: 3, label: 'GOLD', color: '#FFD700', shadow: '0 0 10px rgba(255,215,0,0.5)' };
+            if (l >= 3.0) return { stars: 2, label: 'SILVER', color: '#C0C0C0', shadow: 'none' };
+            return { stars: 1, label: 'BRONZE', color: '#CD7F32', shadow: 'none' };
         }
 
         /**
@@ -80,11 +97,50 @@
         }
 
         /**
+         * Enuelve una promesa con un tiempo límite de expiración (timeout)
+         */
+        _withTimeout(promise, ms, defaultValue = []) {
+            let timeoutId;
+            const timeoutPromise = new Promise((resolve) => {
+                timeoutId = setTimeout(() => {
+                    console.warn(`⏳ [RankingController] Promesa expirada tras ${ms}ms. Usando valor por defecto.`);
+                    resolve(defaultValue);
+                }, ms);
+            });
+            return Promise.race([
+                promise.then(val => {
+                    clearTimeout(timeoutId);
+                    return val;
+                }),
+                timeoutPromise
+            ]);
+        }
+
+        /**
          * Data-only entry point for the Dashboard.
          * Calcs rankings without touching the #content-area DOM.
          */
         async calculateSilently() {
             console.log("📊 [RankingController] Silent calculation starting...");
+
+            const now = Date.now();
+            if (this._cachedRanking && (now - this._lastCacheTime < 600000)) {
+                console.log("⚡ [RankingController] Returning recently cached ranking data (saving Firestore queries)");
+                return this._cachedRanking;
+            }
+
+            // Fallback: si no tenemos la caché en memoria pero sí en IndexedDB, podemos usarla temporalmente
+            if (!this._cachedRanking && window.CacheService) {
+                try {
+                    const localRanking = await window.CacheService.get('general', 'global_ranking');
+                    if (localRanking && Array.isArray(localRanking) && localRanking.length > 0) {
+                        console.log("💾 [RankingController] Loaded backup ranking from IndexedDB.");
+                        this._cachedRanking = localRanking;
+                    }
+                } catch (err) {
+                    console.warn("Error reading IndexedDB backup ranking:", err);
+                }
+            }
 
             // Check if FirebaseDB is available
             if ((!this.db || !this.rawDb) && window.FirebaseDB) {
@@ -101,11 +157,15 @@
             try {
                 // 1. Fetch All Data
                 console.log("📡 [RankingController] Fetching players, americanas, and entrenos...");
-                const [players, allAmericanas, allEntrenos] = await Promise.all([
-                    this.db.players.getAll(),
-                    this.db.americanas.getAll(),
-                    this.db.entrenos.getAll()
-                ]);
+                const [players, allAmericanas, allEntrenos] = await this._withTimeout(
+                    Promise.all([
+                        this.db.players.getAll() || [],
+                        this.db.americanas.getAll() || [],
+                        this.db.entrenos.getAll() || []
+                    ]),
+                    4000,
+                    [[], [], []]
+                );
 
                 console.log(`✅ [RankingController] Loaded: ${players.length} players, ${allAmericanas.length} americanas, ${allEntrenos.length} entrenos`);
 
@@ -161,10 +221,14 @@
                     return allResults;
                 };
 
-                const [allAmeMatchesRaw, allEntMatchesRaw] = await Promise.all([
-                    fetchMatchesInBatches('matches', americanaIds),
-                    fetchMatchesInBatches('entrenos_matches', entrenoIds)
-                ]);
+                const [allAmeMatchesRaw, allEntMatchesRaw] = await this._withTimeout(
+                    Promise.all([
+                        fetchMatchesInBatches('matches', americanaIds),
+                        fetchMatchesInBatches('entrenos_matches', entrenoIds)
+                    ]),
+                    5000,
+                    [[], []]
+                );
 
                 console.log(`📦 [RankingController] Raw matches: ${allAmeMatchesRaw.length} americana matches, ${allEntMatchesRaw.length} entreno matches`);
 
@@ -259,7 +323,8 @@
                         level: parseFloat(p.level || p.self_rate_level || 3.5),
                         gender: p.gender || 'chico',
                         photo_url: p.photo_url || null,
-                        stats: ps.stats
+                        stats: ps.stats,
+                        badge: this.getLevelBadge(p.level || p.self_rate_level || 3.5)
                     };
                 })
                     .sort((a, b) => {
@@ -298,6 +363,12 @@
                     console.warn(`⚠️ [RankingController] No players with match history found!`);
                 }
 
+                // Cache the successfully calculated ranking if not empty
+                if (this.rankedPlayers && this.rankedPlayers.length > 0) {
+                    this._cachedRanking = this.rankedPlayers;
+                    this._lastCacheTime = Date.now();
+                }
+
                 return this.rankedPlayers;
 
             } catch (error) {
@@ -314,6 +385,6 @@
         }
     }
 
-    window.RankingController = new RankingController();
-    console.log("🎮 RankingController v2 Initialized");
+    window.RankingControllerClass = RankingController;
+    console.log("📊 RankingController Module Loaded (Class definition)");
 })();

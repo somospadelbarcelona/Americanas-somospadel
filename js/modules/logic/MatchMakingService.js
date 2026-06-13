@@ -62,73 +62,21 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                         return existingRoundMatches;
                     }
 
-                    // --- SMART SCALING LOGIC (ENHANCED WITH DURATION) ---
+                    // --- SMART SCALING LOGIC (DISABLED AUTO-UPGRADE) ---
                     let effectiveCourts = parseInt(event.max_courts || 4);
-                    let courtsUpdated = false;
-
+                    
+                    /* 
+                       ⚠️ [Audit Fix] Disabled automatic court scaling. 
+                       Users reported courts duplicating unexpectedly (e.g. going from 3 to 6).
+                       We keep 'effectiveCourts' anchored to what the Admin defined.
+                    */
                     const playersCount = (event.players || []).length;
                     const maxPossibleCourts = Math.floor(playersCount / 4);
 
-                    // NEW: Calculate courts based on duration and rounds
-                    const calculateCourtsFromDuration = () => {
-                        if (!event.time || !event.time_end) return null;
-
-                        try {
-                            const [startH, startM] = event.time.split(':').map(Number);
-                            const [endH, endM] = event.time_end.split(':').map(Number);
-                            const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
-
-                            if (durationMinutes <= 0) return null;
-
-                            const roundsCount = parseInt(event.rounds_count) || 6;
-                            const playersCount = (event.players || []).length;
-
-                            // Each match takes ~15 minutes + 3 minutes transition
-                            const timePerRound = 18;
-
-                            // Total matches that need to be played in total across all rounds
-                            const totalMatchSets = roundsCount * Math.ceil(playersCount / 4);
-
-                            // Max rounds that can fit sequentially in the duration
-                            const maxSequentialRounds = Math.floor(durationMinutes / timePerRound);
-
-                            if (maxSequentialRounds <= 0) return Math.floor(playersCount / 4);
-
-                            // Required parallelism: how many courts do we need to hit the target?
-                            const courtsNeeded = Math.ceil(totalMatchSets / maxSequentialRounds);
-
-                            return Math.max(courtsNeeded, 2);
-                        } catch (err) {
-                            console.warn('Error calculating courts from duration:', err);
-                            return null;
-                        }
-                    };
-
-                    const durationBasedCourts = calculateCourtsFromDuration();
-
-                    if (durationBasedCourts) {
-                        if (durationBasedCourts > effectiveCourts) {
-                            effectiveCourts = durationBasedCourts;
-                            courtsUpdated = true;
-                            console.log(`🧠 AI Duration Scaling: Needs ${durationBasedCourts} courts to finish on time.`);
-                        }
-                    } else {
-                        // Fallback to player-based scaling
-                        if (maxPossibleCourts > effectiveCourts) {
-                            effectiveCourts = maxPossibleCourts;
-                            courtsUpdated = true;
-                        }
-                    }
-
-                    // CAP: Never exceed player capacity
+                    // CAP: Never exceed player capacity, but also don't auto-grow
                     if (effectiveCourts > maxPossibleCourts) {
                         console.log(`⚠️ AI Scaling CAP: Reducing from ${effectiveCourts} to ${maxPossibleCourts} (Player Limit)`);
                         effectiveCourts = maxPossibleCourts;
-                        courtsUpdated = (effectiveCourts !== parseInt(event.max_courts || 4));
-                    }
-
-                    if (courtsUpdated && effectiveCourts > 0) {
-                        console.log(`🤖 AI Scaling: Upgrading to ${effectiveCourts} courts.`);
                         await collection.update(eventId, { max_courts: effectiveCourts });
                         event.max_courts = effectiveCourts;
                     }
@@ -142,9 +90,41 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
 
                         const prevRoundMatches = matches.filter(m => parseInt(m.round) === (roundNum - 1));
 
-                        const unfinished = prevRoundMatches.filter(m => m.status !== 'finished');
+                        // 🛡️ [DIAGNOSTIC & SELF-HEALING]
+                        const finishedMatches = prevRoundMatches.filter(m => m.status === 'finished');
+                        let unfinished = prevRoundMatches.filter(m => m.status !== 'finished');
+
                         if (unfinished.length > 0) {
-                            throw new Error(`⚠️ Ronda ${roundNum - 1} tiene partidos sin finalizar. Termínalos antes.`);
+                            // Check for "Ghost Duplicates": If an unfinished match has a finished counterpart on the same court/round, it's a ghost from a previous bug.
+                            const ghostIds = [];
+                            const realUnfinished = [];
+
+                            unfinished.forEach(unf => {
+                                const isGhost = finishedMatches.some(f => 
+                                    parseInt(f.court) === parseInt(unf.court) && 
+                                    parseInt(f.round) === parseInt(unf.round)
+                                );
+                                if (isGhost) ghostIds.push(unf.id);
+                                else realUnfinished.push(unf);
+                            });
+
+                            if (ghostIds.length > 0) {
+                                console.log(`🧹 [MatchMaking] Detectados ${ghostIds.length} partidos fantasma duplicados en R${roundNum-1}. Limpiando...`);
+                                const collName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                                for (const id of ghostIds) {
+                                    try { await window.db.collection(collName).doc(id).delete(); } catch(e) {}
+                                }
+                                unfinished = realUnfinished;
+                            }
+                        }
+
+                        if (unfinished.length > 0) {
+                            const pendingCourts = [...new Set(unfinished.map(m => m.court))].sort((a,b) => a-b);
+                            throw new Error(`⚠️ La Ronda ${roundNum - 1} tiene partidos sin finalizar en: Pista ${pendingCourts.join(', Pista ')}. Por favor, introduce los resultados.`);
+                        }
+
+                        if (roundNum === 3) {
+                            console.log(`🌀 [MatchMaking] Iniciando generación de Ronda 3 para ${eventType}. Verificando rotación...`);
                         }
 
                         if (isFixedPairs) {
@@ -384,21 +364,12 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                 let winningCollection = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
 
                 try {
-                    if (eventType) {
-                        const snap = await window.db.collection(winningCollection).where('americana_id', '==', eventId).get();
-                        matches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    } else {
-                        // Auto-detect
-                        const eSnap = await window.db.collection('entrenos_matches').where('americana_id', '==', eventId).get();
-                        if (!eSnap.empty) {
-                            matches = eSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                            winningCollection = 'entrenos_matches';
-                        } else {
-                            const mSnap = await window.db.collection('matches').where('americana_id', '==', eventId).get();
-                            matches = mSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                            winningCollection = 'matches';
-                        }
-                    }
+                    const coll = window.db.collection(winningCollection);
+                    const snap = await coll
+                        .where('americana_id', '==', eventId)
+                        .where('status', '==', 'scheduled') // 🛡️ CRITICAL OPTIMIZATION: Only fetch pending matches
+                        .get();
+                    matches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 } catch (err) {
                     console.error("Error fetching matches for substitution:", err);
                     return 0;
@@ -406,6 +377,10 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
 
                 const pending = matches.filter(m => !m.isFinished && m.status !== 'finished');
                 let updatesCount = 0;
+
+                // 🛡️ [OPTIMIZATION] Use WriteBatch to prevent 429 errors
+                const batch = window.db.batch();
+                let batchHasData = false;
 
                 for (const m of pending) {
                     let updatePayload = {};
@@ -441,12 +416,20 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                     });
 
                     if (changed) {
-                        try {
-                            await window.db.collection(winningCollection).doc(m.id).update(updatePayload);
-                            updatesCount++;
-                        } catch (e) {
-                            console.error(`Error updating match ${m.id}:`, e);
-                        }
+                        const ref = window.db.collection(winningCollection).doc(m.id);
+                        batch.update(ref, updatePayload);
+                        updatesCount++;
+                        batchHasData = true;
+                    }
+                }
+
+                if (batchHasData) {
+                    try {
+                        await batch.commit();
+                        console.log(`✅ Batch commit success: Updated ${updatesCount} matches.`);
+                    } catch (e) {
+                        console.error(`❌ Batch commit failed:`, e);
+                        return 0;
                     }
                 }
 
@@ -501,6 +484,159 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
                     console.error("Error in purgeSubsequentRounds:", error);
                     throw error;
                 }
+            },
+            /**
+             * [NEW] Sanitize Round: Removes duplicate or unfinished matches for a specific round 
+             * if finished counterparts exist.
+             */
+            async sanitizeRound(eventId, eventType, roundNum) {
+                console.log(`🧹 [MatchMaking] Saneando Ronda ${roundNum} para ${eventId}...`);
+                const collName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                const snap = await window.db.collection(collName)
+                    .where('americana_id', '==', eventId)
+                    .where('round', '==', parseInt(roundNum))
+                    .get();
+
+                if (snap.empty) return { deleted: 0 };
+
+                const matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const finished = matches.filter(m => m.status === 'finished');
+                const unfinished = matches.filter(m => m.status !== 'finished');
+                
+                const toDelete = [];
+
+                // 1. Unfinished matches that have a finished counterpart on the same court
+                unfinished.forEach(unf => {
+                    if (finished.some(f => parseInt(f.court) === parseInt(unf.court))) {
+                        toDelete.push(unf.id);
+                    }
+                });
+
+                // 2. Exact duplicates (same court, same teams - even if both finished)
+                // (Keep the first one found)
+                const seen = new Set();
+                matches.forEach(m => {
+                    const teamA = Array.isArray(m.team_a_names) ? m.team_a_names.sort().join('|') : m.team_a_names;
+                    const teamB = Array.isArray(m.team_b_names) ? m.team_b_names.sort().join('|') : m.team_b_names;
+                    const sig = `${m.court}-${teamA}-${teamB}`;
+                    if (seen.has(sig)) {
+                        if (!toDelete.includes(m.id)) toDelete.push(m.id);
+                    } else {
+                        seen.add(sig);
+                    }
+                });
+
+                for (const id of toDelete) {
+                    await window.db.collection(collName).doc(id).delete();
+                }
+
+                console.log(`✅ [MatchMaking] Saneamiento completado. Borrados: ${toDelete.length}`);
+                return { deleted: toDelete.length };
+            },
+
+            /**
+             * [NEW] Repair Round: Detects missing courts in a round and re-creates them using 
+             * the unassigned players.
+             */
+            async repairRound(eventId, eventType, roundNum) {
+                console.log(`🔧 [MatchMaking] Reparación Robusta Ronda ${roundNum} para ${eventId}...`);
+                const collName = (eventType === 'entreno') ? 'entrenos_matches' : 'matches';
+                const eventColl = (eventType === 'entreno') ? 'entrenos' : 'americanas';
+                
+                const eventDoc = await window.db.collection(eventColl).doc(eventId).get();
+                if (!eventDoc.exists) throw new Error("Evento no encontrado");
+                
+                const eventData = eventDoc.data();
+                const players = eventData.players || [];
+                const maxCourts = parseInt(eventData.max_courts || 4);
+
+                // --- ROBUST FETCH: Get ALL matches and filter in JS to avoid Number/String mismatch ---
+                const snap = await window.db.collection(collName)
+                    .where('americana_id', '==', eventId)
+                    .get();
+
+                const roundMatches = snap.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(m => parseInt(m.round) === parseInt(roundNum));
+
+                console.log(`🔍 Encontrados ${roundMatches.length} partidos existentes en Ronda ${roundNum}`);
+
+                const assignedPlayerIds = new Set();
+                const existingCourts = new Set();
+
+                roundMatches.forEach(m => {
+                    (m.team_a_ids || []).forEach(id => assignedPlayerIds.add(String(id)));
+                    (m.team_b_ids || []).forEach(id => assignedPlayerIds.add(String(id)));
+                    existingCourts.add(parseInt(m.court));
+                });
+
+                const missingCourts = [];
+                for (let i = 1; i <= maxCourts; i++) {
+                    if (!existingCourts.has(i)) missingCourts.push(i);
+                }
+
+                if (missingCourts.length === 0) {
+                    return { repaired: 0, message: "✅ No faltan pistas en esta ronda (todas están presentes)." };
+                }
+
+                // Identify unassigned players
+                const unassignedPlayers = players.filter(p => !assignedPlayerIds.has(String(p.id || p.uid)));
+
+                if (unassignedPlayers.length === 0) {
+                     return { repaired: 0, message: "❌ No hay jugadores libres. ¿Quizás están asignados a pistas duplicadas? Usa 'SANEAR' primero." };
+                }
+
+                console.log(`⚠️ Faltan pistas: ${missingCourts.join(', ')}. Jugadores sin asignar: ${unassignedPlayers.length}`);
+
+                let repairedCount = 0;
+                let pool = [...unassignedPlayers];
+
+                for (const courtNum of missingCourts) {
+                    // Try to find players for THIS court first
+                    let courtPlayers = pool.filter(p => parseInt(p.current_court) === courtNum);
+                    
+                    // FALLBACK: If not exactly 4, but we only have one court missing and 4 players left, just take them
+                    if (courtPlayers.length !== 4 && missingCourts.length === 1 && pool.length === 4) {
+                        console.log("💡 Fallback: Usando todos los jugadores restantes para la única pista que falta.");
+                        courtPlayers = [...pool];
+                    }
+
+                    if (courtPlayers.length === 4) {
+                        const teamA = courtPlayers.slice(0, 2);
+                        const teamB = courtPlayers.slice(2, 4);
+
+                        const payload = {
+                            americana_id: eventId,
+                            round: parseInt(roundNum),
+                            court: courtNum,
+                            status: 'scheduled',
+                            score_a: 0,
+                            score_b: 0,
+                            createdAt: new Date().toISOString(),
+                            team_a_ids: teamA.map(p => p.id || p.uid),
+                            team_a_names: teamA.map(p => p.name),
+                            teamA: teamA.map(p => p.name).join(' / '),
+                            team_b_ids: teamB.map(p => p.id || p.uid),
+                            team_b_names: teamB.map(p => p.name),
+                            teamB: teamB.map(p => p.name).join(' / ')
+                        };
+
+                        await window.db.collection(collName).add(payload);
+                        repairedCount++;
+                        
+                        // Remove from pool
+                        const usedIds = new Set(courtPlayers.map(p => String(p.id || p.uid)));
+                        pool = pool.filter(p => !usedIds.has(String(p.id || p.uid)));
+                    } else {
+                        console.warn(`Could not repair court ${courtNum}: Found ${courtPlayers.length} candidates.`);
+                    }
+                }
+
+                if (repairedCount === 0) {
+                    return { repaired: 0, message: `❌ No se pudo reparar automáticamente. Se encontraron ${unassignedPlayers.length} jugadores libres pero no cuadran con las pistas faltantes.` };
+                }
+
+                return { repaired: repairedCount };
             }
         };
 

@@ -131,33 +131,43 @@ window.AdminViews.entrenos_create = async function () {
     if (titleEl) titleEl.textContent = 'Crear Nuevo Entreno';
 
     content.innerHTML = `
-        <div style="max-width: 600px; margin: 0 auto;">
-            <div class="glass-card-enterprise" style="padding: 2.5rem;">
-                <h3 style="color: var(--primary); margin-bottom: 2rem; display: flex; align-items: center; gap: 12px;">
-                    <i class="fas fa-plus-circle" style="font-size: 1.5rem;"></i> CONFIGURACIÓN DEL EVENTO
+        <div style="max-width: 650px; margin: 0 auto;">
+            <div class="glass-card-enterprise fade-in" style="padding: 2.5rem;">
+                <h3 style="color: var(--primary); margin-bottom: 2rem; display: flex; align-items: center; gap: 12px; font-weight:800; font-size: 1.2rem;">
+                    <i class="fas fa-plus-circle" style="font-size: 1.5rem; color: #CCFF00;"></i> CREAR NUEVO EVENTO DE ENTRENO
                 </h3>
                 
-                <form id="create-entreno-form" class="pro-form">
-                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                <form id="create-entreno-form" class="pro-form compact-admin-form">
+                    
+                    <h3 style="color: #CCFF00; font-size: 0.85rem; margin-bottom: 15px; border-bottom: 1px solid rgba(204,255,0,0.2); padding-bottom: 8px;">
+                        <i class="fas fa-sliders-h"></i> CONFIGURACIÓN GENERAL
+                    </h3>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
                         <label>NOMBRE DEL EVENTO</label>
-                        <input type="text" name="name" class="pro-input" placeholder="Ej: Entreno Mañanero Intensivo" required style="font-weight:800; font-size: 1.1rem; height: 50px;">
+                        <input type="text" name="name" class="pro-input" placeholder="Ej: Entreno Mañanero Intensivo" required
+                            style="font-weight: 800; font-size: 1rem;">
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px;">
                         <div class="form-group">
-                            <label>FECHA DEL EVENTO</label>
-                            <input type="date" name="date" class="pro-input" required style="height: 50px;">
+                            <label>FECHA</label>
+                            <input type="date" name="date" class="pro-input" required>
                         </div>
                         <div class="form-group">
-                            <label>HORA DE INICIO</label>
-                            <input type="time" name="time" class="pro-input" value="10:00" required style="height: 50px;">
+                            <label>INICIO</label>
+                            <input type="time" name="time" class="pro-input" value="10:00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>FIN</label>
+                            <input type="time" name="time_end" class="pro-input" value="11:30">
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
                         <div class="form-group">
-                            <label>CATEGORÍA / GÉNERO</label>
-                            <select name="category" class="pro-input" style="height: 50px;">
+                            <label>CATEGORÍA</label>
+                            <select name="category" class="pro-input">
                                 <option value="open">TODOS / OPEN</option>
                                 <option value="male">MASCULINO</option>
                                 <option value="female">FEMENINO</option>
@@ -165,41 +175,85 @@ window.AdminViews.entrenos_create = async function () {
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>SEDE / UBICACIÓN</label>
-                            <select name="location" class="pro-input" style="height: 50px;">
+                            <label>SEDE</label>
+                            <select name="location" class="pro-input">
                                 <option value="Barcelona Pádel el Prat">EL PRAT</option>
                                 <option value="Delfos Cornellá">DELFOS</option>
                             </select>
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
                         <div class="form-group">
-                            <label>NÚMERO DE PISTAS</label>
-                            <input type="number" name="max_courts" class="pro-input" value="4" min="1" style="height: 50px;">
+                            <label>MODO DE JUEGO</label>
+                            <select name="pair_mode" class="pro-input">
+                                <option value="fixed">🔒 PAREJA FIJA (Manual)</option>
+                                <option value="fixed_admin">👔 PAREJA FIJA (Admin)</option>
+                                <option value="fixed_auto">🤖 PAREJA FIJA (Auto)</option>
+                                <option value="rotating">🌪️ TWISTER / INDIVIDUAL</option>
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label>Nº PARTIDOS (RONDAS)</label>
-                            <input type="number" name="rounds_count" class="pro-input" value="6" min="1" style="height: 50px;">
-                        </div>
-                         <div class="form-group">
-                            <label>MODO DE JUEGO (PRO)</label>
-                            <select name="pair_mode" class="pro-input" style="height: 50px;">
-                                <option value="fixed">🔒 PAREJA FIJA (Elige pareja)</option>
-                                <option value="fixed_admin">👔 PAREJA FIJA (Admin elige)</option>
-                                <option value="fixed_auto">🤖 PAREJA FIJA (Automática)</option>
-                                <option value="rotating">🌪️ TWISTER (Individual)</option>
+                            <label>ESTADO</label>
+                            <select name="status" class="pro-input" style="font-weight: 800;">
+                                <option value="open" selected>🟢 ABIERTA</option>
+                                <option value="pairing">🔀 EMPAREJAMIENTO</option>
+                                <option value="live">🎾 EN JUEGO</option>
+                                <option value="finished">🏁 FINALIZADA</option>
+                                <option value="cancelled">⛔ ANULADO</option>
                             </select>
                         </div>
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 2rem;">
-                        <label>URL DE IMAGEN (OPCIONAL)</label>
-                        <input type="text" name="image_url" class="pro-input" placeholder="Se asignará una automática si se deja vacío" style="font-size: 0.85rem; height: 50px;">
+                    <h3 style="color: #60A5FA; font-size: 0.85rem; margin-bottom: 15px; border-bottom: 1px solid rgba(96,165,250,0.2); padding-bottom: 8px; margin-top: 20px;">
+                        <i class="fas fa-cogs"></i> LOGÍSTICA
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group">
+                            <label>PISTAS</label>
+                            <input type="number" name="max_courts" class="pro-input" value="4" placeholder="4">
+                        </div>
+                        <div class="form-group">
+                            <label>RONDAS</label>
+                            <input type="number" name="rounds_count" class="pro-input" value="6">
+                        </div>
+                        <div class="form-group">
+                            <label>€ SOCIO</label>
+                            <input type="number" name="price_members" step="0.1" class="pro-input" value="15">
+                        </div>
+                        <div class="form-group">
+                            <label>€ EXT.</label>
+                            <input type="number" name="price_external" step="0.1" class="pro-input" value="17">
+                        </div>
                     </div>
 
-                    <input type="hidden" name="status" value="open">
-                    
+                    <div class="form-group" style="margin-top: 15px; margin-bottom: 2rem;">
+                        <label>IMAGEN DE PORTADA</label>
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                            <input type="text" name="image_url" id="create-entreno-img-input" class="pro-input"
+                                placeholder="URL de la imagen...">
+                            <img id="create-entreno-img-preview" src=""
+                                style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: #333;">
+                        </div>
+
+                        <!-- Quick Image Selectors -->
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                            <button type="button" class="btn-micro"
+                                onclick="selectCreateEntrenoImage('img/entreno masculino prat.jpg')">Prat Masc</button>
+                            <button type="button" class="btn-micro"
+                                onclick="selectCreateEntrenoImage('img/entreno femenino prat.jpg')">Prat Fem</button>
+                            <button type="button" class="btn-micro" style="background: #ccff00; color: #000;"
+                                onclick="selectCreateEntrenoImage('img/entreno mixto prat.jpg')">Prat Mixto</button>
+                            <button type="button" class="btn-micro"
+                                onclick="selectCreateEntrenoImage('img/entreno masculino delfos.jpg')">Delfos Masc</button>
+                            <button type="button" class="btn-micro"
+                                onclick="selectCreateEntrenoImage('img/entreno femenino delfos.jpg')">Delfos Fem</button>
+                            <button type="button" class="btn-micro" style="background: #ccff00; color: #000;"
+                                onclick="selectCreateEntrenoImage('img/entreno mixto delfos.jpg')">Delfos Mixto</button>
+                        </div>
+                    </div>
+
                     <div style="display: flex; gap: 15px; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
                         <button type="button" class="btn-outline-pro" onclick="loadAdminView('entrenos_mgmt')" style="flex: 1; height: 55px; font-weight: 700;">
                             CANCELAR
@@ -358,6 +412,15 @@ function renderEntrenoCard(e) {
         </div>`;
 }
 
+window.selectCreateEntrenoImage = (url) => {
+    const input = document.getElementById('create-entreno-img-input');
+    if (input) {
+        input.value = url;
+        const preview = document.getElementById('create-entreno-img-preview');
+        if (preview) preview.src = url;
+    }
+};
+
 function setupCreateForm() {
     const form = document.getElementById('create-entreno-form');
     if (!form) return;
@@ -380,16 +443,25 @@ function setupCreateForm() {
 
         // Smart Default Image
         const autoImg = EventService.getAutoImage(lVal, cVal, 'entreno');
-        if (img && !img.value) img.value = autoImg; // Only set if empty
-
-        // Name Sync (Optional, only if user hasn't typed a custom name)
-        // if (!name.value || name.value.startsWith('ENTRENO')) {
-        //     name.value = `ENTRENO ${ cVal.toUpperCase() } `;
-        // }
+        if (img && !img.value) {
+            img.value = autoImg; // Only set if empty
+            const preview = document.getElementById('create-entreno-img-preview');
+            if (preview) preview.src = autoImg;
+        }
     };
 
     if (cat) cat.onchange = sync;
     if (loc) loc.onchange = sync;
+    
+    if (img) {
+        img.oninput = () => {
+            const preview = document.getElementById('create-entreno-img-preview');
+            if (preview) preview.src = img.value;
+        };
+    }
+
+    // Run initial sync to pre-populate default image
+    sync();
 
     form.onsubmit = async (e) => {
         e.preventDefault();
@@ -848,12 +920,32 @@ window.loadEntrenoParticipantsUI = async (id) => {
 
         // Deduplicate players by ID/UID
         const seenIds = new Set();
-        const uniquePlayers = (event.players || []).filter(p => {
-            const pid = String(p.id || p.uid || '');
-            if (!pid || seenIds.has(pid)) return false;
-            seenIds.add(pid);
-            return true;
-        });
+        const uniquePlayers = (event.players || [])
+            .filter(p => {
+                const pid = String(p.id || p.uid || '');
+                if (!pid || seenIds.has(pid)) return false;
+                seenIds.add(pid);
+                return true;
+            })
+            .sort((a, b) => {
+                const parse = (d) => {
+                    if (!d) return 0;
+                    if (typeof d === 'number') return d;
+                    const ds = String(d);
+                    if (ds.includes('/')) {
+                        const parts = ds.split(' ');
+                        const dateParts = parts[0].split('/');
+                        const timePart = parts[1] || '00:00:00';
+                        // DD/MM/YYYY or DD/MM
+                        const day = dateParts[0];
+                        const month = dateParts[1];
+                        const year = dateParts[2] || new Date().getFullYear();
+                        return new Date(`${year}-${month}-${day}T${timePart}`).getTime() || 0;
+                    }
+                    return new Date(d).getTime() || 0;
+                };
+                return parse(a.joinedAt) - parse(b.joinedAt);
+            });
 
         // 🧠 Smart Mode Detection (Consistent with MatchMakingService)
         let isFixedMode = (event.pair_mode && event.pair_mode.includes('fixed')) ||
@@ -886,6 +978,21 @@ window.loadEntrenoParticipantsUI = async (id) => {
         ` + (() => {
                 const renderedIds = new Set();
                 let html = '';
+
+                // Pre-calculate signup order to ensure #1 is ALWAYS the first who joined, regardless of rendering order
+                const signupOrderMap = new Map();
+                uniquePlayers.forEach((p, idx) => {
+                    signupOrderMap.set(String(p.id || p.uid), idx + 1);
+                });
+
+                const formatJoinDate = (d) => {
+                    if (!d) return '';
+                    const date = new Date(d);
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    return `${day}/${month} ${time}`;
+                };
 
                 // Helper for Level Color
                 const getLevelColor = (l) => {
@@ -925,24 +1032,39 @@ window.loadEntrenoParticipantsUI = async (id) => {
                         const shortName1 = name1.split(' ')[0] + (name1.split(' ')[1] ? ' ' + name1.split(' ')[1].charAt(0) + '.' : '');
                         const shortName2 = name2.split(' ')[0] + (name2.split(' ')[1] ? ' ' + name2.split(' ')[1].charAt(0) + '.' : '');
 
+                        // Get registration times
+                        const time1 = formatJoinDate(p.joinedAt);
+                        const time2 = formatJoinDate(partner.joinedAt);
+
+                        const num1 = signupOrderMap.get(pid);
+                        const num2 = signupOrderMap.get(partnerId);
+
                         html += `
                      <div class="player-row" style="display:flex; align-items:center; justify-content:space-between; padding:10px; border-bottom:1px solid #e2e8f0; background:rgba(59, 130, 246, 0.08); border-left: 4px solid #3b82f6;">
                          <!-- PAIR CONTAINER -->
                          <div style="display:flex; align-items:center; flex:1; flex-wrap:wrap; gap:5px;">
                             
                             <!-- P1 -->
-                            <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-                                <div style="width:24px; height:24px; border-radius:50%; background:${c1}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${p.level || '3.5'}</div>
-                                <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName1}</span>
+                            <div style="display:flex; flex-direction:column; gap:2px;">
+                                <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                                     <div style="width:20px; height:20px; border-radius:50%; background:#CCFF00 !important; color:#000 !important; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:900; margin-right:2px; border:1px solid rgba(0,0,0,0.1); box-shadow:0 1px 3px rgba(0,0,0,0.2);">#${num1}</div>
+                                    <div style="width:24px; height:24px; border-radius:50%; background:${c1}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${p.level || '3.5'}</div>
+                                    <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName1}</span>
+                                </div>
+                                ${time1 ? `<span style="font-size:0.6rem; color:#64748b; font-weight:700; padding-left:8px;">🕒 ${time1}</span>` : ''}
                             </div>
                             
                             <!-- LINK ICON -->
                             <div style="color:#3b82f6; font-size:0.75rem; margin:0 2px;"><i class="fas fa-link"></i></div>
 
                             <!-- P2 -->
-                            <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-                                <div style="width:24px; height:24px; border-radius:50%; background:${c2}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${partner.level || '3.5'}</div>
-                                <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName2}</span>
+                            <div style="display:flex; flex-direction:column; gap:2px;">
+                                <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 8px; border-radius:30px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                                     <div style="width:20px; height:20px; border-radius:50%; background:#CCFF00 !important; color:#000 !important; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:900; margin-right:2px; border:1px solid rgba(0,0,0,0.1); box-shadow:0 1px 3px rgba(0,0,0,0.2);">#${num2}</div>
+                                    <div style="width:24px; height:24px; border-radius:50%; background:${c2}; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; color:#fff;">${partner.level || '3.5'}</div>
+                                    <span style="font-weight:800; font-size:0.75rem; color:#000;">${shortName2}</span>
+                                </div>
+                                ${time2 ? `<span style="font-size:0.6rem; color:#64748b; font-weight:700; padding-left:8px;">🕒 ${time2}</span>` : ''}
                             </div>
 
                          </div>
@@ -978,15 +1100,22 @@ window.loadEntrenoParticipantsUI = async (id) => {
                         const c = getLevelColor(p.level);
                         const hasMissingPartner = !!p.partner_name;
                         const playerName = (p.name || 'JUGADOR').toUpperCase();
+                        const time = formatJoinDate(p.joinedAt);
+
+                        const num = signupOrderMap.get(pid);
 
                         html += `
                      <div class="player-row" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #e2e8f0;">
                         <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="width:24px; height:24px; border-radius:50%; background:#CCFF00 !important; color:#000 !important; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:900; border:1px solid rgba(0,0,0,0.2); box-shadow: 0 2px 5px rgba(0,0,0,0.2);">${num}</div>
                             <div style="width:32px; height:32px; border-radius:50%; background:${c}; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:800; color:#ffffff; border: 1px solid rgba(0,0,0,0.1); overflow:hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 ${p.level || '3.5'}
                             </div>
                             <div style="display:flex; flex-direction:column;">
-                                <span style="font-weight:900; font-size:0.85rem; color:#000000; text-transform:uppercase;">${playerName}</span>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span style="font-weight:900; font-size:0.85rem; color:#000000; text-transform:uppercase;">${playerName}</span>
+                                    ${time ? `<span style="font-size:0.65rem; color:#64748b; font-weight:700; background:rgba(0,0,0,0.05); padding:2px 6px; border-radius:4px;">🕒 ${time}</span>` : ''}
+                                </div>
                                 ${hasMissingPartner ? `<span style="font-size:0.7rem; color:#ef4444; font-weight:600;"><i class="fas fa-exclamation-triangle"></i> Pareja: ${p.partner_name} (?)</span>` : ''}
                             </div>
                         </div>

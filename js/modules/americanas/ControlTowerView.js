@@ -24,6 +24,7 @@
                 mvps: 0 // Placeholder for future logic
             };
             this.autoStartInterval = null;
+            this._recalcTimeout = null;
         }
 
         /**
@@ -34,10 +35,19 @@
             if (this.unsubscribeMatches) this.unsubscribeMatches();
             if (this.unsubscribeEvent) this.unsubscribeEvent();
             if (this.autoStartInterval) clearInterval(this.autoStartInterval);
+            if (this._recalcTimeout) clearTimeout(this._recalcTimeout);
 
             this.unsubscribeMatches = null;
             this.unsubscribeEvent = null;
             this.autoStartInterval = null;
+            this._recalcTimeout = null;
+        }
+
+        debouncedRecalc() {
+            if (this._recalcTimeout) clearTimeout(this._recalcTimeout);
+            this._recalcTimeout = setTimeout(() => {
+                this.recalc();
+            }, 40); // 40ms batching window
         }
 
         goToRound(round, evt) {
@@ -81,6 +91,7 @@
             this.currentAmericanaId = eventId;
             this.selectedRound = 1;
             this.mainSection = 'playing'; // Ensure we show the game area
+            this._trainingFinishedShown = false; // Reset end-of-training modal flag
 
             // Show loading
             this.render({ status: 'LOADING' });
@@ -150,7 +161,7 @@
                     }
 
                     if (previousStatus !== updatedEvent.status) {
-                        this.recalc();
+                        this.debouncedRecalc();
                     }
                 }, err => {
                     console.error("Error watching event status:", err);
@@ -205,7 +216,7 @@
 
                             // 3. Update Local State immediately
                             this.currentAmericanaDoc.status = 'live';
-                            this.recalc();
+                            this.debouncedRecalc();
                         } else {
                             console.warn(`⏳ [AutoStart] Live View trigger: Time reached but NOT FULL (${players.length}/${maxCourts * 4}). Waiting.`);
                         }
@@ -272,17 +283,29 @@
                         if (isNewRoundDetected && currentMatches.length > 0 && isMainArea) {
                             // Debounce: Wait a bit for all matches of the round to arrive before animating
                             if (this._animTimeout) clearTimeout(this._animTimeout);
-                            this._animTimeout = setTimeout(() => {
+                            this._animTimeout = setTimeout(async () => {
                                 // RE-FETCH to get latest matches after delay
                                 const finalMatches = this.allMatches.filter(m => parseInt(m.round) === maxRound);
                                 const isStillPending = finalMatches.every(m => !m.score_a && m.status !== 'finished');
 
                                 if (isStillPending) {
                                     console.log(`🎬 [Tower] Auto-starting animation for Round ${maxRound}`);
+
+                                    // CRITICAL: Fetch ALL player data for robust animation lookup
+                                    let freshPlayers = [];
+                                    try {
+                                        console.log("📡 [Tower] Fetching comprehensive player pool for animation...");
+                                        freshPlayers = await window.FirebaseDB.players.getAll();
+                                        console.log(`✅ [Tower] Pool ready with ${freshPlayers.length} players.`);
+                                    } catch (e) {
+                                        console.warn("⚠️ [Tower] Could not fetch fresh players pool", e);
+                                        freshPlayers = this.currentAmericanaDoc?.players || [];
+                                    }
+
                                     this._lastAnimatedRound = maxRound;
                                     window.ShuffleAnimator.animate({
                                         round: maxRound,
-                                        players: this.currentAmericanaDoc?.players || [],
+                                        players: freshPlayers,
                                         courts: this.currentAmericanaDoc?.max_courts || 4,
                                         matches: finalMatches
                                     }, () => {
@@ -294,7 +317,7 @@
                         }
                     }
 
-                    this.recalc();
+                    this.debouncedRecalc();
 
                     // CHECK ROUND COMPLETION (Manual Advancement Prompt)
                     this.checkRoundCompletion(this.allMatches);
@@ -326,7 +349,15 @@
 
                 // Check if Max Rounds reached
                 const totalRounds = parseInt(this.currentAmericanaDoc.rounds_count || this.currentAmericanaDoc.rounds) || 6;
-                if (maxRound >= totalRounds) return;
+                if (maxRound >= totalRounds) {
+                    // LAST ROUND COMPLETE → Show Final Training Results Modal
+                    if (!this._trainingFinishedShown) {
+                        this._trainingFinishedShown = true;
+                        this.roundPromptDismissedFor = maxRound;
+                        this.showTrainingFinishedModal(maxRound);
+                    }
+                    return;
+                }
 
                 // SHOW PROMPT for the current completed round
                 this.showRoundFinishedModal(maxRound);
@@ -340,70 +371,46 @@
         }
 
         showRoundFinishedModal(round) {
-            if (document.getElementById('round-finished-modal')) return;
-
-            const modal = document.createElement('div');
-            modal.id = 'round-finished-modal';
-            modal.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: rgba(0,0,0,0.85); z-index: 13000;
-                display: flex; align-items: center; justify-content: center;
-                backdrop-filter: blur(5px); animation: fadeIn 0.3s ease;
-            `;
-
-            modal.innerHTML = `
-                <div style="background: linear-gradient(135deg, #111 0%, #0a0a0a 100%); width: 90%; max-width: 400px; padding: 30px; border-radius: 24px; border: 2px solid #CCFF00; text-align: center; box-shadow: 0 0 50px rgba(204,255,0,0.2); position: relative;">
-                    <div style="width: 60px; height: 60px; background: #CCFF00; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 0 20px rgba(204,255,0,0.6);">
-                        <i class="fas fa-flag-checkered" style="font-size: 1.8rem; color: black;"></i>
-                    </div>
-                    <h2 style="color: white; font-weight: 950; font-size: 1.5rem; margin: 0 0 10px 0;">RONDA ${round} FINALIZADA</h2>
-                    <p style="color: #bbb; font-size: 0.9rem; margin-bottom: 25px;">Todos los partidos han terminado. ¿Qué quieres hacer?</p>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <button id="btn-next-round" style="background: #CCFF00; color: black; border: none; padding: 16px; border-radius: 14px; font-weight: 900; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 5px 15px rgba(204,255,0,0.3);">
-                            ✅ SÍ, SIGUIENTE RONDA
-                        </button>
-                        <button id="btn-edit-round" style="background: transparent; color: white; border: 2px solid #333; padding: 14px; border-radius: 14px; font-weight: 800; font-size: 0.9rem; cursor: pointer;">
-                            ❌ NO, QUIERO EDITAR
-                        </button>
-                    </div>
-                </div>
-            `;
-
-            document.body.appendChild(modal);
-
-            // Bind Actions
-            document.getElementById('btn-next-round').onclick = async () => {
-                const btn = document.getElementById('btn-next-round');
-                btn.innerHTML = '<div class="loader-spinner"></div> GENERANDO...';
-                try {
+            window.EventModals.showRoundFinishedModal(
+                round,
+                this.currentAmericanaDoc,
+                async () => {
                     const isEntreno = this.currentAmericanaDoc?.isEntreno;
-                    // Trigger Generation
                     if (window.AmericanaService) {
-                        await window.AmericanaService.generateNextRound(this.currentAmericanaDoc.id, round, isEntreno ? 'entreno' : 'americana');
-                        // Dismiss modal 
-                        this.roundPromptDismissedFor = null; // Reset for next
-                        this.closeRoundFinishedModal();
+                        try {
+                            await window.AmericanaService.generateNextRound(this.currentAmericanaDoc.id, round, isEntreno ? 'entreno' : 'americana');
+                            window.EventModals.closeRoundFinishedModal();
+                            this.roundPromptDismissedFor = null;
+                        } catch (e) {
+                            window.PremiumModal.alert({ title: "❌ ERROR", message: e.message, type: 'error' });
+                        }
                     }
-                } catch (e) {
-                    window.PremiumModal.alert({
-                        title: "❌ ERROR",
-                        message: "No se pudo generar la siguiente ronda: " + e.message,
-                        type: 'error'
-                    });
-                    btn.innerHTML = '✅ SÍ, SIGUIENTE RONDA';
-                }
-            };
-
-            document.getElementById('btn-edit-round').onclick = () => {
-                this.roundPromptDismissedFor = round;
-                this.closeRoundFinishedModal();
-            };
+                },
+                () => { this.roundPromptDismissedFor = round; }
+            );
         }
 
         closeRoundFinishedModal() {
-            const el = document.getElementById('round-finished-modal');
-            if (el) el.remove();
+            window.EventModals.closeRoundFinishedModal();
+        }
+
+        showTrainingFinishedModal(finalRound) {
+            window.EventModals.showTrainingFinishedModal(
+                finalRound,
+                this.allMatches,
+                this.currentAmericanaDoc,
+                (rankingItems, isFixedPairs) => {
+                    const eventDate = this.currentAmericanaDoc?.date || '';
+                    const medals = ['🏆', '🥈', '🥉'];
+                    const shareText = rankingItems.slice(0, 3)
+                        .map((p, i) => `${medals[i]} ${p.name} — ${isFixedPairs ? p.won + ' V' : p.points + ' pts'}`)
+                        .join('\n');
+                    const fullText = `🎾 FIN DEL ENTRENO\n📅 ${eventDate}\n\n${shareText}\n\n¡Hasta la próxima! 🏆`;
+                    if (window.WhatsAppService) window.WhatsAppService.shareText(fullText);
+                },
+                (tab) => { this.switchTab(tab); document.getElementById('training-finished-modal')?.remove(); },
+                () => { document.getElementById('training-finished-modal')?.remove(); window.Router.navigate('dashboard'); }
+            );
         }
 
         async loadHistory() {
@@ -496,15 +503,6 @@
                 // STRICT COUNTING: Only count events derived from real matches found
                 const eventCount = uniqueEvents.size;
 
-                // REMOVED: Fallback guessing logic that was causing ghost data
-                /* 
-                if (eventCount === 0 && user.matches_played > 0) {
-                    eventCount = Math.ceil(parseInt(user.matches_played) / 4); // Approx events
-                    g = parseInt(user.games_played || 0); // If exists
-                    w = parseInt(user.wins || 0);
-                }
-                */
-
                 this.userStats = {
                     games: g,
                     wins: w,
@@ -529,12 +527,12 @@
                 }, []);
 
                 console.log(`✅ [Tower] History Loaded: ${this.userStats.games} games, ${this.userStats.events} events.`);
-                this.recalc();
+                this.debouncedRecalc();
 
             } catch (e) {
                 console.error("History fail:", e);
                 this.userStats = { games: 0, wins: 0, losses: 0, events: 0 };
-                this.recalc();
+                this.debouncedRecalc();
             }
         }
 
@@ -638,8 +636,8 @@
                         teamB: namesB,
                         scoreA: m.score_a,
                         scoreB: m.score_b,
-                        isFinished: m.status === 'finished',
-                        isLive: m.status === 'live',
+                        isFinished: m.status === 'finished' || m.status === 'finalizado',
+                        isLive: (m.status === 'live' || m.status === 'en juego'),
                         level_avg: m.level_avg || '3.5',
                         ...m
                     };
@@ -700,7 +698,7 @@
             // --------------------------
 
             container.innerHTML = `
-                <div class="tournament-layout fade-in" style="background: #050505;">
+                <div class="tournament-layout fade-in" style="background: #ffffff; color: #0a192f;">
                     
                     <!-- PREMIUM DARK LED SUBMENU -->
                     <style>
@@ -718,15 +716,21 @@
                         }
                     </style>
 
-                    <div style="background: #111; backdrop-filter: blur(20px); padding: 14px; display: flex; justify-content: center; gap: 12px; border-bottom: 2px solid #222; position: sticky; top: 0; z-index: 1002; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
-                        <button onclick="window.ControlTowerView.switchSection('playing')" class="${this.mainSection === 'playing' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #333; background: rgba(255,255,255,0.05); color: #fff; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);">EN JUEGO</button>
-                        <button onclick="window.ControlTowerView.switchSection('history')" class="${this.mainSection === 'history' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #333; background: rgba(255,255,255,0.05); color: #fff; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);">MI PASADO</button>
-                        <button onclick="window.ControlTowerView.switchSection('help')" class="${this.mainSection === 'help' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #333; background: rgba(255,255,255,0.05); color: #fff; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);">INFO</button>
+                    <div style="background: #ffffff; backdrop-filter: blur(20px); padding: 14px; display: flex; justify-content: center; gap: 12px; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 1002; box-shadow: 0 10px 40px rgba(0,0,0,0.05);">
+                        <button onclick="window.ControlTowerView.switchSection('playing')" class="${this.mainSection === 'playing' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #e2e8f0; background: #f8fafc; color: #0a192f; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer;">EN JUEGO</button>
+                        <button onclick="window.ControlTowerView.switchSection('history')" class="${this.mainSection === 'history' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #e2e8f0; background: #f8fafc; color: #0a192f; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer;">MI PASADO</button>
+                        <button onclick="window.ControlTowerView.switchSection('help')" class="${this.mainSection === 'help' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #e2e8f0; background: #f8fafc; color: #0a192f; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer;">INFO</button>
                     </div>
 
                     ${this.renderMainArea(data, isPlayingHere)}
                 </div>
             `;
+
+            // --- RPG RADAR CHART INIT ---
+            if (this.mainSection === 'history') {
+                setTimeout(() => this.initRadarChart(user), 100);
+            }
+
 
             // --- STATE RESTORATION ---
             if (openEditIds.length > 0) {
@@ -747,124 +751,45 @@
             if (this.mainSection === 'help') return this.renderHelpContent();
             if (this.mainSection === 'history') return this.renderHistoryContent();
 
-            // --- PREMIUM CATEGORY ENGINE ---
-            const category = this.currentAmericanaDoc?.category || 'pro';
-            const isFemale = category === 'female';
-            const isMixed = category === 'mixed';
-            const isMale = category === 'male';
-
-            let theme = {
-                grad: 'linear-gradient(135deg, #CCFF00 0%, #00E36D 100%)',
-                accent: '#CCFF00',
-                glow: 'rgba(204, 255, 0, 0.4)',
-                text: '#000',
-                border: '#00E36D'
-            };
-
-            if (isFemale) {
-                theme = {
-                    grad: 'linear-gradient(135deg, #FF2D55 0%, #FF5E7B 100%)',
-                    accent: '#FF2D55',
-                    glow: 'rgba(255, 45, 85, 0.4)',
-                    text: '#fff',
-                    border: '#FF2D55'
-                };
-            } else if (isMixed) {
-                theme = {
-                    grad: 'linear-gradient(135deg, #FFD700 0%, #FF9500 100%)',
-                    accent: '#FFD700',
-                    glow: 'rgba(255, 215, 0, 0.4)',
-                    text: '#000',
-                    border: '#FF9500'
-                };
-            } else if (isMale) {
-                theme = {
-                    grad: 'linear-gradient(135deg, #00C4FF 0%, #0072FF 100%)',
-                    accent: '#00C4FF',
-                    glow: 'rgba(0, 196, 255, 0.4)',
-                    text: '#fff',
-                    border: '#0072FF'
-                };
-            }
-
             const roundData = data?.currentRound || { matches: [] };
-            const amName = this.currentAmericanaDoc ? this.currentAmericanaDoc.name : "Americana Activa";
+            const isLive = this.currentAmericanaDoc?.status === 'live';
 
             return `
-                <div class="tour-header-context" style="background: ${theme.grad}; padding: 45px 20px 35px; text-align: center; border-bottom: 2px solid rgba(0,0,0,0.05); position: relative; overflow: hidden;">
-                    <!-- AMBIENT GLOW -->
-                    <div style="position: absolute; top: -50px; left: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.2); filter: blur(60px); border-radius: 50%;"></div>
-                    
-                    <!-- ACTION BUTTONS -->
-                    <div style="position:absolute; top:20px; right:20px; display:flex; gap:12px; z-index:10; flex-wrap: wrap; justify-content: flex-end;">
-                         <div onclick="window.ControlTowerView.replayShuffleAnimation()" 
-                               style="background:rgba(0,0,0,0.7); color:${theme.accent}; padding:8px 16px; border-radius:12px; font-weight:950; font-size:0.65rem; cursor:pointer; backdrop-filter: blur(10px); border: 1px solid ${theme.accent}40; letter-spacing: 1px;">
-                             <i class="fas fa-random"></i> SORTEO
-                         </div>
-                         <div onclick="window.ChatView.init('${this.currentAmericanaDoc?.id}', '${amName}')" 
-                               style="background:rgba(0,0,0,0.7); color:white; padding:8px 16px; border-radius:12px; font-weight:950; font-size:0.65rem; cursor:pointer; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); letter-spacing: 1px;">
-                             <i class="fas fa-comment-dots"></i> CHAT
-                         </div>
-                         <div onclick="window.openTVMode('${this.currentAmericanaDoc?.id}', '${this.currentAmericanaDoc?.isEntreno ? 'entreno' : 'americana'}')" 
-                               style="background:rgba(0,0,0,0.7); color:${theme.accent}; padding:8px 16px; border-radius:12px; font-weight:950; font-size:0.65rem; cursor:pointer; backdrop-filter: blur(10px); border: 1px solid ${theme.accent}40;">
-                             <i class="fas fa-tv"></i> TV
-                         </div>
-                    </div>
-
-                    ${isPlayingHere ? `
-                        <div style="background: rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.1); color: ${theme.text}; display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.65rem; font-weight: 950; margin-bottom: 20px; letter-spacing: 1px; text-transform: uppercase;">
-                           PARTICIPANDO EN VIVO ✅
-                        </div>
-                    ` : ''}
-                    
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; position: relative; z-index: 2;">
-                        <div style="position: relative;">
-                            <img src="${this.currentAmericanaDoc?.image_url || 'img/logo_somospadel.png'}" 
-                                 style="width: 85px; height: 85px; border-radius: 50%; border: 4px solid white; box-shadow: 0 15px 35px rgba(0,0,0,0.3);"
-                                 onerror="this.src='img/logo_somospadel.png'">
-                            <div style="position: absolute; bottom: -5px; right: -5px; background: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
-                                <span style="font-size: 1.1rem;">${isFemale ? '♀️' : isMale ? '♂️' : '🎾'}</span>
-                            </div>
-                        </div>
-                        <h1 style="color: ${theme.text}; margin: 0; font-family: 'Outfit'; font-weight: 1000; font-size: 1.8rem; letter-spacing: -1px; line-height: 0.9;">${amName.toUpperCase()}</h1>
-                    </div>
-                    
-                    <div style="color: ${theme.text}; opacity: 0.7; font-size: 0.85rem; margin-top: 15px; font-weight: 900; letter-spacing: 0.5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                        <div style="background: rgba(0,0,0,0.05); padding: 4px 12px; border-radius: 8px;">
-                            ${this.currentAmericanaDoc?.date || ''} • ${(isMale ? 'MASCULINA' : isFemale ? 'FEMENINA' : isMixed ? 'MIXTA' : 'CATEGORÍA PRO')}
-                        </div>
-                        
-                        ${(() => {
-                    const mode = (this.currentAmericanaDoc?.pair_mode || this.currentAmericanaDoc?.format || '').toLowerCase();
-                    const nameUpper = (this.currentAmericanaDoc?.name || '').toUpperCase();
-                    let label = 'PAREJA FIJA';
-                    let modeColor = '#000';
-
-                    if (nameUpper.includes('TWISTER') || mode.includes('twister') || nameUpper.includes('ROTATIVO') || mode.includes('rotating') || mode.includes('rotativo')) {
-                        label = 'MODO TWISTER';
-                    }
-
-                    return `<div style="background: rgba(255,255,255,0.2); color: ${theme.text}; border: 1.5px solid rgba(255,255,255,0.3); padding: 5px 15px; border-radius: 12px; font-size: 0.7rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">${label}</div>`;
-                })()}
-                    </div>
-                </div>
-
-                <div class="tour-sub-nav" style="background: rgba(255,255,255,0.9); backdrop-filter: blur(20px); padding: 14px; display: flex; gap: 10px; border-bottom: 2px solid ${theme.accent}; position: sticky; top: 62px; z-index: 1001; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
-                    <button class="tour-menu-item ${this.activeTab === 'results' ? 'active' : ''}" style="flex:1; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'results' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'results' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'results' ? '0 8px 20px ' + theme.glow : 'none'}; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);" onclick="window.ControlTowerView.switchTab('results')">PARTIDOS</button>
-                    <button class="tour-menu-item ${this.activeTab === 'standings' ? 'active' : ''}" style="flex:1; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'standings' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'standings' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'standings' ? '0 8px 20px ' + theme.glow : 'none'}; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);" onclick="window.ControlTowerView.switchTab('standings')">POSICIONES</button>
-                    <button class="tour-menu-item ${this.activeTab === 'summary' ? 'active' : ''}" style="flex:1; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'summary' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'summary' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'summary' ? '0 8px 20px ' + theme.glow : 'none'}; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);" onclick="window.ControlTowerView.switchTab('summary')">STATS</button>
-                    <button class="tour-menu-item ${this.activeTab === 'report' ? 'active' : ''}" style="flex:1; border-radius: 14px; font-size: 0.65rem; font-weight: 950; background: ${this.activeTab === 'report' ? theme.grad : '#f5f5f5'}; color: ${this.activeTab === 'report' ? theme.text : '#888'}; border: none; box-shadow: ${this.activeTab === 'report' ? '0 8px 20px ' + theme.glow : 'none'}; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);" onclick="window.ControlTowerView.switchTab('report')">INFORME</button>
-                </div>
-
+                ${window.EventHeader.render(this.currentAmericanaDoc, {
+                activeTab: this.activeTab,
+                isPlayingHere,
+                theme: {
+                    grad: 'linear-gradient(135deg, #CCFF00 0%, #00E36D 100%)',
+                    accent: '#CCFF00',
+                    text: '#000'
+                }
+            })}
                 ${this.renderActiveContent(data, roundData)}
             `;
         }
 
         renderActiveContent(data, roundData) {
-            if (data?.status === 'LOADING') return '<div class="loader" style="margin:80px auto;"></div>';
+            if (data?.status === 'LOADING') {
+                const skeletons = Array.from({ length: 3 }, () => `
+                    <div class="skeleton-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 20px; margin-bottom: 15px;">
+                        <div class="skeleton-box skeleton-line" style="width: 40%; height: 12px; background: #f1f5f9;"></div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                            <div class="skeleton-box skeleton-line" style="width: 60%; height: 30px; background: #f1f5f9;"></div>
+                            <div class="skeleton-box" style="width: 50px; height: 50px; border-radius: 12px; background: #f1f5f9;"></div>
+                        </div>
+                        <div style="height: 1px; background: #e2e8f0; margin: 15px 0;"></div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="skeleton-box skeleton-line" style="width: 50%; height: 30px; background: #f1f5f9;"></div>
+                            <div class="skeleton-box" style="width: 50px; height: 50px; border-radius: 12px; background: #f1f5f9;"></div>
+                        </div>
+                    </div>
+                `).join('');
+                return `<div style="padding: 15px;">${skeletons}</div>`;
+            }
 
             switch (this.activeTab) {
                 case 'standings': return this.renderStandingsView();
+                case 'brackets': return this.renderBracketsView();
                 case 'summary': return this.renderSummaryView();
                 case 'report': return this.renderReportView();
                 default:
@@ -910,18 +835,36 @@
 
             // 2. Insert / Update Logic
             matches.forEach((match, index) => {
-                const cardId = `tour-match-${match.id}`;
+                const cardId = `card-${match.id}`;
                 let el = document.getElementById(cardId);
 
                 if (el) {
                     // --- UPDATE EXISTING CARD ---
-                    // 1. Status Badge
+                    // 1. Status Badge & Card Container Styles
                     const statusArea = el.querySelector('.status-area');
-                    const isFinished = match.isFinished;
-                    const isLive = this.currentAmericanaDoc?.status === 'live' && !isFinished;
+                    const isFinished = match.status === 'finished' || match.status === 'finalizado';
+                    const evtStatus = this.currentAmericanaDoc?.status;
+                    const isLive = evtStatus === 'live' && !isFinished;
+
+                    // SYNC CARD CONTAINER STYLES (Zero-Latency)
+                    let cardStyle = 'border: 1px solid #e2e8f0; opacity: 1; filter: none; transform: none;';
+                    let cardBg = '#ffffff';
+                    const user = window.Store ? window.Store.getState('currentUser') : null;
+                    const uid = user ? user.uid : '-';
+                    const isMyMatch = (match.team_a_ids || []).includes(uid) || (match.team_b_ids || []).includes(uid);
+
+                    if (isFinished) {
+                        cardStyle = 'border: 1px solid #e2e8f0; opacity: 0.6; filter: grayscale(100%); z-index: 1;';
+                        cardBg = '#f8fafc';
+                    } else if (isMyMatch && isLive) {
+                        cardStyle = 'border: 3px solid #72a800; box-shadow: 0 15px 45px rgba(114, 168, 0, 0.2); transform: scale(1.03); z-index: 10;';
+                    }
+                    el.style.cssText += cardStyle;
+                    el.style.background = cardBg;
+
                     const newStatusHTML = isFinished ?
-                        '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">FINALIZADO</span>' :
-                        (isLive ? '<span class="status-badge-live">⚡ EN JUEGO</span>' : '<span style="color:#BBB;">ESPERANDO</span>');
+                        '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 950; font-size: 0.6rem; letter-spacing: 0.5px; text-transform:uppercase;">FINALIZADO</span>' :
+                        (isLive ? '<span class="status-badge-live" style="animation: pulse 1s infinite alternate;">⚡ EN JUEGO</span>' : '<span style="background: rgba(255,255,255,0.1); color: #888; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">PROGRAMADO</span>');
 
                     if (statusArea && statusArea.innerHTML !== newStatusHTML) statusArea.innerHTML = newStatusHTML;
 
@@ -978,6 +921,11 @@
                                 scoreBEl.style.boxShadow = (sB > sA) ? 'var(--shadow-neon)' : 'inset 0 2px 4px rgba(0,0,0,0.05)';
                             }
                         }
+
+                        // ACTION AREA SYNC: If it just finished, we might need a full re-render of this card's internals
+                        // to show the "Share" button instead of the "+/-" controls.
+                        // For simplicity, if isFinished and doesn't have the share button, we return false to trigger full render of this view.
+                        if (!el.querySelector('.fa-instagram')) return false;
                     }
 
                 } else {
@@ -992,10 +940,10 @@
             });
 
             // 3. REMOVE STALE CARDS (The fix for the user)
-            const allCards = Array.from(grid.querySelectorAll('.tour-match-card'));
+            const allCards = Array.from(grid.querySelectorAll('.match-card'));
             allCards.forEach(card => {
-                // Extract ID from e.g. "tour-match-abc1234"
-                const id = card.id.replace('tour-match-', '');
+                // Extract ID from e.g. "card-abc1234"
+                const id = card.id.replace('card-', '');
                 if (!validIds.has(id)) {
                     console.log("[SmartUpdate] Removing stale card:", id);
                     card.remove();
@@ -1031,21 +979,21 @@
             const isRoundComplete = roundData.matches.length > 0 && roundData.matches.every(m => m.isFinished);
             let nextRoundUI = '';
 
-            if (isRoundComplete && isViewingMaxRound && this.currentAmericanaDoc?.status === 'live') {
+                if (isRoundComplete && isViewingMaxRound && this.currentAmericanaDoc?.status === 'live') {
                 nextRoundUI = `
-                    <div id="next-round-btn-container" class="animate-pop-in" style="margin-top: 30px; background: white; padding: 25px; border-radius: 20px; border: 2px solid #CCFF00; box-shadow: 0 10px 30px rgba(204,255,0,0.2); text-align: center;">
-                        <h3 style="margin: 0 0 15px 0; font-weight: 900; font-size: 1.1rem;">🏁 RONDA ${roundData.number} FINALIZADA</h3>
-                        <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">
+                    <div id="next-round-btn-container" class="animate-pop-in" style="margin-top: 30px; background: #ffffff; padding: 25px; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.04); text-align: center;">
+                        <h3 style="margin: 0 0 15px 0; font-weight: 950; font-size: 1.1rem; color: #0a192f;">🏁 RONDA ${roundData.number} FINALIZADA</h3>
+                        <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 20px; font-weight: 500;">
                             Todos los resultados han sido introducidos. ¿Deseas generar la siguiente ronda?
                         </p>
                         <div style="display: flex; gap: 15px; justify-content: center;">
                              <button onclick="window.ControlTowerView.triggerNextRound(${roundData.number})" 
                                     class="btn-primary-pro"
-                                    style="padding: 15px 30px; font-size: 1rem; background: var(--playtomic-neon); color: black; border: none; box-shadow: 0 5px 15px rgba(204,255,0,0.4);">
+                                    style="padding: 15px 30px; font-size: 1rem; background: #72a800; color: white; border: none; box-shadow: 0 8px 25px rgba(114, 168, 0, 0.2);">
                                 SI, SIGUIENTE RONDA 🚀
                             </button>
                              <button onclick="document.getElementById('next-round-btn-container').innerHTML='<p>Puedes editar los resultados usando el botón ✏️ en cada tarjeta.</p>'; setTimeout(() => window.ControlTowerView.recalc(), 3000);" 
-                                    style="padding: 15px 20px; font-size: 0.9rem; background: #eee; border: none; border-radius: 12px; font-weight: 800; color: #666; cursor: pointer;">
+                                    style="padding: 15px 20px; font-size: 0.9rem; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; font-weight: 800; color: #64748b; cursor: pointer;">
                                 NO, QUIERO EDITAR
                             </button>
                         </div>
@@ -1057,68 +1005,77 @@
                 '<div style="display:flex; justify-content:center; padding:40px;"><div class="loader"></div></div>' :
                 'Selecciona una ronda válida...';
 
+            const user = window.Store ? window.Store.getState('currentUser') : null;
+            const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain', 'capitan', 'capitanes', 'organizador', 'organizadores'].includes((user?.role || '').toLowerCase());
+
+            let adminNextRoundBtn = '';
+
+            if (isAdmin && this.currentAmericanaDoc?.status === 'live') {
+                adminNextRoundBtn = `
+                    <div style="flex-shrink:0; padding-left: 10px;">
+                        <button onclick="window.ControlTowerView.triggerNextRound(${maxRound})" 
+                                style="background: #ffffff; color: #72a800; border: 1px solid #72a800; padding: 10px 15px; border-radius: 12px; font-weight: 950; font-size: 0.7rem; letter-spacing: 0.5px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(114, 168, 0, 0.1);">
+                            🚀 SIG. RONDA
+                        </button>
+                    </div>
+                `;
+            }
+
             return `
-                <div class="tour-filter-bar" style="background:#F8F9FA; padding: 12px; overflow-x: auto;">
-                   ${tabs}
+                <div class="tour-filter-bar" style="position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.9); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+                   <div style="flex: 1; overflow-x: auto; display: flex; align-items: center; scrollbar-width: none; -ms-overflow-style: none;">
+                       <style>
+                           .tour-filter-bar div::-webkit-scrollbar { display: none; }
+                           @keyframes scorePing {
+                               0% { transform: scale(1); box-shadow: 0 0 0 rgba(204,255,0,0.5); }
+                               50% { transform: scale(1.1); box-shadow: 0 0 25px rgba(204,255,0,0.8); }
+                               100% { transform: scale(1); box-shadow: 0 0 0 rgba(204,255,0,0); }
+                           }
+                           .score-updated-ping { animation: scorePing 0.5s ease-out; }
+                           
+                           @keyframes pulseLive {
+                               0% { transform: scale(1); opacity: 1; }
+                               50% { transform: scale(1.5); opacity: 0.5; }
+                               100% { transform: scale(1); opacity: 1; }
+                           }
+                           .live-pulse-dot { width: 8px; height: 8px; background: #00E36D; border-radius: 50%; display: inline-block; margin-right: 8px; animation: pulseLive 2s infinite; }
+                       </style>
+                       ${tabs}
+                   </div>
+                   <div style="display:flex; align-items:center; gap:10px;">
+                       <span style="font-size: 0.65rem; color: #666; font-weight: 700; background: #eee; padding: 4px 8px; border-radius: 10px; display: flex; align-items: center;">
+                           <span class="live-pulse-dot"></span> VIVO
+                       </span>
+                       ${adminNextRoundBtn}
+                   </div>
                 </div>
                 <div class="tour-grid-container" style="padding: 16px; display: grid; gap: 16px; padding-bottom: 100px;">
                     ${roundData.matches.length ? '' : `<div style="color:#999; width:100%; text-align:center; padding:80px; font-weight:700; line-height:1.5;">${emptyMessage}</div>`}
                     ${roundData.matches.map(match => this.renderTournamentCard(match)).join('')}
                     ${nextRoundUI}
                 </div>
+                <script>
+                    if (typeof window._rollbackCheckedRounds === 'undefined') window._rollbackCheckedRounds = new Set();
+                    if (${isAdmin && parseInt(roundData.number) < maxRound} && !window._rollbackCheckedRounds.has(${roundData.number})) {
+                        window._rollbackCheckedRounds.add(${roundData.number});
+                        setTimeout(() => {
+                            window.PremiumModal.confirm({
+                                title: "⚠️ MODO CORRECCIÓN DETECTADO",
+                                message: "Estás viendo una ronda anterior. Cualquier cambio en estos marcadores requiere reiniciar las rondas posteriores.<br><br>¿Deseas activar el modo corrección ahora?",
+                                confirmText: "SÍ, ACTIVAR",
+                                cancelText: "SÓLO MIRAR",
+                                type: 'danger'
+                            }).then(ok => {
+                                if(ok) window.ControlTowerView.rollbackTournament(${roundData.number});
+                            });
+                        }, 500);
+                    }
+                </script>
             `;
         }
 
         renderRoundTabs(rounds, currentNum) {
-            const category = this.currentAmericanaDoc?.category || 'pro';
-
-            let activeColor = '#CCFF00';
-            if (category === 'female') activeColor = '#FF2D55';
-            else if (category === 'mixed') activeColor = '#FFD700';
-            else if (category === 'male') activeColor = '#00C4FF';
-
-            let replayButtonHtml = '';
-            if (this.allMatches && this.allMatches.some(m => parseInt(m.round) === parseInt(currentNum))) {
-                replayButtonHtml = `
-                    <div style="width: 1px; height: 30px; background: rgba(0,0,0,0.1); margin: 0 5px;"></div>
-                    <button onclick="window.ControlTowerView.replayShuffleAnimation()" 
-                        style="background: #111; color: #CCFF00; border: 1px solid #CCFF00; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 10px rgba(204,255,0,0.3);"
-                        title="Ver Sorteo Animado">
-                        <i class="fas fa-play"></i>
-                    </button>
-                 `;
-            }
-
-            return `
-                <style>
-                    @keyframes neonPulse {
-                        0% { box-shadow: 0 0 5px var(--active-color), 0 0 10px var(--active-color); transform: scale(1); }
-                        50% { box-shadow: 0 0 20px var(--active-color), 0 0 30px var(--active-color); transform: scale(1.05); }
-                        100% { box-shadow: 0 0 5px var(--active-color), 0 0 10px var(--active-color); transform: scale(1); }
-                    }
-                </style>
-                <div class="round-tabs-container" style="display:flex; gap:8px; align-items: center; overflow-x: auto; padding: 5px 0;">
-                    ${rounds.map(r => {
-                const isSel = parseInt(r.number) === parseInt(currentNum);
-                // Use a dedicated active class or inline style with custom property for animation
-                return `
-                        <button type="button" 
-                                class="round-tab ${isSel ? 'active' : ''}" 
-                                onclick="window.ControlTowerView.goToRound(${r.number}, event)"
-                                style="--active-color: ${activeColor};
-                                       background: ${isSel ? activeColor : 'rgba(255,255,255,0.05)'}; 
-                                       color: ${isSel ? '#000' : '#999'}; 
-                                       border: 1px solid ${isSel ? activeColor : 'rgba(255,255,255,0.1)'};
-                                       padding: 12px 20px; border-radius: 14px; font-weight: 950; cursor: pointer; transition: 0.4s; min-width: 65px;
-                                       box-shadow: ${isSel ? `0 0 20px ${activeColor}` : 'none'}; 
-                                       animation: ${isSel ? 'neonPulse 2s infinite' : 'none'};
-                                       text-transform: uppercase; font-size: 0.8rem;">
-                            ${r.number}º
-                        </button>
-                    `}).join('')}
-                    ${replayButtonHtml}
-                </div>
-            `;
+            return window.EventHeader.renderRoundTabs(rounds, currentNum, this.currentAmericanaDoc, this.allMatches);
         }
 
         renderStandingsView() {
@@ -1126,197 +1083,29 @@
             return window.ControlTowerStandings.render(this.allMatches, this.currentAmericanaDoc);
         }
 
+        renderBracketsView() {
+            if (!window.ControlTowerBrackets) return '<div style="padding:40px; text-align:center; color:white;">Cargando cuadros...</div>';
+            return window.ControlTowerBrackets.render(this.allMatches, this.currentAmericanaDoc);
+        }
+
         renderSummaryView() {
             if (!window.ControlTowerStats) return '<div style="padding:40px; text-align:center;">Cargando...</div>';
             return window.ControlTowerStats.render(this.allMatches, this.currentAmericanaDoc);
         }
 
-        renderTournamentCard(match) {
-            try {
-                const user = window.Store ? window.Store.getState('currentUser') : null;
-                const isEntreno = this.currentAmericanaDoc?.isEntreno;
-                const colorClass = `border-${(match.court % 4) + 1}`;
-
-                // --- 1. USER CONTEXT & PERMISSIONS ---
-                const getTeamName = (namesArr, teamStr) => {
-                    if (teamStr && typeof teamStr === 'string' && teamStr.length > 0) return teamStr;
-                    if (Array.isArray(namesArr)) return namesArr.join(' / ');
-                    return String(namesArr || '');
-                };
-
-                const safeTeamA = getTeamName(match.team_a_names, match.teamA) || 'EQUIPO A';
-                const safeTeamB = getTeamName(match.team_b_names, match.teamB) || 'EQUIPO B';
-
-                const isPartA = user && (match.team_a_ids?.includes(user.uid) || safeTeamA.toLowerCase().includes((user.name || '').toLowerCase()));
-                const isPartB = user && (match.team_b_ids?.includes(user.uid) || safeTeamB.toLowerCase().includes((user.name || '').toLowerCase()));
-                const isMyMatch = isPartA || isPartB;
-                const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain'].includes((user?.role || '').toLowerCase());
-
-                // --- 2. STATUS & THEME ---
-                const evtStatus = this.currentAmericanaDoc?.status;
-                const isFinished = match.isFinished || match.status === 'finished';
-                const isLive = evtStatus === 'live' && !isFinished;
-
-                let statusBadge = '';
-                if (isFinished) {
-                    statusBadge = '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 950; font-size: 0.6rem; letter-spacing: 0.5px; text-transform:uppercase;">FINALIZADO</span>';
-                } else if (isLive) {
-                    statusBadge = '<span class="status-badge-live" style="animation: pulse 1s infinite alternate;">⚡ EN JUEGO</span>';
-                } else {
-                    statusBadge = '<span style="background: rgba(255,255,255,0.1); color: #888; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">PROGRAMADO</span>';
+        renderTournamentCard(match, options = {}) {
+            const user = window.Store ? window.Store.getState('currentUser') : null;
+            return window.MatchCard.render(match, {
+                ...options,
+                currentUser: user,
+                isEntreno: this.currentAmericanaDoc?.isEntreno,
+                eventStatus: this.currentAmericanaDoc?.status,
+                theme: {
+                    grad: 'linear-gradient(135deg, #CCFF00 0%, #00E36D 100%)',
+                    accent: '#CCFF00',
+                    text: '#000'
                 }
-
-                const sA = parseInt(match.score_a || 0);
-                const sB = parseInt(match.score_b || 0);
-
-                const timeLabel = (window.calculateMatchTime && typeof window.calculateMatchTime === 'function')
-                    ? window.calculateMatchTime(this.currentAmericanaDoc?.time || "10:00", parseInt(match.round) || 1)
-                    : "Seguido";
-
-                // --- 3. DYNAMIC STYLES ---
-                const cardStyle = isMyMatch && isLive
-                    ? 'border: 3px solid #CCFF00; box-shadow: 0 0 35px rgba(204, 255, 0, 0.4); transform: scale(1.03); z-index: 10;'
-                    : 'border: 1px solid var(--border-subtle);';
-
-                const winnerA = isFinished && sA > sB;
-                const winnerB = isFinished && sB > sA;
-
-                // --- 4. ACTION AREA (UX REVOLUTION) ---
-                const canEdit = (evtStatus === 'live' || evtStatus === 'adjusting') && user;
-                let actionArea = '';
-
-                if (isFinished) {
-                    const userDelta = isPartA ? (match.delta_a || 0) : (match.delta_b || 0);
-                    if (!window._matchRegistry) window._matchRegistry = {};
-                    window._matchRegistry[match.id] = match;
-
-                    actionArea = `
-                        <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
-                            <button onclick="shareVictory('${match.id}', ${userDelta})"
-                                    style="background: linear-gradient(135deg, #CCFF00 0%, #00E36D 100%); color: black; border: none; padding: 14px; border-radius: 16px; font-size: 0.8rem; cursor: pointer; font-weight: 950; box-shadow: 0 4px 15px rgba(204,255,0,0.3); display: flex; align-items: center; gap: 10px; justify-content: center; text-transform: uppercase; width: 100%;">
-                                <i class="fab fa-instagram" style="font-size: 1.1rem;"></i> COMPARTIR VICTORIA
-                            </button>
-                            ${isAdmin ? `
-                                <button onclick="window.ControlTowerView.unlockMatch('${match.id}')" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #666; padding: 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 700;">
-                                    <i class="fas fa-lock-open"></i> DESBLOQUEAR PARA EDITAR
-                                </button>
-                            ` : ''}
-                        </div>
-                    `;
-                } else if (canEdit) {
-                    // NEW HIGH-INTERACTION PAD FOR PLAYERS
-                    actionArea = `
-                        <div style="margin-top:20px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.05);">
-                            <div style="text-align:center; margin-bottom:15px;">
-                                <span style="font-size:0.6rem; font-weight:950; color:var(--brand-neon); letter-spacing:2px; text-transform:uppercase;">INTRODUCIR RESULTADO</span>
-                            </div>
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                                <!-- TEAM A CONTROLS -->
-                                <div style="display:flex; flex-direction:column; align-items:center; gap:10px; background:rgba(255,255,255,0.02); padding:15px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
-                                    <div style="font-size:0.6rem; color:#888; font-weight:900; text-transform:uppercase;">EQ. ARRIBA</div>
-                                    <div style="display:flex; align-items:center; gap:12px;">
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', -1)" style="width:40px; height:40px; border-radius:50%; border:none; background:#333; color:white; font-size:1.5rem; display:flex; align-items:center; justify-content:center;">-</button>
-                                        <span id="score-a-val-${match.id}" style="font-size:2rem; font-weight:950; color:white; min-width:40px; text-align:center;">${sA}</span>
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', 1)" style="width:40px; height:40px; border-radius:50%; border:none; background:var(--brand-neon); color:black; font-size:1.5rem; display:flex; align-items:center; justify-content:center;">+</button>
-                                    </div>
-                                </div>
-                                <!-- TEAM B CONTROLS -->
-                                <div style="display:flex; flex-direction:column; align-items:center; gap:10px; background:rgba(255,255,255,0.02); padding:15px; border-radius:20px; border:1px solid rgba(255,255,255,0.05);">
-                                    <div style="font-size:0.6rem; color:#888; font-weight:900; text-transform:uppercase;">EQ. ABAJO</div>
-                                    <div style="display:flex; align-items:center; gap:12px;">
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', -1)" style="width:40px; height:40px; border-radius:50%; border:none; background:#333; color:white; font-size:1.5rem; display:flex; align-items:center; justify-content:center;">-</button>
-                                        <span id="score-b-val-${match.id}" style="font-size:2rem; font-weight:950; color:white; min-width:40px; text-align:center;">${sB}</span>
-                                        <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', 1)" style="width:40px; height:40px; border-radius:50%; border:none; background:var(--brand-neon); color:black; font-size:1.5rem; display:flex; align-items:center; justify-content:center;">+</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <button onclick="window.ControlTowerView.finishMatch('${match.id}')" 
-                                    style="width:100%; margin-top:20px; padding:18px; background:var(--brand-neon); color:black; font-weight:950; font-size:1rem; border:none; border-radius:20px; box-shadow: 0 10px 25px rgba(204,255,0,0.3); display:flex; align-items:center; justify-content:center; gap:12px; transition:0.3s;"
-                                    onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                                <i class="fas fa-check-circle" style="font-size:1.2rem;"></i> FINALIZAR PARTIDO
-                            </button>
-                        </div>
-                    `;
-                } else if (!isFinished && !canEdit) {
-                    actionArea = `
-                        <div style="margin-top:15px; padding:12px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:12px; text-align:center;">
-                            <span style="font-size:0.7rem; color:#666; font-weight:700;">MODO ESPECTADOR • SOLO LECTURA</span>
-                        </div>
-                    `;
-                }
-
-                return `
-                    <div id="tour-match-${match.id}" class="tour-match-card ${colorClass}" style="
-                        background: #0f172a; 
-                        border-radius: 32px; 
-                        overflow: hidden; 
-                        box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-                        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                        ${cardStyle}
-                    ">
-                        <!-- CARD HEADER -->
-                        <div style="padding: 16px 24px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03);">
-                            <span style="font-size: 0.65rem; font-weight: 900; color: rgba(255,255,255,0.5); letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px;">
-                                <div style="width: 8px; height: 8px; background: var(--brand-neon); border-radius: 50%; box-shadow: 0 0 10px var(--brand-neon);"></div>
-                                PISTA ${match.court} • P${match.round} • ${timeLabel}
-                            </span>
-                            <div class="status-area">${statusBadge}</div>
-                        </div>
-                        
-                        <!-- TEAMS & SCORES -->
-                        <div style="padding: 24px;">
-                            <!-- TEAM A -->
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-                                    <div style="font-size: 1.05rem; color: #fff; font-weight: 900; line-height: 1.2; text-transform: uppercase; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px;">
-                                        ${winnerA ? '<i class="fas fa-trophy" style="color: var(--brand-neon); font-size: 0.9rem;"></i>' : ''}
-                                        <span style="${winnerA ? 'border-bottom: 2px solid var(--brand-neon);' : ''}">${safeTeamA}</span>
-                                    </div>
-                                    ${isPartA ? '<span style="color: var(--brand-neon); font-size: 0.6rem; font-weight: 950; letter-spacing: 1px;">TU EQUIPO ★</span>' : ''}
-                                </div>
-                                <div id="match-score-a-${match.id}" style="
-                                    background: ${winnerA ? 'var(--brand-neon)' : 'rgba(255,255,255,0.05)'}; 
-                                    color: ${winnerA ? 'black' : 'white'}; 
-                                    min-width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; 
-                                    font-weight: 950; font-size: 1.6rem; border: 1px solid ${winnerA ? 'var(--brand-neon)' : 'rgba(255,255,255,0.1)'};
-                                    box-shadow: ${winnerA ? '0 0 20px rgba(204,255,0,0.3)' : 'none'};
-                                    transition: all 0.3s;
-                                ">${sA}</div>
-                            </div>
-                            
-                            <!-- DIVIDER -->
-                            <div style="height: 1px; background: linear-gradient(to right, rgba(204,255,0,0.4), transparent); margin-bottom: 20px; position: relative;">
-                                <div style="position: absolute; left: 0; top: -1px; width: 40px; height: 3px; background: var(--brand-neon); border-radius: 10px;"></div>
-                            </div>
-                            
-                            <!-- TEAM B -->
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-                                    <div style="font-size: 1.05rem; color: #fff; font-weight: 900; line-height: 1.2; text-transform: uppercase; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px;">
-                                        ${winnerB ? '<i class="fas fa-trophy" style="color: var(--brand-neon); font-size: 0.9rem;"></i>' : ''}
-                                        <span style="${winnerB ? 'border-bottom: 2px solid var(--brand-neon);' : ''}">${safeTeamB}</span>
-                                    </div>
-                                    ${isPartB ? '<span style="color: var(--brand-neon); font-size: 0.6rem; font-weight: 950; letter-spacing: 1px;">TU EQUIPO ★</span>' : ''}
-                                </div>
-                                <div id="match-score-b-${match.id}" style="
-                                    background: ${winnerB ? 'var(--brand-neon)' : 'rgba(255,255,255,0.05)'}; 
-                                    color: ${winnerB ? 'black' : 'white'}; 
-                                    min-width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; 
-                                    font-weight: 950; font-size: 1.6rem; border: 1px solid ${winnerB ? 'var(--brand-neon)' : 'rgba(255,255,255,0.1)'};
-                                    box-shadow: ${winnerB ? '0 0 20px rgba(204,255,0,0.3)' : 'none'};
-                                    transition: all 0.3s;
-                                ">${sB}</div>
-                            </div>
-                            
-                            <!-- ACTION AREA -->
-                            ${actionArea}
-                        </div>
-                    </div>
-                `;
-            } catch (err) {
-                console.error("Match Render Error:", err, match);
-                return `<div style="padding:20px; color:red; font-size:0.7rem;">Error al cargar tarjeta de partido: ${err.message}</div>`;
-            }
+            });
         }
 
         async adjustScore(matchId, field, delta) {
@@ -1329,46 +1118,178 @@
             const newVal = Math.max(0, currentVal + delta);
             match[field] = newVal;
 
-            // 2. TRIGGER UI SYNC IMMEDIATELY
-            // This will call recalc() -> render() -> smartUpdateResults()
-            // Since we updated match[field], the UI will reflect it instantly.
-            this.recalc();
+            // 2a. LIVE TIE-WARNING UPDATE (Entreno only — instant DOM feedback)
+            if (this.currentAmericanaDoc?.isEntreno) {
+                const updatedSA = parseInt(match.score_a || 0);
+                const updatedSB = parseInt(match.score_b || 0);
+                const isTie = updatedSA === updatedSB;
+                const tieDiv = document.getElementById(`tie-warning-${matchId}`);
+                const finishBtn = document.getElementById(`finish-btn-${matchId}`);
+                if (tieDiv) tieDiv.style.display = isTie && (updatedSA > 0 || updatedSB > 0) ? 'flex' : 'none';
+                if (finishBtn) {
+                    finishBtn.style.background = isTie ? 'rgba(255,160,0,0.2)' : 'var(--brand-neon)';
+                    finishBtn.style.color = isTie ? '#FFA000' : 'black';
+                    finishBtn.style.border = isTie ? '2px solid rgba(255,160,0,0.5)' : 'none';
+                    finishBtn.style.boxShadow = isTie ? 'none' : '0 10px 25px rgba(204,255,0,0.3)';
+                    finishBtn.innerHTML = `<i class="fas ${isTie ? 'fa-exclamation-triangle' : 'fa-check-circle'}" style="font-size:1.2rem;margin-right:10px;"></i>${isTie ? 'EMPATE — CORRIGE EL MARCADOR' : 'FINALIZAR PARTIDO'}`;
+                }
+            }
+
+            // 2b. DOM DIRECT UPDATE (Massive Performance Boost with Odometer)
+            const sA = parseInt(match.score_a || 0);
+            const sB = parseInt(match.score_b || 0);
+
+            if (window.MatchCard && window.MatchCard.updateOdometer) {
+                window.MatchCard.updateOdometer(matchId, 'a', sA, sA > sB);
+                window.MatchCard.updateOdometer(matchId, 'b', sB, sB > sA);
+            }
+
+            // Sync the tiny labels in the edit area if they exist
+            const lblSmallA = document.getElementById(`score-a-val-${matchId}`);
+            if (lblSmallA) lblSmallA.innerText = sA;
+            const lblSmallB = document.getElementById(`score-b-val-${matchId}`);
+            if (lblSmallB) lblSmallB.innerText = sB;
+
 
             // 3. HAPTIC FEEDBACK
             if (window.navigator?.vibrate) window.navigator.vibrate(20);
 
-            // 4. PERSIST TO FIREBASE
+            // 4. DEBOUNCED PERSIST TO FIREBASE (Stops HTTP 429 & UI Blocking)
             const isEntreno = this.currentAmericanaDoc?.isEntreno;
             const collection = isEntreno ? 'entrenos_matches' : 'matches';
 
-            try {
-                await window.db.collection(collection).doc(matchId).update({
-                    [field]: newVal
-                });
-                console.log(`✅ Score synced to cloud: ${field} = ${newVal}`);
-            } catch (e) {
-                console.error("❌ Firebase update failed:", e);
-                // On failure, the next snapshot will naturally roll back the UI
-                window.PremiumModal.alert({
-                    title: "❌ ERROR AL GUARDAR",
-                    message: e.message.includes('permission') ? "No tienes permisos para editar este resultado." : e.message,
-                    type: 'error'
-                });
+            if (!window._scoreDebounceMap) window._scoreDebounceMap = {};
+            const debounceKey = `${matchId}_${field}`;
+
+            if (window._scoreDebounceMap[debounceKey]) {
+                clearTimeout(window._scoreDebounceMap[debounceKey]);
+            }
+
+            window._scoreDebounceMap[debounceKey] = setTimeout(async () => {
+                try {
+                    await window.db.collection(collection).doc(matchId).update({
+                        [field]: newVal
+                    });
+                    console.log(`✅ Score synced (debounced): ${field} = ${newVal}`);
+                } catch (e) {
+                    console.error("❌ Firebase debounced update failed:", e);
+                    window.PremiumModal.alert({
+                        title: "❌ ERROR AL GUARDAR",
+                        message: e.message.includes('permission') ? "No tienes permisos para editar." : e.message,
+                        type: 'error'
+                    });
+                }
+            }, 800);
+        }
+
+        async manualScoreEdit(matchId, field) {
+            const match = this.allMatches.find(m => m.id === matchId);
+            if (!match) return;
+
+            const user = window.Store ? window.Store.getState('currentUser') : null;
+            const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain'].includes((user?.role || '').toLowerCase());
+
+            // Check if restricted (Optional: add extra safety if needed)
+
+            const currentVal = parseInt(match[field] || 0);
+            const teamLabel = field === 'score_a' ? 'EQUIPO ARRIBA' : 'EQUIPO ABAJO';
+
+            const options = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(v => ({
+                id: v,
+                name: String(v),
+                sub: v === currentVal ? 'ACTUAL' : ''
+            }));
+
+            const selected = await window.PremiumModal.selector({
+                title: `MARCADOR - ${teamLabel}`,
+                message: `Puntuación actual: ${currentVal}`,
+                items: options,
+                type: 'primary'
+            });
+
+            if (selected !== null && selected !== undefined) {
+                const val = (typeof selected === 'object') ? selected.id : selected;
+
+                // If match is finished, check for confirmation
+                if (match.status === 'finished' || match.status === 'finalizado') {
+                    const confirmed = await window.PremiumModal.confirm({
+                        title: "⚠️ PARTIDO FINALIZADO",
+                        message: "¿Deseas corregir el marcador de este partido ya terminado? Esto sincronizará el resultado y avisará al sistema.",
+                        confirmText: "CORREGIR",
+                        cancelText: "CANCELAR"
+                    });
+                    if (!confirmed) return;
+                }
+
+                // Call adjustScore with a direct set logic (we can modify adjustScore or do direct update)
+                // For directness:
+                const diff = val - currentVal;
+                if (diff !== 0) {
+                    await this.adjustScore(matchId, field, diff);
+                }
             }
         }
 
         async finishMatch(matchId) {
+            const confirmed = await window.PremiumModal.confirm({
+                title: "🏁 FINALIZAR PARTIDO",
+                message: "¿Deseas cerrar este partido con el resultado actual? Esta acción actualizará los niveles de los jugadores.",
+                confirmText: "SÍ, FINALIZAR",
+                cancelText: "CANCELAR"
+            });
+
+            if (!confirmed) return;
+
             const isEntreno = this.currentAmericanaDoc?.isEntreno;
             const collection = isEntreno ? 'entrenos_matches' : 'matches';
 
+            // ⛔ ANTI-EMPATE: En entrenos no se permiten empates (bloquean la lógica de avance)
+            if (isEntreno) {
+                const match = this.allMatches.find(m => m.id === matchId);
+                if (match) {
+                    const sA = parseInt(match.score_a || 0);
+                    const sB = parseInt(match.score_b || 0);
+                    if (sA === sB) {
+                        if (window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
+                        window.PremiumModal.alert({
+                            title: '⚠️ EMPATE NO PERMITIDO',
+                            message: `El resultado está igualado (${sA}-${sB}). En los entrenos debe haber un ganador claro. Ajusta el marcador antes de finalizar.`,
+                            type: 'warning'
+                        });
+                        return; // Block finalization
+                    }
+                }
+            }
+
             // Haptic feedback
             if (window.navigator?.vibrate) window.navigator.vibrate([30, 50, 30]);
+
+            // OPTIMISTIC UI: Instant visual feedback to the user before Firebase responds
+            const matchCardEl = document.getElementById(`card-${matchId}`);
+            if (matchCardEl) {
+                matchCardEl.style.transition = 'all 0.3s ease-out';
+                matchCardEl.style.opacity = '0.5';
+                matchCardEl.style.filter = 'grayscale(100%)';
+                matchCardEl.style.transform = 'scale(0.98)';
+                matchCardEl.style.pointerEvents = 'none'; // Lock interaction momentarily
+            }
 
             try {
                 await window.db.collection(collection).doc(matchId).update({
                     status: 'finished'
                 });
                 console.log("Match finished:", matchId);
+
+                // 🎊 CONFETTI FEEDBACK (Punto 6)
+                if (window.confetti) {
+                    window.confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: ['#CCFF00', '#00E36D', '#ffffff']
+                    });
+                }
+
 
                 if (window.LevelService) {
                     const match = this.allMatches.find(m => m.id === matchId);
@@ -1379,6 +1300,59 @@
                 }
             } catch (e) {
                 console.error("Finish match failed:", e);
+            }
+        }
+
+
+        async rollbackTournament(fromRound) {
+            const confirmed = await window.PremiumModal.confirm({
+                title: "⚠️ REINICIAR TORNEO",
+                message: `¿Estás SEGURO de querer reiniciar desde la RONDA ${fromRound}?<br><br>Se BORRARÁN todos los partidos de la Ronda ${fromRound + 1} en adelante. Esta acción no se puede deshacer.`,
+                confirmText: "SÍ, REINICIAR",
+                cancelText: "CANCELAR",
+                type: 'danger'
+            });
+
+            if (!confirmed) return;
+
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const type = isEntreno ? 'entreno' : 'americana';
+
+            try {
+                // 1. Purge all subsequent rounds
+                // We use a safe loop to prevent orphans
+                const nextRound = fromRound + 1;
+                const maxR = Math.max(...this.allMatches.map(m => parseInt(m.round) || 1));
+
+                for (let r = nextRound; r <= maxR; r++) {
+                    console.log(`🗑️ Purging round ${r}...`);
+                    await window.AmericanaService.deleteRound(this.currentAmericanaDoc.id, r, type);
+                }
+
+                // 2. Unlock current round matches (Optional but helpful)
+                const currentMatches = this.allMatches.filter(m => parseInt(m.round) === fromRound);
+                const collection = isEntreno ? 'entrenos_matches' : 'matches';
+
+                const batch = window.db.batch();
+                currentMatches.forEach(m => {
+                    batch.update(window.db.collection(collection).doc(m.id), { status: 'live' });
+                });
+                await batch.commit();
+
+                window.PremiumModal.alert({
+                    title: "✅ TORNEO REINICIADO",
+                    message: `Se han eliminado las rondas posteriores. Ahora puedes corregir los resultados de la Ronda ${fromRound} y generar la siguiente cuando estés listo.`,
+                    type: 'success'
+                });
+
+                this.recalc();
+            } catch (e) {
+                console.error("Rollback failed:", e);
+                window.PremiumModal.alert({
+                    title: "❌ ERROR AL REINICIAR",
+                    message: e.message,
+                    type: 'error'
+                });
             }
         }
 
@@ -1545,7 +1519,7 @@
                 <div class="fade-in" style="padding: 10px 5px 120px; font-family: 'Outfit', sans-serif;">
                     
                 <!-- SOMOSPADEL LIVE DASHBOARD (Real Community Data) -->
-                <div style="background: linear-gradient(135deg, #111 0%, #050505 100%); padding: 30px; border-radius: 32px; border: 1px solid rgba(204,255,0,0.15); margin-bottom: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); position: relative; overflow: hidden;">
+                <div style="background: #ffffff; padding: 30px; border-radius: 32px; border: 1px solid #e2e8f0; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); position: relative; overflow: hidden;">
                     <div style="position: absolute; top: -20px; right: -20px; font-size: 8rem; opacity: 0.03; color: #CCFF00; transform: rotate(-15deg);"><i class="fas fa-users"></i></div>
                     
                     <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
@@ -1553,22 +1527,22 @@
                             <i class="fas fa-broadcast-tower"></i>
                         </div>
                         <div>
-                            <h2 style="color: #fff; font-size: 1.15rem; font-weight: 950; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Panel de Comunidad</h2>
+                            <h2 style="color: #0a192f; font-size: 1.15rem; font-weight: 950; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Panel de Comunidad</h2>
                             <p style="color: #64748b; font-size: 0.75rem; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Estatus Real • SomosPadel BCN</p>
                         </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
                         <!-- Real Data: Total Players -->
-                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="background: #f8fafc; padding: 20px; border-radius: 24px; border: 1px solid #e2e8f0;">
                             <div style="font-size: 0.65rem; color: #888; font-weight: 900; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;">Jugadores en Club</div>
-                            <div style="font-size: 1.8rem; font-weight: 950; color: #fff; display: flex; align-items: baseline; gap: 5px;">
-                                ${window.Store.getState('players')?.length || '120'}<span style="font-size: 0.8rem; color: #CCFF00;">+</span>
+                            <div style="font-size: 1.8rem; font-weight: 950; color: #0a192f; display: flex; align-items: baseline; gap: 5px;">
+                                ${window.Store.getState('players')?.length || '120'}<span style="font-size: 0.8rem; color: #72a800;">+</span>
                             </div>
                         </div>
                         
                         <!-- Real Data: Next Event -->
-                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="background: #f8fafc; padding: 20px; border-radius: 24px; border: 1px solid #e2e8f0;">
                             <div style="font-size: 0.65rem; color: #888; font-weight: 900; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;">Próxima Cita</div>
                             <div style="font-size: 1rem; font-weight: 950; color: #3b82f6; margin-top: 5px; line-height: 1.2;">
                                 📅 ${(window.Store.getState('americanas')?.[0]?.date) || 'Próximamente'}
@@ -1598,30 +1572,16 @@
                             <!-- EMPTY STATE: PRO DASHBOARD MODE (Copied to ControlTower) -->
                             <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 25px; text-align: center; position: relative; overflow: hidden;">
                                 
-                                <!-- Simulated Radar Chart Visual -->
-                                <div style="margin-bottom: 20px;">
-                                    <div style="font-size: 0.8rem; color: #888; margin-bottom: 15px; font-weight: 700; text-transform:uppercase; letter-spacing:1px;">ANÁLISIS DE ATRIBUTOS (Nivel ${user && user.level ? parseFloat(user.level).toFixed(2) : '3.50'})</div>
-                                    <div style="display: flex; justify-content: space-around; align-items: flex-end; height: 100px; padding: 0 20px;">
-                                        <!-- Bars Logic based on Level -->
-                                        ${(() => {
-                        const l = user ? parseFloat(user.level || 3.5) : 3.5;
-                        const atk = Math.min(100, l * 15 + 20);
-                        const def = Math.min(100, l * 12 + 30);
-                        const tec = Math.min(100, l * 14 + 10);
-                        const fis = Math.min(100, l * 10 + 40);
-
-                        const bar = (h, color, label) => `
-                                                <div style="display:flex; flex-direction:column; align-items:center; gap:8px; flex:1;">
-                                                    <div style="width: 80%; height: 80px; background: rgba(255,255,255,0.05); border-radius: 10px; position: relative; overflow: hidden;">
-                                                        <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: ${h}%; background: ${color}; transition: height 1s ease;"></div>
-                                                    </div>
-                                                    <span style="font-size: 0.6rem; font-weight: 800; color: #aaa;">${label}</span>
-                                                </div>
-                                            `;
-                        return bar(atk, '#ef4444', 'ATAQUE') + bar(def, '#3b82f6', 'DEFENSA') + bar(tec, '#CCFF00', 'TÉCNICA') + bar(fis, '#f59e0b', 'FÍSICO');
-                    })()}
+                                <!-- 🕸️ TARJETA RPG: RADAR CHART (Chart.js) -->
+                                <div style="margin-bottom: 25px; background: rgba(0,0,0,0.4); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                                    <div style="font-size: 0.75rem; color: #CCFF00; margin-bottom: 20px; font-weight: 950; text-transform:uppercase; letter-spacing:2px; text-align: center;">
+                                        ANÁLISIS DE ATRIBUTOS (Nivel ${user && user.level ? parseFloat(user.level).toFixed(2) : '3.50'})
+                                    </div>
+                                    <div style="width: 100%; max-width: 280px; margin: 0 auto; position: relative;">
+                                        <canvas id="playerRadarChart"></canvas>
                                     </div>
                                 </div>
+
 
                                 <p style="font-size: 0.85rem; color: #ddd; margin: 0 0 20px; font-weight: 500; line-height: 1.5;">
                                     Aún no hay partidos registrados este año, pero tu perfil está <b>listo para competir</b>.
@@ -1788,6 +1748,57 @@
                     </div>
                 </div>
             `;
+        }
+
+        initRadarChart(user) {
+            const ctx = document.getElementById('playerRadarChart');
+            if (!ctx || !window.Chart) return;
+
+            const l = user ? parseFloat(user.level || 3.5) : 3.5;
+            const data = {
+                labels: ['ATAQUE', 'DEFENSA', 'TÉCNICA', 'FÍSICO', 'REMATE'],
+                datasets: [{
+                    label: 'Mi Perfil SomosPadel',
+                    data: [
+                        Math.min(100, l * 12 + 20),
+                        Math.min(100, l * 10 + 30),
+                        Math.min(100, l * 14 + 10),
+                        Math.min(100, l * 10 + 40),
+                        Math.min(100, l * 13 + 15)
+                    ],
+                    fill: true,
+                    backgroundColor: 'rgba(204, 255, 0, 0.2)',
+                    borderColor: '#CCFF00',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#CCFF00',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#CCFF00'
+                }]
+            };
+
+            new Chart(ctx, {
+                type: 'radar',
+                data: data,
+                options: {
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            pointLabels: { 
+                                color: '#aaa', 
+                                font: { size: 10, weight: '950', family: 'Outfit' } 
+                            },
+                            ticks: { display: false, stepSize: 20 },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
         }
 
         async replayShuffleAnimation() {

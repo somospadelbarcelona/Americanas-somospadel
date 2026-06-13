@@ -105,86 +105,292 @@ function renderResultsFrame(container, activeEvent, allEvents) {
                 if (badge) {
                     const status = newData.status; // 'open', 'live', 'finished'
                     const isLive = status === 'live';
-                    // Determine color based on event type AND status
-                    // If Entreno: Red/Live, or defined color. 
-                    // Let's keep the logic simple:
                     const baseColor = isEntreno ? '#FF2D55' : '#CCFF00';
+                    const badgeText = (isEntreno ? 'CONTROL DE CLASE/ENTRENO' : 'CONTROL DE TORNEO') + ' • ' + status.toUpperCase();
 
-                    const badgeColor = isLive ? '#E11D48' : baseColor;
-                    const badgeBg = isLive ? '#E11D48' : 'transparent';
-                    const badgeShadow = isLive ? '0 0 15px #E11D48' : 'none';
-                    const badgeText = (isEntreno ? 'CONTROL DE CLASE/ENTRENO' : 'CONTROL DE TORNEO') + ' | ' + status.toUpperCase();
-
-                    badge.style.color = isLive ? '#fff' : baseColor;
-                    badge.style.background = isLive ? '#E11D48' : 'transparent'; // Fix: transparent for non-live?
-                    // Actually, let's just reset the whole style string or innerHTML
-                    badge.innerHTML = badgeText;
-                    badge.style.boxShadow = badgeShadow;
-                    // Optional: Update title if changed
+                    badge.style.color = baseColor;
+                    badge.innerHTML = `<span style="width: 6px; height: 6px; border-radius: 50%; background: ${baseColor}; display: inline-block; box-shadow: 0 0 8px ${baseColor};"></span> ${badgeText}`;
+                    
                     const titleEl = document.getElementById('event-title-header');
                     if (titleEl && newData.name) titleEl.innerText = newData.name;
+
+                    const courtLabel = document.getElementById('telemetry-courts-label');
+                    if (courtLabel && newData.max_courts !== undefined) courtLabel.innerText = `${newData.max_courts} pistas`;
+
+                    const courtInput = document.getElementById('quick-courts');
+                    if (courtInput && newData.max_courts !== undefined) courtInput.value = newData.max_courts;
                 }
             }
         });
 
     container.innerHTML = `
-        <div class="dashboard-header-pro" style="margin-bottom: 2rem; background: linear-gradient(135deg, #0a0a0a 0%, #111 100%); padding: 2.5rem; border-radius: 24px;">
-            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
-                <div style="display: flex; align-items: center; gap: 1.5rem;">
-                    <div style="font-size: 2.5rem; text-shadow: 0 0 20px ${color}40;">${isEntreno ? '🏋️' : '🏆'}</div>
-                    <div>
-                        <h1 id="event-title-header" style="margin:0; color: white; font-size: 2.2rem; font-weight: 900;">${activeEvent.name}</h1>
-                        <span id="event-status-badge" style="color: ${activeEvent.status === 'live' ? '#fff' : color}; background: ${activeEvent.status === 'live' ? '#E11D48' : 'transparent'}; padding: 2px 10px; border-radius: 4px; font-weight: 800; letter-spacing: 2px; font-size: 0.8rem; text-transform: uppercase; box-shadow: ${activeEvent.status === 'live' ? '0 0 15px #E11D48' : 'none'};">
-                            ${isEntreno ? 'CONTROL DE CLASE/ENTRENO' : 'CONTROL DE TORNEO'} | ${activeEvent.status.toUpperCase()}
-                        </span>
+        <div class="dashboard-header-pro" style="margin-bottom: 2rem; background: linear-gradient(135deg, #0d0e12 0%, #15181f 100%); padding: 2rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 15px 35px rgba(0,0,0,0.4);">
+            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 2rem; align-items: start;">
+                
+                <!-- COLUMNA IZQUIERDA: INFO & METADATA -->
+                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    <!-- Badge & Icon Row -->
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="width: 54px; height: 54px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
+                            ${isEntreno ? '🏋️' : '🏆'}
+                        </div>
+                        <div>
+                            <span id="event-status-badge" style="display: inline-flex; align-items: center; gap: 6px; color: ${color}; background: rgba(${isEntreno ? '255,45,85' : '204,255,0'}, 0.08); border: 1px solid rgba(${isEntreno ? '255,45,85' : '204,255,0'}, 0.2); padding: 4px 10px; border-radius: 8px; font-weight: 800; letter-spacing: 1px; font-size: 0.7rem; text-transform: uppercase;">
+                                <span style="width: 6px; height: 6px; border-radius: 50%; background: ${color}; display: inline-block; box-shadow: 0 0 8px ${color};"></span>
+                                ${isEntreno ? 'CONTROL DE CLASE/ENTRENO' : 'CONTROL DE TORNEO'} • ${activeEvent.status.toUpperCase()}
+                            </span>
+                            <h1 id="event-title-header" style="margin: 6px 0 0 0; color: white; font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px;">${activeEvent.name}</h1>
+                        </div>
+                    </div>
+
+                    <!-- Telemetry Chips Row -->
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        <!-- Sede Chip -->
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; color: #a0aec0; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-map-marker-alt" style="color: #60A5FA;"></i> ${activeEvent.location || 'Sede no definida'}
+                        </div>
+                        <!-- Formato Chip -->
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; color: #a0aec0; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-shuffle" style="color: #A78BFA;"></i> Formato: ${activeEvent.pair_mode === 'rotating' ? 'Individual / Twister' : 'Parejas Fijas'}
+                        </div>
+                        <!-- Modo de juego -->
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; color: #a0aec0; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-table-tennis-paddle-ball" style="color: #F59E0B;"></i> <span id="telemetry-courts-label">${activeEvent.max_courts || 4} pistas</span>
+                        </div>
                     </div>
                 </div>
-                
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn-primary-pro" onclick="window.Actions.generateRound()" style="background: #3498db; color:white;">⚡ GENERAR RONDA</button>
-                    <button class="btn-primary-pro" onclick="window.Actions.simulateRound()" style="background: #e67e22; color:white;">🎲 SIMULACIÓN</button>
-                    <button class="btn-primary-pro" onclick="window.Actions.finishEvent()" style="background: #27ae60; color:white;">🏁 FINALIZAR</button>
-                    <button class="btn-primary-pro" onclick="window.Actions.recalculateLevels()" style="background: #9b59b6; color:white;">⚖️ RECALCULAR NIVELES</button>
-                    <button class="btn-primary-pro" onclick="window.Actions.resetEvent()" style="background: #e74c3c; color:white;">🗑️ REINICIAR</button>
-                </div>
-            </div>
 
-            <!-- FILTERS & TABS -->
-             <div style="margin-top: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                 <div style="display: flex; gap: 10px; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 16px;">
-                    <button onclick="window.setTab('matches')" class="tab-btn active" id="tab-matches" style="flex:1; border:none; padding:10px; border-radius:10px; font-weight:900; background:var(--primary); color:black;">PARTIDOS</button>
-                    <button onclick="window.setTab('standings')" class="tab-btn" id="tab-standings" style="flex:1; border:none; padding:10px; border-radius:10px; font-weight:900; background:transparent; color:white;">POSICIONES</button>
-                    <button onclick="window.setTab('stats')" class="tab-btn" id="tab-stats" style="flex:1; border:none; padding:10px; border-radius:10px; font-weight:900; background:transparent; color:white;">ESTADÍSTICAS</button>
-                 </div>
-                 
-                 <div style="display: flex; gap: 1rem;">
-                     <div style="flex:1;">
-                        <select id="event-selector" class="pro-input" onchange="window.locationSelectEvent(this.value)" style="width:100%;">
+                <!-- COLUMNA DERECHA: SELECTOR DE EVENTO & STEPPER -->
+                <div style="display: flex; flex-direction: column; gap: 12px; align-items: flex-end;">
+                    <!-- Event Selector -->
+                    <div style="width: 100%; position: relative;">
+                        <select id="event-selector" class="pro-input" onchange="window.locationSelectEvent(this.value)" style="width:100%; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding-left: 15px; font-weight: 700;">
                             ${allEvents.map(e => `<option value="${e.id}" ${e.id === activeEvent.id ? 'selected' : ''}>[${e.type.substring(0, 3).toUpperCase()}] ${e.name}</option>`).join('')}
                         </select>
-                     </div>
-                     <div style="display:flex; gap:10px;">
-                        <input type="number" id="quick-courts" value="${activeEvent.max_courts || 4}" class="pro-input" style="width:60px; text-align:center;">
-                        <button class="btn-outline-pro" onclick="window.Actions.updateCourts()">💾</button>
                     </div>
-                 </div>
-             </div>
-             
-             <!-- ROUND TABS -->
-             <div id="round-tabs-container" style="display: flex; gap: 1rem; margin-top: 2rem; overflow-x: auto; padding-bottom: 5px;">
+
+                    <!-- Stepper Control de Pistas -->
+                    <div style="display: flex; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; height: 48px; padding: 0 4px; width: 100%; justify-content: space-between;">
+                        <span style="font-size: 0.75rem; font-weight: 800; color: #888; padding: 0 12px; text-transform: uppercase; letter-spacing: 0.5px;">Gestionar Pistas</span>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <button type="button" onclick="window.Actions.adjustCourts(-1)" style="width: 34px; height: 34px; border-radius: 8px; border: none; background: rgba(255,255,255,0.06); color: white; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">-</button>
+                            <input type="number" id="quick-courts" value="${activeEvent.max_courts || 4}" readonly style="width: 35px; border: none; background: transparent; color: white; text-align: center; font-weight: 900; font-size: 1.1rem; -moz-appearance: textfield; pointer-events: none; margin: 0;">
+                            <button type="button" onclick="window.Actions.adjustCourts(1)" style="width: 34px; height: 34px; border-radius: 8px; border: none; background: rgba(255,255,255,0.06); color: white; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">+</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SEPARADOR SLEEK -->
+            <div style="height: 1px; background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.08) 80%, rgba(255,255,255,0) 100%); margin: 1.5rem 0;"></div>
+
+            <!-- FILAS INFERIORES: TABS & ACTION BUTTONS GRID -->
+            <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; align-items: start;">
+                
+                <!-- TABS DE RESULTADOS (Izquierda) -->
+                <div style="display: flex; gap: 6px; background: rgba(255,255,255,0.02); padding: 6px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.04); margin-top: 10px;">
+                    <button onclick="window.setTab('matches')" class="tab-btn ${window.AdminController.activeTab === 'matches' ? 'active' : ''}" id="tab-matches" style="flex:1; border:none; padding:10px 15px; border-radius:10px; font-weight:900; font-size: 0.8rem; letter-spacing: 0.5px; background:${window.AdminController.activeTab === 'matches' ? color : 'transparent'}; color:${window.AdminController.activeTab === 'matches' ? '#000' : '#888'}; cursor: pointer; transition: all 0.3s;">PARTIDOS</button>
+                    <button onclick="window.setTab('standings')" class="tab-btn ${window.AdminController.activeTab === 'standings' ? 'active' : ''}" id="tab-standings" style="flex:1; border:none; padding:10px 15px; border-radius:10px; font-weight:900; font-size: 0.8rem; letter-spacing: 0.5px; background:${window.AdminController.activeTab === 'standings' ? color : 'transparent'}; color:${window.AdminController.activeTab === 'standings' ? '#000' : '#888'}; cursor: pointer; transition: all 0.3s;">POSICIONES</button>
+                    <button onclick="window.setTab('stats')" class="tab-btn ${window.AdminController.activeTab === 'stats' ? 'active' : ''}" id="tab-stats" style="flex:1; border:none; padding:10px 15px; border-radius:10px; font-weight:900; font-size: 0.8rem; letter-spacing: 0.5px; background:${window.AdminController.activeTab === 'stats' ? color : 'transparent'}; color:${window.AdminController.activeTab === 'stats' ? '#000' : '#888'}; cursor: pointer; transition: all 0.3s;">ESTADÍSTICAS</button>
+                </div>
+
+                <!-- ACCIONES DEL EVENTO EN FILA PREMIUM OPTIMIZADA (Derecha) -->
+                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; align-items: flex-end;">
+                    
+                    <div style="font-size: 0.65rem; font-weight: 800; color: #555; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px;">
+                        Control del evento
+                    </div>
+
+                    <div style="display: flex; gap: 8px; align-items: center; justify-content: flex-end; width: 100%; flex-wrap: wrap;">
+                        
+                        <!-- Botón Circular de Ayuda ❔ (Naranja/Amber) -->
+                        <button onclick="window.Actions.toggleHelpMode()" id="btn-toggle-help"
+                            style="width: 38px; height: 38px; border-radius: 50%;
+                                   border: 1.5px solid rgba(251, 191, 36, 0.5);
+                                   background: rgba(251, 191, 36, 0.08);
+                                   color: #fbbf24; font-size: 0.9rem; cursor: pointer;
+                                   display: flex; align-items: center; justify-content: center;
+                                   transition: all 0.25s; box-shadow: 0 0 8px rgba(251,191,36,0.2);"
+                            title="Activar Modo Ayuda"
+                            onmouseover="this.style.background='rgba(251,191,36,0.18)'; this.style.boxShadow='0 0 14px rgba(251,191,36,0.4)';"
+                            onmouseout="this.style.background='rgba(251,191,36,0.08)'; this.style.boxShadow='0 0 8px rgba(251,191,36,0.2)';">
+                            <i class="fas fa-question"></i>
+                        </button>
+
+                        <!-- Botón COMPARTIR 📢 (Violeta) -->
+                        <button onclick="window.Actions.shareStandings()"
+                            style="height: 38px; padding: 0 14px; border-radius: 10px;
+                                   font-weight: 800; font-size: 0.72rem; letter-spacing: 0.3px;
+                                   border: 1.5px solid rgba(167, 139, 250, 0.5);
+                                   background: rgba(167, 139, 250, 0.08);
+                                   color: #a78bfa; cursor: pointer;
+                                   display: flex; align-items: center; gap: 6px;
+                                   transition: all 0.25s; box-shadow: 0 0 8px rgba(167,139,250,0.15);"
+                            title="Copiar clasificación para WhatsApp/compartir"
+                            onmouseover="this.style.background='rgba(167,139,250,0.18)'; this.style.boxShadow='0 0 14px rgba(167,139,250,0.35)';"
+                            onmouseout="this.style.background='rgba(167,139,250,0.08)'; this.style.boxShadow='0 0 8px rgba(167,139,250,0.15)';">
+                            <i class="fas fa-share-nodes"></i> COMPARTIR
+                        </button>
+
+                        <!-- Dropdown de Herramientas 🛠️ (Azul) -->
+                        <div style="position: relative; display: inline-block;" id="tools-dropdown-wrapper">
+                            <button onclick="window.Actions.toggleToolsDropdown(event)" id="btn-tools-dropdown"
+                                style="height: 38px; padding: 0 14px; border-radius: 10px;
+                                       font-weight: 800; font-size: 0.72rem; letter-spacing: 0.3px;
+                                       border: 1.5px solid rgba(96, 165, 250, 0.5);
+                                       background: rgba(96, 165, 250, 0.08);
+                                       color: #60a5fa; cursor: pointer;
+                                       display: flex; align-items: center; gap: 6px;
+                                       transition: all 0.25s; box-shadow: 0 0 8px rgba(96,165,250,0.15);"
+                                onmouseover="this.style.background='rgba(96,165,250,0.18)'; this.style.boxShadow='0 0 14px rgba(96,165,250,0.35)';"
+                                onmouseout="this.style.background='rgba(96,165,250,0.08)'; this.style.boxShadow='0 0 8px rgba(96,165,250,0.15)';">
+                                <i class="fas fa-tools"></i> HERRAMIENTAS <i class="fas fa-chevron-down" style="font-size: 0.55rem; opacity: 0.7;"></i>
+                            </button>
+                            
+                            <!-- MENÚ FLOTANTE GLASSMORPHIC -->
+                            <div id="tools-dropdown-menu" style="display: none; position: absolute; right: 0; top: 46px; width: 270px;
+                                background: rgba(13, 14, 20, 0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                                border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;
+                                box-shadow: 0 15px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(96,165,250,0.1);
+                                z-index: 200; padding: 8px; flex-direction: column; gap: 3px;">
+
+                                <!-- Header del menú -->
+                                <div style="padding: 6px 10px 10px 10px; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 4px;">
+                                    <span style="font-size: 0.6rem; font-weight: 900; color: #555; text-transform: uppercase; letter-spacing: 1px;">🛠️ Herramientas de Control</span>
+                                </div>
+
+                                <!-- SANEAR: Amarillo con fondo sutil -->
+                                <div style="display: flex; flex-direction: column; width: 100%;">
+                                    <button onclick="window.Actions.sanitizeCurrentRound(); window.Actions.toggleToolsDropdown()"
+                                        style="width: 100%; text-align: left; padding: 10px 12px; border-radius: 9px;
+                                               border: 1px solid rgba(241,196,15,0.2);
+                                               background: rgba(241,196,15,0.06);
+                                               color: #f1c40f; font-weight: 700; font-size: 0.76rem;
+                                               display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;"
+                                        onmouseover="this.style.background='rgba(241,196,15,0.14)'; this.style.borderColor='rgba(241,196,15,0.4)';"
+                                        onmouseout="this.style.background='rgba(241,196,15,0.06)'; this.style.borderColor='rgba(241,196,15,0.2)';">
+                                        <span style="width:22px; height:22px; border-radius:6px; background:rgba(241,196,15,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="fas fa-broom" style="font-size:0.7rem;"></i></span>
+                                        <span>Sanear Ronda</span>
+                                    </button>
+                                    <p class="action-help-text" style="display: none; font-size: 0.62rem; color: #a0aec0; padding: 4px 12px 8px 44px; margin: 0; line-height: 1.4;">
+                                        Limpia partidos duplicados o fantasma si hubo micro-cortes de red.
+                                    </p>
+                                </div>
+
+                                <!-- REPARAR: Verde neón con fondo sutil -->
+                                <div style="display: flex; flex-direction: column; width: 100%;">
+                                    <button onclick="window.Actions.repairCurrentRound(); window.Actions.toggleToolsDropdown()"
+                                        style="width: 100%; text-align: left; padding: 10px 12px; border-radius: 9px;
+                                               border: 1px solid rgba(0,227,109,0.2);
+                                               background: rgba(0,227,109,0.06);
+                                               color: #00E36D; font-weight: 700; font-size: 0.76rem;
+                                               display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;"
+                                        onmouseover="this.style.background='rgba(0,227,109,0.14)'; this.style.borderColor='rgba(0,227,109,0.4)';"
+                                        onmouseout="this.style.background='rgba(0,227,109,0.06)'; this.style.borderColor='rgba(0,227,109,0.2)';">
+                                        <span style="width:22px; height:22px; border-radius:6px; background:rgba(0,227,109,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="fas fa-wrench" style="font-size:0.7rem;"></i></span>
+                                        <span>Reparar Pistas</span>
+                                    </button>
+                                    <p class="action-help-text" style="display: none; font-size: 0.62rem; color: #a0aec0; padding: 4px 12px 8px 44px; margin: 0; line-height: 1.4;">
+                                        Detecta jugadores sin partido y reconstruye sus pistas de juego.
+                                    </p>
+                                </div>
+
+                                <!-- SIMULAR / AZAR (Condicional): Naranja -->
+                                ${activeEvent.pair_mode === 'rotating' || activeEvent.type === 'entreno' ? `
+                                <div style="display: flex; flex-direction: column; width: 100%;">
+                                    <button onclick="window.Actions.resetEvent(true); window.Actions.toggleToolsDropdown()"
+                                        style="width: 100%; text-align: left; padding: 10px 12px; border-radius: 9px;
+                                               border: 1px solid rgba(243,156,18,0.2);
+                                               background: rgba(243,156,18,0.06);
+                                               color: #f39c12; font-weight: 700; font-size: 0.76rem;
+                                               display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;"
+                                        onmouseover="this.style.background='rgba(243,156,18,0.14)'; this.style.borderColor='rgba(243,156,18,0.4)';"
+                                        onmouseout="this.style.background='rgba(243,156,18,0.06)'; this.style.borderColor='rgba(243,156,18,0.2)';">
+                                        <span style="width:22px; height:22px; border-radius:6px; background:rgba(243,156,18,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="fas fa-dice" style="font-size:0.7rem;"></i></span>
+                                        <span>Reiniciar con Azar</span>
+                                    </button>
+                                    <p class="action-help-text" style="display: none; font-size: 0.62rem; color: #a0aec0; padding: 4px 12px 8px 44px; margin: 0; line-height: 1.4;">
+                                        Reinicia y regenera la Ronda 1 con parejas al 100% de azar (social).
+                                    </p>
+                                </div>
+                                ` : ''}
+
+                                <!-- SEPARADOR -->
+                                <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 3px 0;"></div>
+
+                                <!-- RESET (Reiniciar Balanceado): Rojo -->
+                                <div style="display: flex; flex-direction: column; width: 100%;">
+                                    <button onclick="window.Actions.resetEvent(); window.Actions.toggleToolsDropdown()"
+                                        style="width: 100%; text-align: left; padding: 10px 12px; border-radius: 9px;
+                                               border: 1px solid rgba(239,68,68,0.2);
+                                               background: rgba(239,68,68,0.06);
+                                               color: #ef4444; font-weight: 700; font-size: 0.76rem;
+                                               display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;"
+                                        onmouseover="this.style.background='rgba(239,68,68,0.14)'; this.style.borderColor='rgba(239,68,68,0.4)';"
+                                        onmouseout="this.style.background='rgba(239,68,68,0.06)'; this.style.borderColor='rgba(239,68,68,0.2)';">
+                                        <span style="width:22px; height:22px; border-radius:6px; background:rgba(239,68,68,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="fas fa-rotate" style="font-size:0.7rem;"></i></span>
+                                        <span>Reiniciar Balanceado</span>
+                                    </button>
+                                    <p class="action-help-text" style="display: none; font-size: 0.62rem; color: #a0aec0; padding: 4px 12px 8px 44px; margin: 0; line-height: 1.4;">
+                                        ⚠️ Borra TODOS los partidos y regenera la Ronda 1 por niveles.
+                                    </p>
+                                </div>
+
+                                <!-- BORRAR POSTERIORES (Seguridad): Rojo oscuro -->
+                                <div id="btn-purge-safe-wrapper" style="display: none; width: 100%;">
+                                    <button id="btn-purge-safe" onclick="window.Actions.purgeFutureRoundsFromUI(); window.Actions.toggleToolsDropdown()"
+                                        style="width: 100%; text-align: left; padding: 10px 12px; border-radius: 9px;
+                                               border: 1px solid rgba(239,68,68,0.2);
+                                               background: rgba(239,68,68,0.04);
+                                               color: #ef4444; font-weight: 700; font-size: 0.76rem;
+                                               display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;"
+                                        onmouseover="this.style.background='rgba(239,68,68,0.12)'; this.style.borderColor='rgba(239,68,68,0.4)';"
+                                        onmouseout="this.style.background='rgba(239,68,68,0.04)'; this.style.borderColor='rgba(239,68,68,0.2)';">
+                                        <span style="width:22px; height:22px; border-radius:6px; background:rgba(239,68,68,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="fas fa-trash-alt" style="font-size:0.7rem;"></i></span>
+                                        <span>Borrar Posteriores</span>
+                                    </button>
+                                    <p class="action-help-text" style="display: none; font-size: 0.62rem; color: #a0aec0; padding: 4px 12px 8px 44px; margin: 0; line-height: 1.4;">
+                                        Elimina rondas siguientes para corregir resultados anteriores.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ROND+1: Botón Principal Neón (Azul/Cian brillante) -->
+                        <button onclick="window.Actions.generateRound()"
+                            style="height: 38px; padding: 0 18px; border-radius: 10px;
+                                   font-weight: 900; font-size: 0.75rem; letter-spacing: 0.5px;
+                                   border: none; cursor: pointer;
+                                   background: linear-gradient(135deg, #00d4ff 0%, #0072ff 100%);
+                                   color: white; box-shadow: 0 0 14px rgba(0,212,255,0.4), 0 2px 8px rgba(0,114,255,0.3);
+                                   display: flex; align-items: center; gap: 6px; transition: all 0.25s;"
+                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,212,255,0.55), 0 0 30px rgba(0,114,255,0.3)';"
+                            onmouseout="this.style.transform='none'; this.style.boxShadow='0 0 14px rgba(0,212,255,0.4), 0 2px 8px rgba(0,114,255,0.3)';">
+                            <i class="fas fa-wand-magic-sparkles"></i> ⚡ ROND+1
+                        </button>
+
+                    </div>
+                </div>
+
+            </div>
+
+             <!-- PESTAÑAS DE RONDAS -->
+             <div id="round-tabs-container" style="display: flex; gap: 8px; margin-top: 1.5rem; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch;">
                 ${[1, 2, 3, 4, 5, 6].map(r => `
                     <button class="btn-round-tab ${window.AdminController.currentRound === r ? 'active' : ''}" 
-                            onclick="window.Actions.switchRound(${r})">
+                            onclick="window.Actions.switchRound(${r})" style="font-size: 0.75rem; padding: 10px 18px; border-radius: 10px;">
                         RONDA ${r}
                     </button>`).join('')}
              </div>
+
         </div>
 
         <div id="results-main-layout" style="display: grid; grid-template-columns: 3fr 1fr; gap: 2rem;">
             <div id="matches-grid"><div class="loader"></div></div>
             <div style="display: flex; flex-direction: column; gap: 1.5rem;">
                 <!-- PRESENCIA EN TIEMPO REAL -->
-                <div class="glass-card-enterprise" style="padding: 1.5rem; border-color: rgba(0,227,109,0.3);">
+                <div class="glass-card-enterprise" style="padding: 1.5rem; border-color: rgba(0,227,109,0.3); border-radius:16px;">
                     <h3 style="margin:0 0 1rem 0; color:#00E36D; font-size:0.85rem; font-weight:900; letter-spacing:1px; display:flex; align-items:center; gap:8px;">
                         <i class="fas fa-satellite-dish"></i> RADAR DE PRESENCIA
                     </h3>
@@ -194,7 +400,7 @@ function renderResultsFrame(container, activeEvent, allEvents) {
                     <div style="margin-top:10px; font-size:0.6rem; color:rgba(255,255,255,0.2); text-align:center;">Actualización: cada 30s</div>
                 </div>
                 <!-- CLASIFICACIÓN -->
-                <div id="sidebar-container" class="glass-card-enterprise">
+                <div id="sidebar-container" class="glass-card-enterprise" style="border-radius:16px;">
                     <h3 style="margin:0 0 1rem 0; color:white; font-size:1rem;">CLASIFICACIÓN</h3>
                     <div id="standings-list"></div>
                 </div>
@@ -325,6 +531,28 @@ async function renderMatchesGrid(eventId, type, round) {
             if (!validIds.has(id)) card.remove();
         });
 
+        // --- NEW: NEXT ROUND PROMPT IN ADMIN PANEL ---
+        const maxMatchRound = Math.max(...window.AdminController.matchesBuffer.map(m => parseInt(m.round) || 1));
+        const isCurrentRoundFinished = roundMatches.length > 0 && roundMatches.every(m => m.status === 'finished' || m.status === 'finalizado');
+
+        const existingPrompt = document.getElementById('admin-next-round-prompt');
+        if (existingPrompt) existingPrompt.remove();
+
+        if (isCurrentRoundFinished && round === maxMatchRound) {
+            const promptHTML = `
+                <div id="admin-next-round-prompt" class="glass-card-enterprise animate-pop-in" style="grid-column: 1 / -1; margin-top: 2rem; padding: 2.5rem; border: 2px solid var(--primary); text-align: center; background: rgba(204,255,0,0.05);">
+                    <h2 style="color: var(--primary); margin: 0 0 10px 0; font-weight: 900;">🎯 RONDA ${round} COMPLETADA</h2>
+                    <p style="color: rgba(255,255,255,0.7); margin-bottom: 2rem;">Todos los partidos de esta ronda han finalizado. ¿Deseas generar la siguiente ronda ahora?</p>
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <button onclick="window.Actions.generateRound()" class="btn-primary-pro" style="padding: 15px 40px; font-size: 1.1rem;">
+                            🚀 GENERAR RONDA ${round + 1}
+                        </button>
+                    </div>
+                </div>
+            `;
+            grid.insertAdjacentHTML('beforeend', promptHTML);
+        }
+
         renderStandingsInternal(window.AdminController.matchesBuffer);
     };
 
@@ -339,13 +567,21 @@ async function renderMatchesGrid(eventId, type, round) {
             });
 
         window.AdminController.matchesUnsubscribers = [sub];
+
+        // --- NEW: UI DYNAMICS FOR PURGE BUTTON ---
+        setTimeout(() => {
+            const maxR = Math.max(...window.AdminController.matchesBuffer.map(m => parseInt(m.round) || 1));
+            const btnPurgeWrapper = document.getElementById('btn-purge-safe-wrapper');
+            if (btnPurgeWrapper) btnPurgeWrapper.style.display = (round < maxR) ? 'block' : 'none';
+        }, 500);
+
     } catch (e) {
         container.innerHTML = `Error: ${e.message}`;
     }
 }
 
 function renderMatchCard(match) {
-    const isFinished = match.status === 'finished';
+    const isFinished = match.status === 'finished' || match.status === 'finalizado';
     const sA = match.score_a || 0;
     const sB = match.score_b || 0;
 
@@ -387,7 +623,7 @@ function renderMatchCard(match) {
             <div style="display: flex; gap: 15px; justify-content: center; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <button onclick="window.Actions.adjustScore('${match.id}', 'score_a', -1)" style="width:32px; height:32px; border-radius:50%; border:1px solid #444; background:#222; color:white; font-weight:900;">-</button>
-                    <span id="score-a-${match.id}" onclick="const v = prompt('Puntuación Equipo A', this.innerText); if(v!==null) window.Actions.updateScore('${match.id}', 'score_a', v)" style="width: 30px; text-align: center; font-weight: 950; font-size: 1.4rem; color: var(--primary); cursor: pointer;" title="Click para editar">${sA}</span>
+                    <span id="score-a-${match.id}" onclick="window.Actions.manualScoreEdit('${match.id}', 'score_a')" style="width: 30px; text-align: center; font-weight: 950; font-size: 1.4rem; color: var(--primary); cursor: pointer;" title="Click para editar">${sA}</span>
                     <button onclick="window.Actions.adjustScore('${match.id}', 'score_a', 1)" style="width:32px; height:32px; border-radius:50%; border:1px solid var(--primary); background:#222; color:var(--primary); font-weight:900;">+</button>
                 </div>
                 
@@ -395,7 +631,7 @@ function renderMatchCard(match) {
                 
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <button onclick="window.Actions.adjustScore('${match.id}', 'score_b', -1)" style="width:32px; height:32px; border-radius:50%; border:1px solid #444; background:#222; color:white; font-weight:900;">-</button>
-                    <span id="score-b-${match.id}" onclick="const v = prompt('Puntuación Equipo B', this.innerText); if(v!==null) window.Actions.updateScore('${match.id}', 'score_b', v)" style="width: 30px; text-align: center; font-weight: 950; font-size: 1.4rem; color: var(--primary); cursor: pointer;" title="Click para editar">${sB}</span>
+                    <span id="score-b-${match.id}" onclick="window.Actions.manualScoreEdit('${match.id}', 'score_b')" style="width: 30px; text-align: center; font-weight: 950; font-size: 1.4rem; color: var(--primary); cursor: pointer;" title="Click para editar">${sB}</span>
                     <button onclick="window.Actions.adjustScore('${match.id}', 'score_b', 1)" style="width:32px; height:32px; border-radius:50%; border:1px solid var(--primary); background:#222; color:var(--primary); font-weight:900;">+</button>
                 </div>
             </div>
@@ -436,15 +672,20 @@ function renderMatchCard(match) {
                 
                 ${scoreControls}
                 
-                <div style="margin-top:20px; display:flex; flex-direction:column; gap:8px;">
-                     <button id="btn-finish-${match.id}" class="btn-primary-pro" onclick="${isFinished ? '' : `window.Actions.finishMatch('${match.id}', true)`}" 
-                             style="width:100%; padding:12px; font-size:0.85rem; font-weight:900; background:${isFinished ? 'rgba(0,255,100,0.1)' : 'var(--primary)'}; color:${isFinished ? '#00ff64' : 'black'}; border:none; cursor:${isFinished ? 'default' : 'pointer'};">
-                        ${isFinished ? '✓ RESULTADO CONFIRMADO' : 'ACEPTAR RESULTADO'}
+                <div style="margin-top:20px; display:flex; flex-direction:column; gap:12px;">
+                     <button id="btn-finish-${match.id}" class="btn-primary-pro ${(!isFinished && (sA > 0 || sB > 0)) ? 'btn-pulse-primary' : ''}" 
+                             onclick="${isFinished ? '' : `window.Actions.finishMatch('${match.id}', true)`}" 
+                             style="width:100%; padding:14px; font-size:0.85rem; font-weight:900; 
+                                    background:${isFinished ? 'rgba(0,255,100,0.1)' : 'var(--primary)'}; 
+                                    box-shadow:${(!isFinished && (sA > 0 || sB > 0)) ? '0 0 20px var(--primary-glow)' : 'none'};
+                                    color:${isFinished ? '#00ff64' : 'black'}; border:none; cursor:${isFinished ? 'default' : 'pointer'}; position:relative; overflow:hidden;">
+                        ${isFinished ? '<i class="fas fa-check-circle"></i> RESULTADO CONFIRMADO' : 'ACEPTAR RESULTADO'}
+                        ${(!isFinished && (sA > 0 || sB > 0)) ? '<div class="confetti-hint"></div>' : ''}
                      </button>
                      ${isFinished ? `
                         <button class="btn-outline-pro" onclick="window.Actions.finishMatch('${match.id}', false)" 
-                                style="width:100%; padding:10px; font-size:0.8rem; font-weight:900; color:#CCFF00; border:1px solid #CCFF00; background:transparent;">
-                            <i class="fas fa-undo"></i> REABRIR / EDITAR MARCADO
+                                style="width:100%; padding:10px; font-size:0.8rem; font-weight:900; color:#ff9f43; border:1px solid #ff9f43; background:transparent;">
+                            <i class="fas fa-undo"></i> REABRIR / CORREGIR
                         </button>
                      ` : ''}
                 </div>
@@ -462,7 +703,7 @@ function renderStandingsInternal(matches) {
     const isRotating = evt && evt.pair_mode === 'rotating';
 
     matches.forEach(m => {
-        if (m.status === 'finished') {
+        if (m.status === 'finished' || m.status === 'finalizado') {
             const processTeams = (namesGroup, score) => {
                 // Determine if we should treat names as separate individuals or a single pair
                 let namesToProcess = [];
@@ -504,6 +745,29 @@ function renderStandingsInternal(matches) {
 
 // --- ACTIONS EXPOSED TO WINDOW ---
 window.Actions = {
+    async purgeFutureRoundsFromUI() {
+        const evt = window.AdminController.activeEvent;
+        const round = window.AdminController.currentRound;
+
+        const confirmed = await PremiumModal.confirm({
+            title: "🛑 BORRADO DE SEGURIDAD",
+            message: `¿Estás seguro de que deseas eliminar TODAS las rondas posteriores a la <b>Ronda ${round}</b>?<br><br>Esta acción es necesaria si quieres corregir resultados de la ronda actual que afecten a los cruces siguientes.`,
+            confirmText: "SÍ, BORRAR POSTERIORES",
+            cancelText: "CANCELAR",
+            type: 'danger'
+        });
+
+        if (confirmed) {
+            try {
+                await MatchMakingService.purgeSubsequentRounds(evt.id, round, evt.type);
+                PremiumModal.alert({ title: "ÉXITO", message: "Rondas posteriores eliminadas correctamente.", type: 'success' });
+                window.loadResultsView(evt.type);
+            } catch (e) {
+                PremiumModal.alert({ title: "ERROR", message: e.message, type: 'danger' });
+            }
+        }
+    },
+
     async generateRound() {
         const evt = window.AdminController.activeEvent;
         const round = window.AdminController.currentRound;
@@ -533,6 +797,64 @@ window.Actions = {
             } else {
                 alert(e.message);
             }
+        }
+    },
+
+    async sanitizeCurrentRound() {
+        const evt = window.AdminController.activeEvent;
+        const round = window.AdminController.currentRound;
+        if (!confirm(`⚠️ ¿Deseas sanear la Ronda ${round}?\n\nSe eliminarán:\n- Partidos duplicados (misma pista/par)\n- Partidos fantasma sin finalizar si ya existe uno finalizado.`)) return;
+
+        try {
+            const res = await MatchMakingService.sanitizeRound(evt.id, evt.type, round);
+            alert(`✅ Saneamiento completado.\n\nRegistros eliminados: ${res.deleted}`);
+            window.loadResultsView(evt.type);
+        } catch (e) {
+            alert("❌ Error: " + e.message);
+        }
+    },
+
+    async repairCurrentRound() {
+        const evt = window.AdminController.activeEvent;
+        const round = window.AdminController.currentRound;
+        if (!confirm(`⚠️ ¿Deseas reparar la Ronda ${round}?\n\nSe buscarán jugadores sin partido y se restaurarán las pistas faltantes.`)) return;
+
+        try {
+            const res = await MatchMakingService.repairRound(evt.id, evt.type, round);
+            if (res.repaired > 0) {
+                alert(`✅ Reparación completada.\n\nPistas restauradas: ${res.repaired}`);
+            } else {
+                alert(res.message || "✅ No se han detectado pistas faltantes o jugadores sin asignar.");
+            }
+            window.loadResultsView(evt.type);
+        } catch (e) {
+            alert("❌ Error: " + e.message);
+        }
+    },
+
+    async switchRound(r) {
+        console.log("📍 Switching to Round:", r);
+        window.AdminController.currentRound = r;
+
+        // Update Tabs UI
+        document.querySelectorAll('.btn-round-tab').forEach(btn => {
+            const isTarget = btn.innerText.includes(String(r));
+            btn.classList.toggle('active', isTarget);
+        });
+
+        const evt = window.AdminController.activeEvent;
+        if (evt) {
+            window.renderMatchesGrid(evt.id, evt.type, r);
+        }
+    },
+
+    async recalculateLevels() {
+        if (!confirm("⚠️ ¿Recalcular niveles ELO de TODOS los jugadores?\n\nEste proceso escanea todos los partidos finalizados y ajusta los niveles para corregir posibles desviaciones.")) return;
+
+        if (window.LevelAdjustmentService && window.LevelAdjustmentService.recalculateAllLevels) {
+            await window.LevelAdjustmentService.recalculateAllLevels();
+        } else {
+            alert("Error: LevelAdjustmentService no disponible.");
         }
     },
 
@@ -569,6 +891,35 @@ window.Actions = {
     /**
      * OCR Integration: Scan scoreboard from photo
      */
+    async manualScoreEdit(matchId, field) {
+        const match = window.AdminController.matchesBuffer.find(m => m.id === matchId);
+        if (!match) return;
+
+        const currentVal = match[field] || 0;
+        const teamLabel = field === 'score_a' ? 'EQUIPO A' : 'EQUIPO B';
+
+        // --- NEW: QUICK GRID SELECTOR ---
+        const options = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(v => ({
+            id: v,
+            name: String(v),
+            sub: v === currentVal ? 'ACTUAL' : ''
+        }));
+
+        const selected = await PremiumModal.selector({
+            title: `SELECCIONAR JUEGOS - ${teamLabel}`,
+            message: `Puntuación actual: ${currentVal}`,
+            items: options,
+            placeholder: 'Filtrar...',
+            type: 'primary'
+        });
+
+        if (selected !== null && selected !== undefined) {
+            // Extraer el ID si es un objeto, o usar el valor directo
+            const val = (typeof selected === 'object') ? selected.id : selected;
+            await this.updateScore(matchId, field, val);
+        }
+    },
+
     async scanMatchScore(matchId) {
         if (!window.OcrService) {
             alert("Error: OCR Service no cargado.");
@@ -591,6 +942,18 @@ window.Actions = {
     },
 
     async updateScore(matchId, field, value) {
+        const match = window.AdminController.matchesBuffer.find(m => m.id === matchId);
+        if (match && (match.status === 'finished' || match.status === 'finalizado')) {
+            const proced = await PremiumModal.confirm({
+                title: "⚠️ PARTIDO FINALIZADO",
+                message: "Este partido ya está cerrado. Para cambiar el resultado, se recomienda reabrirlo primero.<br><br>¿Deseas modificar el marcador de todas formas?",
+                confirmText: "MODIFICAR",
+                cancelText: "CANCELAR",
+                type: 'danger'
+            });
+            if (!proced) return;
+        }
+
         const evt = window.AdminController.activeEvent;
         const collection = (evt && evt.type === 'entreno') ? FirebaseDB.entrenos_matches : FirebaseDB.matches;
         await collection.update(matchId, { [field]: parseInt(value) });
@@ -599,6 +962,11 @@ window.Actions = {
     async adjustScore(matchId, field, delta) {
         const match = window.AdminController.matchesBuffer.find(m => m.id === matchId);
         if (!match) return;
+
+        if (match.status === 'finished' || match.status === 'finalizado') {
+            console.log("Admin editing finished match score via +/-");
+            // We allow it in admin panel but we could add a subtle toast
+        }
 
         // CHECK CASCADE
         await this.checkAndPurge(matchId);
@@ -647,76 +1015,146 @@ window.Actions = {
     },
 
     async finishMatch(matchId, isFinish) {
-        alert(`${isFinish ? '🏁 Finalizando' : '🔓 Reabriendo'} partido: ${matchId}`);
+        const match = window.AdminController.matchesBuffer.find(m => m.id === matchId);
+        if (!match) return;
+
         const evt = window.AdminController.activeEvent;
         const collection = (evt && evt.type === 'entreno') ? FirebaseDB.entrenos_matches : FirebaseDB.matches;
-        const newStatus = isFinish ? 'finished' : 'live';
 
-        // CHECK CASCADE ON REOPEN
-        if (!isFinish) {
-            alert("🧹 Verificando cascada de purga...");
+        if (isFinish) {
+            // --- ROBUST CONFIRMATION ---
+            const sA = parseInt(match.score_a || 0);
+            const sB = parseInt(match.score_b || 0);
+            const teamA = match.teamA || (Array.isArray(match.team_a_names) ? match.team_a_names.join(' / ') : match.team_a_names);
+            const teamB = match.teamB || (Array.isArray(match.team_b_names) ? match.team_b_names.join(' / ') : match.team_b_names);
+
+            let winnerText = "EMPATE";
+            let type = 'warning';
+            if (sA > sB) { winnerText = `GANADOR: ${teamA}`; type = 'success'; }
+            else if (sB > sA) { winnerText = `GANADOR: ${teamB}`; type = 'success'; }
+
+            if (sA === 0 && sB === 0) {
+                const confirmZero = await PremiumModal.confirm({
+                    title: "⚠️ ¿MARCADOR 0 - 0?",
+                    message: `Has introducido un 0-0. ¿Es este el resultado real o un error?`,
+                    confirmText: "ES CORRECTO (0-0)",
+                    cancelText: "VOLVER A EDITAR",
+                    type: 'danger'
+                });
+                if (!confirmZero) return;
+            }
+
+            const confirmed = await PremiumModal.confirm({
+                title: "✅ CONFIRMAR RESULTADO",
+                message: `
+                    <div style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 20px; margin: 15px 0; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="font-weight: 800; color: white;">${teamA}</span>
+                            <span style="font-size: 1.5rem; font-weight: 950; color: var(--primary);">${sA}</span>
+                        </div>
+                        <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 10px 0;"></div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 800; color: white;">${teamB}</span>
+                            <span style="font-size: 1.5rem; font-weight: 950; color: var(--primary);">${sB}</span>
+                        </div>
+                    </div>
+                    <div style="font-weight: 900; color: ${type === 'success' ? '#00ff88' : '#ccff00'}; letter-spacing: 1px; font-size: 0.8rem;">${winnerText.toUpperCase()}</div>
+                    <p style="margin-top: 15px; font-size: 0.85rem; color: #94a3b8;">Al confirmar, se actualizarán los niveles ELO de los jugadores.</p>
+                `,
+                confirmText: "ACEPTAR Y FINALIZAR",
+                cancelText: "REVISAR",
+                type: type
+            });
+
+            if (!confirmed) return;
+        } else {
+            // --- REOPENING LOGIC WITH AUTO-ROLLBACK ---
+            const confirmedValue = await PremiumModal.confirm({
+                title: "🔓 REABRIR PARTIDO",
+                message: "¿Estás seguro de que quieres reabrir este partido?<br><br><b>SISTEMA DE SEGURIDAD:</b> Al reabrir, se <u>deshacerán automáticamente</u> los ajustes de nivel ELO realizados previamente para este partido.",
+                confirmText: "SÍ, REABRIR Y REVERTIR",
+                cancelText: "CANCELAR",
+                type: 'warning'
+            });
+            if (!confirmedValue) return;
+
+            // 1. Rollback ELO Results
+            if (window.LevelAdjustmentService) {
+                try { await LevelAdjustmentService.rollbackMatchResults(matchId); }
+                catch (e) { console.error("Error en rollback:", e); }
+            }
+
+            // 2. CHECK CASCADE (Purge subsequent if user changes rank-critical results later)
             await this.checkAndPurge(matchId);
         }
 
         try {
+            const newStatus = isFinish ? 'finished' : 'live';
             await collection.update(matchId, { status: newStatus });
 
-            // --- NEW: AJUSTE DE NIVEL AUTOMÁTICO Y FIABILIDAD ---
             if (isFinish) {
-                const updatedMatch = window.AdminController.matchesBuffer.find(m => m.id === matchId);
-                if (updatedMatch) {
-                    // 1. Ajuste de nivel (Pro Smart)
-                    if (window.LevelAdjustmentService) {
-                        LevelAdjustmentService.processMatchResults(updatedMatch).catch(e => {
-                            console.error("Error ajustando nivel:", e);
-                        });
-                    }
+                // Ajuste de nivel (Pro Smart)
+                if (window.LevelAdjustmentService) {
+                    LevelAdjustmentService.processMatchResults(match).catch(e => {
+                        console.error("Error ajustando nivel:", e);
+                    });
+                }
 
-                    // 2. Actualizar fecha de actividad (Semáforo)
-                    if (window.LevelReliabilityService) {
-                        const playerIds = [
-                            ...(updatedMatch.team_a_ids || []),
-                            ...(updatedMatch.team_b_ids || [])
-                        ];
-                        window.LevelReliabilityService.updateLastMatchDate(playerIds).catch(e => {
-                            console.error("Error actualizando fiabilidad:", e);
-                        });
-                    }
+                // Actualizar fecha de actividad
+                if (window.LevelReliabilityService) {
+                    const playerIds = [...(match.team_a_ids || []), ...(match.team_b_ids || [])];
+                    window.LevelReliabilityService.updateLastMatchDate(playerIds).catch(e => {
+                        console.error("Error actualizando fiabilidad:", e);
+                    });
                 }
             }
 
             console.log("✅ Estado actualizado en DB.");
-        } catch (e) {
-            alert("❌ Error DB: " + e.message);
-        }
 
-        if (isFinish) {
-            setTimeout(async () => {
-                const round = window.AdminController.currentRound;
-                const roundMatches = window.AdminController.matchesBuffer.filter(m => parseInt(m.round) === round);
-                const pending = roundMatches.filter(m => m.status !== 'finished');
+            if (isFinish) {
+                // Check for round completion
+                setTimeout(async () => {
+                    const round = window.AdminController.currentRound;
+                    // We need to re-fetch or use buffer but buffer might be old. 
+                    // Better to check the latest buffer
+                    const roundMatches = window.AdminController.matchesBuffer.filter(m => parseInt(m.round) == round);
+                    const pending = roundMatches.filter(m => m.status !== 'finished');
 
-                if (pending.length === 0 && roundMatches.length > 0) {
-                    // LIMIT TO 6 ROUNDS
-                    if (round >= 6) {
-                        alert("🏁 ENTRENO FINALIZADO\n(6 rondas completadas con éxito)");
-                        return;
-                    }
+                    if (pending.length === 0 && roundMatches.length > 0) {
+                        if (round >= 6) {
+                            await PremiumModal.alert({
+                                title: "🏁 EVENTO COMPLETADO",
+                                message: "Se han completado las 6 rondas oficiales con éxito.",
+                                type: 'success'
+                            });
+                            return;
+                        }
 
-                    const nextRound = round + 1;
-                    const autoGenerate = evt.is_simulation;
+                        const nextRound = round + 1;
+                        const autoGenerate = evt.is_simulation;
 
-                    if (autoGenerate || confirm(`Ronda ${round} finalizada. ¿Generar Ronda ${nextRound}?`)) {
-                        try {
-                            await MatchMakingService.generateRound(evt.id, evt.type, nextRound);
-                            if (autoGenerate) {
-                                await MatchMakingService.simulateRound(evt.id, nextRound, evt.type);
+                        if (autoGenerate || await PremiumModal.confirm({
+                            title: `🚀 RONDA ${round} FINALIZADA`,
+                            message: `Todos los partidos de la Ronda ${round} han terminado.<br><br>¿Quieres generar los cruces de la <b>Ronda ${nextRound}</b> ahora?`,
+                            confirmText: "GENERAR SIGUIENTE RONDA",
+                            cancelText: "LO HARÉ LUEGO",
+                            type: 'success'
+                        })) {
+                            try {
+                                await MatchMakingService.generateRound(evt.id, evt.type, nextRound);
+                                if (autoGenerate) {
+                                    await MatchMakingService.simulateRound(evt.id, nextRound, evt.type);
+                                }
+                                window.Actions.switchRound(nextRound);
+                            } catch (e) {
+                                PremiumModal.alert({ title: "ERROR AL GENERAR", message: e.message, type: 'danger' });
                             }
-                            window.Actions.switchRound(nextRound);
-                        } catch (e) { alert(e.message); }
+                        }
                     }
-                }
-            }, 500);
+                }, 800);
+            }
+        } catch (e) {
+            PremiumModal.alert({ title: "ERROR DB", message: e.message, type: 'danger' });
         }
     },
 
@@ -747,8 +1185,156 @@ window.Actions = {
         alert("Pistas actualizadas");
     },
 
-    async resetEvent() {
-        if (!confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsta acción es irreversible:\n1. Borrará TODOS los partidos y resultados.\n2. Reiniciará el evento a estado 'Live'.\n3. Generará automáticamente la Ronda 1.\n\n¿Continuar?")) return;
+    async adjustCourts(delta) {
+        const input = document.getElementById('quick-courts');
+        if (!input) return;
+        let val = parseInt(input.value) + delta;
+        if (val < 1) val = 1;
+        input.value = val;
+        
+        const evt = window.AdminController.activeEvent;
+        if (!evt) return;
+        
+        try {
+            await EventService.updateEvent(evt.type, evt.id, { max_courts: val });
+            if (window.NotificationService) {
+                window.NotificationService.showToast(`Pistas actualizadas a ${val}`, "success");
+            }
+        } catch (e) {
+            console.error("Error al actualizar pistas:", e);
+            alert("Error: " + e.message);
+        }
+    },
+
+    shareStandings() {
+        const evt = window.AdminController.activeEvent;
+        const matches = window.AdminController.matchesBuffer || [];
+        if (!matches.length) {
+            if (window.NotificationService) {
+                window.NotificationService.showToast('No hay datos de clasificación todavía', 'warning');
+            } else {
+                alert('No hay datos de clasificación todavía.');
+            }
+            return;
+        }
+
+        // Build stats map (same logic as renderStandingsInternal)
+        const stats = {};
+        const isRotating = evt && evt.pair_mode === 'rotating';
+        matches.forEach(m => {
+            if (m.status !== 'finished' && m.status !== 'finalizado') return;
+            const process = (namesGroup, score) => {
+                let names = [];
+                if (Array.isArray(namesGroup)) names = isRotating ? namesGroup : [namesGroup.join(' / ')];
+                else if (typeof namesGroup === 'string') names = [namesGroup];
+                names.forEach(name => {
+                    if (!name || name.includes('VACANTE')) return;
+                    if (!stats[name]) stats[name] = { games: 0, played: 0 };
+                    stats[name].played++;
+                    stats[name].games += parseInt(score || 0);
+                });
+            };
+            process(m.team_a_names, m.score_a);
+            process(m.team_b_names, m.score_b);
+        });
+
+        const sorted = Object.entries(stats)
+            .map(([k, v]) => ({ name: k, ...v }))
+            .sort((a, b) => b.games - a.games);
+
+        if (!sorted.length) {
+            alert('Aún no hay partidos finalizados para compartir.');
+            return;
+        }
+
+        const medals = ['🥇', '🥈', '🥉'];
+        const eventName = evt ? evt.name : 'Torneo';
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+        let text = `🏓 *CLASIFICACIÓN EN VIVO — ${eventName.toUpperCase()}*\n`;
+        text += `📅 Actualizado: ${timeStr}h\n`;
+        text += `${'─'.repeat(28)}\n`;
+        sorted.forEach((p, i) => {
+            const medal = medals[i] || `${i + 1}.`;
+            const first = p.name.split(' ')[0];
+            text += `${medal} *${first}* — ${p.games} juegos (${p.played} PJ)\n`;
+        });
+        text += `${'─'.repeat(28)}\n`;
+        text += `⚡ _SomosPadel BCN_`;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                if (window.NotificationService) {
+                    window.NotificationService.showToast('📋 Clasificación copiada — pégala en WhatsApp', 'success');
+                } else {
+                    alert('✅ Clasificación copiada al portapapeles.');
+                }
+            }).catch(() => {
+                prompt('Copia este texto:', text);
+            });
+        } else {
+            prompt('Copia este texto para compartir:', text);
+        }
+    },
+
+    toggleToolsDropdown(event) {
+        if (event) event.stopPropagation();
+        const menu = document.getElementById('tools-dropdown-menu');
+        if (!menu) return;
+        
+        if (!event) {
+            menu.style.display = 'none';
+            return;
+        }
+        
+        const isCurrentlyOpen = menu.style.display === 'flex';
+        menu.style.display = isCurrentlyOpen ? 'none' : 'flex';
+        
+        if (!isCurrentlyOpen) {
+            const closeDropdown = (e) => {
+                const wrapper = document.getElementById('tools-dropdown-wrapper');
+                if (wrapper && !wrapper.contains(e.target)) {
+                    menu.style.display = 'none';
+                    document.removeEventListener('click', closeDropdown);
+                }
+            };
+            setTimeout(() => {
+                document.addEventListener('click', closeDropdown);
+            }, 50);
+        }
+    },
+
+    toggleHelpMode() {
+        const btn = document.getElementById('btn-toggle-help');
+        if (!btn) return;
+        const helps = document.querySelectorAll('.action-help-text');
+        const isActive = btn.classList.toggle('active');
+        
+        if (isActive) {
+            btn.style.borderColor = 'rgba(204,255,0,0.6)';
+            btn.style.color = '#CCFF00';
+            btn.style.background = 'rgba(204,255,0,0.1)';
+            helps.forEach(h => {
+                h.style.display = 'block';
+                h.style.animation = 'fadeIn 0.2s ease-out';
+            });
+        } else {
+            btn.style.borderColor = 'rgba(255,255,255,0.08)';
+            btn.style.color = '#888';
+            btn.style.background = 'rgba(255,255,255,0.03)';
+            helps.forEach(h => h.style.display = 'none');
+        }
+    },
+
+    async resetEvent(randomize = false) {
+        let msg = randomize
+            ? "⚠️ ¿ESTÁS SEGURO?\n\nSe borrarán TODOS los partidos y se generará la Ronda 1 con PAREJAS TOTALMENTE NUEVAS (Modo Aleatorio).\n\n¿Continuar?"
+            : "⚠️ ¿ESTÁS SEGURO?\n\nEsta acción es irreversible:\n1. Borrará TODOS los partidos y resultados.\n2. Reiniciará el evento a estado 'Live'.\n3. Generará automáticamente la Ronda 1.\n\n¿Continuar?";
+
+        if (!confirm(msg)) return;
+
+        if (randomize) console.log("🎲 Reinicio aleatorio solicitado...");
 
         const evt = window.AdminController.activeEvent;
         if (!evt || !evt.id) {
@@ -811,10 +1397,14 @@ window.Actions = {
                 throw new Error("MatchMakingService no está disponible");
             }
 
-            await MatchMakingService.generateRound(evt.id, evt.type, 1);
+            await MatchMakingService.generateRound(evt.id, evt.type, 1, false, randomize);
             console.log("✅ Round 1 generated successfully");
 
-            alert("✅ Evento reiniciado y Ronda 1 generada automáticamente.");
+            if (window.NotificationService) {
+                window.NotificationService.showToast(randomize ? "🎲 Reiniciado con Nuevas Parejas" : "✅ Evento Reiniciado", "success");
+            } else {
+                alert(randomize ? "🎲 Reiniciado con éxito (Nuevas Parejas)" : "✅ Evento reiniciado y Ronda 1 generada.");
+            }
 
             // Reload view
             if (window.loadResultsView) {
@@ -999,8 +1589,9 @@ window.setTab = (tab) => {
     // UI Update
     document.querySelectorAll('.tab-btn').forEach(b => {
         const isTarget = b.id === `tab-${tab}`;
-        b.style.background = isTarget ? 'var(--primary)' : 'transparent';
-        b.style.color = isTarget ? 'black' : 'white';
+        const activeColor = window.AdminController.activeEvent.type === 'entreno' ? '#FF2D55' : '#CCFF00';
+        b.style.background = isTarget ? activeColor : 'transparent';
+        b.style.color = isTarget ? 'black' : '#888';
     });
 
     // Toggle containers

@@ -66,7 +66,7 @@ class NotificationUi {
 
             <!-- PERMISSIONS PROMPT -->
             <div id="push-permission-box" style="display:none; padding: 20px; background: rgba(204, 255, 0, 0.05); border-bottom: 1px solid rgba(204, 255, 0, 0.1);">
-                <div style="color: #ccff00; font-size: 0.75rem; font-weight: 800; margin-bottom: 8px; letter-spacing: 1px;">🔔 ACTIVAR ALERTAS</div>
+                <div style="color: #ccff00; font-size: 0.75rem; font-weight: 800; margin-bottom: 8px; letter-spacing: 1px;">⚡ ACTIVAR ALERTAS</div>
                 <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 15px; line-height: 1.4;">Recibe avisos al instante cuando empiecen tus partidos.</div>
                 <button onclick="window.NotificationUi.dismissPushPrompt(true)" style="width: 100%; background: #ccff00; color: #000; border: none; padding: 12px; border-radius: 12px; font-weight: 900; cursor: pointer; font-family:'Outfit';">ACTIVAR PUSH</button>
             </div>
@@ -185,13 +185,11 @@ class NotificationUi {
         if (!container) return;
 
         if (items.length === 0) {
-            container.innerHTML = `
-                <div style="padding: 80px 20px; text-align: center; opacity: 0.3;">
-                    <i class="fas fa-bell-slash" style="font-size: 4rem; color: #64748b; margin-bottom: 20px;"></i>
+            container.innerHTML = `<div style="padding: 80px 20px; text-align: center; opacity: 0.3;">
+                    <img src="/img/no-notifications.png" onerror="this.style.display='none'" style="width: 64px; height: 64px; margin-bottom: 20px;">
                     <div style="color: white; font-weight: 800; font-size: 1rem; letter-spacing:1px;">BANDEJA VACÍA</div>
                     <div style="color: #94a3b8; font-size: 0.8rem; margin-top:5px;">No tienes notificaciones pendientes</div>
-                </div>
-            `;
+                </div>`;
             return;
         }
 
@@ -227,7 +225,7 @@ class NotificationUi {
                     </button>
                     
                     <div class="notif-icon-box">
-                        <i class="fas fa-${item.icon || 'bell'}"></i>
+                        <i class="fas fa-${item.icon || 'bolt'}"></i>
                     </div>
                     
                     <div class="notif-content">

@@ -11,6 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control - App Somospadel BCN</title>
     <link rel="stylesheet" href="css/style.css?v=1002">
+    <link rel="stylesheet" href="css/global-light-fix.css?v=2.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -18,6 +19,7 @@
         rel="stylesheet">
     <!-- FontAwesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/mobile-header-fix.css?v=1.1">
 
     <style>
         .loader {
@@ -52,108 +54,65 @@
             padding: 3rem;
         }
 
-        /* --- 💎 FORCE WHITE TEXT IN ADMIN INTERFACE --- */
+        /* --- 💎 ENTERPRISE MATTE LIGHT THEME FOR ADMIN INTERFACE --- */
         :root {
-            --text: #ffffff !important;
-            --text-muted: #bbbbbb !important;
+            --text: #0f172a !important;
+            --text-muted: #475569 !important;
             --admin-sticky-top: 20px;
-            color-scheme: dark;
-            /* Indica al navegador que la página es oscura */
+            color-scheme: light;
         }
 
-        /* Fuerza a que TODO lo que no sea una excepción sea blanco */
-        html,
+        /* 🚨 FUERZA BRUTA DE TEXTO NEGRO/OSCURO EN TODA LA APP ADMIN 🚨 */
         body,
-        div,
-        span,
-        applet,
-        object,
-        iframe,
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6,
-        p,
-        blockquote,
-        pre,
-        a,
-        abbr,
-        acronym,
-        address,
-        big,
-        cite,
-        code,
-        del,
-        dfn,
-        em,
-        img,
-        ins,
-        kbd,
-        q,
-        s,
-        samp,
-        small,
-        strike,
-        strong,
-        sub,
-        sup,
-        tt,
-        var,
-        b,
-        u,
-        i,
-        center,
-        dl,
-        dt,
-        dd,
-        ol,
-        ul,
-        li,
-        fieldset,
-        form,
-        label,
-        legend,
-        table,
-        caption,
-        tbody,
-        tfoot,
-        thead,
-        tr,
-        th,
-        td,
-        article,
-        aside,
-        canvas,
-        details,
-        embed,
-        figure,
-        figcaption,
-        footer,
-        header,
-        hgroup,
-        menu,
-        nav,
-        output,
-        ruby,
-        section,
-        summary,
-        time,
-        mark,
-        audio,
-        video,
-        input,
-        select,
-        textarea {
-            color: #ffffff !important;
+        .app-shell,
+        .main-wrapper,
+        .workspace-area,
+        #content-area,
+        .sidebar-pro,
+        .sidebar-pro *,
+        .nav-menu,
+        .nav-item-pro,
+        .nav-text,
+        .pro-table,
+        .pro-table *,
+        .pro-table th,
+        .pro-table td,
+        .pro-table tr,
+        .pro-table-row,
+        .pro-table-row *,
+        .player-row,
+        .player-row *,
+        .glass-card-enterprise,
+        .glass-card-enterprise *,
+        .stat-value-pro,
+        .modal-content:not(.admin-login-card),
+        .modal-content:not(.admin-login-card) *,
+        .top-bar,
+        .top-title,
+        #page-title {
+            color: #0f172a !important;
+            text-shadow: none !important;
+        }
+
+        /* Excepción para cuando un botón de navegación está activo en el sidebar */
+        .sidebar-pro .nav-item-pro.active {
+            background: #ccff00 !important;
+            color: #000000 !important;
+            font-weight: 900 !important;
+            border-color: #000000 !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+        }
+        .sidebar-pro .nav-item-pro.active .nav-text,
+        .sidebar-pro .nav-item-pro.active .icon-box,
+        .sidebar-pro .nav-item-pro.active i {
+            color: #000000 !important;
         }
 
         /* Allow icons to have their own colors */
         i.fas,
         i.fab,
         i.far {
-            color: inherit !important;
+            color: inherit;
         }
 
         /* Labels priority fix */
@@ -162,7 +121,7 @@
         .modal-content label,
         .modal-content .form-group label,
         .compact-admin-form label {
-            color: #ffffff !important;
+            color: #0f172a !important;
             opacity: 1 !important;
             font-weight: 800 !important;
             font-size: 0.75rem !important;
@@ -175,135 +134,117 @@
         }
 
         /* Inputs & Selects priority fix */
-        .pro-input,
-        select.pro-input,
-        .pro-input-micro,
-        select.pro-input-micro,
-        .modal-content input,
-        .modal-content select,
-        .modal-content textarea,
-        #create-entreno-form input,
-        #create-entreno-form select {
-            color: #ffffff !important;
-            background: rgba(255, 255, 255, 0.07) !important;
-            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        input, select, textarea, .pro-input, .pro-input-micro,
+        .modal-content input, .modal-content select, .modal-content textarea,
+        #create-entreno-form input, #create-entreno-form select {
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
             height: 42px !important;
             padding: 8px 15px !important;
             font-size: 0.95rem !important;
             border-radius: 10px !important;
             width: 100% !important;
             font-family: 'Inter', sans-serif !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
         }
 
-        /* Force Select Icon White */
-        select.pro-input {
+        input:focus, select:focus, textarea:focus {
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
+            border-color: #3b82f6 !important;
+            background: #ffffff !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+        }
+
+        /* Force Select Icon Dark */
+        select {
             appearance: none !important;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230f172a'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") !important;
             background-repeat: no-repeat !important;
             background-position: right 12px center !important;
             background-size: 18px !important;
             padding-right: 40px !important;
         }
 
-        /* Dropdown options fix (Keep legible: Black on White) */
-        .pro-input option,
-        select.pro-input option,
-        .modal-content select option {
-            color: #000000 !important;
+        /* Dropdown options fix */
+        option {
+            color: #0f172a !important;
             background: #ffffff !important;
+            -webkit-text-fill-color: #0f172a !important;
             font-weight: 600 !important;
         }
 
         /* Placeholder */
-        .pro-input::placeholder,
-        input::placeholder {
-            color: rgba(255, 255, 255, 0.4) !important;
+        input::placeholder, textarea::placeholder {
+            color: #94a3b8 !important;
+            -webkit-text-fill-color: #94a3b8 !important;
         }
 
-        /* Headings & Text */
-        .modal-content h1,
-        .modal-content h2,
-        .modal-content h3,
+        /* Headings & Text en Modales (salvo login) */
+        .modal-content:not(.admin-login-card) h1,
+        .modal-content:not(.admin-login-card) h2,
+        .modal-content:not(.admin-login-card) h3,
         .top-title,
-        #page-title,
-        .glass-card-enterprise h3 {
-            color: #ffffff !important;
+        #page-title {
+            color: #0f172a !important;
             text-transform: uppercase !important;
             letter-spacing: 1px !important;
+            font-weight: 900 !important;
         }
 
-        /* Button Exception (Maintain original contrast) */
+        /* Tarjetas Premium en Modo Claro */
+        .glass-card-enterprise {
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+            border-radius: 20px !important;
+            color: #0f172a !important;
+        }
+
+        /* Excepción para la cabecera oscura del torneo en la vista de resultados */
+        .dashboard-header-pro,
+        .dashboard-header-pro div,
+        .dashboard-header-pro h1,
+        .dashboard-header-pro h2,
+        .dashboard-header-pro h3,
+        .dashboard-header-pro p {
+            color: #ffffff !important;
+            text-shadow: none !important;
+        }
+        .dashboard-header-pro button:not(.tab-btn) {
+            color: #ffffff !important;
+        }
+        .dashboard-header-pro .btn-primary-pro,
+        .dashboard-header-pro .btn-primary-pro * {
+            color: #000000 !important;
+        }
+        .dashboard-header-pro .tab-btn {
+            color: #ffffff !important;
+        }
+        .dashboard-header-pro .tab-btn.active {
+            color: #000000 !important;
+        }
+        .dashboard-header-pro select {
+            background: rgba(255,255,255,0.1) !important;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            border-color: rgba(255,255,255,0.2) !important;
+        }
+        .dashboard-header-pro select option {
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
+            background: #ffffff !important;
+        }
+
+        /* Button Exception */
         .btn-primary-pro,
         .btn-glow,
         .btn-primary-pro *,
         .btn-glow * {
             color: #000000 !important;
-        }
-
-        /* --- 🚀 MASSIVE WHITE TEXT REINFORCEMENT --- */
-        /* Targets almost everything inside content areas to avoid black text issues */
-        .modal-content div,
-        .modal-content span,
-        .modal-content p,
-        .modal-content td,
-        .modal-content th,
-        .modal-content strong,
-        .workspace-area div,
-        .workspace-area span,
-        .workspace-area p,
-        .workspace-area td,
-        .workspace-area th,
-        .player-row,
-        .player-row *,
-        input,
-        textarea,
-        .pro-input,
-        .pro-input * {
-            color: #ffffff !important;
-        }
-
-        /* --- 🃏 EXCEPTION: WHITE CARD THEME --- */
-        /* Forces black text on the white entreno cards */
-        .entreno-card-item,
-        .entreno-card-item div,
-        .entreno-card-item span,
-        .entreno-card-item strong,
-        .entreno-card-item p,
-        .entreno-card-item i:not(.fa-whatsapp):not(.fa-trash-alt):not(.fa-clone):not(.fa-pen):not(.fa-bullhorn) {
-            color: #000000 !important;
-            text-shadow: none !important;
-        }
-
-        /* Specific Black Select override */
-        .entreno-card-item select {
-            color: #000000 !important;
-            text-shadow: none !important;
-            opacity: 1 !important;
-        }
-
-        /* Keep specific icon colors */
-        .entreno-card-item .fa-calendar-alt {
-            color: #60A5FA !important;
-        }
-
-        .entreno-card-item .fa-clock {
-            color: #A78BFA !important;
-        }
-
-        .entreno-card-item .fa-users {
-            color: #10B981 !important;
-        }
-
-        /* Special fix for placeholders to be visible but muted */
-        input::placeholder,
-        textarea::placeholder {
-            color: rgba(255, 255, 255, 0.5) !important;
-        }
-
-        /* Keep select options black for readability in the dropdown */
-        option {
-            color: #000000 !important;
-            background: #ffffff !important;
+            font-weight: 900 !important;
         }
 
         .btn-micro {
@@ -312,53 +253,735 @@
             font-weight: 800 !important;
             border-radius: 6px !important;
             cursor: pointer !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid #cbd5e1 !important;
             text-transform: uppercase !important;
             line-height: 1 !important;
             width: auto !important;
             display: inline-block !important;
             margin: 2px !important;
             transition: all 0.2s !important;
-            color: #fff !important;
+            color: #0f172a !important;
+            background: #f8fafc !important;
         }
 
         .btn-micro:hover {
-            background: rgba(255, 255, 255, 0.1) !important;
+            background: #e2e8f0 !important;
             transform: translateY(-1px) !important;
         }
 
-        /* --- 🚨 ULTIMATE WHITE TEXT OVERRIDE 🚨 --- */
-        input,
-        select,
-        textarea,
-        .pro-input,
-        .pro-input-micro,
-        input[type="text"],
-        input[type="date"],
-        input[type="time"],
-        input[type="number"],
-        input[type="tel"],
-        select option {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-            /* Para navegadores basados en Webkit/Chrome */
+        /* --- 📱 CORRECCIÓN ULTRA-PREMIUM CON CONTRASTE COMPLETO Y SCROLL EN MÓVIL (ADMIN) --- */
+        @media (max-width: 1024px) {
+            /* Forzar el fondo del menú lateral/horizontal móvil a blanco y texto a negro */
+            .sidebar-pro, 
+            .sidebar-pro *,
+            .nav-menu {
+                background: #ffffff !important;
+                color: #0f172a !important;
+            }
+            
+            /* Habilitar scroll vertical suave en la barra lateral deslizante móvil */
+            .sidebar-pro {
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            
+            /* Estilizar la barra de scroll vertical del menú lateral móvil para que sea visible y premium */
+            .sidebar-pro::-webkit-scrollbar {
+                width: 6px !important;
+                display: block !important;
+            }
+            
+            .sidebar-pro::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.05) !important;
+                border-radius: 3px !important;
+            }
+            
+            .sidebar-pro::-webkit-scrollbar-thumb {
+                background: rgba(204, 255, 0, 0.4) !important; /* Amarillo neón translúcido */
+                border-radius: 3px !important;
+                border: 1px solid rgba(255, 255, 255, 0.8) !important;
+            }
+            
+            .sidebar-pro::-webkit-scrollbar-thumb:hover {
+                background: #ccff00 !important;
+            }
+            
+            /* Habilitar scroll horizontal fluido en la barra horizontal móvil */
+            .sidebar-pro .nav-menu {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                -webkit-overflow-scrolling: touch !important;
+                padding: 10px 15px 12px 15px !important;
+                gap: 10px !important;
+                margin-top: 1rem !important;
+            }
+            
+            /* Estilizar barra de scroll horizontal en móviles para guiar la usabilidad */
+            .sidebar-pro .nav-menu::-webkit-scrollbar {
+                height: 5px !important;
+                display: block !important;
+            }
+            
+            .sidebar-pro .nav-menu::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.02) !important;
+                border-radius: 4px !important;
+            }
+            
+            .sidebar-pro .nav-menu::-webkit-scrollbar-thumb {
+                background: rgba(204, 255, 0, 0.45) !important;
+                border-radius: 4px !important;
+            }
+            
+            .sidebar-pro .nav-menu::-webkit-scrollbar-thumb:hover {
+                background: #ccff00 !important;
+            }
+            
+            /* Botones del menú móvil: Prevenir deformación (flex-shrink) y forzar white-space */
+            .sidebar-pro .nav-item-pro {
+                flex: 0 0 auto !important;
+                width: auto !important;
+                min-width: max-content !important;
+                white-space: nowrap !important;
+                padding: 10px 16px !important;
+                border-radius: 14px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                margin-bottom: 0 !important;
+            }
+            
+            /* Botones inactivos en el menú móvil: Fondo blanco, bordes y texto oscuro */
+            .sidebar-pro .nav-item-pro:not(.active) {
+                background: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                color: #475569 !important;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
+            }
+            
+            .sidebar-pro .nav-item-pro:not(.active) .icon-box,
+            .sidebar-pro .nav-item-pro:not(.active) i,
+            .sidebar-pro .nav-item-pro:not(.active) span,
+            .sidebar-pro .nav-item-pro:not(.active) .nav-text {
+                color: #475569 !important;
+                background: transparent !important;
+            }
+
+            /* Botón activo: Fondo amarillo neón brillante, bordes oscuros y texto negro */
+            .sidebar-pro .nav-item-pro.active {
+                background: #ccff00 !important;
+                border: 1px solid #000000 !important;
+                color: #000000 !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+                font-weight: 900 !important;
+            }
+            
+            .sidebar-pro .nav-item-pro.active .icon-box,
+            .sidebar-pro .nav-item-pro.active i,
+            .sidebar-pro .nav-item-pro.active span,
+            .sidebar-pro .nav-item-pro.active .nav-text {
+                color: #000000 !important;
+                background: transparent !important;
+            }
+            
+            /* Ajustes estéticos para la cabecera y el perfil de usuario del admin en móvil */
+            .sidebar-pro .brand-top-left,
+            .sidebar-pro .brand-text-main *,
+            .sidebar-pro .user-profile-widget,
+            .sidebar-pro .user-profile-widget * {
+                background: #ffffff !important;
+                color: #0f172a !important;
+            }
+            
+            /* Ocultar títulos de sección en móviles para ahorrar espacio */
+            .sidebar-section-title {
+                display: none !important;
+            }
+            
+            /* Las secciones en móviles fluyen en fila horizontal */
+            .sidebar-section {
+                display: contents !important;
+            }
+            
+            /* Envoltorio del submenú en móvil */
+            .submenu-wrapper {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 0 !important; /* Sin gap por defecto para evitar espacios fantasmas en móvil */
+                flex-shrink: 0 !important;
+                width: auto !important; /* IMPORTANTE: evitar que herede width: 100% y estire el contenedor */
+            }
+            .submenu-wrapper.expanded {
+                gap: 10px !important; /* Restablecer gap al expandirse */
+            }
+            
+            /* El disparador del submenú en móvil */
+            .sidebar-pro .submenu-trigger {
+                display: inline-flex !important;
+                flex: 0 0 auto !important;
+                width: auto !important;
+                min-width: max-content !important;
+                white-space: nowrap !important;
+                padding: 10px 16px !important;
+                border-radius: 14px !important;
+                align-items: center !important;
+                gap: 8px !important;
+                margin-bottom: 0 !important;
+                font-size: 0.85rem !important;
+            }
+            
+            /* Rotación de la flechita en móvil al estar expandido */
+            .submenu-wrapper.expanded .submenu-arrow {
+                transform: rotate(90deg) !important;
+            }
+            
+            /* Contenido del submenú en móvil: colapsado horizontalmente por defecto */
+            .submenu-content {
+                display: none !important; /* Solución definitiva WebKit: ocultar por completo para evitar espacios fantasmas en móvil */
+                flex-direction: row !important;
+                gap: 0 !important; /* Sin gap cuando está colapsado */
+                padding-left: 0 !important;
+                border: none !important;
+                margin: 0 !important;
+                width: 0 !important;
+                min-width: 0 !important; /* Forzar colapso absoluto sobre min-width automático */
+                
+                /* Colapso horizontal fluído */
+                max-width: 0 !important;
+                max-height: none !important;
+                overflow: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+                transition: max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, gap 0.35s ease !important;
+            }
+            
+            /* Cuando está expandido, se muestra horizontalmente */
+            .submenu-wrapper.expanded .submenu-content {
+                display: flex !important; /* Mostrar como flex al expandir */
+                max-width: 800px !important;
+                width: auto !important;
+                min-width: max-content !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                padding: 0 5px !important;
+                gap: 10px !important; /* Restablecer gap interno al expandirse */
+            }
+            
+            /* Los ítems del submenú se comportan como nav-item-pro en móvil */
+            .sidebar-pro .submenu-item {
+                flex: 0 0 auto !important;
+                width: auto !important;
+                min-width: max-content !important;
+                white-space: nowrap !important;
+                padding: 10px 16px !important;
+                border-radius: 14px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                margin-bottom: 0 !important;
+                font-size: 0.85rem !important;
+            }
+            
+            .sidebar-pro .submenu-item:not(.active) {
+                background: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                color: #475569 !important;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
+            }
+            
+            .sidebar-pro .submenu-item::before {
+                display: none !important;
+            }
+            
+            .sidebar-pro .submenu-item.active {
+                background: #ccff00 !important;
+                border: 1px solid #000000 !important;
+                color: #000000 !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+                font-weight: 900 !important;
+            }
         }
 
-        /* Asegurar que el texto que el usuario escribe sea blanco */
-        input:focus,
-        select:focus,
-        textarea:focus {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
+        /* --- 📂 ESTRUCTURACIÓN DE SUBMENÚS PREMIUM EN ESCRITORIO --- */
+        .sidebar-section {
+            margin-bottom: 1.5rem;
+            padding: 0 0.5rem;
         }
 
-        /* Mantener las opciones del desplegable legibles (Fondo blanco, texto negro al abrir) */
-        select option {
-            background-color: #ffffff !important;
+        .sidebar-section-title {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.75rem;
+            padding-left: 0.75rem;
+            border-left: 3px solid #ccff00;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 1rem;
+        }
+
+        .submenu-wrapper {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0.5rem;
+            width: 100%;
+        }
+
+        .submenu-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100% !important;
+        }
+
+        .submenu-trigger-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .submenu-arrow {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-left: auto;
+            pointer-events: none;
+        }
+
+        /* Al expandir, rota la flecha e ilumina */
+        .submenu-wrapper.expanded .submenu-arrow {
+            transform: rotate(90deg);
+            color: #ccff00 !important;
+        }
+
+        .submenu-content {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+            padding-left: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            margin-top: 0;
+            border-left: 1px dashed #cbd5e1;
+            margin-left: 1.7rem;
+        }
+
+        .submenu-wrapper.expanded .submenu-content {
+            max-height: 500px;
+            opacity: 1;
+            pointer-events: auto;
+            margin-top: 0.4rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .submenu-item {
+            padding: 8px 14px !important;
+            font-size: 0.8rem !important;
+            border-radius: 12px !important;
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #475569 !important;
+            margin-bottom: 0 !important;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .submenu-item:hover {
+            background: rgba(204, 255, 0, 0.08) !important;
+            color: #0f172a !important;
+            transform: translateX(4px) !important;
+            border-color: rgba(204, 255, 0, 0.2) !important;
+        }
+
+        .submenu-item.active {
+            background: #ccff00 !important;
             color: #000000 !important;
-            -webkit-text-fill-color: #000000 !important;
+            font-weight: 800 !important;
+            border-color: #000000 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .submenu-item.active::after {
+            display: none !important;
+        }
+
+        .submenu-item::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #94a3b8;
+            display: inline-block;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+
+        .submenu-item:hover::before {
+            background: #ccff00;
+            transform: scale(1.3);
+        }
+
+        /* --- 🎨 COLORACIÓN SELECTIVA POR BLOQUES CROMÁTICOS PREMIUM --- */
+        
+        /* 🏠 Bloque Inicio / Retorno */
+        .nav-item-pro.nav-item-back {
+            border: 1px solid rgba(15, 23, 42, 0.2) !important;
+            background: rgba(15, 23, 42, 0.03) !important;
+            color: #0f172a !important;
+            margin-bottom: 1rem !important;
+        }
+        .nav-item-pro.nav-item-back:hover {
+            background: rgba(15, 23, 42, 0.08) !important;
+            border-color: rgba(15, 23, 42, 0.4) !important;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1) !important;
+        }
+
+
+
+        /* Smart Analytics (Cian) */
+        .nav-item-pro.btn-analytics {
+            border: 1px solid rgba(6, 182, 212, 0.4) !important;
+            background: rgba(6, 182, 212, 0.05) !important;
+            color: #0891b2 !important;
+        }
+        .nav-item-pro.btn-analytics:hover,
+        .nav-item-pro.btn-analytics.active {
+            background: #0891b2 !important;
+            color: #ffffff !important;
+            border-color: #0891b2 !important;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.25) !important;
+        }
+        .nav-item-pro.btn-analytics i {
+            color: inherit !important;
+        }
+
+        /* Gestor de Blog (Azul cielo) */
+        .nav-item-pro.btn-blog {
+            border: 1px solid rgba(14, 165, 233, 0.4) !important;
+            background: rgba(14, 165, 233, 0.05) !important;
+            color: #0284c7 !important;
+        }
+        .nav-item-pro.btn-blog:hover,
+        .nav-item-pro.btn-blog.active {
+            background: #0284c7 !important;
+            color: #ffffff !important;
+            border-color: #0284c7 !important;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.25) !important;
+        }
+        .nav-item-pro.btn-blog i {
+            color: inherit !important;
+        }
+
+        /* 🎾 Bloque 2: Gestión Deportiva (Azul, Dorado, Verde, Naranja) */
+        /* Americanas (Azul Royal) */
+        .nav-group-americana {
+            border: 1px solid rgba(59, 130, 246, 0.4) !important;
+            background: rgba(59, 130, 246, 0.05) !important;
+            color: #2563eb !important;
+        }
+        .nav-group-americana:hover,
+        .nav-group-americana.expanded,
+        .nav-group-americana.active {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border-color: #2563eb !important;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25) !important;
+        }
+        .nav-group-americana i {
+            color: inherit !important;
+        }
+        /* Americanas Submenú Items */
+        .submenu-item.nav-group-americana-sub {
+            border: 1px solid rgba(59, 130, 246, 0.3) !important;
+            background: rgba(59, 130, 246, 0.02) !important;
+            color: #2563eb !important;
+        }
+        .submenu-item.nav-group-americana-sub:hover,
+        .submenu-item.nav-group-americana-sub.active {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border-color: #2563eb !important;
+        }
+        .submenu-item.nav-group-americana-sub::before {
+            background: #2563eb !important;
+        }
+        .submenu-item.nav-group-americana-sub.active::before {
+            background: #ffffff !important;
+        }
+
+        /* Torneos (Dorado Premium) */
+        .nav-item-pro.btn-tournaments {
+            border: 1px solid rgba(234, 179, 8, 0.5) !important;
+            background: rgba(234, 179, 8, 0.08) !important;
+            color: #ca8a04 !important;
+        }
+        .nav-item-pro.btn-tournaments:hover,
+        .nav-item-pro.btn-tournaments.active {
+            background: #ca8a04 !important;
+            color: #ffffff !important;
+            border-color: #ca8a04 !important;
+            box-shadow: 0 4px 15px rgba(234, 179, 8, 0.25) !important;
+        }
+        .nav-item-pro.btn-tournaments i {
+            color: inherit !important;
+        }
+
+        /* Entrenos (Verde Lima Padel Ball) */
+        .nav-group-entreno {
+            border: 1px solid rgba(101, 163, 13, 0.5) !important;
+            background: rgba(101, 163, 13, 0.05) !important;
+            color: #65a30d !important;
+        }
+        .nav-group-entreno:hover,
+        .nav-group-entreno.expanded,
+        .nav-group-entreno.active {
+            background: #84cc16 !important;
+            color: #000000 !important;
+            border-color: #84cc16 !important;
+            box-shadow: 0 4px 15px rgba(101, 163, 13, 0.25) !important;
+        }
+        .nav-group-entreno i {
+            color: inherit !important;
+        }
+        /* Entrenos Submenú Items */
+        .submenu-item.nav-group-entreno-sub {
+            border: 1px solid rgba(101, 163, 13, 0.3) !important;
+            background: rgba(101, 163, 13, 0.02) !important;
+            color: #65a30d !important;
+        }
+        .submenu-item.nav-group-entreno-sub:hover,
+        .submenu-item.nav-group-entreno-sub.active {
+            background: #84cc16 !important;
+            color: #000000 !important;
+            border-color: #84cc16 !important;
+        }
+        .submenu-item.nav-group-entreno-sub::before {
+            background: #65a30d !important;
+        }
+        .submenu-item.nav-group-entreno-sub.active::before {
+            background: #000000 !important;
+        }
+
+        /* Partidas Abiertas (Naranja Deportivo) */
+        .nav-group-open-matches {
+            border: 1px solid rgba(249, 115, 22, 0.5) !important;
+            background: rgba(249, 115, 22, 0.05) !important;
+            color: #ea580c !important;
+        }
+        .nav-group-open-matches:hover,
+        .nav-group-open-matches.expanded,
+        .nav-group-open-matches.active {
+            background: #f97316 !important;
+            color: #ffffff !important;
+            border-color: #f97316 !important;
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.25) !important;
+        }
+        .nav-group-open-matches i {
+            color: inherit !important;
+        }
+        /* Partidas Abiertas Submenú Items */
+        .submenu-item.nav-group-open-matches-sub {
+            border: 1px solid rgba(249, 115, 22, 0.3) !important;
+            background: rgba(249, 115, 22, 0.02) !important;
+            color: #ea580c !important;
+        }
+        .submenu-item.nav-group-open-matches-sub:hover,
+        .submenu-item.nav-group-open-matches-sub.active {
+            background: #f97316 !important;
+            color: #ffffff !important;
+            border-color: #f97316 !important;
+        }
+        .submenu-item.nav-group-open-matches-sub::before {
+            background: #ea580c !important;
+        }
+        .submenu-item.nav-group-open-matches-sub.active::before {
+            background: #ffffff !important;
+        }
+
+        /* 🛠️ Bloque 3: Administración & Datos (Esmeralda, Teal, Rojo) */
+        /* Base de Datos (Esmeralda) */
+        .nav-item-pro.btn-database {
+            border: 1px solid rgba(16, 185, 129, 0.4) !important;
+            background: rgba(16, 185, 129, 0.05) !important;
+            color: #059669 !important;
+        }
+        .nav-item-pro.btn-database:hover,
+        .nav-item-pro.btn-database.active {
+            background: #059669 !important;
+            color: #ffffff !important;
+            border-color: #059669 !important;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25) !important;
+        }
+        .nav-item-pro.btn-database i {
+            color: inherit !important;
+        }
+
+        /* Sincronización (Teal/Turquesa) */
+        .nav-item-pro.btn-sync-trigger {
+            border: 1px solid rgba(13, 148, 136, 0.4) !important;
+            background: rgba(13, 148, 136, 0.05) !important;
+            color: #0d9488 !important;
+        }
+        .nav-item-pro.btn-sync-trigger:hover,
+        .nav-item-pro.btn-sync-trigger.expanded,
+        .nav-item-pro.btn-sync-trigger.active {
+            background: #0d9488 !important;
+            color: #ffffff !important;
+            border-color: #0d9488 !important;
+            box-shadow: 0 4px 15px rgba(13, 148, 136, 0.25) !important;
+        }
+        .nav-item-pro.btn-sync-trigger i {
+            color: inherit !important;
+        }
+        /* Sincro Submenú Items */
+        .submenu-item.btn-sync-sub {
+            border: 1px solid rgba(13, 148, 136, 0.3) !important;
+            background: rgba(13, 148, 136, 0.02) !important;
+            color: #0d9488 !important;
+        }
+        .submenu-item.btn-sync-sub:hover,
+        .submenu-item.btn-sync-sub.active {
+            background: #0d9488 !important;
+            color: #ffffff !important;
+            border-color: #0d9488 !important;
+        }
+        .submenu-item.btn-sync-sub::before {
+            background: #0d9488 !important;
+        }
+        .submenu-item.btn-sync-sub.active::before {
+            background: #ffffff !important;
+        }
+
+        /* Mantenimiento (Rojo Carmesí) */
+        .nav-item-pro.btn-maint-trigger {
+            border: 1px solid rgba(239, 68, 68, 0.4) !important;
+            background: rgba(239, 68, 68, 0.05) !important;
+            color: #dc2626 !important;
+        }
+        .nav-item-pro.btn-maint-trigger:hover,
+        .nav-item-pro.btn-maint-trigger.expanded,
+        .nav-item-pro.btn-maint-trigger.active {
+            background: #dc2626 !important;
+            color: #ffffff !important;
+            border-color: #dc2626 !important;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.25) !important;
+        }
+        .nav-item-pro.btn-maint-trigger i {
+            color: inherit !important;
+        }
+        /* Mantenimiento Submenú Items */
+        .submenu-item.btn-maint-sub {
+            border: 1px solid rgba(239, 68, 68, 0.3) !important;
+            background: rgba(239, 68, 68, 0.02) !important;
+            color: #dc2626 !important;
+        }
+        .submenu-item.btn-maint-sub:hover,
+        .submenu-item.btn-maint-sub.active {
+            background: #dc2626 !important;
+            color: #ffffff !important;
+            border-color: #dc2626 !important;
+        }
+        .submenu-item.btn-maint-sub::before {
+            background: #dc2626 !important;
+        }
+        .submenu-item.btn-maint-sub.active::before {
+            background: #ffffff !important;
+        }
+
+        /* --- 📏 HOMOGENEIZACIÓN DE DISTANCIAS DE SEPARACIÓN UNIFORMES --- */
+        
+        /* Margen de los bloques y botones en Escritorio */
+        .sidebar-section {
+            margin-bottom: 1.25rem !important;
+            padding: 0 0.5rem;
+        }
+        
+        .nav-item-pro {
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .submenu-wrapper {
+            margin-bottom: 0.5rem !important;
+        }
+
+        .submenu-content {
+            gap: 0.4rem !important;
+            margin-top: 0.25rem !important;
+            margin-bottom: 0.25rem !important;
+        }
+        
+        .submenu-item {
+            margin-bottom: 0 !important;
+        }
+
+        /* Ajustes específicos en Móvil para garantizar separación 100% idéntica (12px estricto) */
+        @media (max-width: 1024px) {
+            .sidebar-pro .nav-menu {
+                gap: 12px !important;
+                padding: 10px 15px !important;
+                margin-top: 0.5rem !important;
+            }
+            
+            .submenu-wrapper {
+                gap: 0 !important; /* Evitar separación fantasma cuando está colapsado */
+                margin-bottom: 0 !important;
+                margin-top: 0 !important;
+                width: auto !important; /* IMPORTANTE: evitar que herede width: 100% y estire el contenedor */
+            }
+            .submenu-wrapper.expanded {
+                gap: 12px !important; /* Restablecer gap al expandirse */
+            }
+            
+            .submenu-content {
+                display: none !important; /* Ocultar por completo cuando está colapsado */
+                gap: 0 !important; /* Evitar gap interno cuando está colapsado */
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+                padding: 0 !important;
+            }
+            .submenu-wrapper.expanded .submenu-content {
+                display: flex !important; /* Mostrar como flex al expandirse */
+                gap: 12px !important; /* Restablecer gap interno al expandirse */
+            }
+            
+            .sidebar-pro .submenu-trigger {
+                margin-bottom: 0 !important;
+                margin-top: 0 !important;
+            }
+            
+            .sidebar-pro .submenu-item {
+                margin-bottom: 0 !important;
+                margin-top: 0 !important;
+            }
+            
+            .nav-item-pro {
+                margin-bottom: 0 !important;
+                margin-top: 0 !important;
+            }
+            
+            .nav-item-pro.nav-item-back {
+                margin-bottom: 0 !important;
+                margin-top: 0 !important;
+            }
+            
+            .nav-item-pro.nav-item-logout {
+                margin-bottom: 0 !important;
+                margin-top: 0 !important;
+            }
         }
     </style>
+
 
     <!-- SheetJS for Excel Export -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -446,92 +1069,284 @@
             </div>
 
             <nav class="nav-menu">
+                <!-- 🏠 INICIO RÁPIDO -->
                 <a href="index.html" class="nav-item-pro nav-item-back"
-                    style="text-decoration: none; margin-bottom: 2rem;">
+                    style="text-decoration: none; margin-bottom: 1.5rem;">
                     <span class="icon-box"><i class="fas fa-arrow-left"></i></span>
                     <span class="nav-text">Dashboard Jugador</span>
                 </a>
 
-                <button class="nav-item-pro active" data-view="users" onclick="loadAdminView('users')">
+                <!-- Entrenos (Submenú) -->
+                <div class="submenu-wrapper">
+                    <button class="nav-item-pro submenu-trigger nav-group-entreno" onclick="toggleSubmenu(this)">
+                        <span class="submenu-trigger-content">
+                            <span class="icon-box"><i class="fas fa-graduation-cap"></i></span>
+                            <span class="nav-text">Entrenos</span>
+                        </span>
+                        <span class="submenu-arrow"><i class="fas fa-chevron-right"></i></span>
+                    </button>
+                    <div class="submenu-content">
+                        <button class="submenu-item nav-group-entreno-sub" data-view="entrenos_mgmt" onclick="loadAdminView('entrenos_mgmt')">
+                            <span class="nav-text">Gestor</span>
+                        </button>
+                        <button class="submenu-item nav-group-entreno-sub" data-view="entrenos_create" onclick="loadAdminView('entrenos_create')">
+                            <span class="nav-text">Crear</span>
+                        </button>
+                        <button class="submenu-item nav-group-entreno-sub" data-view="entrenos_results" onclick="loadAdminView('entrenos_results')">
+                            <span class="nav-text">Resultados</span>
+                        </button>
+                        <button class="submenu-item nav-group-entreno-sub" data-view="entrenos_simulator" onclick="loadAdminView('entrenos_simulator')">
+                            <span class="nav-text">Simulador</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Base de Datos (Usuarios) -->
+                <button class="nav-item-pro btn-database" data-view="users" onclick="loadAdminView('users')">
                     <span class="icon-box"><i class="fas fa-users-gear"></i></span>
                     <span class="nav-text">Base de Datos</span>
                 </button>
 
-                <button class="nav-item-pro nav-group-americana" data-view="americanas_mgmt"
-                    onclick="loadAdminView('americanas_mgmt')">
-                    <span class="icon-box"><i class="fas fa-calendar-check"></i></span>
-                    <span class="nav-text">Gestión Americanas</span>
+                <!-- Americanas (Submenú) -->
+                <div class="submenu-wrapper">
+                    <button class="nav-item-pro submenu-trigger nav-group-americana" onclick="toggleSubmenu(this)">
+                        <span class="submenu-trigger-content">
+                            <span class="icon-box"><i class="fas fa-calendar-check"></i></span>
+                            <span class="nav-text">Americanas</span>
+                        </span>
+                        <span class="submenu-arrow"><i class="fas fa-chevron-right"></i></span>
+                    </button>
+                    <div class="submenu-content">
+                        <button class="submenu-item nav-group-americana-sub" data-view="americanas_mgmt" onclick="loadAdminView('americanas_mgmt')">
+                            <span class="nav-text">Gestión</span>
+                        </button>
+                        <button class="submenu-item nav-group-americana-sub" data-view="matches" onclick="loadAdminView('matches')">
+                            <span class="nav-text">Resultados</span>
+                        </button>
+                        <button class="submenu-item nav-group-americana-sub" data-view="simulator_empty" onclick="loadAdminView('simulator_empty')">
+                            <span class="nav-text">Simulador</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Gestor de Torneos -->
+                <button class="nav-item-pro btn-tournaments" data-view="tournaments_mgmt" onclick="loadAdminView('tournaments_mgmt')">
+                    <span class="icon-box"><i class="fas fa-trophy"></i></span>
+                    <span class="nav-text" style="font-weight:700;">Gestor de Torneos</span>
                 </button>
 
-                <button class="nav-item-pro nav-group-americana" data-view="matches" onclick="loadAdminView('matches')">
-                    <span class="icon-box"><i class="fas fa-trophy-award"></i></span>
-                    <span class="nav-text">Resultados Americanas</span>
+                <!-- Partidas Abiertas (Submenú) -->
+                <div class="submenu-wrapper">
+                    <button class="nav-item-pro submenu-trigger nav-group-open-matches" onclick="toggleSubmenu(this)">
+                        <span class="submenu-trigger-content">
+                            <span class="icon-box"><i class="fas fa-table-tennis-paddle-ball"></i></span>
+                            <span class="nav-text">Partidas Abiertas</span>
+                        </span>
+                        <span class="submenu-arrow"><i class="fas fa-chevron-right"></i></span>
+                    </button>
+                    <div class="submenu-content">
+                        <button class="submenu-item nav-group-open-matches-sub" data-view="open_matches_mgmt" onclick="loadAdminView('open_matches_mgmt')">
+                            <span class="nav-text">Gestor</span>
+                        </button>
+                        <button class="submenu-item nav-group-open-matches-sub" data-view="open_matches_create" onclick="loadAdminView('open_matches_create')">
+                            <span class="nav-text">Crear</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Smart Analytics -->
+                <button class="nav-item-pro btn-analytics" data-view="analytics" onclick="loadAdminView('analytics')">
+                    <span class="icon-box"><i class="fas fa-chart-pie"></i></span>
+                    <span class="nav-text" style="font-weight:700;">Smart Analytics</span>
                 </button>
 
-                <button class="nav-item-pro nav-group-americana" data-view="simulator_empty"
-                    onclick="loadAdminView('simulator_empty')">
-                    <span class="icon-box"><i class="fas fa-robot"></i></span>
-                    <span class="nav-text">Simulador de Americanas</span>
+                <!-- Gestor de Blog -->
+                <button class="nav-item-pro btn-blog" data-view="blog_posts" onclick="loadAdminView('blog_posts')">
+                    <span class="icon-box"><i class="fas fa-newspaper"></i></span>
+                    <span class="nav-text" style="font-weight:700;">Gestor de Blog</span>
                 </button>
 
-                <!-- NEW AUTOPILOT TAB -->
-                <button class="nav-item-pro" data-view="autopilot" onclick="loadAdminView('autopilot')"
-                    style="border:1px solid rgba(204,255,0,0.3); background:rgba(204,255,0,0.05); margin-bottom: 0.5rem;">
-                    <span class="icon-box"><i class="fas fa-wand-magic-sparkles"
-                            style="color:var(--brand-neon);"></i></span>
-                    <span class="nav-text" style="color:var(--brand-neon); font-weight:800;">AUTOPILOT 🤖</span>
-                </button>
+                <!-- Sincronización (Submenú) -->
+                <div class="submenu-wrapper">
+                    <button class="nav-item-pro submenu-trigger btn-sync-trigger" onclick="toggleSubmenu(this)">
+                        <span class="submenu-trigger-content">
+                            <span class="icon-box"><i class="fas fa-rotate"></i></span>
+                            <span class="nav-text">Sincronización</span>
+                        </span>
+                        <span class="submenu-arrow"><i class="fas fa-chevron-right"></i></span>
+                    </button>
+                    <div class="submenu-content">
+                        <!-- Recalcular todo -->
+                        <button class="submenu-item btn-sync-sub" onclick="window.LevelAdjustmentService && window.LevelAdjustmentService.recalculateAllLevels()">
+                            <span class="nav-text">Sincronizar Todo 🔄</span>
+                        </button>
+                        
+                        <!-- Robot Summapadel -->
+                        <button class="submenu-item btn-sync-sub" onclick="syncSummapadelData(this)" style="position: relative; overflow: hidden;">
+                            <span class="nav-text">Summapadel 🕷️</span>
+                        </button>
+                    </div>
+                </div>
 
-                <button class="nav-item-pro" data-view="analytics" onclick="loadAdminView('analytics')"
-                    style="border:1px solid rgba(0,212,255,0.3); background:rgba(0,212,255,0.05);">
-                    <span class="icon-box" style="color:#00d4ff;"><i class="fas fa-chart-pie"></i></span>
-                    <span class="nav-text" style="color:white; font-weight:700;">Smart Analytics</span>
-                </button>
+                <!-- Mantenimiento & Diagnóstico (Submenú) -->
+                <div class="submenu-wrapper">
+                    <button class="nav-item-pro submenu-trigger btn-maint-trigger" onclick="toggleSubmenu(this)">
+                        <span class="submenu-trigger-content">
+                            <span class="icon-box"><i class="fas fa-shield-halved"></i></span>
+                            <span class="nav-text">Mantenimiento</span>
+                        </span>
+                        <span class="submenu-arrow"><i class="fas fa-chevron-right"></i></span>
+                    </button>
+                    <div class="submenu-content">
+                        <!-- OP CENTER -->
+                        <button class="submenu-item btn-maint-sub" data-view="network_pulse" onclick="loadAdminView('network_pulse')">
+                            <span class="nav-text">OP Center 🔬</span>
+                        </button>
+                        
+                        <!-- Diagnóstico & Limpieza -->
+                        <button class="submenu-item btn-maint-sub" data-view="database_health" onclick="loadAdminView('database_health')">
+                            <span class="nav-text">Diagnóstico BD 🔬</span>
+                        </button>
+                        
+                        <!-- Reparar Jugadores -->
+                        <button class="submenu-item btn-maint-sub" data-view="fix_players" onclick="loadAdminView('fix_players')">
+                            <span class="nav-text">Reparar Jugadores 🔧</span>
+                        </button>
+                    </div>
+                </div>
 
-                <div
-                    style="margin: 15px 10px 5px 10px; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.3); font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
-                    Módulo Entrenos</div>
+                <!-- Robot Summapadel inline script (conservamos el script existente para que no se rompa la lógica!) -->
+                <script>
+                    async function syncSummapadelData(btn) {
+                        btn.style.opacity = '0.5';
+                        const textSpan = btn.querySelector('.nav-text') || btn;
+                        const originalText = textSpan.innerText;
+                        textSpan.innerText = 'LEYENDO ROBOT...';
+                        
+                        const isLocal = location.hostname === 'localhost' || 
+                                         location.hostname === '127.0.0.1' || 
+                                         location.protocol === 'file:';
+                        
+                        function resetBtn() {
+                            btn.style.opacity = '1';
+                            textSpan.innerText = originalText;
+                        }
+                        
+                        if (isLocal) {
+                            try {
+                                const script = document.createElement('script');
+                                script.src = 'scraper/teams_data_auto.js?t=' + new Date().getTime();
 
-                <button class="nav-item-pro nav-group-entreno" data-view="entrenos_mgmt"
-                    onclick="loadAdminView('entrenos_mgmt')">
-                    <span class="icon-box"><i class="fas fa-tasks"></i></span>
-                    <span class="nav-text">Gestor Entrenos</span>
-                </button>
-                <button class="nav-item-pro nav-group-entreno" data-view="entrenos_create"
-                    onclick="loadAdminView('entrenos_create')">
-                    <span class="icon-box"><i class="fas fa-plus-circle"></i></span>
-                    <span class="nav-text">Crear Entreno</span>
-                </button>
+                                script.onload = async () => {
+                                    if (!window.ExtractedTeamsData) {
+                                        alert("❌ Error: Archivo vacío o estructura incorrecta.\n¡Ejecuta de nuevo el robot!");
+                                        resetBtn();
+                                        return;
+                                    }
 
-                <button class="nav-item-pro nav-group-entreno" data-view="entrenos_results"
-                    onclick="loadAdminView('entrenos_results')">
-                    <span class="icon-box"><i class="fas fa-clipboard-check"></i></span>
-                    <span class="nav-text">Resultados Entrenos</span>
-                </button>
+                                    textSpan.innerText = 'LIMPIANDO NUBE...';
+                                    const db = window.db || firebase.firestore();
 
-                <button class="nav-item-pro nav-group-entreno" data-view="entrenos_simulator"
-                    onclick="loadAdminView('entrenos_simulator')">
-                    <span class="icon-box"><i class="fas fa-brain"></i></span>
-                    <span class="nav-text">Simulador de Entrenos</span>
-                </button>
+                                    try {
+                                        const snapshot = await db.collection('club_teams').get();
+                                        const batch = db.batch();
+                                        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                                        await batch.commit();
+                                    } catch (err) {
+                                        console.warn("Aviso: Falló la limpieza previa:", err);
+                                    }
 
-                <div
-                    style="margin: 15px 10px 5px 10px; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.3); font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
-                    Herramientas</div>
+                                    textSpan.innerText = 'SUBIENDO NUBE...';
+                                    let count = 0;
+                                    for (const equipo of window.ExtractedTeamsData) {
+                                        await db.collection('club_teams').doc(equipo.id).set(equipo);
+                                        count++;
+                                    }
 
-                <button class="nav-item-pro" data-view="network_pulse" onclick="loadAdminView('network_pulse')"
-                    style="border:1px solid rgba(0, 227, 109, 0.3); background:rgba(0, 227, 109, 0.05); margin-bottom: 0.5rem;">
-                    <span class="icon-box"><i class="fas fa-tower-broadcast" style="color:#00E36D;"></i></span>
-                    <span class="nav-text" style="color:#00E36D; font-weight:800;">OP CENTER 🔬</span>
-                </button>
+                                    alert(`✅ ¡SINCRO EXITOSA LOCAL!\nSe han actualizado ${count} equipos en Firebase sin duplicados.`);
+                                    resetBtn();
+                                };
 
-                <button class="nav-item-pro" data-view="database_health" onclick="loadAdminView('database_health')"
-                    style="border:1px solid rgba(204, 255, 0, 0.3); background:rgba(204, 255, 0, 0.05);">
-                    <span class="icon-box"><i class="fas fa-ghost" style="color:#CCFF00;"></i></span>
-                    <span class="nav-text" style="color:white; font-weight:700;">Salud de la DB 🧹</span>
-                </button>
+                                script.onerror = () => {
+                                    promptManualUpload("No se pudo cargar 'teams_data_auto.js' automáticamente. Por favor, selecciónalo manualmente.");
+                                };
 
-                <button class="nav-item-pro nav-item-logout" style="margin-top: auto;" onclick="AdminAuth.logout()">
+                                document.body.appendChild(script);
+
+                            } catch (e) {
+                                promptManualUpload("Error en lectura directa. Selecciónalo manualmente.");
+                            }
+                        } else {
+                            promptManualUpload("Estás en la Web Online de Internet. Por favor, selecciona el archivo 'teams_data_auto.js' generado por tu Robot local.");
+                        }
+
+                        function promptManualUpload(msg) {
+                            alert(`💡 ${msg}`);
+                            
+                            const fileInput = document.createElement('input');
+                            fileInput.type = 'file';
+                            fileInput.accept = '.js';
+                            
+                            fileInput.onchange = e => {
+                                const file = e.target.files[0];
+                                if (!file) {
+                                    resetBtn();
+                                    return;
+                                }
+                                
+                                textSpan.innerText = 'PROCESANDO...';
+                                const reader = new FileReader();
+                                reader.onload = async event => {
+                                    try {
+                                        const content = event.target.result;
+                                        const jsonMatch = content.match(/window\.ExtractedTeamsData\s*=\s*(\[[\s\S]*?\])\s*(?:;)?/);
+                                        if (!jsonMatch) {
+                                            alert("❌ Error: El archivo seleccionado no contiene la variable 'window.ExtractedTeamsData'. Asegúrate de subir 'teams_data_auto.js'.");
+                                            resetBtn();
+                                            return;
+                                        }
+                                        
+                                        const parsedData = JSON.parse(jsonMatch[1]);
+                                        textSpan.innerText = 'LIMPIANDO NUBE...';
+                                        const db = window.db || firebase.firestore();
+                                        
+                                        try {
+                                            const snapshot = await db.collection('club_teams').get();
+                                            const batch = db.batch();
+                                            snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                                            await batch.commit();
+                                        } catch (err) {
+                                            console.warn("Aviso: Falló la limpieza previa:", err);
+                                        }
+
+                                        textSpan.innerText = 'SUBIENDO NUBE...';
+                                        let count = 0;
+                                        for (const equipo of parsedData) {
+                                            await db.collection('club_teams').doc(equipo.id).set(equipo);
+                                            count++;
+                                        }
+                                        
+                                        alert(`✅ ¡SINCRO EXITOSA ONLINE!\nSe han actualizado ${count} equipos en Firebase directamente.`);
+                                        resetBtn();
+                                    } catch (err) {
+                                        alert("❌ Error al procesar el archivo seleccionado: " + err.message);
+                                        resetBtn();
+                                    }
+                                };
+                                reader.onerror = () => {
+                                    alert("❌ Error leyendo el archivo físico.");
+                                    resetBtn();
+                                };
+                                reader.readAsText(file);
+                            };
+                            
+                            fileInput.click();
+                        }
+                    }
+                </script>
+
+                <!-- BOTÓN LOGOUT -->
+                <button class="nav-item-pro nav-item-logout" style="margin-top: 1.5rem;" onclick="AdminAuth.logout()">
                     <span class="icon-box"><i class="fas fa-power-off"></i></span>
                     <span class="nav-text">Cerrar Sesión</span>
                 </button>
@@ -552,7 +1367,10 @@
                 <button id="mobile-menu-toggle" class="btn-micro mobile-only"
                     style="margin-right: 15px; background: transparent; border: none; font-size: 1.5rem; color: white;">☰</button>
                 <div class="top-title" id="page-title">CONSOLA DE ADMINISTRACIÓN</div>
-                <div class="top-actions">
+                <div class="top-actions" style="display:flex; align-items:center; gap:15px;">
+                    <img src="C:/Users/acoscolin/.gemini/antigravity/brain/98319fa2-90ca-4f13-a003-bff232fc3974/corporate_elite_ai_logo_somospadel_1777754306402.png"
+                        class="ai-pulse-trigger haptic-feedback" onclick="window.AICopilot && window.AICopilot.open()"
+                        style="width: 30px; height: 30px; border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px rgba(255,255,255,0.2); animation: aiPulseGlow 5s infinite; object-fit: cover;">
                     <div class="conn-status">
                         <span class="dot online"></span> CLOUD ACTIVE
                     </div>
@@ -706,7 +1524,8 @@
 
     <!-- Edit Entreno Modal (Redesigned for better usability) -->
     <div id="admin-entreno-modal" class="modal-overlay hidden">
-        <div class="modal-content" style="max-width: 950px; width: 95%; padding: 0;">
+        <div class="modal-content"
+            style="max-width: 950px; width: 95%; padding: 0; display: flex; flex-direction: column; max-height: 95vh; overflow: hidden;">
 
             <!-- HEADER -->
             <div class="modal-header"
@@ -726,11 +1545,11 @@
                     style="font-size: 2rem; color: #fff;">&times;</button>
             </div>
 
-            <div class="modal-body-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; height: 80vh;">
+            <div class="modal-body-grid"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; flex: 1; overflow-y: auto !important;">
 
                 <!-- COLUMNA IZQUIERDA: CONFIGURACIÓN (Scrollable) -->
-                <div class="config-column"
-                    style="padding: 30px; overflow-y: auto; border-right: 1px solid rgba(255,255,255,0.05);">
+                <div class="config-column" style="padding: 30px; border-right: 1px solid rgba(255,255,255,0.05);">
                     <form id="edit-entreno-form" class="pro-form compact-admin-form">
                         <input type="hidden" name="id">
 
@@ -852,16 +1671,11 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn-primary-pro"
-                            style="width: 100%; margin-top: 30px; height: 50px; font-weight: 900; font-size: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                            GUARDAR CAMBIOS 💾
-                        </button>
                     </form>
                 </div>
 
                 <!-- COLUMNA DERECHA: GESTIÓN DE JUGADORES (Fixed Header, Scrollable List) -->
-                <div class="participants-column"
-                    style="padding: 0; background: rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden;">
+                <div class="participants-column" style="padding: 0; background: rgba(0,0,0,0.2);">
 
                     <div style="padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.05);">
                         <h3 style="color: #00E36D; font-size: 0.9rem; margin-bottom: 5px; letter-spacing: 1px;">
@@ -871,7 +1685,7 @@
                         </p>
                     </div>
 
-                    <div style="flex: 1; overflow-y: auto; padding: 20px 25px;">
+                    <div style="padding: 20px 25px;">
 
                         <!-- Lista Participantes (Container handled by JS) -->
                         <div id="participants-list-entreno">
@@ -902,6 +1716,19 @@
                     </div>
                 </div>
 
+            </div>
+
+            <!-- FOOTER FLOTANTE -->
+            <div class="modal-footer"
+                style="padding: 15px 30px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 15px; position: sticky; bottom: 0; z-index: 100; border-radius: 0 0 12px 12px;">
+                <button type="button" class="btn-outline-pro" onclick="window.closeEntrenoModal()"
+                    style="width: auto; padding: 10px 25px; height: 50px; border: 1px solid #cbd5e1; color: #64748b; font-weight: 700; border-radius: 10px; background: transparent; cursor: pointer;">
+                    CANCELAR
+                </button>
+                <button type="submit" form="edit-entreno-form" class="btn-primary-pro"
+                    style="width: auto; padding: 0 40px; margin: 0; height: 50px; font-weight: 900; font-size: 1rem; box-shadow: 0 4px 15px rgba(204,255,0,0.3); background: #CCFF00; color: #000; border: none; border-radius: 10px; cursor: pointer;">
+                    GUARDAR CAMBIOS 💾
+                </button>
             </div>
         </div>
     </div>
@@ -1194,8 +2021,8 @@
             <!-- AmericanaService duplicated above -->
 
             <!-- Logic Services (CORE) -->
-            <script src="js/fixed-pairs-logic.js?v=5000"></script>
-            <script src="js/rotating-pozo-logic.js?v=5003"></script>
+            <script src="js/fixed-pairs-logic.js?v=5012"></script>
+            <script src="js/rotating-pozo-logic.js?v=5012"></script>
             <script src="js/MatchMakingService.js?v=5003"></script>
             <script src="js/modules/logic/LevelAdjustmentService.js"></script>
             <script src="js/modules/common/LevelService.js?v=2001"></script>
@@ -1211,20 +2038,36 @@
             <!-- Admin Modules (Lazy Loaded Logic) -->
             <script src="js/modules/logic/LevelReliabilityService.js"></script>
             <script src="js/modules/logic/SmartAlertsService.js"></script>
-            <script src="js/modules/admin/AutopilotView.js"></script>
+            <script src="js/modules/admin/AICopilot_v4.js"></script>
+            <script src="js/modules/admin/NeuralAgent_v6.js"></script>
             <script src="js/modules/admin/BatSignalAgent.js"></script>
+
+            <script src="js/utils/RoleService.js"></script>
+            <script src="js/modules/admin-users.js"></script>
+            <script src="js/modules/admin-americanas.js"></script>
+            <script src="js/modules/admin-matches.js"></script>
+            <script src="js/modules/admin-results.js"></script>
 
             <script src="js/admin-simulator.js?v=5000"></script>
             <script src="js/modules/admin-simulator-view.js?v=5000"></script>
             <script src="js/modules/logic/TwisterSimulation.js?v=1"></script>
             <script src="js/modules/admin-pairs-ui.js?v=2000"></script>
-            <script src="js/modules/admin-results.js?v=4009"></script>
-            <script src="js/modules/admin-users.js?v=1106"></script>
-            <script src="js/modules/admin-americanas.js?v=4007"></script>
+            <script src="js/modules/admin-dashboard.js"></script>
             <script src="js/modules/admin-analytics.js"></script>
             <script src="js/modules/common/WhatsAppService.js?v=7015"></script>
             <script src="js/modules/admin-entrenos.js?v=5010"></script>
+            <script src="js/modules/admin-open-matches.js" defer></script>
             <script src="js/modules/admin-database-health.js"></script>
+            <script src="js/modules/admin-fix-players.js"></script>
+
+            <!-- 📰 Blog & Noticias -->
+            <script src="js/modules/auto-blog-engine.js?v=1001"></script>
+            <script src="js/modules/admin-blog.js?v=1002"></script>
+            
+            <!-- 🏆 Competición & Torneos -->
+            <script src="js/modules/tournaments/TournamentView.js?v=13"></script>
+            <script src="js/modules/tournaments/TournamentController.js?v=13"></script>
+            <script src="js/modules/admin/AdminTournaments.js?v=1"></script>
 
 
             <!-- DIAGNOSTIC SCRIPT (Optional) -->
@@ -1323,7 +2166,7 @@
                 /* Mobile & Tablet Responsive - Premium Menu Fixed */
                 /* Mobile & Tablet Responsive - Full Viewport Width Force */
                 /* Mobile & Tablet Responsive - Full Viewport Width Force (Stacking Context Fix) */
-                @media (max-width: 1024px) {
+                @media (max-width: 768px) {
                     :root {
                         --admin-sticky-top: 110px !important;
                     }
@@ -1510,7 +2353,7 @@
                     }
 
                     /* Contenido Principal */
-                    .main-content-pro {
+                    .main-wrapper {
                         margin-left: 0 !important;
                         margin-top: 100px !important;
                         width: 100% !important;
@@ -1898,24 +2741,15 @@
             <script src="js/modules/core/Constants.js"></script>
             <script src="js/modules/common/EventService.js"></script>
             <script src="js/modules/logic/MatchMakingService.js"></script>
+            <script src="js/modules/logic/LevelAdjustmentService.js"></script>
             <script src="js/modules/americanas/AmericanaLogic.js"></script>
             <script src="js/modules/americanas/AmericanaService.js"></script>
+            <script src="js/app-init.js"></script>
 
             <!-- ADMIN AUTOMATION -->
             <script src="js/modules/logic/AutomationService.js"></script>
-            <script>
-                // Initialize Automation Service (Auto-Generate 4h before)
-                document.addEventListener('DOMContentLoaded', () => {
-                    setTimeout(() => {
-                        if (window.AutomationService) {
-                            console.log("🤖 Starting Automation Service (Auto-Pairing 4h before)...");
-                            window.AutomationService.init();
-                        } else {
-                            console.error("❌ AutomationService not loaded!");
-                        }
-                    }, 3000);
-                });
-            </script>
+            <script src="js/modules/admin-blog.js" defer></script>
+            <!-- Automation handled by AppInit -->
             <style>
                 /* --- 🏳️ WHITE THEME: ENTRENO MODAL OVERRIDE (PURE BLACK EDITION) --- */
                 #admin-entreno-modal .modal-content {
@@ -2057,6 +2891,83 @@
                     /* Keep connection blue */
                 }
             </style>
+            
+    <!-- 📂 JAVASCRIPT DE INTERACTIVIDAD DE SUBMENÚS PREMIUM -->
+    <script>
+        // Función para abrir/cerrar submenús en escritorio y móvil
+        function toggleSubmenu(button) {
+            const wrapper = button.closest('.submenu-wrapper');
+            if (!wrapper) return;
+            
+            const isExpanded = wrapper.classList.contains('expanded');
+            
+            // Efecto acordeón: cerrar otros submenús del mismo nivel
+            document.querySelectorAll('.submenu-wrapper').forEach(w => {
+                if (w !== wrapper) {
+                    w.classList.remove('expanded');
+                }
+            });
+            
+            if (isExpanded) {
+                wrapper.classList.remove('expanded');
+            } else {
+                wrapper.classList.add('expanded');
+            }
+        }
+        
+        // Auto-expande el submenú que contenga el elemento activo
+        function autoExpandActiveSubmenu() {
+            // Buscamos cualquier opción activa de submenú
+            const activeItem = document.querySelector('.submenu-item.active, .nav-item-pro.active');
+            if (activeItem) {
+                const wrapper = activeItem.closest('.submenu-wrapper');
+                if (wrapper) {
+                    wrapper.classList.add('expanded');
+                }
+            }
+        }
+        
+        // Decorador e interceptor de loadAdminView para mantener los submenús actualizados al navegar
+        (function() {
+            // Esperar a que window.loadAdminView esté disponible
+            const checkRouterInterval = setInterval(() => {
+                if (typeof window.loadAdminView === 'function') {
+                    clearInterval(checkRouterInterval);
+                    
+                    const originalLoadAdminView = window.loadAdminView;
+                    window.loadAdminView = async function(viewName) {
+                        // Llamamos a la navegación original
+                        if (originalLoadAdminView) {
+                            await originalLoadAdminView(viewName);
+                        }
+                        
+                        // Añadimos nuestro comportamiento reactivo
+                        setTimeout(() => {
+                            // Sincronizar clases active en los submenús correspondientes si es necesario
+                            document.querySelectorAll('.submenu-item').forEach(el => {
+                                if (el.getAttribute('data-view') === viewName) {
+                                    el.classList.add('active');
+                                } else {
+                                    el.classList.remove('active');
+                                }
+                            });
+                            
+                            // Auto expandir
+                            autoExpandActiveSubmenu();
+                        }, 50); // Pequeño delay para que la vista renderice y las clases se actualicen
+                    };
+                    
+                    console.log("🛡️ Hook de Submenús inyectado con éxito en loadAdminView.");
+                    
+                    // Ejecución inicial al cargar
+                    setTimeout(autoExpandActiveSubmenu, 1000);
+                }
+            }, 100);
+            
+            // Limitar la búsqueda de inicialización a 15 segundos para no consumir recursos
+            setTimeout(() => clearInterval(checkRouterInterval), 15000);
+        })();
+    </script>
 </body>
 
 </html>

@@ -3,7 +3,7 @@
  * "Context-First" Mobile Dashboard
  * Designed for Clarity, Speed and Outdoor Use
  */
-console.log("✅ [v40] DashboardView Loaded Correctly");
+console.log("âœ… [v40] DashboardView Loaded Correctly");
 (function () {
     class DashboardView {
         constructor() {
@@ -15,10 +15,10 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 });
             }
 
-            // AUTO-REFRESH MOTOR: Renovación inteligente cada 5 minutos
+            // AUTO-REFRESH MOTOR: RenovaciÃ³n inteligente cada 5 minutos
             this.refreshInterval = setInterval(() => {
                 if (window.Router && window.Router.currentRoute === 'dashboard') {
-                    console.log("🔄 [AI Motor] Renovando noticias y eventos en tiempo real...");
+                    console.log("ðŸ”„ [AI Motor] Renovando noticias y eventos en tiempo real...");
                     this.renderLiveWidget();
                 }
             }, 5 * 60 * 1000); // 5 min
@@ -27,7 +27,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             if (window.Store) {
                 window.Store.subscribe('currentUser', (user) => {
                     if (user && window.Router && window.Router.currentRoute === 'dashboard') {
-                        console.log("👤 [DashboardView] User synced, refreshing live content...");
+                        console.log("ðŸ‘¤ [DashboardView] User synced, refreshing live content...");
                         this.buildContext(user).then(context => this.loadLiveWidgetContent(context));
                     }
                 });
@@ -35,7 +35,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
         }
 
         async render(data) {
-            console.log("📊 [DashboardView] Rendering started...", data);
+            console.log("ðŸ“Š [DashboardView] Rendering started...", data);
             const container = document.getElementById('content-area');
             if (!container) return;
 
@@ -50,391 +50,184 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             container.innerHTML = `
                 <!-- MAIN DASHBOARD SCROLL CONTENT -->
                 <div class="dashboard-v2-container fade-in full-width-mobile" style="
-                    background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.08) 0%, transparent 70%);
+                    background: #f1f5f9 !important;
                     min-height: 100vh;
-                    padding-top: 10px !important;
-                ">
+                    padding-top: 0px !important;">
 
-                    <!-- NEW CONTEXT-FIRST ARCHITECTURE -->
-                    
-                    <!-- 4. PULSE STORIES (Instagram Style) -->
-                    <div id="story-feed-root" style="margin: 0 !important; animation: floatUp 0.8s ease-out forwards; padding-top: 2px;">
-                        <!-- Cargado vía JS (StoryFeedWidget) -->
+                    <!-- â‘  WELCOME HERO â€” PadelPulse -->
+                    <div id="padel-pulse-widget-root" style="animation: floatUp 0.4s ease-out forwards;"></div>
+
+                    <!-- â‘¡ ACCIONES RÃPIDAS -->
+                    <div style="margin: 0 15px 16px; display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:10px;">
+                        <div onclick="window.Router.navigate('americanas')" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 8px; text-align:center; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.03);" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                            <div style="font-size:1.5rem; margin-bottom:6px;">ðŸ†</div>
+                            <div style="font-size:0.55rem; font-weight:950; color:#0a192f; text-transform:uppercase; letter-spacing:0.5px;">Americ.</div>
+                        </div>
+                        <div onclick="window.Router.navigate('ranking')" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 8px; text-align:center; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.03);" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                            <div style="font-size:1.5rem; margin-bottom:6px;">ðŸ“Š</div>
+                            <div style="font-size:0.55rem; font-weight:950; color:#0a192f; text-transform:uppercase; letter-spacing:0.5px;">Ranking</div>
+                        </div>
+                        <div onclick="window.Router.navigate('equipos')" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 8px; text-align:center; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.03);" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                            <div style="font-size:1.5rem; margin-bottom:6px;">ðŸ‘¥</div>
+                            <div style="font-size:0.55rem; font-weight:950; color:#0a192f; text-transform:uppercase; letter-spacing:0.5px;">Equipos</div>
+                        </div>
+                        <div onclick="window.Router.navigate('profile')" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 8px; text-align:center; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.03);" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                            <div style="font-size:1.5rem; margin-bottom:6px;">ðŸŽ´</div>
+                            <div style="font-size:0.55rem; font-weight:950; color:#0a192f; text-transform:uppercase; letter-spacing:0.5px;">Perfil</div>
+                        </div>
                     </div>
 
-
-                    <!-- 6. NEWS MARQUEE (3D HOLO ENGINE) -->
-                    <div id="registration-widget-root" style="
-                        background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000 100%);
-                        border-radius: 28px;
-                        margin: 2px 15px 12px !important;  
-                        padding: 20px 0 !important; 
-                        box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-                        border: 1px solid rgba(255,255,255,0.1);
-                        z-index: 10;
-                        animation: floatUp 0.8s ease-out forwards;
-                        perspective: 1200px;
-                        overflow: hidden;
-                    ">
-
-                        <div class="live-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px !important; padding: 0 20px; position:relative; z-index:20;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <div style="
-                                    background: linear-gradient(90deg, #00E36D, #00ff9d); 
-                                    color: #000; 
-                                    padding: 6px 16px; 
-                                    border-radius: 12px; 
-                                    font-size: 0.75rem; 
-                                    font-weight: 950; 
-                                    letter-spacing: 1px;
-                                    box-shadow: 0 0 20px rgba(0,227,109,0.4);
-                                    text-transform: uppercase;
-                                    display:flex; align-items:center; gap:6px;
-                                ">
-                                    <i class="fas fa-cube"></i> NOTICIAS
-                                </div>
+                    <!-- â‘¢ MI NIVEL â€” Stats compactas -->
+                    <div id="player-progress-hub" style="margin: 0 15px 16px; background: #ffffff; border-radius: 22px; border: 1px solid #e2e8f0; padding: 18px 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.03); display:flex; align-items:center; gap:16px;">
+                        <div style="flex:1; display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; text-align:center;">
+                            <div>
+                                <div style="font-size:0.5rem; color:#64748b; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Nivel</div>
+                                <div style="font-size:1.6rem; font-weight:950; color:#0a192f; line-height:1;">${userLevel}</div>
+                            </div>
+                            <div style="border-left:1px solid #f1f5f9; border-right:1px solid #f1f5f9;">
+                                <div style="font-size:0.5rem; color:#64748b; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Ranking</div>
+                                <div style="font-size:1.6rem; font-weight:950; color:#0a192f; line-height:1;">#${user ? (user.ranking_pos || 'â€”') : 'â€”'}</div>
+                            </div>
+                            <div>
+                                <div style="font-size:0.5rem; color:#64748b; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Partidas</div>
+                                <div style="font-size:1.6rem; font-weight:950; color:#0a192f; line-height:1;">${user ? (user.total_matches || '0') : '0'}</div>
                             </div>
                         </div>
-                        
-                        <div id="live-scroller-content" style="
-                            width: 100%; 
-                            position: relative; 
-                            transform-style: preserve-3d;
-                            min-height: 220px;
-                        ">
+                        <div onclick="window.Router.navigate('profile')" style="flex-shrink:0; background:#5a8a00; color:#fff; padding:12px 16px; border-radius:14px; font-size:0.65rem; font-weight:950; cursor:pointer; text-align:center; white-space:nowrap; box-shadow:0 4px 12px rgba(90,138,0,0.3);">
+                            MI<br>PERFIL â†’
+                        </div>
+                    </div>
+
+                    <!-- â‘£ EN DIRECTO â€” Carrusel eventos/noticias -->
+                    <div id="registration-widget-root" style="margin: 0 0 16px !important; animation: floatUp 0.6s ease-out forwards;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 20px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div style="width:8px; height:8px; background:#ef4444; border-radius:50%; animation:pulseDot 1.5s infinite;"></div>
+                                <span style="font-size:0.75rem; font-weight:950; color:#0a192f; letter-spacing:1px; text-transform:uppercase;">En Directo</span>
+                            </div>
+                            <span onclick="window.Router.navigate('americanas')" style="font-size:0.65rem; color:#5a8a00; font-weight:950; cursor:pointer;">Ver todo â†’</span>
+                        </div>
+                        <div id="live-scroller-content" style="width:100%; position:relative; overflow:hidden;">
                             <style>
-                                @keyframes marqueeNews {
-                                    0% { transform: translate3d(0, 0, 0); }
-                                    100% { transform: translate3d(-50%, 0, 0); }
-                                }
-                                .news-marquee-track {
-                                    display: flex;
-                                    gap: 12px;
-                                    width: max-content;
-                                    animation: marqueeNews 45s linear infinite;
-                                    padding: 15px 15px 25px;
-                                    will-change: transform;
-                                    backface-visibility: hidden;
-                                }
-                                /* Only pause on desktop hover to avoid mobile sticking */
-                                @media (hover: hover) {
-                                    .news-marquee-track:hover {
-                                        animation-play-state: paused;
-                                    }
-                                }
-                                .registration-ticker-card {
-                                    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-                                    flex-shrink: 0;
-                                }
-                                
-                                /* 3D HOLO ENGINE STYLES */
-                                @keyframes marquee3D {
-                                    0% { transform: rotateY(0deg) translateZ(0); }
-                                    100% { transform: rotateY(-360deg) translateZ(0); }
-                                }
-                                @keyframes hologramFloat {
-                                    0%, 100% { transform: translateY(0) scale(1); filter: brightness(1); }
-                                    50% { transform: translateY(-5px) scale(1.02); filter: brightness(1.2); }
-                                }
-                                .scene-3d-track {
-                                    display: flex;
-                                    gap: 30px;
-                                    padding-left: 50px;
-                                    width: max-content;
-                                    transform-style: preserve-3d;
-                                    animation: scroll3d 60s linear infinite;
-                                }
-                                @keyframes scroll3d {
-                                    0% { transform: translateX(0) rotateX(5deg) rotateY(2deg); }
-                                    50% { transform: translateX(-50%) rotateX(0deg) rotateY(-2deg); }
-                                    100% { transform: translateX(-100%) rotateX(5deg) rotateY(2deg); }
-                                }
-                                .infinite-scroll-wrapper {
-                                    display: flex;
-                                    width: max-content;
-                                    animation: infiniteScroll 40s linear infinite;
-                                }
-                                @keyframes infiniteScroll {
-                                    0% { transform: translateX(0); }
-                                    100% { transform: translateX(-50%); }
-                                }
-                                .holo-card {
-                                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-                                    transform: rotateY(15deg);
-                                    transform-origin: left center;
-                                    backdrop-filter: blur(5px);
-                                    -webkit-backdrop-filter: blur(5px);
-                                }
-                                .holo-card:hover {
-                                    transform: rotateY(0deg) scale(1.05) translateZ(20px);
-                                    z-index: 50;
-                                    box-shadow: 0 25px 50px rgba(0,0,0,0.8) !important;
-                                    border-color: #fff !important;
-                                    filter: brightness(1.2);
-                                }
+                                @keyframes marqueeNews { 0% { transform: translate3d(0,0,0); } 100% { transform: translate3d(-50%,0,0); } }
+                                .news-marquee-track { display:flex; gap:12px; width:max-content; animation:marqueeNews 45s linear infinite; padding:5px 15px 15px; will-change:transform; }
+                                @media (hover: hover) { .news-marquee-track:hover { animation-play-state: paused; } }
+                                .registration-ticker-card { transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); flex-shrink:0; }
+                                .infinite-scroll-wrapper { display:flex; width:max-content; animation:infiniteScroll 40s linear infinite; }
+                                @keyframes infiniteScroll { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
+                                .holo-card { transition: all 0.3s ease; }
+                                .holo-card:active { transform: scale(0.97); }
                             </style>
-                            <div id="live-scroller-inner" class="infinite-scroll-wrapper" style="transform-style: preserve-3d; padding-left: 20px;">
-                                <!-- SKELETON 3D LOADER -->
-                                ${Array(4).fill(0).map((_, i) => `
-                                    <div style="
-                                        min-width: 280px; height: 180px; 
-                                        background: rgba(255,255,255,0.02); 
-                                        border-radius: 24px; 
-                                        border: 1px solid rgba(255,255,255,0.05); 
-                                        margin-right: 25px;
-                                        transform: rotateY(10deg);
-                                        display: flex; align-items: center; justify-content: center;
-                                    ">
-                                        <i class="fas fa-cube fa-spin" style="color:rgba(255,255,255,0.1); font-size:2rem;"></i>
+                            <div id="live-scroller-inner" class="infinite-scroll-wrapper" style="padding-left:15px;">
+                                ${Array(4).fill(0).map(() => `
+                                    <div style="min-width:260px; height:155px; background:#ffffff; border-radius:22px; border:1px solid #e2e8f0; margin-right:12px; display:flex; align-items:center; justify-content:center;">
+                                        <i class="fas fa-circle-notch fa-spin" style="color:#e2e8f0; font-size:1.5rem;"></i>
                                     </div>
                                 `).join('')}
                             </div>
                         </div>
                     </div>
 
-
-
-
-                    <!-- 7. MERCH PROMO (SOMOS PADEL BCN) - CLEAN INTERACTIVE -->
-                    <div id="merch-widget-root" onclick="window.open('https://wa.me/34649219350?text=Hola!%20Me%20interesa%20la%20sudadera%20de%20Somos%20Padel%20BCN', '_blank')" style="
-                        margin: 2px 15px 12px !important; 
-                        background: radial-gradient(circle at 10% 20%, #60a5fa 0%, #1e40af 100%);
-                        border-radius: 24px;
-                        padding: 0;
-                        position: relative;
-                        overflow: hidden;
-                        box-shadow: 0 15px 40px rgba(30, 60, 114, 0.4);
-                        border: 1px solid rgba(255, 255, 255, 0.2);
-                        cursor: pointer;
-                        animation: floatUp 0.8s ease-out forwards;
-                        display: flex;
-                        height: 160px;
-                        transition: transform 0.2s;
-                    " onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
-                        
-                        <!-- BG Effect -->
-                        <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.15; background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 15px 15px;"></div>
-                        <div style="position: absolute; right: -50px; bottom: -50px; width: 200px; height: 200px; background: #ffffff; filter: blur(60px); opacity: 0.2;"></div>
-                        <div style="position: absolute; left: -20px; top: -20px; width: 100px; height: 100px; background: #CCFF00; filter: blur(50px); opacity: 0.3;"></div>
-
-                        <!-- Image Section (Left) -->
-                        <div style="width: 45%; position: relative; display: flex; align-items: center; justify-content: center; z-index: 5;">
-                             <img src="./img/sudadera.jpg" 
-                                  onerror="this.style.display='none'" 
-                                  style="width: 110%; height: 110%; object-fit: contain; transform: rotate(-5deg) scale(1.2) translateY(5px); filter: drop-shadow(0 15px 25px rgba(0,0,0,0.4));">
+                    <!-- â‘¤ ACTIVIDAD RECIENTE -->
+                    <div id="activity-feed-root" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:22px; margin:0 15px 16px !important; padding:20px !important; box-shadow:0 4px 16px rgba(0,0,0,0.03); animation:floatUp 0.7s ease-out forwards;">
+                        <div style="font-weight:950; font-size:0.8rem; color:#0a192f; text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+                            <i class="fas fa-rss" style="color:#5a8a00; font-size:1rem;"></i> ACTIVIDAD RECIENTE
                         </div>
+                        <div id="activity-feed-content" style="display:flex; flex-direction:column; gap:10px;"></div>
+                    </div>
 
-                        <!-- Content Section (Right) -->
-                        <div style="width: 55%; padding: 15px 20px 15px 10px; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 2;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
-                                <div style="
-                                    background: #CCFF00; 
-                                    color: #000; 
-                                    font-size: 0.65rem; 
-                                    font-weight: 1000; 
-                                    padding: 4px 10px; 
-                                    border-radius: 8px; 
-                                    text-transform: uppercase;
-                                    letter-spacing: 0.5px;
-                                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                                ">NUEVA COLECCIÓN</div>
+                    <!-- â‘¥ RANKING SPOTLIGHT -->
+                    <div id="ranking-spotlight-root" style="margin:0 15px 16px; animation:floatUp 0.8s ease-out forwards;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px;">
+                            <div style="font-weight:950; font-size:0.8rem; color:#0a192f; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:1rem;">ðŸ†</span> TOP 10 ELITE
                             </div>
-                            
-                            <h3 style="margin: 0; font-size: 1.2rem; color: white; font-weight: 900; line-height: 1; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">
-                                SUDADERA
-                            </h3>
-                            <div style="font-size: 1rem; color: #e0f2fe; font-weight: 300; margin-bottom: 2px; letter-spacing: 1px;">SOMOSPADEL BCN</div>
-                            
-                            <!-- Price & Button Row -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; gap: 10px;">
-                                <div style="color:white; font-weight:900; font-size:1.2rem; text-shadow:0 2px 10px rgba(0,0,0,0.3);">
-                                    24<span style="font-size:0.7rem; vertical-align:top;">,99€</span>
-                                </div>
-
-                                <div style="
-                                    background: white; 
-                                    color: #1e40af; 
-                                    font-size: 0.75rem; 
-                                    font-weight: 950; 
-                                    padding: 8px 16px; 
-                                    border-radius: 20px; 
-                                    box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
-                                    display: flex; 
-                                    align-items: center; 
-                                    gap: 6px; 
-                                    transition: all 0.2s;
-                                    transform-origin: center;
-                                " onmouseover="this.style.transform='scale(1.1) rotate(2deg)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.3)'" onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.2)'">
-                                    COMPRAR <i class="fas fa-shopping-cart"></i>
-                                </div>
-                            </div>
+                            <div style="font-size:0.65rem; color:#5a8a00; font-weight:950; cursor:pointer;" onclick="window.Router.navigate('ranking')">VER RANKING <i class="fas fa-chevron-right" style="font-size:0.55rem;"></i></div>
+                        </div>
+                        <div id="mvp-spotlight-container" style="margin-bottom:12px;"></div>
+                        <div id="trending-players-list" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:8px; scrollbar-width:none;">
+                            <div style="margin:20px auto; color:#94a3b8;"><i class="fas fa-circle-notch fa-spin"></i></div>
                         </div>
                     </div>
 
-                    <!-- 3. NEW WEATHER WIDGET -->
-                    <div id="weather-widget-root" style="margin: 2px 15px !important; animation: floatUp 0.8s ease-out forwards;">
+                    <!-- â‘¦ STORIES -->
+                    <div id="story-feed-root" style="margin:0 !important; animation:floatUp 0.8s ease-out forwards; padding-top:2px;"></div>
+
+                    <!-- â‘§ CLIMA -->
+                    <div id="weather-widget-root" style="margin:0 15px 12px !important; animation:floatUp 0.9s ease-out forwards;"></div>
+
+                    <!-- â‘¨ POWER LEVEL -->
+                    <div id="power-level-root" style="animation:floatUp 0.9s ease-out forwards;"></div>
+
+                    <!-- â‘© MERCH -->
+                    <div onclick="window.open('https://wa.me/34649219350?text=Hola!%20Me%20interesa%20la%20sudadera%20de%20Somos%20Padel%20BCN', '_blank')" style="margin:0 15px 16px !important; background:linear-gradient(135deg,#1e40af 0%,#1e3a8a 100%); border-radius:22px; padding:0; position:relative; overflow:hidden; cursor:pointer; box-shadow:0 8px 24px rgba(30,64,175,0.3); display:flex; height:140px; transition:transform 0.2s;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+                        <div style="position:absolute; inset:0; opacity:0.08; background-image:radial-gradient(#fff 1px,transparent 1px); background-size:14px 14px;"></div>
+                        <div style="width:42%; position:relative; display:flex; align-items:center; justify-content:center; z-index:5;">
+                            <img src="./img/sudadera.jpg" onerror="this.style.display='none'" style="width:110%; height:110%; object-fit:contain; transform:rotate(-5deg) scale(1.2) translateY(5px); filter:drop-shadow(0 10px 20px rgba(0,0,0,0.4));">
+                        </div>
+                        <div style="width:58%; padding:16px 18px 16px 8px; display:flex; flex-direction:column; justify-content:center; z-index:2;">
+                            <div style="background:#5a8a00; color:#fff; font-size:0.6rem; font-weight:950; padding:3px 10px; border-radius:8px; display:inline-block; margin-bottom:8px; width:fit-content;">NUEVA COLECCIÃ“N</div>
+                            <h3 style="margin:0; font-size:1.15rem; color:white; font-weight:950; line-height:1.1;">SUDADERA</h3>
+                            <div style="font-size:0.8rem; color:#93c5fd; font-weight:400; letter-spacing:1px; margin-bottom:10px;">SOMOSPADEL BCN</div>
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <div style="color:white; font-weight:950; font-size:1.15rem;">24<span style="font-size:0.65rem; vertical-align:top;">,99â‚¬</span></div>
+                                <div style="background:white; color:#1e40af; font-size:0.7rem; font-weight:950; padding:6px 14px; border-radius:16px;">COMPRAR â†’</div>
+                            </div>
+                    </div>
+
+                    <!-- 3.5 NEWS BLOG WIDGET -->
+                    <div id="blog-news-widget-root" style="margin: 0 15px 16px !important; animation: floatUp 0.85s ease-out forwards;">
                         <!-- Content loaded via JS -->
                     </div>
 
-                    <!-- (Old Partner Synergy root removed to favor the new Predictive AI Engine) -->
-
-                    <!-- 4. ACTIVIDAD RECIENTE -->
-                    <div id="activity-feed-root" style="
-                        background: rgba(10, 10, 20, 0.9);
-                        backdrop-filter: blur(20px);
-                        border: 1px solid rgba(0, 227, 109, 0.2);
-                        border-radius: 20px;
-                        margin: 2px 15px !important;
-                        padding: 12px !important;
-                        box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-                        animation: floatUp 0.85s ease-out forwards;
-                    ">
-                        <div style="font-weight:950; font-size:0.85rem; color:white; letter-spacing:-0.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
-                            <i class="fas fa-rss" style="color: #00E36D; font-size: 1rem;"></i> ACTIVIDAD RECIENTE
-                        </div>
-                        <div id="activity-feed-content" style="display: flex; flex-direction: column; gap: 10px;">
-                            <!-- Content loaded via JS -->
-                        </div>
-                    </div>
-
-                    <!-- 5. POWER LEVEL STATUS (Relocated below Recent Activity) -->
-                    <div id="power-level-root" style="animation: floatUp 0.8s ease-out forwards;">
-                        <!-- Loaded via JS (PowerLevelCard) -->
-                    </div>
-
-
-
-                    <!-- 4. TECH HUB & NEWS (PREMIUM GLASS ENGINE) -->
-                    <div id="noticias-banner-root" style="padding: 1px 15px !important; animation: floatUp 0.85s ease-out forwards; margin-bottom: 40px; margin-top: 2px;">
-                        <div class="noticias-banner-premium" style="
-                            background: rgba(15, 23, 42, 0.8); 
-                            backdrop-filter: blur(20px);
-                            border-radius: 32px; 
-                            padding: 25px !important; 
-                            color: #fff; 
-                            position: relative; 
-                            overflow: hidden; 
-                            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255,255,255,0.05);
-                            border: 1px solid rgba(204, 255, 0, 0.15);
-                            transition: all 0.4s ease;
-                        ">
-                            <!-- Hexagon Background Pattern -->
-                            <div style="position: absolute; right: -30px; top: -30px; font-size: 8rem; color: #CCFF00; opacity: 0.05; transform: rotate(-10deg); pointer-events: none;">
-                                <i class="fas fa-layer-group"></i>
-                            </div>
-                            
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: relative; z-index: 2;">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="width: 10px; height: 10px; background: #00E36D; border-radius: 50%; box-shadow: 0 0 10px #00E36D;"></div>
-                                    <span style="font-size: 0.8rem; font-weight: 950; letter-spacing: 2px; color: #00E36D; text-transform: uppercase;">TECH HUB</span>
+                    <!-- â‘ª TECH HUB -->
+                    <div id="noticias-banner-root" style="padding:0 15px !important; animation:floatUp 0.95s ease-out forwards; margin-bottom:30px;">
+                        <div style="background:#ffffff; border-radius:22px; padding:22px; color:#0a192f; position:relative; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,0.03); border:1px solid #e2e8f0;">
+                            <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:linear-gradient(90deg,#5a8a00,#7ab800); border-radius:22px 22px 0 0;"></div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; margin-top:6px;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div style="width:8px; height:8px; background:#5a8a00; border-radius:50%;"></div>
+                                    <span style="font-size:0.75rem; font-weight:950; color:#5a8a00; text-transform:uppercase; letter-spacing:1.5px;">HERRAMIENTAS</span>
                                 </div>
-                                <div style="background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.1);">v4.0.5</div>
+                                <div style="background:#f1f5f9; padding:3px 10px; border-radius:12px; font-size:0.6rem; font-weight:800; color:#64748b; border:1px solid #e2e8f0;">v4.0.5</div>
                             </div>
-                            
-                            <h3 style="font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.3rem; margin: 0 0 12px 0; color: #fff; letter-spacing: -0.5px;">Ecosistema <span style="color: #CCFF00;">SomosPadel</span></h3>
-                            <p style="font-size: 0.85rem; color: #94a3b8; line-height: 1.6; margin: 0 0 25px 0; font-weight: 500;">
-                                Accede a herramientas de alto rendimiento diseñadas por y para jugadores de competición.
-                            </p>
-                            
-                            <!-- Main Actions Grid -->
-                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; position: relative; z-index: 2;">
-                                 <!-- TV LIVE -->
-                                 <div onclick="window.Router.navigate('live')" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='#CCFF00'; this.style.boxShadow='0 0 20px rgba(204,255,0,0.2)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.1)'; this.style.boxShadow='none';">
-                                    <div style="position: absolute; top: -10px; right: -10px; width: 40px; height: 40px; background: rgba(204,255,0,0.1); border-radius: 50%; filter: blur(15px); animation: auraPulse 2s infinite;"></div>
-                                    <i class="fas fa-satellite-dish" style="color: #CCFF00; font-size: 1.4rem; filter: drop-shadow(0 0 5px #CCFF00);"></i>
-                                    <div>
-                                        <div style="font-weight: 950; font-size: 0.8rem;">CENTER COURT</div>
-                                        <div style="font-size: 0.6rem; color: #64748b; font-weight: 700;">LIVE STREAMING</div>
-                                    </div>
+                            <h3 style="font-weight:950; font-size:1.1rem; margin:0 0 6px; color:#0a192f; letter-spacing:-0.5px;">Ecosistema <span style="color:#5a8a00;">SomosPadel</span></h3>
+                            <p style="font-size:0.8rem; color:#64748b; line-height:1.5; margin:0 0 18px;">Herramientas de alto rendimiento para competiciÃ³n.</p>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+                                <div onclick="window.Router.navigate('live')" style="background:#f8fafc; border:1px solid #e2e8f0; padding:16px 14px; border-radius:16px; cursor:pointer; display:flex; flex-direction:column; gap:8px;" onmousedown="this.style.background='#f1f5f9'" onmouseup="this.style.background='#f8fafc'">
+                                    <i class="fas fa-satellite-dish" style="color:#5a8a00; font-size:1.2rem;"></i>
+                                    <div style="font-weight:950; font-size:0.75rem; color:#0a192f;">CENTER COURT</div>
+                                    <div style="font-size:0.55rem; color:#64748b; font-weight:700;">LIVE STREAMING</div>
                                 </div>
-                                <!-- CHAT SOS -->
-                                <div onclick="window.Router.navigate('live')" style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.borderColor='#ef4444'; this.style.boxShadow='0 0 25px rgba(239,68,68,0.3)';" onmouseout="this.style.background='rgba(239, 68, 68, 0.05)'; this.style.borderColor='rgba(239, 68, 68, 0.2)'; this.style.boxShadow='none';">
-                                    <div style="position: absolute; top: -10px; right: -10px; width: 40px; height: 40px; background: rgba(239,68,68,0.2); border-radius: 50%; filter: blur(15px); animation: auraPulse 2s infinite linear;"></div>
-                                    <i class="fas fa-comment-medical" style="color: #ef4444; font-size: 1.4rem; animation: pulseSOS 2s infinite; filter: drop-shadow(0 0 8px #ef4444);"></i>
-                                    <div>
-                                        <div style="font-weight: 950; font-size: 0.8rem; color: #ef4444;">CHAT TÁCTICO</div>
-                                        <div style="font-size: 0.6rem; color: #64748b; font-weight: 700;">BOTÓN SOS ACTIVADO</div>
-                                    </div>
+                                <div onclick="window.Router.navigate('live')" style="background:#fef2f2; border:1px solid #fecaca; padding:16px 14px; border-radius:16px; cursor:pointer; display:flex; flex-direction:column; gap:8px;" onmousedown="this.style.background='#fee2e2'" onmouseup="this.style.background='#fef2f2'">
+                                    <i class="fas fa-comment-medical" style="color:#ef4444; font-size:1.2rem;"></i>
+                                    <div style="font-weight:950; font-size:0.75rem; color:#0a192f;">CHAT TÃCTICO</div>
+                                    <div style="font-size:0.55rem; color:#64748b; font-weight:700;">BOTÃ“N SOS</div>
                                 </div>
                             </div>
-
-                            <style>
-                                @keyframes auraPulse {
-                                    0% { transform: scale(1); opacity: 0.3; }
-                                    50% { transform: scale(1.5); opacity: 0.1; }
-                                    100% { transform: scale(1); opacity: 0.3; }
-                                }
-                            </style>
-
-                            <style>
-                                @keyframes pulseSOS {
-                                    0% { opacity: 1; }
-                                    50% { opacity: 0.5; }
-                                    100% { opacity: 1; }
-                                }
-                            </style>
-
-                            <!-- Secondary Actions -->
-                            <div style="display: flex; gap: 10px; margin-bottom: 25px;">
-                                <button onclick="window.CaptainView.open()" style="flex: 2; background: #CCFF00; color: #000; border: none; padding: 15px; border-radius: 16px; font-weight: 950; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(204, 255, 0, 0.2);">
-                                    <i class="fas fa-robot"></i> CAPITÁN VIRTUAL
-                                </button>
-                                <button onclick="window.DashboardView.showChatInfo()" style="flex: 1; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 16px; font-weight: 800; font-size: 0.8rem; cursor: pointer;">
-                                    GUÍA
-                                </button>
-                            </div>
-                            
-                            <!-- TECHNOLOGY FOOTER -->
-                            <div onclick="window.open('presentation.html', '_blank')" style="background: linear-gradient(90deg, rgba(204, 255, 0, 0.05), transparent); border: 1px solid rgba(204, 255, 0, 0.1); border-radius: 20px; padding: 15px; cursor: pointer; transition: 0.3s; display: flex; justify-content: space-between; align-items: center;" onmouseover="this.style.background='rgba(204, 255, 0, 0.1)'; this.style.borderColor='rgba(204, 255, 0, 0.3)';" onmouseout="this.style.background='rgba(204, 255, 0, 0.05)'; this.style.borderColor='rgba(204, 255, 0, 0.1)';">
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="width: 38px; height: 38px; background: rgba(0,0,0,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(204, 255, 0, 0.2);">
-                                        <i class="fas fa-microchip" style="color: #CCFF00;"></i>
-                                    </div>
-                                    <div style="display: flex; flex-direction: column;">
-                                        <span style="font-weight: 900; font-size: 0.75rem; letter-spacing: 0.5px;">CORE TECHNOLOGY</span>
-                                        <span style="font-size: 0.65rem; color: #64748b; font-weight: 700;">Powered by Somospadel BCN</span>
-                                    </div>
-                                </div>
-                                <i class="fas fa-chevron-right" style="color: #CCFF00; font-size: 0.8rem;"></i>
+                            <div style="display:flex; gap:10px;">
+                                <button onclick="window.CaptainView && window.CaptainView.open()" style="flex:2; background:#0a192f; color:#fff; border:none; padding:14px; border-radius:14px; font-weight:950; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><i class="fas fa-robot"></i> CAPITÃN IA</button>
+                                <button onclick="window.DashboardView && window.DashboardView.showChatInfo()" style="flex:1; background:#f8fafc; color:#0a192f; border:1px solid #e2e8f0; padding:14px; border-radius:14px; font-weight:800; font-size:0.75rem; cursor:pointer;">GUÃA</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 5. PREDICTIVE SYNERGY (MOVED TO LAST POSITION) -->
-                    <div id="predictive-synergy-root" style="margin: 12px 15px 40px !important; position: relative; z-index: 50; display: block !important; min-height: 100px;">
-                        <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.3); font-weight: 800; background: rgba(0,0,0,0.2); border-radius: 24px;">
-                            <i class="fas fa-brain fa-spin" style="margin-bottom: 10px; font-size: 1.5rem; color: #CCFF00;"></i><br>
+                    <!-- â‘« PREDICTIVE SYNERGY -->
+                    <div id="predictive-synergy-root" style="margin:0 15px 30px !important; position:relative; z-index:50; display:block !important; min-height:80px;">
+                        <div style="text-align:center; padding:30px; color:#94a3b8; font-weight:800; background:#ffffff; border-radius:20px; border:1px solid #e2e8f0;">
+                            <i class="fas fa-brain fa-spin" style="margin-bottom:10px; font-size:1.2rem; color:#5a8a00;"></i><br>
                             Sincronizando Inteligencia Predictiva...
                         </div>
                     </div>
 
-                    </div>
                 </div>
-
-
+            </div>
 
         <style>
-            @keyframes slowTicker {
-                0% { transform: translateX(0); }
-                100% { transform: translateX(-50%); }
-            }
-            .ticker-container {
-                width: 100%;
-                overflow: hidden;
-                position: relative;
-                mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-                -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-            }
-            .ticker-content {
-                display: flex;
-                gap: 12px;
-                animation: slowTicker 25s linear infinite;
-                width: max-content;
-                padding: 10px 0;
-            }
-            .ticker-content:hover {
-                animation-play-state: paused;
-            }
+            @keyframes slowTicker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+            .ticker-container { width:100%; overflow:hidden; position:relative; mask-image:linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image:linear-gradient(to right, transparent, black 10%, black 90%, transparent); }
+            .ticker-content { display:flex; gap:12px; animation:slowTicker 25s linear infinite; width:max-content; padding:10px 0; }
+            .ticker-content:hover { animation-play-state: paused; }
             .dashboard-v2-container ::-webkit-scrollbar { display: none; }
         </style>
     `;
@@ -479,11 +272,11 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
 
                     // Render Cards first
                     if (weatherData && weatherData.length > 0) {
-                        weatherHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 2px;">`;
+                        weatherHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">`;
                         weatherData.forEach(w => {
                             weatherHtml += this.renderWeatherCard(
                                 w.name,
-                                `${w.temp}°C`,
+                                `${w.temp}Â°C`,
                                 w.icon,
                                 {
                                     wind: `${w.wind} km/h`,
@@ -541,7 +334,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                     font-weight: 600;
                                     max-width: 240px;
                                     margin: 10px auto 0;
-                                ">Necesitamos más datos de nivel y victorias para calcular tu pareja perfecta.</div>
+                                ">Necesitamos mÃ¡s datos de nivel y victorias para calcular tu pareja perfecta.</div>
 
                                 <style>
                                     @keyframes scannerMove {
@@ -551,9 +344,9 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                     }
                                 </style>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 2px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                                 ${this.renderWeatherCard('EL PRAT', '--', '...', { wind: '--', hum: '--', rain: '--' })}
-                                ${this.renderWeatherCard('CORNELLÀ', '--', '...', { wind: '--', hum: '--', rain: '--' })}
+                                ${this.renderWeatherCard('CORNELLÃ€', '--', '...', { wind: '--', hum: '--', rain: '--' })}
                             </div>`;
                     }
 
@@ -574,7 +367,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         <div style="position: relative; border-radius: 32px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); background: #0f172a; animation: borderFlow 4s infinite;">
                             <div style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
                                 <div style="display:flex; align-items:center; gap:10px;">
-                                    <span style="font-size:0.75rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR TÁCTICO <span style="color:#CCFF00;">WAR ROOM</span></span>
+                                    <span style="font-size:0.75rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR TÃCTICO <span style="color:#CCFF00;">WAR ROOM</span></span>
                                 </div>
                                 <div style="display:flex; align-items:center; gap:8px;">
                                     <button onclick="window.DashboardView.toggleTacticalHUD()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.3s; pointer-events: auto;">
@@ -593,15 +386,15 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                 <!-- HUD TOP LEFT: Pista Status -->
                                 <div id="tactical-hud-grip" style="position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-left:3px solid #00E36D; pointer-events:none; animation: floatUp 0.8s ease-out; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
                                     <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">ESTADO DE PISTA</div>
-                                    <div style="font-size:0.75rem; color:#fff; font-weight:1000;">GRIP: <span style="color:#00E36D;">ÓPTIMO (92%)</span></div>
+                                    <div style="font-size:0.75rem; color:#fff; font-weight:1000;">GRIP: <span style="color:#00E36D;">Ã“PTIMO (92%)</span></div>
                                     <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Prob. Pista resbaladiza: 12%</div>
                                 </div>
 
-                                <!-- HUD TOP RIGHT: Rebote/Presión -->
+                                <!-- HUD TOP RIGHT: Rebote/PresiÃ³n -->
                                 <div id="tactical-hud-bounce" style="position:absolute; top:15px; right:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-right:3px solid #CCFF00; pointer-events:none; text-align:right; animation: floatUp 0.8s ease-out 0.2s both; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
                                     <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">INTELIGENCIA BOLA</div>
                                     <div style="font-size:0.75rem; color:#fff; font-weight:1000;">REBOTE: <span style="color:#CCFF00;">ALTO (+15%)</span></div>
-                                    <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Bola rápida + Presión detectada</div>
+                                    <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Bola rÃ¡pida + PresiÃ³n detectada</div>
                                 </div>
 
                                 <!-- HUD BOTTOM CENTER: Scan Line -->
@@ -622,6 +415,11 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     weatherRoot.style.display = 'block';
                 }
 
+                // Load Blog News Widget
+                const blogRoot = document.getElementById('blog-news-widget-root');
+                if (blogRoot) {
+                    blogRoot.innerHTML = this.renderBlogWidget();
+                }
 
                 // PRO CONTENT (AGENDA) REMOVED PER USER REQUEST
 
@@ -632,12 +430,15 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             // 4. INIT HEADER TICKER SYNC
             this.initHeaderTickerSync();
 
+            // 🏓 PADEL PULSE
+            if (window.PadelPulse) {
+                window.PadelPulse.render('padel-pulse-widget-root');
+            }
+
             // 5. FORCE LOAD NETWORK PULSE & STORIES
             if (window.StoryFeedWidget) {
                 window.StoryFeedWidget.render('story-feed-root');
             }
-
-
         }
 
         initHeaderTickerSync() {
@@ -645,34 +446,606 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             console.log("📺 [DashboardView] Ticker management delegated to SmartTicker.js for premium TV experience.");
         }
 
+        toggleActivityFeed() {
+            const container = document.getElementById('activity-extended-container');
+            const btn = document.getElementById('activity-toggle-btn');
+            
+            if (container && btn) {
+                if (container.style.display === 'none') {
+                    container.style.display = 'flex';
+                    btn.innerHTML = `Ver menos <i class="fas fa-chevron-up" id="activity-toggle-icon"></i>`;
+                } else {
+                    container.style.display = 'none';
+                    btn.innerHTML = `Ver más <i class="fas fa-chevron-down" id="activity-toggle-icon"></i>`;
+                }
+            }
+        }
+
+        async shareBlogPost(postId, title) {
+            this.showShareMenu(postId, title);
+        }
+
+        showShareMenu(postId, title) {
+            const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
+            const shareText = `¡Mira esta noticia en SomosPadel BCN! 🎾\n\n"${title}"\n\n`;
+            
+            // Si ya existe un menú de compartir previo, lo eliminamos
+            const existingShare = document.getElementById('blog-share-menu-modal');
+            if (existingShare) existingShare.remove();
+            
+            const shareModal = document.createElement('div');
+            shareModal.id = 'blog-share-menu-modal';
+            shareModal.style = `
+                position: fixed; inset: 0; z-index: 999999999 !important;
+                background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                display: flex; align-items: center; justify-content: center;
+                padding: 20px; font-family: 'Outfit', sans-serif;
+                animation: fadeIn 0.25s ease-out;
+            `;
+            
+            shareModal.innerHTML = `
+                <div style="background: #090f1e; border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; width: 100%; max-width: 360px; padding: 24px; box-shadow: 0 30px 70px rgba(0,0,0,0.85); position: relative; text-align: center; animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                    
+                    <!-- Botón de Cerrar del Menú de Compartir -->
+                    <button id="share-modal-close-btn" 
+                            style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s;"
+                            onmouseover="this.style.background='rgba(255,255,255,0.15)'"
+                            onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+                        <i class="fas fa-times" style="font-size: 0.8rem;"></i>
+                    </button>
+                    
+                    <div style="margin-bottom: 22px;">
+                        <span style="font-size: 2.5rem; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));">📢</span>
+                        <h4 style="color: white; font-weight: 950; font-size: 1.25rem; margin: 12px 0 6px 0; letter-spacing: -0.4px;">Compartir Noticia</h4>
+                        <p style="color: rgba(255,255,255,0.5); font-size: 0.78rem; line-height: 1.4; margin: 0; padding: 0 10px;">Selecciona el canal oficial para compartir este contenido con tu red de pádel.</p>
+                    </div>
+                    
+                    <!-- Lista de Opciones Premium -->
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        
+                        <!-- WhatsApp Option -->
+                        <button id="share-btn-whatsapp"
+                                style="background: rgba(37, 211, 102, 0.1); border: 1px solid rgba(37, 211, 102, 0.25); color: #25D366; font-weight: 800; font-size: 0.85rem; padding: 12px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                                onmouseover="this.style.background='rgba(37, 211, 102, 0.2)';this.style.borderColor='#25D366';this.style.transform='scale(1.03) translateY(-1px)';"
+                                onmouseout="this.style.background='rgba(37, 211, 102, 0.1)';this.style.borderColor='rgba(37, 211, 102, 0.25)';this.style.transform='scale(1) translateY(0)';">
+                            <i class="fab fa-whatsapp" style="font-size: 1.2rem;"></i>
+                            <span>Compartir por WhatsApp</span>
+                        </button>
+                        
+                        <!-- Instagram Option -->
+                        <button id="share-btn-instagram"
+                                style="background: rgba(225, 48, 108, 0.1); border: 1px solid rgba(225, 48, 108, 0.25); color: #E1306C; font-weight: 800; font-size: 0.85rem; padding: 12px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                                onmouseover="this.style.background='rgba(225, 48, 108, 0.2)';this.style.borderColor='#E1306C';this.style.transform='scale(1.03) translateY(-1px)';"
+                                onmouseout="this.style.background='rgba(225, 48, 108, 0.1)';this.style.borderColor='rgba(225, 48, 108, 0.25)';this.style.transform='scale(1) translateY(0)';">
+                            <i class="fab fa-instagram" style="font-size: 1.2rem;"></i>
+                            <span>Compartir en Instagram</span>
+                        </button>
+                        
+                        <!-- Copiar Enlace Option -->
+                        <button id="share-btn-copy"
+                                style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); color: #3b82f6; font-weight: 800; font-size: 0.85rem; padding: 12px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                                onmouseover="this.style.background='rgba(59, 130, 246, 0.2)';this.style.borderColor='#3b82f6';this.style.transform='scale(1.03) translateY(-1px)';"
+                                onmouseout="this.style.background='rgba(59, 130, 246, 0.1)';this.style.borderColor='rgba(59, 130, 246, 0.25)';this.style.transform='scale(1) translateY(0)';">
+                            <i class="fas fa-link" style="font-size: 1rem;"></i>
+                            <span>Copiar Enlace de Noticia</span>
+                        </button>
+
+                        <!-- Compartir Nativo -->
+                        <button id="native-share-btn"
+                                style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.12); color: white; font-weight: 800; font-size: 0.85rem; padding: 12px 16px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                                onmouseover="this.style.background='rgba(255, 255, 255, 0.08)';this.style.transform='scale(1.03) translateY(-1px)';"
+                                onmouseout="this.style.background='rgba(255, 255, 255, 0.04)';this.style.transform='scale(1) translateY(0)';">
+                            <i class="fas fa-share-alt" style="font-size: 1rem;"></i>
+                            <span>Otras aplicaciones</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(shareModal);
+            
+            // Asignamos manejadores de eventos directos sin dependencias globales
+            const closeBtn = shareModal.querySelector('#share-modal-close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    shareModal.remove();
+                });
+            }
+
+            const waBtn = shareModal.querySelector('#share-btn-whatsapp');
+            if (waBtn) {
+                waBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.actionShare('whatsapp', shareUrl, encodeURIComponent(shareText));
+                });
+            }
+
+            const igBtn = shareModal.querySelector('#share-btn-instagram');
+            if (igBtn) {
+                igBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.actionShare('instagram', shareUrl, '');
+                });
+            }
+
+            const copyBtn = shareModal.querySelector('#share-btn-copy');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.actionShare('copy', shareUrl, '');
+                });
+            }
+
+            const nativeBtn = shareModal.querySelector('#native-share-btn');
+            if (nativeBtn) {
+                if (navigator.share) {
+                    nativeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.actionShare('native', shareUrl, encodeURIComponent(shareText));
+                    });
+                } else {
+                    nativeBtn.style.display = 'none';
+                }
+            }
+            
+            // Cerrar menú de compartir si se hace clic fuera de la tarjeta
+            shareModal.onclick = (e) => {
+                if (e.target === shareModal) shareModal.remove();
+            };
+        }
+
+        async actionShare(type, url, textDecoded) {
+            const text = decodeURIComponent(textDecoded);
+            
+            // Eliminar modal de compartir al ejecutar acción
+            const menu = document.getElementById('blog-share-menu-modal');
+            if (menu) menu.remove();
+            
+            if (type === 'whatsapp') {
+                const waUrl = `https://wa.me/?text=${encodeURIComponent(text + url)}`;
+                window.open(waUrl, '_blank');
+            } else if (type === 'instagram') {
+                try {
+                    await navigator.clipboard.writeText(url);
+                    if (window.PremiumModal) {
+                        window.PremiumModal.alert({
+                            title: '📸 ENLACE COPIADO',
+                            message: '<b>Hemos copiado el enlace al portapapeles.</b><br><br>Ahora abriremos Instagram para que puedas crear una Story o enviárselo por mensaje directo a tus amigos y compañeros de SomosPadel. 🎾',
+                            type: 'success'
+                        });
+                    } else {
+                        alert('¡Enlace copiado! Abre Instagram para pegarlo en tus Stories.');
+                    }
+                    setTimeout(() => {
+                        window.open('https://www.instagram.com', '_blank');
+                    }, 600);
+                } catch (e) {
+                    console.warn("Fallo al copiar para Instagram share:", e);
+                }
+            } else if (type === 'copy') {
+                try {
+                    await navigator.clipboard.writeText(url);
+                    if (window.PremiumModal) {
+                        window.PremiumModal.alert({
+                            title: '📋 COPIADO AL PORTAPAPELES',
+                            message: 'El enlace directo a la noticia ha sido guardado con éxito. ¡Listo para pegar en cualquier chat! 🎾',
+                            type: 'success'
+                        });
+                    } else {
+                        alert('¡Enlace copiado al portapapeles!');
+                    }
+                } catch (e) {
+                    console.warn("Fallo al copiar enlace:", e);
+                }
+            } else if (type === 'native') {
+                try {
+                    await navigator.share({
+                        title: 'SomosPadel BCN',
+                        text: text,
+                        url: url
+                    });
+                } catch (e) {
+                    console.warn('Native share cancelled:', e);
+                }
+            }
+        }
+
+        renderBlogWidget() {
+            // Fetch async, inject into shell
+            setTimeout(async () => {
+                const container = document.getElementById('dynamic-blog-posts-container');
+                if (!container) return;
+                try {
+                    const db = window.db || firebase.firestore();
+                    const snapshot = await db.collection('blog_posts').orderBy('timestamp', 'desc').get();
+                    let posts = [];
+                    if (!snapshot.empty) {
+                        posts = snapshot.docs.map(doc => {
+                            const data = doc.data();
+                            return {
+                                id: doc.id,
+                                ...data
+                            };
+                        });
+                    } else {
+                        posts = [
+                            { id: 'torneo-primavera', category: '🏆 TORNEOS', catColor: '#CCFF00', title: 'Gran Torneo de Primavera 2026', emoji: '🎾', imgGrad: 'linear-gradient(135deg, #CCFF00 0%, #84cc16 100%)', snippet: '¡Inscripciones abiertas! 120 plazas, Welcome Pack premium y barbacoa final.', content: 'Llega el evento más esperado del año. El 15 de Junio celebraremos el Gran Torneo de Primavera con categorías masculina, femenina y mixta. ¡Reserva tu plaza!', date: 'Hoy', readTime: '2 min' },
+                            { id: 'ranking-actualizado', category: '📊 RANKING', catColor: '#38bdf8', title: 'Ranking Actualizado: Top 5 de la Temporada', emoji: '🏅', imgGrad: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)', snippet: 'El ranking se ha recalculado. ¿Has subido posiciones esta semana?', content: 'Consulta tu posición actualizada en la sección Ranking. Nuevos puntos asignados tras la última jornada.', date: 'Ayer', readTime: '2 min' },
+                            { id: 'tactica-centro', category: '💡 CONSEJOS', catColor: '#f59e0b', title: 'Táctica: Jugar al Centro de la Pista', emoji: '⚡', imgGrad: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)', snippet: 'Jugar al medio reduce los ángulos del rival y genera dudas en la pareja contraria.', content: 'El centro de la pista es la clave táctica más potente del pádel. Al tirar al centro reduces ángulos y generas confusión.', date: 'Hace 3 días', readTime: '3 min' }
+                        ];
+                        // Fallbacks listos
+                    }
+                    if (posts.length === 0) { container.innerHTML = ''; return; }
+                    const featured = posts[0];
+                    const rest = posts.slice(1, 5);
+
+                    const premiumIcon = (post, size = 60) => {
+                        const grad = post.imgGrad || 'linear-gradient(135deg, #CCFF00, #84cc16)';
+                        const em = post.emoji || '📰';
+                        return `<div style="width:${size}px;height:${size}px;border-radius:${Math.round(size*0.27)}px;background:${grad};display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(77,124,15,0.18),inset 0 1px 0 rgba(255,255,255,0.35);"><div style="position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.25) 0%,transparent 100%);border-radius:inherit;pointer-events:none;"></div><div style="position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,0.12) 1px,transparent 1px);background-size:${Math.round(size/7)}px ${Math.round(size/7)}px;pointer-events:none;"></div><span style="font-size:${Math.round(size*0.42)}px;position:relative;z-index:2;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.15));line-height:1;">${em}</span></div>`;
+                    };
+
+                    const featuredCard = `
+                        <div onclick="window.DashboardView.openBlogPost('${featured.id}')"
+                             class="premium-blog-3d-card"
+                             style="border-radius: 24px; overflow: hidden; cursor: pointer; background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(16px) saturate(120%); -webkit-backdrop-filter: blur(16px) saturate(120%); position: relative; min-height: 170px; box-shadow: 0 10px 30px rgba(0,0,0,0.03), 0 1px 2px rgba(255,255,255,0.8), inset 0 1px 0 rgba(255,255,255,0.9); transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid rgba(255, 255, 255, 0.7); transform-style: preserve-3d; perspective: 1000px;"
+                             onmouseover="this.style.transform='translateY(-6px) translateZ(10px) rotateX(1.5deg) rotateY(-0.8deg)';this.style.boxShadow='0 25px 50px rgba(56,113,0,0.12), 0 8px 20px rgba(0,0,0,0.02)';this.style.borderColor='rgba(255,255,255,0.95)';"
+                             onmouseout="this.style.transform='translateY(0) translateZ(0) rotateX(0) rotateY(0)';this.style.boxShadow='0 10px 30px rgba(0,0,0,0.03)';this.style.borderColor='rgba(255, 255, 255, 0.7)';"
+                        >
+                            <div style="position: absolute; inset: 0; background-image: radial-gradient(rgba(132,204,22,0.06) 1px, transparent 1px); background-size: 15px 15px; pointer-events: none;"></div>
+                            
+                            <div style="position: relative; padding: 20px; display: flex; gap: 18px; align-items: center; min-height: 170px;">
+                                <div style="width: 80px; height: 80px; border-radius: 20px; background: ${featured.imgGrad || 'linear-gradient(135deg, #CCFF00, #84cc16)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 8px 24px rgba(77,124,15,0.2), inset 0 1px 0 rgba(255,255,255,0.4); animation: premiumEmojiFloat 3.8s ease-in-out infinite;">
+                                    <span style="font-size: 2.4rem; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.15)); line-height: 1;">${featured.emoji||'📰'}</span>
+                                </div>
+                                <div style="flex: 1; min-width: 0; padding-right: 20px;">
+                                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
+                                        <span style="font-size: 0.52rem; font-weight: 1000; color: #000; background: #CCFF00; border: 1px solid #84cc16; padding: 2.5px 8px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(132,204,22,0.15);">${featured.category||'REVISTA'}</span>
+                                        <span style="font-size: 0.48rem; font-weight: 1000; color: #475569; letter-spacing: 0.5px; text-transform: uppercase; opacity: 0.85;">• DESTACADO</span>
+                                    </div>
+                                    <h3 style="margin: 0 0 6px 0; color: #000000; font-weight: 1000; font-size: 1.1rem; line-height: 1.3; letter-spacing: -0.3px; font-family: 'Outfit';">${featured.title}</h3>
+                                    <p style="margin: 0 0 12px 0; color: #334155; font-size: 0.74rem; font-weight: 600; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter';">${featured.snippet}</p>
+
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <span style="font-size: 0.6rem; color: #475569; font-weight: 800; display:flex; align-items:center; gap:4px;">
+                                            <i class="far fa-calendar" style="font-size:0.55rem; color: #84cc16;"></i> ${featured.date || 'Hoy'}
+                                        </span>
+                                        <span style="font-size: 0.6rem; color: #475569; font-weight: 800; display:flex; align-items:center; gap:4px;">
+                                            <i class="far fa-clock" style="font-size:0.55rem; color: #84cc16;"></i> ${featured.readTime || '3 min'}
+                                        </span>
+                                        <div style="margin-left:auto; background: #000000; border: 1px solid #000000; border-radius: 20px; padding: 6px 15px; font-size: 0.62rem; font-weight: 1000; color: #CCFF00; display:flex; align-items:center; gap:6px; box-shadow: 0 4px 10px rgba(0,0,0,0.18); transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                                             onmouseover="this.style.background='#CCFF00';this.style.color='#000';this.style.transform='scale(1.05) translateY(-1px)';this.style.boxShadow='0 6px 15px rgba(204,255,0,0.3)';"
+                                             onmouseout="this.style.background='#000';this.style.color='#CCFF00';this.style.transform='scale(1) translateY(0)';this.style.boxShadow='0 4px 10px rgba(0,0,0,0.18)';">
+                                            LEER AHORA <i class="fas fa-arrow-right" style="font-size:0.5rem;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+
+                    // ── COMPACT CARDS (rest) ────────────────────────────────
+                    const compactCards = rest.map((post, idx) => `
+                        <div onclick="window.DashboardView.openBlogPost('${post.id}')"
+                             style="
+                                display: flex; gap: 14px; align-items: center;
+                                padding: 13px 14px; border-radius: 16px; cursor: pointer;
+                                background: rgba(255,255,255,0.04);
+                                border: 1px solid rgba(255,255,255,0.07);
+                                transition: all 0.25s ease; position: relative; overflow:hidden;
+                             "
+                             onmouseover="this.style.background='rgba(255,255,255,0.09)'; this.style.borderColor='rgba(255,255,255,0.18)'; this.style.transform='translateX(3px)';"
+                             onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.07)'; this.style.transform='translateX(0)';">
+
+                            <!-- Left accent bar -->
+                            <div style="position:absolute; left:0; top:20%; bottom:20%; width:3px; background: ${post.catColor || '#CCFF00'}; border-radius: 0 3px 3px 0; opacity:0.7;"></div>
+
+                            <!-- Icon -->
+                            ${premiumIcon(post, 60)}
+
+                            <!-- Text -->
+                            <div style="flex:1; min-width:0;">
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                                    <span style="
+                                        font-size: 0.5rem; font-weight: 900; letter-spacing: 0.8px;
+                                        color: ${post.catColor || '#CCFF00'};
+                                        text-transform: uppercase;
+                                    ">${(post.category || 'REVISTA').replace(/^[^\s]+\s/, '')}</span>
+                                    <span style="font-size: 0.58rem; color: rgba(255,255,255,0.35); font-weight: 600; display:flex; align-items:center; gap:3px;">
+                                        <i class="far fa-clock" style="font-size:0.5rem;"></i>${post.readTime || '3 min'}
+                                    </span>
+                                </div>
+                                <h4 style="
+                                    margin: 0 0 4px 0; color: rgba(255,255,255,0.95); font-weight: 800;
+                                    font-size: 0.88rem; line-height: 1.2; letter-spacing: -0.2px;
+                                    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow:hidden;
+                                ">${post.title}</h4>
+                                <p style="
+                                    margin: 0; color: rgba(255,255,255,0.5); font-size: 0.68rem;
+                                    font-weight: 500; line-height: 1.35;
+                                    display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow:hidden;
+                                ">${post.snippet}</p>
+                            </div>
+
+                            <!-- Arrow -->
+                            <div style="flex-shrink:0; color: rgba(255,255,255,0.25); font-size: 0.7rem;">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    container.innerHTML = featuredCard + `<div style="display:flex; flex-direction:column; gap:8px; margin-top: 4px;">${compactCards}</div>`;
+
+                } catch (err) {
+                    console.error("Fallo al inyectar blog posts dinámicos:", err);
+                    container.innerHTML = '';
+                }
+            }, 100);
+
+            return `
+                <div style="
+                    background: linear-gradient(160deg, #0d1b2e 0%, #0a1628 50%, #0f1f35 100%);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 28px; padding: 20px;
+                    box-shadow: 0 25px 60px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.08);
+                    position: relative; overflow: hidden;
+                ">
+                    <!-- Ambient glows -->
+                    <div style="position:absolute; top:-60px; right:-40px; width:180px; height:180px; background: radial-gradient(circle, rgba(204,255,0,0.08) 0%, transparent 70%); pointer-events:none; filter:blur(30px);"></div>
+                    <div style="position:absolute; bottom:-60px; left:-40px; width:180px; height:180px; background: radial-gradient(circle, rgba(56,189,248,0.08) 0%, transparent 70%); pointer-events:none; filter:blur(30px);"></div>
+
+                    <!-- Header -->
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.07);">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="
+                                width: 32px; height: 32px; border-radius: 9px;
+                                background: linear-gradient(135deg, #CCFF00, #84cc16);
+                                display: flex; align-items:center; justify-content:center;
+                                box-shadow: 0 4px 12px rgba(204,255,0,0.35);
+                            ">
+                                <i class="fas fa-newspaper" style="font-size:0.75rem; color:#000;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; font-weight: 900; color: white; letter-spacing: 0.5px; text-transform: uppercase;">SomosPadel BCN</div>
+                                <div style="font-size: 0.55rem; color: rgba(255,255,255,0.45); font-weight: 600; letter-spacing: 0.5px;">REVISTA OFICIAL</div>
+                            </div>
+                        </div>
+                        <div style="
+                            background: #000000; border: 1px solid #CCFF00;
+                            padding: 4px 10px; border-radius: 20px;
+                            font-size: 0.5rem; font-weight: 900; color: #CCFF00;
+                            letter-spacing: 1px; text-transform: uppercase;
+                            display: flex; align-items: center; gap: 5px;
+                        ">
+                            INFO OFICIAL
+                        </div>
+                    </div>
+
+                    <!-- Posts container -->
+                    <div id="dynamic-blog-posts-container" style="display:flex; flex-direction:column; gap:10px;">
+                        <!-- Loading skeleton -->
+                        ${[0,1,2].map(i => `
+                            <div style="display:flex; gap:12px; align-items:center; padding:12px; border-radius:14px; background:rgba(255,255,255,0.03);">
+                                <div style="width:60px; height:60px; border-radius:14px; background:rgba(255,255,255,0.07); flex-shrink:0;"></div>
+                                <div style="flex:1;">
+                                    <div style="height:8px; width:40%; background:rgba(255,255,255,0.07); border-radius:4px; margin-bottom:8px;"></div>
+                                    <div style="height:11px; width:85%; background:rgba(255,255,255,0.07); border-radius:4px; margin-bottom:6px;"></div>
+                                    <div style="height:8px; width:65%; background:rgba(255,255,255,0.05); border-radius:4px;"></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+
+        async openBlogPost(postId) {
+            try {
+                const db = window.db || firebase.firestore();
+                let post = null;
+                let viewsCount = 1;
+                let lastReaderName = 'Ninguno';
+
+                // Get Current User
+                const user = window.Store ? window.Store.getState('currentUser') : null;
+                const currentUserName = user ? (user.name || user.displayName || 'Jugador Pro') : 'Invitado Pro';
+
+                try {
+                    const doc = await db.collection('blog_posts').doc(postId).get();
+                    if (doc.exists) {
+                        post = doc.data();
+                        
+                        // Increment views & set reader real-time in Firestore
+                        viewsCount = (post.viewsCount || 0) + 1;
+                        lastReaderName = currentUserName;
+
+                        // Non-blocking update to keep speed ultra-fast
+                        db.collection('blog_posts').doc(postId).update({
+                            viewsCount: viewsCount,
+                            lastReaderName: lastReaderName,
+                            lastReaderTimestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        }).catch(e => console.warn("Fallo al actualizar Firestore views:", e));
+                    }
+                } catch (e) {
+                    console.warn("Fallo al conectar con Firestore para blog stats:", e);
+                }
+
+                // Fallback local if Firestore failed or is offline or post is local
+                if (!post) {
+                    const fallbackPosts = {
+                        'torneo-primavera': {
+                            category: '🏆 TORNEOS',
+                            catColor: '#CCFF00',
+                            title: 'Gran Torneo de Primavera 2026',
+                            content: 'Llega el evento más esperado del año. El próximo 15 de Junio celebraremos el Gran Torneo de Primavera en las instalaciones de El Prat. Contaremos con categorías masculina, femenina y mixta de todos los niveles. Con tu inscripción recibirás un Welcome Pack (camiseta oficial, grip y bebida energética). Al finalizar, disfrutaremos de una barbacoa comunitaria con sorteos y música. ¡Inscripciones limitadas a 120 plazas, reserva la tuya en la sección de eventos!',
+                            date: 'Hoy',
+                            readTime: '2 min',
+                            emoji: '🎾',
+                            imgGrad: 'linear-gradient(135deg, #CCFF00 0%, #84cc16 100%)'
+                        },
+                        'ranking-actualizado': {
+                            category: '📊 RANKING',
+                            catColor: '#38bdf8',
+                            title: 'Ranking Actualizado: Top 5 de la Temporada',
+                            content: 'El ranking de la temporada se ha recalculado tras la última jornada de liga. Los nuevos puntos ya están asignados y podrás consultar tu posición actualizada en la sección Ranking. ¡Enhorabuena a los que han subido posiciones esta semana y ánimo a los que luchan por el ascenso!',
+                            date: 'Ayer',
+                            readTime: '2 min',
+                            emoji: '🏅',
+                            imgGrad: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)'
+                        },
+                        'tactica-centro': {
+                            category: '💡 CONSEJOS',
+                            catColor: '#f59e0b',
+                            title: 'Táctica: Jugar al Centro de la Pista',
+                            content: 'Jugar por el centro de la pista es una de las tácticas más eficaces en el pádel. Al dirigir la bola al centro, reduces drásticamente los ángulos de rebote del rival, evitas que abran la bola a las paredes y generas dudas de comunicación entre la pareja contraria. Es ideal para situaciones bajo presión o globos difíciles. ¡Probadlo en vuestro próximo partido!',
+                            date: 'Hace 3 días',
+                            readTime: '3 min',
+                            emoji: '⚡',
+                            imgGrad: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)'
+                        }
+                    };
+                    post = fallbackPosts[postId];
+                }
+
+                if (!post) return;
+
+                const modal = document.createElement('div');
+                modal.id = 'blog-post-modal';
+                modal.style = `
+                    position: fixed; inset: 0; z-index: 999999999 !important;
+                    background: rgba(0,0,0,0.85); backdrop-filter: blur(15px);
+                    display: flex; align-items: center; justify-content: center;
+                    padding: 20px; font-family: 'Outfit', sans-serif;
+                    animation: fadeIn 0.3s ease-out;
+                `;
+                
+                modal.innerHTML = `
+                    <div style="background: #090f1e; border: 1px solid rgba(255,255,255,0.12); border-radius: 32px; width: 100%; max-width: 480px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 35px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1); position: relative; overflow: hidden; animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                        
+                        <!-- Premium Background Glow/Aura -->
+                        <div style="position: absolute; top: 100px; left: -50px; width: 150px; height: 150px; background: radial-gradient(circle, ${post.catColor || '#CCFF00'}15 0%, transparent 70%); pointer-events: none; filter: blur(30px);"></div>
+                        
+                        <!-- Gradient Header Area (Apple News style) -->
+                        <div style="background: ${post.imgGrad || 'linear-gradient(135deg, #1e293b, #0f172a)'}; height: 130px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;">
+                            <div style="position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px); background-size: 14px 14px; pointer-events: none;"></div>
+                            <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 60%, rgba(9,15,30,0.95) 100%); pointer-events: none;"></div>
+                            <!-- Huge Floating 3D-effect Emoji -->
+                            <span class="blog-modal-emoji" style="font-size: 4.8rem; filter: drop-shadow(0 12px 24px rgba(0,0,0,0.5)); z-index: 1; line-height: 1;">${post.emoji || '📰'}</span>
+                        </div>
+
+                        <!-- Content Area -->
+                        <div id="blog-post-content-area" style="padding: 24px; padding-top: 16px; position: relative; z-index: 2; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+                                <span style="font-size: 0.58rem; font-weight: 1000; color: ${post.catColor || '#CCFF00'}; border: 1px solid ${post.catColor || '#CCFF00'}45; padding: 4px 10px; border-radius: 8px; background: ${post.catColor || '#CCFF00'}12; letter-spacing: 0.8px; text-transform: uppercase;">${post.category || 'REVISTA'}</span>
+                                <span style="font-size: 0.62rem; color: rgba(255,255,255,0.45); font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;">• ${post.readTime || '3 MIN'} DE LECTURA</span>
+                            </div>
+                            
+                            <h3 style="color: white; font-weight: 950; font-size: 1.35rem; margin: 0 0 16px 0; line-height: 1.25; letter-spacing: -0.4px; text-shadow: 0 2px 10px rgba(0,0,0,0.4);">${post.title}</h3>
+                            
+                            <p style="color: rgba(255,255,255,0.85); font-size: 0.86rem; font-weight: 500; line-height: 1.65; margin: 0 0 20px 0; word-break: break-word; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">${post.content}</p>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.68rem; color: rgba(255,255,255,0.4); font-weight: 800; letter-spacing: 0.5px;">
+                                <span>Publicado: ${post.date || 'Recientemente'}</span>
+                                <span style="color: #CCFF00; font-weight: 900; letter-spacing: 0.8px;">SOMOSPADEL BCN</span>
+                            </div>
+                        </div>
+
+                        <!-- Floating Premium Control Buttons (Fixed on top of banner) -->
+                        <button id="blog-modal-share-btn"
+                                style="position: absolute; top: 16px; left: 16px; background: rgba(0,0,0,0.65); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25); color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 999999999 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.4);"
+                                onmouseover="this.style.background='#3b82f6';this.style.borderColor='#3b82f6';this.style.transform='scale(1.12) translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(59,130,246,0.5)';"
+                                onmouseout="this.style.background='rgba(0,0,0,0.65)';this.style.borderColor='rgba(255,255,255,0.25)';this.style.transform='scale(1) translateY(0)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.4)';"
+                                title="Compartir Noticia">
+                            <i class="fas fa-share-alt" style="font-size: 0.95rem;"></i>
+                        </button>
+                        
+                        <button id="blog-modal-close-btn"
+                                style="position: absolute; top: 16px; right: 16px; background: rgba(0,0,0,0.65); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25); color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 999999999 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.4);"
+                                onmouseover="this.style.background='#CCFF00';this.style.borderColor='#CCFF00';this.style.color='#000';this.style.transform='scale(1.12) translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(204,255,0,0.5)';"
+                                onmouseout="this.style.background='rgba(0,0,0,0.65)';this.style.borderColor='rgba(255,255,255,0.25)';this.style.color='#fff';this.style.transform='scale(1) translateY(0)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.4)';"
+                                title="Cerrar Noticia">
+                            <i class="fas fa-times" style="font-size: 0.95rem;"></i>
+                        </button>
+                    </div>
+                    <style>
+                        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                        @keyframes slideUp { from { transform: translateY(28px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                        .blog-modal-emoji { animation: modalEmojiFloat 4s ease-in-out infinite; }
+                        @keyframes modalEmojiFloat {
+                            0%, 100% { transform: translateY(0) scale(1); }
+                            50% { transform: translateY(-7px) scale(1.05); }
+                        }
+                        #blog-post-content-area::-webkit-scrollbar { width: 6px; }
+                        #blog-post-content-area::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 10px; }
+                        #blog-post-content-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 10px; }
+                        #blog-post-content-area::-webkit-scrollbar-thumb:hover { background: #CCFF00; }
+                    </style>
+                `;
+                document.body.appendChild(modal);
+
+                // Asignamos manejadores de eventos directos sin inline onclicks propensos a fallos
+                const closeBtn = modal.querySelector('#blog-modal-close-btn');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        modal.remove();
+                    });
+                }
+
+                const shareBtn = modal.querySelector('#blog-modal-share-btn');
+                if (shareBtn) {
+                    shareBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.shareBlogPost(postId, post.title);
+                    });
+                }
+
+                // Cerrar modal al hacer click fuera de la tarjeta de contenido para UX impecable
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                };
+            } catch (err) {
+                console.error("Error al abrir blog post:", err);
+            }
+        }
+
+        toggleWeatherDetails(safeCityId) {
+            const details = document.getElementById(`weather-details-${safeCityId}`);
+            const insight = document.getElementById(`weather-insight-${safeCityId}`);
+            const btn = document.getElementById(`weather-btn-${safeCityId}`);
+            
+            if (details && btn) {
+                if (details.style.display === 'none') {
+                    details.style.display = 'flex';
+                    if (insight) insight.style.display = 'block';
+                    btn.innerHTML = `Ver menos <i class="fas fa-chevron-up" id="weather-icon-${safeCityId}"></i>`;
+                } else {
+                    details.style.display = 'none';
+                    if (insight) insight.style.display = 'none';
+                    btn.innerHTML = `Ver más <i class="fas fa-chevron-down" id="weather-icon-${safeCityId}"></i>`;
+                }
+            }
+        }
 
         renderWeatherCard(city, temp, icon, details = {}, isPropitious = true) {
-            const intel = details.intel || { score: 100, ballSpeed: '--', recommendation: 'Sincronizando meteorología...', gripStatus: '--' };
-            const statusLabel = isPropitious ? 'ÓPTIMO' : 'ADVERSO';
-            const statusColor = isPropitious ? '#00E36D' : '#FF2D55';
+            const safeCityId = city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-");
+            const intel = details.intel || { score: 100, ballSpeed: '--', recommendation: 'Sincronizando meteorologÃ­a...', gripStatus: '--' };
+            const statusLabel = isPropitious ? 'Ã“PTIMO' : 'ADVERSO';
+            const statusColor = isPropitious ? '#72a800' : '#ef4444';
             const rainProb = parseInt(details.rain) || 0;
             const isRaining = rainProb > 30;
 
-            let cardBg = 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)';
+            let cardBg = '#ffffff';
             let weatherOverlay = '';
 
             if (isRaining) {
-                cardBg = 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)';
-                weatherOverlay = `
-                <div style="position: absolute; inset: 0; pointer-events: none; opacity: 0.4;">
-                    <div style="
-                            position: absolute; inset: -100% 0 0 0;
-                            background-image: linear-gradient(to bottom, rgba(59,130,246,0) 0%, rgba(59,130,246,0.4) 50%, rgba(59,130,246,0) 100%);
-                            background-size: 2px 50px;
-                            animation: rainFall 0.6s linear infinite;
-                        "></div>
-                    </div>
-                `;
+                cardBg = 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)';
             } else if (isPropitious) {
-                cardBg = 'linear-gradient(135deg, #3f6212 0%, #022c22 100%)';
-                weatherOverlay = `<div style="position: absolute; top: -60px; right: -60px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(253, 224, 71, 0.15) 0%, transparent 70%); filter: blur(20px); animation: sunPulse 6s ease-in-out infinite; pointer-events: none;"></div>`;
-            } else {
-                cardBg = 'linear-gradient(135deg, #334155 0%, #0f172a 100%)';
+                cardBg = 'linear-gradient(135deg, #ffffff 0%, #f7fee7 100%)';
             }
 
             return `
@@ -682,48 +1055,58 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     @keyframes textSlideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
                 </style>
                 <div style="
-                    background: ${cardBg}; background-size: 200% 200%; animation: cardShine 10s ease infinite;
-                    border: 1px solid rgba(255,255,255,0.1); border-radius: 32px; padding: 24px 20px;
-                    display: flex; flex-direction: column; gap: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-                    position: relative; overflow: hidden; min-height: 280px;
+                    background: ${cardBg}; 
+                    border: 1px solid #e1e8f0; border-radius: 28px; padding: 24px 20px;
+                    display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+                    position: relative; overflow: hidden; min-height: auto;
                 ">
-                    ${weatherOverlay}
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 2;">
-                        <div style="font-size: 3.5rem; line-height: 1; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3)); animation: weatherFloat 5s ease-in-out infinite;">${icon}</div>
+                        <div style="font-size: 3.5rem; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));">${icon}</div>
                         <div style="text-align: right;">
-                            <div style="background: rgba(0,0,0,0.3); color: ${statusColor}; padding: 6px 14px; border-radius: 12px; font-size: 0.65rem; font-weight: 950; border: 1px solid ${statusColor}40; margin-bottom: 6px; box-shadow: 0 0 15px ${statusColor}20; backdrop-filter: blur(4px);">${statusLabel}</div>
-                            <div style="font-size: 0.6rem; color: white; opacity: 0.6; font-weight: 800; letter-spacing: 1px;">SCORE ${intel.score}%</div>
+                            <div style="background: ${isPropitious ? 'rgba(114, 168, 0, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; color: ${statusColor}; padding: 5px 12px; border-radius: 10px; font-size: 0.65rem; font-weight: 950; border: 1px solid ${statusColor}30; margin-bottom: 6px; text-transform: uppercase;">${statusLabel}</div>
+                            <div style="font-size: 0.65rem; color: #64748b; font-weight: 900; letter-spacing: 0.5px;">SCORE ${intel.score}%</div>
                         </div>
                     </div>
-                    <div style="position: relative; z-index: 2; margin-top: 10px; animation: textSlideIn 0.5s ease-out;">
-                        <div style="color: white; font-weight: 950; font-size: 2.8rem; line-height: 0.9; letter-spacing: -2px; text-shadow: 0 5px 10px rgba(0,0,0,0.5);">${temp}</div>
-                        <div style="color: rgba(255,255,255,0.7); font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px;">${city}</div>
+                    <div style="position: relative; z-index: 2; margin-top: 10px; animation: textSlideIn 0.5s ease-out; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <div style="color: #0a192f; font-weight: 950; font-size: 2.8rem; line-height: 0.9; letter-spacing: -1.5px;">${temp}</div>
+                            <div style="color: #64748b; font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px;">${city}</div>
+                        </div>
+                        <button onclick="event.stopPropagation(); window.DashboardView.toggleWeatherDetails('${safeCityId}')" 
+                                id="weather-btn-${safeCityId}" 
+                                style="background: rgba(10, 25, 47, 0.05); border: 1px solid rgba(10, 25, 47, 0.15); color: #0a192f; border-radius: 12px; padding: 6px 12px; font-size: 0.65rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s;">
+                            Ver más <i class="fas fa-chevron-down" id="weather-icon-${safeCityId}"></i>
+                        </button>
                     </div>
-                    <div style="margin-top: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 10px; position: relative; z-index: 2; backdrop-filter: blur(5px); animation: textSlideIn 0.7s ease-out;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-bolt" style="color:#fbbf24;"></i> VELOCIDAD BOLA</span>
-                            <span style="font-size: 0.7rem; color: #fbbf24; font-weight: 950; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);">${intel.ballSpeed}</span>
+                    <div id="weather-details-${safeCityId}" style="display: none; flex-direction: column; gap: 10px; margin-top: 15px; background: #f8fafc; border-radius: 18px; padding: 15px; border: 1px solid #e2e8f0; position: relative; z-index: 2;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #edf2f7; padding-bottom: 8px;">
+                            <span style="font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-bolt" style="color:#eab308;"></i> VELOCIDAD BOLA</span>
+                            <span style="font-size: 0.75rem; color: #0a192f; font-weight: 950;">${intel.ballSpeed}</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-wind" style="color:#0ea5e9;"></i> VIENTO</span>
-                            <span style="font-size: 0.7rem; color: white; font-weight: 900;">${details.wind || '--'}</span>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #edf2f7; padding-bottom: 8px;">
+                            <span style="font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-wind" style="color:#0ea5e9;"></i> VIENTO</span>
+                            <span style="font-size: 0.75rem; color: #0a192f; font-weight: 900;">${details.wind || '--'}</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-tint" style="color:#38bdf8;"></i> HUMEDAD</span>
-                            <span style="font-size: 0.7rem; color: white; font-weight: 900;">${details.hum || '--'}</span>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #edf2f7; padding-bottom: 8px;">
+                            <span style="font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-tint" style="color:#38bdf8;"></i> HUMEDAD</span>
+                            <span style="font-size: 0.75rem; color: #0a192f; font-weight: 900;">${details.hum || '--'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-hand-rock" style="color:#00E36D;"></i> AGARRE PISTA</span>
-                            <span style="font-size: 0.7rem; color: #00E36D; font-weight: 950;">${intel.gripStatus || 'ÓPTIMO'}</span>
+                            <span style="font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase; display:flex; align-items:center; gap:6px;"><i class="fas fa-hand-rock" style="color:#72a800;"></i> AGARRE PISTA</span>
+                            <span style="font-size: 0.75rem; color: #72a800; font-weight: 950;">${intel.gripStatus || 'Ã“PTIMO'}</span>
                         </div>
                     </div>
-                    <div style="margin-top: 12px; padding: 12px 14px; background: rgba(0,0,0,0.2); border-radius: 16px; border-left: 3px solid ${statusColor}; animation: textSlideIn 0.8s ease-out;">
-                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 5px;">
-                            <i class="fas fa-brain" style="font-size: 0.65rem; color: ${statusColor}; opacity: 0.9;"></i>
-                            <span style="font-size: 0.55rem; font-weight: 950; color: ${statusColor}; letter-spacing: 0.5px; text-transform: uppercase;">INSIGHT TÁCTICO</span>
+                    <div id="weather-insight-${safeCityId}" style="display: none; margin-top: 10px; padding: 12px 14px; background: rgba(0,0,0,0.02); border-radius: 16px; border-left: 4px solid ${statusColor};">
+                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                            <i class="fas fa-brain" style="font-size: 0.7rem; color: ${statusColor};"></i>
+                            <span style="font-size: 0.6rem; font-weight: 950; color: ${statusColor}; letter-spacing: 0.5px; text-transform: uppercase;">INSIGHT TÃ CTICO</span>
                         </div>
-                        <p style="margin: 0; font-size: 0.7rem; color: rgba(255,255,255,0.7); font-weight: 600; line-height: 1.4;">
+                        <p style="margin: 0; font-size: 0.75rem; color: #475569; font-weight: 600; line-height: 1.4;">
                             ${intel.recommendation.replace('la IA', 'el sistema').replace('predictivo', 'estimado')}
+                        </p>
+                    </div>
+                </div>
+            `;           ${intel.recommendation.replace('la IA', 'el sistema').replace('predictivo', 'estimado')}
                         </p>
                     </div>
                 </div>
@@ -737,8 +1120,8 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         <div style="width: 80px; height: 80px; background: var(--bg-app); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px; border: 1px solid var(--border-subtle);">
                             <i class="fas fa-calendar-plus" style="font-size: 2.2rem; color: #cbd5e1;"></i>
                         </div>
-                        <h3 style="color: var(--text-primary); font-weight: 950; font-size: 1.25rem; margin-bottom: 10px; letter-spacing: -0.5px;">SIN PLANES PRÓXIMOS</h3>
-                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 25px; font-weight: 600; line-height: 1.5;">Apúntate a una americana para<br>empezar a sumar en el ranking.</p>
+                        <h3 style="color: var(--text-primary); font-weight: 950; font-size: 1.25rem; margin-bottom: 10px; letter-spacing: -0.5px;">SIN PLANES PRÃ“XIMOS</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 25px; font-weight: 600; line-height: 1.5;">ApÃºntate a una americana para<br>empezar a sumar en el ranking.</p>
                         <button onclick="Router.navigate('americanas')" class="btn-3d primary" style="width: auto; padding: 14px 28px;">EXPLORAR EVENTOS</button>
                     </div >
                 `;
@@ -749,7 +1132,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                         <div style="color: var(--brand-neon); background: var(--brand-navy); padding: 4px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 950; letter-spacing: 1px; text-transform: uppercase;">${this.formatDateShort(am.date)}</div>
                         ${am.status === 'live' ?
-                    `<div style="background: rgba(255, 45, 85, 0.2); color: #FF2D55; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; animation: blink 1s infinite; border: 1px solid #FF2D55;">EN VIVO 🔴</div>` :
+                    `<div style="background: rgba(255, 45, 85, 0.2); color: #FF2D55; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; animation: blink 1s infinite; border: 1px solid #FF2D55;">EN VIVO ðŸ”´</div>` :
                     `<div style="background: rgba(6, 182, 212, 0.1); color: var(--brand-accent); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900;">CONFIRMADO</div>`
                 }
                     </div>
@@ -766,20 +1149,20 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
 
         renderSmartHero(context, userLevel) {
             // SLIDE: VIBRANT GLASS HERO
-            let pillText = "INSCRIPCIÓN ABIERTA";
+            let pillText = "INSCRIPCIÃ“N ABIERTA";
             let btnText = "APUNTARME AHORA";
             let btnClass = "primary";
             let logoText = "AMERICANAS";
-            let explainerText = "¡Quedan pocas plazas! No te quedes fuera hoy.";
+            let explainerText = "Â¡Quedan pocas plazas! No te quedes fuera hoy.";
             let heroImage = "img/ball_hero.jpg";
             let overlayColor = "linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 64, 175, 0.7))";
 
             if (context.status === 'UPCOMING_EVENT') {
-                pillText = "ESTÁS INSCRITO";
+                pillText = "ESTÃS INSCRITO";
                 btnText = "VER DETALLES";
                 btnClass = "navy";
                 logoText = "MI PLAZA";
-                explainerText = "¡Prepárate! Tu próximo reto está a punto de empezar.";
+                explainerText = "Â¡PrepÃ¡rate! Tu prÃ³ximo reto estÃ¡ a punto de empezar.";
                 overlayColor = "linear-gradient(135deg, rgba(2, 6, 23, 0.95), rgba(6, 182, 212, 0.7))";
             } else if (context.status === 'FINISHED') {
                 pillText = "EVENTO FINALIZADO";
@@ -789,11 +1172,11 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 explainerText = "Consulta los resultados y revive los mejores momentos.";
                 overlayColor = "linear-gradient(135deg, rgba(31, 41, 55, 0.95), rgba(107, 114, 128, 0.7))";
             } else if (context.status === 'LIVE_MATCH') {
-                pillText = "¡ESTÁS EN PISTA!";
+                pillText = "Â¡ESTÃS EN PISTA!";
                 btnText = "MARCADOR EN VIVO";
                 btnClass = "primary";
                 logoText = "LIVE NOW";
-                explainerText = "Tu partido está en progreso. ¡A por todas!";
+                explainerText = "Tu partido estÃ¡ en progreso. Â¡A por todas!";
                 overlayColor = "linear-gradient(135deg, rgba(225, 29, 72, 0.95), rgba(204, 255, 0, 0.4))";
             }
 
@@ -837,23 +1220,23 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     window.WeatherService ? window.WeatherService.getDashboardWeather() : []
                 ]);
 
-                console.log(`🧠[AI News Motor] Processing ${allEvents.length} events for priority feed.`);
+                console.log(`ðŸ§ [AI News Motor] Processing ${allEvents.length} events for priority feed.`);
 
                 let itemsHtml = [];
 
                 // 0. SAFETY BASE: Ensure we always have something to show
                 const dynamicPool = [
                     {
-                        tag: '📈 TU NIVEL',
+                        tag: 'ðŸ“ˆ TU NIVEL',
                         icon: 'fa-chart-line',
                         bgColor: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)',
                         accent: '#38bdf8',
-                        title: 'Nivel Dinámico',
-                        desc: 'Tu nivel evoluciona con cada set. ¡Juega y demuestra tu progreso!',
+                        title: 'Nivel DinÃ¡mico',
+                        desc: 'Tu nivel evoluciona con cada set. Â¡Juega y demuestra tu progreso!',
                         action: "window.Router.navigate('profile')"
                     },
                     {
-                        tag: '🏆 COMPETICIÓN',
+                        tag: 'ðŸ† COMPETICIÃ“N',
                         icon: 'fa-trophy',
                         bgColor: 'linear-gradient(135deg, #111 0%, #701a75 100%)',
                         accent: '#f472b6',
@@ -862,12 +1245,12 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         action: "window.Router.navigate('ranking')"
                     },
                     {
-                        tag: '🎾 CONTROL TOTAL',
+                        tag: 'ðŸŽ¾ CONTROL TOTAL',
                         icon: 'fa-user-check',
                         bgColor: 'linear-gradient(135deg, #064e3b 0%, #059669 100%)',
                         accent: '#34d399',
                         title: 'Perfil y Stats',
-                        desc: 'Consulta tu historial, victorias y próximos retos desde tu perfil.',
+                        desc: 'Consulta tu historial, victorias y prÃ³ximos retos desde tu perfil.',
                         action: "window.Router.navigate('profile')"
                     },
                     {
@@ -875,17 +1258,17 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         icon: 'fa-shopping-bag',
                         bgColor: 'linear-gradient(135deg, #312e81 0%, #4338ca 100%)',
                         accent: '#818cf8',
-                        title: 'SomosPadel Store',
-                        desc: 'Los mejores precios en palas de alta gama y equipación oficial.',
-                        action: "window.open('https://somospadel.eu', '_blank')"
+                        title: 'Tienda Oficial (En Breve)',
+                        desc: 'Muy pronto disponible la tienda online oficial integrada directamente en esta app.',
+                        action: "window.StoryFeedWidget ? window.StoryFeedWidget.showStory('shop') : alert('Tienda online oficial integrada muy pronto en la app.')"
                     },
                     {
-                        tag: '💡 SMART TIP',
+                        tag: 'ðŸ’¡ SMART TIP',
                         icon: 'fa-brain',
                         bgColor: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
                         accent: '#94a3b8',
-                        title: 'Navegación Gesto',
-                        desc: 'Desliza las historias o pulsa los laterales para pasar rápido.',
+                        title: 'NavegaciÃ³n Gesto',
+                        desc: 'Desliza las historias o pulsa los laterales para pasar rÃ¡pido.',
                         action: "window.DashboardView.showChatInfo()"
                     }
                 ];
@@ -903,11 +1286,11 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                 </div>
                             </div>
                             <div style="position: absolute; bottom: 18px; left: 18px; z-index: 2;">
-                                <div style="color:white; font-weight:950; font-size:1.8rem; line-height: 1; margin-bottom: 2px;">${w.temp}ºC</div>
+                                <div style="color:white; font-weight:950; font-size:1.8rem; line-height: 1; margin-bottom: 2px;">${w.temp}ÂºC</div>
                                 <div style="color:rgba(255,255,255,0.6); font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;">${w.name}</div>
                             </div>
                             <div style="position: absolute; bottom: 18px; right: 18px; z-index: 2; text-align: right; display:flex; flex-direction:column; gap:6px;">
-                                <div style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:4px; border-right:2px solid #0ea5e9;">BOLA: ${w.temp > 20 ? 'RÁPIDA' : 'LENTA'}</div>
+                                <div style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:4px; border-right:2px solid #0ea5e9;">BOLA: ${w.temp > 20 ? 'RÃPIDA' : 'LENTA'}</div>
                                 <div style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:4px; border-right:2px solid #38bdf8;">HUM: ${w.humidity}%</div>
                             </div>
                         </div>
@@ -931,16 +1314,16 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 if (openEvents.length > 0) {
                     const topEvt = openEvents[0];
                     itemsHtml.push(`
-                    <div class="holo-card" onclick="console.log('🚀 [Dashboard] Event Clicked!'); window.Router.navigate('entrenos')" style="min-width: 280px; width: 280px; height: 180px; ${getAiVisual('fire')} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="holo-card" onclick="console.log('ðŸš€ [Dashboard] Event Clicked!'); window.Router.navigate('entrenos')" style="min-width: 280px; width: 280px; height: 180px; ${getAiVisual('fire')} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
                         <div style="position: absolute; inset:0; background: url('https://media.giphy.com/media/3o7btQ8jDTSLStx3Ko/giphy.gif') center/cover; opacity: 0.15; mix-blend-mode: overlay; pointer-events: none;"></div>
                         <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.2; background: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 3px); pointer-events: none;"></div>
                         
                         <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3; margin-bottom: 20px; pointer-events: none;">
-                            <span style="font-size:0.65rem; font-weight:1000; color:white; background:#ff4d00; padding:6px 14px; border-radius:100px; text-transform:uppercase; letter-spacing:1px; box-shadow: 0 0 15px #ff4d00;">RECOMENDACIÓN</span>
+                            <span style="font-size:0.65rem; font-weight:1000; color:white; background:#ff4d00; padding:6px 14px; border-radius:100px; text-transform:uppercase; letter-spacing:1px; box-shadow: 0 0 15px #ff4d00;">RECOMENDACIÃ“N</span>
                             <i class="fas fa-fire-alt" style="color:#ffcdb2; animation: pulseDot 1s infinite;"></i>
                         </div>
                         <div style="position:relative; z-index:3; pointer-events: none;">
-                            <div style="color:#ffcdb2; font-size:0.7rem; font-weight:900; text-transform:uppercase; letter-spacing:1px; margin-bottom: 6px;">🔥 DESTACADO</div>
+                            <div style="color:#ffcdb2; font-size:0.7rem; font-weight:900; text-transform:uppercase; letter-spacing:1px; margin-bottom: 6px;">ðŸ”¥ DESTACADO</div>
                             <h4 style="margin:0; color:white; font-size:1.1rem; font-weight:1000; line-height:1.1; text-shadow: 0 5px 15px black;">${(topEvt.name || "Evento").toUpperCase()}</h4>
                             <div style="margin-top: 15px; display:inline-block; border-bottom: 2px solid #ff4d00; padding-bottom: 2px; color: white; font-size: 0.8rem; font-weight: 800;">RESERVAR AHORA <i class="fas fa-arrow-right"></i></div>
                         </div>
@@ -954,7 +1337,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     if (lowerName.includes('fem') || lowerName.includes('wom')) aiClass = 'neon';
 
                     itemsHtml.push(`
-                    <div class="holo-card" onclick="console.log('🚀 [Dashboard] Event Clicked!'); window.Router.navigate('entrenos')" style="min-width: 260px; width: 260px; height: 180px; ${getAiVisual(aiClass)} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="holo-card" onclick="console.log('ðŸš€ [Dashboard] Event Clicked!'); window.Router.navigate('entrenos')" style="min-width: 260px; width: 260px; height: 180px; ${getAiVisual(aiClass)} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
                         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; opacity: 0.2; filter: blur(4px); color: rgba(255,255,255,0.5); pointer-events: none;"><i class="fas fa-medal"></i></div>
                         <div style="position: absolute; inset: 0; background: linear-gradient(top, transparent, rgba(0,0,0,0.8)); pointer-events: none;"></div>
                         
@@ -975,12 +1358,12 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 const selectedTips = shuffledPool.slice(0, remainingSlots);
 
                 // HELPER: Interactive Action wrapper
-                const doAction = (act) => `console.log('👆 Card Clicked:', '${act}'); ${act}`;
+                const doAction = (act) => `console.log('ðŸ‘† Card Clicked:', '${act}'); ${act}`;
 
                 // Update Actions in dynamicPool for Robustness
                 dynamicPool.forEach(p => {
                     if (p.action && !p.action.includes('console.log')) {
-                        p.action = `console.log('🚀 Navigating to ${p.title}...'); ` + p.action;
+                        p.action = `console.log('ðŸš€ Navigating to ${p.title}...'); ` + p.action;
                     }
                 });
 
@@ -1025,9 +1408,9 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             tomorrow.setDate(tomorrow.getDate() + 1);
 
             if (date.toDateString() === today.toDateString()) return 'HOY';
-            if (date.toDateString() === tomorrow.toDateString()) return 'MAÑANA';
+            if (date.toDateString() === tomorrow.toDateString()) return 'MAÃ‘ANA';
 
-            const days = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+            const days = ['DOM', 'LUN', 'MAR', 'MIÃ‰', 'JUE', 'VIE', 'SÃB'];
             return `${days[date.getDay()]} ${date.getDate()} `;
         }
 
@@ -1163,7 +1546,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 }
 
             } catch (err) {
-                console.error("❌ [DashboardView] Error building user context:", err);
+                console.error("âŒ [DashboardView] Error building user context:", err);
             }
 
             return context;
@@ -1180,7 +1563,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
         formatFriendlyDate(dateStr) {
             if (!dateStr) return '';
             const d = new Date(dateStr);
-            const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const days = ['Domingo', 'Lunes', 'Martes', 'MiÃ©rcoles', 'Jueves', 'Viernes', 'SÃ¡bado'];
             return `${days[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`;
         }
 
@@ -1265,7 +1648,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
         formatDate(dateString) {
             if (!dateString) return '';
             const date = new Date(dateString);
-            const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            const days = ['Dom', 'Lun', 'Mar', 'MiÃ©', 'Jue', 'Vie', 'SÃ¡b'];
             return `${days[date.getDay()]} ${date.getDate()}`;
         }
 
@@ -1285,7 +1668,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
         }
 
         async loadLiveWidgetContent(context) {
-            console.log("🧠 [DashboardView] loadLiveWidgetContent started");
+            console.log("ðŸ§  [DashboardView] loadLiveWidgetContent started");
 
             // 4. Load Predictive Synergy Widget
             try {
@@ -1295,7 +1678,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     window.currentUser ||
                     (window.firebase ? window.firebase.auth().currentUser : null);
 
-                console.log("🧠 [DashboardView] Synergy Init Check:", {
+                console.log("ðŸ§  [DashboardView] Synergy Init Check:", {
                     hasContainer: !!synergyContainer,
                     hasUser: !!user,
                     userId: user ? (user.uid || user.id) : 'none'
@@ -1304,15 +1687,15 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 if (synergyContainer && user) {
                     const userId = user.uid || user.id;
                     if (!userId) {
-                        console.warn("⚠️ [DashboardView] User exists but has no UID/ID");
-                        synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">⚠️ Sesión incompleta</div>`;
+                        console.warn("âš ï¸ [DashboardView] User exists but has no UID/ID");
+                        synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">âš ï¸ SesiÃ³n incompleta</div>`;
                         return;
                     }
 
                     // Subscribe to real-time changes
                     if (window.PartnerSynergyService && window.PartnerSynergyService.subscribeToPlayerData) {
                         window.PartnerSynergyService.subscribeToPlayerData(userId, async () => {
-                            console.log("🧠 [DashboardView] Real-time Sync Triggered");
+                            console.log("ðŸ§  [DashboardView] Real-time Sync Triggered");
                             const html = await this.renderPredictiveSynergy();
                             if (html && synergyContainer) synergyContainer.innerHTML = html;
                         });
@@ -1322,35 +1705,35 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     const refreshSynergy = async () => {
                         const html = await this.renderPredictiveSynergy();
                         if (html && html.trim() !== '') {
-                            console.log("🧠 [DashboardView] Synergy HTML generated");
+                            console.log("ðŸ§  [DashboardView] Synergy HTML generated");
                             if (synergyContainer) synergyContainer.innerHTML = html;
                         } else {
-                            console.warn("🧠 [DashboardView] Synergy HTML was empty");
-                            if (synergyContainer) synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center; border:1px solid rgba(255,0,0,0.3); border-radius:15px;">⚠️ Generando análisis...</div>`;
+                            console.warn("ðŸ§  [DashboardView] Synergy HTML was empty");
+                            if (synergyContainer) synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center; border:1px solid rgba(255,0,0,0.3); border-radius:15px;">âš ï¸ Generando anÃ¡lisis...</div>`;
                         }
                     };
 
                     refreshSynergy();
                 } else if (!synergyContainer) {
-                    console.error("❌ [DashboardView] predictive-synergy-root NOT FOUND");
+                    console.error("âŒ [DashboardView] predictive-synergy-root NOT FOUND");
                 } else if (!user) {
-                    console.warn("⚠️ [DashboardView] No user found in Store during loadLiveWidgetContent");
+                    console.warn("âš ï¸ [DashboardView] No user found in Store during loadLiveWidgetContent");
                     // Don't show the "Lock" message immediately if we just loaded, give it a second
                     setTimeout(() => {
                         const userCheck = (window.Store ? window.Store.getState('currentUser') : null) || window.currentUser;
                         if (!userCheck && synergyContainer) {
-                            synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">🔒 Inicia sesión para ver tu análisis</div>`;
+                            synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">ðŸ”’ Inicia sesiÃ³n para ver tu anÃ¡lisis</div>`;
                         }
                     }, 2000);
                 }
             } catch (e) {
-                console.error("❌ Predictive Synergy loading failed", e);
+                console.error("âŒ Predictive Synergy loading failed", e);
             }
 
             try {
                 const container = document.getElementById('live-scroller-content');
                 if (!container) {
-                    console.warn("⚠️ [DashboardView] live-scroller-content not found, skipping other widgets");
+                    console.warn("âš ï¸ [DashboardView] live-scroller-content not found, skipping other widgets");
                     return;
                 }
 
@@ -1370,8 +1753,230 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         console.error("Activity Feed failed", e);
                     });
                 }
+                // 4. Load Trending Players
+                this.renderTrendingPlayers();
             } catch (e) {
-                console.error('❌ [DashboardView] Error in core widget loading:', e);
+                console.error('âŒ [DashboardView] Error in core widget loading:', e);
+            }
+        }
+
+        async renderTrendingPlayers() {
+            const root = document.getElementById('trending-players-list');
+            const mvpRoot = document.getElementById('mvp-spotlight-container');
+            if (!root) return;
+
+            try {
+                // Obtenemos los datos del Ranking real
+                const players = await (window.RankingController ? window.RankingController.calculateSilently() : []);
+                
+                // --- 1. MVP SPOTLIGHT (Top 1) ---
+                if (mvpRoot) {
+                    let mvp = (players && players.length > 0) ? players[0] : null;
+                    if (!mvp) {
+                        const currentUser = window.Store ? window.Store.getState('currentUser') : null;
+                        mvp = currentUser ? {
+                            name: currentUser.name || "Alejandro Coscolín",
+                            level: currentUser.level || 3.5,
+                            points: 2450,
+                            streak: currentUser.streak || 6,
+                            photo_url: currentUser.photo_url || currentUser.photoURL || null,
+                            ranking_pos: 1
+                        } : {
+                            name: "Alejandro Coscolín",
+                            level: 3.5,
+                            points: 2450,
+                            streak: 6,
+                            photo_url: null,
+                            ranking_pos: 1
+                        };
+                    }
+                    mvpRoot.innerHTML = `
+                        <div class="fut-card-container" style="
+                            perspective: 1000px;
+                            margin-bottom: 16px;
+                            font-family: 'Outfit', 'Inter', sans-serif;">
+                            <style>
+                                @keyframes gold-shine {
+                                    0% { background-position: 0% 50%; }
+                                    50% { background-position: 100% 50%; }
+                                    100% { background-position: 0% 50%; }
+                                }
+                                .fut-card {
+                                    background: linear-gradient(135deg, #1e1b4b 0%, #030712 100%);
+                                    border: 2px solid #eab308;
+                                    border-radius: 24px;
+                                    padding: 2px;
+                                    position: relative;
+                                    overflow: hidden;
+                                    box-shadow: 0 15px 35px rgba(234, 179, 8, 0.15), 0 0 25px rgba(234, 179, 8, 0.05);
+                                    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+                                    transform-style: preserve-3d;
+                                }
+                                .fut-card:hover {
+                                    transform: rotateY(10deg) rotateX(5deg) scale(1.02);
+                                    box-shadow: 0 20px 40px rgba(234, 179, 8, 0.25), 0 0 35px rgba(234, 179, 8, 0.15);
+                                }
+                                .fut-card-inner {
+                                    background: radial-gradient(circle at center, #1c1917 0%, #0c0a09 100%);
+                                    border-radius: 22px;
+                                    padding: 16px;
+                                    position: relative;
+                                    z-index: 2;
+                                    overflow: hidden;
+                                    border: 1px solid rgba(234, 179, 8, 0.25);
+                                }
+                                .fut-gold-glow {
+                                    position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+                                    background: linear-gradient(45deg, transparent, rgba(234, 179, 8, 0.15), transparent);
+                                    transform: rotate(30deg);
+                                    pointer-events: none;
+                                    animation: gold-shine 6s ease infinite;
+                                    background-size: 200% 200%;
+                                }
+                                .fut-badge-gold {
+                                    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+                                    color: #000;
+                                    font-weight: 1000;
+                                    font-size: 0.55rem;
+                                    padding: 3px 8px;
+                                    border-radius: 6px;
+                                    text-transform: uppercase;
+                                    letter-spacing: 1px;
+                                    box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+                                    display: inline-block;
+                                }
+                                .fut-stat-label {
+                                    color: rgba(255,255,255,0.4);
+                                    font-size: 0.52rem;
+                                    font-weight: 800;
+                                    text-transform: uppercase;
+                                    letter-spacing: 0.5px;
+                                }
+                                .fut-stat-value {
+                                    color: #fbbf24;
+                                    font-size: 0.95rem;
+                                    font-weight: 950;
+                                    text-shadow: 0 0 5px rgba(251, 191, 36, 0.2);
+                                }
+                            </style>
+                            <div class="fut-card">
+                                <div class="fut-gold-glow"></div>
+                                <div class="fut-card-inner">
+                                    <!-- HEADER STATUS -->
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; position: relative; z-index: 5;">
+                                        <span class="fut-badge-gold"><i class="fas fa-crown"></i> MVP OF THE WEEK</span>
+                                        <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">SOMOSPADEL ELITE</span>
+                                    </div>
+
+                                    <!-- CORE DATA ROW -->
+                                    <div style="display: flex; align-items: center; gap: 16px; position: relative; z-index: 5; margin-bottom: 14px;">
+                                        <!-- Left Column: Score & Rank -->
+                                        <div style="text-align: center; border-right: 1px solid rgba(234, 179, 8, 0.2); padding-right: 14px;">
+                                            <!-- OVR Rating -->
+                                            <div style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; line-height: 0.8; letter-spacing: -2px; font-family: 'Outfit';">
+                                                ${Math.min(99, Math.max(50, Math.round(parseFloat(mvp.level || 3.5) * 15 + 35)))}
+                                            </div>
+                                            <div style="font-size: 0.5rem; color: #fbbf24; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; line-height: 1;">OVR</div>
+                                            <div style="font-size: 0.65rem; color: #fff; font-weight: 950; margin-top: 8px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                                                RANK #1
+                                            </div>
+                                        </div>
+
+                                        <!-- Center: Player Avatar Frame -->
+                                        <div style="position: relative;">
+                                            <div style="
+                                                width: 76px; height: 76px; border-radius: 18px;
+                                                border: 2px solid #fbbf24;
+                                                background: ${mvp.photo_url ? `url('${mvp.photo_url}') center/cover` : '#27272a'};
+                                                box-shadow: 0 8px 20px rgba(0,0,0,0.5), 0 0 15px rgba(234, 179, 8, 0.15);
+                                                overflow: hidden;
+                                                display: flex; align-items: center; justify-content: center;">
+                                                ${!mvp.photo_url ? `<span style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; font-family: 'Outfit';">${mvp.name.charAt(0).toUpperCase()}</span>` : ''}
+                                            </div>
+                                            <!-- Small Sparkle icon -->
+                                            <div style="position: absolute; bottom: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #fbbf24; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px #fbbf24;">
+                                                <i class="fas fa-star" style="font-size: 0.55rem; color: #000;"></i>
+                                            </div>
+                                        </div>
+
+                                        <!-- Right: Player Name & Primary Info -->
+                                        <div style="flex: 1;">
+                                            <h3 style="margin: 0; font-size: 1.25rem; font-weight: 1000; color: #fff; letter-spacing: -0.5px; line-height: 1.1; font-family: 'Outfit'; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+                                                ${mvp.name.toUpperCase()}
+                                            </h3>
+                                            <div style="color: #a3e635; font-size: 0.6rem; font-weight: 800; display: flex; align-items: center; gap: 5px; margin-top: 6px;">
+                                                <i class="fas fa-fire"></i> Racha: <span style="font-weight:950;">${mvp.streak || 0} victorias</span>
+                                            </div>
+                                            <div style="color: rgba(255,255,255,0.4); font-size: 0.55rem; font-weight: 700; margin-top: 3px; display: flex; align-items: center; gap: 4px;">
+                                                <i class="fas fa-satellite"></i> NODO_BCN_ACTIVE
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- FIFA STYLE ATRIBUTES COLUMNS -->
+                                    <div style="
+                                        background: rgba(0, 0, 0, 0.4);
+                                        border: 1px solid rgba(234, 179, 8, 0.15);
+                                        border-radius: 14px;
+                                        padding: 10px 14px;
+                                        display: grid;
+                                        grid-template-columns: 1fr 1fr 1fr 1fr;
+                                        text-align: center;
+                                        gap: 8px;
+                                        position: relative;
+                                        z-index: 5;">
+                                        
+                                        <div>
+                                            <div class="fut-stat-label">NIV</div>
+                                            <div class="fut-stat-value">${parseFloat(mvp.level || 3.5).toFixed(2)}</div>
+                                        </div>
+                                        <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                            <div class="fut-stat-label">PTS</div>
+                                            <div class="fut-stat-value">${mvp.points || 0}</div>
+                                        </div>
+                                        <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                            <div class="fut-stat-label">RAC</div>
+                                            <div class="fut-stat-value">${mvp.streak || 0}</div>
+                                        </div>
+                                        <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                            <div class="fut-stat-label">VIC</div>
+                                            <div class="fut-stat-value">${mvp.won || mvp.matches_played || 0}</div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // --- 2. TRENDING PLAYERS (Next 9) ---
+                const topPlayers = players.slice(1, 10); // Rest of Top 10
+
+                if (topPlayers.length === 0) {
+                    root.innerHTML = `<div style="padding:20px; color:#94a3b8; font-size:0.7rem; text-align:center;">Sincronizando ranking...</div>`;
+                    return;
+                }
+
+                root.innerHTML = topPlayers.map(p => `
+                    <div style="min-width: 110px; padding: 14px 10px; text-align: center; flex-shrink: 0; background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                        <div style="position:relative; width:52px; height:52px; margin:0 auto 10px;">
+                            <div style="width:100%; height:100%; border-radius:50%; border:2px solid #e2e8f0; background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#f1f5f9'}; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                                ${!p.photo_url ? `<span style="font-weight:950; color:#0a192f; font-size:1.1rem;">${p.name.charAt(0)}</span>` : ''}
+                            </div>
+                            <div style="position:absolute; bottom:-5px; right:-5px; background:#72a800; color:#fff; font-size:0.5rem; font-weight:950; padding:2px 5px; border-radius:10px; border:2px solid #fff;">
+                                #${p.ranking_pos || '?'}
+                            </div>
+                        </div>
+                        <div style="font-size: 0.7rem; font-weight: 950; color: #0a192f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom:4px;">${p.name.split(' ')[0]}</div>
+                        <div style="font-size: 0.6rem; color: #72a800; font-weight: 900;">${p.points || 0} PTS</div>
+                    </div>
+                `).join('');
+
+
+            } catch (err) {
+                console.error("Error rendering trending players:", err);
+                if (root) root.innerHTML = "âš ï¸ Error sync";
             }
         }
 
@@ -1385,9 +1990,9 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             setTimeout(async () => {
                 if (window.PremiumModal) {
                     await window.PremiumModal.alert({
-                        title: '💡 TIP DE NAVEGACIÓN',
-                        message: 'Hemos optimizado tu experiencia. Ahora tus <b>Acciones Rápidas</b> y tu <b>Estado Físico</b> están centralizados en tu <b>PERFIL</b>.<br><br>¡Haz clic en tu foto o en la pestaña Perfil para verlo todo!',
-                        btnText: '¡ENTENDIDO!',
+                        title: 'ðŸ’¡ TIP DE NAVEGACIÃ“N',
+                        message: 'Hemos optimizado tu experiencia. Ahora tus <b>Acciones RÃ¡pidas</b> y tu <b>Estado FÃ­sico</b> estÃ¡n centralizados en tu <b>PERFIL</b>.<br><br>Â¡Haz clic en tu foto o en la pestaÃ±a Perfil para verlo todo!',
+                        btnText: 'Â¡ENTENDIDO!',
                         type: 'info'
                     });
                     sessionStorage.setItem('profileTipShown', 'true');
@@ -1493,8 +2098,8 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 realNotifications.forEach(notif => {
                     activities.push({
                         type: notif.isChat ? 'chat' : 'notification',
-                        icon: notif.isChat ? '💬' : '🔔',
-                        title: notif.title || 'Notificación',
+                        icon: notif.isChat ? 'ðŸ’¬' : 'ðŸ””',
+                        title: notif.title || 'NotificaciÃ³n',
                         desc: notif.body || '',
                         time: this.formatRelativeTime(notif.timestamp),
                         color: notif.isChat ? '#CCFF00' : '#38bdf8',
@@ -1515,17 +2120,17 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         catColor = '#00C4FF'; // Blue
                     }
 
-                    // Lógica de colores de equipo idéntica a EventsController_V6
+                    // LÃ³gica de colores de equipo idÃ©ntica a EventsController_V6
                     const t = reg.playerTeam ? reg.playerTeam.toUpperCase() : '';
-                    let teamColor = '#38bdf8'; // Default Cyan (3º)
-                    if (t.includes('4º')) teamColor = '#84cc16'; // Neon Green
-                    if (t.includes('3º')) teamColor = '#38bdf8'; // Cyan
-                    if (t.includes('2º')) teamColor = '#f59e0b'; // Gold/Orange
+                    let teamColor = '#38bdf8'; // Default Cyan (3Âº)
+                    if (t.includes('4Âº')) teamColor = '#84cc16'; // Neon Green
+                    if (t.includes('3Âº')) teamColor = '#38bdf8'; // Cyan
+                    if (t.includes('2Âº')) teamColor = '#f59e0b'; // Gold/Orange
                     if (t.includes('MIXTO')) teamColor = '#ef4444'; // Red
 
                     activities.push({
                         type: 'registration',
-                        icon: '🎾',
+                        icon: 'ðŸŽ¾',
                         title: reg.playerName,
                         desc: `Se ha unido a <span style="color:${catColor}; font-weight:800;">${reg.eventName}</span>${reg.playerTeam ? `<br><span style="color:${teamColor}; font-size:0.65rem; font-weight:950; letter-spacing:1px; text-shadow: 0 0 8px ${teamColor}60; border-bottom: 2px solid ${teamColor}; padding-bottom: 1px;">${t}</span>` : ''}`,
                         time: this.formatRelativeTime(reg.timestamp),
@@ -1538,8 +2143,8 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 urgentAlerts.forEach(alert => {
                     activities.push({
                         type: 'urgent',
-                        icon: '🚨',
-                        title: '¡ÚLTIMA HORA!',
+                        icon: 'ðŸš¨',
+                        title: 'Â¡ÃšLTIMA HORA!',
                         desc: alert.title,
                         time: 'ahora',
                         color: '#ef4444',
@@ -1553,9 +2158,9 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 rankingChanges.forEach(change => {
                     activities.push({
                         type: 'ranking',
-                        icon: change.position === 1 ? '👑' : '📈',
+                        icon: change.position === 1 ? 'ðŸ‘‘' : 'ðŸ“ˆ',
                         title: change.playerName,
-                        desc: `${change.position === 1 ? '¡NUEVO LÍDER!' : `Entra en el TOP ${change.position}`} del ranking`,
+                        desc: `${change.position === 1 ? 'Â¡NUEVO LÃDER!' : `Entra en el TOP ${change.position}`} del ranking`,
                         time: this.formatRelativeTime(change.timestamp),
                         color: '#f59e0b',
                         timestamp: change.timestamp,
@@ -1581,11 +2186,14 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     `;
                 }
 
+                const alwaysVisible = top6.slice(0, 2);
+                const extended = top6.slice(2);
+
                 return `
                     <div style="position: relative;">
                         <div class="activity-timeline-line"></div>
                         <div style="display: flex; flex-direction: column; gap: 12px;">
-                            ${top6.map((activity, index) => `
+                            ${alwaysVisible.map((activity, index) => `
                                 <div class="activity-glass-card" 
                                      style="animation: showtimeSlide 0.6s both ${index * 0.12}s; color: ${activity.color};"
                                      onclick="${activity.action ? `window.Router.navigate('${activity.action.toLowerCase()}')` : ''}">
@@ -1612,7 +2220,49 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                     </div>
                                 </div>
                             `).join('')}
+
+                            ${extended.length > 0 ? `
+                            <div id="activity-extended-container" style="display: none; flex-direction: column; gap: 12px;">
+                                ${extended.map((activity, index) => `
+                                    <div class="activity-glass-card" 
+                                         style="color: ${activity.color};"
+                                         onclick="${activity.action ? `window.Router.navigate('${activity.action.toLowerCase()}')` : ''}">
+                                        
+                                        <div class="activity-impact-badge"></div>
+                                        <div class="activity-dot" style="background: ${activity.color};"></div>
+                                        
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; position: relative; z-index: 1;">
+                                            <div style="flex: 1;">
+                                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                                    <span style="font-size: 0.95rem; font-weight: 1000; color: white; text-transform: uppercase; letter-spacing: -0.5px; font-style: italic;">${activity.title}</span>
+                                                    ${activity.priority === 'critical' ? `<span style="background: #ef4444; color: white; font-size: 0.55rem; font-weight: 1000; padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; animation: pulse 1s infinite; box-shadow: 0 0 15px #ef4444;">BREAKING</span>` : ''}
+                                                </div>
+                                                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.7); font-weight: 700; line-height: 1.5; letter-spacing: 0.2px;">${activity.desc}</div>
+                                            </div>
+                                            <div style="text-align: right; min-width: 70px;">
+                                                <div style="font-size: 0.6rem; color: ${activity.color}; font-weight: 1000; text-transform: uppercase; opacity: 0.8; letter-spacing: 1px;">${activity.time}</div>
+                                                ${activity.action ? `
+                                                    <div style="margin-top: 8px; font-size: 0.55rem; font-weight: 1000; color: #000; background: ${activity.color}; padding: 3px 10px; border-radius: 4px; display: inline-block; box-shadow: 0 4px 10px ${activity.color}40; transform: skewX(-10deg);">
+                                                        ${activity.action.toUpperCase()}
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            ` : ''}
                         </div>
+
+                        ${extended.length > 0 ? `
+                        <div style="text-align: center; margin-top: 15px;">
+                            <button onclick="event.stopPropagation(); window.DashboardView.toggleActivityFeed()" 
+                                    id="activity-toggle-btn" 
+                                    style="background: rgba(10, 25, 47, 0.05); border: 1px solid rgba(10, 25, 47, 0.15); color: #0a192f; border-radius: 14px; padding: 10px 24px; font-size: 0.75rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                                Ver más <i class="fas fa-chevron-down" id="activity-toggle-icon"></i>
+                            </button>
+                        </div>
+                        ` : ''}
                     </div>
                 `;
             } catch (e) {
@@ -1669,7 +2319,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     if (spotsLeft > 0 && spotsLeft <= 2 && maxPlayers > 0) {
                         alerts.push({
                             type: 'urgent',
-                            title: `¡ÚLTIMA${spotsLeft === 1 ? '' : 'S'} ${spotsLeft} PLAZA${spotsLeft === 1 ? '' : 'S'}! ${event.name}`,
+                            title: `Â¡ÃšLTIMA${spotsLeft === 1 ? '' : 'S'} ${spotsLeft} PLAZA${spotsLeft === 1 ? '' : 'S'}! ${event.name}`,
                             eventName: event.name,
                             spotsLeft,
                             timestamp: Date.now(),
@@ -1768,7 +2418,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     const cardBg = isFull ? 'linear-gradient(135deg, #475569 0%, #1e293b 100%)' : 'linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)';
                     const btnText = isFull ? 'VER LISTA DE ESPERA' : 'APUNTARME AHORA';
                     const btnBg = isFull ? '#94a3b8' : '#00E36D';
-                    const statusDesc = isFull ? '¡Pista completa! Avisaremos bajas.' : `¡Solo <b>${spots} plazas</b>! Se llenará pronto.`;
+                    const statusDesc = isFull ? 'Â¡Pista completa! Avisaremos bajas.' : `Â¡Solo <b>${spots} plazas</b>! Se llenarÃ¡ pronto.`;
                     const navigateAction = "window.Router.navigate('entrenos'); setTimeout(() => { if(window.EventsController) window.EventsController.filterByType('entreno'); }, 200);";
 
                     let html = `
@@ -1780,7 +2430,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         </style>
                         <div class="smart-hero-card" onclick="${navigateAction}" style="background: ${cardBg}; border-radius: 16px; padding: 20px; color: white; position: relative; overflow: hidden; margin-bottom: 5px; cursor: pointer;">
                             <div style="position: absolute; top: -20px; right: -20px; font-size: 5rem; color: rgba(255,255,255,0.1); transform: rotate(-15deg);"><i class="fas fa-star"></i></div>
-                            <div style="background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 4px 12px; border-radius: 100px; font-size: 0.6rem; font-weight: 900; display: inline-block; margin-bottom: 12px; text-transform: uppercase;">RECOMENDACIÓN</div>
+                            <div style="background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 4px 12px; border-radius: 100px; font-size: 0.6rem; font-weight: 900; display: inline-block; margin-bottom: 12px; text-transform: uppercase;">RECOMENDACIÃ“N</div>
                             <div style="font-size: 1.4rem; font-weight: 900; margin-bottom: 5px;">${urgentAm.name}</div>
                             <p style="font-size: 0.8rem; opacity: 0.9; margin-bottom: 15px;">${statusDesc}</p>
                             <div style="background: ${btnBg}; color: black; padding: 12px; border-radius: 12px; text-align: center; font-weight: 950; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 10px;">
@@ -1789,11 +2439,11 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         </div>
                     `;
 
-                    const hypeMessages = [`🔥 <b>${pCount + 3} personas</b> viéndolo`, `⚡ <b>Alta Demanda</b>: Se llenará hoy`, `🏆 <b>Nivel Garantizado</b>`];
+                    const hypeMessages = [`ðŸ”¥ <b>${pCount + 3} personas</b> viÃ©ndolo`, `âš¡ <b>Alta Demanda</b>: Se llenarÃ¡ hoy`, `ðŸ† <b>Nivel Garantizado</b>`];
                     if (players.length > 0) {
                         const randomPlayer = players[Math.floor(Math.random() * players.length)];
                         const pName = (randomPlayer.name || 'Jugador').split(' ')[0];
-                        hypeMessages.unshift(`🚀 <b>${pName}</b> acaba de unirse`);
+                        hypeMessages.unshift(`ðŸš€ <b>${pName}</b> acaba de unirse`);
                     }
 
                     const tickerItems = [...hypeMessages, ...hypeMessages].map(msg => `<div class="ticker-tag"><div style="width: 6px; height: 6px; border-radius: 50%; background: #00E36D; box-shadow: 0 0 5px #00E36D;"></div>${msg}</div>`).join('');
@@ -1816,12 +2466,12 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
             }
 
             const guideItems = [
-                { title: 'HISTORIAS LIVE', icon: 'fa-play-circle', color: '#fb7185', desc: 'Sigue la actualidad del club al estilo Instagram. Pulsa derecha para avanzar, izquierda para volver o mantén para pausar.' },
-                { title: 'RANKING GLOBAL', icon: 'fa-trophy', color: '#CCFF00', desc: 'Suma puntos en Americanas y Entrenos. El sistema recalcula tu nivel dinámicamente según tus victorias.' },
-                { title: 'METEOROLOGÍA', icon: 'fa-cloud-sun', color: '#0ea5e9', desc: 'Análisis en tiempo real de temperatura y humedad. Te indicamos la velocidad de la bola y el agarre de pista óptimo.' },
-                { title: 'NOTIFICACIONES PUSH', icon: 'fa-bell', color: '#fbbf24', desc: 'Recibe avisos instantáneos cuando se abran inscripciones o cuando tu partido esté listo para empezar.' },
-                { title: 'APP MULTI-MODO', icon: 'fa-layer-group', color: '#a855f7', desc: 'Gestiona Americanas, Entrenos, Clases y Pozo desde un solo lugar con lógica de ascensos automáticos.' },
-                { title: 'PILOTO AUTOMÁTICO', icon: 'fa-robot', color: '#34d399', desc: 'El sistema genera cruces 4h antes del evento y notifica a los jugadores para que todo fluya sin esperas.' }
+                { title: 'HISTORIAS LIVE', icon: 'fa-play-circle', color: '#fb7185', desc: 'Sigue la actualidad del club al estilo Instagram. Pulsa derecha para avanzar, izquierda para volver o mantÃ©n para pausar.' },
+                { title: 'RANKING GLOBAL', icon: 'fa-trophy', color: '#CCFF00', desc: 'Suma puntos en Americanas y Entrenos. El sistema recalcula tu nivel dinÃ¡micamente segÃºn tus victorias.' },
+                { title: 'METEOROLOGÃA', icon: 'fa-cloud-sun', color: '#0ea5e9', desc: 'AnÃ¡lisis en tiempo real de temperatura y humedad. Te indicamos la velocidad de la bola y el agarre de pista Ã³ptimo.' },
+                { title: 'NOTIFICACIONES PUSH', icon: 'fa-bell', color: '#fbbf24', desc: 'Recibe avisos instantÃ¡neos cuando se abran inscripciones o cuando tu partido estÃ© listo para empezar.' },
+                { title: 'APP MULTI-MODO', icon: 'fa-layer-group', color: '#a855f7', desc: 'Gestiona Americanas, Entrenos, Clases y Pozo desde un solo lugar con lÃ³gica de ascensos automÃ¡ticos.' },
+                { title: 'PILOTO AUTOMÃTICO', icon: 'fa-robot', color: '#34d399', desc: 'El sistema genera cruces 4h antes del evento y notifica a los jugadores para que todo fluya sin esperas.' }
             ];
 
             modal.innerHTML = `
@@ -1832,7 +2482,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         <div style="width: 50px; height: 50px; background: #CCFF00; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; box-shadow: 0 0 20px rgba(204,255,0,0.3);">
                             <i class="fas fa-book-open" style="color: black; font-size: 1.4rem;"></i>
                         </div>
-                        <h3 style="margin: 0 0 4px 0; color: #fff; font-weight: 950; font-size: 1.5rem; letter-spacing: -0.5px;">GUÍA <span style="color:#CCFF00">SMART</span> JUGADOR</h3>
+                        <h3 style="margin: 0 0 4px 0; color: #fff; font-weight: 950; font-size: 1.5rem; letter-spacing: -0.5px;">GUÃA <span style="color:#CCFF00">SMART</span> JUGADOR</h3>
                         <p style="color: rgba(255,255,255,0.4); font-size: 0.65rem; margin: 0; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;">Manual de Experiencia SomosPadel</p>
                     </div>
 
@@ -1869,10 +2519,10 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
         }
         async renderPredictiveSynergy() {
             try {
-                console.log("🧠 [DashboardView] renderPredictiveSynergy called");
+                console.log("ðŸ§  [DashboardView] renderPredictiveSynergy called");
                 const user = window.Store ? window.Store.getState('currentUser') : null;
                 if (!user) {
-                    console.warn("🧠 [DashboardView] No user for synergy");
+                    console.warn("ðŸ§  [DashboardView] No user for synergy");
                     return '';
                 }
 
@@ -1881,7 +2531,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                 const userPhoto = user.photoURL || user.photo_url || 'img/default-avatar.png';
 
                 if (!window.PartnerSynergyService || !window.FirebaseDB) {
-                    console.error("🧠 [DashboardView] Synergy Services MISSING");
+                    console.error("ðŸ§  [DashboardView] Synergy Services MISSING");
                     return '';
                 }
 
@@ -1892,7 +2542,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     bestPartners = await window.PartnerSynergyService.getBestPartnersFor(userId, 3) || [];
                     trend = await window.PartnerSynergyService.getRecentPerformanceTrend(userId) || trend;
                 } catch (e) {
-                    console.error("🧠 [DashboardView] Fetching synergy failed", e);
+                    console.error("ðŸ§  [DashboardView] Fetching synergy failed", e);
                 }
 
                 let rankingInfo = { nextRival: null, myStats: null };
@@ -1913,7 +2563,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         }
                     }
                 } catch (e) {
-                    console.error("🧠 [DashboardView] Ranking calc error", e);
+                    console.error("ðŸ§  [DashboardView] Ranking calc error", e);
                 }
 
                 const myTotalPts = rankingInfo.myStats ?
@@ -1926,10 +2576,10 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                     (rivalTotalPts > myTotalPts ?
                         `Objetivo: Superar a <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span>. Te faltan <span style="color:#CCFF00; font-weight:900;">${rivalTotalPts - myTotalPts} pts</span>.` :
                         (rivalTotalPts > 0 ?
-                            `Estás empatado con <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span>. ¡Una victoria más y le superas!` :
-                            `Supera a <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span> en tu próximo match para subir en el Top.`
+                            `EstÃ¡s empatado con <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span>. Â¡Una victoria mÃ¡s y le superas!` :
+                            `Supera a <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span> en tu prÃ³ximo match para subir en el Top.`
                         )) :
-                    (myTotalPts > 0 ? '¡Eres el líder actual! Mantén el nivel para conservar tu puesto.' : 'Comienza a jugar partidos para subir en el Ranking mundial.');
+                    (myTotalPts > 0 ? 'Â¡Eres el lÃ­der actual! MantÃ©n el nivel para conservar tu puesto.' : 'Comienza a jugar partidos para subir en el Ranking mundial.');
 
                 // HELPER: Get Smart Name (Name + 1st Surname) and Initials (N.S.)
                 const getSmartData = (fullName) => {
@@ -1952,8 +2602,8 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         photo: p.player?.photoURL || p.player?.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(sData.display)}&background=0f172a&color=fff&size=128`,
                         chemistry: Math.round(p.totalScore || 0),
                         color: p.rating?.color || '#CCFF00',
-                        desc: hasHistory ? (p.playChemistry.winRate > 60 ? 'Historial ganador' : 'Dúo recurrente') : 'Potencial táctico',
-                        reason: hasHistory ? `Habéis jugado ${p.playChemistry.matchesPlayed} partidos juntos.` : `Nivel de juego muy similar (${p.levelCompatibility.level2}).`
+                        desc: hasHistory ? (p.playChemistry.winRate > 60 ? 'Historial ganador' : 'DÃºo recurrente') : 'Potencial tÃ¡ctico',
+                        reason: hasHistory ? `HabÃ©is jugado ${p.playChemistry.matchesPlayed} partidos juntos.` : `Nivel de juego muy similar (${p.levelCompatibility.level2}).`
                     };
                 }) : [];
 
@@ -1974,24 +2624,24 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                     photo: p.photoURL || p.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(sData.display)}&background=random&color=fff&size=128`,
                                     chemistry: 75 + Math.floor(Math.random() * 15),
                                     color: i === 0 ? '#00E36D' : (i === 1 ? '#CCFF00' : '#38bdf8'),
-                                    desc: 'Dúo sugerido',
+                                    desc: 'DÃºo sugerido',
                                     reason: 'Compatibilidad por nivel de juego.'
                                 });
                             });
                         }
                     } catch (err) {
-                        console.error("🧠 Fallback players failed", err);
+                        console.error("ðŸ§  Fallback players failed", err);
                     }
                 }
 
                 // If still empty after fallback (very rare), use better named dummies
                 if (synergies.length === 0) {
                     synergies.push({ name: 'Pro 1', photo: 'https://i.pravatar.cc/150?u=1', chemistry: 85, color: '#00E36D', desc: 'Compatibilidad nivel' });
-                    synergies.push({ name: 'Pro 2', photo: 'https://i.pravatar.cc/150?u=2', chemistry: 72, color: '#CCFF00', desc: 'Estilo similar' });
-                    synergies.push({ name: 'Pro 3', photo: 'https://i.pravatar.cc/150?u=3', chemistry: 60, color: '#38bdf8', desc: 'Buena racha' });
+                    synergies.push({ name: 'Pro 2', photo: 'https://i.pravatar.cc/150?u=2', chemistry: 72, color: '#72a800', desc: 'Estilo similar' });
+                    synergies.push({ name: 'Pro 3', photo: 'https://i.pravatar.cc/150?u=3', chemistry: 60, color: '#1e3a8a', desc: 'Buena racha' });
                 }
 
-                const fatigueColor = trend.status === 'HIGH' ? '#ef4444' : (trend.status === 'OPTIMAL' ? '#00E36D' : '#CCFF00');
+                const fatigueColor = trend.status === 'HIGH' ? '#ef4444' : (trend.status === 'OPTIMAL' ? '#00E36D' : '#72a800');
 
                 return `
                     <div class="synergy-glass-container" data-widget="predictive-synergy" style="
@@ -2012,13 +2662,13 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; z-index: 20;">
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <div style="width: 12px; height: 12px; background: #CCFF00; border-radius: 50%; box-shadow: 0 0 15px #CCFF00; animation: pulseSOS 1.5s infinite;"></div>
-                                <span style="font-size: 0.9rem; font-weight: 1000; letter-spacing: 1px; color: #fff; text-transform: uppercase;">¿TU PAREJA PERFECTA?</span>
+                                <span style="font-size: 0.9rem; font-weight: 1000; letter-spacing: 1px; color: #fff; text-transform: uppercase;">Â¿TU PAREJA PERFECTA?</span>
                             </div>
                             <div style="background: rgba(0,227,109,0.15); padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 900; color: #00E36D; border: 1px solid #00E36D40; letter-spacing: 1px;">MATCH PADEL</div>
                         </div>
 
                         <p style="font-size: 0.72rem; color: rgba(255,255,255,0.5); line-height: 1.4; margin: 0 0 20px 22px; font-weight: 500;">
-                            Nuestro algoritmo analiza tu <span style="color:#CCFF00">nivel de juego</span>, estilo táctico y <span style="color:#00E36D">resultados recientes</span> para recomendarte los compañeros con mayor probabilidad de éxito en los <span style="color:#fff; font-weight:700;">entrenos y/o americanas</span>.
+                            Nuestro algoritmo analiza tu <span style="color:#CCFF00">nivel de juego</span>, estilo tÃ¡ctico y <span style="color:#00E36D">resultados recientes</span> para recomendarte los compaÃ±eros con mayor probabilidad de Ã©xito en los <span style="color:#fff; font-weight:700;">entrenos y/o americanas</span>.
                         </p>
 
                         <div style="display: grid; grid-template-columns: 1fr; gap: 24px;">
@@ -2031,7 +2681,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                     <div style="width: 100%; height: 100%; border-radius: 50%; background: #0f172a; overflow: hidden; border: 2px solid #0f172a;">
                                         <img src="${userPhoto}" style="width: 100%; height: 100%; object-fit: cover;">
                                     </div>
-                                    <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: #CCFF00; color: #000; font-size: 0.6rem; font-weight: 1000; padding: 3px 10px; border-radius: 100px; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">TÚ</div>
+                                    <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: #CCFF00; color: #000; font-size: 0.6rem; font-weight: 1000; padding: 3px 10px; border-radius: 100px; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">TÃš</div>
                                 </div>
 
                                 <!-- SYNERGY NODES -->
@@ -2105,7 +2755,7 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                             <i class="fas fa-chart-line" style="color: #38bdf8; font-size: 1.3rem;"></i>
                                         </div>
                                         <div>
-                                            <div style="font-size: 0.85rem; font-weight: 1000; color: #fff; margin-bottom: 4px;">PROYECCIÓN DE ASCENSO</div>
+                                            <div style="font-size: 0.85rem; font-weight: 1000; color: #fff; margin-bottom: 4px;">PROYECCIÃ“N DE ASCENSO</div>
                                             <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.5; font-weight: 500;">
                                                 ${rankingMsg}
                                             </p>
@@ -2120,9 +2770,9 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
                                             <i class="fas fa-lightbulb" style="color: #CCFF00; font-size: 1.3rem;"></i>
                                         </div>
                                         <div>
-                                            <div style="font-size: 0.85rem; font-weight: 1000; color: #fff; margin-bottom: 4px;">CONSEJO DEL CAPITÁN</div>
+                                            <div style="font-size: 0.85rem; font-weight: 1000; color: #fff; margin-bottom: 4px;">CONSEJO DEL CAPITÃN</div>
                                             <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.5; font-weight: 500;">
-                                                Tu pareja ideal es <span style="color:#CCFF00; font-weight:900;">${synergies[0]?.name || 'un perfil defensivo'}</span>. Juntos tenéis un ratio de cobertura de red del <span style="color:#00E36D; font-weight:900;">85%</span>.
+                                                Tu pareja ideal es <span style="color:#CCFF00; font-weight:900;">${synergies[0]?.name || 'un perfil defensivo'}</span>. Juntos tenÃ©is un ratio de cobertura de red del <span style="color:#00E36D; font-weight:900;">85%</span>.
                                             </p>
                                         </div>
                                     </div>
@@ -2162,5 +2812,5 @@ console.log("✅ [v40] DashboardView Loaded Correctly");
     }
 
     window.DashboardView = new DashboardView();
-    console.log("🚀 Vibrant Dashboard Loaded");
+    console.log("ðŸš€ Vibrant Dashboard Loaded");
 })();

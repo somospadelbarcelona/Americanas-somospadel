@@ -54,7 +54,7 @@ body {
     font-family: var(--font-body);
     margin: 0;
     -webkit-font-smoothing: antialiased;
-    padding-bottom: 100px;
+    padding-bottom: 90px;
     /* Space for bottom nav */
 }
 
@@ -129,26 +129,25 @@ body {
 
 /* --- FIXED HEADER ARCHITECTURE (Added for Mobile Optimization) --- */
 .dashboard-fixed-header {
-    position: fixed;
+    position: fixed; /* Fixed as requested */
     top: 0;
     left: 0;
     width: 100%;
     z-index: 10000;
-    /* Extremely high to stay above everything */
-    background: var(--brand-navy);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    background: #ffffff;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .dashboard-fixed-header .ticker-container {
     position: relative;
     width: 100%;
     z-index: 1005;
-    background: rgba(15, 23, 42, 0.95);
+    background: #ffffff;
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid #e2e8f0;
     height: 44px;
     display: flex;
     align-items: center;
@@ -191,8 +190,8 @@ body {
     top: 0;
     height: 100%;
     padding: 0 15px;
-    background: #000;
-    color: var(--brand-neon);
+    background: #ffffff;
+    color: #0a192f;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -200,8 +199,8 @@ body {
     font-size: 0.65rem;
     letter-spacing: 2px;
     z-index: 10;
-    border-right: 3px solid var(--brand-neon);
-    box-shadow: 10px 0 20px rgba(0, 0, 0, 0.5);
+    border-right: 3px solid #CCFF00;
+    box-shadow: 10px 0 20px rgba(0, 0, 0, 0.05);
     text-transform: uppercase;
 }
 
@@ -246,6 +245,8 @@ body {
     padding-left: 0 !important;
     padding-right: 0 !important;
     overflow-x: hidden;
+    gap: 6px !important;
+    /* Compact spacing between all dashboard widgets */
 }
 
 .mobile-panel {
@@ -328,9 +329,9 @@ body {
 
 /* UPCOMING STATE (Elegant Navy) */
 .hero-card.upcoming {
-    background: linear-gradient(135deg, var(--brand-navy) 0%, #000c24 100%);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    color: #0a192f;
+    border: 1px solid #e2e8f0;
 }
 
 .hero-card.upcoming .upcoming-label {
@@ -662,7 +663,7 @@ body {
     gap: 10px;
     padding: 16px 20px;
     overflow-x: auto;
-    background: #0d1117;
+    background: #ffffff;
     /* Darker than header */
     white-space: nowrap;
     border-bottom: 1px solid #333;
@@ -694,8 +695,8 @@ body {
 }
 
 .tower-header {
-    background: #111;
-    color: white;
+    background: #ffffff;
+    color: #0a192f;
     padding: 16px 20px;
     position: sticky;
     top: 60px;
@@ -1228,7 +1229,7 @@ body {
 .news-card h3 {
     margin: 10px 0;
     font-size: 1.2rem;
-    leading-trim: both;
+    line-height: 1.2;
 }
 
 .news-card p {
@@ -2195,10 +2196,10 @@ body {
 .dashboard-v2-container {
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    /* Space between visual blocks */
-    padding: 0 20px 120px 20px;
-    /* Safe space plus bottom nav */
+    gap: 8px;
+    /* Space between visual blocks — reduced from 24px */
+    padding: 0 0 120px 0;
+    /* Safe space plus bottom nav — horizontal handled per-widget */
     max-width: 600px;
     /* Tablet constraint */
     margin: 0 auto;
@@ -3117,7 +3118,7 @@ body {
     filter: none !important;
     /* Reset any filters */
     /* Only apply shadow if transparent PNG */
-    drop-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 /* Adjust Command Brand Layout to accommodate AI on left */
@@ -3914,7 +3915,10 @@ body {
 }
 
 .auth-overlay-enterprise {
-    background: rgba(0, 0, 0, 0.92);
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), 
+                url('https://images.unsplash.com/photo-1626248294249-19943fce2657?q=80&w=2070&auto=format&fit=crop') !important;
+    background-size: cover !important;
+    background-position: center !important;
     backdrop-filter: blur(10px);
 }
 
@@ -3933,6 +3937,24 @@ body {
     border-right: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     flex-direction: column;
+    overflow-y: auto; /* ENABLE SCROLL */
+    overflow-x: hidden;
+}
+
+/* Custom scrollbar for Side Drawer (NEON EDITION) */
+.side-drawer::-webkit-scrollbar {
+    width: 6px;
+}
+.side-drawer::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+.side-drawer::-webkit-scrollbar-thumb {
+    background: rgba(204, 255, 0, 0.3);
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.2);
+}
+.side-drawer::-webkit-scrollbar-thumb:hover {
+    background: rgba(204, 255, 0, 0.6);
 }
 
 .side-drawer.open {
@@ -3970,7 +3992,7 @@ body {
 
 #dynamic-menu-items {
     flex: 1;
-    overflow-y: auto;
+    /* Removed overflow-y to allow global drawer scroll */
     padding-top: 20px;
 }
 

@@ -1,0 +1,73 @@
+/* glassmorphism.css
+   Premium Crystal & Glass Effects for Somospadel BCN
+*/
+
+:root {
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --glass-blur: blur(12px);
+    --crystal-bg: rgba(255, 255, 255, 0.95);
+    --crystal-border: rgba(0, 0, 0, 0.1);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+}
+
+.crystal-card {
+    background: var(--crystal-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--crystal-border);
+    border-radius: 32px;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.crystal-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+        120deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.05) 45%, 
+        rgba(255, 255, 255, 0.1) 50%, 
+        rgba(255, 255, 255, 0.05) 55%, 
+        transparent
+    );
+    transition: all 0.6s;
+    pointer-events: none;
+}
+
+.crystal-card:hover::before {
+    left: 100%;
+}
+
+.haptic-feedback {
+    transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.haptic-feedback:active {
+    transform: scale(0.96);
+}
+
+/* Floating Animation for Crystals */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.animate-float {
+    animation: float 5s ease-in-out infinite;
+}

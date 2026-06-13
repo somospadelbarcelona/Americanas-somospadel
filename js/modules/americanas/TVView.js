@@ -133,12 +133,26 @@
 
                         if (isNewRoundDetected && isPending) {
                             this._lastAnimatedRound = maxRound;
-                            window.ShuffleAnimator.animate({
-                                round: maxRound,
-                                players: this.eventDoc?.players || [],
-                                courts: this.eventDoc?.max_courts || 4,
-                                matches: currentMatches
-                            });
+
+                            // CRITICAL: Fetch ALL player data for robust animation lookup
+                            (async () => {
+                                let freshPlayers = [];
+                                try {
+                                    console.log("📡 [TVView] Syncing comprehensive player pool...");
+                                    freshPlayers = await window.FirebaseDB.players.getAll();
+                                    console.log(`✅ [TVView] Pool ready with ${freshPlayers.length} players.`);
+                                } catch (e) {
+                                    console.warn("⚠️ [TVView] Could not fetch fresh players pool", e);
+                                    freshPlayers = this.eventDoc?.players || [];
+                                }
+
+                                window.ShuffleAnimator.animate({
+                                    round: maxRound,
+                                    players: freshPlayers,
+                                    courts: this.eventDoc?.max_courts || 4,
+                                    matches: currentMatches
+                                });
+                            })();
                         }
                     }
 

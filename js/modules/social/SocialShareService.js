@@ -72,6 +72,15 @@ class SocialShareService {
 
     // --- INTERNAL HELPER ---
     async _generateImage(renderFn) {
+        if (typeof html2canvas === 'undefined' && window.loadExternalScript) {
+            try {
+                await window.loadExternalScript('https://html2canvas.hertzen.com/dist/html2canvas.min.js', 'html2canvas');
+            } catch (err) {
+                console.error("❌ Error loading html2canvas dinámicamente:", err);
+                throw new Error("No se pudo cargar la librería de generación de imagen.");
+            }
+        }
+
         this.ensureHiddenContainer();
         const container = document.getElementById(this.hiddenContainerId);
 
