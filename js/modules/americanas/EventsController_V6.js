@@ -620,7 +620,6 @@
             // TRIGGER ASYNC CONTENT
             this.loadGeoRadarWidget();
             if (this.state.activeTab === 'entrenos' || this.state.activeTab === 'events') {
-                this.loadSynergyWidget();
                 if (window.PadelPulse) {
                     window.PadelPulse.render('events-welcome-root', 'welcome_and_event');
                 }
@@ -631,40 +630,6 @@
                     window.OpenMatchesView.renderLayout();
                     window.OpenMatchesController.init();
                 }
-            }
-        }
-
-        async loadSynergyWidget() {
-            const root = document.getElementById('predictive-synergy-entrenos-root');
-            if (!root) return;
-
-            const user = (window.Store ? window.Store.getState('currentUser') : null) || window.currentUser;
-            if (!user) {
-                root.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">🔒 Inicia sesión para ver tu análisis</div>`;
-                return;
-            }
-
-            if (!window.DashboardView || !window.DashboardView.renderPredictiveSynergy) {
-                console.warn("DashboardView not ready for synergy");
-                return;
-            }
-
-            // Subscribirse si existe el servicio
-            const userId = user.uid || user.id;
-            if (window.PartnerSynergyService && window.PartnerSynergyService.subscribeToPlayerData) {
-                window.PartnerSynergyService.subscribeToPlayerData(userId, async () => {
-                    if (document.getElementById('predictive-synergy-entrenos-root')) {
-                        const html = await window.DashboardView.renderPredictiveSynergy();
-                        const newRoot = document.getElementById('predictive-synergy-entrenos-root');
-                        if (newRoot && html) newRoot.innerHTML = html;
-                    }
-                });
-            }
-
-            // Initial Render
-            const html = await window.DashboardView.renderPredictiveSynergy();
-            if (html && document.getElementById('predictive-synergy-entrenos-root')) {
-                document.getElementById('predictive-synergy-entrenos-root').innerHTML = html;
             }
         }
 
@@ -858,14 +823,6 @@
                                 <i class="fas fa-info-circle" style="color: #CCFF00;"></i> ¿CÓMO FUNCIONAN LOS FORMATOS?
                             </button>
                             ` : ''}
-
-                            <!-- PREDICTIVE SYNERGY WIDGET (MIRROR FROM DASHBOARD) -->
-                            <div id="predictive-synergy-entrenos-root" style="width: 100%; max-width: 500px; margin: 15px auto 0;">
-                                <div style="text-align: center; padding: 30px; color: rgba(255,255,255,0.2); font-weight: 800; background: rgba(0,0,0,0.1); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
-                                    <i class="fas fa-brain fa-spin" style="margin-bottom: 10px; font-size: 1.2rem; color: #CCFF00;"></i><br>
-                                    Cargando tu compatibilidad...
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -2060,18 +2017,7 @@
 
             modal.style.display = 'block';
 
-            // Initialize Partner Synergy Radar in Modal
-            if (this.state.currentUser && window.PartnerSynergyWidget) {
-                setTimeout(() => {
-                    window.PartnerSynergyWidget.render(this.state.currentUser.uid || this.state.currentUser.id, 'event-synergy-radar-root', {
-                        title: '🔗 PAREJAS IDEALES EN ESTE EVENTO',
-                        subtitle: 'Sugerencias basadas en compatibilidad real',
-                        limit: 3,
-                        showDetails: true,
-                        compact: false
-                    }).catch(e => console.error('Synergy widget failed:', e));
-                }, 100);
-            }
+
         }
 
         _renderEventTabHeader(eventId, tabId, label, icon) {
