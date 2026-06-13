@@ -605,8 +605,8 @@
                 contentHtml = '<div style="padding: 100px; text-align: center;"><div class="loader"></div><p style="margin-top:20px; font-weight:900; letter-spacing:2px;">CARGANDO AMERICANAS...</p></div>';
             } else {
                 switch (this.state.activeTab) {
-                    case 'events': contentHtml = '<div id="events-welcome-root" style="animation: floatUp 0.5s ease-out both;"></div>' + this.renderEventsList(false, false); break;
-                    case 'entrenos': contentHtml = '<div id="events-welcome-root" style="animation: floatUp 0.5s ease-out both;"></div>' + this.renderEventsList(false, true); break;
+                    case 'events': contentHtml = this.renderEventsList(false, false); break;
+                    case 'entrenos': contentHtml = this.renderEventsList(false, true); break;
                     case 'open_matches': contentHtml = '<div id="events-tab-content" style="min-height: 80vh;"></div>'; break;
                     case 'agenda': contentHtml = this.renderAgendaView(); break;
                     case 'results': contentHtml = await this.renderResultsView(); break;
@@ -619,11 +619,6 @@
 
             // TRIGGER ASYNC CONTENT
             this.loadGeoRadarWidget();
-            if (this.state.activeTab === 'entrenos' || this.state.activeTab === 'events') {
-                if (window.PadelPulse) {
-                    window.PadelPulse.render('events-welcome-root', 'welcome_and_event');
-                }
-            }
             if (this.state.activeTab === 'open_matches') {
                 if (window.OpenMatchesView && window.OpenMatchesController) {
                     window.OpenMatchesView.containerId = 'events-tab-content';

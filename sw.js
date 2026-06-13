@@ -4,7 +4,7 @@
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
 
-const CACHE_NAME = 'somospadel-ultra-cache-v825';
+const CACHE_NAME = 'somospadel-ultra-cache-v826';
 
 // Recursos críticos para el "App Shell"
 const CORE_ASSETS = [

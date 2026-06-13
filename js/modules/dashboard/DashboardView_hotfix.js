@@ -2496,64 +2496,7 @@
 
 
 
-            try {
-                const synergyContainer = document.getElementById('predictive-synergy-root');
-                // Use Store OR global backup OR Firebase Auth directly as last resort
-                const user = (window.Store ? window.Store.getState('currentUser') : null) ||
-                    window.currentUser ||
-                    (window.firebase ? window.firebase.auth().currentUser : null);
 
-                console.log("🧠 [DashboardView] Synergy Init Check:", {
-                    hasContainer: !!synergyContainer,
-                    hasUser: !!user,
-                    userId: user ? (user.uid || user.id) : 'none'
-                });
-
-                if (synergyContainer && user) {
-                    const userId = user.uid || user.id;
-                    if (!userId) {
-                        console.warn("⚠️ [DashboardView] User exists but has no UID/ID");
-                        synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">⚠️ Sesión incompleta</div>`;
-                        return;
-                    }
-
-                    // Subscribe to real-time changes
-                    if (window.PartnerSynergyService && window.PartnerSynergyService.subscribeToPlayerData) {
-                        window.PartnerSynergyService.subscribeToPlayerData(userId, async () => {
-                            console.log("🧠 [DashboardView] Real-time Sync Triggered");
-                            const html = await this.renderPredictiveSynergy();
-                            if (html && synergyContainer) synergyContainer.innerHTML = html;
-                        });
-                    }
-
-                    // Initial render
-                    const refreshSynergy = async () => {
-                        const html = await this.renderPredictiveSynergy();
-                        if (html && html.trim() !== '') {
-                            console.log("🧠 [DashboardView] Synergy HTML generated");
-                            if (synergyContainer) synergyContainer.innerHTML = html;
-                        } else {
-                            console.warn("🧠 [DashboardView] Synergy HTML was empty");
-                            if (synergyContainer) synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center; border:1px solid rgba(255,0,0,0.3); border-radius:15px;">⚠️ Generando análisis...</div>`;
-                        }
-                    };
-
-                    refreshSynergy();
-                } else if (!synergyContainer) {
-                    console.error("❌ [DashboardView] predictive-synergy-root NOT FOUND");
-                } else if (!user) {
-                    console.warn("⚠️ [DashboardView] No user found in Store during loadLiveWidgetContent");
-                    // Don't show the "Lock" message immediately if we just loaded, give it a second
-                    setTimeout(() => {
-                        const userCheck = (window.Store ? window.Store.getState('currentUser') : null) || window.currentUser;
-                        if (!userCheck && synergyContainer) {
-                            synergyContainer.innerHTML = `<div style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">🔒 Inicia sesión para ver tu análisis</div>`;
-                        }
-                    }, 2000);
-                }
-            } catch (e) {
-                console.error("❌ Predictive Synergy loading failed", e);
-            }
 
             try {
                 // 3. Load Activity Feed
@@ -2616,40 +2559,90 @@
                     const mvpWon = (mvp.stats?.americanas?.won || 0) + (mvp.stats?.entrenos?.won || 0);
                     const mvpStreak = mvpWon > 0 ? (1 + ((mvp.id ? String(mvp.id).charCodeAt(0) : 0) % Math.min(mvpWon, 4))) : 0;
 
+                    const levelNum = parseFloat(mvp.level || 3.5);
+
+                    // Estilo de juego y consejos de la IA
+                    let playstyle = "🛡️ DEFENSIVO / MURO DE FONDO";
+                    let coachTip = "Acelera la bola en la red; usa voleas agresivas antes de que se acomode en el fondo.";
+                    if (levelNum >= 4.5) {
+                        playstyle = "💥 AGRESIVO / ATAQUE EN RED";
+                        coachTip = "Evita globos cortos; busca chiquitas a sus pies para obligarlo a volear bajo y cometer errores.";
+                    } else if (levelNum >= 3.5) {
+                        playstyle = "🎯 VERSÁTIL / CONTROL Y TRANSICIÓN";
+                        coachTip = "Mantén la paciencia; cambia el ritmo con bandejas profundas y busca jugar a su revés.";
+                    }
+
+                    // Estadísticas del informe de IA (Escala 0-99)
+                    const statAtk = Math.round(Math.min(99, levelNum * 16 + 20));
+                    const statDef = Math.round(Math.min(99, levelNum * 12 + 35));
+                    const statTac = Math.round(Math.min(99, levelNum * 13 + 30));
+
                     mvpRoot.innerHTML = `
-                        <div class="fut-card-container" style="
+                        <div class="fut-card-wrapper" onclick="this.classList.toggle('flipped')" style="
                             perspective: 1000px;
                             margin-bottom: 16px;
-                            font-family: 'Outfit', 'Inter', sans-serif;">
+                            font-family: 'Outfit', 'Inter', sans-serif;
+                            cursor: pointer;
+                            position: relative;
+                            user-select: none;
+                            -webkit-tap-highlight-color: transparent;">
                             <style>
                                 @keyframes gold-shine {
                                     0% { background-position: 0% 50%; }
                                     50% { background-position: 100% 50%; }
                                     100% { background-position: 0% 50%; }
                                 }
-                                .fut-card {
-                                    background: linear-gradient(135deg, #1e1b4b 0%, #030712 100%);
-                                    border: 2px solid #eab308;
-                                    border-radius: 24px;
-                                    padding: 2px;
-                                    position: relative;
-                                    overflow: hidden;
-                                    box-shadow: 0 15px 35px rgba(234, 179, 8, 0.15), 0 0 25px rgba(234, 179, 8, 0.05);
-                                    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-                                    transform-style: preserve-3d;
+                                @keyframes pulse-soft {
+                                    0% { opacity: 0.6; transform: scale(1); }
+                                    50% { opacity: 1; transform: scale(1.02); }
+                                    100% { opacity: 0.6; transform: scale(1); }
                                 }
-                                .fut-card:hover {
+                                .fut-card-flipper {
+                                    position: relative;
+                                    width: 100%;
+                                    transform-style: preserve-3d;
+                                    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                                }
+                                .fut-card-wrapper.flipped .fut-card-flipper {
+                                    transform: rotateY(180deg);
+                                }
+                                .fut-card-wrapper:not(.flipped):hover .fut-card-flipper {
                                     transform: rotateY(10deg) rotateX(5deg) scale(1.02);
-                                    box-shadow: 0 20px 40px rgba(234, 179, 8, 0.25), 0 0 35px rgba(234, 179, 8, 0.15);
+                                }
+                                .fut-card-front, .fut-card-back {
+                                    width: 100%;
+                                    backface-visibility: hidden;
+                                    -webkit-backface-visibility: hidden;
+                                    border-radius: 24px;
+                                    border: 2px solid #eab308;
+                                    box-sizing: border-box;
+                                    overflow: hidden;
+                                }
+                                .fut-card-front {
+                                    background: linear-gradient(135deg, #1e1b4b 0%, #030712 100%);
+                                    box-shadow: 0 15px 35px rgba(234, 179, 8, 0.15), 0 0 25px rgba(234, 179, 8, 0.05);
+                                    position: relative;
+                                    z-index: 2;
+                                }
+                                .fut-card-back {
+                                    background: linear-gradient(135deg, #090514 0%, #02010a 100%);
+                                    box-shadow: 0 15px 35px rgba(234, 179, 8, 0.15), 0 0 25px rgba(234, 179, 8, 0.05);
+                                    transform: rotateY(180deg);
+                                    position: absolute;
+                                    top: 0;
+                                    left: 0;
+                                    height: 100%;
+                                    z-index: 1;
                                 }
                                 .fut-card-inner {
                                     background: radial-gradient(circle at center, #1c1917 0%, #0c0a09 100%);
                                     border-radius: 22px;
                                     padding: 16px;
                                     position: relative;
-                                    z-index: 2;
                                     overflow: hidden;
                                     border: 1px solid rgba(234, 179, 8, 0.25);
+                                    height: 100%;
+                                    box-sizing: border-box;
                                 }
                                 .fut-gold-glow {
                                     position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
@@ -2685,90 +2678,164 @@
                                     text-shadow: 0 0 5px rgba(251, 191, 36, 0.2);
                                 }
                             </style>
-                            <div class="fut-card">
-                                <div class="fut-gold-glow"></div>
-                                <div class="fut-card-inner">
-                                    <!-- HEADER STATUS -->
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; position: relative; z-index: 5;">
-                                        <span class="fut-badge-gold"><i class="fas fa-crown"></i> MVP OF THE WEEK</span>
-                                        <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">SOMOSPADEL ELITE</span>
+                            <div class="fut-card-flipper">
+                                <!-- CARA FRONTAL -->
+                                <div class="fut-card-front">
+                                    <div class="fut-gold-glow"></div>
+                                    <div class="fut-card-inner">
+                                        <!-- HEADER STATUS -->
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; position: relative; z-index: 5;">
+                                            <span class="fut-badge-gold"><i class="fas fa-crown"></i> MVP OF THE WEEK</span>
+                                            <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">SOMOSPADEL ELITE</span>
+                                        </div>
+
+                                        <!-- CORE DATA ROW -->
+                                        <div style="display: flex; align-items: center; gap: 16px; position: relative; z-index: 5; margin-bottom: 14px;">
+                                            <!-- Left Column: Score & Rank -->
+                                            <div style="text-align: center; border-right: 1px solid rgba(234, 179, 8, 0.2); padding-right: 14px;">
+                                                <!-- Real Padel Level -->
+                                                <div style="font-size: 2rem; font-weight: 1000; color: #fbbf24; line-height: 0.8; letter-spacing: -1.5px; font-family: 'Outfit';">
+                                                    ${parseFloat(mvp.level || 3.5).toFixed(2)}
+                                                </div>
+                                                <div style="font-size: 0.5rem; color: #fbbf24; font-weight: 950; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; line-height: 1;">NIVEL</div>
+                                                <div style="font-size: 0.65rem; color: #fff; font-weight: 950; margin-top: 8px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                                                    RANK #1
+                                                </div>
+                                            </div>
+
+                                            <!-- Center: Player Avatar Frame -->
+                                            <div style="position: relative;">
+                                                <div style="
+                                                    width: 76px; height: 76px; border-radius: 18px;
+                                                    border: 2px solid #fbbf24;
+                                                    background: ${mvp.photo_url ? `url('${mvp.photo_url}') center/cover` : '#27272a'};
+                                                    box-shadow: 0 8px 20px rgba(0,0,0,0.5), 0 0 15px rgba(234, 179, 8, 0.15);
+                                                    overflow: hidden;
+                                                    display: flex; align-items: center; justify-content: center;">
+                                                    ${!mvp.photo_url ? `<span style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; font-family: 'Outfit';">${mvp.name.charAt(0).toUpperCase()}</span>` : ''}
+                                                </div>
+                                                <!-- Small Sparkle icon -->
+                                                <div style="position: absolute; bottom: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #fbbf24; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px #fbbf24;">
+                                                    <i class="fas fa-star" style="font-size: 0.55rem; color: #000;"></i>
+                                                </div>
+                                            </div>
+
+                                            <!-- Right: Player Name & Primary Info -->
+                                            <div style="flex: 1;">
+                                                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 1000; color: #fff; letter-spacing: -0.5px; line-height: 1.1; font-family: 'Outfit'; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+                                                    ${mvp.name.toUpperCase()}
+                                                </h3>
+                                                <div style="color: #a3e635; font-size: 0.6rem; font-weight: 800; display: flex; align-items: center; gap: 5px; margin-top: 6px;">
+                                                    <i class="fas fa-fire"></i> Racha: <span style="font-weight:950;">${mvpStreak} victorias</span>
+                                                </div>
+                                                <div style="color: rgba(255,255,255,0.4); font-size: 0.55rem; font-weight: 700; margin-top: 3px; display: flex; align-items: center; gap: 4px;">
+                                                    <i class="fas fa-satellite"></i> NODO_BCN_ACTIVE
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- FIFA STYLE ATRIBUTES COLUMNS -->
+                                        <div style="
+                                            background: rgba(0, 0, 0, 0.4);
+                                            border: 1px solid rgba(234, 179, 8, 0.15);
+                                            border-radius: 14px;
+                                            padding: 10px 14px;
+                                            display: grid;
+                                            grid-template-columns: 1fr 1fr 1fr 1fr;
+                                            text-align: center;
+                                            gap: 8px;
+                                            position: relative;
+                                            z-index: 5;">
+                                            
+                                            <div>
+                                                <div class="fut-stat-label">NIV</div>
+                                                <div class="fut-stat-value">${parseFloat(mvp.level || 3.5).toFixed(2)}</div>
+                                            </div>
+                                            <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                                <div class="fut-stat-label">PTS</div>
+                                                <div class="fut-stat-value">${mvpPoints}</div>
+                                            </div>
+                                            <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                                <div class="fut-stat-label">RAC</div>
+                                                <div class="fut-stat-value">${mvpStreak}</div>
+                                            </div>
+                                            <div style="border-left: 1px solid rgba(255,255,255,0.06);">
+                                                <div class="fut-stat-label">VIC</div>
+                                                <div class="fut-stat-value">${mvpWon}</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- HINT TO FLIP -->
+                                        <div style="text-align: center; margin-top: 10px; font-size: 0.55rem; color: rgba(251, 191, 36, 0.6); font-weight: 900; letter-spacing: 0.5px; animation: pulse-soft 2s infinite; display: flex; align-items: center; justify-content: center; gap: 4px; position: relative; z-index: 5;">
+                                            <i class="fas fa-sync-alt"></i> TOCAR PARA SCOUTING DE IA
+                                        </div>
                                     </div>
+                                </div>
 
-                                    <!-- CORE DATA ROW -->
-                                    <div style="display: flex; align-items: center; gap: 16px; position: relative; z-index: 5; margin-bottom: 14px;">
-                                        <!-- Left Column: Score & Rank -->
-                                        <div style="text-align: center; border-right: 1px solid rgba(234, 179, 8, 0.2); padding-right: 14px;">
-                                            <!-- OVR Rating -->
-                                            <div style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; line-height: 0.8; letter-spacing: -2px; font-family: 'Outfit';">
-                                                ${Math.min(99, Math.max(50, Math.round(parseFloat(mvp.level || 3.5) * 15 + 35)))}
-                                            </div>
-                                            <div style="font-size: 0.5rem; color: #fbbf24; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; line-height: 1;">OVR</div>
-                                            <div style="font-size: 0.65rem; color: #fff; font-weight: 950; margin-top: 8px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
-                                                RANK #1
-                                            </div>
+                                <!-- CARA TRASERA -->
+                                <div class="fut-card-back">
+                                    <div class="fut-gold-glow"></div>
+                                    <div class="fut-card-inner" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                        <!-- HEADER STATUS -->
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; z-index: 5;">
+                                            <span class="fut-badge-gold" style="background: linear-gradient(135deg, #a3e635 0%, #15803d 100%); color: white;"><i class="fas fa-robot"></i> AI SCOUTING</span>
+                                            <span style="color: rgba(251, 191, 36, 0.7); font-size: 0.65rem; font-weight: 900; letter-spacing: 1px;">ANÁLISIS TÁCTICO</span>
                                         </div>
 
-                                        <!-- Center: Player Avatar Frame -->
-                                        <div style="position: relative;">
-                                            <div style="
-                                                width: 76px; height: 76px; border-radius: 18px;
-                                                border: 2px solid #fbbf24;
-                                                background: ${mvp.photo_url ? `url('${mvp.photo_url}') center/cover` : '#27272a'};
-                                                box-shadow: 0 8px 20px rgba(0,0,0,0.5), 0 0 15px rgba(234, 179, 8, 0.15);
-                                                overflow: hidden;
-                                                display: flex; align-items: center; justify-content: center;">
-                                                ${!mvp.photo_url ? `<span style="font-size: 2.2rem; font-weight: 1000; color: #fbbf24; font-family: 'Outfit';">${mvp.name.charAt(0).toUpperCase()}</span>` : ''}
+                                        <!-- STATS & PLAYSTYLE -->
+                                        <div style="position: relative; z-index: 5; margin: 8px 0; display: flex; flex-direction: column; gap: 8px; flex-grow: 1; justify-content: center;">
+                                            <div style="text-align: center;">
+                                                <div style="font-size: 0.52rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">ESTILO DE JUEGO</div>
+                                                <div style="font-size: 1rem; font-weight: 1000; color: #fff; text-shadow: 0 0 8px rgba(251, 191, 36, 0.35); margin-top: 1px; font-family: 'Outfit';">
+                                                    ${playstyle}
+                                                </div>
                                             </div>
-                                            <!-- Small Sparkle icon -->
-                                            <div style="position: absolute; bottom: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #fbbf24; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px #fbbf24;">
-                                                <i class="fas fa-star" style="font-size: 0.55rem; color: #000;"></i>
+
+                                            <!-- ATRIBUTES BARS -->
+                                            <div style="display: flex; flex-direction: column; gap: 5px; background: rgba(0,0,0,0.3); padding: 8px 10px; border-radius: 12px; border: 1px solid rgba(234, 179, 8, 0.15);">
+                                                <!-- ATQ -->
+                                                <div>
+                                                    <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 900; color: rgba(255,255,255,0.6); letter-spacing: 0.5px;">
+                                                        <span>ATAQUE (ATQ)</span>
+                                                        <span style="color: #fbbf24; font-weight: 950;">${statAtk}</span>
+                                                    </div>
+                                                    <div style="height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-top: 2px;">
+                                                        <div style="width: ${statAtk}%; height: 100%; background: linear-gradient(to right, #fbbf24, #f59e0b); border-radius: 2px;"></div>
+                                                    </div>
+                                                </div>
+                                                <!-- DEF -->
+                                                <div>
+                                                    <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 900; color: rgba(255,255,255,0.6); letter-spacing: 0.5px;">
+                                                        <span>DEFENSA (DEF)</span>
+                                                        <span style="color: #fbbf24; font-weight: 950;">${statDef}</span>
+                                                    </div>
+                                                    <div style="height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-top: 2px;">
+                                                        <div style="width: ${statDef}%; height: 100%; background: linear-gradient(to right, #fbbf24, #d97706); border-radius: 2px;"></div>
+                                                    </div>
+                                                </div>
+                                                <!-- TAC -->
+                                                <div>
+                                                    <div style="display: flex; justify-content: space-between; font-size: 0.52rem; font-weight: 900; color: rgba(255,255,255,0.6); letter-spacing: 0.5px;">
+                                                        <span>TÁCTICA (TAC)</span>
+                                                        <span style="color: #fbbf24; font-weight: 950;">${statTac}</span>
+                                                    </div>
+                                                    <div style="height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-top: 2px;">
+                                                        <div style="width: ${statTac}%; height: 100%; background: linear-gradient(to right, #fbbf24, #fbbf24); border-radius: 2px;"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- IA COACH ADVICE -->
+                                            <div style="background: rgba(234, 179, 8, 0.05); border: 1px dashed rgba(234, 179, 8, 0.2); border-radius: 12px; padding: 6px 8px; font-size: 0.55rem; color: #e2e8f0; line-height: 1.25; text-align: left;">
+                                                <span style="color: #fbbf24; font-weight: 900;"><i class="fas fa-lightbulb"></i> TIP DE IA:</span> ${coachTip}
                                             </div>
                                         </div>
 
-                                        <!-- Right: Player Name & Primary Info -->
-                                        <div style="flex: 1;">
-                                            <h3 style="margin: 0; font-size: 1.25rem; font-weight: 1000; color: #fff; letter-spacing: -0.5px; line-height: 1.1; font-family: 'Outfit'; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-                                                ${mvp.name.toUpperCase()}
-                                            </h3>
-                                            <div style="color: #a3e635; font-size: 0.6rem; font-weight: 800; display: flex; align-items: center; gap: 5px; margin-top: 6px;">
-                                                <i class="fas fa-fire"></i> Racha: <span style="font-weight:950;">${mvpStreak} victorias</span>
-                                            </div>
-                                            <div style="color: rgba(255,255,255,0.4); font-size: 0.55rem; font-weight: 700; margin-top: 3px; display: flex; align-items: center; gap: 4px;">
-                                                <i class="fas fa-satellite"></i> NODO_BCN_ACTIVE
-                                            </div>
+                                        <!-- FOOTER STATUS -->
+                                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.5rem; color: rgba(255,255,255,0.4); border-top: 1px solid rgba(255,255,255,0.06); padding-top: 5px; position: relative; z-index: 5;">
+                                            <span><i class="fas fa-check-circle" style="color: #a3e635;"></i> COACH VERIFIED</span>
+                                            <span style="animation: pulse-soft 2s infinite; color: rgba(251, 191, 36, 0.6); font-weight: 900;"><i class="fas fa-sync-alt"></i> VOLVER</span>
                                         </div>
-                                    </div>
-
-                                    <!-- FIFA STYLE ATRIBUTES COLUMNS -->
-                                    <div style="
-                                        background: rgba(0, 0, 0, 0.4);
-                                        border: 1px solid rgba(234, 179, 8, 0.15);
-                                        border-radius: 14px;
-                                        padding: 10px 14px;
-                                        display: grid;
-                                        grid-template-columns: 1fr 1fr 1fr 1fr;
-                                        text-align: center;
-                                        gap: 8px;
-                                        position: relative;
-                                        z-index: 5;">
-                                        
-                                        <div>
-                                            <div class="fut-stat-label">NIV</div>
-                                            <div class="fut-stat-value">${parseFloat(mvp.level || 3.5).toFixed(2)}</div>
-                                        </div>
-                                        <div style="border-left: 1px solid rgba(255,255,255,0.06);">
-                                            <div class="fut-stat-label">PTS</div>
-                                            <div class="fut-stat-value">${mvpPoints}</div>
-                                        </div>
-                                        <div style="border-left: 1px solid rgba(255,255,255,0.06);">
-                                            <div class="fut-stat-label">RAC</div>
-                                            <div class="fut-stat-value">${mvpStreak}</div>
-                                        </div>
-                                        <div style="border-left: 1px solid rgba(255,255,255,0.06);">
-                                            <div class="fut-stat-label">VIC</div>
-                                            <div class="fut-stat-value">${mvpWon}</div>
-                                        </div>
-
                                     </div>
                                 </div>
                             </div>
@@ -3790,349 +3857,7 @@
             `;
             setTimeout(() => modal.style.opacity = '1', 10);
         }
-        async renderPredictiveSynergy() {
-            try {
-                console.log("🧠 [DashboardView] renderPredictiveSynergy called");
-                const user = window.Store ? window.Store.getState('currentUser') : null;
-                if (!user) {
-                    console.warn("🧠 [DashboardView] No user for synergy");
-                    return '';
-                }
 
-                const userId = user.id || user.uid;
-                const userName = user.name || "Jugador";
-                const userPhoto = user.photoURL || user.photo_url || 'img/default-avatar.png';
-
-                if (!window.PartnerSynergyService || !window.FirebaseDB) {
-                    console.error("🧠 [DashboardView] Synergy Services MISSING");
-                    return '';
-                }
-
-                let bestPartners = [];
-                let trend = { status: 'NORMAL', factor: 1, desc: 'Analizando...' };
-
-                try {
-                    bestPartners = await window.PartnerSynergyService.getBestPartnersFor(userId, 3) || [];
-                    trend = await window.PartnerSynergyService.getRecentPerformanceTrend(userId) || trend;
-                } catch (e) {
-                    console.error("🧠 [DashboardView] Fetching synergy failed", e);
-                }
-
-                let rankingInfo = { nextRival: null, myStats: null };
-                try {
-                    let ranked = [];
-                    if (window.RankingController && window.RankingController.calculateSilently) {
-                        ranked = await window.RankingController.calculateSilently();
-                    } else {
-                        const allPlayers = await window.FirebaseDB.players.getAll() || [];
-                        ranked = [...allPlayers].sort((a, b) => parseFloat(b.level || 0) - parseFloat(a.level || 0));
-                    }
-
-                    const myIndex = ranked.findIndex(p => (p.id || p.uid) === userId);
-                    if (myIndex !== -1) {
-                        rankingInfo.myStats = ranked[myIndex];
-                        if (myIndex > 0) {
-                            rankingInfo.nextRival = ranked[myIndex - 1];
-                        }
-                    }
-                } catch (e) {
-                    console.error("🧠 [DashboardView] Ranking calc error", e);
-                }
-
-                const myTotalPts = rankingInfo.myStats ?
-                    ((rankingInfo.myStats.stats?.americanas?.points || 0) + (rankingInfo.myStats.stats?.entrenos?.points || 0)) : 0;
-
-                const rivalTotalPts = rankingInfo.nextRival ?
-                    ((rankingInfo.nextRival.stats?.americanas?.points || 0) + (rankingInfo.nextRival.stats?.entrenos?.points || 0)) : 0;
-
-                const rankingMsg = rankingInfo.nextRival ?
-                    (rivalTotalPts > myTotalPts ?
-                        `Objetivo: Superar a <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span>. Te faltan <span style="color:#CCFF00; font-weight:900;">${rivalTotalPts - myTotalPts} pts</span>.` :
-                        (rivalTotalPts > 0 ?
-                            `Estás empatado con <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span>. ¡Una victoria más y le superas!` :
-                            `Supera a <span style="color:#38bdf8; font-weight:900;">${rankingInfo.nextRival.name}</span> en tu próximo match para subir en el Top.`
-                        )) :
-                    (myTotalPts > 0 ? '¡Eres el líder actual! Mantén el nivel para conservar tu puesto.' : 'Comienza a jugar partidos para subir en el Ranking mundial.');
-
-                // HELPER: Get Smart Name (Name + 1st Surname) and Initials (N.S.)
-                const getSmartData = (fullName) => {
-                    if (!fullName) return { display: "Jugador", initials: "JP" };
-                    const parts = fullName.trim().split(/\s+/);
-                    if (parts.length === 1) return { display: parts[0], initials: parts[0].substring(0, 2).toUpperCase() };
-                    return {
-                        display: `${parts[0]} ${parts[1]}`,
-                        initials: (parts[0][0] + parts[1][0]).toUpperCase()
-                    };
-                };
-
-                const myData = getSmartData(userName);
-
-                const synergies = (bestPartners && bestPartners.length > 0) ? bestPartners.map(p => {
-                    const sData = getSmartData(p.player?.name);
-                    const hasHistory = p.playChemistry && p.playChemistry.matchesPlayed > 0;
-                    return {
-                        name: sData.display,
-                        photo: p.player?.photoURL || p.player?.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(sData.display)}&background=0f172a&color=fff&size=128`,
-                        chemistry: Math.round(p.totalScore || 0),
-                        color: p.rating?.color || '#CCFF00',
-                        desc: hasHistory ? (p.playChemistry.winRate > 60 ? 'Historial ganador' : 'Dúo recurrente') : 'Potencial táctico',
-                        reason: hasHistory ? `Habéis jugado ${p.playChemistry.matchesPlayed} partidos juntos.` : `Nivel de juego muy similar (${p.levelCompatibility.level2}).`
-                    };
-                }) : [];
-
-                // FALLBACK: If no smart synergy is found yet, show REAL club players
-                if (synergies.length === 0) {
-                    try {
-                        const allPlayers = await window.FirebaseDB.players.getAll() || [];
-                        const realFallbacks = allPlayers
-                            .filter(p => (p.id || p.uid) !== userId && p.name && p.name.length > 3)
-                            .sort((a, b) => Math.abs((a.level || 0) - (user.level || 0)) - Math.abs((b.level || 0) - (user.level || 0))) // Group by similar level
-                            .slice(0, 3);
-
-                        if (realFallbacks.length > 0) {
-                            realFallbacks.forEach((p, i) => {
-                                const sData = getSmartData(p.name);
-                                synergies.push({
-                                    name: sData.display,
-                                    photo: p.photoURL || p.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(sData.display)}&background=random&color=fff&size=128`,
-                                    chemistry: 75 + Math.floor(Math.random() * 15),
-                                    color: i === 0 ? '#00E36D' : (i === 1 ? '#CCFF00' : '#38bdf8'),
-                                    desc: 'Dúo sugerido',
-                                    reason: 'Compatibilidad por nivel de juego.'
-                                });
-                            });
-                        }
-                    } catch (err) {
-                        console.error("🧠 Fallback players failed", err);
-                    }
-                }
-
-                // If still empty after fallback (very rare), use better named dummies
-                if (synergies.length === 0) {
-                    synergies.push({ name: 'Pro 1', photo: 'https://i.pravatar.cc/150?u=1', chemistry: 85, color: '#00E36D', desc: 'Compatibilidad nivel' });
-                    synergies.push({ name: 'Pro 2', photo: 'https://i.pravatar.cc/150?u=2', chemistry: 72, color: '#CCFF00', desc: 'Estilo similar' });
-                    synergies.push({ name: 'Pro 3', photo: 'https://i.pravatar.cc/150?u=3', chemistry: 60, color: '#38bdf8', desc: 'Buena racha' });
-                }
-
-                const fatigueColor = trend.status === 'HIGH' ? '#ef4444' : (trend.status === 'OPTIMAL' ? '#00E36D' : '#CCFF00');
-
-                return `
-                    <div class="synergy-glass-container" data-widget="predictive-synergy" style="
-                        background: #0f172a;
-                        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-                        border-radius: 32px;
-                        padding: 24px;
-                        border: 1px solid rgba(204, 255, 0, 0.3);
-                        box-shadow: 0 40px 80px rgba(0,0,0,0.8), inset 0 0 20px rgba(204, 255, 0, 0.05);
-                        overflow: hidden;
-                        position: relative;
-                        margin-bottom: 20px;
-                        min-height: 480px;
-                    ">
-                        <!-- Holographic ML Live Scanner Loader Overlay -->
-                        <div id="ai-synergy-loader" style="
-                            position: absolute; inset: 0; 
-                            background: rgba(15, 23, 42, 0.98); 
-                            z-index: 1000; display: flex; 
-                            flex-direction: column; align-items: center; 
-                            justify-content: center; gap: 20px; 
-                            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-                        ">
-                            <div style="position: absolute; inset: 0; background-image: radial-gradient(rgba(204,255,0,0.12) 1px, transparent 1px); background-size: 15px 15px; opacity: 0.5;"></div>
-                            
-                            <!-- Glowing 3D Target Radar -->
-                            <div style="width: 90px; height: 90px; border-radius: 50%; border: 2px dashed rgba(204,255,0,0.3); display: flex; align-items: center; justify-content: center; position: relative; animation: spinRadar 4s linear infinite;">
-                                <div style="position: absolute; inset: 5px; border: 1.5px solid rgba(59,130,246,0.3); border-radius: 50%; animation: spinRadar 6s linear infinite reverse;"></div>
-                                <div style="width: 54px; height: 54px; border-radius: 50%; background: radial-gradient(circle, rgba(204,255,0,0.25) 0%, transparent 70%); border: 1px dashed #CCFF00; animation: pulseRadar 1.5s ease-in-out infinite alternate;"></div>
-                            </div>
-                            
-                            <div style="text-align: center; position: relative; z-index: 10;">
-                                <div id="ai-loader-text" style="color: #CCFF00; font-size: 0.65rem; font-weight: 1000; letter-spacing: 2px; text-transform: uppercase; font-family: 'Outfit'; height: 18px;">CONECTANDO AL CEREBRO...</div>
-                                <div style="color: rgba(255,255,255,0.45); font-size: 0.52rem; font-weight: 800; margin-top: 5px; letter-spacing: 1px; text-transform: uppercase;">BIG DATA ML ENGINE V4.0</div>
-                            </div>
-                            
-                            <script>
-                                (function() {
-                                    const phrases = [
-                                        "⚡ INICIANDO MACHINE LEARNING...",
-                                        "🔍 RASTREANDO BASE DE JUGADORES...",
-                                        "🧠 ANALIZANDO VECTORES TÁCTICOS...",
-                                        "🧬 EVALUANDO SINERGIA Y QUÍMICA...",
-                                        "💎 ¡COMPATIBILIDAD ENCONTRADA!"
-                                    ];
-                                    let step = 0;
-                                    const txtEl = document.getElementById('ai-loader-text');
-                                    const interval = setInterval(() => {
-                                        step++;
-                                        if (txtEl && phrases[step]) {
-                                            txtEl.textContent = phrases[step];
-                                        }
-                                    }, 400);
-                                    
-                                    setTimeout(() => {
-                                        clearInterval(interval);
-                                        const loader = document.getElementById('ai-synergy-loader');
-                                        if (loader) {
-                                            loader.style.opacity = '0';
-                                            loader.style.transform = 'translateY(-20px)';
-                                            setTimeout(() => loader.remove(), 600);
-                                        }
-                                    }, 2200);
-                                })();
-                            </script>
-                        </div>
-
-                        <!-- Background Glow -->
-                        <div style="position: absolute; top: -50px; left: -50px; width: 250px; height: 250px; background: rgba(0, 227, 109, 0.15); filter: blur(80px); opacity: 0.6; pointer-events: none;"></div>
-
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; z-index: 20;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <div style="width: 12px; height: 12px; background: #CCFF00; border-radius: 50%; box-shadow: 0 0 15px #CCFF00; animation: pulseSOS 1.5s infinite;"></div>
-                                <span style="font-size: 0.9rem; font-weight: 1000; letter-spacing: 1px; color: #fff; text-transform: uppercase;">¿TU PAREJA PERFECTA?</span>
-                            </div>
-                            <div style="background: rgba(0,227,109,0.15); padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 900; color: #00E36D; border: 1px solid #00E36D40; letter-spacing: 1px;">MATCH PADEL</div>
-                        </div>
-
-                        <p style="font-size: 0.72rem; color: rgba(255,255,255,0.5); line-height: 1.4; margin: 0 0 20px 22px; font-weight: 500;">
-                            Nuestro algoritmo analiza tu <span style="color:#CCFF00">nivel de juego</span>, estilo táctico y <span style="color:#00E36D">resultados recientes</span> para recomendarte los compañeros con mayor probabilidad de éxito en los <span style="color:#fff; font-weight:700;">entrenos y/o americanas</span>.
-                        </p>
-
-                        <div style="display: grid; grid-template-columns: 1fr; gap: 24px;">
-                            <!-- PART 1: NODE RADAR MAP -->
-                            <div style="background: rgba(0,0,0,0.3); border-radius: 24px; padding: 40px 10px; position: relative; height: 300px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.05);">
-                                <div style="position: absolute; inset: 0; background: radial-gradient(circle, rgba(204,255,0,0.08) 0%, transparent 75%);"></div>
-                                
-                                <!-- CENTRAL NODE (YOU) -->
-                                <div style="position: relative; z-index: 10; width: 80px; height: 80px; padding: 4px; background: #CCFF00; border-radius: 50%; box-shadow: 0 0 40px rgba(204,255,0,0.5); animation: pulseFloat 3s ease-in-out infinite;">
-                                    <div style="width: 100%; height: 100%; border-radius: 50%; background: #0f172a; overflow: hidden; border: 2px solid #0f172a;">
-                                        <img src="${userPhoto}" style="width: 100%; height: 100%; object-fit: cover;">
-                                    </div>
-                                    <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: #CCFF00; color: #000; font-size: 0.6rem; font-weight: 1000; padding: 3px 10px; border-radius: 100px; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">TÚ</div>
-                                </div>
-
-                                <!-- SYNERGY NODES -->
-                                ${synergies.map((s, i) => {
-                    const angles = [210, 330, 90];
-                    const angleRad = angles[i] * (Math.PI / 180);
-                    const dist = 105;
-                    const x = Math.cos(angleRad) * dist;
-                    const y = Math.sin(angleRad) * dist;
-
-                    return `
-                                        <div style="
-                                            position: absolute; 
-                                            transform: translate(${x}px, ${y}px);
-                                            width: 70px; height: 70px; border-radius: 50%;
-                                            background: #000; border: 2.5px solid ${s.color};
-                                            padding: 3px; z-index: 5;
-                                            box-shadow: 0 0 25px ${s.color}60;
-                                            animation: itemFadeIn 0.8s both ${i * 0.2}s;
-                                        ">
-                                            <!-- CONNECTOR LINE -->
-                                            <div style="
-                                                position: absolute; 
-                                                top: 50%; left: 50%;
-                                                width: ${dist}px; height: 2px;
-                                                background: linear-gradient(90deg, ${s.color}60, transparent);
-                                                transform-origin: 0% 50%;
-                                                transform: rotate(${angles[i] + 180}deg);
-                                                z-index: -1;
-                                            "></div>
-
-                                            <div style="width: 100%; height: 100%; border-radius: 50%; background: #0f172a; overflow: hidden; border: 1px solid #0f172a;">
-                                                <img src="${s.photo}" style="width: 100%; height: 100%; object-fit: cover;">
-                                            </div>
-                                            <div style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 0.6rem; color: #fff; font-weight: 900; white-space: nowrap; background: rgba(0,0,0,0.8); padding: 2px 8px; border-radius: 6px; border: 1.5px solid ${s.color};">${s.name}</div>
-                                            <div style="position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; color: #fff; font-weight: 800; white-space: nowrap; opacity: 0.7;">${s.chemistry}% CHM</div>
-                                            <!-- HOVER EXPLANATION -->
-                                            <div class="synergy-reason" style="position: absolute; top: 75px; left: 50%; transform: translateX(-50%); background: #000; color: ${s.color}; font-size: 0.5rem; font-weight: 900; padding: 4px 8px; border-radius: 8px; border: 1px solid ${s.color}40; white-space: nowrap; opacity: 0.8; z-index: 100;">${s.desc.toUpperCase()}</div>
-                                        </div>
-                                    `;
-                }).join('')}
-
-                                <!-- SCANNER EFFECT -->
-                                <div style="position: absolute; inset: 0; border: 1px solid rgba(204,255,0,0.15); border-radius: 50%; margin: 15px; animation: sonar 4s linear infinite;"></div>
-                                <div style="position: absolute; inset: 0; border: 2px solid rgba(204,255,0,0.05); border-radius: 50%; margin: 80px; animation: sonar 3s linear infinite reverse;"></div>
-                            </div>
-
-                            <!-- PART 2: IA PREDICTIVE INSIGHTS -->
-                            <div style="display: flex; flex-direction: column; gap: 14px;">
-                                <!-- CARD 1: FORM -->
-                                <div style="background: ${fatigueColor}10; border: 1px solid ${fatigueColor}30; padding: 18px; border-radius: 20px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-                                    <div style="display: flex; gap: 15px; align-items: flex-start;">
-                                        <div style="width: 44px; height: 44px; background: ${fatigueColor}20; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid ${fatigueColor}30;">
-                                            <i class="fas fa-heartbeat" style="color: ${fatigueColor}; font-size: 1.3rem;"></i>
-                                        </div>
-                                        <div>
-                                            <div style="font-size: 0.85rem; font-weight: 1000; color: #fff; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-                                                TU ESTADO DE FORMA: <span style="background:${fatigueColor}; color:#000; font-size:0.55rem; padding:2px 8px; border-radius:4px; font-weight:900;">${trend.status}</span>
-                                            </div>
-                                            <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.5; font-weight: 500;">
-                                                ${trend.desc} Basado en tu carga de partidos, ${trend.status === 'HIGH' ? 'reducir intensidad para evitar lesiones.' : 'puedes aumentar la carga de entrenamiento.'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- CARD 2: RANKING -->
-                                <div style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); padding: 18px; border-radius: 20px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-                                    <div style="display: flex; gap: 15px; align-items: flex-start;">
-                                        <div style="width: 44px; height: 44px; background: rgba(56, 189, 248, 0.2); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(56, 189, 248, 0.3);">
-                                            <i class="fas fa-chart-line" style="color: #38bdf8; font-size: 1.3rem;"></i>
-                                        </div>
-                                        <div>
-                                            <div style="font-size: 0.85rem; font-weight: 1000; color: #fff; margin-bottom: 4px;">PROYECCIÓN DE ASCENSO</div>
-                                            <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.5; font-weight: 500;">
-                                                ${rankingMsg}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- CARD 3: TACTICAL ADVICE -->
-                                <div style="background: rgba(204, 255, 0, 0.05); border: 1px solid rgba(204, 255, 0, 0.2); padding: 18px; border-radius: 20px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-                                    <div style="display: flex; gap: 15px; align-items: flex-start;">
-                                        <div style="width: 44px; height: 44px; background: rgba(204, 255, 0, 0.1); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(204, 255, 0, 0.2);">
-                                            <i class="fas fa-lightbulb" style="color: #CCFF00; font-size: 1.3rem;"></i>
-                                        </div>
-                                        <div>
-                                            <div style="font-size: 0.85rem; font-weight: 1000; color: #fff; margin-bottom: 4px;">CONSEJO DEL CAPITÁN</div>
-                                            <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.5; font-weight: 500;">
-                                                Tu pareja ideal es <span style="color:#CCFF00; font-weight:900;">${synergies[0]?.name || 'un perfil defensivo'}</span>. Juntos tenéis un ratio de cobertura de red del <span style="color:#00E36D; font-weight:900;">85%</span>.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <style>
-                            @keyframes sonar {
-                                0% { transform: scale(0.7); opacity: 0; }
-                                50% { opacity: 0.4; }
-                                100% { transform: scale(1.6); opacity: 0; }
-                            }
-                            @keyframes pulseFloat {
-                                0% { transform: scale(1) translateY(0) rotate(0deg); }
-                                50% { transform: scale(1.03) translateY(-8px) rotate(1deg); }
-                                100% { transform: scale(1) translateY(0) rotate(0deg); }
-                            }
-                            @keyframes spinRadar {
-                                0% { transform: rotate(0deg); }
-                                100% { transform: rotate(360deg); }
-                            }
-                            @keyframes pulseRadar {
-                                0% { transform: scale(0.9); opacity: 0.5; }
-                                100% { transform: scale(1.1); opacity: 1; }
-                            }
-                        </style>
-                    </div>
-                `;
-            } catch (e) {
-                console.error("renderPredictiveSynergy error:", e);
-                return '';
-            }
-        }
 
         toggleTacticalHUD() {
             const grip = document.getElementById('tactical-hud-grip');
