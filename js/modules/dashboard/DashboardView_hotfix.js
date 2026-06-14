@@ -759,29 +759,26 @@
 
 
 
-                    <!-- 3. EN DIRECTO (PREMIUM DARK GLASS SCROLLER) -->
+                    <!-- 3. DESTACADOS (PREMIUM GLASS SCROLLER) -->
                     <div id="registration-widget-root" style="margin: 0 0 16px !important; animation: floatUp 0.8s ease-out forwards;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 20px;">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <div style="width:8px; height:8px; background:#ef4444; border-radius:50%; animation:pulseDot 1.5s infinite;"></div>
-                                <span style="font-size:0.75rem; font-weight:950; color:#ffffff; letter-spacing:1px; text-transform:uppercase;">En Directo</span>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:0 20px;">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <i class="fas fa-star" style="color:#CCFF00; font-size:0.75rem;"></i>
+                                <span style="font-size:0.75rem; font-weight:950; color:#ffffff; letter-spacing:1px; text-transform:uppercase;">Destacados</span>
                             </div>
                             <span onclick="window.Router.navigate('americanas')" style="font-size:0.65rem; color:#CCFF00; font-weight:950; cursor:pointer;">Ver todo →</span>
                         </div>
-                        <div id="live-scroller-content" style="width:100%; position:relative; overflow:hidden;">
+                        <div id="live-scroller-content" class="live-scroller-container" style="width:100%; position:relative; overflow-x:auto; -webkit-overflow-scrolling:touch; scroll-behavior:smooth;">
                             <style>
-                                @keyframes marqueeNews { 0% { transform: translate3d(0,0,0); } 100% { transform: translate3d(-50%,0,0); } }
-                                .news-marquee-track { display:flex; gap:12px; width:max-content; animation:marqueeNews 45s linear infinite; padding:5px 15px 15px; will-change:transform; }
-                                @media (hover: hover) { .news-marquee-track:hover { animation-play-state: paused; } }
+                                .live-scroller-container::-webkit-scrollbar { display: none !important; }
                                 .registration-ticker-card { transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); flex-shrink:0; }
-                                .infinite-scroll-wrapper { display:flex; width:max-content; animation:infiniteScroll 40s linear infinite; }
-                                @keyframes infiniteScroll { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
+                                .live-track { display:flex; gap:12px; padding:5px 20px 15px; width:max-content; }
                                 .holo-card { transition: all 0.3s ease; }
                                 .holo-card:active { transform: scale(0.97); }
                             </style>
-                            <div id="live-scroller-inner" class="infinite-scroll-wrapper" style="padding-left:15px;">
-                                ${Array(4).fill(0).map(() => `
-                                    <div style="min-width:280px; height:180px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius:24px; border:1px solid rgba(255, 255, 255, 0.08); margin-right:12px; display:flex; align-items:center; justify-content:center; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+                            <div id="live-scroller-inner" class="live-track">
+                                ${Array(3).fill(0).map(() => `
+                                    <div style="min-width:260px; height:135px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius:20px; border:1px solid rgba(255, 255, 255, 0.08); display:flex; align-items:center; justify-content:center; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
                                         <i class="fas fa-circle-notch fa-spin" style="color: rgba(255,255,255,0.2); font-size:1.5rem;"></i>
                                     </div>
                                 `).join('')}
@@ -2516,165 +2513,123 @@
 
                 let itemsHtml = [];
 
-                // 0. SAFETY BASE: Ensure we always have something to show
-                const dynamicPool = [
-                    {
-                        tag: '📈 TU NIVEL',
-                        icon: 'fa-chart-line',
-                        bgColor: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)',
-                        accent: '#38bdf8',
-                        title: 'Nivel Dinámico',
-                        desc: 'Tu nivel evoluciona con cada set. ¡Juega y demuestra tu progreso!',
-                        action: "window.Router.navigate('profile')"
-                    },
-                    {
-                        tag: '🏆 COMPETICIÓN',
-                        icon: 'fa-trophy',
-                        bgColor: 'linear-gradient(135deg, #111 0%, #701a75 100%)',
-                        accent: '#f472b6',
-                        title: 'Puntos y Ascensos',
-                        desc: 'Gana partidos para subir de pista y alcanzar el Top 1 del Ranking.',
-                        action: "window.Router.navigate('ranking')"
-                    },
-                    {
-                        tag: '🎾 CONTROL TOTAL',
-                        icon: 'fa-user-check',
-                        bgColor: 'linear-gradient(135deg, #064e3b 0%, #059669 100%)',
-                        accent: '#34d399',
-                        title: 'Perfil y Stats',
-                        desc: 'Consulta tu historial, victorias y próximos retos desde tu perfil.',
-                        action: "window.Router.navigate('profile')"
-                    },
-                    {
-                        tag: '💡 SMART TIP',
-                        icon: 'fa-brain',
-                        bgColor: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-                        accent: '#94a3b8',
-                        title: 'Navegación Gesto',
-                        desc: 'Desliza las historias o pulsa los laterales para pasar rápido.',
-                        action: "window.DashboardView.showChatInfo()"
-                    }
-                ];
-
-                // A. WEATHER INTEL CARD (VISION 2026 UPGRADE)
+                // A. WEATHER INTEL CARD (Compact 135px Upgrade)
                 if (weatherData && weatherData[0]) {
                     const w = weatherData[0];
                     itemsHtml.push(`
-                <div class="registration-ticker-card" onclick="window.dashNavigate('weather_story', 'weather')" style="cursor: pointer; min-width: 280px; width: 280px; height: 180px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 18px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05);">
-                            <div style="position: absolute; right: -20px; bottom: -20px; font-size: 7rem; opacity: 0.1; filter: blur(2px); animation: weatherFloat 6s ease-in-out infinite; pointer-events: none;">${w.icon}</div>
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 2; pointer-events: none;">
-                                <span class="premium-tag" style="font-size:0.6rem; font-weight:1000; color:white; background:rgba(59, 130, 246, 0.8); padding:5px 12px; border-radius:8px; letter-spacing:1px; box-shadow: 0 0 15px rgba(59,130,246,0.3); text-transform:uppercase;">METEO</span>
-                                <div style="display:flex; flex-direction:column; align-items:flex-end;">
-                                    <span style="font-size:1.8rem;">${w.icon}</span>
-                                </div>
+                    <div class="registration-ticker-card holo-card" onclick="window.dashNavigate('weather_story', 'weather')" style="cursor: pointer; min-width: 260px; width: 260px; height: 135px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.85) 100%); border-radius: 20px; padding: 15px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); display:flex; flex-direction:column; justify-content:space-between; margin-right: 15px;">
+                        <!-- Background icon decoration -->
+                        <div style="position: absolute; right: -10px; bottom: -10px; font-size: 5rem; opacity: 0.06; filter: blur(1px); pointer-events: none;">${w.icon}</div>
+                        
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="premium-tag" style="font-size:0.55rem; font-weight:950; color:white; background:#3b82f6; padding:3px 8px; border-radius:6px; letter-spacing:1px; text-transform:uppercase;">METEO</span>
+                            <span style="font-size:1.4rem; font-weight:900; color:white;">${w.temp}ºC ${w.icon}</span>
+                        </div>
+                        
+                        <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                            <div>
+                                <div style="color:white; font-weight:800; font-size:0.8rem; letter-spacing:0.5px;">${w.name.toUpperCase()}</div>
+                                <div style="color:rgba(255,255,255,0.5); font-size:0.6rem; font-weight:700;">BOLA: ${w.temp > 20 ? 'RÁPIDA' : 'LENTA'}</div>
                             </div>
-                            <div style="position: absolute; bottom: 18px; left: 18px; z-index: 2; pointer-events: none;">
-                                <div style="color:white; font-weight:950; font-size:1.8rem; line-height: 1; margin-bottom: 2px;">${w.temp}ºC</div>
-                                <div style="color:rgba(255,255,255,0.6); font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;">${w.name}</div>
-                            </div>
-                            <div style="position: absolute; bottom: 18px; right: 18px; z-index: 2; text-align: right; display:flex; flex-direction:column; gap:6px; pointer-events: none;">
-                                <div style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:4px; border-right:2px solid #0ea5e9;">BOLA: ${w.temp > 20 ? 'RÁPIDA' : 'LENTA'}</div>
-                                <div style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:4px; border-right:2px solid #38bdf8;">HUM: ${w.humidity}%</div>
+                            <div style="font-size:0.6rem; color:rgba(255,255,255,0.7); font-weight:800; background:rgba(0,0,0,0.3); padding:3px 6px; border-radius:4px;">
+                                <i class="fas fa-tint" style="color:#38bdf8; margin-right:3px;"></i>${w.humidity}% HUM
                             </div>
                         </div>
-                `);
+                    </div>
+                    `);
                 }
 
-                // --- PRIORITY LOGIC ---
+                // B. PRIORITY EVENTS
                 const openEvents = allEvents
                     .filter(a => ['open', 'upcoming'].includes(a.status))
                     .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                // HELPER: VISUAL GENERATOR
-                const getAiVisual = (type, seed) => {
-                    if (type === 'fire') return `background: radial-gradient(circle at 30% 70%, #ff4d00 0%, #000 70%), linear-gradient(45deg, #1a0500 0%, #330d00 100%);`;
-                    if (type === 'water') return `background: radial-gradient(circle at 70% 20%, #00d2ff 0%, #000 70%), linear-gradient(135deg, #001219 0%, #002838 100%);`;
-                    if (type === 'neon') return `background: conic-gradient(from 0deg at 50% 50%, #000 0deg, #111 120deg, #CCFF00 180deg, #111 240deg, #000 360deg);`;
-                    if (type === 'glass') return `background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.01) 100%); backdrop-filter: blur(10px);`;
-                    return `background: #111;`;
-                };
-
                 if (openEvents.length > 0) {
                     const topEvt = openEvents[0];
                     itemsHtml.push(`
-                    <div class="holo-card" onclick="window.dashNavigate('entrenos', 'event')" style="min-width: 280px; width: 280px; height: 180px; ${getAiVisual('fire')} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <div style="position: absolute; inset:0; background: url('https://media.giphy.com/media/3o7btQ8jDTSLStx3Ko/giphy.gif') center/cover; opacity: 0.15; mix-blend-mode: overlay; pointer-events: none;"></div>
-                        <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.2; background: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 3px); pointer-events: none;"></div>
+                    <div class="holo-card" onclick="window.dashNavigate('entrenos', 'event')" style="min-width: 260px; width: 260px; height: 135px; background: linear-gradient(135deg, #2e0804 0%, #0f172a 100%); border-radius: 20px; padding: 15px; margin-right: 15px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(239, 68, 68, 0.25); display:flex; flex-direction:column; justify-content:space-between;">
+                        <!-- Ambient glow -->
+                        <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: #ef4444; filter: blur(30px); opacity: 0.5; pointer-events: none;"></div>
                         
-                        <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3; margin-bottom: 20px; pointer-events: none;">
-                            <span class="premium-tag" style="font-size:0.65rem; font-weight:1000; color:white; background:#ff4d00; padding:6px 14px; border-radius:100px; text-transform:uppercase; letter-spacing:1px; box-shadow: 0 0 15px #ff4d00;">RECOMENDACIÓN</span>
-                            <i class="fas fa-fire-alt" style="color:#ffcdb2; animation: pulseDot 1s infinite;"></i>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="premium-tag" style="font-size:0.55rem; font-weight:950; color:white; background:#ef4444; padding:3px 8px; border-radius:6px; letter-spacing:1px; text-transform:uppercase; box-shadow: 0 0 10px rgba(239,68,68,0.4);">DESTACADO</span>
+                            <i class="fas fa-fire-alt" style="color:#ef4444; font-size: 0.9rem;"></i>
                         </div>
-                        <div style="position:relative; z-index:3; pointer-events: none;">
-                            <div style="color:#ffcdb2; font-size:0.7rem; font-weight:900; text-transform:uppercase; letter-spacing:1px; margin-bottom: 6px;">🔥 DESTACADO</div>
-                            <h4 style="margin:0; color:white; font-size:1.1rem; font-weight:1000; line-height:1.1; text-shadow: 0 5px 15px black;">${(topEvt.name || "Evento").toUpperCase()}</h4>
-                            <div style="margin-top: 15px; display:inline-block; border-bottom: 2px solid #ff4d00; padding-bottom: 2px; color: white; font-size: 0.8rem; font-weight: 800;">RESERVAR AHORA <i class="fas fa-arrow-right"></i></div>
+                        
+                        <div>
+                            <h4 style="margin:0; color:white; font-size:0.9rem; font-weight:900; line-height:1.2; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${(topEvt.name || "Evento").toUpperCase()}</h4>
+                            <div style="margin-top: 6px; display:flex; align-items:center; gap:4px; color: #ff8a65; font-size: 0.65rem; font-weight: 800;">
+                                RESERVAR AHORA <i class="fas fa-arrow-right" style="font-size: 0.6rem;"></i>
+                            </div>
                         </div>
                     </div>
                     `);
                 }
 
                 openEvents.slice(1).forEach(am => {
-                    let aiClass = 'water';
-                    const lowerName = am.name.toLowerCase();
-                    if (lowerName.includes('fem') || lowerName.includes('wom')) aiClass = 'neon';
-
+                    const isWomen = am.name.toLowerCase().includes('fem') || am.name.toLowerCase().includes('wom');
                     itemsHtml.push(`
-                    <div class="holo-card" onclick="window.dashNavigate('entrenos', 'event')" style="min-width: 280px; width: 280px; height: 180px; ${getAiVisual(aiClass)} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; opacity: 0.2; filter: blur(4px); color: rgba(255,255,255,0.5); pointer-events: none;"><i class="fas fa-medal"></i></div>
-                        <div style="position: absolute; inset: 0; background: linear-gradient(top, transparent, rgba(0,0,0,0.8)); pointer-events: none;"></div>
+                    <div class="holo-card" onclick="window.dashNavigate('entrenos', 'event')" style="min-width: 260px; width: 260px; height: 135px; background: ${isWomen ? 'linear-gradient(135deg, #1e0b36 0%, #0f172a 100%)' : 'linear-gradient(135deg, #062436 0%, #0f172a 100%)'}; border-radius: 20px; padding: 15px; margin-right: 15px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.08); display:flex; flex-direction:column; justify-content:space-between;">
+                        <div style="position: absolute; top:-10px; right:-10px; font-size: 4rem; opacity: 0.04; color: white; pointer-events: none;"><i class="fas fa-medal"></i></div>
                         
-                        <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3; margin-bottom: 12px; pointer-events: none;">
-                             <span class="premium-tag" style="font-size:0.6rem; color:rgba(255,255,255,0.8); font-weight:950; letter-spacing:1px; border: 1px solid rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 8px;">${this.formatDateShort(am.date)}</span>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="premium-tag" style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; letter-spacing:1px; border: 1px solid rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,0.05);">${this.formatDateShort(am.date)}</span>
+                            <i class="fas fa-calendar-alt" style="color:rgba(255,255,255,0.4); font-size:0.8rem;"></i>
                         </div>
-                        <div style="position:relative; z-index:3; margin-top: auto; pointer-events: none;">
-                            <h4 style="margin:0; color:white; font-size:1rem; font-weight:1000; line-height:1.2;">${am.name}</h4>
-                            <div style="margin-top: 10px; font-size: 0.75rem; color: rgba(255,255,255,0.7); font-weight: 600;">Plazas disponibles</div>
+                        
+                        <div>
+                            <h4 style="margin:0; color:white; font-size:0.9rem; font-weight:900; line-height:1.2; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${am.name}</h4>
+                            <div style="margin-top: 6px; font-size: 0.65rem; color: #CCFF00; font-weight: 800; display:flex; align-items:center; gap:4px;">
+                                VER EVENTO <i class="fas fa-chevron-right" style="font-size:0.55rem;"></i>
+                            </div>
                         </div>
                     </div>
                     `);
                 });
 
-                const maxCards = 8;
-                const remainingSlots = Math.max(0, maxCards - itemsHtml.length);
-                const shuffledPool = [...dynamicPool].sort(() => 0.5 - Math.random());
-                const selectedTips = shuffledPool.slice(0, remainingSlots);
-
-                selectedTips.forEach((tip, idx) => {
-                    // Extract route from action for dashNavigate
-                    let route = 'dashboard';
-                    if (tip.action.includes("'profile'")) route = 'profile';
-                    if (tip.action.includes("'ranking'")) route = 'ranking';
-                    if (tip.action.includes("'https")) {
-                        const match = tip.action.match(/'(https[^']+)'/);
-                        if (match) route = match[1];
+                // C. DYNAMIC ENGAGING TIPS
+                const dynamicPool = [
+                    {
+                        tag: '📈 TU NIVEL',
+                        icon: 'fa-chart-line',
+                        accent: '#38bdf8',
+                        title: 'Nivel Dinámico',
+                        desc: 'Tu nivel evoluciona con cada set. ¡Juega y demuestra tu progreso!',
+                        route: 'profile'
+                    },
+                    {
+                        tag: '🏆 COMPETICIÓN',
+                        icon: 'fa-trophy',
+                        accent: '#f472b6',
+                        title: 'Puntos y Ascensos',
+                        desc: 'Gana partidos para subir de pista y alcanzar el Top 1 del Ranking.',
+                        route: 'ranking'
                     }
-                    if (tip.action.includes('showChatInfo')) route = 'chat_info';
+                ];
 
+                dynamicPool.forEach((tip) => {
                     itemsHtml.push(`
-                    <div class="holo-card" onclick="window.dashNavigate('${route}', 'tip')" style="cursor: pointer; min-width: 280px; width: 280px; height: 180px; background: #0f172a; border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <!-- VISUAL PLACEHOLDER -->
-                        <div style="position: absolute; inset:0; background: conic-gradient(from 180deg at 50% 50%, #1e293b 0deg, #0f172a 120deg, ${tip.accent} 240deg, #1e293b 360deg); opacity: 0.4; pointer-events: none;"></div>
-                        <div style="position: absolute; top:0; left:0; width:100%; height:100%; filter: url(#noise); opacity: 0.1; pointer-events: none;"></div>
+                    <div class="holo-card" onclick="window.dashNavigate('${tip.route}', 'tip')" style="cursor: pointer; min-width: 260px; width: 260px; height: 135px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 20px; padding: 15px; margin-right: 15px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); display:flex; flex-direction:column; justify-content:space-between;">
+                        <!-- Ambient glow -->
+                        <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: ${tip.accent}; filter: blur(30px); opacity: 0.25; pointer-events: none;"></div>
                         
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 2; pointer-events: none;">
-                            <span class="premium-tag" style="font-size:0.6rem; font-weight:1000; color:white; background:rgba(0,0,0,0.4); padding:4px 10px; border-radius:10px; border:1px solid ${tip.accent}80; letter-spacing:1px; white-space:nowrap;">${tip.tag}</span>
-                            <div style="width:30px; height:30px; background:${tip.accent}20; border-radius:50%; display:flex; align-items:center; justify-content:center;">
-                                <i class="fas ${tip.icon}" style="color:${tip.accent}; font-size:1rem;"></i>
-                            </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="premium-tag" style="font-size:0.55rem; font-weight:950; color:white; background:rgba(0,0,0,0.4); padding:3px 8px; border-radius:6px; border:1px solid ${tip.accent}80; letter-spacing:1px; white-space:nowrap;">${tip.tag}</span>
+                            <i class="fas ${tip.icon}" style="color:${tip.accent}; font-size:0.85rem;"></i>
                         </div>
-                        <div style="margin-top:20px; position:relative; z-index:2; pointer-events: none;">
-                            <div style="color:white; font-weight:1000; font-size:1.1rem; margin-bottom:6px; letter-spacing:-0.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow: 0 0 10px ${tip.accent};">${tip.title}</div>
-                            <div style="color:rgba(255,255,255,0.7); font-size:0.75rem; font-weight:600; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${tip.desc}</div>
+                        
+                        <div>
+                            <div style="color:white; font-weight:900; font-size:0.9rem; margin-bottom:3px; letter-spacing:-0.3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${tip.title}</div>
+                            <div style="color:rgba(255,255,255,0.6); font-size:0.65rem; font-weight:600; line-height:1.25; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${tip.desc}</div>
                         </div>
                     </div>
-                   `);
+                    `);
                 });
 
                 const scroller = document.getElementById('live-scroller-inner');
                 const html = itemsHtml.join('');
                 if (scroller) {
-                    scroller.innerHTML = html + html;
+                    scroller.innerHTML = html;
                 }
                 return html;
             } catch (err) {
