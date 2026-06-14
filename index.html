@@ -4,47 +4,172 @@
 <head>
     <meta charset="UTF-8">
     <script>
-        // 🩺 DEBUGGER FLOTANTE PREMIUM PARA DISPOSITIVOS MÓVILES
+        // 🩺 SOMOSPADEL ULTIMATE DIAGNOSTIC SYSTEM & CACHE PURGER
         (function() {
             const errors = [];
-            function showDebugBanner(title, message, errorObj) {
-                let banner = document.getElementById('global-debug-banner');
-                if (!banner) {
-                    banner = document.createElement('div');
-                    banner.id = 'global-debug-banner';
-                    banner.style = "position:fixed; bottom:20px; left:15px; right:15px; background:rgba(15, 23, 42, 0.95); border:2px solid #ef4444; border-radius:20px; padding:18px; color:white; z-index:99999; font-family:'Outfit',sans-serif; font-size:0.75rem; box-shadow:0 15px 35px rgba(0,0,0,0.5); backdrop-filter:blur(10px); animation:slideUp 0.3s ease-out both;";
-                    
-                    const style = document.createElement('style');
-                    style.innerHTML = `
-                        @keyframes slideUp { from { transform: translateY(100px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+            let isConnected = null;
+
+            async function checkFirebaseStatus() {
+                try {
+                    if (window.db || (window.firebase && window.firebase.firestore)) {
+                        const db = window.db || window.firebase.firestore();
+                        const start = Date.now();
+                        await db.collection('system_metadata').doc('blog_control').get();
+                        console.log(`📡 [Diagnostic] Firestore ping: ${Date.now() - start}ms`);
+                        isConnected = true;
+                    } else {
+                        isConnected = false;
+                    }
+                } catch (e) {
+                    console.warn("[Diagnostic] Firestore check failed", e);
+                    isConnected = false;
+                }
+                updatePanelUI();
+            }
+
+            setInterval(() => {
+                const panel = document.getElementById('sp-diagnostic-panel');
+                if (panel && panel.style.display !== 'none') {
+                    checkFirebaseStatus();
+                }
+            }, 15000);
+
+            function createDiagnosticTrigger() {
+                if (document.getElementById('sp-diagnostic-trigger')) return;
+                
+                const trigger = document.createElement('div');
+                trigger.id = 'sp-diagnostic-trigger';
+                trigger.style = "position:fixed; bottom:20px; right:20px; width:28px; height:28px; background:rgba(15,23,42,0.9); border:1.5px solid #CCFF00; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:99999; box-shadow:0 0 10px rgba(204,255,0,0.4); transition:all 0.3s ease; animation:pulseGlow 2s infinite;";
+                trigger.innerHTML = `<i class="fas fa-heartbeat" style="font-size:0.75rem; color:#CCFF00;"></i>`;
+                
+                trigger.onmouseover = () => { trigger.style.transform = "scale(1.1) rotate(15deg)"; trigger.style.boxShadow = "0 0 15px #CCFF00"; };
+                trigger.onmouseout = () => { trigger.style.transform = "scale(1) rotate(0deg)"; trigger.style.boxShadow = "0 0 10px rgba(204,255,0,0.4)"; };
+                trigger.onclick = () => toggleDiagnosticPanel();
+
+                if (!document.getElementById('sp-diagnostic-styles')) {
+                    const styles = document.createElement('style');
+                    styles.id = 'sp-diagnostic-styles';
+                    styles.innerHTML = `
+                        @keyframes pulseGlow { 0% { box-shadow: 0 0 5px rgba(204,255,0,0.3); } 50% { box-shadow: 0 0 15px rgba(204,255,0,0.7); } 100% { box-shadow: 0 0 5px rgba(204,255,0,0.3); } }
+                        @keyframes slideInPanel { from { transform: translateY(120%) scale(0.95); opacity:0; } to { transform: translateY(0) scale(1); opacity:1; } }
                     `;
-                    document.head.appendChild(style);
-                    document.body.appendChild(banner);
+                    document.head.appendChild(styles);
+                }
+
+                document.body.appendChild(trigger);
+            }
+
+            function toggleDiagnosticPanel() {
+                let panel = document.getElementById('sp-diagnostic-panel');
+                if (!panel) {
+                    createDiagnosticPanel();
+                    panel = document.getElementById('sp-diagnostic-panel');
                 }
                 
-                errors.push({ title, message, stack: errorObj ? errorObj.stack : '' });
-                
-                banner.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; color:#ef4444; font-weight:950; text-transform:uppercase; font-size:0.8rem;">
-                        <i class="fas fa-exclamation-triangle"></i> ERROR DE CARGA EN MÓVIL (${errors.length})
+                if (panel.style.display === 'none') {
+                    panel.style.display = 'block';
+                    checkFirebaseStatus();
+                } else {
+                    panel.style.display = 'none';
+                }
+            }
+
+            function createDiagnosticPanel() {
+                const panel = document.createElement('div');
+                panel.id = 'sp-diagnostic-panel';
+                panel.style = "position:fixed; bottom:60px; left:15px; right:15px; background:rgba(10,10,18,0.96); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1.5px solid rgba(204,255,0,0.3); border-radius:24px; padding:20px; color:white; z-index:99998; font-family:'Outfit',sans-serif; box-shadow:0 25px 50px rgba(0,0,0,0.8); display:none; animation:slideInPanel 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; overflow:hidden;";
+                document.body.appendChild(panel);
+                updatePanelUI();
+            }
+
+            function updatePanelUI() {
+                const panel = document.getElementById('sp-diagnostic-panel');
+                if (!panel) return;
+
+                const hasErrors = errors.length > 0;
+                const statusColor = hasErrors ? '#ef4444' : '#00E36D';
+                const statusText = hasErrors ? 'FALLO DETECTADO' : 'SISTEMAS OPERATIVOS';
+                const statusShadow = hasErrors ? '0 0 15px rgba(239,68,68,0.6)' : '0 0 15px rgba(0,227,109,0.6)';
+                const activeCache = window.CACHE_NAME || 'somospadel-ultra-cache-v827'; 
+
+                let errorsHtml = '';
+                if (hasErrors) {
+                    errorsHtml = `
+                        <div style="font-weight:900; color:#ef4444; font-size:0.68rem; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:8px;">REGISTRO DE ERRORES (${errors.length})</div>
+                        <div style="display:flex; flex-direction:column; gap:8px; max-height:140px; overflow-y:auto; margin-bottom:15px; padding-right:4px;">
+                            ${errors.map((e, idx) => `
+                                <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.20); padding:10px; border-radius:12px;">
+                                    <div style="font-weight:900; color:#ff8080; display:flex; justify-content:space-between;">
+                                        <span>[${idx+1}] ${e.title}</span>
+                                        <span style="font-size:0.55rem; opacity:0.6;">${e.time}</span>
+                                    </div>
+                                    <div style="color:rgba(255,255,255,0.8); font-family:monospace; font-size:0.65rem; margin-top:4px; word-break:break-all;">${e.message}</div>
+                                    ${e.stack ? `<details style="margin-top:6px;"><summary style="color:#38bdf8; cursor:pointer; font-weight:800; font-size:0.55rem;">VER DETALLES</summary><pre style="font-size:0.58rem; color:#ccc; overflow-x:auto; margin:4px 0 0 0; white-space:pre-wrap; font-family:monospace; word-break:break-all;">${e.stack}</pre></details>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    errorsHtml = `
+                        <div style="text-align:center; padding:15px 0; color:rgba(255,255,255,0.4); font-size:0.7rem; font-weight:600;">
+                            <i class="fas fa-check-double" style="color:#00E36D; font-size:1.2rem; margin-bottom:8px; display:block;"></i>
+                            No se han registrado excepciones de JavaScript.
+                        </div>
+                    `;
+                }
+
+                let dbStatusHtml = `<span style="color:#fbbf24;"><i class="fas fa-circle-notch fa-spin"></i> Comprobando...</span>`;
+                if (isConnected === true) {
+                    dbStatusHtml = `<span style="color:#00E36D; font-weight:800;"><i class="fas fa-check-circle"></i> CONECTADO</span>`;
+                } else if (isConnected === false) {
+                    dbStatusHtml = `<span style="color:#ef4444; font-weight:800;"><i class="fas fa-times-circle"></i> DESCONECTADO</span>`;
+                }
+
+                panel.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:10px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div style="width:8px; height:8px; border-radius:50%; background:${statusColor}; box-shadow:${statusShadow};"></div>
+                            <span style="font-weight:950; font-size:0.8rem; letter-spacing:1px; color:#fff;">TELEMETRÍA DE SISTEMA</span>
+                        </div>
+                        <div onclick="window.toggleDiagnosticPanel()" style="width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; cursor:pointer; color:rgba(255,255,255,0.6);"><i class="fas fa-times" style="font-size:0.7rem;"></i></div>
                     </div>
-                    <div id="debug-error-list" style="max-height:120px; overflow-y:auto; margin-bottom:14px; display:flex; flex-direction:column; gap:8px;">
-                        ${errors.map((e, idx) => `
-                            <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); padding:10px; border-radius:10px;">
-                                <div style="font-weight:800; color:#ff8080;">[${idx+1}] ${e.title}</div>
-                                <div style="color:rgba(255,255,255,0.85); font-family:monospace; margin-top:4px; font-size:0.68rem; word-break:break-all;">${e.message}</div>
-                                ${e.stack ? `<details style="margin-top:6px;"><summary style="color:#38bdf8; cursor:pointer; font-weight:800; font-size:0.6rem;">VER DETALLES</summary><pre style="font-size:0.6rem; color:#ccc; overflow-x:auto; margin:5px 0 0 0; white-space:pre-wrap; font-family:monospace; word-break:break-all;">${e.stack}</pre></details>` : ''}
-                            </div>
-                        `).join('')}
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); padding:12px; border-radius:16px; margin-bottom:15px; font-size:0.68rem;">
+                        <div>
+                            <span style="color:rgba(255,255,255,0.4); display:block; font-weight:700;">ESTADO MOTOR:</span>
+                            <span style="color:${statusColor}; font-weight:900;">${statusText}</span>
+                        </div>
+                        <div>
+                            <span style="color:rgba(255,255,255,0.4); display:block; font-weight:700;">FIRESTORE DB:</span>
+                            ${dbStatusHtml}
+                        </div>
+                        <div style="margin-top:6px;">
+                            <span style="color:rgba(255,255,255,0.4); display:block; font-weight:700;">CACHÉ REGISTRO:</span>
+                            <span style="color:#38bdf8; font-weight:800;">${activeCache}</span>
+                        </div>
+                        <div style="margin-top:6px;">
+                            <span style="color:rgba(255,255,255,0.4); display:block; font-weight:700;">RED/DISPOSITIVO:</span>
+                            <span style="color:#fff; font-weight:800;">${navigator.onLine ? 'ONLINE' : 'OFFLINE'}</span>
+                        </div>
                     </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <button onclick="window.location.reload(true)" style="background:rgba(255,255,255,0.08); color:white; border:1px solid rgba(255,255,255,0.15); padding:10px; border-radius:12px; font-weight:800; font-size:0.7rem; cursor:pointer;">RECARGAR</button>
-                        <button onclick="window.forceUpdateApp()" style="background:#CCFF00; color:black; border:none; padding:10px; border-radius:12px; font-weight:950; font-size:0.7rem; cursor:pointer;">LIMPIAR CACHÉ PWA</button>
+
+                    ${errorsHtml}
+
+                    <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:10px; margin-top:5px;">
+                        <button onclick="window.location.reload(true)" style="background:rgba(255,255,255,0.05); color:white; border:1px solid rgba(255,255,255,0.1); padding:11px; border-radius:14px; font-weight:900; font-size:0.68rem; cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'"><i class="fas fa-sync-alt"></i> RECARGAR</button>
+                        <button onclick="window.forceUpdateApp()" style="background:#CCFF00; color:black; border:none; padding:11px; border-radius:14px; font-weight:1000; font-size:0.68rem; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 12px rgba(204,255,0,0.2);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(204,255,0,0.35)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(204,255,0,0.2)'"><i class="fas fa-trash-alt"></i> LIMPIAR CACHÉ PWA</button>
                     </div>
                 `;
             }
 
+            window.toggleDiagnosticPanel = toggleDiagnosticPanel;
+
             window.forceUpdateApp = async function() {
+                const btn = document.querySelector('#sp-diagnostic-panel button:last-child');
+                if (btn) {
+                    btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> LIMPIANDO...`;
+                    btn.style.opacity = '0.7';
+                }
                 try {
                     console.log("🧹 [Debug] Forzando actualización y limpieza de caché...");
                     if ('caches' in window) {
@@ -52,36 +177,76 @@
                         for (const key of keys) {
                             await caches.delete(key);
                         }
-                        console.log("✅ Cachés eliminadas.");
                     }
                     if ('serviceWorker' in navigator) {
                         const regs = await navigator.serviceWorker.getRegistrations();
                         for (const reg of regs) {
                             await reg.unregister();
                         }
-                        console.log("✅ Service workers desregistrados.");
                     }
                     localStorage.removeItem('somospadel_last_news_gen_date');
                     localStorage.removeItem('local_ranking_cache');
                     window.location.reload(true);
                 } catch (err) {
                     alert("Error al actualizar: " + err.message);
+                    if (btn) {
+                        btn.innerHTML = `<i class="fas fa-trash-alt"></i> LIMPIAR CACHÉ PWA`;
+                        btn.style.opacity = '1';
+                    }
                 }
             };
 
             window.onerror = function(message, source, lineno, colno, error) {
                 if (source && (source.includes('chrome-extension') || source.includes('safari-extension'))) return;
-                const title = "Crash en Script";
-                const msg = `${message}<br><small>en ${source ? source.split('/').pop() : 'inline'}:${lineno}:${colno}</small>`;
-                showDebugBanner(title, msg, error);
+                
+                const dateObj = new Date();
+                const timeStr = `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}:${String(dateObj.getSeconds()).padStart(2, '0')}`;
+                
+                const errObj = {
+                    title: "Crash en Script",
+                    message: `${message} en ${source ? source.split('/').pop() : 'inline'}:${lineno}:${colno}`,
+                    stack: error ? error.stack : '',
+                    time: timeStr
+                };
+                errors.push(errObj);
+                
+                let panel = document.getElementById('sp-diagnostic-panel');
+                if (!panel) createDiagnosticPanel();
+                panel = document.getElementById('sp-diagnostic-panel');
+                panel.style.display = 'block';
+                updatePanelUI();
+                
                 return false;
             };
 
             window.onunhandledrejection = function(event) {
-                const title = "Promesa Rechazada (Promise Rejection)";
-                const msg = event.reason ? (event.reason.message || String(event.reason)) : "Error desconocido en promesa";
-                showDebugBanner(title, msg, event.reason);
+                const dateObj = new Date();
+                const timeStr = `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}:${String(dateObj.getSeconds()).padStart(2, '0')}`;
+                
+                const errObj = {
+                    title: "Promesa Rechazada (Promise Rejection)",
+                    message: event.reason ? (event.reason.message || String(event.reason)) : "Error desconocido en promesa asíncrona",
+                    stack: event.reason ? event.reason.stack : '',
+                    time: timeStr
+                };
+                errors.push(errObj);
+                
+                let panel = document.getElementById('sp-diagnostic-panel');
+                if (!panel) createDiagnosticPanel();
+                panel = document.getElementById('sp-diagnostic-panel');
+                panel.style.display = 'block';
+                updatePanelUI();
             };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    createDiagnosticTrigger();
+                    checkFirebaseStatus();
+                });
+            } else {
+                createDiagnosticTrigger();
+                checkFirebaseStatus();
+            }
         })();
     </script>
     <script src="js/security-core.js?v=2" defer></script>
