@@ -10,202 +10,248 @@
     console.log('🤖 [AutoBlogEngine] Motor de Noticias cargando...');
 
     // ─── BANCO DE CONSEJOS TÁCTICOS ROTATIVOS ENRIQUECIDOS (MINI-MASTERCLASSES) ───
-    const TACTICAL_TIPS = [
+    const TEMPLATES = [
         {
-            title: '💡 La Teoría del Centro: el Secreto de los Pros',
-            emoji: '🎯',
-            snippet: 'Jugar al centro reduce los ángulos del rival y provoca dudas entre la pareja contraria.',
-            content: `
-                <div style="font-family:'Inter', sans-serif; color:rgba(255,255,255,0.9); line-height:1.65;">
-                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
-                        <h4 style="margin:0 0 8px; font-family:'Outfit'; font-size:0.95rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">🎯 ¿Por qué es fundamental?</h4>
-                        <p style="margin:0; font-size:0.8rem; color:rgba(255,255,255,0.72); font-weight:500;">Uno de los principios más poderosos del pádel moderno es la "Teoría del Centro". Al golpear consistentemente hacia el centro de la pista, reduces drásticamente los ángulos de rebote que puede explotar el rival. Además, generas confusión espacial y de comunicación entre la pareja contraria — ¿quién coge esa bola?</p>
-                    </div>
-                    
-                    <div style="margin-bottom:18px;">
-                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">📋 Guía de Ejecución Paso a Paso</h4>
-                        <div style="display:flex; flex-direction:column; gap:8px;">
-                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
-                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">1</span>
-                                <span style="color:rgba(255,255,255,0.85);"><strong>Apunta a la "T":</strong> Dirige tus golpes hacia el punto donde se cruzan las líneas de servicio del fondo de la pista contraria para un rebote neutro.</span>
-                            </div>
-                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
-                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">2</span>
-                                <span style="color:rgba(255,255,255,0.85);"><strong>Controla la altura:</strong> Juega globos profundos por el centro para recuperar tu posición en la red sin regalar ángulos laterales.</span>
-                            </div>
-                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
-                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">3</span>
-                                <span style="color:rgba(255,255,255,0.85);"><strong>Sincroniza la volea:</strong> Cuando ambos subáis a la red, mantened una distancia coordinada para cubrir la zona central y el rebote del cristal.</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom:18px;">
-                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">❌ Errores Comunes a Evitar</h4>
-                        <div style="display:flex; flex-direction:column; gap:6px;">
-                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
-                                <span style="color:#ef4444; font-weight:900;">❌</span> Rematar de frente con demasiada fuerza, regalando un rebote cómodo a su cristal de fondo.
-                            </div>
-                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
-                                <span style="color:#ef4444; font-weight:900;">❌</span> No comunicarse con tu pareja en las bolas del centro, permitiendo que ambos duden y dejen pasar el punto.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="background:linear-gradient(135deg, rgba(204,255,0,0.08) 0%, rgba(132,204,22,0.03) 100%); border:1px solid rgba(204,255,0,0.22); padding:16px; border-radius:18px; box-shadow: 0 4px 15px rgba(204,255,0,0.05);">
-                        <h4 style="margin:0 0 6px; font-family:'Outfit'; font-size:0.9rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">💡 El Secreto del Coach</h4>
-                        <p style="margin:0; font-size:0.78rem; color:rgba(255,255,255,0.85); font-weight:500;">Si el rival juega muy separado, el juego central es letal. Satura el centro hasta forzar un golpeo defensivo de mala calidad de tu rival, y entonces ataca agresivamente los espacios laterales que queden abiertos.</p>
-                    </div>
-                </div>
-            `,
-            catColor: '#f59e0b', imgGrad: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)'
+            title: "La Teoría del Centro: el Secreto de los Pros",
+            category: "💡 CONSEJOS",
+            catColor: "#f59e0b",
+            imageUrl: "https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop",
+            emoji: "🎯",
+            imgGrad: "linear-gradient(135deg, #fb923c 0%, #f97316 100%)",
+            snippet: "Reducir los ángulos del rival y provocar dudas en la pareja contraria jugando al medio.",
+            contentTemplate: "El centro de la pista es el área más segura y eficaz para jugar en pádel. Al dirigir la bola al centro, reduces drásticamente los ángulos de rebote del rival, evitas que abran la bola a las paredes and generas dudas de comunicación entre la pareja contraria. <br><br>El jugador <strong>{PLAYER1}</strong> nos compartía su truco esta semana: <em>'Si juegas al centro con margen, obligas al rival a levantar la bola, dejándote una volea cómoda'</em>. Su compañero <strong>{PLAYER2}</strong> destaca la importancia de buscar globos profundos por el centro para recuperar la posición en la red sin regalar ángulos laterales.",
+            readTime: "3 min"
         },
         {
-            title: '💡 El Globo Defensivo: Tu Mejor Arma en Apuros',
-            emoji: '🌟',
-            snippet: 'Cuando estás bajo presión, el globo bien colocado te da tiempo para recuperar la posición.',
-            content: `
-                <div style="font-family:'Inter', sans-serif; color:rgba(255,255,255,0.9); line-height:1.65;">
-                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
-                        <h4 style="margin:0 0 8px; font-family:'Outfit'; font-size:0.95rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">🌟 ¿Por qué es fundamental?</h4>
-                        <p style="margin:0; font-size:0.8rem; color:rgba(255,255,255,0.72); font-weight:500;">El globo no es una señal de debilidad — es una herramienta táctica de alto nivel. Cuando el rival te presiona en el fondo de pista, un globo profundo y con efecto te permite recuperar la posición en la red, resetear el punto y pasar de defender a atacar.</p>
-                    </div>
-                    
-                    <div style="margin-bottom:18px;">
-                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">📋 Guía de Ejecución Paso a Paso</h4>
-                        <div style="display:flex; flex-direction:column; gap:8px;">
-                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
-                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">1</span>
-                                <span style="color:rgba(255,255,255,0.85);"><strong>Flexiona las rodillas:</strong> Entra siempre por debajo de la bola con la pala bien abierta para garantizar la parábola ideal.</span>
-                            </div>
-                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
-                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">2</span>
-                                <span style="color:rgba(255,255,255,0.85);"><strong>Busca la altura correcta:</strong> Un globo demasiado alto da tiempo a reubicarse, pero un globo tenso y profundo los saca de su posición de red al instante.</span>
-                            </div>
-                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
-                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">3</span>
-                                <span style="color:rgba(255,255,255,0.85);"><strong>Acompaña la subida:</strong> Si ves que el globo sobrepasa a los oponentes, sube inmediatamente a la red con tu pareja para consolidar la ventaja.</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom:18px;">
-                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">❌ Errores Comunes a Evitar</h4>
-                        <div style="display:flex; flex-direction:column; gap:6px;">
-                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
-                                <span style="color:#ef4444; font-weight:900;">❌</span> Golpear con la muñeca suelta, lo que provoca globos cortos y fáciles de rematar (bandeja ganadora).
-                            </div>
-                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
-                                <span style="color:#ef4444; font-weight:900;">❌</span> Quedarse estático en el fondo esperando a ver el bote de tu propio globo en lugar de subir a la red.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="background:linear-gradient(135deg, rgba(204,255,0,0.08) 0%, rgba(132,204,22,0.03) 100%); border:1px solid rgba(204,255,0,0.22); padding:16px; border-radius:18px; box-shadow: 0 4px 15px rgba(204,255,0,0.05);">
-                        <h4 style="margin:0 0 6px; font-family:'Outfit'; font-size:0.9rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">💡 El Secreto del Coach</h4>
-                        <p style="margin:0; font-size:0.78rem; color:rgba(255,255,255,0.85); font-weight:500;">En pistas de cristal templado outdoor o con viento en contra, el globo alto al rincón del rival es doblemente efectivo porque las trayectorias de rebote se vuelven impredecibles. ¡Úsalo para cansar psicológicamente a tus rivales!</p>
-                    </div>
-                </div>
-            `,
-            catColor: '#f59e0b', imgGrad: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'
+            title: "Suela Omni vs. Suela Clay: ¿Qué zapatillas elegir?",
+            category: "👟 MATERIAL",
+            catColor: "#fb923c",
+            imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop",
+            emoji: "👟",
+            imgGrad: "linear-gradient(135deg, #ffe066 0%, #facc15 100%)",
+            snippet: "Analizamos las diferencias de agarre y durabilidad en pistas con mucha o poca arena.",
+            contentTemplate: "Elegir el calzado correcto es fundamental para evitar resbalones y lesiones en el pádel. La suela Clay (o espiga) ofrece el máximo agarre, especialmente en pistas con bastante arena, permitiendo deslizar con control. Por otro lado, la suela Omni (con pequeños puntos) es ideal para pistas más secas o con menos arena. <br><br><strong>{PLAYER1}</strong> comentaba tras su último torneo: <em>'Desde que cambié a zapatillas con suela Clay, siento mucha más seguridad en las arrancadas hacia la red y mis tobillos sufren menos'</em>. Su compañero <strong>{PLAYER2}</strong> añade que la duración de la suela Clay suele ser mayor en pistas de césped artificial moderno.",
+            readTime: "2 min"
         },
         {
-            title: '💡 La Posición en la Red: Dónde Ganar los Puntos',
-            emoji: '⚡',
-            snippet: 'Controlar la red te da el dominio del punto. Aprende la posición correcta para voleas ganadoras.',
-            content: `
-                <div style="font-family:'Inter', sans-serif; color:rgba(255,255,255,0.9); line-height:1.65;">
-                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
-                        <h4 style="margin:0 0 8px; font-family:'Outfit'; font-size:0.95rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">⚡ ¿Por qué es fundamental?</h4>
-                        <p style="margin:0; font-size:0.8rem; color:rgba(255,255,255,0.72); font-weight:500;">El pádel se gana en la red. Quien controla la posición central en la red tiene una ventaja enorme: más ángulos de volea, más presión psicológica sobre el rival y mejores opciones de cierre de punto. La clave es el split-step.</p>
-                    </div>
-                    
-                    <div style="margin-bottom:18px;">
-                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">📋 Guía de Ejecución Paso a Paso</h4>
-                        <div style="display:flex; flex-direction:column; gap:8px;">
-                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
-                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">1</span>
-                                <span style="color:rgba(255,255,255,0.85);"><strong>Posicionamiento ideal:</strong> Sitúate a un metro y medio de la red, siempre alineado horizontalmente con la trayectoria de la bola y tu pareja.</span>
-                            </div>
-                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
-                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">2</span>
-                                <span style="color:rgba(255,255,255,0.85);"><strong>El Split-Step obligatorio:</strong> Realiza un pequeño salto de caída amortiguada justo en el instante en que tu rival impacta la bola.</span>
-                            </div>
-                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
-                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">3</span>
-                                <span style="color:rgba(255,255,255,0.85);"><strong>Pala arriba:</strong> Mantén la cabeza de la pala siempre a la altura del pecho para poder reaccionar a voleas veloces al cuerpo.</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom:18px;">
-                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">❌ Errores Comunes a Evitar</h4>
-                        <div style="display:flex; flex-direction:column; gap:6px;">
-                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
-                                <span style="color:#ef4444; font-weight:900;">❌</span> Pegarse excesivamente a la red, facilitando que te sobrepasen con globos defensivos sencillos.
-                            </div>
-                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
-                                <span style="color:#ef4444; font-weight:900;">❌</span> Bajar los brazos y la pala entre voleas, perdiendo centésimas vitales de reacción defensiva.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="background:linear-gradient(135deg, rgba(204,255,0,0.08) 0%, rgba(132,204,22,0.03) 100%); border:1px solid rgba(204,255,0,0.22); padding:16px; border-radius:18px; box-shadow: 0 4px 15px rgba(204,255,0,0.05);">
-                        <h4 style="margin:0 0 6px; font-family:'Outfit'; font-size:0.9rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">💡 El Secreto del Coach</h4>
-                        <p style="margin:0; font-size:0.78rem; color:rgba(255,255,255,0.85); font-weight:500;">La "teoría del imán": cuando tu oponente se desplaza al fondo y se desequilibra, da un paso adelante en la red. Al achicar el espacio, la presión sobre su tiro se multiplica por tres.</p>
-                    </div>
-                </div>
-            `,
-            catColor: '#f59e0b', imgGrad: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)'
+            title: "Cómo prevenir la Epicondilitis o codo de tenista",
+            category: "💪 SALUD",
+            catColor: "#ef4444",
+            imageUrl: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=600&auto=format&fit=crop",
+            emoji: "💪",
+            imgGrad: "linear-gradient(135deg, #f87171 0%, #ef4444 100%)",
+            snippet: "Ejercicios de estiramiento y consejos sobre la elección del peso de tu pala.",
+            contentTemplate: "La epicondilitis se produce por la sobrecarga de los tendones del codo debido a impactos repetitivos. Para prevenirla, es vital realizar un buen calentamiento de articulaciones y estiramientos específicos al terminar. <br><br><em>'Añadir un overgrip extra a mi pala me ayudó a relajar el agarre de la mano y alivió las molestias'</em>, nos aconseja <strong>{PLAYER1}</strong>. Su compañero <strong>{PLAYER2}</strong> recalca la importancia de no jugar con pelotas húmedas o excesivamente pesadas, ya que aumentan la vibración transmitida al brazo.",
+            readTime: "3 min"
         },
         {
-            title: '💡 El Efecto Cortado: El Golpe que Confunde',
-            emoji: '🔄',
-            snippet: 'Un golpe cortado con slice hace que la bola patine en el cristal y genere ángulos imposibles.',
-            content: `
-                <div style="font-family:'Inter', sans-serif; color:rgba(255,255,255,0.9); line-height:1.65;">
-                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
-                        <h4 style="margin:0 0 8px; font-family:'Outfit'; font-size:0.95rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">🔄 ¿Por qué es fundamental?</h4>
-                        <p style="margin:0; font-size:0.8rem; color:rgba(255,255,255,0.72); font-weight:500;">El golpe cortado (slice) es una de las herramientas más sofisticadas del pádel avanzado. Al golpear la bola con efecto cortado hacia la pared lateral, creas una trayectoria "baja y resbalosa" que patina en el cristal, impidiendo que la bola suba al rebotar.</p>
-                    </div>
-                    
-                    <div style="margin-bottom:18px;">
-                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">📋 Guía de Ejecución Paso a Paso</h4>
-                        <div style="display:flex; flex-direction:column; gap:8px;">
-                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
-                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">1</span>
-                                <span style="color:rgba(255,255,255,0.85);"><strong>Impacto de arriba a abajo:</strong> Comienza con la pala alta y finaliza el recorrido por debajo de la bola con la cara de la pala mirando ligeramente hacia arriba.</span>
-                            </div>
-                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
-                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">2</span>
-                                <span style="color:rgba(255,255,255,0.85);"><strong>Apunta a la reja lateral:</strong> Dirigir voleas cortadas hacia la reja o las uniones de los cristales laterales genera botes totalmente aleatorios e irrecuperables.</span>
-                            </div>
-                            <div style="display:flex; gap:10px; align-items:flex-start; font-size:0.78rem;">
-                                <span style="background:#CCFF00; color:black; font-weight:900; font-size:0.7rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">3</span>
-                                <span style="color:rgba(255,255,255,0.85);"><strong>Acompaña con el cuerpo:</strong> Transfiere tu peso corporal hacia adelante en el momento del impacto para que la volea viaje con peso y profundidad.</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom:18px;">
-                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.95rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">❌ Errores Comunes a Evitar</h4>
-                        <div style="display:flex; flex-direction:column; gap:6px;">
-                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
-                                <span style="color:#ef4444; font-weight:900;">❌</span> Acelerar la muñeca en exceso, provocando que la bola "flote" y salga alta para el remate fácil del rival.
-                            </div>
-                            <div style="font-size:0.76rem; color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:6px;">
-                                <span style="color:#ef4444; font-weight:900;">❌</span> Cortar bolas extremadamente bajas, arriesgando un fallo en la red. En bolas bajas se aconseja juego plano.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="background:linear-gradient(135deg, rgba(204,255,0,0.08) 0%, rgba(132,204,22,0.03) 100%); border:1px solid rgba(204,255,0,0.22); padding:16px; border-radius:18px; box-shadow: 0 4px 15px rgba(204,255,0,0.05);">
-                        <h4 style="margin:0 0 6px; font-family:'Outfit'; font-size:0.9rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">💡 El Secreto del Coach</h4>
-                        <p style="margin:0; font-size:0.78rem; color:rgba(255,255,255,0.85); font-weight:500;">Si juegas a la bandeja cortada (víbora), impacta a las 2 en punto (si eres diestro). Ese giro de slice lateral forzará a que la bola rebote contra el fondo patinando hacia el suelo lateral.</p>
-                    </div>
-                </div>
-            `,
-            catColor: '#f59e0b', imgGrad: 'linear-gradient(135deg, #34d399 0%, #059669 100%)'
+            title: "Nutrición y energía para Americanas de larga duración",
+            category: "🍎 NUTRICIÓN",
+            catColor: "#22c55e",
+            imageUrl: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=600&auto=format&fit=crop",
+            emoji: "🍎",
+            imgGrad: "linear-gradient(135deg, #4ade80 0%, #22c55e 100%)",
+            snippet: "Pautas de hidratación y alimentación antes y durante competiciones de más de 2 horas.",
+            contentTemplate: "Jugar una americana de más de dos horas exige rendimiento físico constante. Es recomendable consumir hidratos de carbono complejos unas horas antes y asegurar una buena hidratación previa. <br><br><strong>{PLAYER1}</strong> suele llevar plátanos y frutos secos en su bolsa: <em>'Una pequeña dosis de potasio y energía a mitad de la americana evita los calambres en las últimas partidas'</em>. Su compañero <strong>{PLAYER2}</strong> coincide en que la clave es hidratarse a pequeños sorbos en cada cambio de pista, incluso si no se siente sed inmediata.",
+            readTime: "3 min"
+        },
+        {
+            title: "El Globo: El golpe táctico más subestimado del pádel",
+            category: "💡 CONSEJOS",
+            catColor: "#38bdf8",
+            imageUrl: "https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop",
+            emoji: "🎈",
+            imgGrad: "linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)",
+            snippet: "Por qué tirar un buen globo es más efectivo para ganar la red que buscar un remate arriesgado.",
+            contentTemplate: "Muchos jugadores asocian el pádel con remates espectaculares, pero tácticamente el globo es el golpe más importante de este deporte. Un globo alto y profundo obliga a los rivales a abandonar la red y nos da tiempo para colocarnos en posición de ataque. <br><br><strong>{PLAYER1}</strong> nos explicaba su táctica: <em>'Un buen globo al rincón del rival suele abrir el centro de la pista para definir la siguiente bola con una volea cómoda'</em>. Su compañero <strong>{PLAYER2}</strong> nos recuerda que es mejor fallar un globo por alto (dando tiempo de reacción) que tirarlo plano y corto, facilitando el remate cómodo de los contrarios.",
+            readTime: "2 min"
+        },
+        {
+            title: "Fair Play: Cómo gestionar los cantos de bola dudosos",
+            category: "🤝 COMUNIDAD",
+            catColor: "#a855f7",
+            imageUrl: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=600&auto=format&fit=crop",
+            emoji: "🤝",
+            imgGrad: "linear-gradient(135deg, #c084fc 0%, #a855f7 100%)",
+            snippet: "Consejos de convivencia y reglamento amistoso para mantener el buen ambiente en el club.",
+            contentTemplate: "El pádel es un deporte social y el buen ambiente es la seña de identidad de nuestras americanas en SomosPadel. En partidos sin árbitro, es habitual que surjan dudas sobre botes. Lo más deportivo es repetir el punto ('dos bolas') ante cualquier discrepancia. <br><br>El jugador <strong>{PLAYER1}</strong> destaca: <em>'Venimos a disfrutar y a hacer deporte; un punto dudoso no vale la pena si genera mal ambiente en la pista'</em>. Su compañero <strong>{PLAYER2}</strong> añade que mantener una actitud positiva y aplaudir los buenos golpes de los rivales hace que la experiencia del torneo sea mucho mejor para todos.",
+            readTime: "2 min"
+        },
+        {
+            title: "Palas Blandas vs. Palas Duras: ¿EVA o FOAM?",
+            category: "👟 MATERIAL",
+            catColor: "#fb923c",
+            imageUrl: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=600&auto=format&fit=crop",
+            emoji: "🎾",
+            imgGrad: "linear-gradient(135deg, #fdba74 0%, #f97316 100%)",
+            snippet: "Analizamos qué tipo de goma de pala se adapta mejor a tu estilo de juego.",
+            contentTemplate: "Las palas blandas (con núcleo de FOAM o EVA Soft) ofrecen más salida de bola y absorben vibraciones, ideales para evitar lesiones. Las palas duras (con EVA de alta densidad) ofrecen mayor control y potencia si tienes fuerza de pegada. <br><br><strong>{PLAYER1}</strong> prefiere las blandas: <em>'Para defender en el fondo son comodísimas, despachan la bola sin esfuerzo'</em>. En cambio, <strong>{PLAYER2}</strong> opta por pala dura: <em>'Me da la precisión exacta en las voleas rápidas en la red y mayor control de dirección'</em>.",
+            readTime: "2 min"
+        },
+        {
+            title: "La Posición en la Red: Dónde ganar los puntos",
+            category: "💡 CONSEJOS",
+            catColor: "#f59e0b",
+            imageUrl: "https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop",
+            emoji: "⚡",
+            imgGrad: "linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%)",
+            snippet: "El pádel se gana en la red. Aprende la posición correcta para voleas ganadoras.",
+            contentTemplate: "El pádel se gana en la red. Quien controla la posición central en la red tiene una ventaja enorme. Sitúate a un metro y medio de la red, y realiza el split-step obligatorio en el momento del impacto rival. <br><br><strong>{PLAYER1}</strong> aconseja: <em>'Si te pegas demasiado a la red, te pasarán con globos simples. Mantén la distancia adecuada'</em>. Su compañero <strong>{PLAYER2}</strong> nos recuerda que la cabeza de la pala debe estar siempre arriba a la altura del pecho para poder reaccionar a voleas rápidas al cuerpo.",
+            readTime: "2 min"
+        },
+        {
+            title: "El Efecto Cortado: El golpe que confunde al rival",
+            category: "💡 CONSEJOS",
+            catColor: "#f59e0b",
+            imageUrl: "https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop",
+            emoji: "🔄",
+            imgGrad: "linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)",
+            snippet: "Un golpe cortado con slice hace que la bola patine en el cristal y caiga rápidamente.",
+            contentTemplate: "El golpe cortado (slice) es fundamental en el juego de red. Hace que la bola patine y no levante tras botar, especialmente contra las paredes. Al volear, entra siempre de arriba a abajo. <br><br><strong>{PLAYER1}</strong> comenta: <em>'Una volea cortada profunda a la reja lateral es letal por su bote totalmente aleatorio'</em>. Su pareja <strong>{PLAYER2}</strong> añade que en bolas muy bajas es preferible jugar plano para no arriesgar un fallo directo en la red.",
+            readTime: "3 min"
+        },
+        {
+            title: "Calentamiento Dinámico: Prepárate para rendir al 100%",
+            category: "💪 SALUD",
+            catColor: "#ef4444",
+            imageUrl: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=600&auto=format&fit=crop",
+            emoji: "🔥",
+            imgGrad: "linear-gradient(135deg, #fca5a5 0%, #ef4444 100%)",
+            snippet: "Entrar en calor antes de golpear evita lesiones y mejora tu velocidad de arranque.",
+            contentTemplate: "Entrar en calor antes de golpear evita tirones musculares y mejora tu reactividad desde el primer punto. Dedica 5 minutos a carrera continua, desplazamientos laterales y rotación de articulaciones. <br><br><em>'Yo solía entrar frío a la pista hasta que me lesioné el gemelo por una arrancada brusca'</em>, confiesa <strong>{PLAYER1}</strong>. Su compañero <strong>{PLAYER2}</strong> coincide: <em>'Hacer unas sombras de golpes antes de empezar el peloteo te conecta físicamente'</em>.",
+            readTime: "2 min"
+        },
+        {
+            title: "Hidratación Inteligente: Qué beber antes y durante el partido",
+            category: "🍎 NUTRICIÓN",
+            catColor: "#22c55e",
+            imageUrl: "https://images.unsplash.com/photo-1548690312-e3b507d8c110?q=80&w=600&auto=format&fit=crop",
+            emoji: "💧",
+            imgGrad: "linear-gradient(135deg, #6ee7b7 0%, #22c55e 100%)",
+            snippet: "La deshidratación reduce la fuerza y la concentración. Aprende a hidratarte adecuadamente.",
+            contentTemplate: "La deshidratación reduce la concentración y la fuerza muscular. Beber solo agua no es suficiente en días calurosos porque perdemos electrolitos vitales por el sudor. <br><br><strong>{PLAYER1}</strong> nos da su fórmula: <em>'Mezclar agua con bebida isotónica en relación 1:1 me mantiene fresco y con energía sin pesadez estomacal'</em>. Su compañero <strong>{PLAYER2}</strong> recalca que debemos beber pequeños sorbos en cada cambio de pista sin esperar a sentir sed.",
+            readTime: "2 min"
+        },
+        {
+            title: "Comunicación en Pareja: Hablar en pista salva puntos",
+            category: "🤝 COMUNIDAD",
+            catColor: "#a855f7",
+            imageUrl: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=600&auto=format&fit=crop",
+            emoji: "🗣️",
+            imgGrad: "linear-gradient(135deg, #d8b4fe 0%, #a855f7 100%)",
+            snippet: "Cantar la posición de los rivales y coordinar coberturas de pista salva sets.",
+            contentTemplate: "Cantar la posición de los rivales cuando tu compañero va a golpear un globo de espaldas es vital. Utiliza comandos cortos como: 'Vienen', 'Atrás' o 'Centro'. <br><br><strong>{PLAYER1}</strong> destaca: <em>'Mi juego mejoró muchísimo cuando aprendí a hablarle a mi compañero entre puntos'</em>. Su compañero <strong>{PLAYER2}</strong> concluye: <em>'Una pareja coordinada que se comunica bien puede ganarle a dos individualistas de mayor nivel'</em>.",
+            readTime: "3 min"
+        },
+        {
+            title: "Cómo remontar un Match Point en contra en el punto de oro",
+            category: "🧠 MENTAL",
+            catColor: "#38bdf8",
+            imageUrl: "https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=600&auto=format&fit=crop",
+            emoji: "🎯",
+            imgGrad: "linear-gradient(135deg, #7dd3fc 0%, #0ea5e9 100%)",
+            snippet: "Ante un punto de partido en contra, la calma y el juego central son tus mejores armas.",
+            contentTemplate: "Ante un punto de partido en contra, la clave es no precipitarse ni jugar con prisa. Fuerza un punto largo y deja que la presión pase a la pareja rival. <br><br><strong>{PLAYER1}</strong> recuerda: <em>'Estábamos 40-0 abajo en el set definitivo y decidimos asegurar la bola por el centro. Forzamos su error y remontamos'</em>. Su compañero <strong>{PLAYER2}</strong> añade que mantener una respiración pausada entre puntos reduce el estrés competitivo.",
+            readTime: "3 min"
+        },
+        {
+            title: "La Ley de la Concentración: Mantenerse enfocado",
+            category: "🧠 MENTAL",
+            catColor: "#38bdf8",
+            imageUrl: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=600&auto=format&fit=crop",
+            emoji: "🧠",
+            imgGrad: "linear-gradient(135deg, #c084fc 0%, #3b82f6 100%)",
+            snippet: "El pádel es un deporte de rachas. Evita frustrarte por fallos simples y concéntrate.",
+            contentTemplate: "El pádel es un juego de rachas psicológicas. Evita frustrarte por fallos fáciles y mantén el foco en la siguiente bola. <br><br><strong>{PLAYER1}</strong> nos comparte su técnica: <em>'Hago rebotar la pelota tres veces antes del saque para forzarme a concentrarme'</em>. Su compañero <strong>{PLAYER2}</strong> recomienda no discutir tácticas complejas durante el set si hay tensión, sino apoyarse mutuamente con gestos positivos.",
+            readTime: "2 min"
+        },
+        {
+            title: "La Chiquita Decisiva: El golpe táctico avanzado",
+            category: "🏫 CLINIC",
+            catColor: "#ec4899",
+            imageUrl: "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=600&auto=format&fit=crop",
+            emoji: "🎾",
+            imgGrad: "linear-gradient(135deg, #f472b6 0%, #ec4899 100%)",
+            snippet: "Cómo y cuándo jugar una bola lenta a los pies del rival para ganar la red.",
+            contentTemplate: "La chiquita consiste en golpear una bola lenta a los pies de los rivales que están en la red para obligarles a volear por debajo del nivel de la red. <br><br><strong>{PLAYER1}</strong> nos cuenta: <em>'Si colocas una chiquita al pie, puedes subir rápidamente con tu pareja a bloquear su volea forzada'</em>. Su compañero <strong>{PLAYER2}</strong> advierte que jugarla con demasiada velocidad la convierte en un tiro cómodo para el rival.",
+            readTime: "2 min"
+        },
+        {
+            title: "Bandeja vs. Víbora: Diferencias y cuándo usar cada golpe",
+            category: "🏫 CLINIC",
+            catColor: "#ec4899",
+            imageUrl: "https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop",
+            emoji: "🐍",
+            imgGrad: "linear-gradient(135deg, #f472b6 0%, #be185d 100%)",
+            snippet: "Aprende a diferenciar el armado y el efecto de los dos golpes aéreos por excelencia.",
+            contentTemplate: "La bandeja busca mantener la posición de la red con un golpe seguro y cortado. La víbora es más agresiva, con efecto lateral-cortado para definir o desestabilizar. <br><br><strong>{PLAYER1}</strong> explica: <em>'Uso la bandeja para bolas muy altas, y la víbora cuando la bola queda más cómoda a mi derecha'</em>. Su compañero <strong>{PLAYER2}</strong> añade que la víbora requiere transferir más el peso del cuerpo hacia adelante e impactar a la altura de la sien.",
+            readTime: "2 min"
+        },
+        {
+            title: "El Remate por 3 y por 4: Cómo definir el punto",
+            category: "📡 REGLAMENTO",
+            catColor: "#0ea5e9",
+            imageUrl: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=600&auto=format&fit=crop",
+            emoji: "💥",
+            imgGrad: "linear-gradient(135deg, #38bdf8 0%, #1d4ed8 100%)",
+            snippet: "Reglas de recuperación fuera de pista tras un remate liftado de los contrarios.",
+            contentTemplate: "Un remate 'por 3' hace que la bola salga por el lateral de la pista. Los rivales pueden salir a recuperarla si hay espacio de juego autorizado. Un remate 'por 4' sale por el fondo, siendo punto directo. <br><br><strong>{PLAYER1}</strong> opina: <em>'Para sacar la bola por 3 necesitas golpear con efecto liftado e impacto alto'</em>. Su compañero <strong>{PLAYER2}</strong> destaca que el jugador defensor no puede tocar la red ni invadir el campo contrario al recuperar.",
+            readTime: "2 min"
+        },
+        {
+            title: "ELO y Matchmaking: La ciencia detrás de SomosPadel",
+            category: "📡 REGLAMENTO",
+            catColor: "#0ea5e9",
+            imageUrl: "https://images.unsplash.com/photo-1548690312-e3b507d8c110?q=80&w=600&auto=format&fit=crop",
+            emoji: "📊",
+            imgGrad: "linear-gradient(135deg, #93c5fd 0%, #1e40af 100%)",
+            snippet: "Te explicamos cómo nuestro algoritmo equilibra las pistas según tus partidos.",
+            contentTemplate: "Nuestro sistema recalcula los puntos tras cada set disputado en americanas usando un algoritmo ELO adaptado. Si vences a parejas de mayor nivel, sumas más puntos de ranking. <br><br><strong>{PLAYER1}</strong> nos decía: <em>'Es genial ver cómo se equilibra el nivel de la americana ronda a ronda'</em>. Su compañero <strong>{PLAYER2}</strong> añade que jugar partidos oficiales asegura una clasificación más ajustada a la realidad de tu nivel.",
+            readTime: "2 min"
+        },
+        {
+            title: "Cómo elegir el peso ideal de tu pala de pádel",
+            category: "👟 MATERIAL",
+            catColor: "#fb923c",
+            imageUrl: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=600&auto=format&fit=crop",
+            emoji: "⚖️",
+            imgGrad: "linear-gradient(135deg, #fde047 0%, #ca8a04 100%)",
+            snippet: "Manejabilidad vs. Potencia: encuentra el gramaje ideal según tu complexión física.",
+            contentTemplate: "Una pala ligera (menos de 360g) ofrece manejabilidad y rapidez de red, ideal para jugadores amateurs. Una pala pesada (más de 370g) da más potencia pero fatiga el brazo. <br><br><strong>{PLAYER1}</strong> aconseja: <em>'Empezar con una pala ligera te ayuda a pulir la técnica sin sobrecargar tu codo'</em>. Su compañero <strong>{PLAYER2}</strong> añade que el balance (puño o cabeza) influye tanto como el peso en la sensación de ligereza.",
+            readTime: "2 min"
+        },
+        {
+            title: "Táctica: Cómo defender el rebote de pared de fondo",
+            category: "💡 CONSEJOS",
+            catColor: "#f59e0b",
+            imageUrl: "https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop",
+            emoji: "🎾",
+            imgGrad: "linear-gradient(135deg, #fdba74 0%, #f97316 100%)",
+            snippet: "Claves de posicionamiento y lectura del rebote para bolas profundas del rival.",
+            contentTemplate: "La pared de fondo suele ser difícil al principio. La clave es acompañar la bola en su rebote: colócate siempre por detrás de la bola, flexiona bien las rodillas y mantén la pala baja. <br><br><strong>{PLAYER1}</strong> comparte su truco: <em>'Si dejas pasar la bola con calma y esperas al rebote, tienes mucho más tiempo del que crees para armar el golpe'</em>. Su compañero <strong>{PLAYER2}</strong> destaca mantener el cuerpo erguido en el impacto final.",
+            readTime: "2 min"
+        },
+        {
+            title: "Cómo preparar tu Americana: Guía del jugador perfecto",
+            category: "🏆 TORNEOS",
+            catColor: "#facc15",
+            imageUrl: "https://images.unsplash.com/photo-1549060279-7e168fcee0c2?q=80&w=600&auto=format&fit=crop",
+            emoji: "🏆",
+            imgGrad: "linear-gradient(135deg, #fde047 0%, #f59e0b 100%)",
+            snippet: "Consejos para llegar en el mejor estado físico y mental a tu próxima americana.",
+            contentTemplate: "Las americanas son el formato de torneo más popular del pádel amateur. Para rendir al máximo nivel, hay que prepararse física y tácticamente los días previos. <br><br><strong>{PLAYER1}</strong> nos revela su ritual: <em>'La noche antes duermo 8 horas y preparo el bolso con todo para no salir con estrés de casa'</em>. Su compañero <strong>{PLAYER2}</strong> añade que llegar 30 minutos antes del inicio permite hacer un buen calentamiento y conocer las pistas del torneo.",
+            readTime: "3 min"
+        },
+        {
+            title: "Ranking ELO: Cómo subir de nivel en SomosPadel BCN",
+            category: "📈 RANKING",
+            catColor: "#34d399",
+            imageUrl: "https://images.unsplash.com/photo-1519766304817-4f37bda74a26?q=80&w=600&auto=format&fit=crop",
+            emoji: "📈",
+            imgGrad: "linear-gradient(135deg, #6ee7b7 0%, #059669 100%)",
+            snippet: "Estrategias para mejorar tu posición en el ranking y conseguir más puntos por set.",
+            contentTemplate: "El sistema de ranking de SomosPadel BCN premia la consistencia y la dificultad de los rivales. Ganar un set a una pareja de mayor nivel suma más puntos que vencer a parejas de nivel menor. <br><br><strong>{PLAYER1}</strong> comparte su filosofía: <em>'Prefiero jugar contra los mejores y perder por poco que ganar fácil — aprendo más y sumo mejor'</em>. Su compañero <strong>{PLAYER2}</strong> destaca que la regularidad es clave: <em>'Jugar todas las semanas, aunque sea una americana pequeña, te mantiene activo en el ranking y evita penalizaciones de inactividad'</em>.",
+            readTime: "2 min"
         }
     ];
 
@@ -606,22 +652,7 @@
         };
     }
 
-    function buildTacticalTipArticle(tip, index) {
-        const weekNum = Math.ceil(new Date().getDate() / 7);
-        return {
-            id: `tactical-tip-${index}-week-${new Date().toISOString().slice(0,7)}-w${weekNum}`,
-            category: '💡 CONSEJOS',
-            catColor: '#f59e0b',
-            emoji: tip.emoji,
-            imgGrad: tip.imgGrad,
-            title: tip.title,
-            snippet: tip.snippet,
-            content: tip.content, // Now is preformatted premium HTML!
-            date: timeAgo(Date.now() - 18000000),
-            readTime: '3 min',
-            timestamp: Date.now() - 18000000 - index * 3600000
-        };
-    }
+    // buildTacticalTipArticle ha sido unificado en la lógica de generación inteligente.
 
     function buildStatsArticle(stats) {
         const { totalMatches, totalPlayers, totalEvents } = stats;
@@ -760,6 +791,123 @@
                 this._addLog(`⚠️ No se pudo limpiar posts antiguos: ${e.message}`, 'error');
                 return 0;
             }
+        },
+
+        async _getRealPlayers(db) {
+            try {
+                let snapshot = await db.collection('players').limit(15).get();
+                if (snapshot.empty) {
+                    snapshot = await db.collection('users').limit(15).get();
+                }
+                if (!snapshot.empty) {
+                    return snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return data.name || data.displayName || "Alejandro Coscolín";
+                    });
+                }
+            } catch (e) {
+                console.warn("[AutoBlogEngine] Fallo al obtener jugadores reales, usando fallback:", e);
+            }
+            return ["Alejandro Coscolín", "Bernat Pecharromán", "Alberto Javier Martín", "Jordi Díaz", "Carlos Jiménez", "Jordi Díaz"];
+        },
+
+        async _getRecentCategories(db, limit = 5) {
+            try {
+                const snapshot = await db.collection('blog_posts')
+                    .orderBy('timestamp', 'desc')
+                    .limit(limit)
+                    .get();
+                if (!snapshot.empty) {
+                    return snapshot.docs.map(doc => doc.data().category || '').filter(Boolean);
+                }
+            } catch (e) {
+                console.warn('[AutoBlogEngine] No se pudieron obtener categorías recientes:', e);
+            }
+            return [];
+        },
+
+        async _generateWithGemini(key, player1, player2, usedCategories = []) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+            
+            const categories = [
+                { name: '💡 CONSEJOS', color: '#f59e0b', emoji: '💡' },
+                { name: '👟 MATERIAL', color: '#fb923c', emoji: '👟' },
+                { name: '💪 SALUD & BIENESTAR', color: '#ef4444', emoji: '💪' },
+                { name: '🍎 NUTRICIÓN', color: '#22c55e', emoji: '🍎' },
+                { name: '🤝 COMUNIDAD', color: '#a855f7', emoji: '🤝' },
+                { name: '🧠 MENTAL', color: '#38bdf8', emoji: '🧠' },
+                { name: '🏫 CLINIC', color: '#ec4899', emoji: '🏫' },
+                { name: '📡 REGLAMENTO', color: '#0ea5e9', emoji: '📡' },
+                { name: '🏆 TORNEOS', color: '#facc15', emoji: '🏆' },
+                { name: '📈 RANKING', color: '#34d399', emoji: '📈' }
+            ];
+            
+            const freshCategories = categories.filter(c => !usedCategories.includes(c.name));
+            const pool = freshCategories.length > 0 ? freshCategories : categories;
+            const chosenCategory = pool[Math.floor(Math.random() * pool.length)];
+
+            const prompt = `
+            Eres un periodista deportivo e instructor de élite de la comunidad SomosPadel BCN.
+            Tu tarea es redactar un artículo de blog/noticia fascinante en español sobre pádel.
+            Debes devolver ÚNICAMENTE un objeto JSON estructurado con los siguientes campos (no incluyas comentarios ni marcas markdown, solo el JSON):
+            
+            {
+              "title": "Un título de alta conversión y llamativo relacionado con el tema",
+              "snippet": "Resumen corto de 1-2 líneas de gancho para el lector",
+              "category": "${chosenCategory.name}",
+              "catColor": "${chosenCategory.color}",
+              "emoji": "${chosenCategory.emoji}",
+              "imageUrl": "Elige una URL de imagen de Unsplash según el tema. Puedes usar:
+                           - Para Táctica/Clinic: https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop
+                           - Para Material: https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=600&auto=format&fit=crop
+                           - Para Salud/Mental: https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=600&auto=format&fit=crop
+                           - Para Nutrición: https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=600&auto=format&fit=crop
+                           - Para Comunidad: https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=600&auto=format&fit=crop
+                           (U otra URL similar de Unsplash de alta calidad)",
+              "imgGrad": "Un gradiente lineal CSS sutil para la cabecera (ej: linear-gradient(135deg, #fb923c 0%, #f97316 100%))",
+              "content": "El cuerpo del artículo en formato HTML. Debe ser extenso (mínimo 300 palabras), estructurado e incluir:
+                          1. Introducción emocionante.
+                          2. Un bloque con fondo traslúcido y borde sutil (background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px;) titulado '🎯 ¿Por qué es fundamental?'.
+                          3. Guía paso a paso numerada (1, 2, 3) con títulos y descripciones cortas.
+                          4. Ejemplos prácticos nombrando a dos jugadores reales del club para simular su participación: '${player1}' and '${player2}'. Invéntate opiniones o consejos ingeniosos entre comillas de cada uno sobre el tema.
+                          5. Una sección '❌ Errores Comunes a Evitar'.
+                          6. Un bloque final con degradado sutil (con borde coloreado) titulado '💡 El Secreto del Coach' con un consejo avanzado de alto nivel.",
+              "readTime": "3 min"
+            }
+            `;
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json", temperature: 0.7 }
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Gemini HTTP Error ${response.status}`);
+            }
+
+            const data = await response.json();
+            const jsonText = data.candidates[0].content.parts[0].text;
+            const parsed = JSON.parse(jsonText);
+
+            return {
+                title: parsed.title,
+                category: parsed.category || chosenCategory.name,
+                catColor: parsed.catColor || chosenCategory.color,
+                imageUrl: parsed.imageUrl || chosenCategory.imageUrl,
+                snippet: parsed.snippet,
+                content: parsed.content,
+                date: 'Hoy',
+                readTime: parsed.readTime || '3 min',
+                emoji: parsed.emoji || chosenCategory.emoji,
+                imgGrad: parsed.imgGrad || 'linear-gradient(135deg, #1e293b, #0f172a)',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                viewsCount: 0,
+                lastReaderName: 'Ninguno'
+            };
         },
 
         async generate(options = {}) {
@@ -923,16 +1071,101 @@
                 this._addLog(`⚠️ Error en estadísticas: ${e.message}`, 'error');
             }
 
-            // ── CONSEJOS TÁCTICOS (1-2 rotativos por semana) ─────────────
+            // ── GENERACIÓN DINÁMICA DE NOTICIAS DE PÁDEL / CONSEJOS (Gemini o Plantillas Deduplicadas) ──
             try {
-                const weekNum = Math.ceil(new Date().getDate() / 7);
-                const tipIndex = (weekNum + new Date().getMonth()) % TACTICAL_TIPS.length;
-                const tip2Index = (tipIndex + 1) % TACTICAL_TIPS.length;
-                articles.push(buildTacticalTipArticle(TACTICAL_TIPS[tipIndex], tipIndex));
-                articles.push(buildTacticalTipArticle(TACTICAL_TIPS[tip2Index], tip2Index));
-                this._addLog(`💡 2 consejos tácticos seleccionados para esta semana.`, 'info');
+                this._addLog('🧠 Iniciando generación de artículo educativo/consejos...', 'info');
+                const players = await this._getRealPlayers(db);
+                const p1Idx = Math.floor(Math.random() * players.length);
+                let p2Idx = Math.floor(Math.random() * players.length);
+                if (p2Idx === p1Idx) p2Idx = (p1Idx + 1) % players.length;
+                const player1 = players[p1Idx];
+                const player2 = players[p2Idx];
+
+                const savedKey = localStorage.getItem('somospadel_gemini_api_key') || '';
+                let newPost = null;
+                let genTitle = '';
+
+                // Obtener categorías de posts recientes
+                const recentCategories = await this._getRecentCategories(db, 6);
+                this._addLog(`📊 Categorías recientes en Firestore: ${recentCategories.join(', ') || 'ninguna'}`, 'info');
+
+                // 1. Intentar con Gemini
+                if (savedKey) {
+                    try {
+                        this._addLog('🧠 Llamando a la API de Gemini para artículo 100% original...', 'info');
+                        newPost = await this._generateWithGemini(savedKey, player1, player2, recentCategories);
+                        genTitle = newPost.title;
+                    } catch (geminiErr) {
+                        this._addLog(`⚠️ Gemini falló: ${geminiErr.message}. Usando fallbacks...`, 'error');
+                    }
+                }
+
+                // 2. Fallback con Plantillas Deduplicadas
+                if (!newPost) {
+                    this._addLog('📡 Utilizando pool de plantillas deduplicadas...', 'info');
+                    let publishedTitles = [];
+                    try {
+                        const snapshot = await db.collection('blog_posts')
+                            .orderBy('timestamp', 'desc')
+                            .limit(30)
+                            .get();
+                        if (!snapshot.empty) {
+                            publishedTitles = snapshot.docs.map(doc => doc.data().title || '');
+                        }
+                    } catch (fsErr) {
+                        this._addLog(`⚠️ Error al leer posts para deduplicar: ${fsErr.message}`, 'error');
+                    }
+
+                    const unusedByTitle = TEMPLATES.filter(t => !publishedTitles.includes(t.title));
+                    const freshByCategory = unusedByTitle.filter(t => !recentCategories.includes(t.category));
+
+                    let selectedTemplate;
+                    if (freshByCategory.length > 0) {
+                        selectedTemplate = freshByCategory[Math.floor(Math.random() * freshByCategory.length)];
+                        this._addLog(`🎯 Plantilla seleccionada (título + categoría nuevos): "${selectedTemplate.title}"`, 'info');
+                    } else if (unusedByTitle.length > 0) {
+                        selectedTemplate = unusedByTitle[Math.floor(Math.random() * unusedByTitle.length)];
+                        this._addLog(`🔄 Plantilla seleccionada (título nuevo): "${selectedTemplate.title}"`, 'info');
+                    } else {
+                        const notRecentCat = TEMPLATES.filter(t => !recentCategories.includes(t.category));
+                        const pool = notRecentCat.length > 0 ? notRecentCat : TEMPLATES;
+                        selectedTemplate = pool[Math.floor(Math.random() * pool.length)];
+                        this._addLog(`♻️ Reutilizando plantilla (categoría no reciente): "${selectedTemplate.title}"`, 'info');
+                    }
+
+                    const content = selectedTemplate.contentTemplate
+                        .replace(/{PLAYER1}/g, player1)
+                        .replace(/{PLAYER2}/g, player2);
+
+                    newPost = {
+                        title: selectedTemplate.title,
+                        category: selectedTemplate.category,
+                        catColor: selectedTemplate.catColor,
+                        imageUrl: selectedTemplate.imageUrl,
+                        snippet: selectedTemplate.snippet,
+                        content: content,
+                        date: 'Hoy',
+                        readTime: selectedTemplate.readTime,
+                        emoji: selectedTemplate.emoji || '📰',
+                        imgGrad: selectedTemplate.imgGrad || 'linear-gradient(135deg, #1e293b, #0f172a)',
+                        timestamp: Date.now(),
+                        viewsCount: 0,
+                        lastReaderName: 'Ninguno'
+                    };
+                    genTitle = selectedTemplate.title;
+                }
+
+                if (newPost) {
+                    const safeTitle = genTitle.toLowerCase()
+                        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                        .replace(/[^a-z0-9]+/g, '-').slice(0, 35);
+                    newPost.id = `auto-post-admin-${safeTitle}-${Date.now().toString().slice(-4)}`;
+                    articles.push(newPost);
+                    this._addLog(`💡 Noticia de aprendizaje añadida para publicar: "${genTitle}"`, 'info');
+                }
+
             } catch (e) {
-                this._addLog(`⚠️ Error en consejos: ${e.message}`, 'error');
+                this._addLog(`⚠️ Error en consejos/IA: ${e.message}`, 'error');
             }
 
             // ── PUBLICAR TODOS LOS ARTÍCULOS ─────────────────────────────
