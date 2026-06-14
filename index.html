@@ -173,15 +173,23 @@
                 try {
                     console.log("🧹 [Debug] Forzando actualización y limpieza de caché...");
                     if ('caches' in window) {
-                        const keys = await caches.keys();
-                        for (const key of keys) {
-                            await caches.delete(key);
+                        try {
+                            const keys = await caches.keys();
+                            for (const key of keys) {
+                                await caches.delete(key);
+                            }
+                        } catch (cacheErr) {
+                            console.warn("No se pudo limpiar la caché de objetos:", cacheErr);
                         }
                     }
-                    if ('serviceWorker' in navigator) {
-                        const regs = await navigator.serviceWorker.getRegistrations();
-                        for (const reg of regs) {
-                            await reg.unregister();
+                    if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
+                        try {
+                            const regs = await navigator.serviceWorker.getRegistrations();
+                            for (const reg of regs) {
+                                await reg.unregister();
+                            }
+                        } catch (swErr) {
+                            console.warn("No se pudo desregistrar el Service Worker:", swErr);
                         }
                     }
                     localStorage.removeItem('somospadel_last_news_gen_date');
