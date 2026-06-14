@@ -591,6 +591,21 @@
                 }
             };
 
+            // Helper to show weather details on click
+            window.showWeatherDetails = () => {
+                console.log("🌦️ [Weather Details] Scrolling to weather widget...");
+                const target = document.getElementById('weather-widget-root');
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Find the toggle button for El Prat or the first card and click it to expand
+                    const btn = document.querySelector('[id^="weather-btn-"]');
+                    const details = document.querySelector('[id^="weather-details-"]');
+                    if (details && details.style.display === 'none' && btn) {
+                        btn.click();
+                    }
+                }
+            };
+
             if (window.Store) {
                 this.unsubDashboard = window.Store.subscribe('dashboardData', (data) => {
                     if (window.Router && window.Router.currentRoute === 'dashboard') {
@@ -2517,7 +2532,7 @@
                 if (weatherData && weatherData[0]) {
                     const w = weatherData[0];
                     itemsHtml.push(`
-                    <div class="registration-ticker-card holo-card" onclick="window.dashNavigate('weather_story', 'weather')" style="cursor: pointer; min-width: 260px; width: 260px; height: 135px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.85) 100%); border-radius: 20px; padding: 15px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); display:flex; flex-direction:column; justify-content:space-between; margin-right: 15px;">
+                    <div class="registration-ticker-card holo-card" onclick="window.showWeatherDetails()" style="cursor: pointer; min-width: 260px; width: 260px; height: 135px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.85) 100%); border-radius: 20px; padding: 15px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); display:flex; flex-direction:column; justify-content:space-between; margin-right: 15px;">
                         <!-- Background icon decoration -->
                         <div style="position: absolute; right: -10px; bottom: -10px; font-size: 5rem; opacity: 0.06; filter: blur(1px); pointer-events: none;">${w.icon}</div>
                         
