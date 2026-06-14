@@ -1213,15 +1213,6 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                         action: "window.Router.navigate('profile')"
                     },
                     {
-                        tag: '🛍️ TIENDA VIP',
-                        icon: 'fa-shopping-bag',
-                        bgColor: 'linear-gradient(135deg, #312e81 0%, #4338ca 100%)',
-                        accent: '#818cf8',
-                        title: 'Tienda Oficial (En Breve)',
-                        desc: 'Muy pronto disponible la tienda online oficial integrada directamente en esta app.',
-                        action: "window.StoryFeedWidget ? window.StoryFeedWidget.showStory('shop') : alert('Tienda online oficial integrada muy pronto en la app.')"
-                    },
-                    {
                         tag: 'ðŸ’¡ SMART TIP',
                         icon: 'fa-brain',
                         bgColor: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
