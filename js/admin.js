@@ -66,6 +66,13 @@ window.AdminAuth = {
                 if (window.BatSignalAgent) {
                     window.BatSignalAgent.init();
                 }
+
+                // --- AUTOBLOG CRON PASIVO ---
+                setTimeout(() => {
+                    if (window.AutoBlogEngine && typeof window.AutoBlogEngine.checkAndGeneratePassive === 'function') {
+                        window.AutoBlogEngine.checkAndGeneratePassive();
+                    }
+                }, 1500); // 1.5s delay to ensure Firebase initializes first
             }, 500);
         } else {
             console.log("🔒 No active session. Waiting for PIN...");
