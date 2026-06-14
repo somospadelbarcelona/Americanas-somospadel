@@ -628,6 +628,117 @@
             const user = window.Store ? window.Store.getState('currentUser') : null;
             const userLevel = user ? (user.level || "3.5") : "3.5";
 
+            // Soft Refresh if elements already exist in the DOM (prevents flickering and keeps WebGL/Three.js context alive)
+            const isAlreadyRendered = document.getElementById('hero-card-root') !== null;
+            if (isAlreadyRendered) {
+                console.log("⚡ [DashboardView] Already rendered, performing soft refresh...");
+                try {
+                    // Update user stats dynamically
+                    const lvlEl = document.getElementById('user-level-val');
+                    if (lvlEl) lvlEl.innerText = userLevel;
+                    const rnkEl = document.getElementById('user-ranking-val');
+                    if (rnkEl) rnkEl.innerText = `#${user ? (user.ranking_pos || '—') : '—'}`;
+                    const mtcEl = document.getElementById('user-matches-val');
+                    if (mtcEl) mtcEl.innerText = user ? (user.total_matches || '0') : '0';
+
+                    // Build fresh context and load dynamic widgets
+                    const context = await this.buildContext(user);
+                    await this.loadLiveWidgetContent(context);
+
+                    // Refresh Weather & Windy Radar in background
+                    let weatherData = [];
+                    if (window.WeatherService) {
+                        try {
+                            weatherData = await window.WeatherService.getDashboardWeather();
+                        } catch (e) { console.error("Weather fetch failed during soft refresh", e); }
+                    }
+                    const weatherRoot = document.getElementById('weather-widget-root');
+                    if (weatherRoot && weatherData && weatherData.length > 0) {
+                        let weatherHtml = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">`;
+                        weatherData.forEach(w => {
+                            weatherHtml += this.renderWeatherCard(
+                                w.name,
+                                `${w.temp}°C`,
+                                w.icon,
+                                {
+                                    wind: `${w.wind} km/h`,
+                                    hum: `${w.humidity}%`,
+                                    rain: `${w.rainProb}%`,
+                                    uv: w.uv,
+                                    pressure: w.pressure,
+                                    visibility: w.visibility,
+                                    intel: w.intelligence
+                                },
+                                w.isPropitious
+                            );
+                        });
+                        weatherHtml += `</div>`;
+                        
+                        weatherHtml += `
+                            <style>
+                                @keyframes livePulse {
+                                    0% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0.7); transform: scale(1); opacity: 1; }
+                                    70% { box-shadow: 0 0 0 8px rgba(0, 227, 109, 0); transform: scale(1.2); opacity: 0.8; }
+                                    100% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0); transform: scale(1); opacity: 1; }
+                                }
+                                @keyframes borderFlow {
+                                    0% { border-color: rgba(255, 255, 255, 0.1); }
+                                    50% { border-color: rgba(255, 255, 255, 0.25); }
+                                    100% { border-color: rgba(255, 255, 255, 0.1); }
+                                }
+                            </style>
+                            <div style="position: relative; border-radius: 32px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); background: #0f172a; animation: borderFlow 4s infinite;">
+                                <div style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <span style="font-size:0.75rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR TÁCTICO <span style="color:#CCFF00;">WAR ROOM</span></span>
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <button onclick="window.DashboardView.toggleTacticalHUD()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.3s; pointer-events: auto;">
+                                            <i class="fas fa-eye"></i> TACTICAL HUD
+                                        </button>
+                                        <span style="width:8px; height:8px; background:#00E36D; border-radius:50%; animation: livePulse 2s infinite;"></span>
+                                        <span style="font-size:0.6rem; color: #00E36D; font-weight: 900; letter-spacing:1px;">SCANNING</span>
+                                    </div>
+                                </div>
+                                <div style="width: 100%; height: 280px; position: relative;">
+                                    <iframe width="100%" height="100%" src="https://embed.windy.com/embed2.html?lat=41.320&lon=2.040&zoom=10&level=surface&overlay=radar&product=radar&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1" frameborder="0" style="filter: contrast(1.1) brightness(0.8) grayscale(0.3);" loading="lazy"></iframe>
+                                    <div style="pointer-events:none; position:absolute; inset:0; box-shadow: inset 0 0 50px rgba(0,0,0,0.8); background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(204,255,0,0.03) 100%);"></div>
+                                    <div id="tactical-hud-grip" style="position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-left:3px solid #00E36D; pointer-events:none; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                                        <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">ESTADO DE PISTA</div>
+                                        <div style="font-size:0.75rem; color:#fff; font-weight:1000;">GRIP: <span style="color:#00E36D;">ÓPTIMO (92%)</span></div>
+                                        <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Prob. Pista resbaladiza: 12%</div>
+                                    </div>
+                                    <div id="tactical-hud-bounce" style="position:absolute; top:15px; right:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-right:3px solid #CCFF00; pointer-events:none; text-align:right; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                                        <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">INTELIGENCIA BOLA</div>
+                                        <div style="font-size:0.75rem; color:#fff; font-weight:1000;">REBOTE: <span style="color:#CCFF00;">ALTO (+15%)</span></div>
+                                        <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Bola rápida + Presión detectada</div>
+                                    </div>
+                                    <div style="position:absolute; bottom:0; left:0; width:100%; height:1px; background:#CCFF00; opacity:0.3; box-shadow: 0 0 10px #CCFF00; animation: scannerSlide 4s linear infinite;"></div>
+                                </div>
+                            </div>
+                        `;
+                        weatherRoot.innerHTML = weatherHtml;
+                    }
+
+                    // Refresh News Blog
+                    const blogRoot = document.getElementById('blog-news-widget-root');
+                    if (blogRoot) {
+                        blogRoot.innerHTML = this.renderBlogWidget();
+                    }
+
+                    // Refresh Stories & Open Matches
+                    if (window.StoryFeedWidget) {
+                        window.StoryFeedWidget.render('story-feed-root');
+                    }
+                    if (window.OpenMatchesWidget) {
+                        window.OpenMatchesWidget.render('open-matches-widget-root');
+                    }
+                } catch (err) {
+                    console.error("❌ Soft Refresh error:", err);
+                }
+                return;
+            }
+
             // Header is updated globally by AppInstance in app.js on user change.
             // We just ensure we have visibility on the level here.
 
@@ -644,6 +755,38 @@
                     <!-- 0. HERO CARD (CONTEXT AWARE) -->
                     <div id="hero-card-root" style="animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS (HeroCard) -->
+                    </div>
+
+
+
+                    <!-- 3. EN DIRECTO (PREMIUM DARK GLASS SCROLLER) -->
+                    <div id="registration-widget-root" style="margin: 0 0 16px !important; animation: floatUp 0.8s ease-out forwards;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 20px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div style="width:8px; height:8px; background:#ef4444; border-radius:50%; animation:pulseDot 1.5s infinite;"></div>
+                                <span style="font-size:0.75rem; font-weight:950; color:#ffffff; letter-spacing:1px; text-transform:uppercase;">En Directo</span>
+                            </div>
+                            <span onclick="window.Router.navigate('americanas')" style="font-size:0.65rem; color:#CCFF00; font-weight:950; cursor:pointer;">Ver todo →</span>
+                        </div>
+                        <div id="live-scroller-content" style="width:100%; position:relative; overflow:hidden;">
+                            <style>
+                                @keyframes marqueeNews { 0% { transform: translate3d(0,0,0); } 100% { transform: translate3d(-50%,0,0); } }
+                                .news-marquee-track { display:flex; gap:12px; width:max-content; animation:marqueeNews 45s linear infinite; padding:5px 15px 15px; will-change:transform; }
+                                @media (hover: hover) { .news-marquee-track:hover { animation-play-state: paused; } }
+                                .registration-ticker-card { transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); flex-shrink:0; }
+                                .infinite-scroll-wrapper { display:flex; width:max-content; animation:infiniteScroll 40s linear infinite; }
+                                @keyframes infiniteScroll { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
+                                .holo-card { transition: all 0.3s ease; }
+                                .holo-card:active { transform: scale(0.97); }
+                            </style>
+                            <div id="live-scroller-inner" class="infinite-scroll-wrapper" style="padding-left:15px;">
+                                ${Array(4).fill(0).map(() => `
+                                    <div style="min-width:280px; height:180px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius:24px; border:1px solid rgba(255, 255, 255, 0.08); margin-right:12px; display:flex; align-items:center; justify-content:center; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+                                        <i class="fas fa-circle-notch fa-spin" style="color: rgba(255,255,255,0.2); font-size:1.5rem;"></i>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 4. PULSE STORIES (Instagram Style) -->
@@ -765,7 +908,6 @@
 
                     <!-- 📡 ESPN FACEOFF COMPARATOR -->
                     <div id="player-faceoff-widget-root" style="margin: 0 15px 12px !important; animation: floatUp 0.8s ease-out forwards;"></div>
-
                     <!-- 🎾 WAR ROOM 3D TACTICAL BOARD PREVIEW -->
                     <div id="tactical-3d-widget-root" style="animation: floatUp 0.8s ease-out forwards;"></div>
 
@@ -1312,156 +1454,26 @@
                             { id: 'tactica-centro', category: '💡 CONSEJOS', catColor: '#f59e0b', title: 'Táctica: Jugar al Centro de la Pista', snippet: 'Jugar al medio reduce los ángulos del rival y genera dudas en la pareja contraria.', content: 'El centro de la pista es la clave táctica más potente del pádel. Al tirar al centro reduces ángulos y generas confusión.', date: 'Hace 3 días', readTime: '3 min', imageUrl: 'img/blog_racket_ball.png' }
                         ];
                     }
-                    if (posts.length === 0) { container.innerHTML = ''; return; }
-                    
-                    const visiblePosts = posts.slice(0, 4);
-                    
-                    const postImagesMap = (() => {
-                        const pool = [
-                            'img/blog_action_smash.png', 
-                            'img/blog_court_night.png', 
-                            'img/blog_racket_ball.png', 
-                            'img/blog_ball_glass.png', 
-                            'img/blog_player_victory.png', 
-                            'img/blog_club_lounge.png'
-                        ];
-                        const assigned = {};
-                        const used = new Set();
-                        
-                        // 1. Asignar imageUrls explícitas si son únicas
-                        visiblePosts.forEach(post => {
-                            if (post.imageUrl && !used.has(post.imageUrl)) {
-                                assigned[post.id] = post.imageUrl;
-                                used.add(post.imageUrl);
-                            }
-                        });
-                        
-                        // 2. Asignar preferred según palabras clave (si no se ha usado)
-                        visiblePosts.forEach(post => {
-                            if (assigned[post.id]) return;
-                            const title = (post.title || '').toLowerCase();
-                            const content = (post.content || '').toLowerCase();
-                            let preferred = null;
-                            if (title.includes('torneo') || title.includes('americana') || title.includes('evento') || content.includes('torneo') || content.includes('inscrip')) {
-                                preferred = 'img/blog_action_smash.png';
-                            } else if (title.includes('ranking') || title.includes('clasifica') || title.includes('puntos') || title.includes('elo') || title.includes('racha')) {
-                                preferred = 'img/blog_court_night.png';
-                            } else if (title.includes('táctica') || title.includes('tactica') || title.includes('consejo') || title.includes('clase') || content.includes('centro') || content.includes('pista')) {
-                                preferred = 'img/blog_racket_ball.png';
-                            } else if (title.includes('tienda') || title.includes('sudadera') || title.includes('merch') || title.includes('compra')) {
-                                preferred = 'img/blog_club_lounge.png';
-                            } else if (title.includes('victoria') || title.includes('ganador') || title.includes('campeon')) {
-                                preferred = 'img/blog_player_victory.png';
-                            }
-                            if (preferred && !used.has(preferred)) {
-                                assigned[post.id] = preferred;
-                                used.add(preferred);
-                            }
-                        });
-                        
-                        // 3. Asignar imágenes libres del pool
-                        visiblePosts.forEach((post, idx) => {
-                            if (assigned[post.id]) return;
-                            const available = pool.find(img => !used.has(img));
-                            if (available) {
-                                assigned[post.id] = available;
-                                used.add(available);
-                            } else {
-                                assigned[post.id] = pool[idx % pool.length];
-                            }
-                        });
-                        
-                        return assigned;
-                    })();
-                    
-                    const featured = visiblePosts[0];
-                    const rest = visiblePosts.slice(1);
 
+                    // Guardar en caché local para filtrado instantáneo
+                    this.cachedBlogPosts = posts;
 
-                    const featuredCard = `
-                        <div onclick="window.DashboardView.openBlogPost('${featured.id}')"
-                             class="premium-blog-3d-card"
-                             style="border-radius: 20px; overflow: hidden; cursor: pointer; position: relative; min-height: 220px; box-shadow: 0 12px 30px rgba(0,0,0,0.06); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid rgba(0, 0, 0, 0.05); transform-style: preserve-3d; perspective: 1000px;"
-                             onmouseover="this.style.transform='translateY(-5px) scale(1.005)';"
-                             onmouseout="this.style.transform='translateY(0) scale(1)';"
-                        >
-                            <!-- Imagen de fondo con zoom fluido -->
-                            <div class="featured-blog-bg-image" style="position: absolute; inset: 0; background-image: url('${postImagesMap[featured.id]}'); background-size: cover; background-position: center; transition: transform 0.6s ease;"></div>
-                            
-                            <!-- Overlay degradado oscuro para legibilidad -->
-                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.35) 40%, rgba(15, 23, 42, 0.95) 100%); z-index: 2;"></div>
-                            
-                            <!-- Contenido interior -->
-                            <div style="position: relative; z-index: 3; padding: 20px; display: flex; flex-direction: column; justify-content: flex-end; min-height: 220px; box-sizing: border-box;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                    <span style="font-size: 0.52rem; font-weight: 1000; color: #000; background: #CCFF00; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(204,255,0,0.25);">${featured.category||'TORNEOS'}</span>
-                                    <span style="font-size: 0.5rem; font-weight: 900; color: rgba(255,255,255,0.85); letter-spacing: 0.5px; text-transform: uppercase;">• DESTACADO</span>
-                                </div>
-                                <h3 style="margin: 0 0 6px 0; color: #ffffff; font-weight: 950; font-size: 1.15rem; line-height: 1.25; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.6);">${featured.title}</h3>
-                                <p style="margin: 0 0 12px 0; color: rgba(255,255,255,0.85); font-size: 0.72rem; font-weight: 500; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${featured.snippet}</p>
-                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;">
-                                    <div style="display: flex; align-items: center; gap: 12px;">
-                                        <span style="font-size: 0.6rem; color: rgba(255,255,255,0.7); font-weight: 700; display: flex; align-items: center; gap: 4px;"><i class="far fa-calendar" style="font-size: 0.55rem; color: #CCFF00;"></i>${featured.date||'Hoy'}</span>
-                                        <span style="font-size: 0.6rem; color: rgba(255,255,255,0.7); font-weight: 700; display: flex; align-items: center; gap: 4px;"><i class="far fa-clock" style="font-size: 0.55rem; color: #CCFF00;"></i>${featured.readTime||'3 min'}</span>
-                                    </div>
-                                    <div style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 20px; padding: 6px 14px; font-size: 0.6rem; font-weight: 950; color: #ffffff; display: flex; align-items: center; gap: 5px; transition: all 0.25s;"
-                                         class="featured-blog-btn">
-                                        LEER MÁS <i class="fas fa-arrow-right" style="font-size: 0.5rem; transition: transform 0.2s;"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>`;
-  
-                    const compactCards = rest.map(post => `
-                        <div onclick="window.DashboardView.openBlogPost('${post.id}')"
-                             class="premium-blog-compact-card"
-                             style="display: flex; gap: 14px; align-items: center; padding: 12px; border-radius: 18px; cursor: pointer; background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.015);"
-                             onmouseover="this.style.background='#f8fafc';this.style.borderColor='rgba(0,0,0,0.08)';this.style.transform='translateX(4px)';"
-                             onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(0,0,0,0.05)';this.style.transform='translateX(0)';"
-                        >
-                            <!-- Miniatura Realista de la Imagen -->
-                            <div style="width: 76px; height: 76px; border-radius: 12px; background-image: url('${postImagesMap[post.id]}'); background-size: cover; background-position: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05);"></div>
-                            
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                                    <span style="font-size: 0.52rem; font-weight: 1000; letter-spacing: 0.8px; color: #4d7c0f; text-transform: uppercase; background: rgba(204,255,0,0.12); border: 1px solid rgba(204,255,0,0.25); padding: 2px 7px; border-radius: 5px;">${(post.category||'NOTICIAS').replace(/^[^\s]+\s/,'')}</span>
-                                    <span style="font-size: 0.55rem; color: #64748b; font-weight: 800; display: flex; align-items: center; gap: 3px;"><i class="far fa-clock" style="font-size: 0.48rem; color: #4d7c0f;"></i>${post.readTime||'3 min'}</span>
-                                </div>
-                                <h4 style="margin: 0 0 4px 0; color: #0f172a; font-weight: 900; font-size: 0.88rem; line-height: 1.25; letter-spacing: -0.2px; font-family: 'Outfit', sans-serif;">${post.title}</h4>
-                                <p style="margin: 0; color: #475569; font-size: 0.68rem; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${post.snippet}</p>
-                            </div>
-                            <div style="flex-shrink: 0; color: #94a3b8; font-size: 0.7rem; transition: transform 0.2s;" class="compact-chevron"><i class="fas fa-chevron-right"></i></div>
-                        </div>
-                    `).join('');
-  
-                    const historyButtonHtml = `
-                        <div style="margin-top: 15px; text-align: center;">
-                            <button onclick="window.DashboardView.openBlogHistory()"
-                                    id="blog-history-open-btn"
-                                    style="background: rgba(15, 23, 42, 0.03); border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 8px 18px; border-radius: 14px; font-size: 0.65rem; font-weight: 850; cursor: pointer; transition: all 0.25s; display: inline-flex; align-items: center; gap: 6px; font-family: 'Outfit', sans-serif;"
-                                    onmouseover="this.style.background='rgba(15, 23, 42, 0.06)';this.style.color='#0f172a';this.style.borderColor='rgba(15, 23, 42, 0.15)';this.style.transform='scale(1.02)';"
-                                    onmouseout="this.style.background='rgba(15, 23, 42, 0.03)';this.style.color='#475569';this.style.borderColor='rgba(15, 23, 42, 0.08)';this.style.transform='scale(1)';"
-                            >
-                                <i class="fas fa-history" style="font-size: 0.6rem; color: #4d7c0f;"></i> VER MÁS NOTICIAS (HISTÓRICO)
-                            </button>
-                        </div>
-                    `;
-                    container.innerHTML = featuredCard + `<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">${compactCards}</div>` + historyButtonHtml;
+                    // Renderizar con categoría ALL
+                    this.renderBlogPostsHTML(posts, 'ALL');
 
-  
                 } catch (err) {
                     console.error("Fallo al inyectar blog posts dinámicos:", err);
                     container.innerHTML = '';
                 }
             }, 100);
-  
+
             return `
                 <div class="blog-widget-main-container" style="background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(10, 25, 47, 0.03); position: relative; overflow: hidden; perspective: 1000px; transform-style: preserve-3d;">
                     <!-- Efectos de brillo de fondo ultra sutiles (marca SomosPadel) -->
                     <div style="position: absolute; top: -60px; right: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(204,255,0,0.06) 0%, transparent 70%); pointer-events: none; filter: blur(25px);"></div>
                     <div style="position: absolute; bottom: -60px; left: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(46,97,255,0.04) 0%, transparent 70%); pointer-events: none; filter: blur(25px);"></div>
                     
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid rgba(15, 23, 42, 0.06);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(15, 23, 42, 0.06);">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <div style="width: 32px; height: 32px; border-radius: 10px; background: #000000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(204,255,0,0.2); border: 1.5px solid #CCFF00;">
                                 <i class="fas fa-newspaper" style="font-size: 0.8rem; color: #CCFF00;"></i>
@@ -1475,6 +1487,17 @@
                             <span style="width: 4px; height: 4px; background: #CCFF00; border-radius: 50%; display: inline-block; animation: neonPulseGreen 1.5s infinite alternate; box-shadow: 0 0 4px #CCFF00;"></span>OFICIAL
                         </div>
                     </div>
+
+                    <!-- Fila de filtros de categoría premium -->
+                    <div class="blog-categories-filter" style="display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none;">
+                        <button onclick="window.DashboardView.filterBlogCategory('ALL')" class="blog-filter-btn active" style="flex-shrink: 0; background: #CCFF00; border: 1px solid #CCFF00; color: #000; padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 900; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 4px 10px rgba(204,255,0,0.15);">TODAS</button>
+                        <button onclick="window.DashboardView.filterBlogCategory('TORNEOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🏆 TORNEOS</button>
+                        <button onclick="window.DashboardView.filterBlogCategory('CONSEJOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">💡 CONSEJOS</button>
+                        <button onclick="window.DashboardView.filterBlogCategory('RANKING')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📊 RANKING</button>
+                        <button onclick="window.DashboardView.filterBlogCategory('CRÓNICAS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📝 CRÓNICAS</button>
+                        <button onclick="window.DashboardView.filterBlogCategory('COMUNIDAD')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">👥 COMUNIDAD</button>
+                    </div>
+                    
                     <div id="dynamic-blog-posts-container" style="display: flex; flex-direction: column; gap: 10px;">
                         ${[0,1,2].map(i => `
                             <div style="display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 14px; background: #f8fafc; border: 1px solid rgba(0,0,0,0.03);">
@@ -1494,8 +1517,11 @@
                         0% { opacity: 0.6; }
                         100% { opacity: 1; }
                     }
+                    .blog-categories-filter::-webkit-scrollbar {
+                        display: none;
+                    }
                     .premium-blog-3d-card:hover .featured-blog-bg-image {
-                        transform: scale(1.04);
+                        transform: scale(1.06);
                     }
                     .premium-blog-3d-card:hover .featured-blog-btn {
                         background: #CCFF00 !important;
@@ -1510,8 +1536,224 @@
                         transform: translateX(3px);
                         color: #CCFF00 !important;
                     }
+                    .premium-blog-compact-card:hover .compact-blog-thumb {
+                        transform: scale(1.08);
+                    }
+                    
+                    /* Animación premium de desvanecimiento para las tarjetas del blog */
+                    .blog-animate-fade-in {
+                        animation: postFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+                    }
+                    @keyframes postFadeIn {
+                        from {
+                            opacity: 0;
+                            transform: translateY(10px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
                 </style>
             `;
+        }
+
+        filterBlogCategory(category) {
+            // Actualizar botones activos
+            const filterContainer = document.querySelector('.blog-categories-filter');
+            if (filterContainer) {
+                const buttons = filterContainer.querySelectorAll('.blog-filter-btn');
+                buttons.forEach(btn => {
+                    const btnOnclick = btn.getAttribute('onclick') || '';
+                    if (btnOnclick.includes(`'${category}'`)) {
+                        btn.classList.add('active');
+                        btn.style.background = '#CCFF00';
+                        btn.style.borderColor = '#CCFF00';
+                        btn.style.color = '#000';
+                        btn.style.boxShadow = '0 4px 10px rgba(204,255,0,0.15)';
+                        btn.style.fontWeight = '900';
+                    } else {
+                        btn.classList.remove('active');
+                        btn.style.background = 'transparent';
+                        btn.style.borderColor = 'rgba(15, 23, 42, 0.08)';
+                        btn.style.color = '#475569';
+                        btn.style.boxShadow = 'none';
+                        btn.style.fontWeight = '850';
+                    }
+                });
+            }
+
+            // Renderizar filtrado
+            this.renderBlogPostsHTML(this.cachedBlogPosts || [], category);
+        }
+
+        renderBlogPostsHTML(posts, categoryFilter) {
+            const container = document.getElementById('dynamic-blog-posts-container');
+            if (!container) return;
+
+            // Filtrar posts según categoría
+            let filtered = posts;
+            if (categoryFilter !== 'ALL') {
+                filtered = posts.filter(post => {
+                    const postCat = (post.category || '').toUpperCase();
+                    // Limpiar emojis o caracteres no alfanuméricos simples
+                    return postCat.includes(categoryFilter) || 
+                           postCat.replace(/[^A-ZÁÉÍÓÚÑ]/g, '').includes(categoryFilter);
+                });
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="blog-animate-fade-in" style="text-align: center; padding: 30px 10px; color: #94a3b8; font-family: 'Outfit';">
+                        <i class="far fa-folder-open" style="font-size: 1.8rem; color: rgba(15, 23, 42, 0.15); margin-bottom: 8px; display: block;"></i>
+                        <span style="font-size: 0.72rem; font-weight: 700; display: block;">No hay noticias en esta categoría</span>
+                        <span style="font-size: 0.58rem; color: #cbd5e1; display: block; margin-top: 2px;">¡Pronto publicaremos nuevo contenido táctico!</span>
+                    </div>
+                `;
+                return;
+            }
+
+            const visiblePosts = filtered.slice(0, 4);
+
+            // Deduplicación inteligente de imágenes para evitar fallbacks locales repetidos
+            const postImagesMap = (() => {
+                const pool = [
+                    'img/blog_action_smash.png', 
+                    'img/blog_court_night.png', 
+                    'img/blog_racket_ball.png', 
+                    'img/blog_ball_glass.png', 
+                    'img/blog_player_victory.png', 
+                    'img/blog_club_lounge.png'
+                ];
+                const assigned = {};
+                const used = new Set();
+                
+                // 1. Asignar imageUrls explícitas (se priorizan siempre las URLs de Unsplash / externas)
+                visiblePosts.forEach(post => {
+                    if (post.imageUrl) {
+                        assigned[post.id] = post.imageUrl;
+                        if (!post.imageUrl.startsWith('http')) {
+                            used.add(post.imageUrl);
+                        }
+                    }
+                });
+                
+                // 2. Asignar preferred según palabras clave
+                visiblePosts.forEach(post => {
+                    if (assigned[post.id]) return;
+                    const title = (post.title || '').toLowerCase();
+                    const content = (post.content || '').toLowerCase();
+                    let preferred = null;
+                    if (title.includes('torneo') || title.includes('americana') || title.includes('evento') || content.includes('torneo') || content.includes('inscrip')) {
+                        preferred = 'img/blog_action_smash.png';
+                    } else if (title.includes('ranking') || title.includes('clasifica') || title.includes('puntos') || title.includes('elo') || title.includes('racha')) {
+                        preferred = 'img/blog_court_night.png';
+                    } else if (title.includes('táctica') || title.includes('tactica') || title.includes('consejo') || title.includes('clase') || content.includes('centro') || content.includes('pista')) {
+                        preferred = 'img/blog_racket_ball.png';
+                    } else if (title.includes('tienda') || title.includes('sudadera') || title.includes('merch') || title.includes('compra')) {
+                        preferred = 'img/blog_club_lounge.png';
+                    } else if (title.includes('victoria') || title.includes('ganador') || title.includes('campeon')) {
+                        preferred = 'img/blog_player_victory.png';
+                    }
+                    if (preferred && !used.has(preferred)) {
+                        assigned[post.id] = preferred;
+                        used.add(preferred);
+                    }
+                });
+                
+                // 3. Asignar imágenes libres del pool
+                visiblePosts.forEach((post, idx) => {
+                    if (assigned[post.id]) return;
+                    const available = pool.find(img => !used.has(img));
+                    if (available) {
+                        assigned[post.id] = available;
+                        used.add(available);
+                    } else {
+                        assigned[post.id] = pool[idx % pool.length];
+                    }
+                });
+                
+                return assigned;
+            })();
+
+            // Guardar mapeo de imágenes en la instancia para que openBlogPost pueda leerlo
+            this.currentImagesMap = { ...this.currentImagesMap, ...postImagesMap };
+
+            const featured = visiblePosts[0];
+            const rest = visiblePosts.slice(1);
+
+            const featuredCard = `
+                <div onclick="window.DashboardView.openBlogPost('${featured.id}')"
+                     class="premium-blog-3d-card blog-animate-fade-in"
+                     style="border-radius: 20px; overflow: hidden; cursor: pointer; position: relative; min-height: 220px; box-shadow: 0 12px 30px rgba(0,0,0,0.06); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid rgba(0, 0, 0, 0.05); transform-style: preserve-3d; perspective: 1000px;"
+                     onmouseover="this.style.transform='translateY(-5px) scale(1.005)';"
+                     onmouseout="this.style.transform='translateY(0) scale(1)';"
+                >
+                    <!-- Imagen de fondo con zoom fluido -->
+                    <div class="featured-blog-bg-image" style="position: absolute; inset: 0; background-image: url('${postImagesMap[featured.id]}'); background-size: cover; background-position: center; transition: transform 0.6s ease;"></div>
+                    
+                    <!-- Overlay degradado oscuro para legibilidad -->
+                    <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.35) 40%, rgba(15, 23, 42, 0.95) 100%); z-index: 2;"></div>
+                    
+                    <!-- Contenido interior -->
+                    <div style="position: relative; z-index: 3; padding: 20px; display: flex; flex-direction: column; justify-content: flex-end; min-height: 220px; box-sizing: border-box;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <span style="font-size: 0.52rem; font-weight: 1000; color: #000; background: #CCFF00; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(204,255,0,0.25);">${featured.category||'TORNEOS'}</span>
+                            <span style="font-size: 0.5rem; font-weight: 900; color: rgba(255,255,255,0.85); letter-spacing: 0.5px; text-transform: uppercase;">• DESTACADO</span>
+                        </div>
+                        <h3 style="margin: 0 0 6px 0; color: #ffffff; font-weight: 950; font-size: 1.15rem; line-height: 1.25; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.6);">${featured.title}</h3>
+                        <p style="margin: 0 0 12px 0; color: rgba(255,255,255,0.85); font-size: 0.72rem; font-weight: 500; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${featured.snippet}</p>
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: 0.6rem; color: rgba(255,255,255,0.7); font-weight: 700; display: flex; align-items: center; gap: 4px;"><i class="far fa-calendar" style="font-size: 0.55rem; color: #CCFF00;"></i>${featured.date||'Hoy'}</span>
+                                <span style="font-size: 0.6rem; color: rgba(255,255,255,0.7); font-weight: 700; display: flex; align-items: center; gap: 4px;"><i class="far fa-clock" style="font-size: 0.55rem; color: #CCFF00;"></i>${featured.readTime||'3 min'}</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 20px; padding: 6px 14px; font-size: 0.6rem; font-weight: 950; color: #ffffff; display: flex; align-items: center; gap: 5px; transition: all 0.25s;"
+                                 class="featured-blog-btn">
+                                LEER MÁS <i class="fas fa-arrow-right" style="font-size: 0.5rem; transition: transform 0.2s;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            const compactCards = rest.map((post, index) => `
+                <div onclick="window.DashboardView.openBlogPost('${post.id}')"
+                     class="premium-blog-compact-card blog-animate-fade-in"
+                     style="display: flex; gap: 14px; align-items: center; padding: 12px; border-radius: 18px; cursor: pointer; background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.015); animation-delay: ${(index + 1) * 0.04}s;"
+                     onmouseover="this.style.background='#f8fafc';this.style.borderColor='rgba(0,0,0,0.08)';this.style.transform='translateX(4px)';"
+                     onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(0,0,0,0.05)';this.style.transform='translateX(0)';"
+                >
+                    <!-- Miniatura Realista de la Imagen -->
+                    <div style="width: 76px; height: 76px; border-radius: 12px; overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05);">
+                        <div class="compact-blog-thumb" style="width: 100%; height: 100%; background-image: url('${postImagesMap[post.id]}'); background-size: cover; background-position: center; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);"></div>
+                    </div>
+                    
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 0.52rem; font-weight: 1000; letter-spacing: 0.8px; color: #4d7c0f; text-transform: uppercase; background: rgba(204,255,0,0.12); border: 1px solid rgba(204,255,0,0.25); padding: 2px 7px; border-radius: 5px;">${(post.category||'NOTICIAS').replace(/^[^\s]+\s/,'')}</span>
+                            <span style="font-size: 0.55rem; color: #64748b; font-weight: 800; display: flex; align-items: center; gap: 3px;"><i class="far fa-clock" style="font-size: 0.48rem; color: #4d7c0f;"></i>${post.readTime||'3 min'}</span>
+                        </div>
+                        <h4 style="margin: 0 0 4px 0; color: #0f172a; font-weight: 900; font-size: 0.88rem; line-height: 1.25; letter-spacing: -0.2px; font-family: 'Outfit', sans-serif;">${post.title}</h4>
+                        <p style="margin: 0; color: #475569; font-size: 0.68rem; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${post.snippet}</p>
+                    </div>
+                    <div style="flex-shrink: 0; color: #94a3b8; font-size: 0.7rem; transition: transform 0.2s;" class="compact-chevron"><i class="fas fa-chevron-right"></i></div>
+                </div>
+            `).join('');
+
+            const historyButtonHtml = `
+                <div style="margin-top: 15px; text-align: center;" class="blog-animate-fade-in" style="animation-delay: 0.16s;">
+                    <button onclick="window.DashboardView.openBlogHistory()"
+                            id="blog-history-open-btn"
+                            style="background: rgba(15, 23, 42, 0.03); border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 8px 18px; border-radius: 14px; font-size: 0.65rem; font-weight: 850; cursor: pointer; transition: all 0.25s; display: inline-flex; align-items: center; gap: 6px; font-family: 'Outfit', sans-serif;"
+                            onmouseover="this.style.background='rgba(15, 23, 42, 0.06)';this.style.color='#0f172a';this.style.borderColor='rgba(15, 23, 42, 0.15)';this.style.transform='scale(1.02)';"
+                            onmouseout="this.style.background='rgba(15, 23, 42, 0.03)';this.style.color='#475569';this.style.borderColor='rgba(15, 23, 42, 0.08)';this.style.transform='scale(1)';"
+                    >
+                        <i class="fas fa-history" style="font-size: 0.6rem; color: #4d7c0f;"></i> VER MÁS NOTICIAS (HISTÓRICO)
+                    </button>
+                </div>
+            `;
+
+            container.innerHTML = featuredCard + `<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">${compactCards}</div>` + historyButtonHtml;
         }
 
         async openBlogHistory() {
@@ -1948,6 +2190,25 @@
 
                 if (!post) return;
 
+                // Resolver la mejor imagen de fondo para la cabecera (Unsplash dinámico o pool local)
+                let articleImg = post.imageUrl;
+                if (!articleImg && this.currentImagesMap && this.currentImagesMap[postId]) {
+                    articleImg = this.currentImagesMap[postId];
+                }
+                if (!articleImg) {
+                    const title = (post.title || '').toLowerCase();
+                    const category = (post.category || '').toLowerCase();
+                    if (title.includes('torneo') || title.includes('americana') || category.includes('torneo')) {
+                        articleImg = 'img/blog_action_smash.png';
+                    } else if (title.includes('ranking') || category.includes('ranking')) {
+                        articleImg = 'img/blog_court_night.png';
+                    } else if (title.includes('consejo') || title.includes('táctica') || category.includes('consejo')) {
+                        articleImg = 'img/blog_racket_ball.png';
+                    } else {
+                        articleImg = 'img/blog_ball_glass.png';
+                    }
+                }
+
                 const modal = document.createElement('div');
                 modal.id = 'blog-post-modal';
                 modal.style = `
@@ -1964,12 +2225,15 @@
                         <!-- Premium Background Glow/Aura -->
                         <div style="position: absolute; top: 100px; left: -50px; width: 150px; height: 150px; background: radial-gradient(circle, ${post.catColor || '#CCFF00'}15 0%, transparent 70%); pointer-events: none; filter: blur(30px);"></div>
                         
-                        <!-- Gradient Header Area (Apple News style) -->
-                        <div style="background: ${post.imgGrad || 'linear-gradient(135deg, #1e293b, #0f172a)'}; height: 130px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;">
-                            <div style="position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px); background-size: 14px 14px; pointer-events: none;"></div>
-                            <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 60%, rgba(9,15,30,0.95) 100%); pointer-events: none;"></div>
-                            <!-- Huge Floating 3D-effect Emoji -->
-                            <span class="blog-modal-emoji" style="font-size: 4.8rem; filter: drop-shadow(0 12px 24px rgba(0,0,0,0.5)); z-index: 1; line-height: 1;">${post.emoji || '📰'}</span>
+                        <!-- Premium Image Header Area (Magazine style) -->
+                        <div style="background-image: url('${articleImg}'); background-size: cover; background-position: center; height: 200px; position: relative; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;">
+                            <!-- Overlay degradado para fundido limpio a negro (#090f1e) en la base y oscurecimiento para botones -->
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(9, 15, 30, 0.2) 0%, rgba(9, 15, 30, 0.6) 60%, #090f1e 100%); pointer-events: none;"></div>
+                            
+                            <!-- Glassmorphism Floating Emoji Badge -->
+                            <div class="blog-modal-emoji-badge" style="position: absolute; bottom: 16px; right: 16px; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; background: rgba(15, 23, 42, 0.6); border: 1.5px solid rgba(255, 255, 255, 0.25); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 2; animation: badgePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both 0.15s;">
+                                ${post.emoji || '📰'}
+                            </div>
                         </div>
 
                         <!-- Content Area -->
@@ -2009,10 +2273,9 @@
                     <style>
                         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
                         @keyframes slideUp { from { transform: translateY(28px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-                        .blog-modal-emoji { animation: modalEmojiFloat 4s ease-in-out infinite; }
-                        @keyframes modalEmojiFloat {
-                            0%, 100% { transform: translateY(0) scale(1); }
-                            50% { transform: translateY(-7px) scale(1.05); }
+                        @keyframes badgePop {
+                            from { transform: scale(0) rotate(-15deg); opacity: 0; }
+                            to { transform: scale(1) rotate(0deg); opacity: 1; }
                         }
                         #blog-post-content-area::-webkit-scrollbar { width: 6px; }
                         #blog-post-content-area::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 10px; }
@@ -2830,10 +3093,7 @@
             try {
                 const heroRoot = document.getElementById('hero-card-root');
                 if (heroRoot && window.HeroCard) {
-                    // console.log("🃏 [DashboardView] Syncing HeroCard...");
                     heroRoot.innerHTML = window.HeroCard.render(context);
-
-
 
                     // POPUP ALERT: Torneo (Solo ventana emergente)
                     if (context.hasOpenTournament && !context.isSignedUp && window.PremiumModal) {
@@ -2857,11 +3117,11 @@
             } catch (e) {
                 console.error("❌ HeroCard render failed:", e);
             }
-
-
-
-
-
+            try {
+                await this.renderLiveWidget(context);
+            } catch (e) {
+                console.error("❌ renderLiveWidget failed:", e);
+            }
 
 
 

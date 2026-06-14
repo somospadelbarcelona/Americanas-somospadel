@@ -54,51 +54,10 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                     min-height: 100vh;
                     padding-top: 0px !important;">
 
-                    <!-- â‘  WELCOME HERO â€” PadelPulse -->
+                    <!-- ① WELCOME HERO — PadelPulse -->
                     <div id="padel-pulse-widget-root" style="animation: floatUp 0.4s ease-out forwards;"></div>
 
-                    <!-- â‘¡ ACCIONES RÃPIDAS -->
-                    <div style="margin: 0 15px 16px; display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:10px;">
-                        <div onclick="window.Router.navigate('americanas')" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 8px; text-align:center; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.03);" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                            <div style="font-size:1.5rem; margin-bottom:6px;">ðŸ†</div>
-                            <div style="font-size:0.55rem; font-weight:950; color:#0a192f; text-transform:uppercase; letter-spacing:0.5px;">Americ.</div>
-                        </div>
-                        <div onclick="window.Router.navigate('ranking')" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 8px; text-align:center; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.03);" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                            <div style="font-size:1.5rem; margin-bottom:6px;">ðŸ“Š</div>
-                            <div style="font-size:0.55rem; font-weight:950; color:#0a192f; text-transform:uppercase; letter-spacing:0.5px;">Ranking</div>
-                        </div>
-                        <div onclick="window.Router.navigate('equipos')" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 8px; text-align:center; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.03);" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                            <div style="font-size:1.5rem; margin-bottom:6px;">ðŸ‘¥</div>
-                            <div style="font-size:0.55rem; font-weight:950; color:#0a192f; text-transform:uppercase; letter-spacing:0.5px;">Equipos</div>
-                        </div>
-                        <div onclick="window.Router.navigate('profile')" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 8px; text-align:center; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.03);" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                            <div style="font-size:1.5rem; margin-bottom:6px;">ðŸŽ´</div>
-                            <div style="font-size:0.55rem; font-weight:950; color:#0a192f; text-transform:uppercase; letter-spacing:0.5px;">Perfil</div>
-                        </div>
-                    </div>
-
-                    <!-- â‘¢ MI NIVEL â€” Stats compactas -->
-                    <div id="player-progress-hub" style="margin: 0 15px 16px; background: #ffffff; border-radius: 22px; border: 1px solid #e2e8f0; padding: 18px 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.03); display:flex; align-items:center; gap:16px;">
-                        <div style="flex:1; display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; text-align:center;">
-                            <div>
-                                <div style="font-size:0.5rem; color:#64748b; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Nivel</div>
-                                <div style="font-size:1.6rem; font-weight:950; color:#0a192f; line-height:1;">${userLevel}</div>
-                            </div>
-                            <div style="border-left:1px solid #f1f5f9; border-right:1px solid #f1f5f9;">
-                                <div style="font-size:0.5rem; color:#64748b; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Ranking</div>
-                                <div style="font-size:1.6rem; font-weight:950; color:#0a192f; line-height:1;">#${user ? (user.ranking_pos || 'â€”') : 'â€”'}</div>
-                            </div>
-                            <div>
-                                <div style="font-size:0.5rem; color:#64748b; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Partidas</div>
-                                <div style="font-size:1.6rem; font-weight:950; color:#0a192f; line-height:1;">${user ? (user.total_matches || '0') : '0'}</div>
-                            </div>
-                        </div>
-                        <div onclick="window.Router.navigate('profile')" style="flex-shrink:0; background:#5a8a00; color:#fff; padding:12px 16px; border-radius:14px; font-size:0.65rem; font-weight:950; cursor:pointer; text-align:center; white-space:nowrap; box-shadow:0 4px 12px rgba(90,138,0,0.3);">
-                            MI<br>PERFIL â†’
-                        </div>
-                    </div>
-
-                    <!-- â‘£ EN DIRECTO â€” Carrusel eventos/noticias -->
+                    <!-- ③ EN DIRECTO — Carrusel eventos/noticias -->
                     <div id="registration-widget-root" style="margin: 0 0 16px !important; animation: floatUp 0.6s ease-out forwards;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 20px;">
                             <div style="display:flex; align-items:center; gap:8px;">

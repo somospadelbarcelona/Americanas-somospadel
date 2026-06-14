@@ -1461,6 +1461,14 @@ window.Actions = {
                 await window.db.collection(collectionName).doc(evt.id).update(updatePayload);
             }
 
+            // Trigger automatic blog generation silently
+            if (window.AutoBlogEngine && typeof window.AutoBlogEngine.generate === 'function') {
+                console.log('🤖 Lanzando generación de blog automática tras finalizar evento...');
+                window.AutoBlogEngine.generate({ silent: true }).catch(err => {
+                    console.error('Error en generación de blog automática:', err);
+                });
+            }
+
             alert("✅ Evento finalizado correctamente");
 
             // Reload view

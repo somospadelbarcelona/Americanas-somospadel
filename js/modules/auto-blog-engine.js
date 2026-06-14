@@ -826,52 +826,223 @@
             return [];
         },
 
-        async _generateWithGemini(key, player1, player2, usedCategories = []) {
+        async _getRecentFinishedEvents(db, limit = 2) {
+            try {
+                const snapshot = await db.collection('americanas')
+                    .where('status', '==', 'finished')
+                    .orderBy('date', 'desc')
+                    .limit(limit)
+                    .get();
+                if (!snapshot.empty) {
+                    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                }
+            } catch (e) {
+                console.warn('[AutoBlogEngine] Fallo al leer americanas finalizadas con orden:', e);
+                try {
+                    const snapshot = await db.collection('americanas')
+                        .where('status', '==', 'finished')
+                        .limit(limit)
+                        .get();
+                    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                } catch (e2) {}
+            }
+            return [];
+        },
+
+        async _getRecentMatches(db, limit = 6) {
+            try {
+                const snapshot = await db.collection('matches')
+                    .where('status', '==', 'finished')
+                    .orderBy('timestamp', 'desc')
+                    .limit(limit)
+                    .get();
+                if (!snapshot.empty) {
+                    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                }
+            } catch (e) {
+                console.warn('[AutoBlogEngine] Fallo al leer partidos con orden:', e);
+                try {
+                    const snapshot = await db.collection('matches')
+                        .where('status', '==', 'finished')
+                        .limit(limit)
+                        .get();
+                    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                } catch (e2) {}
+            }
+            return [];
+        },
+
+        async _getFutureEvents(db, limit = 3) {
+            try {
+                const snapshot = await db.collection('americanas')
+                    .where('status', 'in', ['open', 'draft'])
+                    .limit(limit)
+                    .get();
+                if (!snapshot.empty) {
+                    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                }
+            } catch (e) {
+                console.warn('[AutoBlogEngine] Fallo al leer eventos futuros:', e);
+            }
+            return [];
+        },
+
+        async _getTopPlayers(db, limit = 5) {
+            try {
+                let snapshot = await db.collection('players')
+                    .orderBy('ranking_points', 'desc')
+                    .limit(limit)
+                    .get();
+                if (snapshot.empty) {
+                    snapshot = await db.collection('users')
+                        .orderBy('ranking_points', 'desc')
+                        .limit(limit)
+                        .get();
+                }
+                if (!snapshot.empty) {
+                    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                }
+            } catch (e) {
+                console.warn('[AutoBlogEngine] Fallo al leer top players ordenados, buscando sin index:', e);
+                try {
+                    let snapshot = await db.collection('players').limit(30).get();
+                    if (snapshot.empty) {
+                        snapshot = await db.collection('users').limit(30).get();
+                    }
+                    if (!snapshot.empty) {
+                        const players = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        return players
+                            .sort((a, b) => (b.ranking_points || b.points || 0) - (a.ranking_points || a.points || 0))
+                            .slice(0, limit);
+                    }
+                } catch (e2) {}
+            }
+            return [];
+        },
+
+        async _generateWithGemini(key, realData, usedCategories = []) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
             
-            const categories = [
-                { name: '💡 CONSEJOS', color: '#f59e0b', emoji: '💡' },
-                { name: '👟 MATERIAL', color: '#fb923c', emoji: '👟' },
-                { name: '💪 SALUD & BIENESTAR', color: '#ef4444', emoji: '💪' },
-                { name: '🍎 NUTRICIÓN', color: '#22c55e', emoji: '🍎' },
-                { name: '🤝 COMUNIDAD', color: '#a855f7', emoji: '🤝' },
-                { name: '🧠 MENTAL', color: '#38bdf8', emoji: '🧠' },
-                { name: '🏫 CLINIC', color: '#ec4899', emoji: '🏫' },
-                { name: '📡 REGLAMENTO', color: '#0ea5e9', emoji: '📡' },
-                { name: '🏆 TORNEOS', color: '#facc15', emoji: '🏆' },
-                { name: '📈 RANKING', color: '#34d399', emoji: '📈' }
-            ];
+            const articleTypes = ['cronica', 'masterclass', 'radar'];
+            const chosenType = articleTypes[Math.floor(Math.random() * articleTypes.length)];
             
-            const freshCategories = categories.filter(c => !usedCategories.includes(c.name));
-            const pool = freshCategories.length > 0 ? freshCategories : categories;
-            const chosenCategory = pool[Math.floor(Math.random() * pool.length)];
+            let typePrompt = '';
+            let categoryName = '💡 CONSEJOS';
+            let catColor = '#f59e0b';
+            let emoji = '💡';
+            
+            const formattedMatches = (realData.recentMatches || []).map(m => {
+                return `- ${m.team_a_names ? m.team_a_names.join(' y ') : 'Pareja A'} vs ${m.team_b_names ? m.team_b_names.join(' y ') : 'Pareja B'} | Resultado: ${m.score_a || 0}-${m.score_b || 0} (${m.event_name || 'Partido Amistoso'})`;
+            }).join('\n');
+            
+            const formattedEvents = (realData.recentEvents || []).map(e => {
+                return `- Americana "${e.name || 'Torneo'}" celebrada el ${e.date || 'Reciente'}. Ubicación: ${e.location || 'Club'}. Estado: Finalizado.`;
+            }).join('\n');
+
+            const formattedTopPlayers = (realData.topPlayers || []).map((p, idx) => {
+                const medal = ['🥇', '🥈', '🥉', '4º', '5º'][idx] || '•';
+                return `${medal} ${p.name || p.displayName || 'Jugador'} - ${p.ranking_points || p.points || 0} PTS (Nivel: ${p.level ? p.level.toFixed(2) : '3.5'})`;
+            }).join('\n');
+            
+            const formattedFutureEvents = (realData.futureEvents || []).map(e => {
+                return `- Americana "${e.name || 'Torneo'}" programada para el ${e.date || 'Próximamente'}. Ubicación: ${e.location || 'Club'}.`;
+            }).join('\n');
+            
+            if (chosenType === 'cronica') {
+                categoryName = '🏆 TORNEOS';
+                catColor = '#CCFF00';
+                emoji = '🏆';
+                typePrompt = `
+                Escribe una CRÓNICA DEPORTIVA real y emocionante sobre los acontecimientos recientes en el club SomosPadel BCN.
+                Usa la siguiente información de partidos y torneos jugados recientemente:
+                ---
+                PARTIDOS RECIENTES FINALIZADOS:
+                ${formattedMatches || 'No hay partidos registrados recientemente. Invéntate una crónica sobre la última americana del viernes.'}
+                
+                ÚLTIMOS TORNEOS/AMERICANAS JUGADOS:
+                ${formattedEvents || 'No hay torneos registrados recientemente.'}
+                ---
+                
+                Instrucciones:
+                1. El título debe ser llamativo y con tono periodístico deportivo (ej. "Tensión y épica en las pistas: Resumen de la última jornada").
+                2. Redacta el artículo en español con un tono motivador, analizando los marcadores y el rendimiento de las parejas.
+                3. Haz mención a jugadores reales del club basándote en los datos anteriores (por ejemplo: ${realData.player1} y ${realData.player2}).
+                4. Crea una sección '🎯 ¿Qué nos dejó la jornada?' que analice las claves de los partidos.
+                5. Incluye opiniones inventadas o declaraciones entre comillas de los jugadores sobre lo reñido que estuvo el punto de oro o la red.
+                `;
+            } else if (chosenType === 'masterclass') {
+                categoryName = '💡 CONSEJOS';
+                catColor = '#f59e0b';
+                emoji = '⚡';
+                
+                const strokes = ['la Víbora', 'el Globo de recuperación', 'la Chiquita a los pies', 'la Volea de centro de control', 'la Bandeja de mantenimiento', 'el Remate por 3 liftado'];
+                const chosenStroke = strokes[Math.floor(Math.random() * strokes.length)];
+                
+                typePrompt = `
+                Escribe una MASTERCLASS TÁCTICA avanzada para el blog de SomosPadel BCN sobre cómo dominar: "${chosenStroke}".
+                
+                Instrucciones:
+                1. El título debe ser atractivo y orientado a la mejora del nivel del jugador amateur (ej. "El arte de ${chosenStroke}: El secreto para ganar la red").
+                2. Explica la técnica de golpeo, el posicionamiento del cuerpo y cuándo utilizarlo tácticamente.
+                3. Nombra a dos jugadores reales del club para simular sus testimonios: '${realData.player1}' y '${realData.player2}'. Invéntate consejos cortos o anécdotas entre comillas sobre cómo ellos ejecutan o defienden este golpe.
+                4. Crea la sección obligatoria '🎯 ¿Por qué es fundamental?'.
+                5. Agrega una guía numerada paso a paso.
+                6. Incluye una sección '❌ Errores Comunes a Evitar'.
+                7. Cierra con un bloque de degradado titulado '💡 El Secreto del Coach' con un tip técnico avanzado.
+                `;
+            } else { // radar
+                categoryName = '📊 RANKING';
+                catColor = '#38bdf8';
+                emoji = '📈';
+                typePrompt = `
+                Escribe un artículo de análisis sobre el RADAR DEL RANKING ELO y las novedades de la comunidad SomosPadel BCN.
+                Usa los siguientes datos del ranking actual y los próximos eventos programados:
+                ---
+                TOP 5 RANKING ELO ACTUAL:
+                ${formattedTopPlayers || '1. Bernat Pecharromán - 1200 PTS\n2. Jordi Díaz - 1180 PTS\n3. Alejandro Coscolín - 1150 PTS'}
+                
+                PRÓXIMAS AMERICANAS Y EVENTOS ABIERTOS:
+                ${formattedFutureEvents || 'No hay eventos futuros listados. Anima a la comunidad a reservar pista y estar atentos a la app.'}
+                ---
+                
+                Instrucciones:
+                1. El título debe referirse al ranking y la competitividad sana (ej. "¡Terremoto en el Ranking! La lucha por el número 1 de la semana").
+                2. Analiza los puntos y niveles de los líderes del club. Felicita al top del ranking y comenta lo ajustado que está el nivel de juego.
+                3. Haz mención a ${realData.player1} y ${realData.player2} como contendientes del ranking.
+                4. Explica brevemente cómo funciona el algoritmo ELO que recalcula los puntos de nivel tras cada set de americana oficial.
+                5. Anima a los jugadores a inscribirse en los eventos futuros descritos arriba para sumar más puntos y subir en la clasificación.
+                `;
+            }
 
             const prompt = `
-            Eres un periodista deportivo e instructor de élite de la comunidad SomosPadel BCN.
+            Eres un periodista deportivo, redactor oficial e instructor de élite de la comunidad SomosPadel BCN.
             Tu tarea es redactar un artículo de blog/noticia fascinante en español sobre pádel.
-            Debes devolver ÚNICAMENTE un objeto JSON estructurado con los siguientes campos (no incluyas comentarios ni marcas markdown, solo el JSON):
+            
+            ${typePrompt}
+            
+            Debes devolver ÚNICAMENTE un objeto JSON estructurado con los siguientes campos (no incluyas comentarios ni marcas markdown, solo el JSON limpio):
             
             {
               "title": "Un título de alta conversión y llamativo relacionado con el tema",
               "snippet": "Resumen corto de 1-2 líneas de gancho para el lector",
-              "category": "${chosenCategory.name}",
-              "catColor": "${chosenCategory.color}",
-              "emoji": "${chosenCategory.emoji}",
+              "category": "${categoryName}",
+              "catColor": "${catColor}",
+              "emoji": "${emoji}",
               "imageUrl": "Elige una URL de imagen de Unsplash según el tema. Puedes usar:
                            - Para Táctica/Clinic: https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop
                            - Para Material: https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=600&auto=format&fit=crop
                            - Para Salud/Mental: https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=600&auto=format&fit=crop
-                           - Para Nutrición: https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=600&auto=format&fit=crop
-                           - Para Comunidad: https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=600&auto=format&fit=crop
+                           - Para Nutrición/Comunidad: https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=600&auto=format&fit=crop
+                           - Para Ranking/Estadísticas: https://images.unsplash.com/photo-1548690312-e3b507d8c110?q=80&w=600&auto=format&fit=crop
                            (U otra URL similar de Unsplash de alta calidad)",
               "imgGrad": "Un gradiente lineal CSS sutil para la cabecera (ej: linear-gradient(135deg, #fb923c 0%, #f97316 100%))",
               "content": "El cuerpo del artículo en formato HTML. Debe ser extenso (mínimo 300 palabras), estructurado e incluir:
                           1. Introducción emocionante.
-                          2. Un bloque con fondo traslúcido y borde sutil (background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px;) titulado '🎯 ¿Por qué es fundamental?'.
-                          3. Guía paso a paso numerada (1, 2, 3) con títulos y descripciones cortas.
-                          4. Ejemplos prácticos nombrando a dos jugadores reales del club para simular su participación: '${player1}' and '${player2}'. Invéntate opiniones o consejos ingeniosos entre comillas de cada uno sobre el tema.
-                          5. Una sección '❌ Errores Comunes a Evitar'.
-                          6. Un bloque final con degradado sutil (con borde coloreado) titulado '💡 El Secreto del Coach' con un consejo avanzado de alto nivel.",
+                          2. Un bloque con fondo traslúcido y borde sutil (background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px;) titulado '🎯 ¿Por qué es fundamental?' o '📊 Lo que revela el análisis'.
+                          3. Desarrollo estructurado en varios párrafos con títulos claros o una guía paso a paso.
+                          4. Ejemplos prácticos y anécdotas de los jugadores reales del club mencionados.
+                          5. Una sección de consejos prácticos o errores comunes a evitar en pista.
+                          6. Un bloque final con degradado sutil (con borde coloreado, ej: border-left: 4px solid #CCFF00) titulado '💡 El Secreto del Coach' o '🔥 Conclusión del Analista' con una recomendación de alto nivel.",
               "readTime": "3 min"
             }
             `;
@@ -895,19 +1066,215 @@
 
             return {
                 title: parsed.title,
-                category: parsed.category || chosenCategory.name,
-                catColor: parsed.catColor || chosenCategory.color,
-                imageUrl: parsed.imageUrl || chosenCategory.imageUrl,
+                category: parsed.category || categoryName,
+                catColor: parsed.catColor || catColor,
+                imageUrl: parsed.imageUrl || (chosenType === 'cronica' ? 'https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop' : 'https://images.unsplash.com/photo-1548690312-e3b507d8c110?q=80&w=600&auto=format&fit=crop'),
                 snippet: parsed.snippet,
                 content: parsed.content,
                 date: 'Hoy',
                 readTime: parsed.readTime || '3 min',
-                emoji: parsed.emoji || chosenCategory.emoji,
+                emoji: parsed.emoji || emoji,
                 imgGrad: parsed.imgGrad || 'linear-gradient(135deg, #1e293b, #0f172a)',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                timestamp: Date.now(),
                 viewsCount: 0,
                 lastReaderName: 'Ninguno'
             };
+        },
+
+        async _generateDynamicFallback(db, player1, player2) {
+            this._addLog('📡 Construyendo artículo dinámico modular offline...', 'info');
+            
+            let topLeaderName = 'Alejandro Coscolín';
+            let topLeaderPoints = 1200;
+            try {
+                const topPlayers = await this._getTopPlayers(db, 1);
+                if (topPlayers.length > 0) {
+                    topLeaderName = topPlayers[0].name || topPlayers[0].displayName || topLeaderName;
+                    topLeaderPoints = topPlayers[0].ranking_points || topPlayers[0].points || topLeaderPoints;
+                }
+            } catch (e) {}
+
+            const topics = [
+                {
+                    theme: 'la chiquita y la red',
+                    category: '💡 CONSEJOS',
+                    catColor: '#f59e0b',
+                    emoji: '🎯',
+                    imgGrad: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)',
+                    imageUrl: 'https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop',
+                    titles: [
+                        `Cómo ejecutar la chiquita perfecta y ganar la red`,
+                        `El secreto táctico de la chiquita: de la defensa al ataque`,
+                        `¿Bolas a los pies? Domina la chiquita esta semana`
+                    ],
+                    intro: `El juego moderno de pádel se gana en la red, pero subir de forma descontrolada suele ser sinónimo de regalar el punto. Aquí es donde entra en juego la chiquita: un golpe suave, con control y dirigido a los pies de los rivales que están voleando.`,
+                    why: `Jugar una bola baja y lenta obliga al rival a impactar por debajo del nivel de la red. Esto le impide atacar la bola y te otorga el tiempo necesario para presionar hacia adelante junto a tu compañero.`,
+                    steps: [
+                        `<strong>Preparación corta:</strong> Reduce el armado de la pala para esconder la dirección del golpe y asegurar el control.`,
+                        `<strong>Lectura de pies:</strong> Espera a que los rivales retrocedan ligeramente o estén mal posicionados en la red.`,
+                        `<strong>Acompañar la bola:</strong> Empuja suavemente de atrás hacia adelante en lugar de golpear de forma brusca.`
+                    ],
+                    playerQuotes: [
+                        `"Cuando juego con {PLAYER1}, siempre me dice que tire la chiquita al centro para que no puedan abrir ángulos en la volea", nos comenta {PLAYER2}.`,
+                        `Por su parte, {PLAYER1} destaca: "Es cuestión de paciencia. Si tiras una chiquita con demasiada velocidad, les regalas una volea cómoda a la altura del pecho. La clave es que caiga muerta a sus pies".`
+                    ],
+                    coachSecret: `El verdadero truco de los profesionales no es solo tirar la chiquita, sino hacer el sprint de transición inmediatamente después del golpe. No te quedes mirando; si la bola baja, tu sitio está pegado a la red.`
+                },
+                {
+                    theme: 'la prevención del codo de tenista (epicondilitis)',
+                    category: '💪 SALUD',
+                    catColor: '#ef4444',
+                    emoji: '💪',
+                    imgGrad: 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)',
+                    imageUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=600&auto=format&fit=crop',
+                    titles: [
+                        `Evita el codo de tenista: Guía de salud para padeleros`,
+                        `Cómo prevenir lesiones de codo jugando tres veces por semana`,
+                        `Salud en pista: Protege tus articulaciones al volear`
+                    ],
+                    intro: `La epicondilitis lateral, comúnmente llamada codo de tenista, es una de las afecciones más molestas e incapacitantes del pádel amateur. Se genera por la inflamación de los tendones que unen los músculos del antebrazo con el exterior del codo debido a la vibración del impacto.`,
+                    why: `Un codo sano te permite golpear con soltura, mantener la precisión en los globos y, sobre todo, disfrutar del deporte sin dolor residual al terminar tus partidos.`,
+                    steps: [
+                        `<strong>Grip adecuado:</strong> Asegúrate de que el grosor de tu puño sea el correcto (debe quedar un espacio del ancho de un dedo índice entre tus dedos y la palma).`,
+                        `<strong>Peso de la pala:</strong> Jugar con una pala demasiado pesada o con balance muy alto sobrecarga tu musculatura innecesariamente.`,
+                        `<strong>Calentamiento específico:</strong> Dedica al menos 3 minutos a calentar muñecas, codo y hombro antes de realizar el primer remate.`
+                    ],
+                    playerQuotes: [
+                        `"Yo solía jugar con dolores hasta que {PLAYER1} me recomendó añadir un overgrip extra de absorción", recuerda {PLAYER2}.`,
+                        `A esto, {PLAYER1} añade: "Muchos cometen el error de jugar con bolas muy gastadas o mojadas. Esas bolas no rebotan y transmiten toda la fuerza del impacto directamente al codo".`
+                    ],
+                    coachSecret: `Realizar estiramientos del antebrazo (con el brazo extendido y la palma hacia abajo, tirando de los dedos hacia el cuerpo) durante 20 segundos después de cada partido reducirá la tensión acumulada de forma drástica.`
+                },
+                {
+                    theme: 'la táctica del globo profundo',
+                    category: '🏫 CLINIC',
+                    catColor: '#ec4899',
+                    emoji: '🎈',
+                    imgGrad: 'linear-gradient(135deg, #f472b6 0%, #be185d 100%)',
+                    imageUrl: 'https://images.unsplash.com/photo-1592919505780-303950717480?q=80&w=600&auto=format&fit=crop',
+                    titles: [
+                        `El Globo: La herramienta táctica más poderosa en el pádel`,
+                        `Cómo tirar globos defensivos que ahoguen al rival en el fondo`,
+                        `Táctica de pádel: Recupera la red con globos milimétricos`
+                    ],
+                    intro: `Muchos jugadores asocian el pádel con remates potentes y jugadas espectaculares, pero tácticamente el globo es el golpe más decisivo de este deporte. Un buen globo cambia la dinámica del punto por completo, forzando a los rivales a retroceder y ceder la red.`,
+                    why: `El globo te da tiempo para recuperar la posición defensiva, reduce la presión del rival y te permite pasar al ataque sin arriesgar un golpe plano de alta dificultad.`,
+                    steps: [
+                        `<strong>Flexión obligatoria:</strong> Entra por debajo de la bola flexionando las rodillas, no uses solo la muñeca.`,
+                        `<strong>Terminación alta:</strong> Lleva la pala hacia el cielo al acabar el golpe para garantizar la altura necesaria.`,
+                        `<strong>Dirección estratégica:</strong> Dirige la bola preferentemente al rincón del jugador de revés o al centro de la pista para sembrar dudas.`
+                    ],
+                    playerQuotes: [
+                        `"Un globo corto contra la pareja de {PLAYER1} es un suicidio táctico; te la sacan por 3 inmediatamente", nos confiesa {PLAYER2}.`,
+                        `{PLAYER1} sonríe y añade: "Totalmente. El secreto del globo no es que sea bonito, sino que sea alto. Cuanto más alta venga la bola, más difícil es coordinar el remate y más tiempo tenemos para tomar la red".`
+                    ],
+                    coachSecret: `Cuando estés muy forzado en el fondo de la pista, tira un globo extremadamente alto (globo de vela). Aunque no vaya profundo, la altura te dará el tiempo suficiente para volver a situarte en el centro de tu zona.`
+                }
+            ];
+
+            const chosenTopic = topics[Math.floor(Math.random() * topics.length)];
+            const title = chosenTopic.titles[Math.floor(Math.random() * chosenTopic.titles.length)];
+            
+            const formattedQuotes = chosenTopic.playerQuotes.map(q => {
+                return q.replace(/{PLAYER1}/g, player1).replace(/{PLAYER2}/g, player2);
+            }).join('<br><br>');
+
+            const contentHtml = `
+                <div style="font-family:'Inter', sans-serif; color:rgba(255,255,255,0.9); line-height:1.65;">
+                    <p style="margin:0 0 16px; font-size:0.84rem; color:rgba(255,255,255,0.85); font-weight:500;">
+                        ¡La comunidad SomosPadel BCN sigue aprendiendo y subiendo de nivel! Hoy analizamos a fondo <strong>${chosenTopic.theme}</strong>, un tema crucial para todo jugador que aspire a competir en las pistas de alto rendimiento.
+                    </p>
+                    
+                    <p style="margin:0 0 16px; font-size:0.78rem; color:rgba(255,255,255,0.78);">
+                        ${chosenTopic.intro}
+                    </p>
+
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:16px; border-radius:18px; margin-bottom:18px; box-shadow:0 4px 15px rgba(0,0,0,0.15);">
+                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.9rem; color:${chosenTopic.catColor}; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">🎯 ¿Por qué es fundamental?</h4>
+                        <p style="margin:0; font-size:0.75rem; color:rgba(255,255,255,0.72); line-height:1.45;">
+                            ${chosenTopic.why}
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom:18px;">
+                        <h4 style="margin:0 0 10px; font-family:'Outfit'; font-size:0.9rem; color:white; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">📋 Guía de Ejecución en Pistas</h4>
+                        <ol style="margin:0; padding-left:18px; font-size:0.78rem; color:rgba(255,255,255,0.72); display:flex; flex-direction:column; gap:6px;">
+                            ${chosenTopic.steps.map(s => `<li>${s}</li>`).join('')}
+                        </ol>
+                    </div>
+
+                    <div style="background:rgba(0,0,0,0.2); border-left:4px solid ${chosenTopic.catColor}; padding:14px; border-radius:8px; margin-bottom:18px; font-style:italic; font-size:0.75rem; color:rgba(255,255,255,0.85);">
+                        ${formattedQuotes}
+                    </div>
+
+                    <div style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); padding:12px 16px; border-radius:12px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <span style="font-size:0.72rem; color:rgba(255,255,255,0.5);">📊 Estado del Ranking Semanal:</span>
+                        <span style="font-size:0.72rem; font-weight:800; color:#38bdf8;">🥇 ${topLeaderName} lidera el club con ${topLeaderPoints} PTS</span>
+                    </div>
+
+                    <div style="background:linear-gradient(135deg, rgba(204,255,0,0.06) 0%, rgba(0,0,0,0) 100%); border:1px solid #CCFF00; padding:16px; border-radius:18px; box-shadow: 0 4px 15px rgba(204,255,0,0.03);">
+                        <h4 style="margin:0 0 6px; font-family:'Outfit'; font-size:0.85rem; color:#CCFF00; font-weight:950; letter-spacing:0.5px; text-transform:uppercase;">💡 El Secreto del Coach</h4>
+                        <p style="margin:0; font-size:0.75rem; color:rgba(255,255,255,0.72); line-height:1.45;">
+                            ${chosenTopic.coachSecret}
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            return {
+                title: title,
+                category: chosenTopic.category,
+                catColor: chosenTopic.catColor,
+                imageUrl: chosenTopic.imageUrl,
+                snippet: `${title}. Consejos prácticos de ejecución analizados con ${player1} y ${player2}.`,
+                content: contentHtml,
+                date: 'Hoy',
+                readTime: '3 min',
+                emoji: chosenTopic.emoji,
+                imgGrad: chosenTopic.imgGrad,
+                timestamp: Date.now(),
+                viewsCount: 0,
+                lastReaderName: 'Ninguno'
+            };
+        },
+
+        async checkAndGeneratePassive() {
+            try {
+                const db = await this._getDB();
+                if (!db) return;
+                
+                // 1. Obtener timestamp de última generación
+                const statsDoc = await db.collection('config').doc('blog_stats').get();
+                const now = Date.now();
+                let lastGen = 0;
+                
+                if (statsDoc.exists) {
+                    lastGen = statsDoc.data().last_generation_timestamp || 0;
+                }
+                
+                // Intervalo de generación automática: 12 horas (12 * 3600 * 1000 milisegundos)
+                const AUTO_INTERVAL = 12 * 3600 * 1000;
+                
+                if (now - lastGen >= AUTO_INTERVAL) {
+                    console.log('🤖 [AutoBlog] Detectada necesidad de generación automática (más de 12 horas). Ejecutando...');
+                    this._log = [];
+                    this._addLog('🤖 Iniciando generación automática pasiva...', 'info');
+                    
+                    // Actualizar timestamp primero para evitar llamadas paralelas
+                    await db.collection('config').doc('blog_stats').set({
+                        last_generation_timestamp: now,
+                        last_generation_date: new Date().toISOString()
+                    }, { merge: true });
+                    
+                    // Ejecutar generación silenciosa
+                    await this.generate({ silent: true });
+                } else {
+                    const diffHours = ((AUTO_INTERVAL - (now - lastGen)) / (3600 * 1000)).toFixed(1);
+                    console.log(`🤖 [AutoBlog] Generación pasiva al día. Próxima auto-generación en ${diffHours} horas.`);
+                }
+            } catch (err) {
+                console.warn('⚠️ Error en verificación pasiva de AutoBlog:', err);
+            }
         },
 
         async generate(options = {}) {
@@ -1081,7 +1448,23 @@
                 const player1 = players[p1Idx];
                 const player2 = players[p2Idx];
 
-                const savedKey = localStorage.getItem('somospadel_gemini_api_key') || '';
+                // Sincronizar API Key desde Firestore si no está en localStorage
+                let savedKey = localStorage.getItem('somospadel_gemini_api_key') || this.geminiApiKey || '';
+                if (!savedKey) {
+                    try {
+                        const configDoc = await db.collection('config').doc('ai_config').get();
+                        if (configDoc.exists) {
+                            savedKey = configDoc.data().gemini_api_key || '';
+                            if (savedKey) {
+                                localStorage.setItem('somospadel_gemini_api_key', savedKey);
+                                this.geminiApiKey = savedKey;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('[AutoBlogEngine] Fallo al recuperar API Key de Firestore:', e);
+                    }
+                }
+
                 let newPost = null;
                 let genTitle = '';
 
@@ -1092,67 +1475,62 @@
                 // 1. Intentar con Gemini
                 if (savedKey) {
                     try {
-                        this._addLog('🧠 Llamando a la API de Gemini para artículo 100% original...', 'info');
-                        newPost = await this._generateWithGemini(savedKey, player1, player2, recentCategories);
+                        this._addLog('🧠 Extrayendo datos reales de Firestore para Gemini...', 'info');
+                        const [recentEvents, recentMatches, topPlayers, futureEvents] = await Promise.all([
+                            this._getRecentFinishedEvents(db, 2),
+                            this._getRecentMatches(db, 6),
+                            this._getTopPlayers(db, 5),
+                            this._getFutureEvents(db, 3)
+                        ]);
+
+                        const realData = {
+                            recentEvents,
+                            recentMatches,
+                            topPlayers,
+                            futureEvents,
+                            player1,
+                            player2
+                        };
+
+                        this._addLog('🧠 Llamando a la API de Gemini para redactar artículo original con datos reales...', 'info');
+                        newPost = await this._generateWithGemini(savedKey, realData, recentCategories);
                         genTitle = newPost.title;
                     } catch (geminiErr) {
                         this._addLog(`⚠️ Gemini falló: ${geminiErr.message}. Usando fallbacks...`, 'error');
                     }
                 }
 
-                // 2. Fallback con Plantillas Deduplicadas
+                // 2. Fallback con Generador Dinámico Modular Offline
                 if (!newPost) {
-                    this._addLog('📡 Utilizando pool de plantillas deduplicadas...', 'info');
-                    let publishedTitles = [];
                     try {
-                        const snapshot = await db.collection('blog_posts')
-                            .orderBy('timestamp', 'desc')
-                            .limit(30)
-                            .get();
-                        if (!snapshot.empty) {
-                            publishedTitles = snapshot.docs.map(doc => doc.data().title || '');
-                        }
-                    } catch (fsErr) {
-                        this._addLog(`⚠️ Error al leer posts para deduplicar: ${fsErr.message}`, 'error');
+                        newPost = await this._generateDynamicFallback(db, player1, player2);
+                        genTitle = newPost.title;
+                    } catch (fallbackErr) {
+                        this._addLog(`⚠️ Fallback dinámico falló: ${fallbackErr.message}. Usando plantilla estática básica...`, 'error');
+                        
+                        // Fallback de tercer nivel: Plantilla estática simple
+                        const selectedTemplate = TEMPLATES[Math.floor(Math.random() * TEMPLATES.length)];
+                        const content = selectedTemplate.contentTemplate
+                            .replace(/{PLAYER1}/g, player1)
+                            .replace(/{PLAYER2}/g, player2);
+
+                        newPost = {
+                            title: selectedTemplate.title,
+                            category: selectedTemplate.category,
+                            catColor: selectedTemplate.catColor,
+                            imageUrl: selectedTemplate.imageUrl,
+                            snippet: selectedTemplate.snippet,
+                            content: content,
+                            date: 'Hoy',
+                            readTime: selectedTemplate.readTime,
+                            emoji: selectedTemplate.emoji || '📰',
+                            imgGrad: selectedTemplate.imgGrad || 'linear-gradient(135deg, #1e293b, #0f172a)',
+                            timestamp: Date.now(),
+                            viewsCount: 0,
+                            lastReaderName: 'Ninguno'
+                        };
+                        genTitle = selectedTemplate.title;
                     }
-
-                    const unusedByTitle = TEMPLATES.filter(t => !publishedTitles.includes(t.title));
-                    const freshByCategory = unusedByTitle.filter(t => !recentCategories.includes(t.category));
-
-                    let selectedTemplate;
-                    if (freshByCategory.length > 0) {
-                        selectedTemplate = freshByCategory[Math.floor(Math.random() * freshByCategory.length)];
-                        this._addLog(`🎯 Plantilla seleccionada (título + categoría nuevos): "${selectedTemplate.title}"`, 'info');
-                    } else if (unusedByTitle.length > 0) {
-                        selectedTemplate = unusedByTitle[Math.floor(Math.random() * unusedByTitle.length)];
-                        this._addLog(`🔄 Plantilla seleccionada (título nuevo): "${selectedTemplate.title}"`, 'info');
-                    } else {
-                        const notRecentCat = TEMPLATES.filter(t => !recentCategories.includes(t.category));
-                        const pool = notRecentCat.length > 0 ? notRecentCat : TEMPLATES;
-                        selectedTemplate = pool[Math.floor(Math.random() * pool.length)];
-                        this._addLog(`♻️ Reutilizando plantilla (categoría no reciente): "${selectedTemplate.title}"`, 'info');
-                    }
-
-                    const content = selectedTemplate.contentTemplate
-                        .replace(/{PLAYER1}/g, player1)
-                        .replace(/{PLAYER2}/g, player2);
-
-                    newPost = {
-                        title: selectedTemplate.title,
-                        category: selectedTemplate.category,
-                        catColor: selectedTemplate.catColor,
-                        imageUrl: selectedTemplate.imageUrl,
-                        snippet: selectedTemplate.snippet,
-                        content: content,
-                        date: 'Hoy',
-                        readTime: selectedTemplate.readTime,
-                        emoji: selectedTemplate.emoji || '📰',
-                        imgGrad: selectedTemplate.imgGrad || 'linear-gradient(135deg, #1e293b, #0f172a)',
-                        timestamp: Date.now(),
-                        viewsCount: 0,
-                        lastReaderName: 'Ninguno'
-                    };
-                    genTitle = selectedTemplate.title;
                 }
 
                 if (newPost) {

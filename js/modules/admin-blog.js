@@ -116,7 +116,7 @@
                         </div>
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center; flex: 1; min-width: 250px; justify-content: flex-end;">
-                        <input type="password" id="admin-gemini-key" placeholder="API Key de Gemini (Opcional)..." style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.75rem; width: 60%; max-width: 250px; box-sizing: border-box;" onchange="localStorage.setItem('somospadel_gemini_api_key', this.value); if(window.OpenMatchesController) window.OpenMatchesController.geminiApiKey = this.value; if(window.SomosPadelNewsEngine) window.SomosPadelNewsEngine.geminiApiKey = this.value;">
+                        <input type="password" id="admin-gemini-key" placeholder="API Key de Gemini (Opcional)..." style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.75rem; width: 60%; max-width: 250px; box-sizing: border-box;" onchange="window.saveGeminiKey(this.value)">
                         <button onclick="const input = document.getElementById('admin-gemini-key'); input.type = input.type === 'password' ? 'text' : 'password'; this.innerHTML = input.type === 'password' ? '<i class=\'fas fa-eye\'></i>' : '<i class=\'fas fa-eye-slash\'></i>';" style="background: white; border: 1px solid #cbd5e1; padding: 8px 10px; border-radius: 10px; cursor: pointer; color: #475569;"><i class="fas fa-eye"></i></button>
                     </div>
                 </div>
@@ -285,16 +285,34 @@
             }
         };
 
-        // Inicializar API Key de Gemini desde localStorage y propagar
-        setTimeout(() => {
-            const savedKey = localStorage.getItem('somospadel_gemini_api_key') || '';
+        // Inicializar API Key de Gemini desde localStorage y Firestore
+        setTimeout(async () => {
+            let savedKey = localStorage.getItem('somospadel_gemini_api_key') || '';
             const keyInput = document.getElementById('admin-gemini-key');
-            if (keyInput) {
+            if (keyInput && savedKey) {
                 keyInput.value = savedKey;
             }
+
+            try {
+                const db = window.db || firebase.firestore();
+                const configDoc = await db.collection('config').doc('ai_config').get();
+                if (configDoc.exists) {
+                    const dbKey = configDoc.data().gemini_api_key || '';
+                    if (dbKey && dbKey !== savedKey) {
+                        savedKey = dbKey;
+                        localStorage.setItem('somospadel_gemini_api_key', savedKey);
+                        if (keyInput) keyInput.value = savedKey;
+                        console.log('🔄 API Key sincronizada desde Firestore.');
+                    }
+                }
+            } catch (err) {
+                console.warn('⚠️ No se pudo sincronizar API Key desde Firestore:', err);
+            }
+
             if (savedKey) {
                 if (window.OpenMatchesController) window.OpenMatchesController.geminiApiKey = savedKey;
                 if (window.SomosPadelNewsEngine) window.SomosPadelNewsEngine.geminiApiKey = savedKey;
+                if (window.AutoBlogEngine) window.AutoBlogEngine.geminiApiKey = savedKey;
             }
         }, 100);
 
@@ -511,6 +529,24 @@
             alert("Error al guardar el artículo: " + e.message);
         }
     }
+
+    // ─── GUARDAR GEMINI API KEY EN FIRESTORE Y LOCALSTORAGE ───────────────────
+    window.saveGeminiKey = async function (key) {
+        localStorage.setItem('somospadel_gemini_api_key', key);
+        if (window.OpenMatchesController) window.OpenMatchesController.geminiApiKey = key;
+        if (window.SomosPadelNewsEngine) window.SomosPadelNewsEngine.geminiApiKey = key;
+        if (window.AutoBlogEngine) window.AutoBlogEngine.geminiApiKey = key;
+
+        try {
+            const db = window.db || firebase.firestore();
+            await db.collection('config').doc('ai_config').set({ gemini_api_key: key }, { merge: true });
+            console.log('💾 API Key de Gemini guardada en Firestore.');
+            if (window.AutoBlogEngine) window.AutoBlogEngine._addLog('💾 API Key de Gemini guardada en Firestore y local.', 'success');
+        } catch (e) {
+            console.error('❌ Error al guardar API Key en Firestore:', e);
+            if (window.AutoBlogEngine) window.AutoBlogEngine._addLog(`⚠️ API Key guardada localmente, pero falló en Firestore: ${e.message}`, 'error');
+        }
+    };
 
     // ─── REGISTRAR EN ROUTER ──────────────────────────────────────────────────
     window.AdminViews.blog_posts = initBlogView;
