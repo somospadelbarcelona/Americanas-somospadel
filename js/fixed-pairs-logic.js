@@ -316,6 +316,25 @@ const FixedPairsLogic = {
                 const teamAIds = Array.isArray(match.team_a_ids) ? match.team_a_ids.map(String) : [];
                 const teamBIds = Array.isArray(match.team_b_ids) ? match.team_b_ids.map(String) : [];
 
+                // --- 🛡️ BYE MATCH HANDLING ---
+                if (match.pair_b_id === 'bye' || match.is_bye) {
+                    let pairA = pairMap[match.pair_a_id];
+                    if (!pairA) pairA = pairs.find(p => teamAIds.includes(String(p.player1_id)) || teamAIds.includes(String(p.player2_id)));
+                    
+                    if (pairA) {
+                        pairA.games_won = (pairA.games_won || 0) + 6;
+                        pairA.games_lost = (pairA.games_lost || 0) + 0;
+                        pairA.wins = (pairA.wins || 0) + 1;
+                        pairA.won_last_match = true;
+                        pairA.last_played_round = match.round;
+                        if (pairA.current_court > 1) {
+                            pairA.current_court--;
+                        }
+                        console.log(`🎁 [BYE SUCCESS] Default win (+6 games, +1 win) granted to ${pairA.pair_name || pairA.id}`);
+                    }
+                    return;
+                }
+
                 // Fallback: search pairs containing players if IDs missing (Robustness)
                 let pairA = pairMap[match.pair_a_id];
                 let pairB = pairMap[match.pair_b_id];

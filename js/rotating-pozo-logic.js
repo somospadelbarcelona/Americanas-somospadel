@@ -55,15 +55,22 @@ const RotatingPozoLogic = {
                         // Find key that matches loosely
                         const pKey = Object.keys(playerMap).find(k => String(k) === String(id));
                         if (pKey && playerMap[pKey]) {
-                            playerMap[pKey].played = true;
-                            playerMap[pKey].won = winners.includes(String(id));
+                            const pObj = playerMap[pKey];
+                            pObj.played = true;
+                            pObj.won = winners.includes(String(id));
 
                             // TRACK LAST PARTNER (For Twister Logic)
                             // If I am in Team A, my partner is the other guy in Team A.
                             const myTeam = teamA.includes(String(id)) ? teamA : teamB;
                             const partnerId = myTeam.find(pid => String(pid) !== String(id));
                             if (partnerId) {
-                                playerMap[pKey].last_partner = partnerId;
+                                // Get history before overwriting last_partner
+                                const currentHistory = pObj.partner_history || (pObj.last_partner ? [pObj.last_partner] : []);
+                                pObj.last_partner = partnerId;
+                                
+                                // Keep history of last 2 partners (exclude duplicates)
+                                const newHistory = [partnerId, ...currentHistory.filter(hid => String(hid) !== String(partnerId))];
+                                pObj.partner_history = newHistory.slice(0, 2);
                             }
                         }
                     });
@@ -85,33 +92,42 @@ const RotatingPozoLogic = {
         // 4. ESTABILIZACIÓN: Re-empaquetado inteligente para evitar huecos sin saltar pistas
         let allPlayers = Object.values(playerMap);
 
+        // Helper comparison logic for Pozo stability with BYE rotation
+        const comparePlayers = (a, b) => {
+            const cA = parseInt(a.current_court || maxCourts);
+            const cB = parseInt(b.current_court || maxCourts);
+            if (cA !== cB) return cA - cB;
+            
+            // Prioritize rested players (played === false) over played players
+            if (a.played !== b.played) {
+                return a.played ? 1 : -1; // false (rested) comes first
+            }
+            
+            // Prioritize winners (won === true) over losers (won === false)
+            if (a.won !== b.won) {
+                return a.won ? -1 : 1; // true (winner) comes first
+            }
+            
+            return String(a.name || "").localeCompare(String(b.name || ""));
+        };
+
         if (category === 'mixed') {
-            const males = allPlayers.filter(p => p.gender === 'chico').sort((a, b) => a.current_court - b.current_court || String(a.id || a.uid || "").localeCompare(String(b.id || b.uid || "")));
-            const females = allPlayers.filter(p => p.gender === 'chica').sort((a, b) => a.current_court - b.current_court || String(a.id || a.uid || "").localeCompare(String(b.id || b.uid || "")));
+            const males = allPlayers.filter(p => p.gender === 'chico').sort(comparePlayers);
+            const females = allPlayers.filter(p => p.gender === 'chica').sort(comparePlayers);
 
             males.forEach((p, i) => { p.current_court = Math.floor(i / 2) + 1; });
             females.forEach((p, i) => { p.current_court = Math.floor(i / 2) + 1; });
 
             return [...males, ...females];
         } else {
-            // 💡 [STABILITY FIX] Sort by:
-            // 1. current_court (primary)
-            // 2. whether they won (secondary - winners of the same court should stay together in the list)
-            // 3. name/id (tertiary - deterministic fallback)
-            allPlayers.sort((a, b) => {
-                const cA = parseInt(a.current_court || maxCourts);
-                const cB = parseInt(b.current_court || maxCourts);
-                if (cA !== cB) return cA - cB;
-                if (a.won !== b.won) return a.won ? -1 : 1;
-                return String(a.name || "").localeCompare(String(b.name || ""));
-            });
+            allPlayers.sort(comparePlayers);
 
             console.log("🏃 [Movement Audit] Re-calculating final court assignments:");
             allPlayers.forEach((p, i) => { 
                 const oldCourt = p.current_court;
                 p.current_court = Math.floor(i / 4) + 1; 
                 if (oldCourt !== p.current_court) {
-                    console.log(`   - ${p.name}: Pista ${oldCourt} -> Pista ${p.current_court} (${p.won ? 'Gano' : 'Perdio'})`);
+                    console.log(`   - ${p.name}: Pista ${oldCourt} -> Pista ${p.current_court} (${p.played ? (p.won ? 'Gano' : 'Perdio') : 'Resto'})`);
                 } else {
                     console.log(`   - ${p.name}: Se mantiene en Pista ${p.current_court}`);
                 }
@@ -257,7 +273,7 @@ const RotatingPozoLogic = {
     /**
      * Creates pairs for Entreno trying to maximize teammate HEAD-TO-HEAD rivalries.
      * Scores every possible combination and picks the best one.
-     * Also penalizes repeating the same partner from last round.
+     * Also penalizes repeating the same partner from the last 2 rounds.
      */
     _createEntrenoPairs(players) {
         if (players.length < 4) return { teamA: players.slice(0, 2), teamB: players.slice(2, 4) };
@@ -289,15 +305,25 @@ const RotatingPozoLogic = {
             if (teamA1 && teamA2 && teamA1 === teamA2) score -= 2;
             if (teamB1 && teamB2 && teamB1 === teamB2) score -= 2;
 
-            // 🛡️ CRITICAL: Penalize repeating last_partner (Absolute priority over rivalry)
-            const penalizeRepeat = (player, partner) => {
-                if (player.last_partner && String(player.last_partner) === String(partner.id)) return -500; // Massively prohibitive
+            // 🛡️ CRITICAL: Penalize repeating partners based on partner_history (last 2 rounds)
+            const getPartnerPenalty = (player, partner) => {
+                const history = player.partner_history || (player.last_partner ? [player.last_partner] : []);
+                
+                // Repitió en el partido anterior (depth 1) -> Penalización masiva
+                if (history[0] && String(history[0]) === String(partner.id)) {
+                    return -1000;
+                }
+                // Repitió hace 2 partidos (depth 2) -> Penalización moderada-alta
+                if (history[1] && String(history[1]) === String(partner.id)) {
+                    return -300;
+                }
                 return 0;
             };
-            score += penalizeRepeat(opt.teamA[0], opt.teamA[1]);
-            score += penalizeRepeat(opt.teamA[1], opt.teamA[0]);
-            score += penalizeRepeat(opt.teamB[0], opt.teamB[1]);
-            score += penalizeRepeat(opt.teamB[1], opt.teamB[0]);
+
+            score += getPartnerPenalty(opt.teamA[0], opt.teamA[1]);
+            score += getPartnerPenalty(opt.teamA[1], opt.teamA[0]);
+            score += getPartnerPenalty(opt.teamB[0], opt.teamB[1]);
+            score += getPartnerPenalty(opt.teamB[1], opt.teamB[0]);
 
             if (score > maxScore) {
                 maxScore = score;
@@ -319,7 +345,8 @@ const RotatingPozoLogic = {
     },
 
     /**
-     * Create Smart Pairs ensuring NO repetition of last_partner
+     * Create Smart Pairs ensuring NO repetition of partners in the last 2 rounds,
+     * falling back to 1 round, and finally falling back to any available option if blocked.
      */
     _createSmartPairs(players) {
         if (players.length < 4) return { teamA: players.slice(0, 2), teamB: players.slice(2, 4) };
@@ -331,20 +358,68 @@ const RotatingPozoLogic = {
             { teamA: [p[0], p[3]], teamB: [p[1], p[2]] }
         ];
 
-        // Filter out options where ANY pair repeated (null last_partner = no block)
-        const validOptions = options.filter(opt => {
-            if (opt.teamA[0].last_partner && String(opt.teamA[0].last_partner) === String(opt.teamA[1].id)) return false;
-            if (opt.teamB[0].last_partner && String(opt.teamB[0].last_partner) === String(opt.teamB[1].id)) return false;
+        // Función auxiliar para verificar si dos jugadores han sido compañeros en el rango dado de historial
+        const areRecentPartners = (p1, p2, depth) => {
+            const h1 = p1.partner_history || (p1.last_partner ? [p1.last_partner] : []);
+            const h2 = p2.partner_history || (p2.last_partner ? [p2.last_partner] : []);
+            
+            // Comprobar hasta depth elementos
+            const slice1 = h1.slice(0, depth);
+            const slice2 = h2.slice(0, depth);
+
+            if (slice1.some(id => String(id) === String(p2.id))) return true;
+            if (slice2.some(id => String(id) === String(p1.id))) return true;
+            return false;
+        };
+
+        // Nivel 2: Comprobar historial de las últimas 2 rondas (depth = 2)
+        let validOptions = options.filter(opt => {
+            if (areRecentPartners(opt.teamA[0], opt.teamA[1], 2)) return false;
+            if (areRecentPartners(opt.teamB[0], opt.teamB[1], 2)) return false;
             return true;
         });
 
         if (validOptions.length > 0) {
-            // Pick a random valid option
+            console.log(`🤖 Smart Matchmaking: Found ${validOptions.length} options with NO repeated partners in last 2 rounds.`);
             return validOptions[Math.floor(Math.random() * validOptions.length)];
-        } else {
-            console.warn("⚠️ No perfect separation possible. Forcing best available.");
-            return options[0]; // Fallback to first option (at least it's deterministic)
         }
+
+        // Nivel 1: Comprobar historial de la última ronda (depth = 1)
+        console.warn("⚠️ Blocked for 2 rounds history. Falling back to 1 round history check...");
+        validOptions = options.filter(opt => {
+            if (areRecentPartners(opt.teamA[0], opt.teamA[1], 1)) return false;
+            if (areRecentPartners(opt.teamB[0], opt.teamB[1], 1)) return false;
+            return true;
+        });
+
+        if (validOptions.length > 0) {
+            console.log(`🤖 Smart Matchmaking Fallback (1 round): Found ${validOptions.length} options.`);
+            return validOptions[Math.floor(Math.random() * validOptions.length)];
+        }
+
+        // Nivel 0: Permitir cualquier emparejamiento (elegir el que menos repeticiones tenga sumadas)
+        console.warn("⚠️ No perfect separation possible. Forcing best available option.");
+        
+        // Calculamos una penalización para cada opción
+        const scoredOptions = options.map(opt => {
+            let penalty = 0;
+            // Si son compañeros del partido anterior, penaliza 10
+            if (areRecentPartners(opt.teamA[0], opt.teamA[1], 1)) penalty += 10;
+            if (areRecentPartners(opt.teamB[0], opt.teamB[1], 1)) penalty += 10;
+            // Si son compañeros de hace 2 partidos, penaliza 2
+            if (areRecentPartners(opt.teamA[0], opt.teamA[1], 2) && !areRecentPartners(opt.teamA[0], opt.teamA[1], 1)) penalty += 2;
+            if (areRecentPartners(opt.teamB[0], opt.teamB[1], 2) && !areRecentPartners(opt.teamB[0], opt.teamB[1], 1)) penalty += 2;
+            return { option: opt, penalty };
+        });
+
+        // Ordenar por menor penalización
+        scoredOptions.sort((a, b) => a.penalty - b.penalty);
+        
+        // Filtrar las que tienen la misma mínima penalización y elegir una al azar
+        const minPenalty = scoredOptions[0].penalty;
+        const bestScored = scoredOptions.filter(o => o.penalty === minPenalty);
+        
+        return bestScored[Math.floor(Math.random() * bestScored.length)].option;
     }
 
 };
