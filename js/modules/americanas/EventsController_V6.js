@@ -705,9 +705,9 @@
             if (category !== 'all') {
                 events = events.filter(e => {
                     const cat = (e.category || '').toLowerCase();
-                    if (category === 'male') return cat === 'male' || cat === 'masculina';
-                    if (category === 'female') return cat === 'female' || cat === 'femenina';
-                    if (category === 'mixed') return cat === 'mixed' || cat === 'mixta' || cat === 'mixto';
+                    if (category === 'male') return ['male', 'masculina', 'masculino', 'chicos', 'hombres'].includes(cat);
+                    if (category === 'female') return ['female', 'femenina', 'femenino', 'chicas', 'mujeres'].includes(cat);
+                    if (category === 'mixed') return ['mixed', 'mixta', 'mixto'].includes(cat);
                     return cat === category;
                 });
             }
@@ -1144,14 +1144,18 @@
                 timeLabel = `${pad(times.start.getHours())}:${pad(times.start.getMinutes())} - ${pad(times.end.getHours())}:${pad(times.end.getMinutes())}`;
             }
 
-            // Gender Check
+            // Gender Check (Robust normalization)
             const userGender = user ? (user.gender || '').toLowerCase() : '';
-            const isChico = userGender === 'm' || userGender === 'chico' || userGender === 'male';
-            const isChica = userGender === 'f' || userGender === 'chica' || userGender === 'female';
+            const isChico = ['m', 'chico', 'male', 'masculino', 'hombre'].includes(userGender);
+            const isChica = ['f', 'chica', 'female', 'femenina', 'femenino', 'mujer'].includes(userGender);
             const cat = (evt.category || 'open').toLowerCase();
             let isGenderMismatch = false, mismatchCase = '';
-            if ((cat === 'male' || cat === 'masculina') && !isChico) { isGenderMismatch = true; mismatchCase = 'male'; }
-            if ((cat === 'female' || cat === 'femenina') && !isChica) { isGenderMismatch = true; mismatchCase = 'female'; }
+
+            const isEventMale = ['male', 'masculina', 'masculino', 'chicos', 'hombres'].includes(cat);
+            const isEventFemale = ['female', 'femenina', 'femenino', 'chicas', 'mujeres'].includes(cat);
+
+            if (isEventMale && !isChico) { isGenderMismatch = true; mismatchCase = 'male'; }
+            if (isEventFemale && !isChica) { isGenderMismatch = true; mismatchCase = 'female'; }
 
             // Button Logic
             let cardAction = `window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}')`;

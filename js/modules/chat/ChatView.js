@@ -36,20 +36,21 @@
                 }
 
                 // 2. Gender Category Enforcement (Global rule)
-                let userGender = (user?.gender || 'male').toLowerCase();
-                // Normalize gender labels
-                if (userGender === 'chico') userGender = 'male';
-                if (userGender === 'chica') userGender = 'female';
+                const rawGender = (user?.gender || '').toLowerCase();
+                const isChico = ['m', 'chico', 'male', 'masculino', 'hombre'].includes(rawGender);
+                const isChica = ['f', 'chica', 'female', 'femenina', 'femenino', 'mujer'].includes(rawGender);
 
                 const eventCat = category.toLowerCase();
+                const isEventMale = ['male', 'masculina', 'masculino', 'chicos', 'hombres'].includes(eventCat);
+                const isEventFemale = ['female', 'femenina', 'femenino', 'chicas', 'mujeres'].includes(eventCat);
 
                 let allowed = false;
-                if (eventCat === 'male' && userGender === 'male') allowed = true;
-                else if (eventCat === 'female' && userGender === 'female') allowed = true;
-                else if (eventCat === 'mixed' || eventCat === 'open') allowed = true;
+                if (isEventMale && isChico) allowed = true;
+                else if (isEventFemale && isChica) allowed = true;
+                else if (!isEventMale && !isEventFemale) allowed = true; // mixto, open, etc.
 
                 if (!allowed) {
-                    const catName = eventCat === 'male' ? 'MASCULINA' : 'FEMENINA';
+                    const catName = isEventMale ? 'MASCULINA' : 'FEMENINA';
                     this.showAccessDenied(`Tu perfil no coincide con la categoría ${catName} de este entreno.`);
                     return;
                 }
