@@ -1308,7 +1308,7 @@
 
                             <!-- ACTION BUTTON (FAB) -->
                             <div id="event-fab-${evt.id}" onclick="event.stopPropagation(); ${fabAction}" style="position: absolute; bottom: -20px; right: 16px; width: 54px; height: 54px; background: ${btnColor === '#fff' ? '#CCFF00' : btnColor}; color: ${btnColor === '#fff' ? '#000' : 'white'}; border-radius: 16px; border: 3px solid #141414; box-shadow: 0 8px 15px rgba(0,0,0,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transform: rotate(-3deg); transition: transform 0.2s; ${isLive ? 'animation: pulse-border 2s infinite;' : ''}">
-                                <i class="fas ${btnIcon}" style="font-size: 1.1rem;"></i>
+                                <i id="event-fab-icon-${evt.id}" class="fas ${btnIcon}" style="font-size: 1.1rem;"></i>
                             </div>
                         </div>
 
@@ -1340,15 +1340,17 @@
                             <div class="${tileClass}" onclick="event.stopPropagation(); window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')" style="background: rgba(255,255,255,0.08); border-radius: 16px; padding: 12px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 12px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; position: relative;">
                                     <div style="display: flex; align-items: center; gap: 8px;">
-                                        <i class="fas fa-users" style="color: ${capacityIconColor}; font-size: 0.9rem;"></i>
-                                        <span style="font-weight: 950; font-size: 0.95rem; color: #fff;">${playerCount} <small style="color:#666;">/ ${maxPlayers}</small></span>
+                                        <i id="event-players-icon-${evt.id}" class="fas fa-users" style="color: ${capacityIconColor}; font-size: 0.9rem;"></i>
+                                        <span id="event-players-label-${evt.id}" style="font-weight: 950; font-size: 0.95rem; color: #fff;">${playerCount} / ${maxPlayers} Plazas</span>
                                     </div>
-                                    <span style="font-size: 0.65rem; font-weight: 950; color: ${isFull ? '#FF3B30' : (isEntreno ? '#a855f7' : '#CCFF00')}; text-transform: uppercase; letter-spacing: 0.5px;">${isFull ? 'COMPLETO' : 'DISPONIBLE'}</span>
+                                    <span id="event-status-capacity-${evt.id}" style="font-size: 0.65rem; font-weight: 950; color: ${isFull ? '#FF3B30' : (isEntreno ? '#a855f7' : '#CCFF00')}; text-transform: uppercase; letter-spacing: 0.5px;">${isFull ? 'COMPLETO' : 'DISPONIBLE'}</span>
                                 </div>
                                 <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden;">
-                                    <div style="width: ${progress}%; height: 100%; background: ${progressColor}; box-shadow: 0 0 10px ${progressColor}55;"></div>
+                                    <div id="event-progress-bar-${evt.id}" style="width: ${progress}%; height: 100%; background: ${progressColor}; box-shadow: 0 0 10px ${progressColor}55;"></div>
                                 </div>
-                                ${waitlist.length > 0 ? `<div style="margin-top: 5px; font-size: 0.65rem; font-weight: 900; color: #eab308; text-transform: uppercase;">+${waitlist.length} EN ESPERA</div>` : ''}
+                                <div id="event-waitlist-label-${evt.id}">
+                                    ${waitlist.length > 0 ? `<div style="margin-top: 5px; font-size: 0.65rem; font-weight: 900; color: #eab308; text-transform: uppercase;">+${waitlist.length} EN ESPERA</div>` : ''}
+                                </div>
                             </div>
 
                             <!-- 📍 SUPER CHULO FOOTER (LIGHT LOCATION + PREMIUM STATUS) -->
@@ -1369,7 +1371,7 @@
                                 <div style="position: relative; flex-shrink: 0;">
                                     ${isLive ? `<div style="position: absolute; inset: -4px; border-radius: 16px; background: #FF2D55; opacity: 0.4; animation: status-breathe 1.2s ease-in-out infinite; filter: blur(6px);"></div>` : ''}
                                     ${!isLive && !isCancelled && !isFinished ? `<div style="position: absolute; inset: -3px; border-radius: 16px; background: ${isEntreno ? '#a855f7' : '#CCFF00'}; opacity: 0.3; animation: status-breathe 2s ease-in-out infinite; filter: blur(5px);"></div>` : ''}
-                                    <div style="
+                                    <div id="event-status-badge-${evt.id}" style="
                                         position: relative;
                                         background: ${statusBg};
                                         color: ${statusColorText};
@@ -1600,6 +1602,9 @@
                         uid: this.state.currentUser.uid || this.state.currentUser.id
                     };
                     const res = await window.AmericanaService.addToWaitlist(id, userToJoin, type);
+                    if (res.success) {
+                        this.onDataUpdate();
+                    }
                     window.PremiumModal.alert({
                         title: res.success ? "✅ REGISTRADO" : "❌ ERROR",
                         message: res.success ? "Estás en lista de espera. ¡Suerte!" : "Error: " + res.error,
@@ -1624,13 +1629,16 @@
                     const userUid = this.state.currentUser.uid || this.state.currentUser.id;
                     const res = await window.AmericanaService.confirmWaitlist(id, userUid, type);
                     
-                    if (res.success && window.confetti) {
-                        window.confetti({
-                            particleCount: 150,
-                            spread: 100,
-                            origin: { y: 0.6 },
-                            colors: ['#CCFF00', '#38bdf8', '#ffffff']
-                        });
+                    if (res.success) {
+                        this.onDataUpdate();
+                        if (window.confetti) {
+                            window.confetti({
+                                particleCount: 150,
+                                spread: 100,
+                                origin: { y: 0.6 },
+                                colors: ['#CCFF00', '#38bdf8', '#ffffff']
+                            });
+                        }
                     }
 
                     window.PremiumModal.alert({
@@ -1656,6 +1664,9 @@
 
                 const userUid = this.state.currentUser.uid || this.state.currentUser.id;
                 const res = await window.AmericanaService.leaveWaitlist(id, userUid, type);
+                if (res.success) {
+                    this.onDataUpdate();
+                }
                 window.PremiumModal.alert({
                     title: "ℹ️ INFO",
                     message: res.success ? "Has salido de la lista de espera." : "Error: " + res.error
@@ -2189,16 +2200,36 @@
                 const fabLabel = document.getElementById(`event-fab-label-${evt.id}`);
                 const fabIcon = document.getElementById(`event-fab-icon-${evt.id}`);
 
-                if (fab && fabLabel) {
-                    if (fabLabel.innerText !== btnLabel) {
+                if (fab) {
+                    // Si el botón tiene texto (versiones antiguas), actualizarlo
+                    if (fabLabel && fabLabel.innerText !== btnLabel) {
                         fabLabel.innerText = btnLabel;
-                        fab.setAttribute('onclick', `event.stopPropagation(); ${fabAction}`);
-                        fab.style.background = btnColor === '#fff' ? '#CCFF00' : (btnColor === '#CCFF00' ? '#38bdf8' : btnColor);
-                        fab.style.color = btnColor === '#CCFF00' ? '#fff' : (btnColor === '#fff' ? '#000' : 'white');
-                        if (fabIcon) {
-                            fabIcon.className = `fas ${btnIcon}`;
-                        }
                     }
+                    
+                    // Siempre actualizar atributos, colores e iconos del FAB
+                    fab.setAttribute('onclick', `event.stopPropagation(); ${fabAction}`);
+                    fab.style.background = btnColor === '#fff' ? '#CCFF00' : (btnColor === '#CCFF00' ? '#38bdf8' : btnColor);
+                    fab.style.color = btnColor === '#CCFF00' ? '#fff' : (btnColor === '#fff' ? '#000' : 'white');
+                    if (fabIcon) {
+                        fabIcon.className = `fas ${btnIcon}`;
+                    }
+                }
+
+                // 2B. Update Progress Bar & Capacity State (Added for V6 circular cards)
+                const progressBar = document.getElementById(`event-progress-bar-${evt.id}`);
+                if (progressBar) {
+                    const progress = Math.min((playerCount / maxPlayers) * 100, 100);
+                    const progressColor = isFull ? '#FF3B30' : (progress > 80 ? '#eab308' : '#CCFF00');
+                    progressBar.style.width = `${progress}%`;
+                    progressBar.style.background = progressColor;
+                    progressBar.style.boxShadow = `0 0 10px ${progressColor}55`;
+                }
+
+                const statusCapacity = document.getElementById(`event-status-capacity-${evt.id}`);
+                if (statusCapacity) {
+                    const statusText = isFull ? 'COMPLETO' : 'DISPONIBLE';
+                    statusCapacity.innerText = statusText;
+                    statusCapacity.style.color = isFull ? '#FF3B30' : (isEntreno ? '#a855f7' : '#CCFF00');
                 }
 
                 // 3. Update Status Badge
