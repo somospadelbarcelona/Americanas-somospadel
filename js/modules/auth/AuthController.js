@@ -145,9 +145,9 @@
                     const name = newRegisterForm.name.value.trim();
                     const phone = newRegisterForm.phone.value.trim();
                     const password = newRegisterForm.password.value.trim();
-                    const gender = newRegisterForm.gender.value;
-                    const play_preference = newRegisterForm.play_preference.value;
-                    const level = parseFloat(newRegisterForm.self_rate_level.value) || 3.5;
+                    const gender = newRegisterForm.gender ? newRegisterForm.gender.value : 'chico';
+                    const play_preference = newRegisterForm.play_preference ? newRegisterForm.play_preference.value : 'drive';
+                    const level = newRegisterForm.self_rate_level ? (parseFloat(newRegisterForm.self_rate_level.value) || 3.5) : 3.5;
 
                     let email = phone;
                     if (!email.includes('@')) email = phone + '@somospadel.com';

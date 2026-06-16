@@ -3092,6 +3092,31 @@
                         style="width: 100%; height: 50px; border-radius: 14px; padding: 0 15px;">
                     <input type="password" name="password" placeholder="Clave Elegida" class="neon-input" required
                         style="width: 100%; height: 50px; border-radius: 14px; padding: 0 15px;">
+                    
+                    <select name="gender" class="neon-input" required style="width: 100%; height: 50px; border-radius: 14px; padding: 0 15px; background: #141414; color: #fff; border: 1.5px solid rgba(255,255,255,0.1); font-family: 'Outfit'; margin-bottom: 2px;">
+                        <option value="" disabled selected hidden>Género</option>
+                        <option value="chico">Chico</option>
+                        <option value="chica">Chica</option>
+                    </select>
+                    
+                    <select name="play_preference" class="neon-input" required style="width: 100%; height: 50px; border-radius: 14px; padding: 0 15px; background: #141414; color: #fff; border: 1.5px solid rgba(255,255,255,0.1); font-family: 'Outfit'; margin-bottom: 2px;">
+                        <option value="" disabled selected hidden>Lado de Juego</option>
+                        <option value="drive">Drive (Derecha)</option>
+                        <option value="reves">Revés (Izquierda)</option>
+                        <option value="ambos">Ambos lados</option>
+                    </select>
+                    
+                    <select name="self_rate_level" class="neon-input" required style="width: 100%; height: 50px; border-radius: 14px; padding: 0 15px; background: #141414; color: #fff; border: 1.5px solid rgba(255,255,255,0.1); font-family: 'Outfit'; margin-bottom: 2px;">
+                        <option value="" disabled selected hidden>Nivel Estimado</option>
+                        <option value="1.0">Nivel 1.0 (Iniciación)</option>
+                        <option value="2.0">Nivel 2.0 (Principiante)</option>
+                        <option value="3.0">Nivel 3.0 (Intermedio Bajo)</option>
+                        <option value="3.5">Nivel 3.5 (Intermedio)</option>
+                        <option value="4.0">Nivel 4.0 (Intermedio Alto)</option>
+                        <option value="4.5">Nivel 4.5 (Avanzado Bajo)</option>
+                        <option value="5.0">Nivel 5.0 (Avanzado)</option>
+                        <option value="6.0">Nivel 6.0 (Competición)</option>
+                    </select>
 
                     <button type="submit" class="shimmer-btn"
                         style="width: 100%; height: 56px; background: #CCFF00; color: #000; border: none; border-radius: 16px; font-weight: 900; margin-top: 10px;">
@@ -3144,7 +3169,7 @@
     <script src="js/fixed-pairs-logic.js?v=5013" defer></script>
     <script src="js/rotating-pozo-logic.js?v=5013" defer></script>
     <script src="js/modules/logic/LevelAdjustmentService.js" defer></script>
-    <script src="js/modules/auth/AuthController.js?v=12.1" defer></script>
+    <script src="js/modules/auth/AuthController.js?v=12.2" defer></script>
     <script src="js/modules/common/PartnerSynergyService.js" defer></script>
     <script src="js/modules/common/PartnerSynergyWidget.js" defer></script>
     <script src="js/modules/core/NetworkPulseService.js" defer></script>
