@@ -1144,7 +1144,7 @@
                 timeLabel = `${pad(times.start.getHours())}:${pad(times.start.getMinutes())} - ${pad(times.end.getHours())}:${pad(times.end.getMinutes())}`;
             }
 
-            // Gender Check (Robust normalization)
+            // Gender Check (Robust normalization with Admin Bypass)
             const userGender = user ? (user.gender || '').toLowerCase() : '';
             const isChico = ['m', 'chico', 'male', 'masculino', 'hombre'].includes(userGender);
             const isChica = ['f', 'chica', 'female', 'femenina', 'femenino', 'mujer'].includes(userGender);
@@ -1154,8 +1154,9 @@
             const isEventMale = ['male', 'masculina', 'masculino', 'chicos', 'hombres'].includes(cat);
             const isEventFemale = ['female', 'femenina', 'femenino', 'chicas', 'mujeres'].includes(cat);
 
-            if (isEventMale && !isChico) { isGenderMismatch = true; mismatchCase = 'male'; }
-            if (isEventFemale && !isChica) { isGenderMismatch = true; mismatchCase = 'female'; }
+            const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin' || user.role === 'admin_player');
+            if (isEventMale && !isChico && !isAdmin) { isGenderMismatch = true; mismatchCase = 'male'; }
+            if (isEventFemale && !isChica && !isAdmin) { isGenderMismatch = true; mismatchCase = 'female'; }
 
             // Button Logic
             let cardAction = `window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}')`;

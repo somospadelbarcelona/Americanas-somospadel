@@ -96,6 +96,13 @@
                             // Transición Premium Láser Fade-out
                             const authModal = document.getElementById('auth-modal');
                             const appShell = document.getElementById('app-shell');
+                            
+                            // Navegar al Dashboard inmediatamente para pintar el contenido real en el DOM
+                            // antes de mostrar la pantalla y evitar ver esqueletos
+                            if (window.Router) {
+                                window.Router.navigate('dashboard');
+                            }
+
                             if (authModal) {
                                 if (scanner) {
                                     scanner.style.display = 'block'; // láser para barrido final
@@ -108,18 +115,13 @@
                                     authModal.style.setProperty('display', 'none', 'important');
                                     if (scanner) scanner.style.display = 'none';
 
-                                    // Navigate to Dashboard
-                                    if (window.Router) {
-                                        window.Router.navigate('dashboard');
-                                    } else {
+                                    if (!window.Router) {
                                         window.location.reload();
                                     }
                                 }, 800);
                             } else {
                                 if (appShell) appShell.classList.remove('hidden');
-                                if (window.Router) {
-                                    window.Router.navigate('dashboard');
-                                } else {
+                                if (!window.Router) {
                                     window.location.reload();
                                 }
                             }

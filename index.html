@@ -420,8 +420,8 @@
         }
 
         .skeleton-box {
-            background: #111;
-            background-image: linear-gradient(to right, #111 0%, #222 20%, #111 40%, #111 100%);
+            background: #e2e8f0;
+            background-image: linear-gradient(to right, #e2e8f0 0%, #f1f5f9 20%, #e2e8f0 40%, #e2e8f0 100%);
             background-repeat: no-repeat;
             background-size: 800px 100%;
             display: inline-block;
@@ -431,8 +431,8 @@
         }
 
         .skeleton-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 20px;
             padding: 24px;
             margin-bottom: 15px;
@@ -440,6 +440,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.025);
         }
 
         .skeleton-line {
@@ -955,7 +956,7 @@
                         <div class="skeleton-box skeleton-line" style="width: 50%; height: 25px;"></div>
                         <div class="skeleton-box" style="width: 40px; height: 40px; border-radius: 10px;"></div>
                     </div>
-                    <div style="height: 1px; background: rgba(255,255,255,0.05);"></div>
+                    <div style="height: 1px; background: #e2e8f0;"></div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div class="skeleton-box skeleton-line" style="width: 40%; height: 25px;"></div>
                         <div class="skeleton-box" style="width: 40px; height: 40px; border-radius: 10px;"></div>
@@ -3138,15 +3139,15 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js" defer></script>
     <script src="js/firebase-config.js" defer></script>
-    <script src="js/firebase-init.js" defer></script>
-
+    <script src="js/firebase-init.js?v=1.1" defer></script>
+    
     <!-- CORE SERVICES -->
     <script src="js/modules/core/Constants.js?v=2001" defer></script>
     <script src="js/core/ContextService.js" defer></script>
     <script src="js/core/StateManager.js?v=1.1" defer></script>
     <script src="js/core/CacheService.js" defer></script>
     <script src="js/core/DatabaseService.js" defer></script>
-    <script src="js/core/AuthService.js?v=12.1" defer></script>
+    <script src="js/core/AuthService.js?v=12.3" defer></script>
     <script src="js/core/Router.js?v=5.7" defer></script>
     <script src="js/core/SmartTicker.js?v=2" defer></script>
 
@@ -3203,7 +3204,7 @@
     <script src="js/modules/chat/ChatService.js?v=1.1" defer></script>
     <script src="js/modules/chat/ChatView.js?v=1.2" defer></script>
     <script src="js/modules/americanas/EntrenoLiveView.js" defer></script>
-    <script src="js/modules/americanas/EventsController_V6.js?v=10.2" defer></script>
+    <script src="js/modules/americanas/EventsController_V6.js?v=10.3" defer></script>
     <script src="js/modules/common/SocialShareService.js" defer></script>
     <script src="js/modules/admin/SocialShareView.js" defer></script>
 

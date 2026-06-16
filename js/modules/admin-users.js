@@ -146,8 +146,8 @@ window.AdminViews.users = async function () {
                     </div>
                 </td>
                 <td data-col="genero">
-                    <span style="display: inline-flex; align-items: center; white-space: nowrap; background: ${u.gender === 'chica' ? 'rgba(236, 72, 153, 0.08)' : 'rgba(59, 130, 246, 0.08)'}; color: ${u.gender === 'chica' ? '#ec4899' : '#3b82f6'}; border: 1px solid ${u.gender === 'chica' ? 'rgba(236, 72, 153, 0.25)' : 'rgba(59, 130, 246, 0.25)'}; font-weight: 800; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; letter-spacing: 0.5px;">
-                        ${u.gender === 'chica' ? '👩 CHICA' : '👨 CHICO'}
+                    <span style="display: inline-flex; align-items: center; white-space: nowrap; background: ${u.gender === 'chica' ? 'rgba(236, 72, 153, 0.08)' : (u.gender === 'chico' ? 'rgba(59, 130, 246, 0.08)' : 'rgba(245, 158, 11, 0.08)')}; color: ${u.gender === 'chica' ? '#ec4899' : (u.gender === 'chico' ? '#3b82f6' : '#d97706')}; border: 1px solid ${u.gender === 'chica' ? 'rgba(236, 72, 153, 0.25)' : (u.gender === 'chico' ? 'rgba(59, 130, 246, 0.25)' : 'rgba(245, 158, 11, 0.25)')}; font-weight: 800; padding: 4px 10px; border-radius: 8px; font-size: 0.65rem; letter-spacing: 0.5px;">
+                        ${u.gender === 'chica' ? '👩 CHICA' : (u.gender === 'chico' ? '👨 CHICO' : '⚠️ SIN GÉNERO')}
                     </span>
                 </td>
 
@@ -211,13 +211,9 @@ window.AdminViews.users = async function () {
                     <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #2563eb; color: #2563eb; background: rgba(37, 99, 235, 0.05); font-weight: 800;" onclick="window.Actions.runRescue1101()">
                         🚑 RESCATAR PARTIDOS
                     </button>
-                    <!-- NEW RECALC STATS BUTTON -->
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #d97706; color: #d97706; background: rgba(217, 119, 6, 0.05); margin-left: auto; font-weight: 800;" onclick="recalculateMatchesPlayed()">
-                        🔄 REPARAR STATS
-                    </button>
-                    <!-- NEW GLOBAL RECALC BUTTON -->
-                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #0f172a; color: #0f172a; background: #f8fafc; font-weight: 800;" onclick="handleGlobalLevelRecalc()">
-                        🏆 RECALCULAR NIVELES (GLOBAL)
+                    <!-- NEW UNIFIED RECALC BUTTON -->
+                    <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #ccff00; color: #ccff00; background: rgba(204, 255, 0, 0.05); font-weight: 900; margin-left: auto;" onclick="runUnifiedRecalculation(this)">
+                        ⚡ RECALCULAR NIVELES Y PARTIDOS
                     </button>
 
                     <!-- BOTÓN Y DESPLEGABLE SELECTOR DE COLUMNAS -->
@@ -1105,16 +1101,18 @@ window.openWhatsAppActions = (phone, name) => {
 };
 
 // NEW: RECALCULATE STATS FUNCTION (DESTRUCTIVE CLEANUP)
-window.recalculateMatchesPlayed = async () => {
-    const confirmed = await window.PremiumModal.confirm({
-        title: "⚠️ MODO LIMPIEZA TOTAL",
-        message: "¿Deseas ELIMINAR permanentemente los partidos huérfanos?\n\nEl sistema escaneará cada partido y borrará aquellos de eventos inexistentes.",
-        confirmText: "INICIAR LIMPIEZA",
-        confirmColor: "#FF3B30"
-    });
-    if (!confirmed) return;
+window.recalculateMatchesPlayed = async (silent = false) => {
+    if (!silent) {
+        const confirmed = await window.PremiumModal.confirm({
+            title: "⚠️ MODO LIMPIEZA TOTAL",
+            message: "¿Deseas ELIMINAR permanentemente los partidos huérfanos?\n\nEl sistema escaneará cada partido y borrará aquellos de eventos inexistentes.",
+            confirmText: "INICIAR LIMPIEZA",
+            confirmColor: "#FF3B30"
+        });
+        if (!confirmed) return;
+    }
 
-    const btn = document.querySelector('button[onclick="recalculateMatchesPlayed()"]');
+    const btn = silent ? null : document.querySelector('button[onclick="recalculateMatchesPlayed()"]');
     let originalText = "";
     if (btn) {
         originalText = btn.textContent;
@@ -1199,7 +1197,10 @@ window.recalculateMatchesPlayed = async () => {
             if (m.team_b_ids && m.team_b_ids.length > 0) teamB = m.team_b_ids;
 
             let scoreA = 0, scoreB = 0;
-            if (m.result && m.result.set1) {
+            if (m.score_a !== undefined && m.score_b !== undefined) {
+                scoreA = parseInt(m.score_a || 0);
+                scoreB = parseInt(m.score_b || 0);
+            } else if (m.result && m.result.set1) {
                 scoreA = parseInt(m.result.set1.a || 0); scoreB = parseInt(m.result.set1.b || 0);
             } else if (typeof m.score === 'string' && m.score.includes('-')) {
                 const p = m.score.split('-'); scoreA = parseInt(p[0]); scoreB = parseInt(p[1]);
@@ -1250,29 +1251,94 @@ window.recalculateMatchesPlayed = async () => {
         }
         await Promise.all(updates);
 
-        window.PremiumModal.alert({
-            title: "✅ LIMPIEZA COMPLETA",
-            message: `Partidos huérfanos eliminados: ${deletedMatches}\nPerfiles actualizados: ${updatedCount}`,
-            type: 'success'
-        });
+        if (!silent) {
+            window.PremiumModal.alert({
+                title: "✅ LIMPIEZA COMPLETA",
+                message: `Partidos huérfanos eliminados: ${deletedMatches}\nPerfiles actualizados: ${updatedCount}`,
+                type: 'success'
+            });
 
-        // Refresh
-        const users = await FirebaseDB.players.getAll();
-        window.allUsersCache = users;
-        window.multiFilterUsers();
+            // Refresh
+            const users = await FirebaseDB.players.getAll();
+            window.allUsersCache = users;
+            window.multiFilterUsers();
+        }
 
     } catch (e) {
         console.error(e);
+        if (!silent) {
+            window.PremiumModal.alert({
+                title: "❌ ERROR CRÍTICO",
+                message: e.message,
+                type: 'error'
+            });
+        } else {
+            throw e;
+        }
+    } finally {
+        if (btn) {
+            btn.textContent = originalText;
+            btn.disabled = false;
+            btn.style.backgroundColor = '';
+            btn.style.color = '';
+        }
+    }
+};
+
+// NEW: UNIFIED RECALCULATION FUNCTION
+window.runUnifiedRecalculation = async (btn) => {
+    const confirmed = await window.PremiumModal.confirm({
+        title: "⚡ RECALCULO COMPLETO PRO",
+        message: "¿Deseas iniciar la limpieza de partidos y el recálculo completo de niveles de todos los jugadores?<br><br>Esta acción ajustará las estadísticas de partidos y reconstruirá todos los niveles desde el historial.",
+        confirmText: "INICIAR RECALCULO",
+        confirmColor: "#ccff00"
+    });
+
+    if (!confirmed) return;
+
+    let originalText = "";
+    if (btn) {
+        originalText = btn.textContent;
+        btn.textContent = "Procesando todo...";
+        btn.disabled = true;
+        btn.style.borderColor = '#666';
+        btn.style.color = '#666';
+    }
+
+    try {
+        console.log("⚡ Starting Unified Recalculation...");
+        
+        // 1. Recalculate matches (silent)
+        console.log("⚡ Step 1/2: Cleaning and repairing match stats...");
+        await window.recalculateMatchesPlayed(true);
+        
+        // 2. Recalculate levels (silent)
+        console.log("⚡ Step 2/2: Recalculating player levels...");
+        if (window.LevelService && window.LevelService.recalculateAllLevels) {
+            await window.LevelService.recalculateAllLevels(true);
+        } else {
+            throw new Error("El servicio de niveles no está cargado.");
+        }
+
+        await window.PremiumModal.alert({
+            title: "✅ PROCESO COMPLETADO",
+            message: "Se han recalculado correctamente todos los partidos y niveles de juego de la base de datos.",
+            type: 'success'
+        });
+
+        window.location.reload();
+    } catch (e) {
+        console.error("❌ Unified Recalculation failed:", e);
         window.PremiumModal.alert({
             title: "❌ ERROR CRÍTICO",
-            message: e.message,
+            message: "Error en el recálculo unificado: " + e.message,
             type: 'error'
         });
     } finally {
         if (btn) {
             btn.textContent = originalText;
             btn.disabled = false;
-            btn.style.backgroundColor = '';
+            btn.style.borderColor = '';
             btn.style.color = '';
         }
     }

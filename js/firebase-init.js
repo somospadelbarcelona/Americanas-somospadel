@@ -46,6 +46,21 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
             console.log("✅ Firebase initialized successfully");
         }
         db = firebase.firestore();
+
+        // Enable offline persistence (Premium UX: Works in subways/low signal)
+        // Debe ser llamado INMEDIATAMENTE después de crear la instancia db y ANTES de cualquier consulta.
+        try {
+            db.enablePersistence({ synchronizeTabs: true })
+                .then(() => {
+                    console.log("📦 Firestore persistence enabled");
+                })
+                .catch((err) => {
+                    console.warn("⚠️ Firestore persistence failed to enable (expected under file:// protocol):", err.message);
+                });
+        } catch (e) {
+            console.warn("⚠️ Sync error enabling Firestore persistence:", e);
+        }
+
         auth = firebase.auth();
 
         // Forzar persistencia local en Firebase Auth
@@ -80,8 +95,8 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
             .catch(err => {
                 console.error('❌ Error al conectar con Firestore al iniciar:', err);
                 const isPermissionError = err.code === 'permission-denied' || 
-                                          (err.message && err.message.toLowerCase().includes('permission-denied')) ||
-                                          (err.message && err.message.toLowerCase().includes('missing or insufficient permissions'));
+                                           (err.message && err.message.toLowerCase().includes('permission-denied')) ||
+                                           (err.message && err.message.toLowerCase().includes('missing or insufficient permissions'));
                 
                 if (isPermissionError) {
                     console.log("ℹ️ Firestore connection requires authentication (normal behavior before login).");
@@ -102,19 +117,6 @@ if (typeof window.FIREBASE_CONFIG === 'undefined') {
                 console.log("📴 Firebase Messaging not supported in this browser");
             }
         } catch (e) { console.warn("Messaging init error", e); }
-
-        // Enable offline persistence (Premium UX: Works in subways/low signal)
-        db.enablePersistence({ synchronizeTabs: true })
-            .then(() => {
-                console.log("📦 Firestore persistence enabled");
-            })
-            .catch((err) => {
-                if (err.code == 'failed-precondition') {
-                    console.warn("⚠️ Multiple tabs open, persistence limited.");
-                } else if (err.code == 'unimplemented') {
-                    console.warn("⚠️ Current browser doesn't support persistence.");
-                }
-            });
     } catch (error) {
         console.error("❌ Firebase initialization error:", error);
         if (window.PremiumModal) {
@@ -180,10 +182,20 @@ const FirebaseDB = {
         },
 
         async getByPhone(phone) {
-            const snapshot = await db.collection('players')
-                .where('phone', '==', phone)
+            if (!phone) return null;
+            const cleanPhone = String(phone).trim();
+            let snapshot = await db.collection('players')
+                .where('phone', '==', cleanPhone)
                 .limit(1)
                 .get();
+
+            // Fallback: If not found and it's a number, try querying as type Number
+            if (snapshot.empty && !isNaN(cleanPhone) && cleanPhone !== '') {
+                snapshot = await db.collection('players')
+                    .where('phone', '==', Number(cleanPhone))
+                    .limit(1)
+                    .get();
+            }
 
             if (snapshot.empty) return null;
             const doc = snapshot.docs[0];

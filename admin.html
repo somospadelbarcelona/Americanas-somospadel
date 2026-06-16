@@ -1177,7 +1177,7 @@
                     </button>
                     <div class="submenu-content">
                         <!-- Recalcular todo -->
-                        <button class="submenu-item btn-sync-sub" onclick="window.LevelAdjustmentService && window.LevelAdjustmentService.recalculateAllLevels()">
+                        <button class="submenu-item btn-sync-sub" onclick="window.runUnifiedRecalculation && window.runUnifiedRecalculation(this)">
                             <span class="nav-text">Sincronizar Todo 🔄</span>
                         </button>
                         
@@ -2043,7 +2043,7 @@
             <script src="js/modules/admin/BatSignalAgent.js"></script>
 
             <script src="js/utils/RoleService.js"></script>
-            <script src="js/modules/admin-users.js"></script>
+            <script src="js/modules/admin-users.js?v=1.1"></script>
             <script src="js/modules/admin-americanas.js"></script>
             <script src="js/modules/admin-matches.js"></script>
             <script src="js/modules/admin-results.js"></script>
