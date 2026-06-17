@@ -66,17 +66,40 @@ window.LevelReliabilityService = {
     async updateLastMatchDate(playerIds, date = new Date()) {
         if (!playerIds || playerIds.length === 0) return;
 
-        console.log(`🚦 [Reliability] Actualizando fecha para ${playerIds.length} jugadores...`);
+        // Limpiar duplicados y vacíos
+        const uniqueIds = Array.from(new Set(playerIds)).filter(id => !!id && id.trim().length > 0);
+        if (uniqueIds.length === 0) return;
 
-        const batch = window.db.batch();
+        console.log(`🚦 [Reliability] Verificando existencia de ${uniqueIds.length} jugadores...`);
+
+        const db = window.db || firebase.firestore();
+        const existingIds = new Set();
+
+        // Consultar existencia en lotes de 30
+        const chunkSize = 30;
+        for (let i = 0; i < uniqueIds.length; i += chunkSize) {
+            const chunk = uniqueIds.slice(i, i + chunkSize);
+            try {
+                const snap = await db.collection('players')
+                    .where(firebase.firestore.FieldPath.documentId(), 'in', chunk)
+                    .get();
+                snap.forEach(doc => existingIds.add(doc.id));
+            } catch (err) {
+                console.error("Error al verificar jugadores en el lote:", err);
+            }
+        }
+
+        console.log(`🚦 [Reliability] Actualizando fecha para ${existingIds.size} jugadores válidos (de ${uniqueIds.length} solicitados)...`);
+        if (existingIds.size === 0) return;
+
+        const batch = db.batch();
         const isoDate = date.toISOString();
 
-        playerIds.forEach(id => {
-            if (!id) return;
-            const ref = window.db.collection('players').doc(id);
+        existingIds.forEach(id => {
+            const ref = db.collection('players').doc(id);
             batch.update(ref, {
                 last_match_date: isoDate,
-                last_active: window.firebase.firestore.FieldValue.serverTimestamp()
+                last_active: firebase.firestore.FieldValue.serverTimestamp()
             });
         });
 

@@ -96,6 +96,13 @@
                             // Transición Premium Láser Fade-out
                             const authModal = document.getElementById('auth-modal');
                             const appShell = document.getElementById('app-shell');
+                            
+                            // Navegar al Dashboard inmediatamente para pintar el contenido real en el DOM
+                            // antes de mostrar la pantalla y evitar ver esqueletos
+                            if (window.Router) {
+                                window.Router.navigate('dashboard');
+                            }
+
                             if (authModal) {
                                 if (scanner) {
                                     scanner.style.display = 'block'; // láser para barrido final
@@ -108,18 +115,13 @@
                                     authModal.style.setProperty('display', 'none', 'important');
                                     if (scanner) scanner.style.display = 'none';
 
-                                    // Navigate to Dashboard
-                                    if (window.Router) {
-                                        window.Router.navigate('dashboard');
-                                    } else {
+                                    if (!window.Router) {
                                         window.location.reload();
                                     }
                                 }, 800);
                             } else {
                                 if (appShell) appShell.classList.remove('hidden');
-                                if (window.Router) {
-                                    window.Router.navigate('dashboard');
-                                } else {
+                                if (!window.Router) {
                                     window.location.reload();
                                 }
                             }
@@ -145,9 +147,9 @@
                     const name = newRegisterForm.name.value.trim();
                     const phone = newRegisterForm.phone.value.trim();
                     const password = newRegisterForm.password.value.trim();
-                    const gender = newRegisterForm.gender.value;
-                    const play_preference = newRegisterForm.play_preference.value;
-                    const level = parseFloat(newRegisterForm.self_rate_level.value) || 3.5;
+                    const gender = newRegisterForm.gender ? newRegisterForm.gender.value : 'chico';
+                    const play_preference = newRegisterForm.play_preference ? newRegisterForm.play_preference.value : 'drive';
+                    const level = newRegisterForm.self_rate_level ? (parseFloat(newRegisterForm.self_rate_level.value) || 3.5) : 3.5;
 
                     let email = phone;
                     if (!email.includes('@')) email = phone + '@somospadel.com';

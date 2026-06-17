@@ -56,6 +56,37 @@
             }
         }
 
+        async _fetchPlayerProfile(uid, emailOrPhone) {
+            let playerData = null;
+            try {
+                // 1. Intentar buscar el documento por ID (si coincide con el UID de Auth)
+                if (uid) {
+                    playerData = await window.FirebaseDB.players.getById(uid);
+                }
+                
+                // 2. Si no se encuentra, buscar por el campo 'uid' en la colección
+                if (!playerData && uid && db) {
+                    const snapshot = await db.collection('players').where('uid', '==', uid).limit(1).get();
+                    if (!snapshot.empty) {
+                        const doc = snapshot.docs[0];
+                        playerData = { id: doc.id, ...doc.data() };
+                    }
+                }
+
+                // 3. Fallback: buscar por el teléfono/email
+                if (!playerData && emailOrPhone) {
+                    let phone = emailOrPhone;
+                    if (emailOrPhone.includes('@')) {
+                        phone = emailOrPhone.split('@')[0];
+                    }
+                    playerData = await window.FirebaseDB.players.getByPhone(phone);
+                }
+            } catch (e) {
+                console.error("Error fetching player profile helper:", e);
+            }
+            return playerData;
+        }
+
         async revalidateSession() {
             if (!window.Store) return;
             const current = window.Store.getState('currentUser');
@@ -63,10 +94,10 @@
 
             console.log("🔄 [AuthService] Revalidando sesión activa en segundo plano...");
             try {
-                const phone = current.phone || (current.email ? current.email.split('@')[0] : '');
-                if (!phone) return;
+                const uid = current.uid || current.id;
+                const emailOrPhone = current.phone || current.email;
+                const playerData = await this._fetchPlayerProfile(uid, emailOrPhone);
 
-                const playerData = await window.FirebaseDB.players.getByPhone(phone);
                 if (!playerData) {
                     console.warn("⚠️ Usuario no encontrado en base de datos. Cerrando sesión...");
                     this.logout();
@@ -109,11 +140,10 @@
         }
 
         async handleAuthStateChange(user) {
-            const phone = user.email ? user.email.split('@')[0] : '';
             let playerData = null;
             try {
-                // UNIFICATION MAGIC: Find the REAL player profile by phone
-                playerData = await window.FirebaseDB.players.getByPhone(phone);
+                // UNIFICATION MAGIC: Find the REAL player profile using UID or phone
+                playerData = await this._fetchPlayerProfile(user.uid, user.email);
             } catch (e) {
                 console.error("Error fetching player data on auth state change", e);
             }
@@ -147,8 +177,7 @@
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
-                const phone = user.email ? user.email.split('@')[0] : '';
-                const playerData = await window.FirebaseDB.players.getByPhone(phone);
+                const playerData = await this._fetchPlayerProfile(user.uid, user.email || email);
 
                 if (playerData && playerData.status === 'pending') {
                     await auth.signOut(); // Force signout

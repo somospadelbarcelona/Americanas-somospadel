@@ -591,6 +591,21 @@
                 }
             };
 
+            // Helper to show weather details on click
+            window.showWeatherDetails = () => {
+                console.log("🌦️ [Weather Details] Scrolling to weather widget...");
+                const target = document.getElementById('weather-widget-root');
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Find the toggle button for El Prat or the first card and click it to expand
+                    const btn = document.querySelector('[id^="weather-btn-"]');
+                    const details = document.querySelector('[id^="weather-details-"]');
+                    if (details && details.style.display === 'none' && btn) {
+                        btn.click();
+                    }
+                }
+            };
+
             if (window.Store) {
                 this.unsubDashboard = window.Store.subscribe('dashboardData', (data) => {
                     if (window.Router && window.Router.currentRoute === 'dashboard') {
@@ -628,6 +643,117 @@
             const user = window.Store ? window.Store.getState('currentUser') : null;
             const userLevel = user ? (user.level || "3.5") : "3.5";
 
+            // Soft Refresh if elements already exist in the DOM (prevents flickering and keeps WebGL/Three.js context alive)
+            const isAlreadyRendered = document.getElementById('hero-card-root') !== null;
+            if (isAlreadyRendered) {
+                console.log("⚡ [DashboardView] Already rendered, performing soft refresh...");
+                try {
+                    // Update user stats dynamically
+                    const lvlEl = document.getElementById('user-level-val');
+                    if (lvlEl) lvlEl.innerText = userLevel;
+                    const rnkEl = document.getElementById('user-ranking-val');
+                    if (rnkEl) rnkEl.innerText = `#${user ? (user.ranking_pos || '—') : '—'}`;
+                    const mtcEl = document.getElementById('user-matches-val');
+                    if (mtcEl) mtcEl.innerText = user ? (user.total_matches || '0') : '0';
+
+                    // Build fresh context and load dynamic widgets
+                    const context = await this.buildContext(user);
+                    await this.loadLiveWidgetContent(context);
+
+                    // Refresh Weather & Windy Radar in background
+                    let weatherData = [];
+                    if (window.WeatherService) {
+                        try {
+                            weatherData = await window.WeatherService.getDashboardWeather();
+                        } catch (e) { console.error("Weather fetch failed during soft refresh", e); }
+                    }
+                    const weatherRoot = document.getElementById('weather-widget-root');
+                    if (weatherRoot && weatherData && weatherData.length > 0) {
+                        let weatherHtml = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">`;
+                        weatherData.forEach(w => {
+                            weatherHtml += this.renderWeatherCard(
+                                w.name,
+                                `${w.temp}°C`,
+                                w.icon,
+                                {
+                                    wind: `${w.wind} km/h`,
+                                    hum: `${w.humidity}%`,
+                                    rain: `${w.rainProb}%`,
+                                    uv: w.uv,
+                                    pressure: w.pressure,
+                                    visibility: w.visibility,
+                                    intel: w.intelligence
+                                },
+                                w.isPropitious
+                            );
+                        });
+                        weatherHtml += `</div>`;
+                        
+                        weatherHtml += `
+                            <style>
+                                @keyframes livePulse {
+                                    0% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0.7); transform: scale(1); opacity: 1; }
+                                    70% { box-shadow: 0 0 0 8px rgba(0, 227, 109, 0); transform: scale(1.2); opacity: 0.8; }
+                                    100% { box-shadow: 0 0 0 0 rgba(0, 227, 109, 0); transform: scale(1); opacity: 1; }
+                                }
+                                @keyframes borderFlow {
+                                    0% { border-color: rgba(255, 255, 255, 0.1); }
+                                    50% { border-color: rgba(255, 255, 255, 0.25); }
+                                    100% { border-color: rgba(255, 255, 255, 0.1); }
+                                }
+                            </style>
+                            <div style="position: relative; border-radius: 32px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); background: #0f172a; animation: borderFlow 4s infinite;">
+                                <div style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <span style="font-size:0.75rem; font-weight:950; color:white; letter-spacing:0.5px;">RADAR TÁCTICO <span style="color:#CCFF00;">WAR ROOM</span></span>
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <button onclick="window.DashboardView.toggleTacticalHUD()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.3s; pointer-events: auto;">
+                                            <i class="fas fa-eye"></i> TACTICAL HUD
+                                        </button>
+                                        <span style="width:8px; height:8px; background:#00E36D; border-radius:50%; animation: livePulse 2s infinite;"></span>
+                                        <span style="font-size:0.6rem; color: #00E36D; font-weight: 900; letter-spacing:1px;">SCANNING</span>
+                                    </div>
+                                </div>
+                                <div style="width: 100%; height: 280px; position: relative;">
+                                    <iframe width="100%" height="100%" src="https://embed.windy.com/embed2.html?lat=41.320&lon=2.040&zoom=10&level=surface&overlay=radar&product=radar&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1" frameborder="0" style="filter: contrast(1.1) brightness(0.8) grayscale(0.3);" loading="lazy"></iframe>
+                                    <div style="pointer-events:none; position:absolute; inset:0; box-shadow: inset 0 0 50px rgba(0,0,0,0.8); background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(204,255,0,0.03) 100%);"></div>
+                                    <div id="tactical-hud-grip" style="position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-left:3px solid #00E36D; pointer-events:none; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                                        <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">ESTADO DE PISTA</div>
+                                        <div style="font-size:0.75rem; color:#fff; font-weight:1000;">GRIP: <span style="color:#00E36D;">ÓPTIMO (92%)</span></div>
+                                        <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Prob. Pista resbaladiza: 12%</div>
+                                    </div>
+                                    <div id="tactical-hud-bounce" style="position:absolute; top:15px; right:15px; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); padding:8px 12px; border-radius:8px; border-right:3px solid #CCFF00; pointer-events:none; text-align:right; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                                        <div style="font-size:0.5rem; color:#888; font-weight:900; text-transform:uppercase; letter-spacing:1px;">INTELIGENCIA BOLA</div>
+                                        <div style="font-size:0.75rem; color:#fff; font-weight:1000;">REBOTE: <span style="color:#CCFF00;">ALTO (+15%)</span></div>
+                                        <div style="font-size:0.45rem; color:rgba(255,255,255,0.4); font-weight:700; margin-top:2px;">Bola rápida + Presión detectada</div>
+                                    </div>
+                                    <div style="position:absolute; bottom:0; left:0; width:100%; height:1px; background:#CCFF00; opacity:0.3; box-shadow: 0 0 10px #CCFF00; animation: scannerSlide 4s linear infinite;"></div>
+                                </div>
+                            </div>
+                        `;
+                        weatherRoot.innerHTML = weatherHtml;
+                    }
+
+                    // Refresh News Blog
+                    const blogRoot = document.getElementById('blog-news-widget-root');
+                    if (blogRoot) {
+                        blogRoot.innerHTML = this.renderBlogWidget();
+                    }
+
+                    // Refresh Stories & Open Matches
+                    if (window.StoryFeedWidget) {
+                        window.StoryFeedWidget.render('story-feed-root');
+                    }
+                    if (window.OpenMatchesWidget) {
+                        window.OpenMatchesWidget.render('open-matches-widget-root');
+                    }
+                } catch (err) {
+                    console.error("❌ Soft Refresh error:", err);
+                }
+                return;
+            }
+
             // Header is updated globally by AppInstance in app.js on user change.
             // We just ensure we have visibility on the level here.
 
@@ -644,6 +770,35 @@
                     <!-- 0. HERO CARD (CONTEXT AWARE) -->
                     <div id="hero-card-root" style="animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS (HeroCard) -->
+                    </div>
+
+
+
+                    <!-- 3. DESTACADOS (PREMIUM GLASS SCROLLER) -->
+                    <div id="registration-widget-root" style="margin: 0 0 16px !important; animation: floatUp 0.8s ease-out forwards;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:0 20px;">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <i class="fas fa-star" style="color:#CCFF00; font-size:0.75rem;"></i>
+                                <span style="font-size:0.75rem; font-weight:950; color:#ffffff; letter-spacing:1px; text-transform:uppercase;">Destacados</span>
+                            </div>
+                            <span onclick="window.Router.navigate('americanas')" style="font-size:0.65rem; color:#CCFF00; font-weight:950; cursor:pointer;">Ver todo →</span>
+                        </div>
+                        <div id="live-scroller-content" class="live-scroller-container" style="width:100%; position:relative; overflow-x:auto; -webkit-overflow-scrolling:touch; scroll-behavior:smooth;">
+                            <style>
+                                .live-scroller-container::-webkit-scrollbar { display: none !important; }
+                                .registration-ticker-card { transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); flex-shrink:0; }
+                                .live-track { display:flex; gap:12px; padding:5px 20px 15px; width:max-content; }
+                                .holo-card { transition: all 0.3s ease; }
+                                .holo-card:active { transform: scale(0.97); }
+                            </style>
+                            <div id="live-scroller-inner" class="live-track">
+                                ${Array(3).fill(0).map(() => `
+                                    <div style="min-width:260px; height:135px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius:20px; border:1px solid rgba(255, 255, 255, 0.08); display:flex; align-items:center; justify-content:center; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+                                        <i class="fas fa-circle-notch fa-spin" style="color: rgba(255,255,255,0.2); font-size:1.5rem;"></i>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 4. PULSE STORIES (Instagram Style) -->
@@ -765,7 +920,6 @@
 
                     <!-- 📡 ESPN FACEOFF COMPARATOR -->
                     <div id="player-faceoff-widget-root" style="margin: 0 15px 12px !important; animation: floatUp 0.8s ease-out forwards;"></div>
-
                     <!-- 🎾 WAR ROOM 3D TACTICAL BOARD PREVIEW -->
                     <div id="tactical-3d-widget-root" style="animation: floatUp 0.8s ease-out forwards;"></div>
 
@@ -1312,156 +1466,26 @@
                             { id: 'tactica-centro', category: '💡 CONSEJOS', catColor: '#f59e0b', title: 'Táctica: Jugar al Centro de la Pista', snippet: 'Jugar al medio reduce los ángulos del rival y genera dudas en la pareja contraria.', content: 'El centro de la pista es la clave táctica más potente del pádel. Al tirar al centro reduces ángulos y generas confusión.', date: 'Hace 3 días', readTime: '3 min', imageUrl: 'img/blog_racket_ball.png' }
                         ];
                     }
-                    if (posts.length === 0) { container.innerHTML = ''; return; }
-                    
-                    const visiblePosts = posts.slice(0, 4);
-                    
-                    const postImagesMap = (() => {
-                        const pool = [
-                            'img/blog_action_smash.png', 
-                            'img/blog_court_night.png', 
-                            'img/blog_racket_ball.png', 
-                            'img/blog_ball_glass.png', 
-                            'img/blog_player_victory.png', 
-                            'img/blog_club_lounge.png'
-                        ];
-                        const assigned = {};
-                        const used = new Set();
-                        
-                        // 1. Asignar imageUrls explícitas si son únicas
-                        visiblePosts.forEach(post => {
-                            if (post.imageUrl && !used.has(post.imageUrl)) {
-                                assigned[post.id] = post.imageUrl;
-                                used.add(post.imageUrl);
-                            }
-                        });
-                        
-                        // 2. Asignar preferred según palabras clave (si no se ha usado)
-                        visiblePosts.forEach(post => {
-                            if (assigned[post.id]) return;
-                            const title = (post.title || '').toLowerCase();
-                            const content = (post.content || '').toLowerCase();
-                            let preferred = null;
-                            if (title.includes('torneo') || title.includes('americana') || title.includes('evento') || content.includes('torneo') || content.includes('inscrip')) {
-                                preferred = 'img/blog_action_smash.png';
-                            } else if (title.includes('ranking') || title.includes('clasifica') || title.includes('puntos') || title.includes('elo') || title.includes('racha')) {
-                                preferred = 'img/blog_court_night.png';
-                            } else if (title.includes('táctica') || title.includes('tactica') || title.includes('consejo') || title.includes('clase') || content.includes('centro') || content.includes('pista')) {
-                                preferred = 'img/blog_racket_ball.png';
-                            } else if (title.includes('tienda') || title.includes('sudadera') || title.includes('merch') || title.includes('compra')) {
-                                preferred = 'img/blog_club_lounge.png';
-                            } else if (title.includes('victoria') || title.includes('ganador') || title.includes('campeon')) {
-                                preferred = 'img/blog_player_victory.png';
-                            }
-                            if (preferred && !used.has(preferred)) {
-                                assigned[post.id] = preferred;
-                                used.add(preferred);
-                            }
-                        });
-                        
-                        // 3. Asignar imágenes libres del pool
-                        visiblePosts.forEach((post, idx) => {
-                            if (assigned[post.id]) return;
-                            const available = pool.find(img => !used.has(img));
-                            if (available) {
-                                assigned[post.id] = available;
-                                used.add(available);
-                            } else {
-                                assigned[post.id] = pool[idx % pool.length];
-                            }
-                        });
-                        
-                        return assigned;
-                    })();
-                    
-                    const featured = visiblePosts[0];
-                    const rest = visiblePosts.slice(1);
 
+                    // Guardar en caché local para filtrado instantáneo
+                    this.cachedBlogPosts = posts;
 
-                    const featuredCard = `
-                        <div onclick="window.DashboardView.openBlogPost('${featured.id}')"
-                             class="premium-blog-3d-card"
-                             style="border-radius: 20px; overflow: hidden; cursor: pointer; position: relative; min-height: 220px; box-shadow: 0 12px 30px rgba(0,0,0,0.06); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid rgba(0, 0, 0, 0.05); transform-style: preserve-3d; perspective: 1000px;"
-                             onmouseover="this.style.transform='translateY(-5px) scale(1.005)';"
-                             onmouseout="this.style.transform='translateY(0) scale(1)';"
-                        >
-                            <!-- Imagen de fondo con zoom fluido -->
-                            <div class="featured-blog-bg-image" style="position: absolute; inset: 0; background-image: url('${postImagesMap[featured.id]}'); background-size: cover; background-position: center; transition: transform 0.6s ease;"></div>
-                            
-                            <!-- Overlay degradado oscuro para legibilidad -->
-                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.35) 40%, rgba(15, 23, 42, 0.95) 100%); z-index: 2;"></div>
-                            
-                            <!-- Contenido interior -->
-                            <div style="position: relative; z-index: 3; padding: 20px; display: flex; flex-direction: column; justify-content: flex-end; min-height: 220px; box-sizing: border-box;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                    <span style="font-size: 0.52rem; font-weight: 1000; color: #000; background: #CCFF00; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(204,255,0,0.25);">${featured.category||'TORNEOS'}</span>
-                                    <span style="font-size: 0.5rem; font-weight: 900; color: rgba(255,255,255,0.85); letter-spacing: 0.5px; text-transform: uppercase;">• DESTACADO</span>
-                                </div>
-                                <h3 style="margin: 0 0 6px 0; color: #ffffff; font-weight: 950; font-size: 1.15rem; line-height: 1.25; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.6);">${featured.title}</h3>
-                                <p style="margin: 0 0 12px 0; color: rgba(255,255,255,0.85); font-size: 0.72rem; font-weight: 500; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${featured.snippet}</p>
-                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;">
-                                    <div style="display: flex; align-items: center; gap: 12px;">
-                                        <span style="font-size: 0.6rem; color: rgba(255,255,255,0.7); font-weight: 700; display: flex; align-items: center; gap: 4px;"><i class="far fa-calendar" style="font-size: 0.55rem; color: #CCFF00;"></i>${featured.date||'Hoy'}</span>
-                                        <span style="font-size: 0.6rem; color: rgba(255,255,255,0.7); font-weight: 700; display: flex; align-items: center; gap: 4px;"><i class="far fa-clock" style="font-size: 0.55rem; color: #CCFF00;"></i>${featured.readTime||'3 min'}</span>
-                                    </div>
-                                    <div style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 20px; padding: 6px 14px; font-size: 0.6rem; font-weight: 950; color: #ffffff; display: flex; align-items: center; gap: 5px; transition: all 0.25s;"
-                                         class="featured-blog-btn">
-                                        LEER MÁS <i class="fas fa-arrow-right" style="font-size: 0.5rem; transition: transform 0.2s;"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>`;
-  
-                    const compactCards = rest.map(post => `
-                        <div onclick="window.DashboardView.openBlogPost('${post.id}')"
-                             class="premium-blog-compact-card"
-                             style="display: flex; gap: 14px; align-items: center; padding: 12px; border-radius: 18px; cursor: pointer; background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.015);"
-                             onmouseover="this.style.background='#f8fafc';this.style.borderColor='rgba(0,0,0,0.08)';this.style.transform='translateX(4px)';"
-                             onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(0,0,0,0.05)';this.style.transform='translateX(0)';"
-                        >
-                            <!-- Miniatura Realista de la Imagen -->
-                            <div style="width: 76px; height: 76px; border-radius: 12px; background-image: url('${postImagesMap[post.id]}'); background-size: cover; background-position: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05);"></div>
-                            
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                                    <span style="font-size: 0.52rem; font-weight: 1000; letter-spacing: 0.8px; color: #4d7c0f; text-transform: uppercase; background: rgba(204,255,0,0.12); border: 1px solid rgba(204,255,0,0.25); padding: 2px 7px; border-radius: 5px;">${(post.category||'NOTICIAS').replace(/^[^\s]+\s/,'')}</span>
-                                    <span style="font-size: 0.55rem; color: #64748b; font-weight: 800; display: flex; align-items: center; gap: 3px;"><i class="far fa-clock" style="font-size: 0.48rem; color: #4d7c0f;"></i>${post.readTime||'3 min'}</span>
-                                </div>
-                                <h4 style="margin: 0 0 4px 0; color: #0f172a; font-weight: 900; font-size: 0.88rem; line-height: 1.25; letter-spacing: -0.2px; font-family: 'Outfit', sans-serif;">${post.title}</h4>
-                                <p style="margin: 0; color: #475569; font-size: 0.68rem; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${post.snippet}</p>
-                            </div>
-                            <div style="flex-shrink: 0; color: #94a3b8; font-size: 0.7rem; transition: transform 0.2s;" class="compact-chevron"><i class="fas fa-chevron-right"></i></div>
-                        </div>
-                    `).join('');
-  
-                    const historyButtonHtml = `
-                        <div style="margin-top: 15px; text-align: center;">
-                            <button onclick="window.DashboardView.openBlogHistory()"
-                                    id="blog-history-open-btn"
-                                    style="background: rgba(15, 23, 42, 0.03); border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 8px 18px; border-radius: 14px; font-size: 0.65rem; font-weight: 850; cursor: pointer; transition: all 0.25s; display: inline-flex; align-items: center; gap: 6px; font-family: 'Outfit', sans-serif;"
-                                    onmouseover="this.style.background='rgba(15, 23, 42, 0.06)';this.style.color='#0f172a';this.style.borderColor='rgba(15, 23, 42, 0.15)';this.style.transform='scale(1.02)';"
-                                    onmouseout="this.style.background='rgba(15, 23, 42, 0.03)';this.style.color='#475569';this.style.borderColor='rgba(15, 23, 42, 0.08)';this.style.transform='scale(1)';"
-                            >
-                                <i class="fas fa-history" style="font-size: 0.6rem; color: #4d7c0f;"></i> VER MÁS NOTICIAS (HISTÓRICO)
-                            </button>
-                        </div>
-                    `;
-                    container.innerHTML = featuredCard + `<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">${compactCards}</div>` + historyButtonHtml;
+                    // Renderizar con categoría ALL
+                    this.renderBlogPostsHTML(posts, 'ALL');
 
-  
                 } catch (err) {
                     console.error("Fallo al inyectar blog posts dinámicos:", err);
                     container.innerHTML = '';
                 }
             }, 100);
-  
+
             return `
                 <div class="blog-widget-main-container" style="background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(10, 25, 47, 0.03); position: relative; overflow: hidden; perspective: 1000px; transform-style: preserve-3d;">
                     <!-- Efectos de brillo de fondo ultra sutiles (marca SomosPadel) -->
                     <div style="position: absolute; top: -60px; right: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(204,255,0,0.06) 0%, transparent 70%); pointer-events: none; filter: blur(25px);"></div>
                     <div style="position: absolute; bottom: -60px; left: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(46,97,255,0.04) 0%, transparent 70%); pointer-events: none; filter: blur(25px);"></div>
                     
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid rgba(15, 23, 42, 0.06);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(15, 23, 42, 0.06);">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <div style="width: 32px; height: 32px; border-radius: 10px; background: #000000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(204,255,0,0.2); border: 1.5px solid #CCFF00;">
                                 <i class="fas fa-newspaper" style="font-size: 0.8rem; color: #CCFF00;"></i>
@@ -1475,6 +1499,17 @@
                             <span style="width: 4px; height: 4px; background: #CCFF00; border-radius: 50%; display: inline-block; animation: neonPulseGreen 1.5s infinite alternate; box-shadow: 0 0 4px #CCFF00;"></span>OFICIAL
                         </div>
                     </div>
+
+                    <!-- Fila de filtros de categoría premium -->
+                    <div class="blog-categories-filter" style="display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none;">
+                        <button onclick="window.DashboardView.filterBlogCategory('ALL')" class="blog-filter-btn active" style="flex-shrink: 0; background: #CCFF00; border: 1px solid #CCFF00; color: #000; padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 900; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 4px 10px rgba(204,255,0,0.15);">TODAS</button>
+                        <button onclick="window.DashboardView.filterBlogCategory('TORNEOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🏆 TORNEOS</button>
+                        <button onclick="window.DashboardView.filterBlogCategory('CONSEJOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">💡 CONSEJOS</button>
+                        <button onclick="window.DashboardView.filterBlogCategory('RANKING')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📊 RANKING</button>
+                        <button onclick="window.DashboardView.filterBlogCategory('CRÓNICAS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📝 CRÓNICAS</button>
+                        <button onclick="window.DashboardView.filterBlogCategory('COMUNIDAD')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 5px 12px; border-radius: 12px; font-size: 0.6rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">👥 COMUNIDAD</button>
+                    </div>
+                    
                     <div id="dynamic-blog-posts-container" style="display: flex; flex-direction: column; gap: 10px;">
                         ${[0,1,2].map(i => `
                             <div style="display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 14px; background: #f8fafc; border: 1px solid rgba(0,0,0,0.03);">
@@ -1494,8 +1529,11 @@
                         0% { opacity: 0.6; }
                         100% { opacity: 1; }
                     }
+                    .blog-categories-filter::-webkit-scrollbar {
+                        display: none;
+                    }
                     .premium-blog-3d-card:hover .featured-blog-bg-image {
-                        transform: scale(1.04);
+                        transform: scale(1.06);
                     }
                     .premium-blog-3d-card:hover .featured-blog-btn {
                         background: #CCFF00 !important;
@@ -1510,8 +1548,224 @@
                         transform: translateX(3px);
                         color: #CCFF00 !important;
                     }
+                    .premium-blog-compact-card:hover .compact-blog-thumb {
+                        transform: scale(1.08);
+                    }
+                    
+                    /* Animación premium de desvanecimiento para las tarjetas del blog */
+                    .blog-animate-fade-in {
+                        animation: postFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+                    }
+                    @keyframes postFadeIn {
+                        from {
+                            opacity: 0;
+                            transform: translateY(10px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
                 </style>
             `;
+        }
+
+        filterBlogCategory(category) {
+            // Actualizar botones activos
+            const filterContainer = document.querySelector('.blog-categories-filter');
+            if (filterContainer) {
+                const buttons = filterContainer.querySelectorAll('.blog-filter-btn');
+                buttons.forEach(btn => {
+                    const btnOnclick = btn.getAttribute('onclick') || '';
+                    if (btnOnclick.includes(`'${category}'`)) {
+                        btn.classList.add('active');
+                        btn.style.background = '#CCFF00';
+                        btn.style.borderColor = '#CCFF00';
+                        btn.style.color = '#000';
+                        btn.style.boxShadow = '0 4px 10px rgba(204,255,0,0.15)';
+                        btn.style.fontWeight = '900';
+                    } else {
+                        btn.classList.remove('active');
+                        btn.style.background = 'transparent';
+                        btn.style.borderColor = 'rgba(15, 23, 42, 0.08)';
+                        btn.style.color = '#475569';
+                        btn.style.boxShadow = 'none';
+                        btn.style.fontWeight = '850';
+                    }
+                });
+            }
+
+            // Renderizar filtrado
+            this.renderBlogPostsHTML(this.cachedBlogPosts || [], category);
+        }
+
+        renderBlogPostsHTML(posts, categoryFilter) {
+            const container = document.getElementById('dynamic-blog-posts-container');
+            if (!container) return;
+
+            // Filtrar posts según categoría
+            let filtered = posts;
+            if (categoryFilter !== 'ALL') {
+                filtered = posts.filter(post => {
+                    const postCat = (post.category || '').toUpperCase();
+                    // Limpiar emojis o caracteres no alfanuméricos simples
+                    return postCat.includes(categoryFilter) || 
+                           postCat.replace(/[^A-ZÁÉÍÓÚÑ]/g, '').includes(categoryFilter);
+                });
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="blog-animate-fade-in" style="text-align: center; padding: 30px 10px; color: #94a3b8; font-family: 'Outfit';">
+                        <i class="far fa-folder-open" style="font-size: 1.8rem; color: rgba(15, 23, 42, 0.15); margin-bottom: 8px; display: block;"></i>
+                        <span style="font-size: 0.72rem; font-weight: 700; display: block;">No hay noticias en esta categoría</span>
+                        <span style="font-size: 0.58rem; color: #cbd5e1; display: block; margin-top: 2px;">¡Pronto publicaremos nuevo contenido táctico!</span>
+                    </div>
+                `;
+                return;
+            }
+
+            const visiblePosts = filtered.slice(0, 4);
+
+            // Deduplicación inteligente de imágenes para evitar fallbacks locales repetidos
+            const postImagesMap = (() => {
+                const pool = [
+                    'img/blog_action_smash.png', 
+                    'img/blog_court_night.png', 
+                    'img/blog_racket_ball.png', 
+                    'img/blog_ball_glass.png', 
+                    'img/blog_player_victory.png', 
+                    'img/blog_club_lounge.png'
+                ];
+                const assigned = {};
+                const used = new Set();
+                
+                // 1. Asignar imageUrls explícitas (se priorizan siempre las URLs de Unsplash / externas)
+                visiblePosts.forEach(post => {
+                    if (post.imageUrl) {
+                        assigned[post.id] = post.imageUrl;
+                        if (!post.imageUrl.startsWith('http')) {
+                            used.add(post.imageUrl);
+                        }
+                    }
+                });
+                
+                // 2. Asignar preferred según palabras clave
+                visiblePosts.forEach(post => {
+                    if (assigned[post.id]) return;
+                    const title = (post.title || '').toLowerCase();
+                    const content = (post.content || '').toLowerCase();
+                    let preferred = null;
+                    if (title.includes('torneo') || title.includes('americana') || title.includes('evento') || content.includes('torneo') || content.includes('inscrip')) {
+                        preferred = 'img/blog_action_smash.png';
+                    } else if (title.includes('ranking') || title.includes('clasifica') || title.includes('puntos') || title.includes('elo') || title.includes('racha')) {
+                        preferred = 'img/blog_court_night.png';
+                    } else if (title.includes('táctica') || title.includes('tactica') || title.includes('consejo') || title.includes('clase') || content.includes('centro') || content.includes('pista')) {
+                        preferred = 'img/blog_racket_ball.png';
+                    } else if (title.includes('tienda') || title.includes('sudadera') || title.includes('merch') || title.includes('compra')) {
+                        preferred = 'img/blog_club_lounge.png';
+                    } else if (title.includes('victoria') || title.includes('ganador') || title.includes('campeon')) {
+                        preferred = 'img/blog_player_victory.png';
+                    }
+                    if (preferred && !used.has(preferred)) {
+                        assigned[post.id] = preferred;
+                        used.add(preferred);
+                    }
+                });
+                
+                // 3. Asignar imágenes libres del pool
+                visiblePosts.forEach((post, idx) => {
+                    if (assigned[post.id]) return;
+                    const available = pool.find(img => !used.has(img));
+                    if (available) {
+                        assigned[post.id] = available;
+                        used.add(available);
+                    } else {
+                        assigned[post.id] = pool[idx % pool.length];
+                    }
+                });
+                
+                return assigned;
+            })();
+
+            // Guardar mapeo de imágenes en la instancia para que openBlogPost pueda leerlo
+            this.currentImagesMap = { ...this.currentImagesMap, ...postImagesMap };
+
+            const featured = visiblePosts[0];
+            const rest = visiblePosts.slice(1);
+
+            const featuredCard = `
+                <div onclick="window.DashboardView.openBlogPost('${featured.id}')"
+                     class="premium-blog-3d-card blog-animate-fade-in"
+                     style="border-radius: 20px; overflow: hidden; cursor: pointer; position: relative; min-height: 220px; box-shadow: 0 12px 30px rgba(0,0,0,0.06); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid rgba(0, 0, 0, 0.05); transform-style: preserve-3d; perspective: 1000px;"
+                     onmouseover="this.style.transform='translateY(-5px) scale(1.005)';"
+                     onmouseout="this.style.transform='translateY(0) scale(1)';"
+                >
+                    <!-- Imagen de fondo con zoom fluido -->
+                    <div class="featured-blog-bg-image" style="position: absolute; inset: 0; background-image: url('${postImagesMap[featured.id]}'); background-size: cover; background-position: center; transition: transform 0.6s ease;"></div>
+                    
+                    <!-- Overlay degradado oscuro para legibilidad -->
+                    <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.35) 40%, rgba(15, 23, 42, 0.95) 100%); z-index: 2;"></div>
+                    
+                    <!-- Contenido interior -->
+                    <div style="position: relative; z-index: 3; padding: 20px; display: flex; flex-direction: column; justify-content: flex-end; min-height: 220px; box-sizing: border-box;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <span style="font-size: 0.52rem; font-weight: 1000; color: #000; background: #CCFF00; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(204,255,0,0.25);">${featured.category||'TORNEOS'}</span>
+                            <span style="font-size: 0.5rem; font-weight: 900; color: rgba(255,255,255,0.85); letter-spacing: 0.5px; text-transform: uppercase;">• DESTACADO</span>
+                        </div>
+                        <h3 style="margin: 0 0 6px 0; color: #ffffff; font-weight: 950; font-size: 1.15rem; line-height: 1.25; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.6);">${featured.title}</h3>
+                        <p style="margin: 0 0 12px 0; color: rgba(255,255,255,0.85); font-size: 0.72rem; font-weight: 500; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${featured.snippet}</p>
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: 0.6rem; color: rgba(255,255,255,0.7); font-weight: 700; display: flex; align-items: center; gap: 4px;"><i class="far fa-calendar" style="font-size: 0.55rem; color: #CCFF00;"></i>${featured.date||'Hoy'}</span>
+                                <span style="font-size: 0.6rem; color: rgba(255,255,255,0.7); font-weight: 700; display: flex; align-items: center; gap: 4px;"><i class="far fa-clock" style="font-size: 0.55rem; color: #CCFF00;"></i>${featured.readTime||'3 min'}</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 20px; padding: 6px 14px; font-size: 0.6rem; font-weight: 950; color: #ffffff; display: flex; align-items: center; gap: 5px; transition: all 0.25s;"
+                                 class="featured-blog-btn">
+                                LEER MÁS <i class="fas fa-arrow-right" style="font-size: 0.5rem; transition: transform 0.2s;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            const compactCards = rest.map((post, index) => `
+                <div onclick="window.DashboardView.openBlogPost('${post.id}')"
+                     class="premium-blog-compact-card blog-animate-fade-in"
+                     style="display: flex; gap: 14px; align-items: center; padding: 12px; border-radius: 18px; cursor: pointer; background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.015); animation-delay: ${(index + 1) * 0.04}s;"
+                     onmouseover="this.style.background='#f8fafc';this.style.borderColor='rgba(0,0,0,0.08)';this.style.transform='translateX(4px)';"
+                     onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(0,0,0,0.05)';this.style.transform='translateX(0)';"
+                >
+                    <!-- Miniatura Realista de la Imagen -->
+                    <div style="width: 76px; height: 76px; border-radius: 12px; overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05);">
+                        <div class="compact-blog-thumb" style="width: 100%; height: 100%; background-image: url('${postImagesMap[post.id]}'); background-size: cover; background-position: center; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);"></div>
+                    </div>
+                    
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 0.52rem; font-weight: 1000; letter-spacing: 0.8px; color: #4d7c0f; text-transform: uppercase; background: rgba(204,255,0,0.12); border: 1px solid rgba(204,255,0,0.25); padding: 2px 7px; border-radius: 5px;">${(post.category||'NOTICIAS').replace(/^[^\s]+\s/,'')}</span>
+                            <span style="font-size: 0.55rem; color: #64748b; font-weight: 800; display: flex; align-items: center; gap: 3px;"><i class="far fa-clock" style="font-size: 0.48rem; color: #4d7c0f;"></i>${post.readTime||'3 min'}</span>
+                        </div>
+                        <h4 style="margin: 0 0 4px 0; color: #0f172a; font-weight: 900; font-size: 0.88rem; line-height: 1.25; letter-spacing: -0.2px; font-family: 'Outfit', sans-serif;">${post.title}</h4>
+                        <p style="margin: 0; color: #475569; font-size: 0.68rem; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${post.snippet}</p>
+                    </div>
+                    <div style="flex-shrink: 0; color: #94a3b8; font-size: 0.7rem; transition: transform 0.2s;" class="compact-chevron"><i class="fas fa-chevron-right"></i></div>
+                </div>
+            `).join('');
+
+            const historyButtonHtml = `
+                <div style="margin-top: 15px; text-align: center;" class="blog-animate-fade-in" style="animation-delay: 0.16s;">
+                    <button onclick="window.DashboardView.openBlogHistory()"
+                            id="blog-history-open-btn"
+                            style="background: rgba(15, 23, 42, 0.03); border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 8px 18px; border-radius: 14px; font-size: 0.65rem; font-weight: 850; cursor: pointer; transition: all 0.25s; display: inline-flex; align-items: center; gap: 6px; font-family: 'Outfit', sans-serif;"
+                            onmouseover="this.style.background='rgba(15, 23, 42, 0.06)';this.style.color='#0f172a';this.style.borderColor='rgba(15, 23, 42, 0.15)';this.style.transform='scale(1.02)';"
+                            onmouseout="this.style.background='rgba(15, 23, 42, 0.03)';this.style.color='#475569';this.style.borderColor='rgba(15, 23, 42, 0.08)';this.style.transform='scale(1)';"
+                    >
+                        <i class="fas fa-history" style="font-size: 0.6rem; color: #4d7c0f;"></i> VER MÁS NOTICIAS (HISTÓRICO)
+                    </button>
+                </div>
+            `;
+
+            container.innerHTML = featuredCard + `<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">${compactCards}</div>` + historyButtonHtml;
         }
 
         async openBlogHistory() {
@@ -1948,6 +2202,25 @@
 
                 if (!post) return;
 
+                // Resolver la mejor imagen de fondo para la cabecera (Unsplash dinámico o pool local)
+                let articleImg = post.imageUrl;
+                if (!articleImg && this.currentImagesMap && this.currentImagesMap[postId]) {
+                    articleImg = this.currentImagesMap[postId];
+                }
+                if (!articleImg) {
+                    const title = (post.title || '').toLowerCase();
+                    const category = (post.category || '').toLowerCase();
+                    if (title.includes('torneo') || title.includes('americana') || category.includes('torneo')) {
+                        articleImg = 'img/blog_action_smash.png';
+                    } else if (title.includes('ranking') || category.includes('ranking')) {
+                        articleImg = 'img/blog_court_night.png';
+                    } else if (title.includes('consejo') || title.includes('táctica') || category.includes('consejo')) {
+                        articleImg = 'img/blog_racket_ball.png';
+                    } else {
+                        articleImg = 'img/blog_ball_glass.png';
+                    }
+                }
+
                 const modal = document.createElement('div');
                 modal.id = 'blog-post-modal';
                 modal.style = `
@@ -1964,12 +2237,15 @@
                         <!-- Premium Background Glow/Aura -->
                         <div style="position: absolute; top: 100px; left: -50px; width: 150px; height: 150px; background: radial-gradient(circle, ${post.catColor || '#CCFF00'}15 0%, transparent 70%); pointer-events: none; filter: blur(30px);"></div>
                         
-                        <!-- Gradient Header Area (Apple News style) -->
-                        <div style="background: ${post.imgGrad || 'linear-gradient(135deg, #1e293b, #0f172a)'}; height: 130px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;">
-                            <div style="position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px); background-size: 14px 14px; pointer-events: none;"></div>
-                            <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 60%, rgba(9,15,30,0.95) 100%); pointer-events: none;"></div>
-                            <!-- Huge Floating 3D-effect Emoji -->
-                            <span class="blog-modal-emoji" style="font-size: 4.8rem; filter: drop-shadow(0 12px 24px rgba(0,0,0,0.5)); z-index: 1; line-height: 1;">${post.emoji || '📰'}</span>
+                        <!-- Premium Image Header Area (Magazine style) -->
+                        <div style="background-image: url('${articleImg}'); background-size: cover; background-position: center; height: 200px; position: relative; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;">
+                            <!-- Overlay degradado para fundido limpio a negro (#090f1e) en la base y oscurecimiento para botones -->
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(9, 15, 30, 0.2) 0%, rgba(9, 15, 30, 0.6) 60%, #090f1e 100%); pointer-events: none;"></div>
+                            
+                            <!-- Glassmorphism Floating Emoji Badge -->
+                            <div class="blog-modal-emoji-badge" style="position: absolute; bottom: 16px; right: 16px; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; background: rgba(15, 23, 42, 0.6); border: 1.5px solid rgba(255, 255, 255, 0.25); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 2; animation: badgePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both 0.15s;">
+                                ${post.emoji || '📰'}
+                            </div>
                         </div>
 
                         <!-- Content Area -->
@@ -2009,10 +2285,9 @@
                     <style>
                         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
                         @keyframes slideUp { from { transform: translateY(28px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-                        .blog-modal-emoji { animation: modalEmojiFloat 4s ease-in-out infinite; }
-                        @keyframes modalEmojiFloat {
-                            0%, 100% { transform: translateY(0) scale(1); }
-                            50% { transform: translateY(-7px) scale(1.05); }
+                        @keyframes badgePop {
+                            from { transform: scale(0) rotate(-15deg); opacity: 0; }
+                            to { transform: scale(1) rotate(0deg); opacity: 1; }
                         }
                         #blog-post-content-area::-webkit-scrollbar { width: 6px; }
                         #blog-post-content-area::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 10px; }
@@ -2253,174 +2528,123 @@
 
                 let itemsHtml = [];
 
-                // 0. SAFETY BASE: Ensure we always have something to show
-                const dynamicPool = [
-                    {
-                        tag: '📈 TU NIVEL',
-                        icon: 'fa-chart-line',
-                        bgColor: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)',
-                        accent: '#38bdf8',
-                        title: 'Nivel Dinámico',
-                        desc: 'Tu nivel evoluciona con cada set. ¡Juega y demuestra tu progreso!',
-                        action: "window.Router.navigate('profile')"
-                    },
-                    {
-                        tag: '🏆 COMPETICIÓN',
-                        icon: 'fa-trophy',
-                        bgColor: 'linear-gradient(135deg, #111 0%, #701a75 100%)',
-                        accent: '#f472b6',
-                        title: 'Puntos y Ascensos',
-                        desc: 'Gana partidos para subir de pista y alcanzar el Top 1 del Ranking.',
-                        action: "window.Router.navigate('ranking')"
-                    },
-                    {
-                        tag: '🎾 CONTROL TOTAL',
-                        icon: 'fa-user-check',
-                        bgColor: 'linear-gradient(135deg, #064e3b 0%, #059669 100%)',
-                        accent: '#34d399',
-                        title: 'Perfil y Stats',
-                        desc: 'Consulta tu historial, victorias y próximos retos desde tu perfil.',
-                        action: "window.Router.navigate('profile')"
-                    },
-                    {
-                        tag: '🛍️ TIENDA VIP',
-                        icon: 'fa-shopping-bag',
-                        bgColor: 'linear-gradient(135deg, #312e81 0%, #4338ca 100%)',
-                        accent: '#818cf8',
-                        title: 'Tienda Oficial (En Breve)',
-                        desc: 'Muy pronto disponible la tienda online oficial integrada directamente en esta app.',
-                        action: "window.StoryFeedWidget ? window.StoryFeedWidget.showStory('shop') : alert('Tienda online oficial integrada muy pronto en la app.')"
-                    },
-                    {
-                        tag: '💡 SMART TIP',
-                        icon: 'fa-brain',
-                        bgColor: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-                        accent: '#94a3b8',
-                        title: 'Navegación Gesto',
-                        desc: 'Desliza las historias o pulsa los laterales para pasar rápido.',
-                        action: "window.DashboardView.showChatInfo()"
-                    }
-                ];
-
-                // A. WEATHER INTEL CARD (VISION 2026 UPGRADE)
+                // A. WEATHER INTEL CARD (Compact 135px Upgrade)
                 if (weatherData && weatherData[0]) {
                     const w = weatherData[0];
                     itemsHtml.push(`
-                <div class="registration-ticker-card" onclick="window.dashNavigate('weather_story', 'weather')" style="cursor: pointer; min-width: 280px; width: 280px; height: 180px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 18px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05);">
-                            <div style="position: absolute; right: -20px; bottom: -20px; font-size: 7rem; opacity: 0.1; filter: blur(2px); animation: weatherFloat 6s ease-in-out infinite; pointer-events: none;">${w.icon}</div>
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 2; pointer-events: none;">
-                                <span class="premium-tag" style="font-size:0.6rem; font-weight:1000; color:white; background:rgba(59, 130, 246, 0.8); padding:5px 12px; border-radius:8px; letter-spacing:1px; box-shadow: 0 0 15px rgba(59,130,246,0.3); text-transform:uppercase;">METEO</span>
-                                <div style="display:flex; flex-direction:column; align-items:flex-end;">
-                                    <span style="font-size:1.8rem;">${w.icon}</span>
-                                </div>
+                    <div class="registration-ticker-card holo-card" onclick="window.showWeatherDetails()" style="cursor: pointer; min-width: 260px; width: 260px; height: 135px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.85) 100%); border-radius: 20px; padding: 15px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); display:flex; flex-direction:column; justify-content:space-between; margin-right: 15px;">
+                        <!-- Background icon decoration -->
+                        <div style="position: absolute; right: -10px; bottom: -10px; font-size: 5rem; opacity: 0.06; filter: blur(1px); pointer-events: none;">${w.icon}</div>
+                        
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="premium-tag" style="font-size:0.55rem; font-weight:950; color:white; background:#3b82f6; padding:3px 8px; border-radius:6px; letter-spacing:1px; text-transform:uppercase;">METEO</span>
+                            <span style="font-size:1.4rem; font-weight:900; color:white;">${w.temp}ºC ${w.icon}</span>
+                        </div>
+                        
+                        <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                            <div>
+                                <div style="color:white; font-weight:800; font-size:0.8rem; letter-spacing:0.5px;">${w.name.toUpperCase()}</div>
+                                <div style="color:rgba(255,255,255,0.5); font-size:0.6rem; font-weight:700;">BOLA: ${w.temp > 20 ? 'RÁPIDA' : 'LENTA'}</div>
                             </div>
-                            <div style="position: absolute; bottom: 18px; left: 18px; z-index: 2; pointer-events: none;">
-                                <div style="color:white; font-weight:950; font-size:1.8rem; line-height: 1; margin-bottom: 2px;">${w.temp}ºC</div>
-                                <div style="color:rgba(255,255,255,0.6); font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;">${w.name}</div>
-                            </div>
-                            <div style="position: absolute; bottom: 18px; right: 18px; z-index: 2; text-align: right; display:flex; flex-direction:column; gap:6px; pointer-events: none;">
-                                <div style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:4px; border-right:2px solid #0ea5e9;">BOLA: ${w.temp > 20 ? 'RÁPIDA' : 'LENTA'}</div>
-                                <div style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:4px; border-right:2px solid #38bdf8;">HUM: ${w.humidity}%</div>
+                            <div style="font-size:0.6rem; color:rgba(255,255,255,0.7); font-weight:800; background:rgba(0,0,0,0.3); padding:3px 6px; border-radius:4px;">
+                                <i class="fas fa-tint" style="color:#38bdf8; margin-right:3px;"></i>${w.humidity}% HUM
                             </div>
                         </div>
-                `);
+                    </div>
+                    `);
                 }
 
-                // --- PRIORITY LOGIC ---
+                // B. PRIORITY EVENTS
                 const openEvents = allEvents
                     .filter(a => ['open', 'upcoming'].includes(a.status))
                     .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                // HELPER: VISUAL GENERATOR
-                const getAiVisual = (type, seed) => {
-                    if (type === 'fire') return `background: radial-gradient(circle at 30% 70%, #ff4d00 0%, #000 70%), linear-gradient(45deg, #1a0500 0%, #330d00 100%);`;
-                    if (type === 'water') return `background: radial-gradient(circle at 70% 20%, #00d2ff 0%, #000 70%), linear-gradient(135deg, #001219 0%, #002838 100%);`;
-                    if (type === 'neon') return `background: conic-gradient(from 0deg at 50% 50%, #000 0deg, #111 120deg, #CCFF00 180deg, #111 240deg, #000 360deg);`;
-                    if (type === 'glass') return `background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.01) 100%); backdrop-filter: blur(10px);`;
-                    return `background: #111;`;
-                };
-
                 if (openEvents.length > 0) {
                     const topEvt = openEvents[0];
                     itemsHtml.push(`
-                    <div class="holo-card" onclick="window.dashNavigate('entrenos', 'event')" style="min-width: 280px; width: 280px; height: 180px; ${getAiVisual('fire')} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <div style="position: absolute; inset:0; background: url('https://media.giphy.com/media/3o7btQ8jDTSLStx3Ko/giphy.gif') center/cover; opacity: 0.15; mix-blend-mode: overlay; pointer-events: none;"></div>
-                        <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.2; background: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 3px); pointer-events: none;"></div>
+                    <div class="holo-card" onclick="window.dashNavigate('entrenos', 'event')" style="min-width: 260px; width: 260px; height: 135px; background: linear-gradient(135deg, #2e0804 0%, #0f172a 100%); border-radius: 20px; padding: 15px; margin-right: 15px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(239, 68, 68, 0.25); display:flex; flex-direction:column; justify-content:space-between;">
+                        <!-- Ambient glow -->
+                        <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: #ef4444; filter: blur(30px); opacity: 0.5; pointer-events: none;"></div>
                         
-                        <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3; margin-bottom: 20px; pointer-events: none;">
-                            <span class="premium-tag" style="font-size:0.65rem; font-weight:1000; color:white; background:#ff4d00; padding:6px 14px; border-radius:100px; text-transform:uppercase; letter-spacing:1px; box-shadow: 0 0 15px #ff4d00;">RECOMENDACIÓN</span>
-                            <i class="fas fa-fire-alt" style="color:#ffcdb2; animation: pulseDot 1s infinite;"></i>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="premium-tag" style="font-size:0.55rem; font-weight:950; color:white; background:#ef4444; padding:3px 8px; border-radius:6px; letter-spacing:1px; text-transform:uppercase; box-shadow: 0 0 10px rgba(239,68,68,0.4);">DESTACADO</span>
+                            <i class="fas fa-fire-alt" style="color:#ef4444; font-size: 0.9rem;"></i>
                         </div>
-                        <div style="position:relative; z-index:3; pointer-events: none;">
-                            <div style="color:#ffcdb2; font-size:0.7rem; font-weight:900; text-transform:uppercase; letter-spacing:1px; margin-bottom: 6px;">🔥 DESTACADO</div>
-                            <h4 style="margin:0; color:white; font-size:1.1rem; font-weight:1000; line-height:1.1; text-shadow: 0 5px 15px black;">${(topEvt.name || "Evento").toUpperCase()}</h4>
-                            <div style="margin-top: 15px; display:inline-block; border-bottom: 2px solid #ff4d00; padding-bottom: 2px; color: white; font-size: 0.8rem; font-weight: 800;">RESERVAR AHORA <i class="fas fa-arrow-right"></i></div>
+                        
+                        <div>
+                            <h4 style="margin:0; color:white; font-size:0.9rem; font-weight:900; line-height:1.2; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${(topEvt.name || "Evento").toUpperCase()}</h4>
+                            <div style="margin-top: 6px; display:flex; align-items:center; gap:4px; color: #ff8a65; font-size: 0.65rem; font-weight: 800;">
+                                RESERVAR AHORA <i class="fas fa-arrow-right" style="font-size: 0.6rem;"></i>
+                            </div>
                         </div>
                     </div>
                     `);
                 }
 
                 openEvents.slice(1).forEach(am => {
-                    let aiClass = 'water';
-                    const lowerName = am.name.toLowerCase();
-                    if (lowerName.includes('fem') || lowerName.includes('wom')) aiClass = 'neon';
-
+                    const isWomen = am.name.toLowerCase().includes('fem') || am.name.toLowerCase().includes('wom');
                     itemsHtml.push(`
-                    <div class="holo-card" onclick="window.dashNavigate('entrenos', 'event')" style="min-width: 280px; width: 280px; height: 180px; ${getAiVisual(aiClass)} border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; opacity: 0.2; filter: blur(4px); color: rgba(255,255,255,0.5); pointer-events: none;"><i class="fas fa-medal"></i></div>
-                        <div style="position: absolute; inset: 0; background: linear-gradient(top, transparent, rgba(0,0,0,0.8)); pointer-events: none;"></div>
+                    <div class="holo-card" onclick="window.dashNavigate('entrenos', 'event')" style="min-width: 260px; width: 260px; height: 135px; background: ${isWomen ? 'linear-gradient(135deg, #1e0b36 0%, #0f172a 100%)' : 'linear-gradient(135deg, #062436 0%, #0f172a 100%)'}; border-radius: 20px; padding: 15px; margin-right: 15px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative; overflow: hidden; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.08); display:flex; flex-direction:column; justify-content:space-between;">
+                        <div style="position: absolute; top:-10px; right:-10px; font-size: 4rem; opacity: 0.04; color: white; pointer-events: none;"><i class="fas fa-medal"></i></div>
                         
-                        <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3; margin-bottom: 12px; pointer-events: none;">
-                             <span class="premium-tag" style="font-size:0.6rem; color:rgba(255,255,255,0.8); font-weight:950; letter-spacing:1px; border: 1px solid rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 8px;">${this.formatDateShort(am.date)}</span>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="premium-tag" style="font-size:0.55rem; color:rgba(255,255,255,0.8); font-weight:950; letter-spacing:1px; border: 1px solid rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,0.05);">${this.formatDateShort(am.date)}</span>
+                            <i class="fas fa-calendar-alt" style="color:rgba(255,255,255,0.4); font-size:0.8rem;"></i>
                         </div>
-                        <div style="position:relative; z-index:3; margin-top: auto; pointer-events: none;">
-                            <h4 style="margin:0; color:white; font-size:1rem; font-weight:1000; line-height:1.2;">${am.name}</h4>
-                            <div style="margin-top: 10px; font-size: 0.75rem; color: rgba(255,255,255,0.7); font-weight: 600;">Plazas disponibles</div>
+                        
+                        <div>
+                            <h4 style="margin:0; color:white; font-size:0.9rem; font-weight:900; line-height:1.2; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${am.name}</h4>
+                            <div style="margin-top: 6px; font-size: 0.65rem; color: #CCFF00; font-weight: 800; display:flex; align-items:center; gap:4px;">
+                                VER EVENTO <i class="fas fa-chevron-right" style="font-size:0.55rem;"></i>
+                            </div>
                         </div>
                     </div>
                     `);
                 });
 
-                const maxCards = 8;
-                const remainingSlots = Math.max(0, maxCards - itemsHtml.length);
-                const shuffledPool = [...dynamicPool].sort(() => 0.5 - Math.random());
-                const selectedTips = shuffledPool.slice(0, remainingSlots);
-
-                selectedTips.forEach((tip, idx) => {
-                    // Extract route from action for dashNavigate
-                    let route = 'dashboard';
-                    if (tip.action.includes("'profile'")) route = 'profile';
-                    if (tip.action.includes("'ranking'")) route = 'ranking';
-                    if (tip.action.includes("'https")) {
-                        const match = tip.action.match(/'(https[^']+)'/);
-                        if (match) route = match[1];
+                // C. DYNAMIC ENGAGING TIPS
+                const dynamicPool = [
+                    {
+                        tag: '📈 TU NIVEL',
+                        icon: 'fa-chart-line',
+                        accent: '#38bdf8',
+                        title: 'Nivel Dinámico',
+                        desc: 'Tu nivel evoluciona con cada set. ¡Juega y demuestra tu progreso!',
+                        route: 'profile'
+                    },
+                    {
+                        tag: '🏆 COMPETICIÓN',
+                        icon: 'fa-trophy',
+                        accent: '#f472b6',
+                        title: 'Puntos y Ascensos',
+                        desc: 'Gana partidos para subir de pista y alcanzar el Top 1 del Ranking.',
+                        route: 'ranking'
                     }
-                    if (tip.action.includes('showChatInfo')) route = 'chat_info';
+                ];
 
+                dynamicPool.forEach((tip) => {
                     itemsHtml.push(`
-                    <div class="holo-card" onclick="window.dashNavigate('${route}', 'tip')" style="cursor: pointer; min-width: 280px; width: 280px; height: 180px; background: #0f172a; border-radius: 28px; padding: 24px; margin-right: 25px; flex-shrink: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <!-- VISUAL PLACEHOLDER -->
-                        <div style="position: absolute; inset:0; background: conic-gradient(from 180deg at 50% 50%, #1e293b 0deg, #0f172a 120deg, ${tip.accent} 240deg, #1e293b 360deg); opacity: 0.4; pointer-events: none;"></div>
-                        <div style="position: absolute; top:0; left:0; width:100%; height:100%; filter: url(#noise); opacity: 0.1; pointer-events: none;"></div>
+                    <div class="holo-card" onclick="window.dashNavigate('${tip.route}', 'tip')" style="cursor: pointer; min-width: 260px; width: 260px; height: 135px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 20px; padding: 15px; margin-right: 15px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); display:flex; flex-direction:column; justify-content:space-between;">
+                        <!-- Ambient glow -->
+                        <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: ${tip.accent}; filter: blur(30px); opacity: 0.25; pointer-events: none;"></div>
                         
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; position: relative; z-index: 2; pointer-events: none;">
-                            <span class="premium-tag" style="font-size:0.6rem; font-weight:1000; color:white; background:rgba(0,0,0,0.4); padding:4px 10px; border-radius:10px; border:1px solid ${tip.accent}80; letter-spacing:1px; white-space:nowrap;">${tip.tag}</span>
-                            <div style="width:30px; height:30px; background:${tip.accent}20; border-radius:50%; display:flex; align-items:center; justify-content:center;">
-                                <i class="fas ${tip.icon}" style="color:${tip.accent}; font-size:1rem;"></i>
-                            </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="premium-tag" style="font-size:0.55rem; font-weight:950; color:white; background:rgba(0,0,0,0.4); padding:3px 8px; border-radius:6px; border:1px solid ${tip.accent}80; letter-spacing:1px; white-space:nowrap;">${tip.tag}</span>
+                            <i class="fas ${tip.icon}" style="color:${tip.accent}; font-size:0.85rem;"></i>
                         </div>
-                        <div style="margin-top:20px; position:relative; z-index:2; pointer-events: none;">
-                            <div style="color:white; font-weight:1000; font-size:1.1rem; margin-bottom:6px; letter-spacing:-0.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow: 0 0 10px ${tip.accent};">${tip.title}</div>
-                            <div style="color:rgba(255,255,255,0.7); font-size:0.75rem; font-weight:600; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${tip.desc}</div>
+                        
+                        <div>
+                            <div style="color:white; font-weight:900; font-size:0.9rem; margin-bottom:3px; letter-spacing:-0.3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${tip.title}</div>
+                            <div style="color:rgba(255,255,255,0.6); font-size:0.65rem; font-weight:600; line-height:1.25; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${tip.desc}</div>
                         </div>
                     </div>
-                   `);
+                    `);
                 });
 
                 const scroller = document.getElementById('live-scroller-inner');
                 const html = itemsHtml.join('');
                 if (scroller) {
-                    scroller.innerHTML = html + html;
+                    scroller.innerHTML = html;
                 }
                 return html;
             } catch (err) {
@@ -2830,10 +3054,7 @@
             try {
                 const heroRoot = document.getElementById('hero-card-root');
                 if (heroRoot && window.HeroCard) {
-                    // console.log("🃏 [DashboardView] Syncing HeroCard...");
                     heroRoot.innerHTML = window.HeroCard.render(context);
-
-
 
                     // POPUP ALERT: Torneo (Solo ventana emergente)
                     if (context.hasOpenTournament && !context.isSignedUp && window.PremiumModal) {
@@ -2857,11 +3078,11 @@
             } catch (e) {
                 console.error("❌ HeroCard render failed:", e);
             }
-
-
-
-
-
+            try {
+                await this.renderLiveWidget(context);
+            } catch (e) {
+                console.error("❌ renderLiveWidget failed:", e);
+            }
 
 
 

@@ -191,7 +191,7 @@
          * Recalculates all player levels from their entire match history.
          * Using PRO SMART ALGORITHM (60% Performance / 40% Difficulty).
          */
-        async recalculateAllLevels() {
+        async recalculateAllLevels(silent = false) {
             console.log("🚀 [LevelService] Starting Global PRO Recalculation...");
             try {
                 const players = await window.FirebaseDB.players.getAll();
@@ -286,12 +286,16 @@
 
                 if (batchCount > 0) await batch.commit();
 
-                alert(`✅ Recálculo completado: ${allMatches.length} partidos procesados para ${totalUpdated} jugadores.`);
+                if (!silent) {
+                    alert(`✅ Recálculo completado: ${allMatches.length} partidos procesados para ${totalUpdated} jugadores.`);
+                }
                 console.log(`✅ [LevelService] Global recalculation complete. ${totalUpdated} players updated.`);
                 return true;
             } catch (error) {
                 console.error("❌ [LevelService] Recalculation failed:", error);
-                alert("Error en el recálculo. Revisa la consola.");
+                if (!silent) {
+                    alert("Error en el recálculo. Revisa la consola.");
+                }
                 return false;
             }
         }

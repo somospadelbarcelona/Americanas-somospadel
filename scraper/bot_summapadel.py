@@ -11,7 +11,7 @@ import re
 import sys
 from playwright.async_api import async_playwright
 
-sys.stdout.reconfigure(line_buffering=True)
+sys.stdout.reconfigure(line_buffering=True, encoding='utf-8')
 
 TARGET_URL = "https://summapadel.com/event/151"
 CLUB_KEYWORDS = ["somos", "padel bcn", "somopadel", "somospadel"]
@@ -912,6 +912,18 @@ async def run_auto_sync():
             browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
             
+            # Redirigir consola del navegador, errores y diálogos
+            def handle_console(msg):
+                print(f"[BROWSER-CONSOLE] [{msg.type}] {msg.text}")
+            page.on("console", handle_console)
+            
+            page.on("pageerror", lambda err: print(f"[BROWSER-ERROR] {err}"))
+            
+            async def handle_dialog(dialog):
+                print(f"[BROWSER-DIALOG] {dialog.message}")
+                await dialog.accept()
+            page.on("dialog", lambda d: asyncio.create_task(handle_dialog(d)))
+            
             url = "http://127.0.0.1:8080/admin.html"
             print(f"[AUTO-SYNC] Conectando al panel de administración en {url}...")
             try:
@@ -940,19 +952,21 @@ async def run_auto_sync():
                 sync_btn = await page.query_selector("button:has-text('SINCRO SUMMAPADEL')")
                 
             if sync_btn:
-                # Aceptar los diálogos automáticamente
-                page.on("dialog", lambda dialog: dialog.accept())
+                # Obtener el texto inicial del botón para saber cuándo ha vuelto a su estado original
+                initial_text = await page.evaluate("(btn) => (btn.querySelector('.nav-text') || btn).innerText", sync_btn)
+                print(f"[AUTO-SYNC] Texto inicial del botón detectado: '{initial_text}'")
                 
                 print("[AUTO-SYNC] Clicando el botón usando JavaScript para evitar overlays...")
                 await page.evaluate("(btn) => btn.click()", sync_btn)
                 print("[AUTO-SYNC] Sincronizando datos en Firestore...")
                 
-                # Esperar a que el botón termine las fases y vuelva a su estado original
+                # Esperar a que el botón termine las fases y vuelva a su estado original (máx 60s)
                 success = False
-                for _ in range(30):
+                for i in range(60):
                     await page.wait_for_timeout(1000)
-                    btn_text = await page.evaluate("(btn) => btn.querySelector('.nav-text').innerText", sync_btn)
-                    if "SINCRO SUMMAPADEL" in btn_text:
+                    btn_text = await page.evaluate("(btn) => (btn.querySelector('.nav-text') || btn).innerText", sync_btn)
+                    
+                    if btn_text == initial_text:
                         success = True
                         break
                 
