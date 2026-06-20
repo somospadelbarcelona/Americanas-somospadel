@@ -319,14 +319,14 @@ function renderEntrenoCard(e) {
              data-month="${month}" 
              data-status="${e.status || 'open'}" 
              data-category="${e.category || 'open'}"
-             style="margin-bottom: 1.2rem; display: flex; flex-direction: column; padding: 1.2rem; border-left: 6px solid ${statusColor}; background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 12px; gap: 1rem; color: #000000;">
+             style="margin-bottom: 0.8rem; display: flex; flex-direction: column; padding: 0.8rem 1rem; border-left: 6px solid ${statusColor}; background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 12px; gap: 0.6rem; color: #000000;">
             
             <div style="display: flex; gap: 1.2rem; align-items: flex-start;">
-                <div class="entreno-preview-img" style="width: 60px; height: 60px; border-radius: 12px; background: url('${(e.image_url || '').replace(/ /g, '%20')}') center/cover; border: 1px solid rgba(0,0,0,0.1); position:relative; flex-shrink: 0;">
+                <div class="entreno-preview-img" style="width: 48px; height: 48px; border-radius: 12px; background: url('${(e.image_url || '').replace(/ /g, '%20')}') center/cover; border: 1px solid rgba(0,0,0,0.1); position:relative; flex-shrink: 0;">
                     <div style="position:absolute; bottom:-5px; right:-5px; background:${statusColor}; width:12px; height:12px; border-radius:50%; border:2px solid #fff;"></div>
                 </div>
                 <div class="entreno-info-pro" style="flex: 1; min-width: 0;">
-                    <div style="font-weight: 950; font-size: 1.1rem; color: #000000; margin-bottom: 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                    <div style="font-weight: 950; font-size: 1.1rem; color: #000000; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
                         ${e.name.toUpperCase()}
                     </div>
                     <div style="display: flex; gap: 0.8rem; font-size: 0.75rem; color: #333333; flex-wrap: wrap; align-items: center;">
@@ -342,7 +342,7 @@ function renderEntrenoCard(e) {
                 </div>
             </div>
             
-            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.03);">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 0.3rem; border-top: 1px solid rgba(255,255,255,0.03);">
                 <!-- Status Selector -->
                 <div style="position: relative; flex: 1; min-width: 120px;">
                     <select onchange="window.updateEntrenoStatus('${e.id}', this.value)" 
@@ -353,7 +353,7 @@ function renderEntrenoCard(e) {
                                 color: #000000 !important; 
                                 -webkit-text-fill-color: #000000 !important;
                                 border: 2px solid ${statusColor}; 
-                                padding: 8px 12px; 
+                                padding: 6px 10px; 
                                 border-radius: 8px; 
                                 font-weight: 800; 
                                 font-size: 0.7rem; 
@@ -373,39 +373,39 @@ function renderEntrenoCard(e) {
                 <div style="display: flex; gap: 8px; flex-shrink: 0; justify-content: flex-end; flex: 1;">
                     ${(e.status === 'open' || e.status === 'live') ? `
                     <button class="btn-micro" 
-                            style="background: #FFD700 !important; color: #000 !important; border: none; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            style="background: #FFD700 !important; color: #000 !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
                             onclick="window.launchBatSignalEntreno('${e.id}')"
                             title="Batseñal">
-                        <i class="fas fa-bullhorn" style="font-size: 1rem; color: #000 !important;"></i>
+                        <i class="fas fa-bullhorn" style="font-size: 0.9rem; color: #000 !important;"></i>
                     </button>
                     ` : ''}
 
                     <button class="btn-micro" 
-                            style="background: #25D366 !important; color: #fff !important; border: none; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            style="background: #25D366 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
                             onclick="window.launchWhatsAppShareEntreno('${e.id}')"
                             title="WhatsApp">
-                        <i class="fab fa-whatsapp" style="font-size: 1.1rem; color: #fff !important;"></i>
+                        <i class="fab fa-whatsapp" style="font-size: 1rem; color: #fff !important;"></i>
                     </button>
                     
                     <button class="btn-micro" 
-                            style="background: #475569 !important; color: #fff !important; border: none; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            style="background: #475569 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
                             onclick='window.duplicateEntreno(${JSON.stringify(e).replace(/'/g, "&#39;")})' 
                             title="Duplicar">
-                        <i class="fas fa-clone" style="font-size: 0.9rem; color: #fff !important;"></i>
+                        <i class="fas fa-clone" style="font-size: 0.8rem; color: #fff !important;"></i>
                     </button>
                     
                     <button class="btn-micro" 
-                            style="background: #3B82F6 !important; color: #fff !important; border: none; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            style="background: #3B82F6 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
                             onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' 
                             title="Editar">
-                        <i class="fas fa-pen" style="font-size: 0.9rem; color: #fff !important;"></i>
+                        <i class="fas fa-pen" style="font-size: 0.8rem; color: #fff !important;"></i>
                     </button>
                     
                     <button class="btn-micro" 
-                            style="background: #EF4444 !important; color: #fff !important; border: none; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
+                            style="background: #EF4444 !important; color: #fff !important; border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" 
                             onclick="window.deleteEntreno('${e.id}')" 
                             title="Eliminar">
-                        <i class="fas fa-trash-alt" style="font-size: 0.9rem; color: #fff !important;"></i>
+                        <i class="fas fa-trash-alt" style="font-size: 0.8rem; color: #fff !important;"></i>
                     </button>
                 </div>
             </div>

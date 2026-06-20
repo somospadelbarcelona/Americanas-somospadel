@@ -1146,10 +1146,13 @@
                     </button>
                     <div class="submenu-content">
                         <button class="submenu-item nav-group-open-matches-sub" data-view="open_matches_mgmt" onclick="loadAdminView('open_matches_mgmt')">
-                            <span class="nav-text">Gestor</span>
+                            <span class="nav-text">Gestor de Partidas Abiertas</span>
                         </button>
                         <button class="submenu-item nav-group-open-matches-sub" data-view="open_matches_create" onclick="loadAdminView('open_matches_create')">
                             <span class="nav-text">Crear</span>
+                        </button>
+                        <button class="submenu-item nav-group-open-matches-sub" data-view="open_matches_results" onclick="loadAdminView('open_matches_results')">
+                            <span class="nav-text">Resultados</span>
                         </button>
                     </div>
                 </div>
@@ -2003,7 +2006,7 @@
 
             <!-- SERVICES & AUTH (Session Management) -->
             <script src="js/core/AuthService.js?v=1101"></script>
-            <script src="js/admin.js?v=1121"></script>
+            <script src="js/admin.js?v=1122"></script>
 
             <!-- Module Logic -->
             <script src="js/modules/ui/PlayerAutocomplete.js"></script>
@@ -2056,7 +2059,7 @@
             <script src="js/modules/admin-analytics.js"></script>
             <script src="js/modules/common/WhatsAppService.js?v=7015"></script>
             <script src="js/modules/admin-entrenos.js?v=5010"></script>
-            <script src="js/modules/admin-open-matches.js" defer></script>
+            <script src="js/modules/admin-open-matches.js?v=3" defer></script>
             <script src="js/modules/admin-database-health.js"></script>
             <script src="js/modules/admin-fix-players.js"></script>
 

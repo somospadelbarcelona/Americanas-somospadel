@@ -80,55 +80,53 @@
 
             // Action Area logic
             let actionArea = '';
-            const canEdit = (eventStatus === 'live' || eventStatus === 'adjusting') && currentUser;
-
-            if (isFinished && !isAdmin) {
+            const canEdit = (eventStatus === 'live' || eventStatus === 'adjusting') && currentUser;            if (isFinished && !isAdmin) {
                 const userDelta = isPartA ? (match.delta_a || 0) : (match.delta_b || 0);
                 actionArea = `
-                    <div style="margin-top: 15px; padding: 12px; background: #f1f5f9; border-radius: 16px; border: 1px solid #e2e8f0; text-align: center;">
-                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 700;">PARTIDO FINALIZADO</span>
+                    <div style="margin-top: 10px; padding: 8px; background: #f1f5f9; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center;">
+                        <span style="font-size: 0.7rem; color: #64748b; font-weight: 700;">PARTIDO FINALIZADO</span>
                     </div>
                 `;
             } else if (canEdit || isAdmin) {
                 actionArea = `
-                    <div style="margin-top:20px; padding-top:20px; border-top:1px solid #e2e8f0;">
-                        <div style="text-align:center; margin-bottom:15px;">
-                            <span style="font-size:0.6rem; font-weight:950; color:#72a800; letter-spacing:2px; text-transform:uppercase;">INTRODUCIR RESULTADO</span>
+                    <div style="margin-top:12px; padding-top:12px; border-top:1px solid #e2e8f0;">
+                        <div style="text-align:center; margin-bottom:8px;">
+                            <span style="font-size:0.55rem; font-weight:950; color:#72a800; letter-spacing:2px; text-transform:uppercase;">INTRODUCIR RESULTADO</span>
                         </div>
                         <div style="display:flex; gap:8px; justify-content:space-between; width:100%;">
-                            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; background:#f8fafc; padding:12px 5px; border-radius:20px; border:1px solid #e2e8f0;">
-                                <div style="font-size:0.55rem; color:#64748b; font-weight:900; text-transform:uppercase; letter-spacing:0.5px;">EQ. ARRIBA</div>
+                            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; background:#f8fafc; padding:8px 5px; border-radius:14px; border:1px solid #e2e8f0;">
+                                <div style="font-size:0.5rem; color:#64748b; font-weight:900; text-transform:uppercase; letter-spacing:0.5px;">EQ. ARRIBA</div>
                                 <div style="display:flex; align-items:center; gap:6px; justify-content:center;">
-                                    <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', -1)" style="width:36px; height:36px; border-radius:50%; border:1px solid #e2e8f0; background:#f1f5f9; color:#0a192f; font-size:1.5rem; cursor:pointer;">-</button>
-                                    <span id="score-a-val-${match.id}" style="font-size:1.8rem; font-weight:950; color:#0a192f; min-width:32px; text-align:center;">${sA}</span>
-                                    <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', 1)" style="width:36px; height:36px; border-radius:50%; border:1px solid #e2e8f0; background:#f1f5f9; color:#0a192f; font-size:1.5rem; cursor:pointer;">+</button>
+                                    <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', -1)" style="width:28px; height:28px; border-radius:50%; border:1px solid #e2e8f0; background:#f1f5f9; color:#0a192f; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;">-</button>
+                                    <span id="score-a-val-${match.id}" style="font-size:1.4rem; font-weight:950; color:#0a192f; min-width:24px; text-align:center;">${sA}</span>
+                                    <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_a', 1)" style="width:28px; height:28px; border-radius:50%; border:1px solid #e2e8f0; background:#f1f5f9; color:#0a192f; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;">+</button>
                                 </div>
                             </div>
-                            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; background:#f8fafc; padding:12px 5px; border-radius:20px; border:1px solid #e2e8f0;">
-                                <div style="font-size:0.55rem; color:#64748b; font-weight:900; text-transform:uppercase; letter-spacing:0.5px;">EQ. ABAJO</div>
+                            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; background:#f8fafc; padding:8px 5px; border-radius:14px; border:1px solid #e2e8f0;">
+                                <div style="font-size:0.5rem; color:#64748b; font-weight:900; text-transform:uppercase; letter-spacing:0.5px;">EQ. ABAJO</div>
                                 <div style="display:flex; align-items:center; gap:6px; justify-content:center;">
-                                    <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', -1)" style="width:36px; height:36px; border-radius:50%; border:1px solid #e2e8f0; background:#f1f5f9; color:#0a192f; font-size:1.5rem; cursor:pointer;">-</button>
-                                    <span id="score-b-val-${match.id}" style="font-size:1.8rem; font-weight:950; color:#0a192f; min-width:32px; text-align:center;">${sB}</span>
-                                    <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', 1)" style="width:36px; height:36px; border-radius:50%; border:1px solid #e2e8f0; background:#f1f5f9; color:#0a192f; font-size:1.5rem; cursor:pointer;">+</button>
+                                    <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', -1)" style="width:28px; height:28px; border-radius:50%; border:1px solid #e2e8f0; background:#f1f5f9; color:#0a192f; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;">-</button>
+                                    <span id="score-b-val-${match.id}" style="font-size:1.4rem; font-weight:950; color:#0a192f; min-width:24px; text-align:center;">${sB}</span>
+                                    <button onclick="window.ControlTowerView.adjustScore('${match.id}', 'score_b', 1)" style="width:28px; height:28px; border-radius:50%; border:1px solid #e2e8f0; background:#f1f5f9; color:#0a192f; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;">+</button>
                                 </div>
                             </div>
                         </div>
                         ${isEntreno ? `
-                        <div id="tie-warning-${match.id}" style="display:${sA === sB && (sA > 0 || sB > 0) ? 'flex' : 'none'}; align-items:center; gap:8px; margin-top:14px; padding:10px 14px; background:rgba(255,160,0,0.12); border:1px solid rgba(255,160,0,0.4); border-radius:14px;">
-                            <span style="font-size:1.1rem;">⚠️</span>
-                            <span style="font-size:0.7rem; color:#FFA000; font-weight:800;">EMPATE NO VÁLIDO</span>
+                        <div id="tie-warning-${match.id}" style="display:${sA === sB && (sA > 0 || sB > 0) ? 'flex' : 'none'}; align-items:center; gap:6px; margin-top:8px; padding:6px 12px; background:rgba(255,160,0,0.12); border:1px solid rgba(255,160,0,0.4); border-radius:10px;">
+                            <span style="font-size:0.9rem;">⚠️</span>
+                            <span style="font-size:0.65rem; color:#FFA000; font-weight:800;">EMPATE NO VÁLIDO</span>
                         </div>` : ''}
                         <button onclick="window.ControlTowerView.finishMatch('${match.id}')"
                                 id="finish-btn-${match.id}"
-                                style="width:100%; margin-top:20px; padding:18px; background:${isEntreno && sA === sB ? 'rgba(255,160,0,0.2)' : 'var(--brand-neon)'}; color:${isEntreno && sA === sB ? '#FFA000' : 'black'}; font-weight:950; border-radius:20px; cursor:pointer;">
+                                style="width:100%; margin-top:12px; padding:12px 14px; background:${isEntreno && sA === sB ? 'rgba(255,160,0,0.2)' : 'var(--brand-neon)'}; color:${isEntreno && sA === sB ? '#FFA000' : 'black'}; font-weight:950; border-radius:14px; font-size:0.85rem; cursor:pointer; border:none;">
                             ${isEntreno && sA === sB ? 'EMPATE — CORRIGE' : 'FINALIZAR PARTIDO'}
                         </button>
                     </div>
                 `;
             } else {
                 actionArea = `
-                    <div style="margin-top:15px; padding:12px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:12px; text-align:center;">
-                        <span style="font-size:0.7rem; color:#666; font-weight:700;">MODO ESPECTADOR</span>
+                    <div style="margin-top:10px; padding:8px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:10px; text-align:center;">
+                        <span style="font-size:0.65rem; color:#666; font-weight:700;">MODO ESPECTADOR</span>
                     </div>
                 `;
             }
@@ -139,21 +137,21 @@
 
             return `
                 <div class="match-card animate-pop-in ${isLive ? 'live-shadow' : ''}" id="card-${match.id}" 
-                     style="background: ${cardBg}; border-radius: 24px; overflow: hidden; margin-bottom: 20px; position: relative; ${cardStyle}; box-shadow: 0 10px 30px rgba(0,0,0,0.04);">
-                    <div style="padding: 14px 24px; background: #f8fafc; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">
-                        <span style="font-size: 0.65rem; font-weight: 950; color: #64748b; letter-spacing: 1.5px; text-transform: uppercase;">
+                     style="background: ${cardBg}; border-radius: 20px; overflow: hidden; margin-bottom: 12px; position: relative; ${cardStyle}; box-shadow: 0 6px 20px rgba(0,0,0,0.04);">
+                    <div style="padding: 10px 16px; background: #f8fafc; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">
+                        <span style="font-size: 0.6rem; font-weight: 950; color: #64748b; letter-spacing: 1.5px; text-transform: uppercase;">
                             PISTA ${match.court} • R${match.round} • ${timeLabel}
                         </span>
                         <div class="status-area">${statusBadge}</div>
                     </div>
-                    <div style="padding: 24px 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                            <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
-                                <div style="font-size: 1.15rem; color: #0a192f; font-weight: 950; text-transform: uppercase; letter-spacing: -0.5px;">
-                                    ${winnerA ? `<i class="fas fa-trophy" style="color: #72a800; margin-right: 8px;"></i>` : ''}
-                                    <span style="${winnerA ? 'border-bottom: 3px solid #72a800;' : ''}">${safeTeamA}</span>
+                    <div style="padding: 14px 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; padding-right: 10px;">
+                                <div style="font-size: 1.05rem; color: #0a192f; font-weight: 950; text-transform: uppercase; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                                    ${winnerA ? `<i class="fas fa-trophy" style="color: #72a800; margin-right: 6px;"></i>` : ''}
+                                    <span style="${winnerA ? 'border-bottom: 2px solid #72a800;' : ''}">${safeTeamA}</span>
                                 </div>
-                                ${isPartA ? '<span style="color: #72a800; font-size: 0.65rem; font-weight: 950; letter-spacing: 1px;">TU EQUIPO ★</span>' : ''}
+                                ${isPartA ? '<span style="color: #72a800; font-size: 0.55rem; font-weight: 950; letter-spacing: 1px;">TU EQUIPO ★</span>' : ''}
                             </div>
                             <div id="match-score-a-${match.id}" 
                                  onclick="${isAdmin || canEdit ? `window.ControlTowerView.manualScoreEdit('${match.id}', 'score_a')` : ''}">
@@ -161,17 +159,17 @@
                             </div>
                         </div>
                         
-                        <div style="height: 1px; background: #e2e8f0; margin: 20px 0; position: relative;">
-                            <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #f8fafc; padding: 2px 10px; border-radius: 8px; font-size: 0.55rem; color: #cbd5e1; font-weight: 950;">VS</div>
+                        <div style="height: 1px; background: #e2e8f0; margin: 10px 0; position: relative;">
+                            <div style="position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #ffffff; padding: 1px 8px; border-radius: 6px; font-size: 0.5rem; color: #cbd5e1; font-weight: 950; border: 1px solid #e2e8f0;">VS</div>
                         </div>
 
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
-                                <div style="font-size: 1.15rem; color: #0a192f; font-weight: 950; text-transform: uppercase; letter-spacing: -0.5px;">
-                                    ${winnerB ? `<i class="fas fa-trophy" style="color: #72a800; margin-right: 8px;"></i>` : ''}
-                                    <span style="${winnerB ? 'border-bottom: 3px solid #72a800;' : ''}">${safeTeamB}</span>
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; padding-right: 10px;">
+                                <div style="font-size: 1.05rem; color: #0a192f; font-weight: 950; text-transform: uppercase; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                                    ${winnerB ? `<i class="fas fa-trophy" style="color: #72a800; margin-right: 6px;"></i>` : ''}
+                                    <span style="${winnerB ? 'border-bottom: 2px solid #72a800;' : ''}">${safeTeamB}</span>
                                 </div>
-                                ${isPartB ? '<span style="color: #72a800; font-size: 0.65rem; font-weight: 950; letter-spacing: 1px;">TU EQUIPO ★</span>' : ''}
+                                ${isPartB ? '<span style="color: #72a800; font-size: 0.55rem; font-weight: 950; letter-spacing: 1px;">TU EQUIPO ★</span>' : ''}
                             </div>
                             <div id="match-score-b-${match.id}" 
                                  onclick="${isAdmin || canEdit ? `window.ControlTowerView.manualScoreEdit('${match.id}', 'score_b')` : ''}">

@@ -534,7 +534,7 @@ window.AdminViews.open_matches_mgmt = async function () {
     const content = document.getElementById('content-area');
     const titleEl = document.getElementById('page-title');
 
-    if (titleEl) titleEl.textContent = 'Gestor de Partidas';
+    if (titleEl) titleEl.textContent = 'Gestor de Partidas Abiertas';
 
     const updateStatus = (msg) => {
         content.innerHTML = `<div class="loading-container"><div class="loader"></div><p>${msg}</p></div>`;
@@ -880,6 +880,12 @@ window.AdminViews.open_matches_create = async function () {
                             <input type="text" name="playtomic_url" class="pro-input" placeholder="https://playtomic.io/matches/..." style="font-size: 0.82rem; height: 50px; border-radius: 12px;">
                         </div>
 
+                        <!-- Modalidad Parejas Fijas Checkbox -->
+                        <div class="form-group" style="margin-bottom: 1.5rem; display:flex; align-items:center; gap:10px;">
+                            <input type="checkbox" id="create-match-fixed-pair" name="is_fixed_pair" style="width:20px; height:20px; cursor:pointer;">
+                            <label for="create-match-fixed-pair" style="font-size:0.85rem; font-weight:850; color:#0F172A; text-transform:uppercase; letter-spacing:0.5px; cursor:pointer; margin:0;">🏆 Modalidad: Parejas Fijas</label>
+                        </div>
+
                         <!-- Creator Details -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 1.5rem;">
                             <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
@@ -1064,6 +1070,7 @@ function setupCreateOpenMatchFormUpgraded() {
             if (data.player_4 && data.player_4.trim()) players.push(data.player_4.trim());
 
             const spotsVal = Math.max(0, 4 - players.length);
+            const isFixedPair = !!form.querySelector('[name=is_fixed_pair]')?.checked;
 
             // Build match payload
             const payload = {
@@ -1076,6 +1083,7 @@ function setupCreateOpenMatchFormUpgraded() {
                 players: players,
                 spots_needed: spotsVal,
                 playtomic_url: data.playtomic_url || '',
+                is_fixed_pair: isFixedPair,
                 status: 'active',
                 created_at: firebase.firestore.FieldValue.serverTimestamp(),
                 creator_uid: "",
@@ -1387,6 +1395,11 @@ window.openEditOpenMatchModal = async function (m) {
                     <input type="text" name="playtomic_url" class="pro-input" value="${m.playtomic_url || ''}" placeholder="https://...">
                 </div>
 
+                <div class="form-group" style="margin-bottom: 15px; display:flex; align-items:center; gap:10px;">
+                    <input type="checkbox" id="edit-match-fixed-pair" name="is_fixed_pair" style="width:20px; height:20px; cursor:pointer;" ${m.is_fixed_pair ? 'checked' : ''}>
+                    <label for="edit-match-fixed-pair" style="font-size:0.85rem; font-weight:850; color:#0F172A; text-transform:uppercase; letter-spacing:0.5px; cursor:pointer; margin:0;">🏆 Modalidad: Parejas Fijas</label>
+                </div>
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                     <div class="form-group">
                         <label>NOMBRE ORGANIZADOR (OPCIONAL)</label>
@@ -1402,6 +1415,7 @@ window.openEditOpenMatchModal = async function (m) {
                     <label>ESTADO DE LA PARTIDA</label>
                     <select name="status" class="pro-input" style="font-weight: 800;">
                         <option value="active" ${m.status === 'active' ? 'selected' : ''}>🟢 ACTIVA</option>
+                        <option value="completed" ${m.status === 'completed' ? 'selected' : ''}>🏆 COMPLETADA (CON RESULTADO)</option>
                         <option value="finished" ${m.status === 'finished' ? 'selected' : ''}>🏁 FINALIZADA</option>
                         <option value="cancelled" ${m.status === 'cancelled' ? 'selected' : ''}>⛔ ANULADA</option>
                     </select>
@@ -1568,6 +1582,8 @@ window.openEditOpenMatchModal = async function (m) {
             if (data.player_3 && data.player_3.trim()) players.push(data.player_3.trim());
             if (data.player_4 && data.player_4.trim()) players.push(data.player_4.trim());
 
+            const isFixedPair = !!form.querySelector('[name=is_fixed_pair]')?.checked;
+
             const updatedData = {
                 club: finalClub,
                 date: data.date,
@@ -1578,6 +1594,7 @@ window.openEditOpenMatchModal = async function (m) {
                 players: players,
                 spots_needed: Math.max(0, 4 - players.length),
                 playtomic_url: data.playtomic_url || '',
+                is_fixed_pair: isFixedPair,
                 status: data.status || 'active',
                 creator_name: (data.creator_name || "").trim(),
                 creator_phone: (data.creator_phone || "").replace(/[^0-9]/g, "")
@@ -1614,9 +1631,9 @@ function renderOpenMatchCard(m) {
     const totalPlayers = playersList.length;
 
     const isCancelled = m.status === 'cancelled';
-    const isFinished = m.status === 'finished';
-    const statusLabel = isFinished ? 'FINALIZADA' : (isCancelled ? 'ANULADA' : 'ACTIVA');
-    const statusColor = isFinished ? '#888' : (isCancelled ? '#F43F5E' : '#2E61FF');
+    const isFinished = m.status === 'finished' || m.status === 'completed';
+    const statusLabel = m.status === 'completed' ? 'COMPLETADA' : (m.status === 'finished' ? 'FINALIZADA' : (isCancelled ? 'ANULADA' : 'ACTIVA'));
+    const statusColor = m.status === 'completed' ? '#10B981' : (m.status === 'finished' ? '#8b5cf6' : (isCancelled ? '#F43F5E' : '#2E61FF'));
 
     // Month tracking
     let month = '';
@@ -1634,6 +1651,28 @@ function renderOpenMatchCard(m) {
             <i class="fas fa-circle-user" style="font-size:0.75rem;"></i> ${name}
         </span>
     `).join(' ') || `<span style="color:#64748b; font-size:0.75rem; font-style:italic;">Sin jugadores apuntados</span>`;
+
+    // Format sets result
+    let resultHtml = '';
+    if (m.result) {
+        const sets = [];
+        if (m.result.set1) sets.push(`${m.result.set1.a}-${m.result.set1.b}`);
+        if (m.result.set2) sets.push(`${m.result.set2.a}-${m.result.set2.b}`);
+        if (m.result.set3) {
+            const s3a = parseInt(m.result.set3.a);
+            const s3b = parseInt(m.result.set3.b);
+            if (!isNaN(s3a) && !isNaN(s3b) && (s3a !== 0 || s3b !== 0)) {
+                sets.push(`${s3a}-${s3b}`);
+            }
+        }
+        if (sets.length > 0) {
+            resultHtml = `
+                <div style="margin-top: 8px; font-size: 0.72rem; font-weight: 900; color: #10B981; display: flex; align-items: center; gap: 6px; width: 100%;">
+                    <i class="fas fa-trophy"></i> Marcador: <span style="background: rgba(16, 185, 129, 0.08); padding: 2px 8px; border-radius: 6px; border: 1.5px solid rgba(16, 185, 129, 0.15);">${sets.join(', ')}</span>
+                </div>
+            `;
+        }
+    }
 
     return `
         <div class="glass-card-enterprise open-match-card-item" 
@@ -1657,12 +1696,14 @@ function renderOpenMatchCard(m) {
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-clock" style="color: #A78BFA;"></i> <span style="color:#333; font-weight: 600;">${m.time || '19:00'} (${m.duration || 90}m)</span></span>
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-chart-line" style="color: #FBBF24;"></i> <span style="color:#333; font-weight: 800;">${parseFloat(m.level_min || 3.0).toFixed(2)} - ${parseFloat(m.level_max || 3.5).toFixed(2)}</span></span>
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-user-group" style="color: #10B981;"></i> <span style="color:#000; font-weight: 900;">${totalPlayers}</span><span style="opacity:0.5;">/4</span> <span style="color:#64748b; font-size:0.7rem; font-weight:600;">(${spotsNeeded} plazas libres)</span></span>
+                         ${m.is_fixed_pair ? '<span style="display: inline-flex; align-items: center; gap: 5px; color:#2E61FF; font-weight:800;"><i class="fas fa-people-arrows"></i> Parejas Fijas</span>' : ''}
                     </div>
                     
                     <!-- Players Badges inside match card -->
                     <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;">
                         ${playersBadges}
                     </div>
+                    ${resultHtml}
                 </div>
             </div>
             
@@ -1686,6 +1727,7 @@ function renderOpenMatchCard(m) {
                                 outline: none;
                             ">
                         <option value="active" ${m.status === 'active' ? 'selected' : ''}>🟢 ACTIVA</option>
+                        <option value="completed" ${m.status === 'completed' ? 'selected' : ''}>🏆 COMPLETADA (CON RESULTADO)</option>
                         <option value="finished" ${m.status === 'finished' ? 'selected' : ''}>🏁 FINALIZADA</option>
                         <option value="cancelled" ${m.status === 'cancelled' ? 'selected' : ''}>⛔ ANULADA</option>
                     </select>
@@ -1974,5 +2016,258 @@ window.resetPadelVenuesToDefault = async () => {
     } catch (err) {
         alert("Error al restablecer sedes: " + err.message);
         window.loadAdminView('open_matches_mgmt');
+    }
+};
+
+// --- VIEW 3: RESULTADOS DE PARTIDAS ABIERTAS ---
+window.AdminViews.open_matches_results = async function () {
+    const content = document.getElementById('content-area');
+    const titleEl = document.getElementById('page-title');
+
+    if (titleEl) titleEl.textContent = 'Resultados de Partidas Abiertas';
+    content.innerHTML = '<div class="loading-container"><div class="loader"></div><p>Cargando resultados de partidas...</p></div>';
+
+    try {
+        if (!window.db) throw new Error("Firebase Firestore no está inicializado");
+
+        if (window.AdminOpenMatchesResultsUnsubscribe) {
+            window.AdminOpenMatchesResultsUnsubscribe();
+        }
+
+        window.AdminOpenMatchesResultsUnsubscribe = window.db.collection(OPEN_MATCHES_COLLECTION)
+            .onSnapshot(snapshot => {
+                const matches = [];
+                snapshot.forEach(doc => {
+                    matches.push({ id: doc.id, ...doc.data() });
+                });
+
+                matches.sort((a, b) => {
+                    const dateA = new Date(`${a.date || '1970-01-01'}T${a.time || '00:00'}`);
+                    const dateB = new Date(`${b.date || '1970-01-01'}T${b.time || '00:00'}`);
+                    return dateB - dateA;
+                });
+
+                renderResultsList(content, matches);
+            }, err => {
+                console.error("Error in real-time results listener:", err);
+                content.innerHTML = `<div class="error-box">Error al cargar datos en tiempo real: ${err.message}</div>`;
+            });
+
+    } catch (e) {
+        console.error("Error loading results view:", e);
+        content.innerHTML = `<div class="error-box">Error: ${e.message}</div>`;
+    }
+};
+
+function renderResultsList(container, matches) {
+    const listHtml = matches.map(m => {
+        const playersList = m.players || [];
+        const p1 = playersList[0] || 'Libre';
+        const p2 = playersList[1] || 'Libre';
+        const p3 = playersList[2] || 'Libre';
+        const p4 = playersList[3] || 'Libre';
+
+        const isCompleted = m.status === 'completed';
+        const statusLabel = isCompleted ? 'COMPLETADA' : (m.status === 'finished' ? 'FINALIZADA' : (m.status === 'cancelled' ? 'ANULADA' : 'ACTIVA'));
+        const statusColor = isCompleted ? '#10B981' : (m.status === 'finished' ? '#8b5cf6' : (m.status === 'cancelled' ? '#EF4444' : '#2E61FF'));
+
+        // Get sets scores
+        const res = m.result || {};
+        const s1a = res.set1 ? (res.set1.a !== undefined ? res.set1.a : 0) : 0;
+        const s1b = res.set1 ? (res.set1.b !== undefined ? res.set1.b : 0) : 0;
+        const s2a = res.set2 ? (res.set2.a !== undefined ? res.set2.a : 0) : 0;
+        const s2b = res.set2 ? (res.set2.b !== undefined ? res.set2.b : 0) : 0;
+        const s3a = res.set3 ? (res.set3.a !== undefined ? res.set3.a : 0) : 0;
+        const s3b = res.set3 ? (res.set3.b !== undefined ? res.set3.b : 0) : 0;
+
+        return `
+            <div class="glass-card-enterprise" style="padding: 20px; border-radius: 16px; background: #ffffff; border: 1px solid rgba(15,23,42,0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; color:#000;">
+                <!-- Header -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 10px;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-map-marker-alt" style="color: #2E61FF; font-size: 0.9rem;"></i>
+                        <span style="font-weight: 850; font-size: 0.8rem; color: #0F172A; text-transform: uppercase;">${(m.club || 'Somos Pádel BCN').toUpperCase()}</span>
+                        ${m.is_fixed_pair ? '<span style="background: rgba(46,97,255,0.08); color: #2E61FF; font-size: 0.62rem; font-weight: 900; padding: 2px 6px; border-radius: 4px; margin-left:6px; text-transform: uppercase;">Parejas Fijas</span>' : ''}
+                    </div>
+                    <span style="font-size: 0.68rem; font-weight: 900; color: #64748B;">
+                        ${formatOpenMatchDate(m.date)} • ${m.time || '19:00'}
+                    </span>
+                </div>
+
+                <!-- Teams -->
+                <div style="display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size: 0.85rem; font-weight: 850; color: #0F172A; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-user-friends" style="color:#2E61FF; font-size:0.75rem;"></i> ${p1} / ${p2}
+                        </span>
+                        <span style="font-size: 0.62rem; color: #64748B; font-weight: 850; text-transform: uppercase; letter-spacing: 0.5px;">PAREJA 1</span>
+                    </div>
+                    <div style="font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-align: left; padding-left: 18px; margin: -4px 0;">vs</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size: 0.85rem; font-weight: 850; color: #0F172A; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-user-friends" style="color:#2E61FF; font-size:0.75rem;"></i> ${p3} / ${p4}
+                        </span>
+                        <span style="font-size: 0.62rem; color: #64748B; font-weight: 850; text-transform: uppercase; letter-spacing: 0.5px;">PAREJA 2</span>
+                    </div>
+                </div>
+
+                <!-- Score input panel -->
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <span style="font-size: 0.68rem; font-weight: 900; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">INTRODUCIR RESULTADO</span>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                        <!-- Set 1 Card -->
+                        <div style="background: #f8fafc; border: 1px solid rgba(15,23,42,0.05); padding: 10px; border-radius: 12px; display:flex; flex-direction:column; gap:8px;">
+                            <span style="font-size: 0.65rem; font-weight: 900; color: #0F172A; border-bottom:1px solid #e2e8f0; padding-bottom:4px; text-transform:uppercase;">SET 1</span>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <button onclick="window.adjustOpenMatchSetScore('${m.id}', 1, 'a', -1)" class="btn-micro" style="width:24px; height:24px; border-radius:50%; border:1px solid #cbd5e1; background:#fff; font-size:0.8rem; font-weight:900; display:flex; align-items:center; justify-content:center; cursor:pointer;">-</button>
+                                    <span style="font-weight:950; font-size:1.05rem; font-family:monospace; min-width:14px; text-align:center;">${s1a}</span>
+                                    <button onclick="window.adjustOpenMatchSetScore('${m.id}', 1, 'a', 1)" class="btn-micro" style="width:24px; height:24px; border-radius:50%; border:1px solid #cbd5e1; background:#fff; font-size:0.8rem; font-weight:900; display:flex; align-items:center; justify-content:center; cursor:pointer;">+</button>
+                                </div>
+                                <span style="font-size:0.7rem; color:#94a3b8; font-weight:800;">-</span>
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <button onclick="window.adjustOpenMatchSetScore('${m.id}', 1, 'b', -1)" class="btn-micro" style="width:24px; height:24px; border-radius:50%; border:1px solid #cbd5e1; background:#fff; font-size:0.8rem; font-weight:900; display:flex; align-items:center; justify-content:center; cursor:pointer;">-</button>
+                                    <span style="font-weight:950; font-size:1.05rem; font-family:monospace; min-width:14px; text-align:center;">${s1b}</span>
+                                    <button onclick="window.adjustOpenMatchSetScore('${m.id}', 1, 'b', 1)" class="btn-micro" style="width:24px; height:24px; border-radius:50%; border:1px solid #cbd5e1; background:#fff; font-size:0.8rem; font-weight:900; display:flex; align-items:center; justify-content:center; cursor:pointer;">+</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Set 2 Card -->
+                        <div style="background: #f8fafc; border: 1px solid rgba(15,23,42,0.05); padding: 10px; border-radius: 12px; display:flex; flex-direction:column; gap:8px;">
+                            <span style="font-size: 0.65rem; font-weight: 900; color: #0F172A; border-bottom:1px solid #e2e8f0; padding-bottom:4px; text-transform:uppercase;">SET 2</span>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <button onclick="window.adjustOpenMatchSetScore('${m.id}', 2, 'a', -1)" class="btn-micro" style="width:24px; height:24px; border-radius:50%; border:1px solid #cbd5e1; background:#fff; font-size:0.8rem; font-weight:900; display:flex; align-items:center; justify-content:center; cursor:pointer;">-</button>
+                                    <span style="font-weight:950; font-size:1.05rem; font-family:monospace; min-width:14px; text-align:center;">${s2a}</span>
+                                    <button onclick="window.adjustOpenMatchSetScore('${m.id}', 2, 'a', 1)" class="btn-micro" style="width:24px; height:24px; border-radius:50%; border:1px solid #cbd5e1; background:#fff; font-size:0.8rem; font-weight:900; display:flex; align-items:center; justify-content:center; cursor:pointer;">+</button>
+                                </div>
+                                <span style="font-size:0.7rem; color:#94a3b8; font-weight:800;">-</span>
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <button onclick="window.adjustOpenMatchSetScore('${m.id}', 2, 'b', -1)" class="btn-micro" style="width:24px; height:24px; border-radius:50%; border:1px solid #cbd5e1; background:#fff; font-size:0.8rem; font-weight:900; display:flex; align-items:center; justify-content:center; cursor:pointer;">-</button>
+                                    <span style="font-weight:950; font-size:1.05rem; font-family:monospace; min-width:14px; text-align:center;">${s2b}</span>
+                                    <button onclick="window.adjustOpenMatchSetScore('${m.id}', 2, 'b', 1)" class="btn-micro" style="width:24px; height:24px; border-radius:50%; border:1px solid #cbd5e1; background:#fff; font-size:0.8rem; font-weight:900; display:flex; align-items:center; justify-content:center; cursor:pointer;">+</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Set 3 Card -->
+                        <div style="background: #f8fafc; border: 1px solid rgba(15,23,42,0.05); padding: 10px; border-radius: 12px; display:flex; flex-direction:column; gap:8px;">
+                            <span style="font-size: 0.65rem; font-weight: 900; color: #0F172A; border-bottom:1px solid #e2e8f0; padding-bottom:4px; text-transform:uppercase;">SET 3</span>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <button onclick="window.adjustOpenMatchSetScore('${m.id}', 3, 'a', -1)" class="btn-micro" style="width:24px; height:24px; border-radius:50%; border:1px solid #cbd5e1; background:#fff; font-size:0.8rem; font-weight:900; display:flex; align-items:center; justify-content:center; cursor:pointer;">-</button>
+                                    <span style="font-weight:950; font-size:1.05rem; font-family:monospace; min-width:14px; text-align:center;">${s3a}</span>
+                                    <button onclick="window.adjustOpenMatchSetScore('${m.id}', 3, 'a', 1)" class="btn-micro" style="width:24px; height:24px; border-radius:50%; border:1px solid #cbd5e1; background:#fff; font-size:0.8rem; font-weight:900; display:flex; align-items:center; justify-content:center; cursor:pointer;">+</button>
+                                </div>
+                                <span style="font-size:0.7rem; color:#94a3b8; font-weight:800;">-</span>
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <button onclick="window.adjustOpenMatchSetScore('${m.id}', 3, 'b', -1)" class="btn-micro" style="width:24px; height:24px; border-radius:50%; border:1px solid #cbd5e1; background:#fff; font-size:0.8rem; font-weight:900; display:flex; align-items:center; justify-content:center; cursor:pointer;">-</button>
+                                    <span style="font-weight:950; font-size:1.05rem; font-family:monospace; min-width:14px; text-align:center;">${s3b}</span>
+                                    <button onclick="window.adjustOpenMatchSetScore('${m.id}', 3, 'b', 1)" class="btn-micro" style="width:24px; height:24px; border-radius:50%; border:1px solid #cbd5e1; background:#fff; font-size:0.8rem; font-weight:900; display:flex; align-items:center; justify-content:center; cursor:pointer;">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px; padding-top:12px; border-top:1px solid rgba(0,0,0,0.04);">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: ${statusColor}; display: inline-block;"></span>
+                        <span style="font-size: 0.72rem; font-weight: 900; color: #0F172A; text-transform: uppercase;">${statusLabel}</span>
+                    </div>
+
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="window.markOpenMatchCompleted('${m.id}')" class="btn-outline-pro" style="padding: 6px 12px; font-size: 0.65rem; border-radius:8px; font-weight: 800; cursor:pointer; background: ${isCompleted ? '#10B98115' : 'transparent'}; border-color: ${isCompleted ? '#10B981' : '#cbd5e1'}; color: ${isCompleted ? '#10B981' : '#475569'};">
+                            ${isCompleted ? '✓ COMPLETADA' : '🏆 COMPLETAR'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = `
+        <div class="planning-area" style="max-width: 650px; margin: 0 auto; display: flex; flex-direction: column; height: calc(100vh - 140px);">
+            <!-- Help Guide Card -->
+            <div style="background: rgba(46,97,255,0.04); border: 1.5px solid rgba(46,97,255,0.1); border-radius: 18px; padding: 16px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 20px;">
+                <i class="fas fa-info-circle" style="color: #2E61FF; font-size: 1.25rem; margin-top: 2px; flex-shrink: 0;"></i>
+                <div style="display: flex; flex-direction: column; gap: 4px; text-align: left;">
+                    <span style="font-size: 0.75rem; color: #2E61FF; font-weight: 950; text-transform: uppercase; letter-spacing: 0.5px;">🏆 Panel de Control de Marcadores</span>
+                    <span style="font-size: 0.75rem; color: #334155; font-weight: 600; line-height: 1.45;">
+                        Introduce los resultados de los sets para las partidas abiertas. Los cambios se guardan y sincronizan automáticamente en tiempo real con la app de los jugadores.
+                    </span>
+                </div>
+            </div>
+
+            <!-- Matches List -->
+            <div style="flex: 1; overflow-y: auto; padding-right: 6px;">
+                ${listHtml || '<div class="glass-card-enterprise text-center" style="padding: 4rem; color: #64748b;"><p>No hay partidas creadas para registrar resultados.</p></div>'}
+            </div>
+        </div>
+    `;
+}
+
+window.adjustOpenMatchSetScore = async function (matchId, setNum, teamKey, delta) {
+    try {
+        if (!window.db) throw new Error("Firebase Firestore no está inicializado");
+
+        const docRef = window.db.collection(OPEN_MATCHES_COLLECTION).doc(matchId);
+        const doc = await docRef.get();
+        if (!doc.exists) throw new Error("La partida no existe");
+
+        const data = doc.data();
+        let result = data.result || {};
+
+        const setKey = `set${setNum}`;
+        if (!result[setKey]) {
+            result[setKey] = { a: 0, b: 0 };
+        }
+
+        let currentVal = result[setKey][teamKey] !== undefined ? result[setKey][teamKey] : 0;
+        let newVal = currentVal + delta;
+        if (newVal < 0) newVal = 0;
+        if (newVal > 7) newVal = 7;
+
+        result[setKey][teamKey] = newVal;
+
+        const updatePayload = {
+            result: result
+        };
+        if (data.status !== 'completed' && data.status !== 'finished') {
+            updatePayload.status = 'completed';
+        }
+
+        await docRef.update(updatePayload);
+
+        if (window.NotificationService) {
+            window.NotificationService.showToast(`Set ${setNum} actualizado`, "success");
+        }
+    } catch (err) {
+        alert("Error al actualizar marcador: " + err.message);
+    }
+};
+
+window.markOpenMatchCompleted = async function (matchId) {
+    try {
+        if (!window.db) throw new Error("Firebase Firestore no está inicializado");
+        const docRef = window.db.collection(OPEN_MATCHES_COLLECTION).doc(matchId);
+        const doc = await docRef.get();
+        if (!doc.exists) throw new Error("La partida no existe");
+
+        const data = doc.data();
+        const nextStatus = data.status === 'completed' ? 'active' : 'completed';
+        
+        await docRef.update({
+            status: nextStatus
+        });
+
+        if (window.NotificationService) {
+            window.NotificationService.showToast(`Estado cambiado a ${nextStatus.toUpperCase()}`, "success");
+        }
+    } catch (err) {
+        alert("Error al cambiar estado: " + err.message);
     }
 };

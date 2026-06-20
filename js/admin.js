@@ -235,6 +235,9 @@ window.loadAdminView = async function (viewName) {
         else if (viewName === 'open_matches_create' && window.AdminViews && window.AdminViews.open_matches_create) {
             await window.AdminViews.open_matches_create();
         }
+        else if (viewName === 'open_matches_results' && window.AdminViews && window.AdminViews.open_matches_results) {
+            await window.AdminViews.open_matches_results();
+        }
         else if (viewName === 'matches') {
             if (window.loadResultsView) await window.loadResultsView('americana');
             else throw new Error("Results Module not loaded");
