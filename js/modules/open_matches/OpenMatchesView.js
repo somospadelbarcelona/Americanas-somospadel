@@ -102,6 +102,11 @@
                         <!-- Content will be injected dynamically in openInviteModal() -->
                     </div>
 
+                    <!-- PLAYTOMIC SCORE REPORTER MODAL -->
+                    <div id="playtomic-score-modal" class="playtomic-drawer-modal hidden" style="z-index: 27000;">
+                        <!-- Content will be injected dynamically in openScoreReporter() -->
+                    </div>
+
                     <!-- ADMIN DEVELOPER SIMULATOR (Sleek Drawer at the bottom) -->
                     ${isAdmin ? `
                     <div id="playtomic-admin-drawer" class="playtomic-admin-drawer hidden">
@@ -1524,14 +1529,20 @@
 
                     const spotsText = spots === 0 ? 'COMPLETO' : (spots === 1 ? '¡ÚLTIMO HUECO!' : `FALTAN ${spots}`);
                     const spotsClass = spots === 1 ? 'spots-status-pill last-spot' : 'spots-status-pill';
+                    const isCompleted = match.status === 'completed';
+                    const resultStr = isCompleted && match.result ? this.formatMatchResult(match.result) : '';
 
                     return `
-                        <div class="premium-match-card" onclick="window.OpenMatchesView.openDetailDrawer('${match.id}')">
+                        <div class="premium-match-card" onclick="window.OpenMatchesView.openDetailDrawer('${match.id}')" style="${isCompleted ? 'border-left: 5px solid #22c55e;' : ''}">
                             <div class="card-glow-effect"></div>
                             
                             <div class="card-header-row">
-                                <span class="card-time-badge"><i class="far fa-clock"></i> ${match.time || '19:00'} (${match.duration || 90} min)</span>
+                                <span class="card-time-badge"><i class="far fa-clock"></i> ${match.time || '19:00'} ${isCompleted ? '(Finalizado)' : `(${match.duration || 90} min)`}</span>
+                                ${isCompleted ? `
+                                <span class="card-level-badge" style="background:rgba(34,197,94,0.1); color:#22c55e; font-weight:900; border: 1px solid rgba(34,197,94,0.2);"><i class="fas fa-trophy"></i> ${resultStr}</span>
+                                ` : `
                                 <span class="card-level-badge"><i class="fas fa-chart-line"></i> Nivel ${parseFloat(match.level_min || 3.0).toFixed(2)} - ${parseFloat(match.level_max || 3.5).toFixed(2)}</span>
+                                `}
                             </div>
                             
                             <div class="card-body-row">
@@ -1565,8 +1576,8 @@
                                     <i class="fas fa-calendar-days"></i>
                                     <span>${humanDateHeader}</span>
                                 </div>
-                                <div class="footer-right-cta">
-                                    <span>UNIRME</span>
+                                <div class="footer-right-cta" ${isCompleted ? 'style="background:rgba(34,197,94,0.1); color:#22c55e; border-color:rgba(34,197,94,0.2);"' : ''}>
+                                    <span>${isCompleted ? 'VER RESULTADO' : 'UNIRME'}</span>
                                     <i class="fas fa-chevron-right"></i>
                                 </div>
                             </div>
@@ -1594,6 +1605,21 @@
                 return parts[0].substring(0, 2).toUpperCase();
             }
             return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+
+        formatMatchResult(result) {
+            if (!result) return '';
+            const sets = [];
+            if (result.set1) sets.push(`${result.set1.a}-${result.set1.b}`);
+            if (result.set2) sets.push(`${result.set2.a}-${result.set2.b}`);
+            if (result.set3) {
+                const s3a = parseInt(result.set3.a);
+                const s3b = parseInt(result.set3.b);
+                if (!isNaN(s3a) && !isNaN(s3b) && (s3a !== 0 || s3b !== 0)) {
+                    sets.push(`${s3a}-${s3b}`);
+                }
+            }
+            return sets.join(', ');
         }
 
         renderSelectedClubCardHtml(name, comarca, address, courts) {
@@ -1658,6 +1684,8 @@
             const currentUser = window.Store ? window.Store.getState('currentUser') : null;
             const myName = currentUser ? (currentUser.name || currentUser.displayName || "") : "";
             const isJoined = playersArray.some(p => p.toLowerCase().includes(myName.toLowerCase()) && myName !== "");
+            const isCompleted = match.status === 'completed';
+            const resultStr = isCompleted && match.result ? this.formatMatchResult(match.result) : '';
 
             // Roster of horizontal avatars
             let playersRosterHtml = '';
@@ -1730,7 +1758,34 @@
                             </div>
                         </div>
 
-                        <!-- Progress Bar -->
+                        <!-- Results display if completed -->
+                        ${isCompleted ? `
+                        <div style="background: rgba(34, 197, 94, 0.05); border: 1.5px solid rgba(34, 197, 94, 0.2); border-radius: 20px; padding: 18px; margin-top: 15px; text-align: center; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.05);">
+                            <div style="font-size: 0.65rem; color: #22c55e; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <i class="fas fa-trophy"></i> Resultado Final (Parejas Fijas)
+                            </div>
+                            <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 12px; gap: 8px;">
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; width: 40%;">
+                                    <span style="font-size: 0.8rem; font-weight: 900; color: #0F172A; text-align: center; line-height: 1.3;">
+                                        ${playersArray[0] || 'Jugador 1'}<br>&<br>${playersArray[1] || 'Jugador 2'}
+                                    </span>
+                                    <span style="font-size: 0.58rem; color: #64748B; font-weight: 700; background: rgba(15, 23, 42, 0.04); padding: 2px 6px; border-radius: 4px; margin-top: 4px;">PAREJA 1</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0;">
+                                    <span style="font-size: 1.45rem; font-weight: 950; color: #22c55e; letter-spacing: 1px; font-family: monospace; background: rgba(34, 197, 94, 0.08); padding: 4px 12px; border-radius: 10px;">${resultStr}</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; width: 40%;">
+                                    <span style="font-size: 0.8rem; font-weight: 900; color: #0F172A; text-align: center; line-height: 1.3;">
+                                        ${playersArray[2] || 'Jugador 3'}<br>&<br>${playersArray[3] || 'Jugador 4'}
+                                    </span>
+                                    <span style="font-size: 0.58rem; color: #64748B; font-weight: 700; background: rgba(15, 23, 42, 0.04); padding: 2px 6px; border-radius: 4px; margin-top: 4px;">PAREJA 2</span>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <!-- Progress Bar (only if active) -->
+                        ${!isCompleted ? `
                         <div class="plazas-progress-container">
                             <div class="progress-track">
                                 <div class="progress-fill-blue" style="width: ${(filledCount / 4) * 100}%;"></div>
@@ -1740,10 +1795,11 @@
                                 <span>4 Plazas máx.</span>
                             </div>
                         </div>
+                        ` : ''}
 
                         <!-- Action Buttons Panel -->
                         <div class="drawer-actions-panel">
-                            <div class="action-panel-item" onclick="window.OpenMatchesView.toggleJoinMatch('${match.id}')">
+                            <div class="action-panel-item" onclick="${isCompleted ? '' : `window.OpenMatchesView.toggleJoinMatch('${match.id}')`}" style="${isCompleted ? 'opacity:0.4; cursor:not-allowed;' : ''}">
                                 <div class="action-panel-circle">
                                     <i class="fas ${isJoined ? 'fa-user-minus' : 'fa-user-plus'}" style="color: #2E61FF;"></i>
                                 </div>
@@ -1761,7 +1817,7 @@
                                 </div>
                                 <span class="action-panel-label">Grupo WA</span>
                             </div>
-                            <div class="action-panel-item" onclick="window.OpenMatchesView.openInviteModal('${match.id}')">
+                            <div class="action-panel-item" onclick="${isCompleted ? '' : `window.OpenMatchesView.openInviteModal('${match.id}')`}" style="${isCompleted ? 'opacity:0.4; cursor:not-allowed;' : ''}">
                                 <div class="action-panel-circle" style="background: rgba(204, 255, 0, 0.15);">
                                     <i class="fas fa-paper-plane" style="color: #6d8500;"></i>
                                 </div>
@@ -1796,11 +1852,26 @@
                         </div>
                     </div>
 
-                    <!-- Giant Bottom Button -->
-                    <div class="drawer-bottom-cta-sticky">
-                        <button class="playtomic-btn-blue-giant haptic-feedback" onclick="${isJoined ? `window.OpenMatchesView.toggleJoinMatch('${match.id}')` : (spots === 0 ? '' : `window.OpenMatchesView.toggleJoinMatch('${match.id}')`)}" ${spots === 0 && !isJoined ? 'disabled style="background:#e2e8f0; color:#94a3b8; box-shadow:none; cursor:not-allowed;"' : ''}>
+                    <!-- Giant Bottom Button / Score reporter button -->
+                    <div class="drawer-bottom-cta-sticky" style="display:flex; gap:10px;">
+                        ${isCompleted ? `
+                        <button class="playtomic-btn-blue-giant" disabled style="background:#e2e8f0; color:#94a3b8; box-shadow:none; cursor:not-allowed; width: 100%;">
+                            <i class="fas fa-check-circle"></i> PARTIDO FINALIZADO
+                        </button>
+                        ` : (spots === 0 && match.is_fixed_pair ? `
+                            ${isJoined ? `
+                            <button class="playtomic-btn-blue-giant haptic-feedback" onclick="window.OpenMatchesView.toggleJoinMatch('${match.id}')" style="background:#EF4444; flex:1; min-height:48px; font-size:0.75rem; padding: 10px 12px; font-weight:900;">
+                                <i class="fas fa-user-minus"></i> SALIRME
+                            </button>
+                            ` : ''}
+                            <button class="playtomic-btn-blue-giant haptic-feedback" onclick="window.OpenMatchesView.openScoreReporter('${match.id}')" style="background:#22c55e; flex:2; box-shadow: 0 8px 25px rgba(34, 197, 94, 0.35); min-height:48px; font-size:0.78rem;">
+                                <i class="fas fa-trophy"></i> APUNTAR RESULTADO
+                            </button>
+                        ` : `
+                        <button class="playtomic-btn-blue-giant haptic-feedback" onclick="${isJoined ? `window.OpenMatchesView.toggleJoinMatch('${match.id}')` : (spots === 0 ? '' : `window.OpenMatchesView.toggleJoinMatch('${match.id}')`)}" ${spots === 0 && !isJoined ? 'disabled style="background:#e2e8f0; color:#94a3b8; box-shadow:none; cursor:not-allowed;"' : ''} style="width: 100%;">
                             ${isJoined ? '<i class="fas fa-user-minus"></i> SALIRME DEL PARTIDO' : (spots === 0 ? '<i class="fas fa-lock"></i> PARTIDO COMPLETO' : '<i class="fas fa-user-plus"></i> APUNTARME AL PARTIDO')}
                         </button>
+                        `)}
                     </div>
                 </div>
             `;
@@ -1929,6 +2000,15 @@
                                     <span style="font-size:0.65rem; font-weight:800; color:#64748B;">Jugador 4</span>
                                     <input type="text" id="create-match-player-4" class="playtomic-input" style="width:100%; height:40px; font-size:0.8rem; padding:8px; box-sizing:border-box; font-weight:800;" placeholder="Opcional..." oninput="window.OpenMatchesView.updateLiveSpotsBadge()">
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Fixed Pairs Toggle Option -->
+                        <div style="display:flex; align-items:center; gap:12px; background:rgba(46,97,255,0.04); border:1px solid rgba(46,97,255,0.12); border-radius:16px; padding:12px 16px; box-sizing:border-box;">
+                            <input type="checkbox" id="create-match-fixed-pair" style="width:20px; height:20px; accent-color:#2E61FF; cursor:pointer;" onchange="window.OpenMatchesView.updateLiveSpotsBadge()">
+                            <div style="display:flex; flex-direction:column; gap:2px; text-align:left; cursor:pointer;" onclick="const cb=document.getElementById('create-match-fixed-pair'); if(cb) { cb.checked=!cb.checked; window.OpenMatchesView.updateLiveSpotsBadge(); }">
+                                <span style="font-size:0.8rem; font-weight:900; color:#0F172A;">Modalidad: Parejas Fijas</span>
+                                <span style="font-size:0.65rem; color:#64748B; font-weight:600; line-height:1.35;">Activa esta modalidad para poder registrar el resultado en 3 sets al finalizar el partido.</span>
                             </div>
                         </div>
 
@@ -2136,6 +2216,213 @@
         closeCreateModal() {
             const modal = document.getElementById('playtomic-create-modal');
             if (modal) modal.classList.add('hidden');
+        }
+
+        openScoreReporter(matchId) {
+            const match = this.allMatches.find(m => m.id === matchId);
+            if (!match) return;
+
+            const modal = document.getElementById('playtomic-score-modal');
+            if (!modal) return;
+
+            const players = Array.isArray(match.players) ? match.players : [];
+            const p1 = players[0] ? players[0].replace(/\s*\(\d+(?:\.\d+)?\)\s*$/, '').trim() : 'Jugador 1';
+            const p2 = players[1] ? players[1].replace(/\s*\(\d+(?:\.\d+)?\)\s*$/, '').trim() : 'Jugador 2';
+            const p3 = players[2] ? players[2].replace(/\s*\(\d+(?:\.\d+)?\)\s*$/, '').trim() : 'Jugador 3';
+            const p4 = players[3] ? players[3].replace(/\s*\(\d+(?:\.\d+)?\)\s*$/, '').trim() : 'Jugador 4';
+
+            modal.innerHTML = `
+                <div class="drawer-content-container" style="max-height: 95%;">
+                    <!-- Header -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:20px 24px; border-bottom:1px solid rgba(15,23,42,0.08); flex-shrink:0;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <i class="fas fa-arrow-left" onclick="window.OpenMatchesView.closeScoreReporter()" style="font-size:1.15rem; color:#0F172A; cursor:pointer; padding:4px;"></i>
+                            <h2 style="margin:0; font-size:1.15rem; font-weight:950; color:#0F172A; text-transform:uppercase; letter-spacing:0.5px;">Registrar Resultado</h2>
+                        </div>
+                        <div class="drawer-circle-btn" onclick="window.OpenMatchesView.closeScoreReporter()">
+                            <i class="fas fa-times"></i>
+                        </div>
+                    </div>
+
+                    <!-- Body -->
+                    <div style="padding:24px; display:flex; flex-direction:column; gap:20px; padding-bottom:120px; overflow-y:auto; box-sizing:border-box;">
+                        
+                        <!-- Roster Recap Card -->
+                        <div style="background: rgba(46,97,255,0.03); border: 1.5px solid rgba(46,97,255,0.1); border-radius: 18px; padding: 16px; text-align: center;">
+                            <span style="font-size: 0.62rem; color: #2E61FF; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">Enfrentamiento Parejas Fijas</span>
+                            <div style="display: flex; justify-content: space-around; align-items: center; gap: 10px;">
+                                <div style="display: flex; flex-direction: column; width: 42%;">
+                                    <span style="font-size: 0.8rem; font-weight: 850; color: #0F172A; word-break: break-word;">${p1}<br>&<br>${p2}</span>
+                                    <span style="font-size: 0.58rem; color: #64748B; font-weight: 700; margin-top: 4px;">PAREJA 1</span>
+                                </div>
+                                <span style="font-size: 0.8rem; font-weight: 900; color: #94a3b8;">VS</span>
+                                <div style="display: flex; flex-direction: column; width: 42%;">
+                                    <span style="font-size: 0.8rem; font-weight: 850; color: #0F172A; word-break: break-word;">${p3}<br>&<br>${p4}</span>
+                                    <span style="font-size: 0.58rem; color: #64748B; font-weight: 700; margin-top: 4px;">PAREJA 2</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Score Selectors Container -->
+                        <div style="display:flex; flex-direction:column; gap:16px; margin-top: 4px; text-align: left;">
+                            
+                            <!-- Set 1 -->
+                            <div style="display:flex; flex-direction:column; gap:10px; background:#f8fafc; padding:16px; border-radius:18px; border:1px solid rgba(15,23,42,0.05);">
+                                <span style="font-size: 0.72rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 6px;">Set 1</span>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 4px;">
+                                    <!-- P1 Games Counter -->
+                                    <div style="display:flex; align-items:center; gap:8px; width:45%;">
+                                        <button onclick="window.OpenMatchesView.changeScoreValue('set1-a', -1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">-</button>
+                                        <input type="text" id="set1-a" value="6" readonly style="width:38px; text-align:center; border:none; background:transparent; font-size:1.25rem; font-weight:950; color:#0F172A; font-family:monospace;">
+                                        <button onclick="window.OpenMatchesView.changeScoreValue('set1-a', 1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">+</button>
+                                    </div>
+                                    <span style="font-size: 0.72rem; font-weight: 800; color: #94a3b8;">-</span>
+                                    <!-- P2 Games Counter -->
+                                    <div style="display:flex; align-items:center; gap:8px; width:45%; justify-content:flex-end;">
+                                        <button onclick="window.OpenMatchesView.changeScoreValue('set1-b', -1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">-</button>
+                                        <input type="text" id="set1-b" value="4" readonly style="width:38px; text-align:center; border:none; background:transparent; font-size:1.25rem; font-weight:950; color:#0F172A; font-family:monospace;">
+                                        <button onclick="window.OpenMatchesView.changeScoreValue('set1-b', 1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">+</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Set 2 -->
+                            <div style="display:flex; flex-direction:column; gap:10px; background:#f8fafc; padding:16px; border-radius:18px; border:1px solid rgba(15,23,42,0.05);">
+                                <span style="font-size: 0.72rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 6px;">Set 2</span>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 4px;">
+                                    <!-- P1 Games Counter -->
+                                    <div style="display:flex; align-items:center; gap:8px; width:45%;">
+                                        <button onclick="window.OpenMatchesView.changeScoreValue('set2-a', -1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">-</button>
+                                        <input type="text" id="set2-a" value="6" readonly style="width:38px; text-align:center; border:none; background:transparent; font-size:1.25rem; font-weight:950; color:#0F172A; font-family:monospace;">
+                                        <button onclick="window.OpenMatchesView.changeScoreValue('set2-a', 1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">+</button>
+                                    </div>
+                                    <span style="font-size: 0.72rem; font-weight: 800; color: #94a3b8;">-</span>
+                                    <!-- P2 Games Counter -->
+                                    <div style="display:flex; align-items:center; gap:8px; width:45%; justify-content:flex-end;">
+                                        <button onclick="window.OpenMatchesView.changeScoreValue('set2-b', -1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">-</button>
+                                        <input type="text" id="set2-b" value="4" readonly style="width:38px; text-align:center; border:none; background:transparent; font-size:1.25rem; font-weight:950; color:#0F172A; font-family:monospace;">
+                                        <button onclick="window.OpenMatchesView.changeScoreValue('set2-b', 1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">+</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Set 3 (Opcional) -->
+                            <div style="display:flex; flex-direction:column; gap:10px; background:#f8fafc; padding:16px; border-radius:18px; border:1px solid rgba(15,23,42,0.05);">
+                                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 6px;">
+                                    <span style="font-size: 0.72rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">Set 3 (Desempate)</span>
+                                    <span style="font-size: 0.6rem; color: #64748B; font-weight: 700;">OPCIONAL</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 4px;">
+                                    <!-- P1 Games Counter -->
+                                    <div style="display:flex; align-items:center; gap:8px; width:45%;">
+                                        <button onclick="window.OpenMatchesView.changeScoreValue('set3-a', -1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">-</button>
+                                        <input type="text" id="set3-a" value="" placeholder="-" readonly style="width:38px; text-align:center; border:none; background:transparent; font-size:1.25rem; font-weight:950; color:#0F172A; font-family:monospace;">
+                                        <button onclick="window.OpenMatchesView.changeScoreValue('set3-a', 1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">+</button>
+                                    </div>
+                                    <span style="font-size: 0.72rem; font-weight: 800; color: #94a3b8;">-</span>
+                                    <!-- P2 Games Counter -->
+                                    <div style="display:flex; align-items:center; gap:8px; width:45%; justify-content:flex-end;">
+                                        <button onclick="window.OpenMatchesView.changeScoreValue('set3-b', -1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">-</button>
+                                        <input type="text" id="set3-b" value="" placeholder="-" readonly style="width:38px; text-align:center; border:none; background:transparent; font-size:1.25rem; font-weight:950; color:#0F172A; font-family:monospace;">
+                                        <button onclick="window.OpenMatchesView.changeScoreValue('set3-b', 1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sticky CTA Bottom -->
+                        <div class="drawer-bottom-cta-sticky">
+                            <button onclick="window.OpenMatchesView.submitScore('${match.id}')" class="playtomic-btn-blue-giant haptic-feedback" style="background:#22c55e; box-shadow: 0 8px 25px rgba(34, 197, 94, 0.35);">
+                                <i class="fas fa-check"></i> CONFIRMAR RESULTADO
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+            if (window.PlayerView && typeof window.PlayerView.haptic === 'function') {
+                window.PlayerView.haptic(25);
+            }
+        }
+
+        closeScoreReporter() {
+            const modal = document.getElementById('playtomic-score-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        changeScoreValue(fieldId, delta) {
+            const input = document.getElementById(fieldId);
+            if (!input) return;
+            
+            let valStr = input.value;
+            let val = parseInt(valStr);
+            if (isNaN(val)) {
+                // If it was empty (placeholder), initialize it
+                val = delta > 0 ? 0 : 6;
+            } else {
+                val = val + delta;
+            }
+            
+            // Limit score games between 0 and 7
+            val = Math.max(0, Math.min(7, val));
+            input.value = val;
+            
+            if (window.PlayerView && typeof window.PlayerView.haptic === 'function') {
+                window.PlayerView.haptic(10);
+            }
+        }
+
+        async submitScore(matchId) {
+            try {
+                const s1a = parseInt(document.getElementById('set1-a').value);
+                const s1b = parseInt(document.getElementById('set1-b').value);
+                const s2a = parseInt(document.getElementById('set2-a').value);
+                const s2b = parseInt(document.getElementById('set2-b').value);
+                
+                const s3aVal = document.getElementById('set3-a').value;
+                const s3bVal = document.getElementById('set3-b').value;
+                
+                if (isNaN(s1a) || isNaN(s1b) || isNaN(s2a) || isNaN(s2b)) {
+                    throw new Error("Los sets 1 y 2 deben completarse obligatoriamente.");
+                }
+
+                const result = {
+                    set1: { a: s1a, b: s1b },
+                    set2: { a: s2a, b: s2b }
+                };
+
+                const s3a = parseInt(s3aVal);
+                const s3b = parseInt(s3bVal);
+                if (!isNaN(s3a) && !isNaN(s3b)) {
+                    result.set3 = { a: s3a, b: s3b };
+                }
+
+                if (!window.db) {
+                    throw new Error("La base de datos de Firebase no está inicializada.");
+                }
+
+                // Update document to status = completed and write score result
+                await window.db.collection('open_matches').doc(matchId).update({
+                    status: 'completed',
+                    result: result
+                });
+
+                if (window.NotificationService) {
+                    window.NotificationService.showToast("¡Marcador registrado con éxito! 🏆", "success");
+                } else {
+                    alert("¡Marcador registrado con éxito!");
+                }
+
+                if (window.PlayerView && typeof window.PlayerView.haptic === 'function') {
+                    window.PlayerView.haptic(45);
+                }
+
+                this.closeScoreReporter();
+                this.closeDetailDrawer();
+            } catch (err) {
+                alert("Error al registrar el resultado: " + err.message);
+            }
         }
 
         async openInviteModal(matchId) {
@@ -2499,6 +2786,7 @@
                 const lvlMin = parseFloat(document.getElementById('create-match-lvl-min').value) || 3.0;
                 const lvlMax = parseFloat(document.getElementById('create-match-lvl-max').value) || 4.0;
                 const urlVal = document.getElementById('create-match-url').value;
+                const isFixedPair = document.getElementById('create-match-fixed-pair')?.checked || false;
 
                 if (lvlMin > lvlMax) {
                     throw new Error("El nivel mínimo no puede ser superior al nivel máximo.");
@@ -2545,6 +2833,7 @@
                     level_max: lvlMax,
                     players: players,
                     spots_needed: spotsVal,
+                    is_fixed_pair: isFixedPair,
                     playtomic_url: finalUrl,
                     original_text: originalText,
                     creator_uid: currentUser ? (currentUser.uid || currentUser.id || "") : "",

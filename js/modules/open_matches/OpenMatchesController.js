@@ -40,7 +40,7 @@
             try {
                 // Listen to active matches (date filter handled in memory to bypass index requirements)
                 this.unsubscribe = window.db.collection(this.collectionName)
-                    .where('status', '==', 'active')
+                    .where('status', 'in', ['active', 'completed'])
                     .onSnapshot(snapshot => {
                         const matches = [];
                         snapshot.forEach(doc => {

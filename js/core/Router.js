@@ -181,13 +181,18 @@
             });
         }
 
-        renderDashboard() {
+        renderDashboard(attempts = 0) {
             if (window.DashboardView && window.Store) {
                 const data = window.Store.getState('dashboardData');
                 window.DashboardView.render(data || { activeCourts: 0 });
             } else {
-                // Retry with exponential backoff or simple timeout
-                setTimeout(() => this.renderDashboard(), 100);
+                if (attempts >= 30) { // 30 intentos * 100ms = 3 segundos
+                    console.error("❌ [Router Failsafe] DashboardView o Store no cargaron a tiempo. Abortando reintentos.");
+                    this.renderError('dashboard', new Error("No se pudo cargar la vista de inicio a tiempo. Por favor, comprueba tu conexión o recarga la página."));
+                    return;
+                }
+                // Retry with timeout
+                setTimeout(() => this.renderDashboard(attempts + 1), 100);
             }
         }
 

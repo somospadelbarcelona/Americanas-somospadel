@@ -1263,7 +1263,7 @@
                     background: ${cardBg};
                     border-radius: 24px;
                     overflow: hidden;
-                    margin-bottom: 18px;
+                    margin-bottom: 12px;
                     border: ${cardBorder};
                     box-shadow: ${cardGlow};
                     font-family: 'Outfit', sans-serif;
@@ -1275,7 +1275,7 @@
                     <div style="display: flex; flex-direction: column;">
                         
                         <!-- IMAGE AREA -->
-                        <div style="height: 140px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative;">
+                        <div style="height: 115px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative;">
                             <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(20,20,20,0.1), #141414); mix-blend-mode: overlay;"></div>
                             <div style="position: absolute; inset: 0; background: linear-gradient(to top, #141414 2%, transparent 70%);"></div>
                             
@@ -1313,22 +1313,22 @@
                         </div>
 
                         <!-- CONTENT AREA -->
-                        <div style="padding: 30px 18px 18px;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <div style="padding: 22px 16px 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                                 <h3 style="margin: 0; font-size: 1.25rem; font-weight: 950; color: #fff; line-height: 1.1; letter-spacing: -0.5px; text-transform: uppercase;">${evt.name}</h3>
                             </div>
                             
                             <!-- 💎 THE 4 PREMIUM TILES (UNIFIED LIGHT THEME) -->
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
                                 <!-- Time Tile -->
-                                <div class="${tileClass}" style="background: rgba(255,255,255,0.08); border-radius: 14px; padding: 10px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                <div class="${tileClass}" style="background: rgba(255,255,255,0.08); border-radius: 14px; padding: 8px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
                                     <div style="width: 28px; height: 28px; background: ${timeIconBg}; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                                         <i class="far fa-clock" style="color: ${timeIconColor}; font-size: 0.85rem;"></i>
                                     </div>
                                     <span style="font-weight: 900; font-size: 0.85rem; color: #eee;">${timeLabel}</span>
                                 </div>
                                 <!-- Category Tile -->
-                                <div class="${tileClass}" style="background: rgba(255,255,255,0.08); border-radius: 14px; padding: 10px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                <div class="${tileClass}" style="background: rgba(255,255,255,0.08); border-radius: 14px; padding: 8px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
                                     <div style="width: 28px; height: 28px; background: ${categoryColor}20; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                                         <i class="fas ${categoryIcon}" style="color: ${categoryColor}; font-size: 0.85rem;"></i>
                                     </div>
@@ -1337,7 +1337,7 @@
                             </div>
 
                             <!-- CAPACITY & PROGRESS (LIGHT THEME) -->
-                            <div class="${tileClass}" onclick="event.stopPropagation(); window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')" style="background: rgba(255,255,255,0.08); border-radius: 16px; padding: 12px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 12px;">
+                            <div class="${tileClass}" onclick="event.stopPropagation(); window.EventsController.showInscritosModal('${evt.id}', '${evt.type || 'americana'}')" style="background: rgba(255,255,255,0.08); border-radius: 16px; padding: 10px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 8px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; position: relative;">
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <i id="event-players-icon-${evt.id}" class="fas fa-users" style="color: ${capacityIconColor}; font-size: 0.9rem;"></i>
@@ -1357,8 +1357,8 @@
                             <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 5px; gap: 10px;">
                                 <!-- Location Box (Light Theme + Interactive) -->
                                 <div class="${tileClass}" onclick="event.stopPropagation(); window.PremiumModal.alert({ title: '📍 UBICACIÓN', message: 'Sede: ${evt.sede || evt.location || 'Barcelona Pádel el Prat'}<br><br>Este evento se disputa en las instalaciones oficiales del club.', type: 'info' })" 
-                                     style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.08); padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); flex: 1; min-width: 0; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-                                    <div style="width: 32px; height: 32px; background: ${locIconBg}; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                     style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.08); padding: 8px 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); flex: 1; min-width: 0; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                    <div style="width: 28px; height: 28px; background: ${locIconBg}; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                         <i class="fas fa-map-marker-alt" style="color: ${locIconColor}; font-size: 0.9rem;"></i>
                                     </div>
                                     <div style="display: flex; flex-direction: column; min-width: 0;">

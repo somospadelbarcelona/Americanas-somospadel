@@ -1235,11 +1235,21 @@ window.recalculateMatchesPlayed = async (silent = false) => {
             if (!player) continue;
 
             const winRate = c.matches_played > 0 ? Math.round((c.wins / c.matches_played) * 100) : 0;
-            const newData = { matches_played: c.matches_played, wins: c.wins, games_won: c.games_won, win_rate: winRate };
+            const losses = c.matches_played - c.wins;
+            const newData = { 
+                matches_played: c.matches_played, 
+                wins: c.wins, 
+                losses: losses,
+                total_matches: c.matches_played,
+                games_won: c.games_won, 
+                win_rate: winRate 
+            };
 
             const current = {
                 matches_played: player.matches_played || 0,
                 wins: player.wins || 0,
+                losses: player.losses || 0,
+                total_matches: player.total_matches || 0,
                 games_won: player.games_won || 0,
                 win_rate: player.win_rate || 0
             };
