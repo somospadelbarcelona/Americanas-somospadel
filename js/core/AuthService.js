@@ -170,7 +170,14 @@
             window.Store.setState('currentUser', finalUser);
         }
 
-        async login(email, password) {
+        async login(emailOrPhone, password) {
+            if (!emailOrPhone) {
+                return { success: false, error: "Introduce usuario y contraseña" };
+            }
+            let email = emailOrPhone.trim();
+            if (!email.includes('@')) {
+                email = email + '@somospadel.com';
+            }
             try {
                 if (!auth) throw new Error("Firebase Auth not initialized");
 
@@ -372,32 +379,4 @@
     window.AuthService = new AuthService();
     console.log("🛡️ AuthService Global Loaded (v10.1 - Fixed Phone Scope)");
 
-    // Setup login form listener
-    document.addEventListener('DOMContentLoaded', () => {
-        const loginForm = document.getElementById('login-form');
-        if (loginForm) {
-            loginForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                const phone = formData.get('phone');
-                const password = formData.get('password');
-
-                console.log('🔐 Attempting login for:', phone);
-
-                const result = await window.AuthService.login(phone, password);
-                if (result.success) {
-                    console.log('✅ Login successful');
-                    const modal = document.getElementById('auth-modal');
-                    if (modal) modal.classList.add('hidden');
-                } else {
-                    console.error('❌ Login failed:', result.error);
-                    window.PremiumModal.alert({
-                        title: "❌ ERROR DE ACCESO",
-                        message: result.error,
-                        type: 'error'
-                    });
-                }
-            });
-        }
-    });
 })();

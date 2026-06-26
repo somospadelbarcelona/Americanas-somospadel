@@ -203,6 +203,69 @@
                     }
                 }
             };
+            
+            // Marca de tiempo de arranque de la página
+            const bootTime = Date.now();
+
+            async function triggerActiveRecovery(errType, errMsg) {
+                // Solo recuperar en los primeros 5 segundos de carga de la página
+                if (Date.now() - bootTime > 5000) return;
+
+                // Evitar bucles infinitos de recarga
+                const lastAttempt = sessionStorage.getItem('sp_recovery_attempt');
+                if (lastAttempt && Date.now() - parseInt(lastAttempt) < 15000) {
+                    console.warn("⚠️ [Resilience] Bucle de recuperación detectado. Saltando auto-recarga.");
+                    return;
+                }
+
+                console.error(`🚨 [Resilience] Error crítico detectado al iniciar (${errType}: ${errMsg}). Iniciando auto-recuperación activa...`);
+                sessionStorage.setItem('sp_recovery_attempt', Date.now().toString());
+
+                // Mostrar overlay elegante de recuperación activa para tranquilizar al usuario
+                let overlay = document.getElementById('sp-recovery-overlay');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'sp-recovery-overlay';
+                    overlay.style = "position:fixed; inset:0; z-index:999999; background:#0a0a12; color:white; font-family:'Outfit',sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; animation: fadeIn 0.3s ease;";
+                    overlay.innerHTML = `
+                        <div style="width:70px; height:70px; margin-bottom:20px; position:relative; display:flex; align-items:center; justify-content:center;">
+                            <div style="position:absolute; width:100%; height:100%; border:3px solid rgba(204,255,0,0.1); border-top-color:#CCFF00; border-radius:50%; animation:spin 1s linear infinite;"></div>
+                            <i class="fas fa-magic" style="color:#CCFF00; font-size:1.8rem; animation:pulseGlow 1.5s infinite;"></i>
+                        </div>
+                        <h2 style="font-weight:900; margin:0 0 10px 0; font-size:1.4rem; letter-spacing:0.5px;">Auto-recuperación Activa</h2>
+                        <p style="color:#94a3b8; font-size:0.85rem; max-width:320px; margin:0 0 15px 0; line-height:1.5;">Hemos detectado una inconsistencia de caché tras la actualización. Limpiando el sistema para ti...</p>
+                        <span style="font-size:0.65rem; color:#64748b; font-family:monospace; text-transform:uppercase; letter-spacing:1px;">Limpiando Caché PWA & Recargando</span>
+                    `;
+                    
+                    // Inyectar animaciones clave si no existen
+                    if (!document.getElementById('sp-recovery-animations')) {
+                        const styleAnim = document.createElement('style');
+                        styleAnim.id = 'sp-recovery-animations';
+                        styleAnim.innerHTML = `
+                            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                            @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+                        `;
+                        document.head.appendChild(styleAnim);
+                    }
+                    
+                    document.body.appendChild(overlay);
+                }
+
+                // Ejecutar la limpieza forzada y recarga de la app en background
+                if (typeof window.forceUpdateApp === 'function') {
+                    setTimeout(async () => {
+                        await window.forceUpdateApp();
+                    }, 1200);
+                } else {
+                    try {
+                        if ('caches' in window) {
+                            const keys = await caches.keys();
+                            for (const key of keys) await caches.delete(key);
+                        }
+                    } catch(e) {}
+                    window.location.reload(true);
+                }
+            }
 
             window.onerror = function(message, source, lineno, colno, error) {
                 if (source && (source.includes('chrome-extension') || source.includes('safari-extension'))) return;
@@ -224,6 +287,9 @@
                 panel.style.display = 'block';
                 updatePanelUI();
                 
+                // Activar protocolo de auto-recuperación resiliente
+                triggerActiveRecovery('Crash en Script', message);
+                
                 return false;
             };
 
@@ -244,6 +310,10 @@
                 panel = document.getElementById('sp-diagnostic-panel');
                 panel.style.display = 'block';
                 updatePanelUI();
+
+                // Activar protocolo de auto-recuperación resiliente
+                const msg = event.reason ? (event.reason.message || String(event.reason)) : 'Promise Rejection';
+                triggerActiveRecovery('Promise Rejection', msg);
             };
 
             if (document.readyState === 'loading') {
@@ -3228,13 +3298,8 @@
     <script src="js/modules/ranking/RankingController.js?v=2" defer></script>
 
     <!-- Partidas Abiertas Module -->
-<<<<<<< HEAD
-    <script src="js/modules/open_matches/OpenMatchesView.js?v=6" defer></script>
-    <script src="js/modules/open_matches/OpenMatchesController.js?v=3" defer></script>
-=======
-    <script src="js/modules/open_matches/OpenMatchesView.js?v=2" defer></script>
-    <script src="js/modules/open_matches/OpenMatchesController.js?v=2" defer></script>
->>>>>>> 65c65eb5f8aed168d0b9553c507b2e0a01082976
+    <script src="js/modules/open_matches/OpenMatchesView.js?v=10" defer></script>
+    <script src="js/modules/open_matches/OpenMatchesController.js?v=10" defer></script>
 
     <!-- Teams Module -->
     <script src="js/modules/teams/teams_data.js?v=12" defer></script>

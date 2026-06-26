@@ -1696,7 +1696,6 @@
             const isJoined = playersArray.some(p => p.toLowerCase().includes(myName.toLowerCase()) && myName !== "");
             const isCompleted = match.status === 'completed';
             const resultStr = isCompleted && match.result ? this.formatMatchResult(match.result) : '';
-<<<<<<< HEAD
 
             // Nombres cortos para el Scoreboard de TV
             const p1_part1 = playersArray[0] ? playersArray[0].replace(/\s*\(\d+(?:\.\d+)?\)\s*$/, '').trim() : '';
@@ -1728,6 +1727,18 @@
 
                 scoreInputHtml = `
                     <div class="live-score-tv-card" style="background: #0f172a; border-radius: 20px; padding: 16px; margin-top: 15px; box-shadow: 0 10px 25px rgba(15,23,42,0.25); color:#ffffff; font-family: 'Outfit', sans-serif;">
+                        <style>
+                            /* Ocultar las flechas de incremento/decremento por defecto del navegador en los inputs */
+                            input[type=number]::-webkit-outer-spin-button,
+                            input[type=number]::-webkit-inner-spin-button {
+                                -webkit-appearance: none;
+                                margin: 0;
+                            }
+                            input[type=number] {
+                                -moz-appearance: textfield;
+                            }
+                        </style>
+
                         <div style="font-size: 0.68rem; color: #ccff00; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
                             <span class="live-pulse-dot" style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: inline-block; animation: pulseRed 1.5s infinite ease-in-out;"></span> Marcador en Vivo (Parejas Fijas)
                         </div>
@@ -1747,23 +1758,23 @@
                             
                             <!-- Set 1 Pareja 1 -->
                             <div style="display: flex; align-items: center; justify-content: center; gap: 4px; background: rgba(255,255,255,0.03); padding: 4px; border-radius: 8px;">
-                                <button onclick="window.OpenMatchesView.adjustSetScore('${match.id}', 1, 'a', -1)" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">-</button>
-                                <span style="font-family: monospace; font-size: 0.95rem; font-weight: 950; min-width: 14px; text-align: center; color: #ccff00;">${s1a}</span>
-                                <button onclick="window.OpenMatchesView.adjustSetScore('${match.id}', 1, 'a', 1)" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">+</button>
+                                <button type="button" onclick="const el = document.getElementById('score-set1-a'); el.value = Math.max(0, (parseInt(el.value) || 0) - 1);" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">-</button>
+                                <input type="number" id="score-set1-a" value="${s1a}" min="0" max="9" style="width: 20px; height: 20px; background: transparent; border: none; color: #ccff00; font-family: monospace; font-size: 0.95rem; font-weight: 950; text-align: center; outline: none; padding: 0;" onfocus="this.select()" oninput="if(this.value.length > 1) this.value = this.value.slice(0, 1);">
+                                <button type="button" onclick="const el = document.getElementById('score-set1-a'); el.value = Math.min(9, (parseInt(el.value) || 0) + 1);" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">+</button>
                             </div>
                             
                             <!-- Set 2 Pareja 1 -->
                             <div style="display: flex; align-items: center; justify-content: center; gap: 4px; background: rgba(255,255,255,0.03); padding: 4px; border-radius: 8px;">
-                                <button onclick="window.OpenMatchesView.adjustSetScore('${match.id}', 2, 'a', -1)" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">-</button>
-                                <span style="font-family: monospace; font-size: 0.95rem; font-weight: 950; min-width: 14px; text-align: center; color: #ccff00;">${s2a}</span>
-                                <button onclick="window.OpenMatchesView.adjustSetScore('${match.id}', 2, 'a', 1)" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">+</button>
+                                <button type="button" onclick="const el = document.getElementById('score-set2-a'); el.value = Math.max(0, (parseInt(el.value) || 0) - 1);" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">-</button>
+                                <input type="number" id="score-set2-a" value="${s2a}" min="0" max="9" style="width: 20px; height: 20px; background: transparent; border: none; color: #ccff00; font-family: monospace; font-size: 0.95rem; font-weight: 950; text-align: center; outline: none; padding: 0;" onfocus="this.select()" oninput="if(this.value.length > 1) this.value = this.value.slice(0, 1);">
+                                <button type="button" onclick="const el = document.getElementById('score-set2-a'); el.value = Math.min(9, (parseInt(el.value) || 0) + 1);" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">+</button>
                             </div>
                             
                             <!-- Set 3 Pareja 1 -->
                             <div style="display: flex; align-items: center; justify-content: center; gap: 4px; background: rgba(255,255,255,0.03); padding: 4px; border-radius: 8px;">
-                                <button onclick="window.OpenMatchesView.adjustSetScore('${match.id}', 3, 'a', -1)" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">-</button>
-                                <span style="font-family: monospace; font-size: 0.95rem; font-weight: 950; min-width: 14px; text-align: center; color: #ccff00;">${s3a}</span>
-                                <button onclick="window.OpenMatchesView.adjustSetScore('${match.id}', 3, 'a', 1)" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">+</button>
+                                <button type="button" onclick="const el = document.getElementById('score-set3-a'); el.value = Math.max(0, (parseInt(el.value) || 0) - 1);" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">-</button>
+                                <input type="number" id="score-set3-a" value="${s3a}" min="0" max="9" style="width: 20px; height: 20px; background: transparent; border: none; color: #ccff00; font-family: monospace; font-size: 0.95rem; font-weight: 950; text-align: center; outline: none; padding: 0;" onfocus="this.select()" oninput="if(this.value.length > 1) this.value = this.value.slice(0, 1);">
+                                <button type="button" onclick="const el = document.getElementById('score-set3-a'); el.value = Math.min(9, (parseInt(el.value) || 0) + 1);" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">+</button>
                             </div>
                             
                             <!-- Fila Pareja 2 -->
@@ -1773,31 +1784,35 @@
                             
                             <!-- Set 1 Pareja 2 -->
                             <div style="display: flex; align-items: center; justify-content: center; gap: 4px; background: rgba(255,255,255,0.03); padding: 4px; border-radius: 8px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px; margin-top: 4px;">
-                                <button onclick="window.OpenMatchesView.adjustSetScore('${match.id}', 1, 'b', -1)" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">-</button>
-                                <span style="font-family: monospace; font-size: 0.95rem; font-weight: 950; min-width: 14px; text-align: center; color: #ccff00;">${s1b}</span>
-                                <button onclick="window.OpenMatchesView.adjustSetScore('${match.id}', 1, 'b', 1)" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">+</button>
+                                <button type="button" onclick="const el = document.getElementById('score-set1-b'); el.value = Math.max(0, (parseInt(el.value) || 0) - 1);" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">-</button>
+                                <input type="number" id="score-set1-b" value="${s1b}" min="0" max="9" style="width: 20px; height: 20px; background: transparent; border: none; color: #ccff00; font-family: monospace; font-size: 0.95rem; font-weight: 950; text-align: center; outline: none; padding: 0;" onfocus="this.select()" oninput="if(this.value.length > 1) this.value = this.value.slice(0, 1);">
+                                <button type="button" onclick="const el = document.getElementById('score-set1-b'); el.value = Math.min(9, (parseInt(el.value) || 0) + 1);" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">+</button>
                             </div>
                             
                             <!-- Set 2 Pareja 2 -->
                             <div style="display: flex; align-items: center; justify-content: center; gap: 4px; background: rgba(255,255,255,0.03); padding: 4px; border-radius: 8px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px; margin-top: 4px;">
-                                <button onclick="window.OpenMatchesView.adjustSetScore('${match.id}', 2, 'b', -1)" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">-</button>
-                                <span style="font-family: monospace; font-size: 0.95rem; font-weight: 950; min-width: 14px; text-align: center; color: #ccff00;">${s2b}</span>
-                                <button onclick="window.OpenMatchesView.adjustSetScore('${match.id}', 2, 'b', 1)" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">+</button>
+                                <button type="button" onclick="const el = document.getElementById('score-set2-b'); el.value = Math.max(0, (parseInt(el.value) || 0) - 1);" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">-</button>
+                                <input type="number" id="score-set2-b" value="${s2b}" min="0" max="9" style="width: 20px; height: 20px; background: transparent; border: none; color: #ccff00; font-family: monospace; font-size: 0.95rem; font-weight: 950; text-align: center; outline: none; padding: 0;" onfocus="this.select()" oninput="if(this.value.length > 1) this.value = this.value.slice(0, 1);">
+                                <button type="button" onclick="const el = document.getElementById('score-set2-b'); el.value = Math.min(9, (parseInt(el.value) || 0) + 1);" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">+</button>
                             </div>
                             
                             <!-- Set 3 Pareja 2 -->
                             <div style="display: flex; align-items: center; justify-content: center; gap: 4px; background: rgba(255,255,255,0.03); padding: 4px; border-radius: 8px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px; margin-top: 4px;">
-                                <button onclick="window.OpenMatchesView.adjustSetScore('${match.id}', 3, 'b', -1)" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">-</button>
-                                <span style="font-family: monospace; font-size: 0.95rem; font-weight: 950; min-width: 14px; text-align: center; color: #ccff00;">${s3b}</span>
-                                <button onclick="window.OpenMatchesView.adjustSetScore('${match.id}', 3, 'b', 1)" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">+</button>
+                                <button type="button" onclick="const el = document.getElementById('score-set3-b'); el.value = Math.max(0, (parseInt(el.value) || 0) - 1);" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">-</button>
+                                <input type="number" id="score-set3-b" value="${s3b}" min="0" max="9" style="width: 20px; height: 20px; background: transparent; border: none; color: #ccff00; font-family: monospace; font-size: 0.95rem; font-weight: 950; text-align: center; outline: none; padding: 0;" onfocus="this.select()" oninput="if(this.value.length > 1) this.value = this.value.slice(0, 1);">
+                                <button type="button" onclick="const el = document.getElementById('score-set3-b'); el.value = Math.min(9, (parseInt(el.value) || 0) + 1);" style="width: 18px; height: 18px; border-radius: 4px; border: none; background: rgba(255,255,255,0.1); color: #ffffff; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">+</button>
                             </div>
                         </div>
 
-                        <!-- Botón de Finalizar Marcador en el propio marcador de TV -->
-                        <div style="margin-top: 15px; display: flex; justify-content: center; width: 100%;">
-                            <button onclick="window.OpenMatchesView.markCompleted('${match.id}')" style="width:100%; border:none; background: ${isCompleted ? 'rgba(34,197,94,0.15)' : 'linear-gradient(135deg, #ccff00 0%, #a2cb00 100%)'}; border-radius: 12px; color: ${isCompleted ? '#22c55e' : '#000000'}; font-weight: 900; font-size: 0.72rem; padding: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: ${isCompleted ? 'none' : '0 4px 15px rgba(204,255,0,0.25)'}; transition: all 0.2s;">
-                                <i class="fas ${isCompleted ? 'fa-check-circle' : 'fa-trophy'}"></i>
-                                ${isCompleted ? 'CAMBIAR A ACTIVO (CORREGIR)' : 'FINALIZAR Y REGISTRAR MARCADOR'}
+                        <!-- Botones de Guardar y Finalizar Marcador en el propio marcador de TV -->
+                        <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                            <button onclick="window.OpenMatchesView.saveFullScore('${match.id}')" style="width:100%; border:none; background: linear-gradient(135deg, #ccff00 0%, #a2cb00 100%); border-radius: 12px; color: #000000; font-weight: 900; font-size: 0.72rem; padding: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 15px rgba(204,255,0,0.25); transition: all 0.2s;">
+                                <i class="fas fa-save"></i> GUARDAR RESULTADOS
+                            </button>
+                            
+                            <button onclick="window.OpenMatchesView.markCompleted('${match.id}')" style="width:100%; border:none; background: rgba(255,255,255,0.06); border-radius: 12px; color: #e2e8f0; font-weight: 800; font-size: 0.7rem; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+                                <i class="fas ${isCompleted ? 'fa-undo' : 'fa-check-circle'}"></i>
+                                ${isCompleted ? 'CAMBIAR A ACTIVO (CORREGIR ESTADO)' : 'FINALIZAR Y ARCHIVAR PARTIDO'}
                             </button>
                         </div>
                     </div>
@@ -1815,7 +1830,7 @@
                     <div style="background: rgba(15, 23, 42, 0.03); border: 1.5px dashed rgba(15, 23, 42, 0.12); border-radius: 20px; padding: 20px; margin-top: 15px; text-align: center; color: #64748B;">
                         <i class="fas fa-hourglass-half" style="font-size: 1.4rem; color: #2E61FF; margin-bottom: 8px; display: block;"></i>
                         <span style="font-size: 0.75rem; font-weight: 850; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Esperando Jugadores</span>
-                        <span style="font-size: 0.72rem; font-weight: 600; line-height: 1.45;">Falta${4 - filledCount === 1 ? ' solo 1 jugador' : `n ${4 - filledCount} jugadores`} para completar el partido y poder activar el marcador en vivo.</span>
+                        <span style="font-size: 0.72rem; font-weight: 600; line-height: 1.45;">Falta ${4 - filledCount === 1 ? 'solo 1 jugador' : 'n ' + (4 - filledCount) + ' jugadores'} para completar el partido y poder activar el marcador en vivo.</span>
                     </div>
                 `;
             }
@@ -1829,8 +1844,6 @@
                 { left: '15%', bottom: '15%' },  // P2 J1 (Revés)
                 { right: '15%', bottom: '15%' }  // P2 J2 (Drive)
             ];
-=======
->>>>>>> 65c65eb5f8aed168d0b9553c507b2e0a01082976
 
             for (let idx = 0; idx < maxPlayers; idx++) {
                 const posStyle = slotStyles[idx];
@@ -1948,7 +1961,6 @@
                             </div>
                         </div>
 
-<<<<<<< HEAD
                         <style>
                             @keyframes pulseGlow {
                                 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.45); }
@@ -1969,8 +1981,6 @@
                             }
                         </style>
 
-=======
->>>>>>> 65c65eb5f8aed168d0b9553c507b2e0a01082976
                         <!-- Results display if completed -->
                         ${isCompleted ? `
                         <div style="background: rgba(34, 197, 94, 0.05); border: 1.5px solid rgba(34, 197, 94, 0.2); border-radius: 20px; padding: 18px; margin-top: 15px; text-align: center; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.05);">
@@ -1995,7 +2005,6 @@
                                 </div>
                             </div>
                         </div>
-<<<<<<< HEAD
                         <div id="score-corrector-btn" style="text-align: center; margin-top: 10px;">
                             <button onclick="document.getElementById('score-corrector-panel').classList.toggle('hidden'); this.style.display='none';" style="background:transparent; border:none; color:#2E61FF; font-size:0.75rem; font-weight:850; cursor:pointer;">
                                 <i class="fas fa-edit"></i> Corregir Marcador
@@ -2007,9 +2016,6 @@
                         ` : `
                             ${scoreInputHtml}
                         `}
-=======
-                        ` : ''}
->>>>>>> 65c65eb5f8aed168d0b9553c507b2e0a01082976
 
                         <!-- Progress Bar (only if active) -->
                         ${!isCompleted ? `
@@ -2085,7 +2091,6 @@
                         <button class="playtomic-btn-blue-giant" disabled style="background:#e2e8f0; color:#94a3b8; box-shadow:none; cursor:not-allowed; width: 100%;">
                             <i class="fas fa-check-circle"></i> PARTIDO FINALIZADO
                         </button>
-<<<<<<< HEAD
                         ` : (spots === 0 ? `
                             ${isJoined ? `
                             <button class="playtomic-btn-blue-giant haptic-feedback" onclick="window.OpenMatchesView.toggleJoinMatch('${match.id}')" style="background:#EF4444; width: 100%; min-height:48px; font-size:0.75rem; padding: 10px 12px; font-weight:900;">
@@ -2096,17 +2101,6 @@
                                 <i class="fas fa-lock"></i> PARTIDO COMPLETO (EN JUEGO)
                             </button>
                             `}
-=======
-                        ` : (spots === 0 && match.is_fixed_pair ? `
-                            ${isJoined ? `
-                            <button class="playtomic-btn-blue-giant haptic-feedback" onclick="window.OpenMatchesView.toggleJoinMatch('${match.id}')" style="background:#EF4444; flex:1; min-height:48px; font-size:0.75rem; padding: 10px 12px; font-weight:900;">
-                                <i class="fas fa-user-minus"></i> SALIRME
-                            </button>
-                            ` : ''}
-                            <button class="playtomic-btn-blue-giant haptic-feedback" onclick="window.OpenMatchesView.openScoreReporter('${match.id}')" style="background:#22c55e; flex:2; box-shadow: 0 8px 25px rgba(34, 197, 94, 0.35); min-height:48px; font-size:0.78rem;">
-                                <i class="fas fa-trophy"></i> APUNTAR RESULTADO
-                            </button>
->>>>>>> 65c65eb5f8aed168d0b9553c507b2e0a01082976
                         ` : `
                         <button class="playtomic-btn-blue-giant haptic-feedback" onclick="${isJoined ? `window.OpenMatchesView.toggleJoinMatch('${match.id}')` : (spots === 0 ? '' : `window.OpenMatchesView.toggleJoinMatch('${match.id}')`)}" ${spots === 0 && !isJoined ? 'disabled style="background:#e2e8f0; color:#94a3b8; box-shadow:none; cursor:not-allowed;"' : ''} style="width: 100%;">
                             ${isJoined ? '<i class="fas fa-user-minus"></i> SALIRME DEL PARTIDO' : (spots === 0 ? '<i class="fas fa-lock"></i> PARTIDO COMPLETO' : '<i class="fas fa-user-plus"></i> APUNTARME AL PARTIDO')}
@@ -2472,21 +2466,12 @@
             const p4 = players[3] ? players[3].replace(/\s*\(\d+(?:\.\d+)?\)\s*$/, '').trim() : 'Jugador 4';
 
             modal.innerHTML = `
-<<<<<<< HEAD
                 <div class="drawer-content-container" style="max-height: 95%; display: flex; flex-direction: column; overflow: hidden; position: relative;">
                     <!-- Header -->
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:18px 24px; border-bottom:1px solid rgba(15,23,42,0.08); flex-shrink:0;">
                         <div style="display:flex; align-items:center; gap:12px;">
                             <i class="fas fa-arrow-left" onclick="window.OpenMatchesView.closeScoreReporter()" style="font-size:1.15rem; color:#0F172A; cursor:pointer; padding:4px;"></i>
                             <h2 style="margin:0; font-size:1.05rem; font-weight:950; color:#0F172A; text-transform:uppercase; letter-spacing:0.5px;">Registrar Resultado</h2>
-=======
-                <div class="drawer-content-container" style="max-height: 95%;">
-                    <!-- Header -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:20px 24px; border-bottom:1px solid rgba(15,23,42,0.08); flex-shrink:0;">
-                        <div style="display:flex; align-items:center; gap:12px;">
-                            <i class="fas fa-arrow-left" onclick="window.OpenMatchesView.closeScoreReporter()" style="font-size:1.15rem; color:#0F172A; cursor:pointer; padding:4px;"></i>
-                            <h2 style="margin:0; font-size:1.15rem; font-weight:950; color:#0F172A; text-transform:uppercase; letter-spacing:0.5px;">Registrar Resultado</h2>
->>>>>>> 65c65eb5f8aed168d0b9553c507b2e0a01082976
                         </div>
                         <div class="drawer-circle-btn" onclick="window.OpenMatchesView.closeScoreReporter()">
                             <i class="fas fa-times"></i>
@@ -2494,7 +2479,6 @@
                     </div>
 
                     <!-- Body -->
-<<<<<<< HEAD
                     <div style="padding:20px; display:flex; flex-direction:column; gap:18px; padding-bottom:110px; overflow-y:auto; box-sizing:border-box; flex: 1;">
                         
                         <!-- Roster Recap Card Dark Premium -->
@@ -2533,28 +2517,11 @@
                                         ${p3}<br><span style="color: rgba(255,255,255,0.4); font-weight: 600; font-size: 0.68rem;">&</span><br>${p4}
                                     </span>
                                     <span style="font-size: 0.58rem; color: #CCFF00; font-weight: 850; letter-spacing: 0.5px; margin-top: 6px; background: rgba(204,255,0,0.1); padding: 2px 6px; border-radius: 4px;">PAREJA 2</span>
-=======
-                    <div style="padding:24px; display:flex; flex-direction:column; gap:20px; padding-bottom:120px; overflow-y:auto; box-sizing:border-box;">
-                        
-                        <!-- Roster Recap Card -->
-                        <div style="background: rgba(46,97,255,0.03); border: 1.5px solid rgba(46,97,255,0.1); border-radius: 18px; padding: 16px; text-align: center;">
-                            <span style="font-size: 0.62rem; color: #2E61FF; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">Enfrentamiento Parejas Fijas</span>
-                            <div style="display: flex; justify-content: space-around; align-items: center; gap: 10px;">
-                                <div style="display: flex; flex-direction: column; width: 42%;">
-                                    <span style="font-size: 0.8rem; font-weight: 850; color: #0F172A; word-break: break-word;">${p1}<br>&<br>${p2}</span>
-                                    <span style="font-size: 0.58rem; color: #64748B; font-weight: 700; margin-top: 4px;">PAREJA 1</span>
-                                </div>
-                                <span style="font-size: 0.8rem; font-weight: 900; color: #94a3b8;">VS</span>
-                                <div style="display: flex; flex-direction: column; width: 42%;">
-                                    <span style="font-size: 0.8rem; font-weight: 850; color: #0F172A; word-break: break-word;">${p3}<br>&<br>${p4}</span>
-                                    <span style="font-size: 0.58rem; color: #64748B; font-weight: 700; margin-top: 4px;">PAREJA 2</span>
->>>>>>> 65c65eb5f8aed168d0b9553c507b2e0a01082976
                                 </div>
                             </div>
                         </div>
 
                         <!-- Score Selectors Container -->
-<<<<<<< HEAD
                         <div style="display:flex; flex-direction:column; gap:14px; margin-top: 2px; text-align: left;">
                             
                             <!-- Set 1 -->
@@ -2646,85 +2613,15 @@
                                         <button onclick="window.OpenMatchesView.changeScoreValue('set3-b', -1)" style="width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid rgba(15,23,42,0.1); background: #ffffff; font-size: 1.15rem; font-weight: 900; cursor: pointer; color: #475569; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.03); transition: all 0.2s; outline:none; -webkit-tap-highlight-color: transparent;">-</button>
                                         <input type="text" id="set3-b" value="" placeholder="-" readonly style="width: 26px; text-align: center; border: none; background: transparent; font-size: 1.4rem; font-weight: 950; color: #0F172A; font-family: monospace; outline: none; padding:0; margin:0;">
                                         <button onclick="window.OpenMatchesView.changeScoreValue('set3-b', 1)" style="width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid #2E61FF; background: rgba(46,97,255,0.04); font-size: 1.15rem; font-weight: 900; cursor: pointer; color: #2E61FF; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(46,97,255,0.08); transition: all 0.2s; outline:none; -webkit-tap-highlight-color: transparent;">+</button>
-=======
-                        <div style="display:flex; flex-direction:column; gap:16px; margin-top: 4px; text-align: left;">
-                            
-                            <!-- Set 1 -->
-                            <div style="display:flex; flex-direction:column; gap:10px; background:#f8fafc; padding:16px; border-radius:18px; border:1px solid rgba(15,23,42,0.05);">
-                                <span style="font-size: 0.72rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 6px;">Set 1</span>
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 4px;">
-                                    <!-- P1 Games Counter -->
-                                    <div style="display:flex; align-items:center; gap:8px; width:45%;">
-                                        <button onclick="window.OpenMatchesView.changeScoreValue('set1-a', -1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">-</button>
-                                        <input type="text" id="set1-a" value="6" readonly style="width:38px; text-align:center; border:none; background:transparent; font-size:1.25rem; font-weight:950; color:#0F172A; font-family:monospace;">
-                                        <button onclick="window.OpenMatchesView.changeScoreValue('set1-a', 1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">+</button>
-                                    </div>
-                                    <span style="font-size: 0.72rem; font-weight: 800; color: #94a3b8;">-</span>
-                                    <!-- P2 Games Counter -->
-                                    <div style="display:flex; align-items:center; gap:8px; width:45%; justify-content:flex-end;">
-                                        <button onclick="window.OpenMatchesView.changeScoreValue('set1-b', -1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">-</button>
-                                        <input type="text" id="set1-b" value="4" readonly style="width:38px; text-align:center; border:none; background:transparent; font-size:1.25rem; font-weight:950; color:#0F172A; font-family:monospace;">
-                                        <button onclick="window.OpenMatchesView.changeScoreValue('set1-b', 1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">+</button>
->>>>>>> 65c65eb5f8aed168d0b9553c507b2e0a01082976
                                     </div>
                                 </div>
                             </div>
 
-<<<<<<< HEAD
                         </div>
 
                         <!-- Sticky CTA Bottom -->
                         <div class="drawer-bottom-cta-sticky" style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #ffffff 20%); padding: 18px 24px; box-sizing: border-box; display: flex; justify-content: center; z-index: 10;">
                             <button onclick="window.OpenMatchesView.submitScore('${match.id}')" class="playtomic-btn-blue-giant haptic-feedback" style="width: 100%; border: none; background: linear-gradient(135deg, #10B981 0%, #059669 100%); box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3); border-radius: 16px; color: #ffffff; font-weight: 950; font-size: 0.88rem; padding: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-=======
-                            <!-- Set 2 -->
-                            <div style="display:flex; flex-direction:column; gap:10px; background:#f8fafc; padding:16px; border-radius:18px; border:1px solid rgba(15,23,42,0.05);">
-                                <span style="font-size: 0.72rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 6px;">Set 2</span>
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 4px;">
-                                    <!-- P1 Games Counter -->
-                                    <div style="display:flex; align-items:center; gap:8px; width:45%;">
-                                        <button onclick="window.OpenMatchesView.changeScoreValue('set2-a', -1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">-</button>
-                                        <input type="text" id="set2-a" value="6" readonly style="width:38px; text-align:center; border:none; background:transparent; font-size:1.25rem; font-weight:950; color:#0F172A; font-family:monospace;">
-                                        <button onclick="window.OpenMatchesView.changeScoreValue('set2-a', 1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">+</button>
-                                    </div>
-                                    <span style="font-size: 0.72rem; font-weight: 800; color: #94a3b8;">-</span>
-                                    <!-- P2 Games Counter -->
-                                    <div style="display:flex; align-items:center; gap:8px; width:45%; justify-content:flex-end;">
-                                        <button onclick="window.OpenMatchesView.changeScoreValue('set2-b', -1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">-</button>
-                                        <input type="text" id="set2-b" value="4" readonly style="width:38px; text-align:center; border:none; background:transparent; font-size:1.25rem; font-weight:950; color:#0F172A; font-family:monospace;">
-                                        <button onclick="window.OpenMatchesView.changeScoreValue('set2-b', 1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">+</button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Set 3 (Opcional) -->
-                            <div style="display:flex; flex-direction:column; gap:10px; background:#f8fafc; padding:16px; border-radius:18px; border:1px solid rgba(15,23,42,0.05);">
-                                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 6px;">
-                                    <span style="font-size: 0.72rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">Set 3 (Desempate)</span>
-                                    <span style="font-size: 0.6rem; color: #64748B; font-weight: 700;">OPCIONAL</span>
-                                </div>
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 4px;">
-                                    <!-- P1 Games Counter -->
-                                    <div style="display:flex; align-items:center; gap:8px; width:45%;">
-                                        <button onclick="window.OpenMatchesView.changeScoreValue('set3-a', -1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">-</button>
-                                        <input type="text" id="set3-a" value="" placeholder="-" readonly style="width:38px; text-align:center; border:none; background:transparent; font-size:1.25rem; font-weight:950; color:#0F172A; font-family:monospace;">
-                                        <button onclick="window.OpenMatchesView.changeScoreValue('set3-a', 1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">+</button>
-                                    </div>
-                                    <span style="font-size: 0.72rem; font-weight: 800; color: #94a3b8;">-</span>
-                                    <!-- P2 Games Counter -->
-                                    <div style="display:flex; align-items:center; gap:8px; width:45%; justify-content:flex-end;">
-                                        <button onclick="window.OpenMatchesView.changeScoreValue('set3-b', -1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">-</button>
-                                        <input type="text" id="set3-b" value="" placeholder="-" readonly style="width:38px; text-align:center; border:none; background:transparent; font-size:1.25rem; font-weight:950; color:#0F172A; font-family:monospace;">
-                                        <button onclick="window.OpenMatchesView.changeScoreValue('set3-b', 1)" class="drawer-circle-btn" style="width:36px; height:36px; border:1px solid #cbd5e1; background:#ffffff; font-size:1.1rem; font-weight:800; cursor:pointer; color:#0F172A;">+</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Sticky CTA Bottom -->
-                        <div class="drawer-bottom-cta-sticky">
-                            <button onclick="window.OpenMatchesView.submitScore('${match.id}')" class="playtomic-btn-blue-giant haptic-feedback" style="background:#22c55e; box-shadow: 0 8px 25px rgba(34, 197, 94, 0.35);">
->>>>>>> 65c65eb5f8aed168d0b9553c507b2e0a01082976
                                 <i class="fas fa-check"></i> CONFIRMAR RESULTADO
                             </button>
                         </div>
@@ -5010,6 +4907,62 @@
             } catch (err) {
                 console.error("Error al actualizar marcador:", err);
                 alert("Error al actualizar marcador: " + err.message);
+            }
+        }
+
+        async saveFullScore(matchId) {
+            try {
+                if (!window.db) throw new Error("Firebase Firestore no está inicializado");
+
+                const docRef = window.db.collection('open_matches').doc(matchId);
+                const doc = await docRef.get();
+                if (!doc.exists) throw new Error("La partida no existe");
+
+                const data = doc.data();
+
+                // Recoger los valores de los inputs del DOM
+                const s1a = parseInt(document.getElementById('score-set1-a').value) || 0;
+                const s1b = parseInt(document.getElementById('score-set1-b').value) || 0;
+                const s2a = parseInt(document.getElementById('score-set2-a').value) || 0;
+                const s2b = parseInt(document.getElementById('score-set2-b').value) || 0;
+                const s3a = parseInt(document.getElementById('score-set3-a').value) || 0;
+                const s3b = parseInt(document.getElementById('score-set3-b').value) || 0;
+
+                const result = {
+                    set1: { a: s1a, b: s1b },
+                    set2: { a: s2a, b: s2b },
+                    set3: { a: s3a, b: s3b }
+                };
+
+                const updatePayload = {
+                    result: result
+                };
+
+                // Si no estaba completada, la marcamos como completada al guardar resultados
+                if (data.status !== 'completed' && data.status !== 'finished') {
+                    updatePayload.status = 'completed';
+                }
+
+                await docRef.update(updatePayload);
+
+                // Actualizar la copia local en memoria al instante para evitar lag de red
+                const localMatch = this.allMatches.find(m => m.id === matchId);
+                if (localMatch) {
+                    localMatch.result = result;
+                    if (localMatch.status !== 'completed' && localMatch.status !== 'finished') {
+                        localMatch.status = 'completed';
+                    }
+                    this.openDetailDrawer(matchId);
+                }
+
+                if (window.NotificationService) {
+                    window.NotificationService.showToast("Resultados guardados con éxito 🏆", "success");
+                } else {
+                    alert("Resultados guardados con éxito.");
+                }
+            } catch (err) {
+                console.error("Error al guardar marcador:", err);
+                alert("Error al guardar marcador: " + err.message);
             }
         }
 
