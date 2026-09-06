@@ -29,9 +29,9 @@
 
             this.injectStyles();
             
-            // Mostrar esqueleto shimmer de carga en la primera inicialización
+            // Mostrar tarjeta inicial activa en la primera inicialización
             if (!this.hasInitialized) {
-                this.renderSkeleton();
+                this.renderInitialCard();
             }
             
             this.startRealTimeSync();

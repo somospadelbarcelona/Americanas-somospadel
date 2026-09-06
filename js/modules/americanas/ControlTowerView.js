@@ -770,21 +770,14 @@
 
         renderActiveContent(data, roundData) {
             if (data?.status === 'LOADING') {
-                const skeletons = Array.from({ length: 3 }, () => `
-                    <div class="skeleton-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 20px; margin-bottom: 15px;">
-                        <div class="skeleton-box skeleton-line" style="width: 40%; height: 12px; background: #f1f5f9;"></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                            <div class="skeleton-box skeleton-line" style="width: 60%; height: 30px; background: #f1f5f9;"></div>
-                            <div class="skeleton-box" style="width: 50px; height: 50px; border-radius: 12px; background: #f1f5f9;"></div>
+                return `
+                    <div style="padding: 15px;">
+                        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 28px; text-align: center; color: white; margin-bottom: 15px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+                            <i class="fas fa-trophy fa-spin" style="font-size: 2.2rem; color: #CCFF00; margin-bottom: 12px;"></i>
+                            <h4 style="margin: 0 0 6px 0; font-size: 1.1rem; font-weight: 900; color: #ffffff;">Sincronizando Torre de Control...</h4>
+                            <p style="margin: 0; font-size: 0.82rem; color: #94a3b8;">Cargando clasificación y resultados en tiempo real</p>
                         </div>
-                        <div style="height: 1px; background: #e2e8f0; margin: 15px 0;"></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div class="skeleton-box skeleton-line" style="width: 50%; height: 30px; background: #f1f5f9;"></div>
-                            <div class="skeleton-box" style="width: 50px; height: 50px; border-radius: 12px; background: #f1f5f9;"></div>
-                        </div>
-                    </div>
-                `).join('');
-                return `<div style="padding: 15px;">${skeletons}</div>`;
+                    </div>`;
             }
 
             switch (this.activeTab) {
