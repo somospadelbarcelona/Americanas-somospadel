@@ -1511,16 +1511,28 @@
                     </div>
                     
                     <div id="dynamic-blog-posts-container" style="display: flex; flex-direction: column; gap: 10px;">
-                        ${[0,1,2].map(i => `
-                            <div style="display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 14px; background: #f8fafc; border: 1px solid rgba(0,0,0,0.03);">
-                                <div style="width: 76px; height: 76px; border-radius: 12px; background: rgba(0,0,0,0.04); flex-shrink: 0;" class="skeleton-shim"></div>
-                                <div style="flex: 1;">
-                                    <div style="height: 8px; width: 30%; background: rgba(0,0,0,0.04); border-radius: 4px; margin-bottom: 8px;" class="skeleton-shim"></div>
-                                    <div style="height: 12px; width: 80%; background: rgba(0,0,0,0.06); border-radius: 4px; margin-bottom: 6px;" class="skeleton-shim"></div>
-                                    <div style="height: 8px; width: 60%; background: rgba(0,0,0,0.04); border-radius: 4px;" class="skeleton-shim"></div>
-                                </div>
+                        <div onclick="if(window.DashboardView) window.DashboardView.openBlogPost('tip_bandeja')" style="display: flex; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 16px; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); cursor: pointer; transition: all 0.25s; box-shadow: 0 4px 12px rgba(0,0,0,0.03);" class="premium-blog-compact-card">
+                            <div style="width: 60px; height: 60px; border-radius: 12px; background: linear-gradient(135deg, #090f1e 0%, #1e293b 100%); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #CCFF00; font-size: 1.3rem;">
+                                💡
                             </div>
-                        `).join('')}
+                            <div style="flex: 1;">
+                                <span style="font-size: 0.55rem; font-weight: 950; letter-spacing: 0.5px; color: #4d7c0f; text-transform: uppercase;">CONSEJOS TÁCTICOS</span>
+                                <h4 style="font-size: 0.82rem; font-weight: 900; color: #0f172a; margin: 2px 0 3px 0; font-family: 'Outfit';">Claves para la Bandeja de Control y Ataque</h4>
+                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 600;">Mejora tu empuñadura y posicionamiento en pista</span>
+                            </div>
+                            <i class="fas fa-chevron-right compact-chevron" style="color: #94a3b8; font-size: 0.8rem; transition: transform 0.2s;"></i>
+                        </div>
+                        <div onclick="if(window.DashboardView) window.DashboardView.openBlogPost('tip_remate')" style="display: flex; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 16px; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); cursor: pointer; transition: all 0.25s; box-shadow: 0 4px 12px rgba(0,0,0,0.03);" class="premium-blog-compact-card">
+                            <div style="width: 60px; height: 60px; border-radius: 12px; background: linear-gradient(135deg, #172554 0%, #1e1b4b 100%); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #CCFF00; font-size: 1.3rem;">
+                                🎾
+                            </div>
+                            <div style="flex: 1;">
+                                <span style="font-size: 0.55rem; font-weight: 950; letter-spacing: 0.5px; color: #3b82f6; text-transform: uppercase;">COMUNIDAD BCN</span>
+                                <h4 style="font-size: 0.82rem; font-weight: 900; color: #0f172a; margin: 2px 0 3px 0; font-family: 'Outfit';">Próximos Torneos y Americanas Semanales</h4>
+                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 600;">Compite en partidos equilibrados de tu nivel</span>
+                            </div>
+                            <i class="fas fa-chevron-right compact-chevron" style="color: #94a3b8; font-size: 0.8rem; transition: transform 0.2s;"></i>
+                        </div>
                     </div>
                 </div>
                 

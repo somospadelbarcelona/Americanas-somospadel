@@ -783,17 +783,28 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
 
                     <!-- Posts container -->
                     <div id="dynamic-blog-posts-container" style="display:flex; flex-direction:column; gap:10px;">
-                        <!-- Loading skeleton -->
-                        ${[0,1,2].map(i => `
-                            <div style="display:flex; gap:12px; align-items:center; padding:12px; border-radius:14px; background:rgba(255,255,255,0.03);">
-                                <div style="width:60px; height:60px; border-radius:14px; background:rgba(255,255,255,0.07); flex-shrink:0;"></div>
-                                <div style="flex:1;">
-                                    <div style="height:8px; width:40%; background:rgba(255,255,255,0.07); border-radius:4px; margin-bottom:8px;"></div>
-                                    <div style="height:11px; width:85%; background:rgba(255,255,255,0.07); border-radius:4px; margin-bottom:6px;"></div>
-                                    <div style="height:8px; width:65%; background:rgba(255,255,255,0.05); border-radius:4px;"></div>
-                                </div>
+                        <div onclick="if(window.DashboardView) window.DashboardView.openBlogPost('tip_bandeja')" style="display: flex; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255, 255, 255, 0.08); cursor: pointer; transition: all 0.25s;" class="premium-blog-compact-card">
+                            <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(204,255,0,0.1); border: 1px solid rgba(204,255,0,0.25); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #CCFF00; font-size: 1.2rem;">
+                                💡
                             </div>
-                        `).join('')}
+                            <div style="flex: 1;">
+                                <span style="font-size: 0.55rem; font-weight: 950; letter-spacing: 0.5px; color: #CCFF00; text-transform: uppercase;">CONSEJOS TÁCTICOS</span>
+                                <h4 style="font-size: 0.82rem; font-weight: 900; color: #ffffff; margin: 2px 0 3px 0; font-family: 'Outfit';">Claves para la Bandeja de Control y Ataque</h4>
+                                <span style="font-size: 0.65rem; color: rgba(255,255,255,0.6); font-weight: 600;">Mejora tu empuñadura y posicionamiento en pista</span>
+                            </div>
+                            <i class="fas fa-chevron-right compact-chevron" style="color: rgba(255,255,255,0.4); font-size: 0.8rem; transition: transform 0.2s;"></i>
+                        </div>
+                        <div onclick="if(window.DashboardView) window.DashboardView.openBlogPost('tip_remate')" style="display: flex; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255, 255, 255, 0.08); cursor: pointer; transition: all 0.25s;" class="premium-blog-compact-card">
+                            <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #60a5fa; font-size: 1.2rem;">
+                                🎾
+                            </div>
+                            <div style="flex: 1;">
+                                <span style="font-size: 0.55rem; font-weight: 950; letter-spacing: 0.5px; color: #60a5fa; text-transform: uppercase;">COMUNIDAD BCN</span>
+                                <h4 style="font-size: 0.82rem; font-weight: 900; color: #ffffff; margin: 2px 0 3px 0; font-family: 'Outfit';">Próximos Torneos y Americanas Semanales</h4>
+                                <span style="font-size: 0.65rem; color: rgba(255,255,255,0.6); font-weight: 600;">Compite en partidos equilibrados de tu nivel</span>
+                            </div>
+                            <i class="fas fa-chevron-right compact-chevron" style="color: rgba(255,255,255,0.4); font-size: 0.8rem; transition: transform 0.2s;"></i>
+                        </div>
                     </div>
                 </div>
             `;

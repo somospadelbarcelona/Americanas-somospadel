@@ -13,14 +13,13 @@
             if (!root) return;
             const user = window.Store?.getState('currentUser');
             if (!user) return;
-            root.innerHTML = this._skeleton();
+            // Renderizado directo sin tarjetas blancas vacías de esqueleto
             try {
                 const data = await this._buildData(user);
                 root.innerHTML = this._template(data, user, mode);
                 this._initAnimations(data, mode);
             } catch (err) {
                 console.error('[PadelPulse] Error:', err, 'mode:', mode);
-                root.innerHTML = '';
             }
         },
 

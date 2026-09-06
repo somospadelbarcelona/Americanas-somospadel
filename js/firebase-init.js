@@ -152,6 +152,18 @@ if (typeof firebase === 'undefined') {
 // FIRESTORE HELPERS
 // ============================================
 
+async function _updatePlayersSyncToken() {
+    if (!db) return;
+    try {
+        await db.collection('metadata').doc('players').set({
+            last_updated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log("🔄 [Sync Token] Server sync token updated successfully.");
+    } catch (err) {
+        console.warn("⚠️ [Sync Token] Failed to update server sync token:", err);
+    }
+}
+
 const FirebaseDB = {
     // Players Collection
     players: {
@@ -166,10 +178,39 @@ const FirebaseDB = {
                 });
             };
 
-            // Turbo Cache: Instant load with SWR (unless forced)
+            // === CONDITIONAL SYNC TOKEN CACHE VALIDATION ===
             if (window.CacheService && !force) {
-                return await window.CacheService.swr('players', 'all', fetchFn, null, 1000 * 60 * 15); // Revalidate every 15 mins
+                try {
+                    // 1. Obtener el Sync Token más reciente del servidor (1 sola lectura ligera)
+                    const serverMeta = await db.collection('metadata').doc('players').get();
+                    if (serverMeta.exists) {
+                        const serverTime = serverMeta.data().last_updated?.toDate?.()?.getTime() || 0;
+                        const localTime = parseInt(localStorage.getItem('players_sync_token') || '0');
+
+                        // 2. Si coinciden y tenemos caché local, servimos de IndexedDB de inmediato
+                        if (serverTime > 0 && localTime === serverTime) {
+                            const cached = await window.CacheService.get('players', 'all');
+                            if (cached && Array.isArray(cached) && cached.length > 0) {
+                                console.log("⚡ [Sync Token] Cache HIT. Serving players from IndexedDB. ServerTime:", serverTime);
+                                return cached;
+                            }
+                        }
+                        
+                        // 3. Si difieren o no hay caché, descargamos de red y actualizamos tokens
+                        console.log("🔄 [Sync Token] Cache MISS/Stale. Fetching players from Firestore...", { localTime, serverTime });
+                        const fresh = await fetchFn();
+                        await window.CacheService.set('players', 'all', fresh);
+                        localStorage.setItem('players_sync_token', serverTime.toString());
+                        return fresh;
+                    }
+                } catch (cacheErr) {
+                    console.warn("⚠️ [Sync Token] Fallback to standard SWR cache due to error:", cacheErr);
+                }
+                
+                // Fallback standard SWR cache if metadata collection fails or is empty
+                return await window.CacheService.swr('players', 'all', fetchFn, null, 1000 * 60 * 15);
             }
+
             const fresh = await fetchFn();
             if (window.CacheService) window.CacheService.set('players', 'all', fresh);
             return fresh;
@@ -231,6 +272,7 @@ const FirebaseDB = {
 
             // Invalidate Cache
             if (window.CacheService) window.CacheService.remove('players', 'all');
+            await _updatePlayersSyncToken();
 
             const doc = await docRef.get();
             return { ...doc.data(), id: doc.id };
@@ -244,6 +286,7 @@ const FirebaseDB = {
                 await db.collection('players').doc(cleanId).update(data);
                 // Invalidate Cache
                 if (window.CacheService) window.CacheService.remove('players', 'all');
+                await _updatePlayersSyncToken();
 
                 const doc = await db.collection('players').doc(cleanId).get();
                 return { id: doc.id, ...doc.data() };
@@ -265,6 +308,7 @@ const FirebaseDB = {
                 await docRef.delete();
                 // Invalidate Cache
                 if (window.CacheService) window.CacheService.remove('players', 'all');
+                await _updatePlayersSyncToken();
             } catch (err) {
                 console.error("Error direct deleting:", err);
                 throw new Error(`Error de Firebase: ${err.message}`);
