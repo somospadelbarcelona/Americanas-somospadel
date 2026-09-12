@@ -57,6 +57,7 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                     <!-- ① WELCOME HERO — PadelPulse -->
                     <div id="padel-pulse-widget-root" style="animation: floatUp 0.4s ease-out forwards;"></div>
 
+<<<<<<< HEAD
                     <!-- 🔥 HERO CARD PREMIUM: TEMPORADA 2027 | EQUIPOS SOMOSPADEL -->
                     <div id="season-campaign-banner-root" style="margin: 0 15px 20px !important; animation: floatUp 0.5s ease-out forwards;">
                         <div style="
@@ -243,12 +244,80 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                                     border-radius: 14px;
                                     font-weight: 950;
                                     font-size: 0.90rem;
+=======
+                    <!-- 🔥 BANNER CAMPAÑA TEMPORADA OCTUBRE - NOVIEMBRE 2026 -->
+                    <div id="season-campaign-banner-root" style="margin: 0 15px 18px !important; animation: floatUp 0.5s ease-out forwards;">
+                        <div style="
+                            background: #ffffff;
+                            border: 1.5px solid #e2e8f0;
+                            border-radius: 24px;
+                            padding: 20px;
+                            position: relative;
+                            overflow: hidden;
+                            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05), 0 0 20px rgba(204, 255, 0, 0.12);
+                        ">
+                            <!-- Glow decorativo superior -->
+                            <div style="position: absolute; top: -40px; right: -40px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(204, 255, 0, 0.25) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                            <!-- Header del Banner: Badges -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="background: #CCFF00; color: #000000; font-size: 0.65rem; font-weight: 950; padding: 3px 9px; border-radius: 8px; letter-spacing: 0.5px; text-transform: uppercase;">
+                                        🔥 TEMPORADA 2027 | EQUIPOS
+                                    </span>
+                                    <span style="background: #f1f5f9; color: #475569; font-size: 0.65rem; font-weight: 800; padding: 3px 9px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                        PLAZAS LIMITADAS
+                                    </span>
+                                </div>
+                                <span style="font-size: 0.68rem; color: #64748b; font-weight: 700;">
+                                    SomosPadel BCN
+                                </span>
+                            </div>
+
+                            <!-- Título principal -->
+                            <h3 style="margin: 0 0 6px; font-size: 1.22rem; font-weight: 950; color: #0f172a; line-height: 1.25; letter-spacing: -0.3px;">
+                                🏆 INSCRIPCIONES EQUIPOS | TEMPORADA 2027
+                            </h3>
+
+                            <!-- Subtítulo con las 3 funciones clave -->
+                            <p style="margin: 0 0 14px; font-size: 0.78rem; color: #64748b; font-weight: 600; line-height: 1.4;">
+                                Convocatoria oficial de plazas para equipos del club (Octubre - Noviembre) • Entrenos • Americanas
+                            </p>
+
+                            <!-- Mini-features pills -->
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;">
+                                <span style="background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 10px;">
+                                    🏆 Fem (2ª, 3ª, 4ª) • Mix (3ª, 4ª) • Masc (3ª, 4ª)
+                                </span>
+                                <span style="background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 10px;">
+                                    🎯 Clases & Físico
+                                </span>
+                                <span style="background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 10px;">
+                                    ⚡ Ranking en Tiempo Real
+                                </span>
+                            </div>
+
+                            <!-- CTA Principal -->
+                            <button 
+                                type="button" 
+                                onclick="window.SeasonCampaignView && window.SeasonCampaignView.openModal();" 
+                                style="
+                                    width: 100%;
+                                    padding: 13px 18px;
+                                    background: #CCFF00;
+                                    color: #000000;
+                                    border: 1px solid #b5e600;
+                                    border-radius: 14px;
+                                    font-weight: 950;
+                                    font-size: 0.88rem;
+>>>>>>> 08f2fdfe948f5da42084ef798a118048ad329d0d
                                     letter-spacing: 0.5px;
                                     cursor: pointer;
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
                                     gap: 8px;
+<<<<<<< HEAD
                                     box-shadow: 0 4px 20px rgba(204, 255, 0, 0.4);
                                     transition: transform 0.2s, box-shadow 0.2s;
                                     margin-bottom: 10px;
@@ -309,6 +378,89 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                                     onmouseout="this.style.background='rgba(37, 211, 102, 0.14)';">
                                     <span>💬</span> Dudas por WhatsApp
                                 </a>
+=======
+                                    box-shadow: 0 4px 16px rgba(204, 255, 0, 0.35);
+                                    transition: transform 0.2s, box-shadow 0.2s;
+                                    margin-bottom: 10px;
+                                "
+                                onmouseover="this.style.transform='translateY(-2px)';"
+                                onmouseout="this.style.transform='none';">
+                                <i class="fas fa-rocket" style="font-size: 0.95rem;"></i>
+                                PRE-INSCRIBIRSE / DESCUBRIR
+                            </button>
+
+                            <!-- Accesos rápidos secundarios -->
+                            <div style="display: flex; gap: 8px;">
+                                <button 
+                                    type="button" 
+                                    onclick="window.Router && window.Router.navigate('americanas');" 
+                                    style="
+                                        flex: 1;
+                                        padding: 8px 10px;
+                                        background: #f8fafc;
+                                        border: 1px solid #e2e8f0;
+                                        border-radius: 10px;
+                                        color: #334155;
+                                        font-size: 0.72rem;
+                                        font-weight: 800;
+                                        cursor: pointer;
+                                        transition: background 0.2s;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        gap: 5px;
+                                    "
+                                    onmouseover="this.style.background='#f1f5f9';"
+                                    onmouseout="this.style.background='#f8fafc';">
+                                    <span>⚡</span> Americanas
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onclick="window.Router && window.Router.navigate('entrenos');" 
+                                    style="
+                                        flex: 1;
+                                        padding: 8px 10px;
+                                        background: #f8fafc;
+                                        border: 1px solid #e2e8f0;
+                                        border-radius: 10px;
+                                        color: #334155;
+                                        font-size: 0.72rem;
+                                        font-weight: 800;
+                                        cursor: pointer;
+                                        transition: background 0.2s;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        gap: 5px;
+                                    "
+                                    onmouseover="this.style.background='#f1f5f9';"
+                                    onmouseout="this.style.background='#f8fafc';">
+                                    <span>🎯</span> Entrenos
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onclick="window.SeasonCampaignView && window.SeasonCampaignView.openModal('equipos');" 
+                                    style="
+                                        flex: 1;
+                                        padding: 8px 10px;
+                                        background: #f8fafc;
+                                        border: 1px solid #e2e8f0;
+                                        border-radius: 10px;
+                                        color: #334155;
+                                        font-size: 0.72rem;
+                                        font-weight: 800;
+                                        cursor: pointer;
+                                        transition: background 0.2s;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        gap: 5px;
+                                    "
+                                    onmouseover="this.style.background='#f1f5f9';"
+                                    onmouseout="this.style.background='#f8fafc';">
+                                    <span>🏆</span> Equipos
+                                </button>
+>>>>>>> 08f2fdfe948f5da42084ef798a118048ad329d0d
                             </div>
                         </div>
                     </div>
