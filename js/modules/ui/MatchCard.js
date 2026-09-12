@@ -38,21 +38,86 @@
                 container.style.borderColor = '#cbd5e1';
             }
         },
+
+        formatSingleName(raw) {
+            if (!raw || typeof raw !== 'string') return '';
+            const cleaned = raw.trim();
+            if (!cleaned) return '';
+
+            const cap = (w) => {
+                const lower = w.toLowerCase();
+                if (['de', 'del', 'la', 'las', 'el', 'los', 'da', 'do', 'dos', 'das', 'y', 'i'].includes(lower)) {
+                    return lower;
+                }
+                return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+            };
+
+            const parts = cleaned.split(/\s+/);
+            if (parts.length <= 2) {
+                return parts.map(cap).join(' ');
+            }
+
+            const compoundFirstNames = [
+                'juan', 'jose', 'josé', 'maria', 'maría', 'miguel', 'francisco',
+                'carlos', 'ana', 'victor', 'víctor', 'luis', 'pedro', 'jesus', 'jesús'
+            ];
+
+            const p0Lower = parts[0].toLowerCase();
+            const isCompound = parts.length >= 4 && compoundFirstNames.includes(p0Lower);
+            const firstName = isCompound ? `${cap(parts[0])} ${cap(parts[1])}` : cap(parts[0]);
+            const surnameStart = isCompound ? 2 : 1;
+
+            const rem = parts.slice(surnameStart);
+            let surname = '';
+            if (rem.length === 1) {
+                surname = cap(rem[0]);
+            } else if (rem[0].toLowerCase() === 'de' && rem.length >= 2 && ['la', 'las', 'el', 'los'].includes(rem[1].toLowerCase())) {
+                surname = rem.length >= 3 ? `de ${rem[1].toLowerCase()} ${cap(rem[2])}` : `de ${rem[1].toLowerCase()}`;
+            } else if (['de', 'del', 'da'].includes(rem[0].toLowerCase()) && rem.length >= 2) {
+                surname = `${rem[0].toLowerCase()} ${cap(rem[1])}`;
+            } else {
+                surname = cap(rem[0]);
+            }
+
+            return `${firstName} ${surname}`.trim();
+        },
+
+        parseTeam(namesArr, teamStr) {
+            let list = [];
+            if (Array.isArray(namesArr) && namesArr.length > 0) {
+                list = namesArr;
+            } else if (teamStr && typeof teamStr === 'string' && teamStr.length > 0) {
+                list = teamStr.split(/\s*\/\s*/);
+            }
+
+            if (list.length === 0) return { fullText: 'EQUIPO', players: ['EQUIPO'] };
+
+            const players = list.map(p => this.formatSingleName(p)).filter(Boolean);
+            return {
+                fullText: players.join(' / '),
+                players: players.length > 0 ? players : ['EQUIPO']
+            };
+        },
+
         render(match, options = {}) {
             const { currentUser, isEntreno, eventStatus, theme } = options;
             const colorClass = `border-${(match.court % 4) + 1}`;
 
-            const getTeamName = (namesArr, teamStr) => {
-                if (teamStr && typeof teamStr === 'string' && teamStr.length > 0) return teamStr;
-                if (Array.isArray(namesArr)) return namesArr.join(' / ');
-                return String(namesArr || '');
-            };
+            const teamAInfo = this.parseTeam(match.team_a_names, match.teamA);
+            const teamBInfo = this.parseTeam(match.team_b_names, match.teamB);
+            const safeTeamA = teamAInfo.fullText || 'EQUIPO A';
+            const safeTeamB = teamBInfo.fullText || 'EQUIPO B';
 
-            const safeTeamA = getTeamName(match.team_a_names, match.teamA) || 'EQUIPO A';
-            const safeTeamB = getTeamName(match.team_b_names, match.teamB) || 'EQUIPO B';
+            const rawTeamAStr = (Array.isArray(match.team_a_names) ? match.team_a_names.join(' ') : (match.teamA || '')).toLowerCase();
+            const rawTeamBStr = (Array.isArray(match.team_b_names) ? match.team_b_names.join(' ') : (match.teamB || '')).toLowerCase();
+            const currentUserNameLower = (currentUser?.name || '').toLowerCase();
 
-            const isPartA = currentUser && (match.team_a_ids?.includes(currentUser.uid) || safeTeamA.toLowerCase().includes((currentUser.name || '').toLowerCase()));
-            const isPartB = currentUser && (match.team_b_ids?.includes(currentUser.uid) || safeTeamB.toLowerCase().includes((currentUser.name || '').toLowerCase()));
+            const isPartA = currentUser && (match.team_a_ids?.includes(currentUser.uid) || 
+                safeTeamA.toLowerCase().includes(currentUserNameLower) ||
+                rawTeamAStr.includes(currentUserNameLower));
+            const isPartB = currentUser && (match.team_b_ids?.includes(currentUser.uid) || 
+                safeTeamB.toLowerCase().includes(currentUserNameLower) ||
+                rawTeamBStr.includes(currentUserNameLower));
             const isMyMatch = isPartA || isPartB;
             const isAdmin = options.isControlTower || ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain', 'capitan', 'capitanes', 'organizador', 'organizadores'].includes((currentUser?.role || '').toLowerCase());
 
@@ -166,6 +231,18 @@
             const liveClass = isEnJuego ? 'live-pulse-card' : '';
             const cardGlow = (isEnJuego && !isMyMatch) ? 'border: 1px solid rgba(204, 255, 0, 0.3);' : (isMyMatch && isLive ? '' : 'border: 1px solid rgba(255,255,255,0.08);');
 
+            const renderTeamMarkup = (teamInfo, isWinner) => {
+                const borderStyle = isWinner ? 'border-bottom: 2px solid #72a800;' : '';
+                if (!teamInfo.players || teamInfo.players.length <= 1) {
+                    return `<span style="font-size: 1.02rem; color: #0a192f; font-weight: 900; letter-spacing: -0.3px; ${borderStyle}">${teamInfo.players[0] || 'EQUIPO'}</span>`;
+                }
+                return `
+                    <span style="font-size: 0.98rem; color: #0a192f; font-weight: 900; letter-spacing: -0.3px; ${borderStyle}; white-space: nowrap;">${teamInfo.players[0]}</span>
+                    <span style="color: #94a3b8; font-size: 0.85rem; font-weight: 700; user-select: none; margin: 0 1px;">/</span>
+                    <span style="font-size: 0.98rem; color: #0a192f; font-weight: 900; letter-spacing: -0.3px; ${borderStyle}; white-space: nowrap;">${teamInfo.players[1]}</span>
+                `;
+            };
+
             return `
                 <div class="match-card animate-pop-in ${isLive ? 'live-shadow' : ''}" id="card-${match.id}" 
                      style="background: ${cardBg}; border-radius: 20px; overflow: hidden; margin-bottom: 12px; position: relative; ${cardStyle}; box-shadow: 0 6px 20px rgba(0,0,0,0.04);">
@@ -178,9 +255,9 @@
                     <div style="padding: 14px 16px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <div style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; padding-right: 10px;">
-                                <div style="font-size: 1.05rem; color: #0a192f; font-weight: 950; text-transform: uppercase; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
-                                    ${winnerA ? `<i class="fas fa-trophy" style="color: #72a800; margin-right: 6px;"></i>` : ''}
-                                    <span style="${winnerA ? 'border-bottom: 2px solid #72a800;' : ''}">${safeTeamA}</span>
+                                <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 3px 6px; line-height: 1.25;">
+                                    ${winnerA ? `<i class="fas fa-trophy" style="color: #72a800; font-size: 0.92rem; margin-right: 3px; flex-shrink: 0;"></i>` : ''}
+                                    ${renderTeamMarkup(teamAInfo, winnerA)}
                                 </div>
                                 ${isPartA ? '<span style="color: #72a800; font-size: 0.55rem; font-weight: 950; letter-spacing: 1px;">TU EQUIPO ★</span>' : ''}
                             </div>
@@ -196,9 +273,9 @@
 
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; padding-right: 10px;">
-                                <div style="font-size: 1.05rem; color: #0a192f; font-weight: 950; text-transform: uppercase; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
-                                    ${winnerB ? `<i class="fas fa-trophy" style="color: #72a800; margin-right: 6px;"></i>` : ''}
-                                    <span style="${winnerB ? 'border-bottom: 2px solid #72a800;' : ''}">${safeTeamB}</span>
+                                <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 3px 6px; line-height: 1.25;">
+                                    ${winnerB ? `<i class="fas fa-trophy" style="color: #72a800; font-size: 0.92rem; margin-right: 3px; flex-shrink: 0;"></i>` : ''}
+                                    ${renderTeamMarkup(teamBInfo, winnerB)}
                                 </div>
                                 ${isPartB ? '<span style="color: #72a800; font-size: 0.55rem; font-weight: 950; letter-spacing: 1px;">TU EQUIPO ★</span>' : ''}
                             </div>

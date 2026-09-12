@@ -34,9 +34,16 @@
                 }
             };
 
-            // Determinar la ruta inicial desde el hash de la URL (Deep Linking)
+            // Determinar la ruta inicial desde el hash de la URL o parámetros de consulta (Deep Linking)
+            const urlParams = new URLSearchParams(window.location.search);
+            const isRsvpAction = urlParams.get('action') === 'rsvp' || (window.location.hash && window.location.hash.includes('rsvp'));
             const initialHash = window.location.hash.replace('#', '');
-            const targetRoute = this.routes[initialHash] ? initialHash : 'dashboard';
+            let targetRoute = this.routes[initialHash] ? initialHash : 'dashboard';
+
+            if (isRsvpAction) {
+                targetRoute = 'equipos';
+            }
+
             this.currentRoute = null; // No bloquear la primera navegación
 
             // Handle browser navigation
@@ -52,9 +59,20 @@
 
             this.init();
 
-            // Auto-cargar la ruta inicial (INICIO) en cuanto el DOM esté disponible
+            // Auto-cargar la ruta inicial en cuanto el DOM esté disponible
             const launchInitialRoute = () => {
                 this.navigate(targetRoute, false, true);
+
+                if (isRsvpAction) {
+                    const checkRsvp = (retries = 0) => {
+                        if (window.TeamController && typeof window.TeamController.checkUrlForRsvp === 'function') {
+                            window.TeamController.checkUrlForRsvp();
+                        } else if (retries < 20) {
+                            setTimeout(() => checkRsvp(retries + 1), 150);
+                        }
+                    };
+                    setTimeout(checkRsvp, 100);
+                }
             };
 
             if (document.readyState === 'loading') {
@@ -113,7 +131,11 @@
 
             // History Management
             if (!isBack) {
-                window.history.pushState({ route }, '', `#${route}`);
+                const search = window.location.search || '';
+                const hasRsvpParam = search.includes('action=rsvp');
+                const targetHash = `#${route}`;
+                const fullUrl = hasRsvpParam ? `${search}${targetHash}` : targetHash;
+                window.history.pushState({ route }, '', fullUrl);
             }
 
             // Global scroll to top on nav

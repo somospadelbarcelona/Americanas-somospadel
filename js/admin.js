@@ -272,6 +272,13 @@ window.loadAdminView = async function (viewName) {
         if (viewName === 'users' && window.AdminViews.users) {
             await window.AdminViews.users();
         }
+        else if (viewName === 'season_campaign') {
+            if (window.AdminViews && window.AdminViews.season_campaign) {
+                await window.AdminViews.season_campaign();
+            } else {
+                throw new Error("Season Campaign Admin Module not loaded");
+            }
+        }
         else if (viewName === 'americanas_mgmt' && window.AdminViews.americanas_mgmt) {
             await window.AdminViews.americanas_mgmt();
         }

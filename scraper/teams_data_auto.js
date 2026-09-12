@@ -283,11 +283,11 @@ window.ExtractedTeamsData = [
       {
         "pos": 4,
         "team": "CRAZYXPADEL 3M GRIS",
-        "pj": 8,
-        "pg": 4,
+        "pj": 9,
+        "pg": 5,
         "pp": 4,
         "df": 0,
-        "pts": 12
+        "pts": 15
       },
       {
         "pos": 5,
@@ -310,9 +310,9 @@ window.ExtractedTeamsData = [
       {
         "pos": 7,
         "team": "XTREM PADEL 3M",
-        "pj": 6,
+        "pj": 7,
         "pg": 2,
-        "pp": 4,
+        "pp": 5,
         "df": 0,
         "pts": 6
       }
@@ -616,20 +616,20 @@ window.ExtractedTeamsData = [
       {
         "pos": 2,
         "team": "CPI B EL CASINO GASTROBAR",
-        "pj": 8,
-        "pg": 7,
+        "pj": 9,
+        "pg": 8,
         "pp": 1,
         "df": 0,
-        "pts": 17
+        "pts": 19
       },
       {
         "pos": 3,
         "team": "LA PALETA INDOOR PÁDEL A",
-        "pj": 8,
+        "pj": 9,
         "pg": 5,
-        "pp": 3,
+        "pp": 4,
         "df": 0,
-        "pts": 14
+        "pts": 15
       },
       {
         "pos": 4,
@@ -652,18 +652,18 @@ window.ExtractedTeamsData = [
       {
         "pos": 6,
         "team": "VILA PADEL INDOOR A",
-        "pj": 8,
-        "pg": 2,
+        "pj": 9,
+        "pg": 3,
         "pp": 6,
         "df": 0,
-        "pts": 11
+        "pts": 13
       },
       {
         "pos": 7,
         "team": "PÁDEL OXIGEN 3M",
-        "pj": 8,
+        "pj": 9,
         "pg": 3,
-        "pp": 5,
+        "pp": 6,
         "df": 0,
         "pts": 9
       },
@@ -692,9 +692,9 @@ window.ExtractedTeamsData = [
     "ranking": 7,
     "points": 5,
     "stats": {
-      "pj": 9,
+      "pj": 10,
       "pg": 1,
-      "pp": 6,
+      "pp": 7,
       "sf": 0,
       "sc": 0
     },
@@ -886,10 +886,10 @@ window.ExtractedTeamsData = [
         "date": "Diss 12 Set",
         "time": "10:00h",
         "opponent": "PAPIOL PADEL CLUB 4M",
-        "score": "En juego",
+        "score": "0 - 3",
         "venue": "Papiol padel club .",
         "isHome": false,
-        "status": "live"
+        "status": "completed"
       },
       {
         "j": 10,
@@ -965,14 +965,23 @@ window.ExtractedTeamsData = [
       {
         "pos": 2,
         "team": "CEM TENNIS HOSPITALET 4M",
-        "pj": 8,
-        "pg": 7,
+        "pj": 7,
+        "pg": 6,
         "pp": 1,
         "df": 0,
-        "pts": 18
+        "pts": 15
       },
       {
         "pos": 3,
+        "team": "PAPIOL PADEL CLUB 4M",
+        "pj": 8,
+        "pg": 3,
+        "pp": 5,
+        "df": 0,
+        "pts": 11
+      },
+      {
+        "pos": 4,
         "team": "PÁDEL OXIGEN 4M",
         "pj": 7,
         "pg": 4,
@@ -981,22 +990,13 @@ window.ExtractedTeamsData = [
         "pts": 9
       },
       {
-        "pos": 4,
+        "pos": 5,
         "team": "CLUB PADEL VALLIRANA 4M",
         "pj": 7,
         "pg": 2,
         "pp": 5,
         "df": 0,
         "pts": 9
-      },
-      {
-        "pos": 5,
-        "team": "PAPIOL PADEL CLUB 4M",
-        "pj": 6,
-        "pg": 2,
-        "pp": 4,
-        "df": 0,
-        "pts": 8
       },
       {
         "pos": 6,
@@ -1010,9 +1010,9 @@ window.ExtractedTeamsData = [
       {
         "pos": 7,
         "team": "SOMOS PÁDEL BCN 4M",
-        "pj": 9,
+        "pj": 10,
         "pg": 1,
-        "pp": 6,
+        "pp": 7,
         "df": 0,
         "pts": 5,
         "isCurrent": true
@@ -2018,9 +2018,9 @@ window.ExtractedTeamsData = [
       {
         "pos": 1,
         "team": "CLUB SPORTS TENNIS Y PADEL CUNIT",
-        "pj": 7,
+        "pj": 8,
         "pg": 6,
-        "pp": 1,
+        "pp": 2,
         "df": 0,
         "pts": 16
       },
@@ -2055,11 +2055,11 @@ window.ExtractedTeamsData = [
       {
         "pos": 5,
         "team": "CT ANDRÉS GIMENO 3X",
-        "pj": 7,
-        "pg": 2,
+        "pj": 8,
+        "pg": 3,
         "pp": 5,
         "df": 0,
-        "pts": 9
+        "pts": 12
       },
       {
         "pos": 6,
@@ -2094,9 +2094,9 @@ window.ExtractedTeamsData = [
     "ranking": 3,
     "points": 14,
     "stats": {
-      "pj": 8,
+      "pj": 9,
       "pg": 5,
-      "pp": 3,
+      "pp": 4,
       "sf": 0,
       "sc": 0
     },
@@ -2276,10 +2276,10 @@ window.ExtractedTeamsData = [
         "date": "Diss 12 Set",
         "time": "16:00h",
         "opponent": "PCP FEMENÍ 4",
-        "score": "Pendiente",
+        "score": "0 - 3",
         "venue": "Padel center penedés",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 10,
@@ -2333,13 +2333,13 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 9,
-      "date": "Diss 12 Set",
-      "time": "16:00h",
-      "opponent": "PCP FEMENÍ 4",
+      "j": 10,
+      "date": "Diss 19 Set",
+      "time": "13:30h",
+      "opponent": "VALKIRIAS CPV",
       "score": "Pendiente",
-      "venue": "Padel center penedés",
-      "isHome": false,
+      "venue": "Padel bcn - el prat",
+      "isHome": true,
       "status": "upcoming"
     },
     "groupStandings": [
@@ -2364,9 +2364,9 @@ window.ExtractedTeamsData = [
       {
         "pos": 3,
         "team": "SOMOS PÁDEL BCN 4FA",
-        "pj": 8,
+        "pj": 9,
         "pg": 5,
-        "pp": 3,
+        "pp": 4,
         "df": 0,
         "pts": 14,
         "isCurrent": true
@@ -2383,11 +2383,11 @@ window.ExtractedTeamsData = [
       {
         "pos": 5,
         "team": "PCP FEMENÍ 4",
-        "pj": 8,
-        "pg": 3,
+        "pj": 9,
+        "pg": 4,
         "pp": 5,
         "df": 0,
-        "pts": 10
+        "pts": 13
       },
       {
         "pos": 6,
@@ -2654,19 +2654,19 @@ window.ExtractedTeamsData = [
     "groupStandings": [
       {
         "pos": 1,
+        "team": "CPR FEMENI",
+        "pj": 9,
+        "pg": 7,
+        "pp": 2,
+        "df": 0,
+        "pts": 22
+      },
+      {
+        "pos": 2,
         "team": "PÁDEL OXIGEN 2FA",
         "pj": 8,
         "pg": 7,
         "pp": 1,
-        "df": 0,
-        "pts": 19
-      },
-      {
-        "pos": 2,
-        "team": "CPR FEMENI",
-        "pj": 8,
-        "pg": 6,
-        "pp": 2,
         "df": 0,
         "pts": 19
       },
@@ -2709,9 +2709,9 @@ window.ExtractedTeamsData = [
       {
         "pos": 7,
         "team": "PADELARIUM - OLD SCHOOL",
-        "pj": 8,
+        "pj": 9,
         "pg": 1,
-        "pp": 7,
+        "pp": 8,
         "df": 0,
         "pts": 6
       },

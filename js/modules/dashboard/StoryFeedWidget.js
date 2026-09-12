@@ -19,20 +19,20 @@
 
             // Static premium order for consistent user experience and low CPU/memory footprint
             this.stories = [
-                { id: 'noticias', label: 'NOTICIAS 📰', icon: 'fa-bullhorn', color: '#00E36D' },
-                { id: 'ranking', label: 'RANKING 🏆', icon: 'fa-trophy', color: '#fb7185' },
-                { id: 'equipos', label: 'EQUIPOS 👥', icon: 'fa-users', color: '#38bdf8' },
-                { id: 'shop', label: 'TIENDA 🛍️', icon: 'fa-shopping-bag', color: '#6366f1' },
-                { id: 'tournaments', label: 'TORNEOS 🏆', icon: 'fa-award', color: '#fb923c' },
-                { id: 'records', label: 'RÉCORDS 📊', icon: 'fa-history', color: '#10b981' }
+                { id: 'noticias', label: 'Noticias 📰', icon: 'fa-bullhorn', color: '#10b981' },
+                { id: 'ranking', label: 'Ranking 🏆', icon: 'fa-trophy', color: '#f43f5e' },
+                { id: 'equipos', label: 'Equipos 👥', icon: 'fa-users', color: '#0ea5e9' },
+                { id: 'shop', label: 'Tienda 🛍️', icon: 'fa-shopping-bag', color: '#8b5cf6' },
+                { id: 'tournaments', label: 'Torneos 🏆', icon: 'fa-award', color: '#f59e0b' },
+                { id: 'records', label: 'Récords 📊', icon: 'fa-history', color: '#0d9488' }
             ];
         }
 
         async loadDynamicStories() {
             // Start with base stories
             const dynamicStories = [
-                { id: 'noticias', label: 'NOTICIAS 📰', icon: 'fa-bullhorn', color: '#00E36D' },
-                { id: 'ranking', label: 'RANKING 🏆', icon: 'fa-trophy', color: '#fb7185' }
+                { id: 'noticias', label: 'Noticias 📰', icon: 'fa-bullhorn', color: '#10b981' },
+                { id: 'ranking', label: 'Ranking 🏆', icon: 'fa-trophy', color: '#f43f5e' }
             ];
 
             // 1. Fetch Active Events dynamically from the database
@@ -43,15 +43,16 @@
                     
                     // Add up to 3 active events as custom story bubbles!
                     openEvents.slice(0, 3).forEach(event => {
-                        let color = '#38bdf8'; // Blue for male/default
-                        const nameLower = event.name.toLowerCase();
-                        if (nameLower.includes('fem') || nameLower.includes('chicas')) color = '#f472b6'; // Pink
-                        else if (nameLower.includes('mix')) color = '#fbbf24'; // Orange/Yellow
-                        else if (event.type === 'entreno') color = '#a3d900'; // Green
+                        let color = '#0ea5e9'; // Blue for male/default
+                        const nameLower = (event.name || '').toLowerCase();
+                        if (nameLower.includes('fem') || nameLower.includes('chicas')) color = '#ec4899'; // Pink
+                        else if (nameLower.includes('mix')) color = '#f59e0b'; // Amber
+                        else if (event.type === 'entreno') color = '#84cc16'; // Lime green
 
                         // Extract a concise single-word label for the Instagram bubble
-                        let label = event.name.split(' ')[0].toUpperCase();
-                        if (label.length > 9) label = label.substring(0, 8) + '…';
+                        let rawPart = (event.name || '').split(' ')[0] || 'Evento';
+                        if (rawPart.length > 9) rawPart = rawPart.substring(0, 8) + '…';
+                        const label = rawPart.charAt(0).toUpperCase() + rawPart.slice(1).toLowerCase();
 
                         dynamicStories.push({
                             id: `event_${event.id}`,
@@ -69,10 +70,10 @@
 
             // 2. Add remaining base stories
             dynamicStories.push(
-                { id: 'equipos', label: 'EQUIPOS 👥', icon: 'fa-users', color: '#38bdf8' },
-                { id: 'shop', label: 'TIENDA 🛍️', icon: 'fa-shopping-bag', color: '#6366f1' },
-                { id: 'tournaments', label: 'TORNEOS 🏆', icon: 'fa-award', color: '#fb923c' },
-                { id: 'records', label: 'RÉCORDS 📊', icon: 'fa-history', color: '#10b981' }
+                { id: 'equipos', label: 'Equipos 👥', icon: 'fa-users', color: '#0ea5e9' },
+                { id: 'shop', label: 'Tienda 🛍️', icon: 'fa-shopping-bag', color: '#8b5cf6' },
+                { id: 'tournaments', label: 'Torneos 🏆', icon: 'fa-award', color: '#f59e0b' },
+                { id: 'records', label: 'Récords 📊', icon: 'fa-history', color: '#0d9488' }
             );
 
             this.stories = dynamicStories;
@@ -97,7 +98,7 @@
                 /* Story Bar Layout with Premium Fade Edge Indication */
                 .story-feed-v3-wrapper {
                     position: relative;
-                    padding: 0;
+                    padding: 2px 0 0;
                     user-select: none;
                     width: 100%;
                     overflow: visible;
@@ -109,8 +110,8 @@
                     top: 0;
                     right: 0;
                     height: calc(100% - 10px);
-                    width: 40px;
-                    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.98));
+                    width: 36px;
+                    background: linear-gradient(to right, transparent, var(--bg-app, #f8fafc));
                     pointer-events: none;
                     z-index: 10;
                 }
@@ -119,9 +120,9 @@
                     display: flex !important;
                     flex-direction: row !important;
                     justify-content: flex-start;
-                    align-items: center;
-                    gap: 12px;
-                    padding: 6px 16px 10px;
+                    align-items: flex-start;
+                    gap: 14px;
+                    padding: 6px 16px 8px;
                     overflow-x: auto !important;
                     overflow-y: visible !important;
                     scrollbar-width: none;
@@ -135,8 +136,8 @@
                 
                 @media (max-width: 600px) {
                     .story-h-scroll {
-                        gap: 8px;
-                        padding: 4px 12px 8px;
+                        gap: 10px;
+                        padding: 4px 14px 6px;
                     }
                 }
                 
@@ -156,87 +157,82 @@
                     align-items: center;
                     gap: 5px;
                     cursor: pointer;
-                    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
                     scroll-snap-align: start;
                     flex-shrink: 0 !important;
-                    min-width: 66px !important;
+                    min-width: 64px !important;
+                    -webkit-tap-highlight-color: transparent;
                 }
                 @media (max-width: 600px) {
                     .story-v3-item {
-                        min-width: 58px !important;
-                        gap: 3px;
+                        min-width: 56px !important;
+                        gap: 4px;
                     }
                 }
                 
                 .story-v3-item:hover { 
-                    transform: translateY(-2px) scale(1.03); 
+                    transform: translateY(-2px); 
+                }
+                .story-v3-item:active {
+                    transform: scale(0.93);
                 }
 
                 @keyframes pulseDot {
-                    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 45, 85, 0.8); }
-                    70% { transform: scale(1.2); box-shadow: 0 0 0 6px rgba(255, 45, 85, 0); }
-                    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 45, 85, 0); }
+                    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+                    70% { transform: scale(1.15); box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+                    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
                 }
 
-                /* Sphere 3D Outer & Inner Glow Engine */
+                /* Modern Story Ring (Instagram / App Stories Style) */
                 .story-v3-outer {
-                    width: 54px;
-                    height: 54px;
+                    width: 58px;
+                    height: 58px;
                     border-radius: 50%;
                     padding: 2.5px;
                     position: relative;
-                    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
+                    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+                    box-sizing: border-box;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                 }
                 @media (max-width: 600px) {
                     .story-v3-outer {
-                        width: 48px;
-                        height: 48px;
+                        width: 50px;
+                        height: 50px;
                         padding: 2px;
                     }
                 }
                 
-                /* Interactive ambient glow */
                 .story-v3-item:hover .story-v3-outer {
-                    transform: rotate(15deg);
+                    transform: scale(1.05);
+                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
                 }
                 
+                /* Crisp White Separation + Luminous Light Core */
                 .story-v3-inner {
                     width: 100%;
                     height: 100%;
                     border-radius: 50%;
-                    background: radial-gradient(circle at 35% 35%, #232d3f 0%, #0f172a 75%, #020617 100%);
+                    background: #ffffff;
+                    border: 2px solid #ffffff;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    border: 1px solid rgba(255,255,255,0.06);
                     overflow: hidden;
                     position: relative;
-                    box-shadow: inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -2px 4px rgba(0,0,0,0.6);
-                }
-                
-                /* Specular Glare Layer for 3D realism */
-                .story-v3-inner::after {
-                    content: '';
-                    position: absolute;
-                    top: 5%;
-                    left: 15%;
-                    width: 40%;
-                    height: 25%;
-                    border-radius: 50%;
-                    background: linear-gradient(to bottom, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 100%);
-                    filter: blur(0.5px);
-                    transform: rotate(-15deg);
-                    pointer-events: none;
+                    box-sizing: border-box;
+                    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
                 }
                 
                 .story-v3-inner i {
-                    font-size: 1.15rem;
-                    transition: all 0.25s ease;
+                    font-size: 1.25rem;
+                    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
                 }
                 @media (max-width: 600px) {
                     .story-v3-inner i {
-                        font-size: 1rem;
+                        font-size: 1.1rem;
                     }
                 }
                 
@@ -244,17 +240,17 @@
                     transform: scale(1.15);
                 }
                 
-                /* Precise Typography styling */
+                /* Refined Typography */
                 .story-v3-label {
-                    font-size: 0.6rem;
-                    font-weight: 900; 
-                    color: #0f172a !important; 
-                    letter-spacing: 0.3px;
-                    text-transform: uppercase;
+                    font-size: 0.68rem;
+                    font-weight: 700; 
+                    color: #475569 !important; 
+                    letter-spacing: -0.1px;
                     white-space: nowrap;
-                    margin-top: 4px;
+                    margin-top: 2px;
                     text-align: center;
-                    font-family: 'Outfit', sans-serif;
+                    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    transition: color 0.2s ease;
                     
                     /* Sharp anti-aliasing */
                     transform: translateZ(0); 
@@ -265,20 +261,25 @@
                 }
                 @media (max-width: 600px) {
                     .story-v3-label {
-                        font-size: 0.55rem;
-                        margin-top: 3px;
+                        font-size: 0.62rem;
+                        margin-top: 1px;
                     }
+                }
+                .story-v3-item:hover .story-v3-label {
+                    color: #0f172a !important;
                 }
 
                 /* Stories Fullscreen Modal */
                 .story-v3-modal {
                     position: fixed;
                     inset: 0;
-                    background: #000;
+                    background: radial-gradient(circle at 50% 15%, #1e293b 0%, #0f172a 60%, #020617 100%);
                     z-index: 9999999;
                     display: none;
                     flex-direction: column;
-                    overflow: hidden;
+                    overflow-x: hidden;
+                    overflow-y: auto;
+                    -webkit-overflow-scrolling: touch;
                     animation: storyEnter 0.35s both cubic-bezier(0.19, 1, 0.22, 1);
                 }
                 @keyframes storyEnter {
@@ -333,43 +334,50 @@
                     <div class="story-h-scroll">
                         <!-- STORY ITEMS -->
                         ${this.stories.map(story => {
-                            let baseColor = story.color || '#38bdf8';
-                            let ringBg = `linear-gradient(135deg, ${baseColor} 0%, rgba(15,23,42,0.8) 100%)`;
-                            let outerShadow = `0 4px 12px rgba(15,23,42,0.15), 0 0 10px ${baseColor}25`;
+                            let baseColor = story.color || '#0ea5e9';
+                            let ringBg = `linear-gradient(135deg, ${baseColor} 0%, #334155 100%)`;
+                            let innerBg = `radial-gradient(circle at 50% 35%, #ffffff 40%, ${baseColor}15 100%)`;
 
                             if (story.id === 'noticias') {
-                                ringBg = 'linear-gradient(135deg, #00E36D 0%, #00b050 100%)';
-                                outerShadow = '0 4px 15px rgba(0,227,109,0.2), 0 0 15px rgba(0,227,109,0.45)';
-                            } else if (story.id === 'ranking') {
-                                ringBg = 'linear-gradient(135deg, #fb7185 0%, #e11d48 100%)';
-                                outerShadow = '0 4px 15px rgba(251,113,133,0.2), 0 0 15px rgba(251,113,133,0.45)';
-                            } else if (story.id === 'equipos') {
-                                ringBg = 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)';
-                                outerShadow = '0 4px 15px rgba(56,189,248,0.2), 0 0 15px rgba(56,189,248,0.45)';
-                            } else if (story.id === 'shop') {
-                                ringBg = 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)';
-                                outerShadow = '0 4px 15px rgba(99,102,241,0.2), 0 0 15px rgba(99,102,241,0.45)';
-                            } else if (story.id === 'tournaments') {
-                                ringBg = 'linear-gradient(135deg, #fb923c 0%, #ea580c 100%)';
-                                outerShadow = '0 4px 15px rgba(251,146,60,0.2), 0 0 15px rgba(251,146,60,0.45)';
-                            } else if (story.id === 'records') {
+                                baseColor = '#10b981';
                                 ringBg = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-                                outerShadow = '0 4px 15px rgba(16,185,129,0.2), 0 0 15px rgba(16,185,129,0.45)';
+                                innerBg = 'radial-gradient(circle at 50% 35%, #ffffff 35%, rgba(16, 185, 129, 0.12) 100%)';
+                            } else if (story.id === 'ranking') {
+                                baseColor = '#f43f5e';
+                                ringBg = 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)';
+                                innerBg = 'radial-gradient(circle at 50% 35%, #ffffff 35%, rgba(244, 63, 94, 0.12) 100%)';
+                            } else if (story.id === 'equipos') {
+                                baseColor = '#0ea5e9';
+                                ringBg = 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)';
+                                innerBg = 'radial-gradient(circle at 50% 35%, #ffffff 35%, rgba(14, 165, 233, 0.12) 100%)';
+                            } else if (story.id === 'shop') {
+                                baseColor = '#8b5cf6';
+                                ringBg = 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)';
+                                innerBg = 'radial-gradient(circle at 50% 35%, #ffffff 35%, rgba(139, 92, 246, 0.12) 100%)';
+                            } else if (story.id === 'tournaments') {
+                                baseColor = '#f59e0b';
+                                ringBg = 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)';
+                                innerBg = 'radial-gradient(circle at 50% 35%, #ffffff 35%, rgba(245, 158, 11, 0.12) 100%)';
+                            } else if (story.id === 'records') {
+                                baseColor = '#0d9488';
+                                ringBg = 'linear-gradient(135deg, #14b8a6 0%, #0f766e 100%)';
+                                innerBg = 'radial-gradient(circle at 50% 35%, #ffffff 35%, rgba(13, 148, 136, 0.12) 100%)';
                             } else if (story.isEvent) {
-                                ringBg = `linear-gradient(135deg, ${baseColor} 0%, rgba(15,23,42,0.8) 100%)`;
-                                outerShadow = `0 4px 15px rgba(15,23,42,0.15), 0 0 12px ${baseColor}35`;
+                                ringBg = `linear-gradient(135deg, ${baseColor} 0%, #475569 100%)`;
+                                innerBg = `radial-gradient(circle at 50% 35%, #ffffff 35%, ${baseColor}15 100%)`;
                             }
 
-                            // Dynamic label display (Concise text only)
-                            const displayLabel = story.label.split(' ')[0];
+                            // Dynamic label display (Formatted with clean Capitalization)
+                            const rawLabel = (story.label || '').split(' ')[0] || '';
+                            const displayLabel = rawLabel ? (rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1).toLowerCase()) : '';
 
                             return `
-                                <div class="story-v3-item" onclick="window.StoryFeedWidget.showStory('${story.id}')">
-                                    <div class="story-v3-outer" style="background: ${ringBg}; box-shadow: ${outerShadow};">
-                                        <div class="story-v3-inner">
-                                            <i class="fas ${story.icon}" style="color: ${baseColor}; filter: drop-shadow(0 0 4px ${baseColor}80);"></i>
+                                <div class="story-v3-item" onclick="window.StoryFeedWidget.showStory('${story.id}')" title="${displayLabel}">
+                                    <div class="story-v3-outer" style="background: ${ringBg};">
+                                        <div class="story-v3-inner" style="background: ${innerBg};">
+                                            <i class="fas ${story.icon}" style="color: ${baseColor};"></i>
                                         </div>
-                                        ${story.id === 'noticias' ? `<div style="position: absolute; top: -2px; right: -2px; width: 11px; height: 11px; background: #FF2D55; border-radius: 50%; border: 2.2px solid #0f172a; animation: pulseDot 1.4s infinite;"></div>` : ''}
+                                        ${story.id === 'noticias' ? `<div style="position: absolute; top: 0px; right: 0px; width: 12px; height: 12px; background: #ef4444; border-radius: 50%; border: 2.2px solid #ffffff; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.45); animation: pulseDot 1.6s infinite;"></div>` : ''}
                                     </div>
                                     <span class="story-v3-label">${displayLabel}</span>
                                 </div>
@@ -419,6 +427,36 @@
             const allPlayers = playersData;
             const topRanked = rankedData.length > 0 ? rankedData : allPlayers.sort((a, b) => (b.points || 0) - (a.points || 0));
 
+            // Fetch dynamic blog news for the News story
+            let latestNews = null;
+            try {
+                if (window.DashboardView && window.DashboardView.cachedBlogPosts && window.DashboardView.cachedBlogPosts.length > 0) {
+                    latestNews = window.DashboardView.cachedBlogPosts[0];
+                } else if (window.db) {
+                    const newsSnap = await window.db.collection('blog_posts').orderBy('timestamp', 'desc').limit(1).get();
+                    if (!newsSnap.empty) {
+                        latestNews = { id: newsSnap.docs[0].id, ...newsSnap.docs[0].data() };
+                    }
+                }
+            } catch (err) {
+                console.warn("Story news fetch:", err);
+            }
+            if (!latestNews && window.SomosPadelNewsEngine) {
+                const fPosts = window.SomosPadelNewsEngine.getDeterministicFallbackPosts();
+                if (fPosts && fPosts.length > 0) latestNews = fPosts[0];
+            }
+            if (!latestNews) {
+                latestNews = {
+                    id: 'torneo-primavera',
+                    title: 'Gran Torneo de Primavera 2026',
+                    category: '🏆 TORNEOS',
+                    snippet: '¡Inscripciones abiertas! 120 plazas, Welcome Pack premium y barbacoa final.',
+                    content: 'Llega el evento más esperado del año en SomosPadel.',
+                    date: 'Hoy',
+                    readTime: '2 min'
+                };
+            }
+
             // CONTENT INJECTION
             if (id.startsWith('event_')) {
                 const event = story.eventData;
@@ -427,56 +465,59 @@
                     const maxPlazas = (event.max_courts || 0) * 4;
                     const percent = maxPlazas > 0 ? Math.min(100, Math.round((regCount / maxPlazas) * 100)) : 0;
                     
-                    let catColor = '#00E36D';
-                    const lowerName = event.name.toLowerCase();
-                    if (lowerName.includes('fem') || lowerName.includes('chicas')) catColor = '#FF2D55';
-                    else if (lowerName.includes('mix')) catColor = '#FFD700';
-                    else if (lowerName.includes('masc') || lowerName.includes('chicos')) catColor = '#00C4FF';
+                    let catColor = '#10b981';
+                    const lowerName = (event.name || '').toLowerCase();
+                    if (lowerName.includes('fem') || lowerName.includes('chicas')) catColor = '#ec4899';
+                    else if (lowerName.includes('mix')) catColor = '#f59e0b';
+                    else if (lowerName.includes('masc') || lowerName.includes('chicos')) catColor = '#0ea5e9';
 
-                    const playersHtml = (event.players || event.registeredPlayers || []).slice(0, 8).map(p => `
-                        <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between;">
-                            <span style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase;">${p.name || 'Jugador'}</span>
-                            <span style="font-size: 0.7rem; color: #fbbf24; font-weight: 800;">${p.level ? `NIVEL ${p.level}` : 'READY'}</span>
+                    const playersHtml = (event.players || event.registeredPlayers || []).slice(0, 8).map((p, idx) => `
+                        <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 9px 12px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 0.72rem; color: rgba(255,255,255,0.45); font-weight: 800;">#${idx + 1}</span>
+                                <span style="font-weight: 800; font-size: 0.82rem; color: white;">${p.name || 'Jugador'}</span>
+                            </div>
+                            <span style="font-size: 0.65rem; color: #fbbf24; font-weight: 900; background: rgba(251,191,36,0.15); padding: 2px 7px; border-radius: 6px;">${p.level ? `NIVEL ${p.level}` : 'READY'}</span>
                         </div>
                     `).join('');
 
                     contentHtml = `
-                        <div style="color: white; width: 100%; display: flex; flex-direction: column;">
-                            <div style="text-align: center; margin-bottom: 20px; animation: fadeIn 0.4s ease-out;">
-                                <span style="background: ${catColor}; color: #000; padding: 4px 14px; border-radius: 50px; font-weight: 950; font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 0 15px ${catColor}50;">${event.type === 'entreno' ? 'ENTRENAMIENTO' : 'AMERICANAS'}</span>
-                                <h2 style="font-size: 2.2rem; font-weight: 1000; margin: 12px 0 5px; font-family: 'Outfit', sans-serif; line-height: 1.1; text-transform: uppercase;">${event.name}</h2>
-                                <p style="color: rgba(255,255,255,0.4); font-size: 0.75rem; margin: 0; font-weight: 700; text-transform: uppercase;">${event.date} • ${event.time || '18:00'}</p>
+                        <div style="color: white; width: 100%; max-width: 420px; display: flex; flex-direction: column; animation: fadeIn 0.35s ease-out;">
+                            <div style="text-align: center; margin-bottom: 18px;">
+                                <span style="background: ${catColor}; color: #000; padding: 4px 14px; border-radius: 50px; font-weight: 950; font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase;">${event.type === 'entreno' ? 'ENTRENAMIENTO' : 'AMERICANAS'}</span>
+                                <h2 style="font-size: 1.9rem; font-weight: 950; margin: 10px 0 4px; font-family: 'Outfit', sans-serif; line-height: 1.15;">${event.name}</h2>
+                                <p style="color: rgba(255,255,255,0.55); font-size: 0.78rem; margin: 0; font-weight: 700;">${event.date} • ${event.time || '18:00'}</p>
                             </div>
 
-                            <div style="display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px;">
+                            <div style="display: flex; flex-direction: column; gap: 12px; padding-bottom: 25px;">
                                 <!-- CAPACITY PROGRESS -->
-                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 18px;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                        <span style="font-size: 0.75rem; font-weight: 900; color: rgba(255,255,255,0.6);">PLAZAS OCUPADAS</span>
-                                        <span style="font-size: 0.95rem; font-weight: 1000; color: ${catColor};">${regCount} / ${maxPlazas}</span>
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 14px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <span style="font-size: 0.72rem; font-weight: 800; color: rgba(255,255,255,0.7);">PLAZAS OCUPADAS</span>
+                                        <span style="font-size: 0.92rem; font-weight: 950; color: ${catColor};">${regCount} / ${maxPlazas}</span>
                                     </div>
-                                    <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
-                                        <div style="width: ${percent}%; height: 100%; background: ${catColor}; border-radius: 10px; box-shadow: 0 0 10px ${catColor};"></div>
+                                    <div style="width: 100%; height: 7px; background: rgba(255,255,255,0.12); border-radius: 10px; overflow: hidden;">
+                                        <div style="width: ${percent}%; height: 100%; background: ${catColor}; border-radius: 10px;"></div>
                                     </div>
                                 </div>
 
                                 <!-- REGISTERED PLAYERS LIST -->
                                 ${regCount > 0 ? `
-                                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <h4 style="margin: 0 0 4px; font-size: 0.85rem; font-weight: 900; color: rgba(255,255,255,0.5); text-transform: uppercase;">JUGADORES INSCRITOS</h4>
-                                        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;">
+                                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <h4 style="margin: 0 0 2px; font-size: 0.75rem; font-weight: 900; color: rgba(255,255,255,0.5); text-transform: uppercase;">JUGADORES INSCRITOS</h4>
+                                        <div style="display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto;">
                                             ${playersHtml}
                                         </div>
                                     </div>
                                 ` : `
-                                    <div style="text-align: center; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
-                                        <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.4); font-weight: 700;">¡Inaugura la lista! Sé el primero en inscribirse.</p>
+                                    <div style="text-align: center; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px dashed rgba(255,255,255,0.15);">
+                                        <p style="margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.6); font-weight: 700;">¡Inaugura la lista! Sé el primero en inscribirte.</p>
                                     </div>
                                 `}
 
                                 <!-- ACTION BUTTON -->
-                                <button onclick="event.stopPropagation(); window.dashNavigate('entrenos', 'event_story')" style="width: 100%; background: ${catColor}; color: #000; border: none; padding: 14px; border-radius: 15px; font-size: 0.85rem; font-weight: 1000; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 5px 15px ${catColor}40; margin-top: 10px;">
-                                    ${event.status === 'live' ? 'VER PISTAS EN VIVO' : 'RESERVAR PLAZA AHORA'}
+                                <button onclick="event.stopPropagation(); window.dashNavigate('entrenos', 'event_story')" style="width: 100%; background: ${catColor}; color: #000; border: none; padding: 13px; border-radius: 14px; font-size: 0.82rem; font-weight: 950; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 14px ${catColor}50; margin-top: 4px;">
+                                    ${event.status === 'live' ? 'VER PISTAS EN VIVO' : 'RESERVAR MI PLAZA AHORA'}
                                 </button>
                             </div>
                         </div>
@@ -485,154 +526,300 @@
                     contentHtml = `<div style="padding:40px; color:white; text-align:center;"><h2 style="font-weight:950; font-size:2rem;">EVENTO</h2><p style="opacity:0.6; margin-top:20px;">Detalles no disponibles.</p></div>`;
                 }
             } else switch (id) {
-                case 'noticias':
+                case 'noticias': {
+                    const newsCat = (latestNews.category || 'NOTICIAS').toUpperCase();
+                    const newsDate = latestNews.date || 'Hoy';
+                    const newsRead = latestNews.readTime || '2 min';
                     contentHtml = `
-                        <div style="color: white; width: 100%; display: flex; flex-direction: column;">
-                            <div style="text-align: center; margin-bottom: 25px; animation: fadeIn 0.4s ease-out;">
-                                <span style="background: #00E36D; color: #000; padding: 4px 14px; border-radius: 50px; font-weight: 950; font-size: 0.65rem; letter-spacing: 1px; box-shadow: 0 0 15px rgba(0,227,109,0.3);">BOLETÍN OFICIAL</span>
-                                <h2 style="font-size: 2.2rem; font-weight: 1000; margin: 12px 0 5px; font-family: 'Outfit', sans-serif;">SOMOSPADEL <span style="color: #00E36D;">BCN</span></h2>
-                                <p style="color: rgba(255,255,255,0.4); font-size: 0.75rem; margin: 0; font-weight: 700; text-transform: uppercase;">Últimas novedades y accesos rápidos</p>
+                        <div style="color: white; width: 100%; max-width: 420px; display: flex; flex-direction: column; animation: fadeIn 0.35s ease-out;">
+                            <div style="text-align: center; margin-bottom: 16px;">
+                                <span style="background: rgba(16,185,129,0.18); color: #10b981; border: 1px solid rgba(16,185,129,0.35); padding: 4px 14px; border-radius: 50px; font-weight: 950; font-size: 0.65rem; letter-spacing: 0.8px; text-transform: uppercase;">SOMOSPADEL JOURNAL</span>
+                                <h2 style="font-size: 1.8rem; font-weight: 950; margin: 8px 0 4px; font-family: 'Outfit', sans-serif;">ÚLTIMA <span style="color: #10b981;">NOTICIA</span></h2>
+                                <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; margin: 0; font-weight: 600;">${newsDate} • ${newsRead} de lectura</p>
                             </div>
 
-                            <div style="display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px;">
-                                <!-- 1. DESTACADO (ENTRENOS EN GRUPO) -->
-                                <div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1.5px solid #6366f1; border-radius: 20px; padding: 18px; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(99,102,241,0.25);">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                        <span style="font-size: 0.55rem; font-weight: 950; color: #818cf8; background: rgba(99,102,241,0.2); padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">🎾 ENTRENOS</span>
-                                        <i class="fas fa-graduation-cap" style="color: #818cf8;"></i>
+                            <div style="display: flex; flex-direction: column; gap: 12px; padding-bottom: 20px;">
+                                <!-- HERO ARTICLE CARD -->
+                                <div style="background: linear-gradient(145deg, rgba(15,23,42,0.85) 0%, rgba(30,41,59,0.7) 100%); border: 1px solid rgba(16,185,129,0.3); border-radius: 18px; padding: 18px; box-shadow: 0 10px 25px rgba(0,0,0,0.35); position: relative; overflow: hidden;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                        <span style="font-size: 0.6rem; font-weight: 950; color: #10b981; background: rgba(16,185,129,0.15); padding: 3px 9px; border-radius: 6px; text-transform: uppercase;">${newsCat}</span>
+                                        <i class="fas fa-newspaper" style="color: #10b981; font-size: 0.9rem;"></i>
                                     </div>
-                                    <h4 style="margin: 0 0 6px; font-size: 1.05rem; font-weight: 900; color: white;">ENTRENAMIENTOS DE GRUPO</h4>
-                                    <p style="margin: 0 0 14px; font-size: 0.72rem; color: rgba(255,255,255,0.6); line-height: 1.3;">Apúntate hoy a nuestros entrenamientos de grupo y pozos por niveles para perfeccionar tu técnica.</p>
-                                    <button onclick="event.stopPropagation(); window.dashNavigate('entrenos', 'noticias_story')" style="width: 100%; background: #6366f1; color: white; border: none; padding: 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s;">VER ENTRENOS</button>
+                                    <h3 style="margin: 0 0 10px; font-size: 1.2rem; font-weight: 900; color: white; font-family: 'Outfit', sans-serif; line-height: 1.3;">${latestNews.title}</h3>
+                                    <p style="margin: 0 0 16px; font-size: 0.78rem; color: rgba(255,255,255,0.7); line-height: 1.45;">${latestNews.snippet || latestNews.content?.substring(0, 150) + '...'}</p>
+                                    
+                                    <button onclick="event.stopPropagation(); window.StoryFeedWidget.hideStory(); if (window.DashboardView && typeof window.DashboardView.openBlogModal === 'function') { window.DashboardView.openBlogModal('${latestNews.id}'); } else { window.dashNavigate('dashboard', 'news_story'); }" style="width: 100%; background: #10b981; color: white; border: none; padding: 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s; box-shadow: 0 4px 12px rgba(16,185,129,0.35);">LEER ARTÍCULO COMPLETO</button>
                                 </div>
 
-                                <!-- 2. TIENDA VIP (MIGRATION TO INTEGRATED SHOP) -->
-                                <div style="background: linear-gradient(135deg, #172554 0%, #0f172a 100%); border: 1.5px solid #3b82f6; border-radius: 20px; padding: 18px; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(59,130,246,0.25);">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                        <span style="font-size: 0.55rem; font-weight: 950; color: #60a5fa; background: rgba(59,130,246,0.2); padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">🛍️ TIENDA VIP</span>
-                                        <i class="fas fa-shopping-bag" style="color: #60a5fa;"></i>
+                                <!-- SECONDARY QUICK LINKS -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <div onclick="event.stopPropagation(); window.dashNavigate('entrenos', 'news_story')" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 12px; cursor: pointer; text-align: center;">
+                                        <i class="fas fa-graduation-cap" style="color: #818cf8; font-size: 1.1rem; margin-bottom: 4px; display: block;"></i>
+                                        <span style="font-size: 0.72rem; font-weight: 800; color: white; display: block;">Entrenamientos</span>
+                                        <span style="font-size: 0.6rem; color: rgba(255,255,255,0.45);">Pozos y clases</span>
                                     </div>
-                                    <h4 style="margin: 0 0 6px; font-size: 1.05rem; font-weight: 900; color: white;">Tienda Oficial (En Breve)</h4>
-                                    <p style="margin: 0 0 14px; font-size: 0.72rem; color: rgba(255,255,255,0.6); line-height: 1.3;">Muy pronto estará disponible la tienda online oficial integrada directamente en esta app.</p>
-                                    <button onclick="event.stopPropagation(); window.StoryFeedWidget.showStory('shop')" style="width: 100%; background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s;">VER DETALLES</button>
-                                </div>
-
-                                <!-- 3. PERFIL Y STATS -->
-                                <div style="background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); border: 1.5px solid #10b981; border-radius: 20px; padding: 18px; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(16,185,129,0.25);">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                        <span style="font-size: 0.55rem; font-weight: 950; color: #34d399; background: rgba(16,185,129,0.2); padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">📊 MI EVOLUCIÓN</span>
-                                        <i class="fas fa-chart-line" style="color: #34d399;"></i>
+                                    <div onclick="event.stopPropagation(); window.dashNavigate('ranking', 'news_story')" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 12px; cursor: pointer; text-align: center;">
+                                        <i class="fas fa-trophy" style="color: #fb7185; font-size: 1.1rem; margin-bottom: 4px; display: block;"></i>
+                                        <span style="font-size: 0.72rem; font-weight: 800; color: white; display: block;">Clasificación</span>
+                                        <span style="font-size: 0.6rem; color: rgba(255,255,255,0.45);">Top jugadores</span>
                                     </div>
-                                    <h4 style="margin: 0 0 6px; font-size: 1.05rem; font-weight: 900; color: white;">Progreso y Nivel Power</h4>
-                                    <p style="margin: 0 0 14px; font-size: 0.72rem; color: rgba(255,255,255,0.6); line-height: 1.3;">Visualiza tu evolución de nivel, ELO y últimas estadísticas competitivas.</p>
-                                    <button onclick="event.stopPropagation(); window.dashNavigate('profile', 'noticias_story')" style="width: 100%; background: #10b981; color: white; border: none; padding: 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s;">VER MIS ESTADÍSTICAS</button>
-                                </div>
-
-                                <!-- 4. SMART TIP -->
-                                <div style="background: rgba(255, 255, 255, 0.03); border: 1px dashed rgba(255,255,255,0.15); border-radius: 20px; padding: 18px;">
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                                        <i class="fas fa-lightbulb" style="color: #fbbf24; font-size: 1.1rem;"></i>
-                                        <h4 style="margin: 0; font-size: 0.9rem; font-weight: 900; color: white; text-transform: uppercase; letter-spacing: 0.5px;">💡 SMART TIP</h4>
-                                    </div>
-                                    <p style="margin: 0; font-size: 0.72rem; color: rgba(255,255,255,0.5); line-height: 1.4;">
-                                        Desliza hacia abajo para cerrar esta pantalla de historias en cualquier momento o pulsa en los lados izquierdo/derecho para cambiar de canal.
-                                    </p>
                                 </div>
                             </div>
                         </div>
                     `;
                     break;
-                case 'ranking':
-                    this.currentRankingData = topRanked; // Store for search
+                }
+                case 'ranking': {
+                    this.currentRankingData = topRanked;
                     const top3 = topRanked.slice(0, 3);
+                    const medals = ['🥇', '🥈', '🥉'];
+                    const medalBorders = ['#eab308', '#94a3b8', '#b45309'];
+                    const medalBgs = ['rgba(234,179,8,0.12)', 'rgba(148,163,184,0.1)', 'rgba(180,83,9,0.1)'];
+
                     contentHtml = `
-                        <div style="color: white; width: 100%; display: flex; flex-direction: column;">
-                            <div id="ranking-default-view">
-                                <span style="background:#fb7185; color:#000; padding:4px 12px; border-radius:50px; font-weight:950; font-size:0.6rem;">RANKING ACTUALIZADO</span>
-                                <h2 style="font-size: 2.2rem; font-weight: 950; margin: 15px 0;">LOS REYES<br>DE <span style="color:#fb7185">LA PISTA</span></h2>
+                        <div style="color: white; width: 100%; max-width: 420px; display: flex; flex-direction: column; animation: fadeIn 0.35s ease-out;">
+                            <div id="ranking-default-view" style="text-align: center; margin-bottom: 14px;">
+                                <span style="background: rgba(244,63,94,0.18); color: #f43f5e; border: 1px solid rgba(244,63,94,0.35); padding: 4px 14px; border-radius: 50px; font-weight: 950; font-size: 0.65rem; letter-spacing: 0.8px;">RANKING OFICIAL</span>
+                                <h2 style="font-size: 1.8rem; font-weight: 950; margin: 8px 0 4px; font-family: 'Outfit', sans-serif;">PODIO DE LA <span style="color: #f43f5e;">PISTA</span></h2>
+                                <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; margin: 0; font-weight: 600;">Líderes de la temporada en puntos</p>
                             </div>
 
                             <!-- SEARCH BAR -->
-                            <div style="margin-bottom:20px; position:relative; z-index:1005;">
-                                <div style="position:relative;">
-                                    <i class="fas fa-search" style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.4);"></i>
+                            <div style="margin-bottom: 12px; position: relative; z-index: 1005;">
+                                <div style="position: relative;">
+                                    <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.4); font-size: 0.85rem;"></i>
                                     <input type="text" placeholder="Buscar jugador..." 
                                         onclick="event.stopPropagation()"
                                         onkeyup="window.StoryFeedWidget.onRankingSearch(this.value)"
                                         onfocus="window.StoryFeedWidget.pauseStory()"
-                                        style="width:100%; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); padding:12px 12px 12px 45px; border-radius:15px; color:white; font-weight:700; outline:none; font-family:inherit; font-size: 0.9rem;">
+                                        style="width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); padding: 10px 12px 10px 38px; border-radius: 12px; color: white; font-weight: 700; outline: none; font-family: inherit; font-size: 0.82rem; box-sizing: border-box;">
                                 </div>
                             </div>
 
-                            <div id="ranking-content-area" style="overflow-y:auto; flex:1; padding-bottom:50px; -ms-overflow-style: none; scrollbar-width: none;">
-                                <!-- DEFAULT TOP 3 -->
-                                <div id="ranking-top-list" style="display:flex; flex-direction:column; gap:12px;">
+                            <div id="ranking-content-area" style="overflow-y: auto; flex: 1; padding-bottom: 15px;">
+                                <!-- TOP 3 PODIUM CARDS -->
+                                <div id="ranking-top-list" style="display: flex; flex-direction: column; gap: 8px;">
                                     ${top3.length > 0 ? top3.map((p, i) => `
-                                        <div style="display:flex; align-items:center; gap:15px; background:rgba(251,113,133,0.1); padding:15px; border-radius:18px; border:1px solid rgba(251,113,133,0.2); animation: enterStoryCard 0.5s both ${i * 0.1}s;">
-                                            <div style="font-size:1.5rem; font-weight:900; color:#fb7185; min-width: 40px;">#${i + 1}</div>
-                                            <div style="flex:1; font-weight:800; font-size:1rem; text-transform:uppercase;">${p.name || 'Pro Player'}</div>
-                                            <div style="font-weight:900; color:#fb7185;">${Math.round((p.stats?.americanas?.points || 0) + (p.stats?.entrenos?.points || 0))} PTS</div>
+                                        <div style="display: flex; align-items: center; gap: 12px; background: ${medalBgs[i] || 'rgba(255,255,255,0.05)'}; padding: 12px 15px; border-radius: 14px; border: 1px solid ${medalBorders[i] || 'rgba(255,255,255,0.1)'}; animation: enterStoryCard 0.4s both ${i * 0.08}s;">
+                                            <div style="font-size: 1.3rem; min-width: 28px; text-align: center;">${medals[i] || `#${i+1}`}</div>
+                                            <div style="flex: 1; min-width: 0;">
+                                                <div style="font-weight: 850; font-size: 0.9rem; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: white;">${p.name || 'Pro Player'}</div>
+                                                <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5); font-weight: 700;">Nivel ${p.level || '3.5'} • Temporada 2026</div>
+                                            </div>
+                                            <div style="font-weight: 950; color: #f43f5e; font-size: 0.95rem; font-family: 'Outfit', sans-serif;">${Math.round((p.stats?.americanas?.points || 0) + (p.stats?.entrenos?.points || 0) || (p.points || 0))} PTS</div>
                                         </div>
-                                    `).join('') : '<p style="color:rgba(255,255,255,0.4); text-align:center;">Analizando métricas del club...</p>'}
+                                    `).join('') : '<p style="color:rgba(255,255,255,0.4); text-align:center; padding: 20px;">Calculando clasificación en vivo...</p>'}
                                 </div>
-                                <!-- SEARCH RESULTS (Hidden by default) -->
-                                <div id="ranking-search-results" style="display:none; flex-direction:column; gap:10px;"></div>
+                                <!-- SEARCH RESULTS -->
+                                <div id="ranking-search-results" style="display: none; flex-direction: column; gap: 8px;"></div>
                             </div>
+
+                            <button onclick="event.stopPropagation(); window.dashNavigate('ranking', 'ranking_story');" style="width: 100%; background: #f43f5e; color: white; border: none; padding: 13px; border-radius: 14px; font-size: 0.82rem; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 14px rgba(244,63,94,0.35); margin-top: 6px;">VER CLASIFICACIÓN COMPLETA</button>
                         </div>
                     `;
                     break;
+                }
                 case 'shop':
                     contentHtml = `
-                        <div style="padding: 40px; text-align:center; color: white; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
-                            <div style="width:100px; height:100px; background:#6366f1; border-radius:30px; display:flex; align-items:center; justify-content:center; margin:0 auto 30px; box-shadow:0 15px 40px rgba(99,102,241,0.4);">
-                                <i class="fas fa-shopping-bag" style="color:black; font-size:3rem;"></i>
+                        <div style="color: white; width: 100%; max-width: 420px; display: flex; flex-direction: column; animation: fadeIn 0.35s ease-out;">
+                            <div style="text-align: center; margin-bottom: 16px;">
+                                <span style="background: rgba(139,92,246,0.18); color: #a78bfa; border: 1px solid rgba(139,92,246,0.35); padding: 4px 14px; border-radius: 50px; font-weight: 950; font-size: 0.65rem; letter-spacing: 0.8px;">PRO SHOP & MATERIAL</span>
+                                <h2 style="font-size: 1.8rem; font-weight: 950; margin: 8px 0 4px; font-family: 'Outfit', sans-serif;">MATERIAL <span style="color: #a78bfa;">OFICIAL</span></h2>
+                                <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; margin: 0; font-weight: 600;">Equipaciones y accesorios disponibles en el club</p>
                             </div>
-                            <h2 style="font-size: 2.2rem; font-weight: 1000; font-family:'Outfit',sans-serif; color:#6366f1;">TIENDA VIP</h2>
-                            <p style="color:rgba(255,255,255,0.7); margin-top:15px; line-height:1.5; font-weight:600; max-width:280px;">
-                                Muy pronto estará disponible la tienda oficial online de SomosPadel. Ropa técnica, palas y accesorios exclusivos del club.
-                            </p>
+
+                            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;">
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(139,92,246,0.25); border-radius: 14px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(139,92,246,0.15); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-table-tennis" style="color: #a78bfa; font-size: 1rem;"></i>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin: 0; font-size: 0.86rem; font-weight: 850; color: white;">Palas Test en Pista</h4>
+                                            <span style="font-size: 0.68rem; color: rgba(255,255,255,0.5);">Prueba modelos Bullpadel y Nox</span>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 0.65rem; color: #c4b5fd; font-weight: 900; background: rgba(196,181,253,0.15); padding: 3px 7px; border-radius: 6px;">DISPONIBLE</span>
+                                </div>
+
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(139,92,246,0.25); border-radius: 14px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(139,92,246,0.15); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-tshirt" style="color: #a78bfa; font-size: 1rem;"></i>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin: 0; font-size: 0.86rem; font-weight: 850; color: white;">Camiseta Oficial SomosPadel</h4>
+                                            <span style="font-size: 0.68rem; color: rgba(255,255,255,0.5);">Tejido transpirable edición 2026</span>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 0.72rem; color: #a78bfa; font-weight: 900;">24,90€</span>
+                                </div>
+
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(139,92,246,0.25); border-radius: 14px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(139,92,246,0.15); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-box-open" style="color: #a78bfa; font-size: 1rem;"></i>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin: 0; font-size: 0.86rem; font-weight: 850; color: white;">Pack Bolas & Overgrips</h4>
+                                            <span style="font-size: 0.68rem; color: rgba(255,255,255,0.5);">Botes Head Pro y grips Bullpadel</span>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 0.65rem; color: #c4b5fd; font-weight: 900; background: rgba(196,181,253,0.15); padding: 3px 7px; border-radius: 6px;">STOCK ALTO</span>
+                                </div>
+                            </div>
+
+                            <div style="background: rgba(139,92,246,0.12); border: 1px dashed rgba(139,92,246,0.35); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-tag" style="color: #a78bfa; font-size: 1rem;"></i>
+                                <span style="font-size: 0.72rem; color: #ddd6fe; font-weight: 700;">10% de descuento directo para jugadores registrados.</span>
+                            </div>
+
+                            <button onclick="event.stopPropagation(); window.dashNavigate('entrenos', 'shop_story');" style="width: 100%; background: #8b5cf6; color: white; border: none; padding: 13px; border-radius: 14px; font-size: 0.82rem; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 14px rgba(139,92,246,0.35);">CONSULTAR MATERIAL EN RECEPCIÓN</button>
                         </div>
                     `;
                     break;
                 case 'records':
                     contentHtml = `
-                        <div style="padding: 40px; text-align:center; color: white; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
-                            <div style="width:100px; height:100px; background:#10b981; border-radius:30px; display:flex; align-items:center; justify-content:center; margin:0 auto 30px; box-shadow:0 15px 40px rgba(16,185,129,0.4);">
-                                <i class="fas fa-history" style="color:black; font-size:3rem;"></i>
+                        <div style="color: white; width: 100%; max-width: 420px; display: flex; flex-direction: column; animation: fadeIn 0.35s ease-out;">
+                            <div style="text-align: center; margin-bottom: 16px;">
+                                <span style="background: rgba(13,148,136,0.18); color: #14b8a6; border: 1px solid rgba(13,148,136,0.35); padding: 4px 14px; border-radius: 50px; font-weight: 950; font-size: 0.65rem; letter-spacing: 0.8px;">HISTORIAL SOMOSPADEL</span>
+                                <h2 style="font-size: 1.8rem; font-weight: 950; margin: 8px 0 4px; font-family: 'Outfit', sans-serif;">HALL OF <span style="color: #14b8a6;">FAME</span></h2>
+                                <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; margin: 0; font-weight: 600;">Las mayores leyendas y marcas del club</p>
                             </div>
-                            <h2 style="font-size: 2.2rem; font-weight: 1000; font-family:'Outfit',sans-serif; color:#10b981;">RÉCORDS</h2>
-                            <p style="color:rgba(255,255,255,0.7); margin-top:15px; line-height:1.5; font-weight:600; max-width:280px;">
-                                Explora el Hall of Fame del club, ganadores históricos y registros de competiciones pasadas.
-                            </p>
-                            <button onclick="event.stopPropagation(); window.dashNavigate('records', 'records_story')" style="width: 100%; background: #10b981; color: #000; border: none; padding: 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 1000; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 30px; box-shadow: 0 5px 15px rgba(16,185,129,0.3);">VER HISTORIAL COMPLETO</button>
+
+                            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(13,148,136,0.25); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(13,148,136,0.15); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-crown" style="color: #2dd4bf;"></i>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin: 0; font-size: 0.86rem; font-weight: 850; color: white;">Mayor Racha Invicto</h4>
+                                            <span style="font-size: 0.68rem; color: rgba(255,255,255,0.5);">14 Victorias Consecutivas</span>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 0.72rem; color: #2dd4bf; font-weight: 950;">RÉCORD</span>
+                                </div>
+
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(13,148,136,0.25); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(13,148,136,0.15); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-bolt" style="color: #2dd4bf;"></i>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin: 0; font-size: 0.86rem; font-weight: 850; color: white;">Puntos en una Americana</h4>
+                                            <span style="font-size: 0.68rem; color: rgba(255,255,255,0.5);">Máximo histórico registrado</span>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 0.72rem; color: #2dd4bf; font-weight: 950;">48 PTS</span>
+                                </div>
+
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(13,148,136,0.25); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(13,148,136,0.15); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-medal" style="color: #2dd4bf;"></i>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin: 0; font-size: 0.86rem; font-weight: 850; color: white;">Palmarés del Club</h4>
+                                            <span style="font-size: 0.68rem; color: rgba(255,255,255,0.5);">Histórico de campeones anuales</span>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 0.72rem; color: #2dd4bf; font-weight: 950;">ACTUAL</span>
+                                </div>
+                            </div>
+
+                            <button onclick="event.stopPropagation(); window.dashNavigate('records', 'records_story');" style="width: 100%; background: #0d9488; color: white; border: none; padding: 13px; border-radius: 14px; font-size: 0.82rem; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 14px rgba(13,148,136,0.35);">VER TODOS LOS RÉCORDS Y LOGROS</button>
                         </div>
                     `;
                     break;
                 case 'equipos':
                     contentHtml = `
-                        <div style="padding: 40px; text-align:center; color: white; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
-                            <div style="width:100px; height:100px; background:#38bdf8; border-radius:30px; display:flex; align-items:center; justify-content:center; margin:0 auto 30px; box-shadow:0 15px 40px rgba(56,189,248,0.4);">
-                                <i class="fas fa-users" style="color:black; font-size:3rem;"></i>
+                        <div style="color: white; width: 100%; max-width: 420px; display: flex; flex-direction: column; animation: fadeIn 0.35s ease-out;">
+                            <div style="text-align: center; margin-bottom: 16px;">
+                                <span style="background: rgba(14,165,233,0.18); color: #0ea5e9; border: 1px solid rgba(14,165,233,0.35); padding: 4px 14px; border-radius: 50px; font-weight: 950; font-size: 0.65rem; letter-spacing: 0.8px;">COMPETICIÓN OFICIAL</span>
+                                <h2 style="font-size: 1.8rem; font-weight: 950; margin: 8px 0 4px; font-family: 'Outfit', sans-serif;">EQUIPOS <span style="color: #0ea5e9;">SOMOSPADEL</span></h2>
+                                <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; margin: 0; font-weight: 600;">Liga Interclubs de Cataluña & Torneos Federados</p>
                             </div>
-                            <h2 style="font-size: 2.2rem; font-weight: 1000; font-family:'Outfit',sans-serif; color:#38bdf8;">EQUIPOS</h2>
-                            <p style="color:rgba(255,255,255,0.7); margin-top:15px; line-height:1.5; font-weight:600; max-width:280px;">
-                                Forma parte de la liga oficial, representa a SomosPadel y compite contra otros clubes de la región.
-                            </p>
-                            <button onclick="event.stopPropagation(); window.dashNavigate('equipos', 'equipos_story')" style="width: 100%; background: #38bdf8; color: #000; border: none; padding: 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 1000; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 30px; box-shadow: 0 5px 15px rgba(56,189,248,0.3);">VER EQUIPOS Y LIGAS</button>
+
+                            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(14,165,233,0.25); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(14,165,233,0.15); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-users" style="color: #0ea5e9;"></i>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin: 0; font-size: 0.86rem; font-weight: 850; color: white;">Masculino A & B</h4>
+                                            <span style="font-size: 0.68rem; color: rgba(255,255,255,0.5);">1ª y 3ª División Federada</span>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 0.65rem; color: #38bdf8; font-weight: 900; background: rgba(56,189,248,0.15); padding: 3px 8px; border-radius: 6px;">ACTIVO</span>
+                                </div>
+
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(236,72,153,0.25); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(236,72,153,0.15); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-venus" style="color: #ec4899;"></i>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin: 0; font-size: 0.86rem; font-weight: 850; color: white;">Femenino SomosPadel</h4>
+                                            <span style="font-size: 0.68rem; color: rgba(255,255,255,0.5);">2ª División FCP</span>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 0.65rem; color: #f472b6; font-weight: 900; background: rgba(244,114,182,0.15); padding: 3px 8px; border-radius: 6px;">ACTIVO</span>
+                                </div>
+
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(245,158,11,0.25); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(245,158,11,0.15); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-handshake" style="color: #f59e0b;"></i>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin: 0; font-size: 0.86rem; font-weight: 850; color: white;">Equipo Mixto</h4>
+                                            <span style="font-size: 0.68rem; color: rgba(255,255,255,0.5);">Liga Interclubs Fin de Semana</span>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 0.65rem; color: #fbbf24; font-weight: 900; background: rgba(251,191,36,0.15); padding: 3px 8px; border-radius: 6px;">OPEN</span>
+                                </div>
+                            </div>
+
+                            <button onclick="event.stopPropagation(); window.dashNavigate('equipos', 'equipos_story');" style="width: 100%; background: #0ea5e9; color: white; border: none; padding: 13px; border-radius: 14px; font-size: 0.82rem; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 14px rgba(14,165,233,0.35);">VER EQUIPOS Y CONVOCATORIAS</button>
                         </div>
                     `;
                     break;
                 case 'tournaments':
                     contentHtml = `
-                        <div style="padding: 40px; text-align:center; color: white; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
-                            <div style="width:100px; height:100px; background:#fb923c; border-radius:30px; display:flex; align-items:center; justify-content:center; margin:0 auto 30px; box-shadow:0 15px 40px rgba(251,146,60,0.4);">
-                                <i class="fas fa-award" style="color:black; font-size:3rem;"></i>
+                        <div style="color: white; width: 100%; max-width: 420px; display: flex; flex-direction: column; animation: fadeIn 0.35s ease-out;">
+                            <div style="text-align: center; margin-bottom: 16px;">
+                                <span style="background: rgba(245,158,11,0.18); color: #f59e0b; border: 1px solid rgba(245,158,11,0.35); padding: 4px 14px; border-radius: 50px; font-weight: 950; font-size: 0.65rem; letter-spacing: 0.8px;">CIRCUITO DE TORNEOS</span>
+                                <h2 style="font-size: 1.8rem; font-weight: 950; margin: 8px 0 4px; font-family: 'Outfit', sans-serif;">TORNEOS & <span style="color: #f59e0b;">AMERICANAS</span></h2>
+                                <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; margin: 0; font-weight: 600;">Eventos especiales, cuadro con consolación y premios</p>
                             </div>
-                            <h2 style="font-size: 2.2rem; font-weight: 1000; font-family:'Outfit',sans-serif; color:#fb923c;">TORNEOS</h2>
-                            <p style="color:rgba(255,255,255,0.7); margin-top:15px; line-height:1.5; font-weight:600; max-width:280px;">
-                                Participa en nuestros torneos abiertos de fin de semana, suma puntos de ranking y gana grandes premios.
-                            </p>
-                            <button onclick="event.stopPropagation(); window.dashNavigate('tournaments', 'tournaments_story')" style="width: 100%; background: #fb923c; color: #000; border: none; padding: 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 1000; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 30px; box-shadow: 0 5px 15px rgba(251,146,60,0.3);">VER PRÓXIMOS TORNEOS</button>
+
+                            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(245,158,11,0.25); border-radius: 14px; padding: 12px 14px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                        <span style="font-size: 0.65rem; font-weight: 900; color: #f59e0b; text-transform: uppercase;">🎾 GRAN OPEN DE PRIMAVERA</span>
+                                        <span style="font-size: 0.65rem; color: #fbbf24; font-weight: 800; background: rgba(251,191,36,0.15); padding: 2px 7px; border-radius: 6px;">PRÓXIMO</span>
+                                    </div>
+                                    <h4 style="margin: 0 0 4px; font-size: 0.92rem; font-weight: 900; color: white;">Torneo Oficial 120 Plazas</h4>
+                                    <p style="margin: 0; font-size: 0.72rem; color: rgba(255,255,255,0.6); line-height: 1.4;">Categorías Masculina, Femenina y Mixta. Mínimo 3 partidos garantizados, barbacoa y Welcome Pack.</p>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px; text-align: center;">
+                                        <i class="fas fa-gift" style="color: #f59e0b; font-size: 1rem; margin-bottom: 3px; display: block;"></i>
+                                        <span style="font-size: 0.72rem; font-weight: 850; color: white; display: block;">Welcome Pack</span>
+                                        <span style="font-size: 0.6rem; color: rgba(255,255,255,0.45);">Camiseta + Bebida</span>
+                                    </div>
+                                    <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px; text-align: center;">
+                                        <i class="fas fa-trophy" style="color: #fbbf24; font-size: 1rem; margin-bottom: 3px; display: block;"></i>
+                                        <span style="font-size: 0.72rem; font-weight: 850; color: white; display: block;">Puntos Dobles</span>
+                                        <span style="font-size: 0.6rem; color: rgba(255,255,255,0.45);">Para el Ranking</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button onclick="event.stopPropagation(); window.dashNavigate('americanas', 'tournaments_story');" style="width: 100%; background: #f59e0b; color: #000; border: none; padding: 13px; border-radius: 14px; font-size: 0.82rem; font-weight: 950; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 14px rgba(245,158,11,0.35);">VER CALENDARIO E INSCRIBIRME</button>
                         </div>
                     `;
                     break;
@@ -648,20 +835,20 @@
                 </div>
 
                 <!-- TOP BAR INTERACTION -->
-                <div style="position: absolute; top: env(safe-area-inset-top, 20px); left: 0; right: 0; padding: 15px; display: flex; align-items: center; justify-content: space-between; z-index: 1001; background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 100%);">
+                <div style="position: absolute; top: env(safe-area-inset-top, 16px); left: 0; right: 0; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; z-index: 1001; background: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, transparent 100%);">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <div style="width: 32px; height: 32px; border-radius: 50%; background: ${story.color}; display: flex; align-items: center; justify-content: center; border: 1.5px solid white; box-shadow: 0 0 10px ${story.color}80;">
                             <i class="fas ${story.icon}" style="color: black; font-size: 0.95rem;"></i>
                         </div>
                         <span style="font-weight: 900; font-size: 0.85rem; text-transform: uppercase; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.6); font-family: 'Outfit', sans-serif;">${story.label}</span>
                     </div>
-                    <button onclick="window.StoryFeedWidget.hideStory(event)" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.6); padding: 5px; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.08); backdrop-filter: blur(5px);">
+                    <button onclick="window.StoryFeedWidget.hideStory(event)" style="background: none; border: none; color: white; font-size: 1.3rem; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.6); padding: 5px; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.12); backdrop-filter: blur(5px);">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
 
                 <!-- MAIN CARD CONTENT AREA -->
-                <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 1000; position: relative;">
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 75px 18px 25px; z-index: 1000; position: relative; box-sizing: border-box; width: 100%;">
                     ${contentHtml}
                 </div>
 

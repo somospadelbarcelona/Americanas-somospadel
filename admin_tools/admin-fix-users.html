@@ -498,24 +498,21 @@
 
         // Test master credentials
         async function testMasterCredentials() {
-            log('🔑 Probando credenciales maestras hardcodeadas...', 'info');
+            log('🔑 Verificando usuario administrador...', 'info');
             const masterPhone = '649219350';
-            const masterPass = 'JARABA';
 
             try {
                 const user = await window.FirebaseDB.players.getByPhone(masterPhone);
                 if (user) {
-                    log(`✅ Usuario maestro encontrado en BD: ${user.name}`, 'success');
-                    log(`   Rol: ${user.role} | Password: ${user.password}`, 'info');
+                    log(`✅ Usuario administrador encontrado en BD: ${user.name}`, 'success');
+                    log(`   Rol: ${user.role}`, 'info');
+                    alert(`✅ USUARIO ADMINISTRADOR VERIFICADO\n\nNombre: ${user.name}\nTeléfono: ${masterPhone}\nRol: ${user.role}\nStatus: ${user.status}`);
                 } else {
-                    log(`⚠️ Usuario maestro NO encontrado en BD, pero las credenciales hardcodeadas funcionarán igual`, 'warning');
+                    log(`⚠️ Usuario administrador NO encontrado en BD.`, 'warning');
+                    alert(`⚠️ Usuario con teléfono ${masterPhone} no encontrado en la base de datos.`);
                 }
-
-                log(`✅ Las credenciales maestras (${masterPhone} / ${masterPass}) SIEMPRE funcionan como fallback`, 'success');
-                alert(`✅ CREDENCIALES MAESTRAS VERIFICADAS\n\nTeléfono: ${masterPhone}\nContraseña: ${masterPass}\n\nEstas credenciales SIEMPRE funcionan para acceder al panel admin, incluso si no existen en la base de datos.`);
-
             } catch (error) {
-                log(`❌ Error al verificar credenciales maestras: ${error.message}`, 'error');
+                log(`❌ Error al verificar usuario administrador: ${error.message}`, 'error');
             }
         }
 

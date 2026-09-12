@@ -22,24 +22,24 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // REGLAS PARA JUGADORES (PII PROTECTION)
+    // REGLAS PARA JUGADORES (PII PROTECTION & ZERO-TRUST)
     // ==========================================
     match /players/{playerId} {
-      // 🛡️ SEGURIDAD NIVEL SENIOR:
-      // Permitimos lectura a autenticados pero CON RESTRICCIONES en el futuro.
-      // Por ahora, solo permitimos 'list' si es admin. 
-      // Si un jugador quiere ver a otro para el ranking, que sea via 'get'.
       allow read: if isAuthenticated(); 
       
-      // SOLO los admins o el propio usuario pueden ver sus campos sensibles (simulado)
-      // Nota: En Firestore real, para proteger campos específicos hay que usar subcolecciones.
+      // Bloqueo estricto contra inyección de rol de administrador al crear perfil
+      allow create: if isAdmin() || (
+        isAuthenticated() && 
+        isOwner(playerId) &&
+        (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role == 'player') &&
+        (!request.resource.data.keys().hasAny(['status']) || request.resource.data.status in ['active', 'pending']) &&
+        !request.resource.data.keys().hasAny(['isSessionAdmin'])
+      );
       
-      allow create: if isAuthenticated();
-      
-      // Bloqueamos la edición de roles y niveles a usuarios normales
+      // Bloqueamos la edición de roles, niveles y flags de sesión a usuarios normales
       allow update: if isAdmin() || 
                     (isOwner(playerId) && 
-                     !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status', 'level', 'self_rate_level']));
+                     !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status', 'level', 'self_rate_level', 'isSessionAdmin']));
       
       allow delete: if isAdmin();
       
@@ -133,7 +133,9 @@ service cloud.firestore {
     // ==========================================
     match /open_matches/{matchId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.creator_id == request.auth.uid);
     }
 
     // ==========================================
@@ -149,7 +151,8 @@ service cloud.firestore {
     // ==========================================
     match /level_history/{historyId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow create: if isAdmin() || (isAuthenticated() && request.resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin();
     }
 
     // Regla global de cierre

@@ -9,22 +9,52 @@ window.Tactical3DWidget = {
     renderer: null,
     courtGroup: null,
     container: null,
+    animationId: null,
+    resizeObserver: null,
+
+    destroy() {
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+        }
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+            this.resizeObserver = null;
+        }
+        if (this.renderer) {
+            try {
+                this.renderer.dispose();
+                if (this.renderer.domElement && this.renderer.domElement.parentNode) {
+                    this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+                }
+            } catch (e) {}
+            this.renderer = null;
+        }
+        this.scene = null;
+        this.camera = null;
+        this.courtGroup = null;
+    },
 
     init(containerId) {
+        this.destroy();
+
         this.container = document.getElementById(containerId);
         if (!this.container) return;
 
         // Limpiar contenedor
         this.container.innerHTML = '';
 
+        const width = this.container.clientWidth || 300;
+        const height = this.container.clientHeight || 140;
+
         // 1. SCENE SETUP
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x0f172a); // Fondo oscuro slate
 
-        this.camera = new THREE.PerspectiveCamera(50, this.container.clientWidth / this.container.clientHeight, 0.1, 100);
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100);
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+        this.renderer.setSize(width, height);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         this.container.appendChild(this.renderer.domElement);
 
         // 2. CREAR MINI PISTA
@@ -88,7 +118,7 @@ window.Tactical3DWidget = {
         let angle = 0;
         const animate = () => {
             if (!this.renderer) return;
-            requestAnimationFrame(animate);
+            this.animationId = requestAnimationFrame(animate);
             angle += 0.006;
             
             // Órbita lenta
@@ -102,13 +132,22 @@ window.Tactical3DWidget = {
 
         // Redimensionamiento responsivo
         const observer = new ResizeObserver(() => {
-            if (this.container.clientWidth > 0 && this.container.clientHeight > 0 && this.renderer) {
+            if (this.container && this.container.clientWidth > 0 && this.container.clientHeight > 0 && this.renderer && this.camera) {
                 this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
                 this.camera.updateProjectionMatrix();
                 this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
             }
         });
         observer.observe(this.container);
+        this.resizeObserver = observer;
+
+        setTimeout(() => {
+            if (this.container && this.container.clientWidth > 0 && this.container.clientHeight > 0 && this.renderer && this.camera) {
+                this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+            }
+        }, 60);
     },
 
     renderHTML() {

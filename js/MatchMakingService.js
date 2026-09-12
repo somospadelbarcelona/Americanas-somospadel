@@ -18,6 +18,21 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003 (ROOT)...");
             async generateRound(eventId, eventType, roundNum, force = false, randomize = false) {
                 console.log(`🎲 MatchMakingService: Generating Round ${roundNum} for ${eventType} ${eventId}`);
 
+                // --- 🛡️ BÚNKER CLOUD DELEGATION (NIVEL NASA) ---
+                if (window.firebase && typeof firebase.functions === 'function') {
+                    try {
+                        const secureGen = firebase.app().functions('us-central1').httpsCallable('secureGenerateRound');
+                        console.log("🔒 [Security Búnker] Solicitando cálculo seguro de ronda al servidor...");
+                        const response = await secureGen({ eventId, eventType, roundNum, force, randomize });
+                        if (response && response.data && response.data.success) {
+                            console.log("✅ [Security Búnker] Ronda calculada y generada en servidor:", response.data);
+                            return response.data.matches;
+                        }
+                    } catch (cloudErr) {
+                        console.warn("ℹ️ [Security Búnker Fallback] Delegando a cálculo local:", cloudErr.message);
+                    }
+                }
+
                 // Ensure dependencies exist
                 if (typeof window.FirebaseDB === 'undefined') {
                     console.error("❌ FirebaseDB MISSING in MatchMakingService!");

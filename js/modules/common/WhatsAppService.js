@@ -122,10 +122,21 @@ window.WhatsAppService = {
         }
         msg += `\n`;
 
-        // Helper for badges (1️⃣..🔟 then 11.)
+        // Helper for badges with emoji keycaps (1️⃣..9️⃣, 1️⃣0️⃣, 1️⃣1️⃣, 1️⃣2️⃣...)
+        const digitEmojis = {
+            '0': '0️⃣',
+            '1': '1️⃣',
+            '2': '2️⃣',
+            '3': '3️⃣',
+            '4': '4️⃣',
+            '5': '5️⃣',
+            '6': '6️⃣',
+            '7': '7️⃣',
+            '8': '8️⃣',
+            '9': '9️⃣'
+        };
         const getNumBadge = (num) => {
-            const badges = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
-            return (num >= 1 && num <= 10) ? badges[num - 1] : `${num}.`;
+            return String(num).split('').map(d => digitEmojis[d] || d).join('');
         };
 
         // SECTION: PLAYER LIST

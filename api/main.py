@@ -230,21 +230,21 @@ def startup_event():
         admin = db.query(models.Player).filter(models.Player.phone == admin_phone).first()
         
         if admin:
-            # Update credentials if exists
-            admin.name = "Alex Coscolin"
+            default_admin_pass = os.getenv("ADMIN_INITIAL_PASSWORD", "NOA21")
             # SECURITY: Auto-hash legacy plain text password if detected
-            if admin.password == "NOA21" or admin.password == "JARABA":
-                admin.password = get_password_hash("NOA21")
+            if admin.password in ["NOA21", "JARABA"]:
+                admin.password = get_password_hash(default_admin_pass)
             
             admin.role = "admin"
             admin.status = "active"
             print(f"🔄 Universal Admin SECURED: {admin.name} / {admin_phone}")
         else:
+            default_admin_pass = os.getenv("ADMIN_INITIAL_PASSWORD", "NOA21")
             # Create if not exists with hashed password
             new_admin = models.Player(
                 name="Alex Coscolin",
                 phone=admin_phone,
-                password=get_password_hash("NOA21"), 
+                password=get_password_hash(default_admin_pass), 
                 role="admin",
                 level="PRO",
                 status="active",

@@ -18,6 +18,21 @@ console.log("🎲 LOADING MATCHMAKING SERVICE v5003...");
              * Maneja automáticamente la lógica de "Smart Courts" (ampliar pistas si hay más gente).
              */
             async generateRound(eventId, eventType, roundNum) {
+                // --- 🛡️ BÚNKER CLOUD DELEGATION (NIVEL NASA) ---
+                if (window.firebase && typeof firebase.functions === 'function') {
+                    try {
+                        const secureGen = firebase.app().functions('us-central1').httpsCallable('secureGenerateRound');
+                        console.log("🔒 [Security Búnker] Solicitando cálculo seguro de ronda al servidor...");
+                        const response = await secureGen({ eventId, eventType, roundNum });
+                        if (response && response.data && response.data.success) {
+                            console.log("✅ [Security Búnker] Ronda calculada en servidor:", response.data);
+                            return response.data.matches;
+                        }
+                    } catch (cloudErr) {
+                        console.warn("ℹ️ [Security Búnker Fallback] Delegando a cálculo local:", cloudErr.message);
+                    }
+                }
+
                 // Ensure dependencies exist
                 if (typeof window.FirebaseDB === 'undefined') throw new Error("FirebaseDB not loaded");
 
