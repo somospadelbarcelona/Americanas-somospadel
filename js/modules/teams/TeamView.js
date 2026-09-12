@@ -96,6 +96,98 @@
             this.filterDOM();
         }
 
+        scrollCategories(amount) {
+            const container = document.getElementById('cat-pills-container');
+            if (container) {
+                container.scrollBy({ left: amount, behavior: 'smooth' });
+                if (window.PlayerView?.haptic) window.PlayerView.haptic(10);
+            }
+        }
+
+        updateCategoryScrollButtons() {
+            const container = document.getElementById('cat-pills-container');
+            const leftBtn = document.getElementById('cat-scroll-left');
+            const rightBtn = document.getElementById('cat-scroll-right');
+            if (!container || !leftBtn || !rightBtn) return;
+
+            const isStart = container.scrollLeft <= 4;
+            const isEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 4;
+
+            leftBtn.style.opacity = isStart ? '0.35' : '1';
+            leftBtn.style.cursor = isStart ? 'default' : 'pointer';
+
+            rightBtn.style.opacity = isEnd ? '0.35' : '1';
+            rightBtn.style.cursor = isEnd ? 'default' : 'pointer';
+        }
+
+        initCategoryScroll() {
+            const container = document.getElementById('cat-pills-container');
+            if (!container) return;
+
+            const handleScroll = () => this.updateCategoryScrollButtons();
+            if (container._catScrollHandler) {
+                container.removeEventListener('scroll', container._catScrollHandler);
+            }
+            container._catScrollHandler = handleScroll;
+            container.addEventListener('scroll', handleScroll, { passive: true });
+
+            // Soporte drag horizontal suave con ratón para desktop
+            let isDown = false;
+            let startX = 0;
+            let scrollLeft = 0;
+            let hasDragged = false;
+
+            container.addEventListener('mousedown', (e) => {
+                isDown = true;
+                hasDragged = false;
+                startX = e.pageX - container.offsetLeft;
+                scrollLeft = container.scrollLeft;
+            });
+
+            const stopDrag = () => {
+                if (isDown) {
+                    isDown = false;
+                    if (container) container.style.cursor = '';
+                }
+            };
+            window.removeEventListener('mouseup', stopDrag);
+            window.addEventListener('mouseup', stopDrag);
+
+            container.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                const x = e.pageX - container.offsetLeft;
+                const walk = x - startX;
+                if (Math.abs(walk) > 4) {
+                    hasDragged = true;
+                    e.preventDefault();
+                    container.scrollLeft = scrollLeft - walk;
+                }
+            });
+
+            container.addEventListener('click', (e) => {
+                if (hasDragged) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                }
+            }, true);
+
+            const handleResize = () => this.updateCategoryScrollButtons();
+            window.removeEventListener('resize', handleResize);
+            window.addEventListener('resize', handleResize, { passive: true });
+
+            setTimeout(() => this.updateCategoryScrollButtons(), 50);
+        }
+
+        scrollToActiveCategory() {
+            setTimeout(() => {
+                const activeBtn = document.querySelector('.cat-pill-btn.active');
+                if (activeBtn && typeof activeBtn.scrollIntoView === 'function') {
+                    activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
+                this.updateCategoryScrollButtons();
+            }, 60);
+        }
+
         render(teams) {
             if (teams && teams.length > 0) {
                 this.lastTeams = teams;
@@ -236,36 +328,86 @@
                         </button>
                     </div>
 
-                    <!-- 🎛️ CATEGORY PILL FILTERS -->
-                    <div style="display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; padding: 4px; scrollbar-width: none; -ms-overflow-style: none;">
-                        <style>
-                            .teams-view-container div::-webkit-scrollbar { display: none; }
-                            .team-card:hover {
-                                transform: translateY(-4px);
-                                border-color: rgba(56, 176, 0, 0.45) !important;
-                                box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08) !important;
-                            }
-                            .clear-btn-hover:hover {
-                                color: #ef4444 !important;
-                            }
-                        </style>
-                        ${categoryFilters.map(f => {
-                            const isActive = this.activeCategory === f.key;
-                            return `
-                                <button onclick="window.TeamController.setCategory('${f.key}')" 
-                                        style="padding: 10px 20px; border-radius: 16px;
-                                               border: 1.5px solid ${isActive ? '#0f172a' : '#e2e8f0'}; 
-                                               font-weight: 900; font-size: 0.74rem; cursor: pointer; white-space: nowrap;
-                                               background: ${isActive ? '#0f172a' : '#ffffff'};
-                                               color: ${isActive ? '#ccff00' : '#64748b'};
-                                               box-shadow: ${isActive ? '0 6px 18px rgba(15, 23, 42, 0.25)' : '0 2px 6px rgba(0,0,0,0.02)'};
-                                               transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-                                               display: inline-flex; align-items: center; gap: 6px;">
-                                     ${isActive ? '<span style="width: 6px; height: 6px; border-radius: 50%; background: #ccff00; box-shadow: 0 0 6px #ccff00;"></span>' : ''}
-                                     ${f.label}
-                                </button>
-                            `;
-                        }).join('')}
+                    <!-- 🎛️ CATEGORY PILL FILTERS WITH LATERAL ARROWS -->
+                    <div class="category-nav-wrapper" style="display: flex; align-items: center; gap: 8px; margin-bottom: 25px; position: relative;">
+                        <!-- Botón navegación izquierda -->
+                        <button id="cat-scroll-left" 
+                                type="button" 
+                                aria-label="Desplazar categorías hacia la izquierda"
+                                onclick="window.TeamView.scrollCategories(-140)" 
+                                style="width: 34px; height: 34px; border-radius: 50%; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; cursor: pointer; color: #0f172a; flex-shrink: 0; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); outline: none;"
+                                onmouseover="this.style.background='#f8fafc'; this.style.transform='scale(1.08)';" 
+                                onmouseout="this.style.background='#ffffff'; this.style.transform='scale(1)';"
+                                onmousedown="this.style.transform='scale(0.95)';">
+                            <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
+                        </button>
+
+                        <!-- Contenedor scrollable de categorías -->
+                        <div id="cat-pills-container" 
+                             class="cat-pills-container" 
+                             style="display: flex; gap: 10px; overflow-x: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; padding: 4px 2px 8px 2px; flex: 1; min-width: 0;">
+                            <style>
+                                #cat-pills-container::-webkit-scrollbar {
+                                    height: 4px;
+                                    display: block;
+                                }
+                                #cat-pills-container::-webkit-scrollbar-track {
+                                    background: #f1f5f9;
+                                    border-radius: 10px;
+                                }
+                                #cat-pills-container::-webkit-scrollbar-thumb {
+                                    background: #cbd5e1;
+                                    border-radius: 10px;
+                                    transition: background 0.2s ease;
+                                }
+                                #cat-pills-container::-webkit-scrollbar-thumb:hover {
+                                    background: #94a3b8;
+                                }
+                                #cat-pills-container {
+                                    scrollbar-width: thin;
+                                    scrollbar-color: #cbd5e1 #f1f5f9;
+                                }
+                                .team-card:hover {
+                                    transform: translateY(-4px);
+                                    border-color: rgba(56, 176, 0, 0.45) !important;
+                                    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08) !important;
+                                }
+                                .clear-btn-hover:hover {
+                                    color: #ef4444 !important;
+                                }
+                            </style>
+                            ${categoryFilters.map(f => {
+                                const isActive = this.activeCategory === f.key;
+                                return `
+                                    <button id="cat-pill-${f.key.toLowerCase()}"
+                                            class="cat-pill-btn ${isActive ? 'active' : ''}"
+                                            onclick="window.TeamController ? window.TeamController.setCategory('${f.key}') : window.TeamView.setCategory('${f.key}')" 
+                                            style="padding: 10px 20px; border-radius: 16px;
+                                                   border: 1.5px solid ${isActive ? '#0f172a' : '#e2e8f0'}; 
+                                                   font-weight: 900; font-size: 0.74rem; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+                                                   background: ${isActive ? '#0f172a' : '#ffffff'};
+                                                   color: ${isActive ? '#ccff00' : '#64748b'};
+                                                   box-shadow: ${isActive ? '0 6px 18px rgba(15, 23, 42, 0.25)' : '0 2px 6px rgba(0,0,0,0.02)'};
+                                                   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                                                   display: inline-flex; align-items: center; gap: 6px;">
+                                         ${isActive ? '<span style="width: 6px; height: 6px; border-radius: 50%; background: #ccff00; box-shadow: 0 0 6px #ccff00;"></span>' : ''}
+                                         ${f.label}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <!-- Botón navegación derecha -->
+                        <button id="cat-scroll-right" 
+                                type="button" 
+                                aria-label="Desplazar categorías hacia la derecha"
+                                onclick="window.TeamView.scrollCategories(140)" 
+                                style="width: 34px; height: 34px; border-radius: 50%; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; cursor: pointer; color: #0f172a; flex-shrink: 0; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); outline: none;"
+                                onmouseover="this.style.background='#f8fafc'; this.style.transform='scale(1.08)';" 
+                                onmouseout="this.style.background='#ffffff'; this.style.transform='scale(1)';"
+                                onmousedown="this.style.transform='scale(0.95)';">
+                            <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+                        </button>
                     </div>
  
                     <!-- 🚀 MASTER TEAMS GRID -->
@@ -292,6 +434,9 @@
             if (this.searchQuery) {
                 this.filterDOM();
             }
+
+            this.initCategoryScroll();
+            this.scrollToActiveCategory();
         }
 
         renderTeamCard(team) {
