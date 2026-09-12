@@ -81,15 +81,35 @@
             }
         }
 
+        setCategory(category) {
+            this.activeCategory = category;
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
+            if (window.TeamController && window.TeamController.teams && window.TeamController.teams.length > 0) {
+                window.TeamController.render();
+            } else {
+                this.render(this.lastTeams);
+            }
+        }
+
+        handleSearch(query) {
+            this.searchQuery = query;
+            this.filterDOM();
+        }
+
         render(teams) {
-            this.lastTeams = teams || [];
+            if (teams && teams.length > 0) {
+                this.lastTeams = teams;
+            } else if (!this.lastTeams) {
+                this.lastTeams = [];
+            }
+            const currentTeams = this.lastTeams;
             this.container = document.getElementById('content-area');
             if (!this.container) return;
 
             // Filtrar los equipos por categoría activa
             let filteredTeams = this.activeCategory === 'Todos'
-                ? teams
-                : teams.filter(t => t.category === this.activeCategory);
+                ? currentTeams
+                : currentTeams.filter(t => t.category === this.activeCategory);
 
             const favId = localStorage.getItem('favTeam_somospadel');
             filteredTeams.sort((a, b) => {
@@ -99,104 +119,153 @@
             });
 
             // 📊 CÁLCULO DE ESTADÍSTICAS GLOBALES DEL CLUB
-            const allTeams = teams || [];
+            const allTeams = currentTeams;
             const totalTeamsCount = allTeams.length;
             const totalPlayersCount = allTeams.reduce((acc, t) => acc + (t.roster ? t.roster.length : 0), 0);
             const totalWins = allTeams.reduce((acc, t) => acc + (t.stats ? t.stats.pg : 0), 0);
             const totalPointsCount = allTeams.reduce((acc, t) => acc + (t.points || 0), 0);
 
+            // Conteos dinámicos por categoría
+            const countTodos = allTeams.length;
+            const countMasc = allTeams.filter(t => (t.category || '').toLowerCase().includes('masc')).length;
+            const countFem = allTeams.filter(t => (t.category || '').toLowerCase().includes('fem')).length;
+            const countMixt = allTeams.filter(t => (t.category || '').toLowerCase().includes('mixt')).length;
+
+            const categoryFilters = [
+                { key: 'Todos', label: `TODOS (${countTodos})` },
+                { key: 'Masculina', label: `MASCULINA (${countMasc})` },
+                { key: 'Femenina', label: `FEMENINA (${countFem})` },
+                { key: 'Mixta', label: `MIXTA (${countMixt})` }
+            ];
+
             this.container.innerHTML = `
                 <div class="teams-view-container animate-fade-in" style="padding: 24px; padding-bottom: 120px; background: #f8fafc; font-family: 'Outfit', sans-serif;">
                     
-                    <!-- 💎 EXECUTIVE HEADER -->
-                    <div style="margin-bottom: 30px; background: #ffffff; padding: 25px 20px; border-radius: 28px; border: 1px solid #e2e8f0; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
-                        <!-- Accent line -->
-                        <div style="position:absolute; top:0; left:0; width:100%; height:6px; background: linear-gradient(90deg, #70e000, #38b000); border-radius: 28px 28px 0 0;"></div>
-                        <div style="position: absolute; top: -30px; right: -30px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(112,224,0,0.08) 0%, transparent 70%); border-radius: 50%;"></div>
-                                   <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2;">
+                    <!-- 💎 PRO GAME HUB HERO HEADER -->
+                    <div style="margin-bottom: 25px; background: linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #162447 100%); padding: 26px 22px; border-radius: 28px; border: 1px solid rgba(255, 255, 255, 0.08); position: relative; overflow: hidden; box-shadow: 0 16px 36px rgba(11, 19, 41, 0.3), 0 0 35px rgba(204, 255, 0, 0.06);">
+                        <!-- Accent top line con degradado flúor -->
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #ccff00, #38bdf8, #a78bfa); border-radius: 28px 28px 0 0;"></div>
+                        
+                        <!-- Ambient glow orbs -->
+                        <div style="position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(204, 255, 0, 0.12) 0%, rgba(56, 176, 0, 0.03) 60%, transparent 80%); border-radius: 50%; pointer-events: none;"></div>
+                        <div style="position: absolute; bottom: -30px; left: -30px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2; gap: 12px;">
                             <div>
-                                <span style="font-size: 0.65rem; color: #38b000; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;">LLIGA GUINOTPRUNERA</span>
-                                <h1 style="color: #0f172a; font-weight: 950; font-size: 2.2rem; margin: 3px 0 0; letter-spacing: -1px; text-transform: uppercase; line-height: 1.05;">
-                                    EQUIPOS <br><span style="color:#38b000;">SOMOS PÁDEL</span>
+                                <div style="display: inline-flex; align-items: center; gap: 7px; background: rgba(204, 255, 0, 0.1); border: 1px solid rgba(204, 255, 0, 0.28); padding: 4px 10px; border-radius: 20px; margin-bottom: 8px;">
+                                    <span style="width: 6px; height: 6px; border-radius: 50%; background: #ccff00; box-shadow: 0 0 8px #ccff00; display: inline-block;"></span>
+                                    <span style="font-size: 0.63rem; color: #ccff00; font-weight: 900; letter-spacing: 1.2px; text-transform: uppercase;">LLIGA GUINOTPRUNERA • TEMPORADA 2026</span>
+                                </div>
+                                <h1 style="color: #ffffff; font-weight: 950; font-size: 2.2rem; margin: 0; letter-spacing: -1px; text-transform: uppercase; line-height: 1.05;">
+                                    EQUIPOS <br><span style="color: #ccff00; text-shadow: 0 0 24px rgba(204, 255, 0, 0.35);">SOMOS PÁDEL</span>
                                 </h1>
-                                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
-                                    <button onclick="window.TeamView.openNextMatchesSummaryModal()" style="background: linear-gradient(135deg, #38b000 0%, #70e000 100%); color: white; border: none; padding: 8px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(56,176,0,0.15); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(56,176,0,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(56,176,0,0.15)';">
-                                        <i class="fas fa-share-alt"></i> RESUMEN SIG. JORNADA
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;">
+                                    <button onclick="window.TeamView.openNextMatchesSummaryModal()" 
+                                            style="background: linear-gradient(135deg, rgba(204, 255, 0, 0.16) 0%, rgba(56, 176, 0, 0.24) 100%); 
+                                                   color: #ccff00; border: 1.5px solid #ccff00; padding: 8px 16px; border-radius: 14px; 
+                                                   font-size: 0.72rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; 
+                                                   gap: 7px; backdrop-filter: blur(8px); box-shadow: 0 4px 15px rgba(204, 255, 0, 0.2); 
+                                                   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);" 
+                                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 8px 22px rgba(204, 255, 0, 0.35)'; this.style.background='rgba(204, 255, 0, 0.26)';" 
+                                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(204, 255, 0, 0.2)'; this.style.background='linear-gradient(135deg, rgba(204, 255, 0, 0.16) 0%, rgba(56, 176, 0, 0.24) 100%)';">
+                                        <i class="fas fa-share-alt" style="color: #ccff00;"></i> RESUMEN SIG. JORNADA
                                     </button>
                                 </div>
                             </div>
-                            <img src="img/logo_somospadel.png" style="width: 60px; height: 60px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.05));">
+                            <img src="img/logo_somospadel.png" 
+                                 style="width: 66px; height: 66px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 0 16px rgba(204, 255, 0, 0.35)) drop-shadow(0 6px 14px rgba(0,0,0,0.5)); transition: transform 0.3s ease;"
+                                 onmouseover="this.style.transform='scale(1.08) rotate(3deg)';"
+                                 onmouseout="this.style.transform='scale(1) rotate(0deg)';">
                         </div>
                         
-                        <!-- 📊 METRICS ROW -->
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 25px; position: relative; z-index: 2;">
-                            <div style="background: #f8fafc; padding: 12px 6px; border-radius: 16px; border: 1px solid #edf2f7; text-align: center;">
-                                <div style="font-size: 0.5rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Equipos</div>
-                                <div id="metric-teams-count" style="font-size: 1.3rem; color: #0f172a; font-weight: 950;">${totalTeamsCount}</div>
+                        <!-- 📊 4 KPIS DEL CLUB (GLASSMORPHISM MARCADOR DEPORTIVO) -->
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 24px; position: relative; z-index: 2;">
+                            <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 6px; text-align: center; transition: all 0.2s ease;">
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 3px;">
+                                    <i class="fas fa-shield-alt" style="color: #38bdf8; font-size: 0.75rem;"></i>
+                                    <span style="font-size: 0.53rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Equipos</span>
+                                </div>
+                                <div id="metric-teams-count" style="font-size: 1.35rem; color: #ffffff; font-weight: 950; line-height: 1.1;">${totalTeamsCount}</div>
                             </div>
-                            <div style="background: #f8fafc; padding: 12px 6px; border-radius: 16px; border: 1px solid #edf2f7; text-align: center;">
-                                <div style="font-size: 0.5rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Jugadores</div>
-                                <div style="font-size: 1.3rem; color: #0f172a; font-weight: 950;">${totalPlayersCount}</div>
+                            <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 6px; text-align: center; transition: all 0.2s ease;">
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 3px;">
+                                    <i class="fas fa-users" style="color: #a78bfa; font-size: 0.75rem;"></i>
+                                    <span style="font-size: 0.53rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Jugadores</span>
+                                </div>
+                                <div style="font-size: 1.35rem; color: #ffffff; font-weight: 950; line-height: 1.1;">${totalPlayersCount}</div>
                             </div>
-                            <div style="background: #f8fafc; padding: 12px 6px; border-radius: 16px; border: 1px solid #edf2f7; text-align: center;">
-                                <div style="font-size: 0.5rem; color: #38b000; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Victorias</div>
-                                <div style="font-size: 1.3rem; color: #38b000; font-weight: 950;">${totalWins}</div>
+                            <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(204, 255, 0, 0.25); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 6px; text-align: center; transition: all 0.2s ease;">
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 3px;">
+                                    <i class="fas fa-trophy" style="color: #ccff00; font-size: 0.75rem;"></i>
+                                    <span style="font-size: 0.53rem; color: #ccff00; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Victorias</span>
+                                </div>
+                                <div style="font-size: 1.35rem; color: #ccff00; font-weight: 950; text-shadow: 0 0 12px rgba(204,255,0,0.35); line-height: 1.1;">${totalWins}</div>
                             </div>
-                            <div style="background: #f8fafc; padding: 12px 6px; border-radius: 16px; border: 1px solid #edf2f7; text-align: center;">
-                                <div style="font-size: 0.5rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Pts Club</div>
-                                <div style="font-size: 1.3rem; color: #0f172a; font-weight: 950;">${totalPointsCount}</div>
+                            <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 6px; text-align: center; transition: all 0.2s ease;">
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 3px;">
+                                    <i class="fas fa-bolt" style="color: #f59e0b; font-size: 0.75rem;"></i>
+                                    <span style="font-size: 0.53rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Pts Club</span>
+                                </div>
+                                <div style="font-size: 1.35rem; color: #fbbf24; font-weight: 950; line-height: 1.1;">${totalPointsCount}</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- 🔍 SEARCH BAR -->
                     <div style="position: relative; margin-bottom: 20px; display: flex; align-items: center;">
-                        <i class="fas fa-search" style="position: absolute; left: 16px; color: #94a3b8; font-size: 0.95rem;"></i>
+                        <i class="fas fa-search" style="position: absolute; left: 18px; color: #94a3b8; font-size: 0.95rem; pointer-events: none;"></i>
                         <input type="text" 
                                id="team-search-input" 
                                value="${this.searchQuery || ''}" 
                                oninput="window.TeamController.handleSearch(this.value)" 
                                placeholder="Buscar equipo o jugador (ej: Alejandro)..." 
-                               style="width: 100%; padding: 14px 16px 14px 44px; border-radius: 18px; 
+                               style="width: 100%; padding: 14px 20px 14px 46px; border-radius: 20px; 
                                       border: 1.5px solid #e2e8f0; font-family: 'Outfit', sans-serif; 
-                                      font-size: 0.85rem; font-weight: 700; color: #0f172a; 
-                                      background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.015); 
-                                      outline: none; transition: all 0.25s ease;">
+                                      font-size: 0.88rem; font-weight: 700; color: #0f172a; 
+                                      background: #ffffff; box-shadow: 0 4px 18px rgba(15, 23, 42, 0.03); 
+                                      outline: none; transition: all 0.25s ease;"
+                               onfocus="this.style.borderColor='#38b000'; this.style.boxShadow='0 6px 20px rgba(56, 176, 0, 0.1)';"
+                               onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='0 4px 18px rgba(15, 23, 42, 0.03)';">
                         <button id="clear-search-btn" 
                                 onclick="window.TeamController.clearSearch()" 
                                 style="position: absolute; right: 16px; background: none; border: none; 
                                        color: #cbd5e1; cursor: pointer; display: ${this.searchQuery ? 'block' : 'none'}; 
-                                       padding: 4px; font-size: 0.9rem; transition: color 0.2s;"
+                                       padding: 6px; font-size: 1rem; transition: color 0.2s;"
                                 class="clear-btn-hover">
                             <i class="fas fa-times-circle"></i>
                         </button>
                     </div>
 
                     <!-- 🎛️ CATEGORY PILL FILTERS -->
-                    <div style="display: flex; gap: 8px; margin-bottom: 25px; overflow-x: auto; padding: 4px; scrollbar-width: none; -ms-overflow-style: none;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; padding: 4px; scrollbar-width: none; -ms-overflow-style: none;">
                         <style>
                             .teams-view-container div::-webkit-scrollbar { display: none; }
                             .team-card:hover {
-                                transform: translateY(-5px);
+                                transform: translateY(-4px);
                                 border-color: rgba(56, 176, 0, 0.45) !important;
-                                box-shadow: 0 12px 30px rgba(56, 176, 0, 0.08) !important;
+                                box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08) !important;
                             }
                             .clear-btn-hover:hover {
                                 color: #ef4444 !important;
                             }
                         </style>
-                        ${['Todos', 'Masculina', 'Femenina', 'Mixta'].map(cat => `
-                            <button onclick="window.TeamController.setCategory('${cat}')" 
-                                    style="padding: 10px 20px; border-radius: 16px;
-                                           border: 1.5px solid ${this.activeCategory === cat ? '#38b000' : '#e2e8f0'}; 
-                                           font-weight: 900; font-size: 0.75rem; cursor: pointer; white-space: nowrap;
-                                           background: ${this.activeCategory === cat ? '#38b000' : '#ffffff'};
-                                           color: ${this.activeCategory === cat ? '#ffffff' : '#64748b'};
-                                           box-shadow: ${this.activeCategory === cat ? '0 6px 15px rgba(56,176,0,0.15)' : '0 2px 6px rgba(0,0,0,0.02)'};
-                                           transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);">
-                                 ${cat.toUpperCase()}
-                            </button>
-                        `).join('')}
+                        ${categoryFilters.map(f => {
+                            const isActive = this.activeCategory === f.key;
+                            return `
+                                <button onclick="window.TeamController.setCategory('${f.key}')" 
+                                        style="padding: 10px 20px; border-radius: 16px;
+                                               border: 1.5px solid ${isActive ? '#0f172a' : '#e2e8f0'}; 
+                                               font-weight: 900; font-size: 0.74rem; cursor: pointer; white-space: nowrap;
+                                               background: ${isActive ? '#0f172a' : '#ffffff'};
+                                               color: ${isActive ? '#ccff00' : '#64748b'};
+                                               box-shadow: ${isActive ? '0 6px 18px rgba(15, 23, 42, 0.25)' : '0 2px 6px rgba(0,0,0,0.02)'};
+                                               transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                                               display: inline-flex; align-items: center; gap: 6px;">
+                                     ${isActive ? '<span style="width: 6px; height: 6px; border-radius: 50%; background: #ccff00; box-shadow: 0 0 6px #ccff00;"></span>' : ''}
+                                     ${f.label}
+                                </button>
+                            `;
+                        }).join('')}
                     </div>
  
                     <!-- 🚀 MASTER TEAMS GRID -->
@@ -251,7 +320,7 @@
             }
 
             // Nombre de la división sanitizado para quitar saltos de línea molestos
-            const cleanDiv = team.division.replace(/\n/g, ' ').replace(/\s+/g, ' ');
+            const cleanDiv = (team.division || '').replace(/\n/g, ' ').replace(/\s+/g, ' ');
 
             // --- Advanced Stats Calculation (Opción B) ---
             let winRate = 0;
@@ -311,36 +380,66 @@
             const setDiffColor = setDiff > 0 ? '#38b000' : (setDiff < 0 ? '#ef4444' : '#64748b');
 
             const cleanCategory = (team.category || '').toLowerCase();
-            let cardBg = '#ffffff';
-            if (cleanCategory.includes('masc')) cardBg = '#e0f2fe'; // Azul sutil, un poco más visible (Sky-100)
-            else if (cleanCategory.includes('fem')) cardBg = '#fce7f3'; // Rosa sutil, un poco más visible (Pink-100)
-            else if (cleanCategory.includes('mixt')) cardBg = '#f3e8ff'; // Morado sutil, un poco más visible (Purple-100)
+            let catAccentColor = '#10b981';
+            let catBadgeBg = 'rgba(16, 185, 129, 0.1)';
+            let catBadgeText = '#10b981';
+
+            if (cleanCategory.includes('masc')) {
+                catAccentColor = '#0284c7';
+                catBadgeBg = 'rgba(2, 132, 199, 0.1)';
+                catBadgeText = '#0284c7';
+            } else if (cleanCategory.includes('fem')) {
+                catAccentColor = '#db2777';
+                catBadgeBg = 'rgba(219, 39, 119, 0.1)';
+                catBadgeText = '#db2777';
+            } else if (cleanCategory.includes('mixt')) {
+                catAccentColor = '#9333ea';
+                catBadgeBg = 'rgba(147, 51, 234, 0.1)';
+                catBadgeText = '#9333ea';
+            }
+
+            const isHome = pendingMatchInfo ? (
+                pendingMatchInfo.isHome !== undefined 
+                    ? !!pendingMatchInfo.isHome 
+                    : (pendingMatchInfo.venue && (
+                        pendingMatchInfo.venue.toLowerCase().includes('somos') || 
+                        pendingMatchInfo.venue.toLowerCase().includes('casa') ||
+                        pendingMatchInfo.venue.toLowerCase().includes('indoor')
+                      ))
+            ) : false;
 
             return `
                 <div class="team-card" 
                      id="team-${team.id}"
                      onclick="window.TeamView.toggleCard('${team.id}')"
-                     style="background: ${cardBg}; border: ${isFav ? '2px solid #eab308' : '1px solid #e2e8f0'}; border-radius: 28px; padding: 18px; 
+                     style="background: #ffffff; 
+                            border: ${isFav ? '2px solid #eab308' : '1px solid #e2e8f0'}; 
+                            border-top: 4px solid ${isFav ? '#eab308' : catAccentColor}; 
+                            border-radius: 24px; padding: 18px; 
                             transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; 
-                            cursor: pointer; box-shadow: ${isFav ? '0 10px 30px rgba(234,179,8,0.15)' : '0 4px 18px rgba(0,0,0,0.015)'};">
+                            cursor: pointer; box-shadow: ${isFav ? '0 10px 30px rgba(234,179,8,0.18)' : '0 6px 20px rgba(15,23,42,0.035)'};">
                     
                     <!-- Top Ribbon Badge -->
-                    <div style="position: absolute; top: 0; right: 0; background: #38b000; color: #fff; padding: 5px 18px; border-bottom-left-radius: 16px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px; text-transform: uppercase;">
+                    <div style="position: absolute; top: 0; right: 0; background: linear-gradient(135deg, ${catAccentColor} 0%, #0f172a 160%); color: #ffffff; padding: 5px 16px; border-bottom-left-radius: 14px; font-weight: 900; font-size: 0.62rem; letter-spacing: 0.6px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.12);">
                         ${cleanDiv}
                     </div>
 
                     <!-- Favorite Button -->
-                    <div onclick="event.stopPropagation(); window.TeamView.toggleFavorite('${team.id}')" style="position: absolute; top: 8px; left: 8px; z-index: 10; color: ${isFav ? '#eab308' : '#cbd5e1'}; font-size: 1.2rem; cursor: pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); transition: transform 0.2s;">
+                    <div onclick="event.stopPropagation(); window.TeamView.toggleFavorite('${team.id}')" 
+                         style="position: absolute; top: 10px; left: 10px; z-index: 10; color: ${isFav ? '#eab308' : '#cbd5e1'}; font-size: 1.25rem; cursor: pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); transition: transform 0.2s;"
+                         title="${isFav ? 'Desmarcar como favorito' : 'Marcar como equipo favorito'}"
+                         onmouseover="this.style.transform='scale(1.2)';"
+                         onmouseout="this.style.transform='scale(1)';">
                         <i class="fas fa-star"></i>
                     </div>
 
                     <!-- 1. HEADER (ALWAYS VISIBLE) -->
-                    <div style="display: flex; align-items: center; gap: 14px; margin-top: 10px;">
+                    <div style="display: flex; align-items: center; gap: 14px; margin-top: 8px;">
                         <!-- Logo Sphere -->
-                        <div style="width: 52px; height: 52px; border-radius: 16px; background: #f8fafc; border: 1px solid #edf2f7; padding: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative;">
+                        <div style="width: 54px; height: 54px; border-radius: 18px; background: #f8fafc; border: 1.5px solid #edf2f7; padding: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
                             <img src="${team.logo || 'img/logo_somospadel.png'}" style="width: 100%; height: 100%; object-fit: contain;">
                             ${team.ranking ? `
-                                <div style="position: absolute; -top: 4px; -left: 4px; background: #0f172a; color: #fff; width: 18px; height: 18px; border-radius: 50%; font-size: 0.55rem; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 1.5px solid #fff; bottom: -4px; right: -4px;">
+                                <div style="position: absolute; -top: 4px; -left: 4px; background: #0f172a; color: #fff; width: 20px; height: 20px; border-radius: 50%; font-size: 0.58rem; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; bottom: -5px; right: -5px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
                                     #${team.ranking}
                                 </div>
                             ` : ''}
@@ -348,56 +447,67 @@
 
                         <!-- Core Team Info -->
                         <div style="flex: 1; min-width: 0;">
-                            <h3 style="color: #0f172a; margin: 0; font-size: 1.15rem; font-weight: 950; letter-spacing: -0.5px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 60px;">
+                            <h3 style="color: #0f172a; margin: 0; font-size: 1.15rem; font-weight: 950; letter-spacing: -0.5px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 65px;">
                                 ${team.name}
                             </h3>
-                            <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
-                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 800; background: #f1f5f9; padding: 2px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px;">
-                                    <i class="far fa-user" style="font-size: 0.55rem; color: #94a3b8;"></i> ${cleanCap}
+                            <div style="display: flex; align-items: center; gap: 6px; margin-top: 5px; flex-wrap: wrap;">
+                                <span style="font-size: 0.68rem; color: #1e293b; font-weight: 800; background: #f1f5f9; padding: 3px 8px; border-radius: 7px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #e2e8f0;">
+                                    <i class="fas fa-crown" style="font-size: 0.58rem; color: #f59e0b;"></i> ${cleanCap}
                                 </span>
-                                <span style="font-size: 0.6rem; color: #38b000; font-weight: 900; background: rgba(56,176,0,0.08); padding: 2px 8px; border-radius: 6px; text-transform: uppercase;">
+                                <span style="font-size: 0.62rem; color: ${catBadgeText}; font-weight: 900; background: ${catBadgeBg}; padding: 3px 8px; border-radius: 7px; text-transform: uppercase;">
                                     Grupo ${team.group.split(' ').pop()}
                                 </span>
-                                <span style="font-size: 0.6rem; color: #475569; font-weight: 800; background: #f8fafc; padding: 2px 6px; border-radius: 6px; border: 1px solid #edf2f7;">
+                                <span style="font-size: 0.62rem; color: #475569; font-weight: 800; background: #f8fafc; padding: 3px 7px; border-radius: 7px; border: 1px solid #edf2f7;">
                                     G:${winCount} P:${ppCount}
                                 </span>
                             </div>
                         </div>
 
                         <!-- Interactive Indicator -->
-                        <div id="chevron-${team.id}" style="color: #cbd5e1; transition: transform 0.3s ease; width: 32px; height: 32px; border-radius: 50%; background: #f8fafc; border: 1px solid #edf2f7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <div id="chevron-${team.id}" style="color: #64748b; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 34px; height: 34px; border-radius: 50%; background: #f8fafc; border: 1.5px solid #edf2f7; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
                             <i class="fas fa-chevron-down" style="font-size: 0.75rem;"></i>
                         </div>
                     </div>
 
                     ${pendingMatchInfo ? `
-                    <!-- 🚨 MATCH DAY HYPE -->
-                    <div style="margin-top: 15px; padding: 10px 15px; background: linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,41,59,0.98)); border-radius: 16px; border-left: 4px solid #38b000; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                        <div>
-                            <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Próximo Reto • J${pendingMatchInfo.j}</div>
-                            <div style="font-size: 0.85rem; color: #ffffff; font-weight: 900; margin-top: 2px; display: flex; align-items: center; gap: 8px;">
-                                <span>vs ${pendingMatchInfo.opponent}</span>
+                    <!-- 🚨 MATCH DAY HYPE / PRÓXIMO RETO -->
+                    <div style="margin-top: 15px; padding: 12px 14px; background: linear-gradient(135deg, #0b1329 0%, #0f172a 100%); border-radius: 18px; border-left: 4px solid #ccff00; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 18px rgba(0,0,0,0.18); gap: 10px;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 3px;">
+                                <span style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Próximo Reto • J${pendingMatchInfo.j}</span>
+                                ${isHome ? `
+                                    <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 7px; border-radius: 6px; font-size: 0.58rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">🏠 CASA</span>
+                                ` : `
+                                    <span style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 2px 7px; border-radius: 6px; font-size: 0.58rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">✈️ FUERA</span>
+                                `}
+                            </div>
+                            <div style="font-size: 0.88rem; color: #ffffff; font-weight: 900; display: flex; align-items: center; gap: 8px; line-height: 1.2;">
+                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">vs ${pendingMatchInfo.opponent}</span>
                                 ${pendingMatchInfo.opponent !== 'BYE' ? `
                                     <span onclick="event.stopPropagation(); window.TeamController.showRivalScouting('${team.id}', '${pendingMatchInfo.opponent}')" 
-                                          style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(56, 176, 0, 0.15); color: #70e000; font-size: 0.65rem; cursor: pointer; transition: 0.2s;" 
+                                          style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(204, 255, 0, 0.15); color: #ccff00; font-size: 0.65rem; cursor: pointer; transition: 0.2s; flex-shrink: 0;" 
                                           title="Scouting del Rival"
-                                          onmouseover="this.style.background='rgba(56, 176, 0, 0.25)'"
-                                          onmouseout="this.style.background='rgba(56, 176, 0, 0.15)'">
+                                          onmouseover="this.style.background='rgba(204, 255, 0, 0.3)'"
+                                          onmouseout="this.style.background='rgba(204, 255, 0, 0.15)'">
                                         <i class="fas fa-radiation"></i>
                                     </span>
                                 ` : ''}
                             </div>
-                            <div style="font-size: 0.65rem; color: #cbd5e1; font-weight: 600; margin-top: 2px;"><i class="far fa-calendar-alt" style="color: #38b000;"></i> ${pendingMatchInfo.date} • ${pendingMatchInfo.venue}</div>
+                            <div style="font-size: 0.68rem; color: #cbd5e1; font-weight: 600; margin-top: 3px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                <span><i class="far fa-calendar-alt" style="color: #ccff00;"></i> ${pendingMatchInfo.date}</span>
+                                <span style="color: #64748b;">•</span>
+                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px;"><i class="fas fa-map-marker-alt" style="color: #38bdf8; font-size: 0.6rem;"></i> ${pendingMatchInfo.venue}</span>
+                            </div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
                             <button onclick="event.stopPropagation(); window.TeamController.openPlayerRsvpModal('${team.id}', '${pendingMatchInfo.j}')" 
-                                    style="background: rgba(14, 165, 233, 0.2); border: 1px solid #0ea5e9; color: #38bdf8; padding: 5px 12px; border-radius: 12px; font-size: 0.65rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;"
+                                    style="background: #ccff00; color: #0f172a; font-weight: 950; border: none; box-shadow: 0 4px 14px rgba(204,255,0,0.35); padding: 7px 14px; border-radius: 12px; font-size: 0.72rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;"
                                     title="Responder Convocatoria RSVP"
-                                    onmouseover="this.style.background='rgba(14, 165, 233, 0.35)'; this.style.transform='scale(1.05)';" 
-                                    onmouseout="this.style.background='rgba(14, 165, 233, 0.2)'; this.style.transform='scale(1)';">
+                                    onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(204,255,0,0.5)';" 
+                                    onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 14px rgba(204,255,0,0.35)';">
                                 <i class="fas fa-clipboard-check"></i> RSVP
                             </button>
-                            <i class="fas fa-fire-alt" style="color: #f59e0b; font-size: 1.5rem; opacity: 0.8; animation: pulseGlow 2s infinite;"></i>
+                            <i class="fas fa-fire-alt" style="color: #f59e0b; font-size: 1.5rem; opacity: 0.9; animation: pulseGlow 2s infinite;"></i>
                         </div>
                     </div>
                     ` : ''}
@@ -785,8 +895,9 @@
                     chevron.style.transform = 'rotate(180deg)';
                     chevron.style.color = '#38b000';
                 }
-                card.style.borderColor = 'rgba(56, 176, 0, 0.25)';
-                card.style.boxShadow = '0 10px 25px rgba(56,176,0,0.03)';
+                if (card) {
+                    card.style.boxShadow = '0 12px 30px rgba(15,23,42,0.08)';
+                }
                 if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
             } else {
                 // Colapsar
@@ -794,10 +905,11 @@
                 content.style.opacity = '0';
                 if (chevron) {
                     chevron.style.transform = 'rotate(0deg)';
-                    chevron.style.color = '#cbd5e1';
+                    chevron.style.color = '#64748b';
                 }
-                card.style.borderColor = '#e2e8f0';
-                card.style.boxShadow = '0 4px 18px rgba(0,0,0,0.015)';
+                if (card) {
+                    card.style.boxShadow = '0 6px 20px rgba(15,23,42,0.035)';
+                }
             }
         }
 
