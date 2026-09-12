@@ -1601,7 +1601,7 @@
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
                             <div class="form-group">
                                 <label>MODO DE JUEGO</label>
                                 <select name="pair_mode" class="pro-input">
@@ -1620,6 +1620,17 @@
                                     <option value="finished">🏁 FINALIZADA</option>
                                     <option value="cancelled">⛔ ANULADO</option>
                                 </select>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label><i class="fas fa-signal" style="color: #CCFF00;"></i> NIVEL MÍNIMO</label>
+                                <input type="text" name="level_min" class="pro-input" placeholder="Ej: 3.5">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-signal" style="color: #CCFF00;"></i> NIVEL MÁXIMO</label>
+                                <input type="text" name="level_max" class="pro-input" placeholder="Ej: 4.5">
                             </div>
                         </div>
 
@@ -1811,6 +1822,17 @@
                     </div>
                 </div>
 
+                <div class="form-row-compact">
+                    <div class="form-group">
+                        <label><i class="fas fa-signal"></i> NIVEL MÍNIMO</label>
+                        <input type="text" name="level_min" class="pro-input" placeholder="Ej: 3.5">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-signal"></i> NIVEL MÁXIMO</label>
+                        <input type="text" name="level_max" class="pro-input" placeholder="Ej: 4.5">
+                    </div>
+                </div>
+
                 <!-- Bloque 4: Logística y Precios -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
                     <div class="form-group">
@@ -1995,7 +2017,7 @@
 
             <!-- App Config -->
             <script src="js/firebase-config.js"></script>
-            <script src="js/firebase-init.js?v=5006"></script>
+            <script src="js/firebase-init.js?v=5007"></script>
 
             <!-- CORE ARCHITECTURE (Absolute Priority) -->
             <script src="js/modules/core/Constants.js?v=2000"></script>
@@ -2047,7 +2069,7 @@
 
             <script src="js/utils/RoleService.js"></script>
             <script src="js/modules/admin-users.js?v=1.1"></script>
-            <script src="js/modules/admin-americanas.js"></script>
+            <script src="js/modules/admin-americanas.js?v=5012"></script>
             <script src="js/modules/admin-matches.js"></script>
             <script src="js/modules/admin-results.js"></script>
 
@@ -2057,8 +2079,8 @@
             <script src="js/modules/admin-pairs-ui.js?v=2000"></script>
             <script src="js/modules/admin-dashboard.js"></script>
             <script src="js/modules/admin-analytics.js"></script>
-            <script src="js/modules/common/WhatsAppService.js?v=7015"></script>
-            <script src="js/modules/admin-entrenos.js?v=5010"></script>
+            <script src="js/modules/common/WhatsAppService.js?v=7018"></script>
+            <script src="js/modules/admin-entrenos.js?v=5012"></script>
             <script src="js/modules/admin-open-matches.js?v=3" defer></script>
             <script src="js/modules/admin-database-health.js"></script>
             <script src="js/modules/admin-fix-players.js"></script>

@@ -24,12 +24,50 @@ window.onerror = function (msg, url, line, col, error) {
 };
 
 window.addEventListener('unhandledrejection', function (event) {
+    const reason = event.reason;
+    const msg = (reason && (reason.message || (typeof reason === 'string' ? reason : reason.toString()))) || '';
+    const lowerMsg = msg.toLowerCase();
+
+    // Silenciar errores benignos propios del ciclo de vida móvil, suspensión de pestañas en iOS Safari o cancelaciones de usuario
+    if (
+        lowerMsg.includes('the client has already been terminated') ||
+        lowerMsg.includes('failed-precondition') ||
+        lowerMsg.includes('aborterror') ||
+        lowerMsg.includes('the request was aborted') ||
+        lowerMsg.includes('resizeobserver loop') ||
+        lowerMsg.includes('networkerror') ||
+        lowerMsg.includes('failed to fetch') ||
+        lowerMsg.includes('load failed') ||
+        lowerMsg.includes('quotaexceedederror')
+    ) {
+        console.warn("⚠️ [unhandledrejection] Error benigno o de ciclo de vida móvil suprimido:", msg);
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+        return;
+    }
+
     if (window.PremiumModal) {
         window.PremiumModal.alert({
             title: "🔴 ERROR ASÍNCRONO",
             message: event.reason,
             type: 'danger'
         });
+    }
+});
+
+// Auto-recuperación de Firestore si la pestaña vuelve del segundo plano (ej: tras abrir WhatsApp)
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        if (window.db) {
+            try {
+                const isTerminated = window.db._delegate?._firestoreClient?.asyncQueue?.isShuttingDown;
+                if (isTerminated) {
+                    console.warn("🔄 [FirebaseInit] Cliente Firestore terminado en segundo plano. Recargando para restablecer conexión...");
+                    window.location.reload();
+                }
+            } catch (e) {
+                // Ignore
+            }
+        }
     }
 });
 
