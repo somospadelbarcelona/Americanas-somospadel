@@ -376,6 +376,57 @@
             const roster = team.roster || [];
             const sortedRoster = [...roster].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es', { sensitivity: 'base' }));
 
+            // 👤 Detección Inteligente del Usuario Autenticado en Sesión
+            let authUser = null;
+            try {
+                if (window.Store && typeof window.Store.getState === 'function') {
+                    authUser = window.Store.getState('currentUser');
+                }
+                if (!authUser && window.currentUser) {
+                    authUser = window.currentUser;
+                }
+                if (!authUser && typeof localStorage !== 'undefined') {
+                    const raw = localStorage.getItem('currentUser') || localStorage.getItem('adminUser');
+                    if (raw) authUser = JSON.parse(raw);
+                }
+            } catch (e) {}
+
+            const authRole = String(authUser?.role || '').toLowerCase();
+            const isManagerOrAdmin = ['admin', 'super_admin', 'superadmin', 'admin_player', 'captain'].includes(authRole)
+                || (authUser?.email && (authUser.email.includes('admin') || authUser.email.includes('somospadel')));
+
+            let matchedPlayer = null;
+            if (authUser && (authUser.name || authUser.displayName)) {
+                const rawAuthName = String(authUser.name || authUser.displayName || '').trim();
+                const cleanAuthName = rawAuthName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const authParts = cleanAuthName.split(/\s+/).filter(Boolean);
+
+                // 1. Coincidencia exacta
+                matchedPlayer = sortedRoster.find(p => {
+                    const pName = (typeof p === 'string' ? p : p.name).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                    return pName === cleanAuthName;
+                });
+
+                // 2. Coincidencia por nombre y primer apellido
+                if (!matchedPlayer && authParts.length >= 2) {
+                    matchedPlayer = sortedRoster.find(p => {
+                        const pName = (typeof p === 'string' ? p : p.name).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                        return pName.includes(authParts[0]) && pName.includes(authParts[1]);
+                    });
+                }
+
+                // 3. Coincidencia por primer nombre
+                if (!matchedPlayer && authParts.length >= 1 && authParts[0].length >= 3) {
+                    matchedPlayer = sortedRoster.find(p => {
+                        const pName = (typeof p === 'string' ? p : p.name).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                        return pName.startsWith(authParts[0]);
+                    });
+                }
+            }
+
+            const matchedPlayerName = matchedPlayer ? (typeof matchedPlayer === 'string' ? matchedPlayer : matchedPlayer.name) : null;
+            const isIdentityLocked = Boolean(matchedPlayerName && !isManagerOrAdmin);
+
             const overlay = document.createElement('div');
             overlay.id = 'rsvp-player-modal-overlay';
             overlay.className = 'pm-overlay';
@@ -422,26 +473,64 @@
                         </div>
                     </div>
 
-                    <!-- STEP 1: Select Player Name -->
+                    <!-- STEP 1: Select Player Name / Identity Verification -->
                     <div style="margin-bottom: 18px;">
-                        <label for="rsvp-modal-player-select" style="display: block; font-size: 0.72rem; font-weight: 900; color: #0f172a; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
-                            <i class="fas fa-user-check" style="color: #0ea5e9; margin-right: 4px;"></i> 1. Elige tu nombre del roster:
-                        </label>
-                        <select id="rsvp-modal-player-select" onchange="window.TeamController.onRsvpPlayerSelected('${team.id}', '${jNum}', this.value)" 
-                                style="width: 100%; padding: 12px 14px; border-radius: 16px; border: 2px solid #e2e8f0; font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 800; color: #0f172a; background: #f8fafc; outline: none; cursor: pointer; transition: border-color 0.2s;">
-                            <option value="">-- Selecciona quién eres --</option>
-                            ${sortedRoster.map(p => {
-                                const pName = typeof p === 'string' ? p : p.name;
-                                const pPts = typeof p === 'object' && p.pts !== undefined ? ` (${p.pts} pts)` : '';
-                                return `<option value="${pName}">${pName}${pPts}</option>`;
-                            }).join('')}
-                            <option value="__custom__">➕ No estoy en la lista (Escribir mi nombre)</option>
-                        </select>
-                        <div id="rsvp-custom-name-box" style="display: none; margin-top: 8px;">
-                            <input type="text" id="rsvp-modal-custom-player-name" placeholder="Escribe tu nombre y apellido..." 
-                                   style="width: 100%; padding: 10px 14px; border-radius: 14px; border: 2px solid #0ea5e9; font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 800; color: #0f172a; outline: none; background: #f0f9ff; box-sizing: border-box;">
-                        </div>
-                        <div id="rsvp-player-already-notice" style="display: none; font-size: 0.62rem; color: #0ea5e9; font-weight: 800; margin-top: 5px; padding: 4px 8px; background: rgba(14,165,233,0.08); border-radius: 8px;"></div>
+                        ${isIdentityLocked ? `
+                            <!-- 🔒 JUGADOR IDENTIFICADO: Bloqueado contra suplantación -->
+                            <div style="font-size: 0.72rem; font-weight: 900; color: #0f172a; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
+                                <i class="fas fa-user-shield" style="color: #38b000; margin-right: 4px;"></i> 1. Tu Identidad Verificada:
+                            </div>
+                            <div style="background: linear-gradient(135deg, rgba(56,176,0,0.08) 0%, rgba(112,224,0,0.04) 100%); border: 2px solid #38b000; border-radius: 18px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(56,176,0,0.06);">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #38b000; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 2px 8px rgba(56,176,0,0.3); flex-shrink: 0;">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.58rem; color: #15803d; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">Sesión Activa</div>
+                                        <div style="font-size: 1.05rem; color: #0f172a; font-weight: 950; letter-spacing: -0.3px; line-height: 1.1;">${matchedPlayerName}</div>
+                                        <div style="font-size: 0.55rem; color: #64748b; font-weight: 700; margin-top: 2px;">No transferible • Respondiendo tu disponibilidad personal</div>
+                                    </div>
+                                </div>
+                                <span style="font-size: 0.58rem; background: #38b000; color: white; font-weight: 900; padding: 4px 8px; border-radius: 10px; display: flex; align-items: center; gap: 4px;">
+                                    <i class="fas fa-lock"></i> IDENTIFICADO
+                                </span>
+                            </div>
+                            <input type="hidden" id="rsvp-modal-player-select" value="${matchedPlayerName}">
+                            <div id="rsvp-player-already-notice" style="display: none; font-size: 0.62rem; color: #0ea5e9; font-weight: 800; margin-top: 6px; padding: 6px 10px; background: rgba(14,165,233,0.08); border-radius: 8px;"></div>
+                        ` : `
+                            <!-- MODO CAPITÁN / SELECCIÓN MANUAL SI NO ESTÁ LOGUEADO O ES ADMIN -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <label for="rsvp-modal-player-select" style="font-size: 0.72rem; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <i class="fas fa-user-check" style="color: #0ea5e9; margin-right: 4px;"></i> 1. Elige tu nombre del roster:
+                                </label>
+                                ${isManagerOrAdmin ? `
+                                    <span style="font-size: 0.55rem; background: rgba(245,158,11,0.15); color: #d97706; font-weight: 900; padding: 2px 6px; border-radius: 6px; text-transform: uppercase;">
+                                        👑 Modo Capitán
+                                    </span>
+                                ` : ''}
+                            </div>
+                            ${isManagerOrAdmin ? `
+                                <div style="font-size: 0.58rem; color: #b45309; font-weight: 800; margin-bottom: 6px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); padding: 5px 8px; border-radius: 8px;">
+                                    🛡️ <strong>Capitán/Admin:</strong> Tienes permiso para registrar la disponibilidad de cualquier jugador del equipo.
+                                </div>
+                            ` : ''}
+                            <select id="rsvp-modal-player-select" onchange="window.TeamController.onRsvpPlayerSelected('${team.id}', '${jNum}', this.value)" 
+                                    style="width: 100%; padding: 12px 14px; border-radius: 16px; border: 2px solid #e2e8f0; font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 800; color: #0f172a; background: #f8fafc; outline: none; cursor: pointer; transition: border-color 0.2s;">
+                                <option value="">-- Selecciona quién eres --</option>
+                                ${sortedRoster.map(p => {
+                                    const pName = typeof p === 'string' ? p : p.name;
+                                    const pPts = typeof p === 'object' && p.pts !== undefined ? ` (${p.pts} pts)` : '';
+                                    const isSelected = matchedPlayerName && pName === matchedPlayerName ? 'selected' : '';
+                                    return `<option value="${pName}" ${isSelected}>${pName}${pPts}</option>`;
+                                }).join('')}
+                                <option value="__custom__">➕ No estoy en la lista (Escribir mi nombre)</option>
+                            </select>
+                            <div id="rsvp-custom-name-box" style="display: none; margin-top: 8px;">
+                                <input type="text" id="rsvp-modal-custom-player-name" placeholder="Escribe tu nombre y apellido..." 
+                                       style="width: 100%; padding: 10px 14px; border-radius: 14px; border: 2px solid #0ea5e9; font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 800; color: #0f172a; outline: none; background: #f0f9ff; box-sizing: border-box;">
+                            </div>
+                            <div id="rsvp-player-already-notice" style="display: none; font-size: 0.62rem; color: #0ea5e9; font-weight: 800; margin-top: 5px; padding: 4px 8px; background: rgba(14,165,233,0.08); border-radius: 8px;"></div>
+                        `}
                     </div>
 
                     <!-- STEP 2: Choose Availability (3 Big Buttons) -->
@@ -526,6 +615,13 @@
             `;
 
             document.body.appendChild(overlay);
+
+            // Si el jugador está identificado o preseleccionado, cargar automáticamente su respuesta previa si ya votó
+            if (matchedPlayerName) {
+                setTimeout(() => {
+                    this.onRsvpPlayerSelected(team.id, jNum, matchedPlayerName);
+                }, 60);
+            }
 
             // Cerrar al pulsar el fondo oscuro
             overlay.addEventListener('click', (e) => {
