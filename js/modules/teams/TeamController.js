@@ -234,8 +234,24 @@
                     newTeams.forEach(firestoreTeam => {
                         const localIndex = mergedTeams.findIndex(t => t.id === firestoreTeam.id);
                         if (localIndex !== -1) {
+                            const existingCaptain = mergedTeams[localIndex].captain;
+                            const existingSubcaptain = mergedTeams[localIndex].subcaptain;
                             mergedTeams[localIndex] = { ...mergedTeams[localIndex], ...firestoreTeam };
+
+                            // Si Firestore no tiene capitán válido o trae genérico, mantener el oficial
+                            if (!mergedTeams[localIndex].captain || 
+                                mergedTeams[localIndex].captain.includes('Pendiente') || 
+                                mergedTeams[localIndex].captain.includes('definir')) {
+                                mergedTeams[localIndex].captain = existingCaptain || (window.getTeamCaptain ? window.getTeamCaptain(mergedTeams[localIndex]) : 'Capitán por definir');
+                            }
+                            if (!mergedTeams[localIndex].subcaptain || 
+                                mergedTeams[localIndex].subcaptain.includes('Pendiente') || 
+                                mergedTeams[localIndex].subcaptain.includes('definir')) {
+                                mergedTeams[localIndex].subcaptain = existingSubcaptain || (window.getTeamSubcaptain ? window.getTeamSubcaptain(mergedTeams[localIndex]) : 'Por definir');
+                            }
                         } else {
+                            if (window.getTeamCaptain) firestoreTeam.captain = window.getTeamCaptain(firestoreTeam);
+                            if (window.getTeamSubcaptain) firestoreTeam.subcaptain = window.getTeamSubcaptain(firestoreTeam);
                             mergedTeams.push(firestoreTeam);
                         }
                     });
@@ -1080,8 +1096,7 @@
                                                 <div>
                                                     <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Capitán</div>
                                                     <div style="font-size: 0.8rem; font-weight: 900; color: #1e293b;">
-                                                        ${(team.name.includes('3MB') || team.name.includes('3M B')) ? 'Miguel Ángel Méndez Ruiz' : 
-                                                          (team.name.includes('3MA') || team.name.includes('3M A')) ? 'Abraham Rosell' : (team.captain || 'Pendiente')}
+                                                        ${window.getTeamCaptain ? window.getTeamCaptain(team) : (team.captain || 'Capitán por definir')}
                                                     </div>
                                                 </div>
                                                 <a href="https://wa.me/?text=Hola%20Capitán" target="_blank" style="width: 28px; height: 28px; background: rgba(37, 211, 102, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #25D366; text-decoration: none;">
@@ -1093,9 +1108,7 @@
                                                 <div>
                                                     <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Subcapitán</div>
                                                     <div style="font-size: 0.8rem; font-weight: 900; color: #1e293b;">
-                                                        ${(team.name.includes('3MB') || team.name.includes('3M B')) ? 'Alex Cuadra Cabezas' : 
-                                                          (team.name.includes('3MA') || team.name.includes('3M A')) ? 'Miquel Muñoz' : 
-                                                          (team.name.includes('4MA') || team.name.includes('4M A') || team.name === 'SOMOS PÁDEL BCN 4M') ? 'Alejandro Coscolín' : 'Por definir'}
+                                                        ${window.getTeamSubcaptain ? window.getTeamSubcaptain(team) : (team.subcaptain || 'Por definir')}
                                                     </div>
                                                 </div>
                                                 <a href="https://wa.me/?text=Hola%20Subcapitán" target="_blank" style="width: 28px; height: 28px; background: rgba(37, 211, 102, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #25D366; text-decoration: none;">
@@ -2166,8 +2179,9 @@
                                 }
 
                                 // 6. Fallback al capitán si no hay sesión
-                                if (team.captain) {
-                                    const cleanCapName = cleanWithSpaces(team.captain);
+                                const officialCap = window.getTeamCaptain ? window.getTeamCaptain(team) : team.captain;
+                                if (officialCap && !officialCap.toLowerCase().includes('definir')) {
+                                    const cleanCapName = cleanWithSpaces(officialCap);
                                     const matchedCap = team.roster.find(p => cleanWithSpaces(p.name) === cleanCapName || cleanWithSpaces(p.name).includes(cleanCapName));
                                     if (matchedCap) return matchedCap;
                                 }

@@ -241,9 +241,7 @@
             const pjCount = team.stats ? team.stats.pj : 0;
             const ppCount = team.stats ? team.stats.pp : 0;
 
-            const cleanCap = (team.name.includes('3MB') || team.name.includes('3M B')) ? 'Miguel Ángel Méndez' : 
-                             (team.name.includes('3MA') || team.name.includes('3M A')) ? 'Abraham Rosell' : 
-                             (team.captain && !team.captain.includes('Pendiente') ? team.captain : 'Capitán por definir');
+            const cleanCap = window.getTeamCaptain ? window.getTeamCaptain(team) : (team.captain || 'Capitán por definir');
                              
             const cleanCapLower = cleanCap.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
@@ -840,14 +838,9 @@
                 const teamName = (team.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 const captain = (team.captain || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 
-                // Mapear capitanes y subcapitanes personalizados por si acaso
-                const cleanCap = (team.name.includes('3MB') || team.name.includes('3M B')) ? 'miguel angel mendez' : 
-                                 (team.name.includes('3MA') || team.name.includes('3M A')) ? 'abraham rosell' : captain;
-                
-                const cleanSubcap = (team.name.includes('3MB') || team.name.includes('3M B')) ? 'alex cuadra cabezas' : 
-                                    (team.name.includes('3MA') || team.name.includes('3M A')) ? 'miquel munoz' : 
-                                    (team.name.includes('4MA') || team.name.includes('4M A') || team.name === 'SOMOS PÁDEL BCN 4M') ? 'alejandro coscolin' : 
-                                    (team.name.includes('4FA') || team.name === 'SOMOS PÁDEL BCN 4FA') ? 'nadia flora costa' : '';
+                // Mapear capitanes y subcapitanes oficiales
+                const cleanCap = (window.getTeamCaptain ? window.getTeamCaptain(team) : (team.captain || '')).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                const cleanSubcap = (window.getTeamSubcaptain ? window.getTeamSubcaptain(team) : (team.subcaptain || '')).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
                 // Comprobar si alguno de los jugadores del roster coincide
                 const matchesRoster = team.roster && team.roster.some(player => {
@@ -2027,9 +2020,7 @@
             const roster = team.roster || [];
             
             // Captain sanitization
-            const cleanCap = (team.name.includes('3MB') || team.name.includes('3M B')) ? 'Miguel Ángel Méndez' : 
-                             (team.name.includes('3MA') || team.name.includes('3M A')) ? 'Abraham Rosell' : 
-                             (team.captain && !team.captain.includes('Pendiente') ? team.captain : 'Capitán por definir');
+            const cleanCap = window.getTeamCaptain ? window.getTeamCaptain(team) : (team.captain || 'Capitán por definir');
             const cleanCapLower = cleanCap.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
             let maxPts = 0;

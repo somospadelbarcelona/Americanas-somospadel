@@ -2734,4 +2734,70 @@
     "link": "about:blank"
   }
 ];
+
+    window.OFFICIAL_TEAM_STAFF = {
+        'somos-padel-bcn-3ma': { captain: 'Abraham Rosell Claveras', subcaptain: 'Miquel Muñoz Gaudes' },
+        'somos-padel-bcn-3m-b': { captain: 'Miguel Ángel Méndez Ruiz', subcaptain: 'Alex Cuadra Cabezas' },
+        'somos-padel-bcn-4m': { captain: 'Miguel Muñoz Melero', subcaptain: 'Alejandro Coscolín' },
+        'somos-padel-bcn-4xa': { captain: 'Sonia Rodriguez', subcaptain: 'Por definir' },
+        'somos-padel-bcn-4xb': { captain: 'Javier Frauca Ferre', subcaptain: 'Por definir' },
+        'somos-padel-bcn-3xa': { captain: 'Toni Millan Deu', subcaptain: 'Por definir' },
+        'somos-padel-bcn-4fa': { captain: 'Gemma Saavedra', subcaptain: 'Nadia Flora Costa' },
+        'somos-padel-bcn-2f': { captain: 'Silvia Serrano Pinilla', subcaptain: 'Por definir' }
+    };
+
+    window.getTeamCaptain = function(team) {
+        if (!team) return 'Capitán por definir';
+        const id = (team.id || '').toLowerCase();
+        const name = (team.name || '').toUpperCase();
+        
+        // 1. Por ID directo en el mapa oficial
+        if (window.OFFICIAL_TEAM_STAFF[id] && window.OFFICIAL_TEAM_STAFF[id].captain) {
+            return window.OFFICIAL_TEAM_STAFF[id].captain;
+        }
+        
+        // 2. Por coincidencia de patrones en ID o nombre
+        if (id.includes('3ma') || name.includes('3MA') || name.includes('3M A')) return 'Abraham Rosell Claveras';
+        if (id.includes('3mb') || id.includes('3m-b') || name.includes('3MB') || name.includes('3M B')) return 'Miguel Ángel Méndez Ruiz';
+        if (id.includes('4m') || name.includes('4M') || name.includes('4 M')) return 'Miguel Muñoz Melero';
+        if (id.includes('4xa') || name.includes('4XA') || name.includes('4X A')) return 'Sonia Rodriguez';
+        if (id.includes('4xb') || name.includes('4XB') || name.includes('4X B')) return 'Javier Frauca Ferre';
+        if (id.includes('3xa') || id.includes('3x') || name.includes('3X') || name.includes('3 X')) return 'Toni Millan Deu';
+        if (id.includes('4fa') || name.includes('4FA') || name.includes('4F A')) return 'Gemma Saavedra';
+        if (id.includes('2f') || name.includes('2F') || name.includes('2 F')) return 'Silvia Serrano Pinilla';
+
+        // 3. Si viene definido en el objeto team y no es genérico
+        if (team.captain && !team.captain.toLowerCase().includes('pendiente') && !team.captain.toLowerCase().includes('definir')) {
+            return team.captain;
+        }
+        return 'Capitán por definir';
+    };
+
+    window.getTeamSubcaptain = function(team) {
+        if (!team) return 'Por definir';
+        const id = (team.id || '').toLowerCase();
+        const name = (team.name || '').toUpperCase();
+
+        // 1. Por ID directo en el mapa oficial
+        if (window.OFFICIAL_TEAM_STAFF[id] && window.OFFICIAL_TEAM_STAFF[id].subcaptain && window.OFFICIAL_TEAM_STAFF[id].subcaptain !== 'Por definir') {
+            return window.OFFICIAL_TEAM_STAFF[id].subcaptain;
+        }
+
+        // 2. Por coincidencia de patrones
+        if (id.includes('3ma') || name.includes('3MA') || name.includes('3M A')) return 'Miquel Muñoz Gaudes';
+        if (id.includes('3mb') || id.includes('3m-b') || name.includes('3MB') || name.includes('3M B')) return 'Alex Cuadra Cabezas';
+        if (id.includes('4m') || name.includes('4M') || name.includes('4 M')) return 'Alejandro Coscolín';
+        if (id.includes('4fa') || name.includes('4FA') || name.includes('4F A')) return 'Nadia Flora Costa';
+
+        if (team.subcaptain && !team.subcaptain.toLowerCase().includes('pendiente') && !team.subcaptain.toLowerCase().includes('definir')) {
+            return team.subcaptain;
+        }
+        return 'Por definir';
+    };
+
+    // Asegurar que cada equipo de ClubTeamsData tenga su capitán y subcapitán asignado
+    window.ClubTeamsData.forEach(t => {
+        t.captain = window.getTeamCaptain(t);
+        t.subcaptain = window.getTeamSubcaptain(t);
+    });
 })();
