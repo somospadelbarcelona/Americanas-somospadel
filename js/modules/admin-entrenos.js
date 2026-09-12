@@ -11,6 +11,7 @@ window.AdminViews = window.AdminViews || {};
 // 1. GESTOR DE ENTRENOS (Listado y Filtros)
 // 1. GESTOR DE ENTRENOS (Listado y Filtros)
 window.AdminViews.entrenos_mgmt = async function () {
+    const navId = window._currentAdminNavId;
     const content = document.getElementById('content-area');
     const titleEl = document.getElementById('page-title');
 
@@ -18,7 +19,9 @@ window.AdminViews.entrenos_mgmt = async function () {
 
     // Diagnostic Helper
     const updateStatus = (msg) => {
-        content.innerHTML = `<div class="loading-container"><div class="loader"></div><p>${msg}</p></div>`;
+        if (navId === window._currentAdminNavId) {
+            content.innerHTML = `<div class="loading-container"><div class="loader"></div><p>${msg}</p></div>`;
+        }
     };
 
     updateStatus("🚀 Iniciando Gestor...");
@@ -29,18 +32,33 @@ window.AdminViews.entrenos_mgmt = async function () {
         if (!window.AppConstants) throw new Error("AppConstants no cargado");
         if (!window.FirebaseDB) throw new Error("FirebaseDB no cargado");
 
-        // Force reload
-        if (window.CacheService) window.CacheService.remove('entrenos', 'all');
-
         updateStatus("📡 Conectando con Base de Datos...");
 
-        // Race Condition: 8s Timeout vs Data Fetch
-        const fetchPromise = EventService.getAll(AppConstants.EVENT_TYPES.ENTRENO);
-        const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("⌛ Tiempo de espera agotado (8s). Revisa tu conexión.")), 8000)
-        );
+        // Fetch resiliente: soporte SWR y fallback a caché en caso de red lenta
+        let entrenos = [];
+        try {
+            const fetchPromise = EventService.getAll(AppConstants.EVENT_TYPES.ENTRENO);
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("⌛ Tiempo de espera de red (20s).")), 20000)
+            );
+            entrenos = await Promise.race([fetchPromise, timeoutPromise]);
+        } catch (fetchErr) {
+            console.warn("⚠️ [entrenos_mgmt] Red lenta o error, comprobando caché local:", fetchErr.message);
+            if (window.CacheService) {
+                const cached = await window.CacheService.get('entrenos', 'all');
+                if (cached && Array.isArray(cached) && cached.length > 0) {
+                    console.log("🛡️ [entrenos_mgmt] Recuperados entrenos desde caché local.");
+                    entrenos = cached;
+                }
+            }
+            if (!entrenos || !entrenos.length) throw fetchErr;
+        }
 
-        const entrenos = await Promise.race([fetchPromise, timeoutPromise]);
+        // Si el usuario navegó a otra vista mientras cargaban los datos, salir sin sobreescribir pantalla
+        if (navId !== window._currentAdminNavId) {
+            console.log(`⚠️ [entrenos_mgmt] Token de navegación caducado (#${navId} -> #${window._currentAdminNavId}), omitiendo render.`);
+            return;
+        }
 
         updateStatus("✅ Datos recibidos. Procesando...");
 
@@ -113,6 +131,10 @@ window.AdminViews.entrenos_mgmt = async function () {
         setupFilters();
 
     } catch (e) {
+        if (navId !== window._currentAdminNavId) {
+            console.warn(`⚠️ [entrenos_mgmt] Error ignorado porque la vista activa es #${window._currentAdminNavId}:`, e.message);
+            return;
+        }
         console.error("Error en Gestor Entrenos:", e);
         content.innerHTML = `<div class="error-box" style="padding:40px; text-align:center;">
             <i class="fas fa-exclamation-triangle" style="font-size:3rem; color:#ff4444; margin-bottom:20px;"></i>

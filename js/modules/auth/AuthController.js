@@ -100,7 +100,7 @@
                             // Navegar al Dashboard inmediatamente para pintar el contenido real en el DOM
                             // antes de mostrar la pantalla y evitar ver esqueletos
                             if (window.Router) {
-                                window.Router.navigate('dashboard');
+                                window.Router.navigate('dashboard', false, true);
                             }
 
                             if (authModal) {

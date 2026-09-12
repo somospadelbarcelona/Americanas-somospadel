@@ -36,7 +36,8 @@
 
             // Determinar la ruta inicial desde el hash de la URL (Deep Linking)
             const initialHash = window.location.hash.replace('#', '');
-            this.currentRoute = this.routes[initialHash] ? initialHash : 'dashboard';
+            const targetRoute = this.routes[initialHash] ? initialHash : 'dashboard';
+            this.currentRoute = null; // No bloquear la primera navegación
 
             // Handle browser navigation
             window.onpopstate = (event) => {
@@ -50,6 +51,17 @@
             };
 
             this.init();
+
+            // Auto-cargar la ruta inicial (INICIO) en cuanto el DOM esté disponible
+            const launchInitialRoute = () => {
+                this.navigate(targetRoute, false, true);
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', launchInitialRoute);
+            } else {
+                setTimeout(launchInitialRoute, 0);
+            }
         }
 
         init() {
@@ -65,13 +77,21 @@
             }
         }
 
-        navigate(route, isBack = false) {
-            if (this.currentRoute === route && !isBack) return;
+        navigate(route, isBack = false, force = false) {
+            const content = document.getElementById('content-area');
+            const needsRender = !content || 
+                content.querySelector('.match-promo-card') !== null || 
+                (route === 'dashboard' && !content.querySelector('.dashboard-v2-container'));
 
-            console.log(`[Router] Transitioning: ${this.currentRoute} -> ${route}`);
+            if (this.currentRoute === route && !isBack && !force && !needsRender) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            console.log(`[Router] Transitioning: ${this.currentRoute} -> ${route} (force: ${force})`);
 
             // === MEMORY & RESOURCE CLEANUP ===
-            this.cleanupPreviousRoute();
+            this.cleanupPreviousRoute(route);
 
             this.currentRoute = route;
 
@@ -100,7 +120,9 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        cleanupPreviousRoute() {
+        cleanupPreviousRoute(newRoute) {
+            if (this.currentRoute && this.currentRoute === newRoute) return;
+
             const controllersToCleanup = [
                 { name: 'DashboardView', routes: ['dashboard'] },
                 { name: 'DashboardController', routes: ['dashboard'] },
@@ -186,7 +208,7 @@
                 const data = window.Store.getState('dashboardData');
                 window.DashboardView.render(data || { activeCourts: 0 });
             } else {
-                if (attempts >= 30) { // 30 intentos * 100ms = 3 segundos
+                if (attempts >= 50) { // 50 intentos * 100ms = 5 segundos
                     console.error("❌ [Router Failsafe] DashboardView o Store no cargaron a tiempo. Abortando reintentos.");
                     this.renderError('dashboard', new Error("No se pudo cargar la vista de inicio a tiempo. Por favor, comprueba tu conexión o recarga la página."));
                     return;

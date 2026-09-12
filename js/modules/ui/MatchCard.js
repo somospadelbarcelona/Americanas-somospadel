@@ -5,9 +5,9 @@
 (function () {
     window.MatchCard = {
         renderOdometer(value, isWinner, id, type) {
-            const strip = Array.from({ length: 11 }, (_, i) => `<span>${i < 10 ? i : '0'}</span>`).join('');
+            const strip = Array.from({ length: 11 }, (_, i) => `<span style="${isWinner ? 'color: #000000;' : 'color: #0f172a;'} font-weight: 950;">${i < 10 ? i : '0'}</span>`).join('');
             return `
-                <div id="odometer-${type}-${id}" class="odometer-container ${isWinner ? 'winner' : ''}">
+                <div id="odometer-${type}-${id}" class="odometer-container ${isWinner ? 'winner' : ''}" style="${!isWinner ? 'background: #e2e8f0; border: 1px solid #cbd5e1;' : ''}">
                     <div class="odometer-digit-strip" style="transform: translateY(-${(value % 10) * 50}px)">
                         ${strip}
                     </div>
@@ -22,12 +22,20 @@
             const strip = container.querySelector('.odometer-digit-strip');
             if (strip) {
                 strip.style.transform = `translateY(-${(newValue % 10) * 50}px)`;
+                const spans = strip.querySelectorAll('span');
+                spans.forEach(s => {
+                    s.style.color = isWinner ? '#000000' : '#0f172a';
+                });
             }
 
             if (isWinner) {
                 container.classList.add('winner');
+                container.style.background = '';
+                container.style.borderColor = '';
             } else {
                 container.classList.remove('winner');
+                container.style.background = '#e2e8f0';
+                container.style.borderColor = '#cbd5e1';
             }
         },
         render(match, options = {}) {
@@ -46,14 +54,27 @@
             const isPartA = currentUser && (match.team_a_ids?.includes(currentUser.uid) || safeTeamA.toLowerCase().includes((currentUser.name || '').toLowerCase()));
             const isPartB = currentUser && (match.team_b_ids?.includes(currentUser.uid) || safeTeamB.toLowerCase().includes((currentUser.name || '').toLowerCase()));
             const isMyMatch = isPartA || isPartB;
-            const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain', 'capitan', 'capitanes', 'organizador', 'organizadores'].includes((currentUser?.role || '').toLowerCase());
+            const isAdmin = options.isControlTower || ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain', 'capitan', 'capitanes', 'organizador', 'organizadores'].includes((currentUser?.role || '').toLowerCase());
 
             const isFinished = match.status === 'finished' || match.status === 'finalizado' || match.isFinished === true;
-            const isLive = (eventStatus === 'live' || eventStatus === 'adjusting') && !isFinished;
+            const isLive = (eventStatus === 'live' || eventStatus === 'adjusting' || options.isControlTower) && !isFinished;
 
             let statusBadge = '';
+            const canEdit = options.canEdit || options.isControlTower || ((eventStatus === 'live' || eventStatus === 'adjusting') && currentUser);
+            const canUnlock = options.canUnlock || options.isControlTower || isAdmin || isMyMatch || canEdit;
+
             if (isFinished) {
-                statusBadge = '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 950; font-size: 0.6rem; letter-spacing: 0.5px; text-transform:uppercase;">FINALIZADO</span>';
+                statusBadge = `
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 950; font-size: 0.6rem; letter-spacing: 0.5px; text-transform:uppercase;">FINALIZADO</span>
+                        ${canUnlock ? `
+                            <button onclick="window.ControlTowerView.unlockMatch('${match.id}')" title="Corregir resultado"
+                                    style="background: #ffffff; color: #0284c7; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 10px; font-weight: 900; font-size: 0.6rem; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);">
+                                ✏️ EDITAR
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
             } else if (isLive) {
                 statusBadge = '<span class="status-badge-live" style="animation: pulse 1s infinite alternate;">⚡ EN JUEGO</span>';
             } else {
@@ -68,7 +89,7 @@
             let cardBg = '#ffffff';
 
             if (isFinished) {
-                cardStyle = 'border: 1px solid #e2e8f0; opacity: 0.6; filter: grayscale(100%); z-index: 1;';
+                cardStyle = 'border: 1px solid #e2e8f0; z-index: 1;';
                 cardBg = '#f8fafc';
             } else if (isMyMatch && isLive) {
                 cardStyle = 'border: 3px solid #72a800; box-shadow: 0 15px 45px rgba(114, 168, 0, 0.2); transform: scale(1.03); z-index: 10;';
@@ -77,14 +98,24 @@
             const winnerA = isFinished && sA > sB;
             const winnerB = isFinished && sB > sA;
 
-
             // Action Area logic
             let actionArea = '';
-            const canEdit = (eventStatus === 'live' || eventStatus === 'adjusting') && currentUser;            if (isFinished && !isAdmin) {
-                const userDelta = isPartA ? (match.delta_a || 0) : (match.delta_b || 0);
+            if (isFinished) {
                 actionArea = `
-                    <div style="margin-top: 10px; padding: 8px; background: #f1f5f9; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center;">
-                        <span style="font-size: 0.7rem; color: #64748b; font-weight: 700;">PARTIDO FINALIZADO</span>
+                    <div style="margin-top: 12px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1rem;">🏁</span>
+                            <div style="display: flex; flex-direction: column;">
+                                <span style="font-size: 0.7rem; color: #0a192f; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">Resultado Confirmado</span>
+                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 700;">Final: <b>${sA} - ${sB}</b> ${winnerA ? `(Gana ${safeTeamA})` : (winnerB ? `(Gana ${safeTeamB})` : '')}</span>
+                            </div>
+                        </div>
+                        ${canUnlock ? `
+                            <button onclick="window.ControlTowerView.unlockMatch('${match.id}')"
+                                    style="background: #ffffff; color: #0284c7; border: 1px solid #bae6fd; padding: 7px 14px; border-radius: 10px; font-weight: 950; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(2,132,199,0.12); transition: all 0.2s;">
+                                ✏️ Corregir Marcador
+                            </button>
+                        ` : ''}
                     </div>
                 `;
             } else if (canEdit || isAdmin) {

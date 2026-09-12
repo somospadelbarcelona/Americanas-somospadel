@@ -171,11 +171,28 @@ const FirebaseDB = {
             if (!db) throw new Error("Firebase DB not initialized yet");
 
             const fetchFn = async () => {
-                const snapshot = await db.collection('players').get();
-                return snapshot.docs.map(doc => {
-                    const data = doc.data();
-                    return { ...data, id: doc.id, uid: data.uid || doc.id };
-                });
+                try {
+                    const snapshot = await db.collection('players').get();
+                    return snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return { ...data, id: doc.id, uid: data.uid || doc.id };
+                    });
+                } catch (err) {
+                    console.warn("⚠️ [fetchFn] Firestore server fetch failed, attempting offline cache fallback:", err.message);
+                    try {
+                        const cacheSnapshot = await db.collection('players').get({ source: 'cache' });
+                        if (cacheSnapshot && !cacheSnapshot.empty) {
+                            console.log("🛡️ [fetchFn] Retrieved", cacheSnapshot.size, "players from Firestore offline cache.");
+                            return cacheSnapshot.docs.map(doc => {
+                                const data = doc.data();
+                                return { ...data, id: doc.id, uid: data.uid || doc.id };
+                            });
+                        }
+                    } catch (cacheErr) {
+                        console.warn("⚠️ [fetchFn] Firestore offline cache not available:", cacheErr.message);
+                    }
+                    throw err;
+                }
             };
 
             // === CONDITIONAL SYNC TOKEN CACHE VALIDATION ===
@@ -211,9 +228,25 @@ const FirebaseDB = {
                 return await window.CacheService.swr('players', 'all', fetchFn, null, 1000 * 60 * 15);
             }
 
-            const fresh = await fetchFn();
-            if (window.CacheService) window.CacheService.set('players', 'all', fresh);
-            return fresh;
+            try {
+                const fresh = await fetchFn();
+                if (window.CacheService) window.CacheService.set('players', 'all', fresh);
+                return fresh;
+            } catch (networkErr) {
+                console.warn("⚠️ [players.getAll] Network fetch failed, checking local caches:", networkErr.message);
+                if (window.CacheService) {
+                    const cached = await window.CacheService.get('players', 'all');
+                    if (cached && Array.isArray(cached) && cached.length > 0) {
+                        console.log("🛡️ [players.getAll] Recovered", cached.length, "players from IndexedDB CacheService.");
+                        return cached;
+                    }
+                }
+                if (window.allUsersCache && Array.isArray(window.allUsersCache) && window.allUsersCache.length > 0) {
+                    console.log("🛡️ [players.getAll] Recovered players from memory cache.");
+                    return window.allUsersCache;
+                }
+                throw networkErr;
+            }
         },
 
         async getById(id) {

@@ -1,0 +1,1877 @@
+[
+  {
+    "id": "vBEe0oLV8oUtwIV43Zwr",
+    "round": 1,
+    "court": 1,
+    "teamA": [
+      "OCTAVI NAVARRO CARBONELL",
+      "JOEL SANCHEZ PORTILLO"
+    ],
+    "teamB": [
+      "DAVID COCA PINÉ",
+      "ABRAHAM ROSELL CLAVERAS"
+    ],
+    "scoreA": 2,
+    "scoreB": 4,
+    "status": "finished",
+    "raw": {
+      "teamB": {
+        "stringValue": ""
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_625882517"
+            },
+            {
+              "stringValue": "u_656989230"
+            }
+          ]
+        }
+      },
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "DAVID COCA PINÉ"
+            },
+            {
+              "stringValue": "ABRAHAM ROSELL CLAVERAS"
+            }
+          ]
+        }
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "round": {
+        "integerValue": "1"
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_650521668"
+            },
+            {
+              "stringValue": "u_687806479"
+            }
+          ]
+        }
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "OCTAVI NAVARRO CARBONELL"
+            },
+            {
+              "stringValue": "JOEL SANCHEZ PORTILLO"
+            }
+          ]
+        }
+      },
+      "court": {
+        "integerValue": "1"
+      },
+      "createdAt": {
+        "stringValue": "2026-09-06T12:19:50.751Z"
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "created_at": {
+        "timestampValue": "2026-09-06T12:19:51.088Z"
+      },
+      "score_b": {
+        "integerValue": "4"
+      },
+      "score_a": {
+        "integerValue": "2"
+      },
+      "status": {
+        "stringValue": "finished"
+      },
+      "processed_at": {
+        "stringValue": "2026-09-06T16:19:25.215Z"
+      },
+      "delta_a": {
+        "doubleValue": -0.038
+      },
+      "delta_b": {
+        "doubleValue": 0.038
+      }
+    }
+  },
+  {
+    "id": "Gyh4OwBaa9iYmTRcj0fs",
+    "round": 1,
+    "court": 2,
+    "teamA": [
+      "TONI MILLÁN DEU",
+      "ERNESTO RODERA"
+    ],
+    "teamB": [
+      "ALEJANDRO COSCOLÍN",
+      "DAVID NAVEA VIDA"
+    ],
+    "scoreA": 5,
+    "scoreB": 3,
+    "status": "finished",
+    "raw": {
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "ALEJANDRO COSCOLÍN"
+            },
+            {
+              "stringValue": "DAVID NAVEA VIDA"
+            }
+          ]
+        }
+      },
+      "court": {
+        "integerValue": "2"
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "wN7cOTCl3Vg3ZWCLfeha"
+            },
+            {
+              "stringValue": "u_605036686"
+            }
+          ]
+        }
+      },
+      "teamB": {
+        "stringValue": ""
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_619730816"
+            },
+            {
+              "stringValue": "u_648096123"
+            }
+          ]
+        }
+      },
+      "createdAt": {
+        "stringValue": "2026-09-06T12:19:51.164Z"
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "TONI MILLÁN DEU"
+            },
+            {
+              "stringValue": "ERNESTO RODERA"
+            }
+          ]
+        }
+      },
+      "round": {
+        "integerValue": "1"
+      },
+      "created_at": {
+        "timestampValue": "2026-09-06T12:19:51.454Z"
+      },
+      "confirmations": {
+        "mapValue": {
+          "fields": {
+            "u_648096123": {
+              "booleanValue": true
+            },
+            "wN7cOTCl3Vg3ZWCLfeha": {
+              "booleanValue": true
+            }
+          }
+        }
+      },
+      "score_a": {
+        "integerValue": "5"
+      },
+      "score_b": {
+        "integerValue": "3"
+      },
+      "status": {
+        "stringValue": "finished"
+      },
+      "processed_at": {
+        "stringValue": "2026-09-06T16:19:38.138Z"
+      },
+      "delta_a": {
+        "doubleValue": 0.038
+      },
+      "delta_b": {
+        "doubleValue": -0.037
+      }
+    }
+  },
+  {
+    "id": "Z2BEEyoJkz1VMEq54CZ9",
+    "round": 1,
+    "court": 3,
+    "teamA": [
+      "MANUEL GAMERO PLAZA",
+      "PAU MARTIN GALVEZ"
+    ],
+    "teamB": [
+      "ALEX  CUADRA CABEZAS",
+      "TONI BECERRA"
+    ],
+    "scoreA": 6,
+    "scoreB": 3,
+    "status": "finished",
+    "raw": {
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "ALEX  CUADRA CABEZAS"
+            },
+            {
+              "stringValue": "TONI BECERRA"
+            }
+          ]
+        }
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_696422128"
+            },
+            {
+              "stringValue": "CrcYmt7H1M3ktLsSwbOv"
+            }
+          ]
+        }
+      },
+      "createdAt": {
+        "stringValue": "2026-09-06T12:19:51.585Z"
+      },
+      "round": {
+        "integerValue": "1"
+      },
+      "teamB": {
+        "stringValue": ""
+      },
+      "court": {
+        "integerValue": "3"
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_636776592"
+            },
+            {
+              "stringValue": "u_618353118"
+            }
+          ]
+        }
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "MANUEL GAMERO PLAZA"
+            },
+            {
+              "stringValue": "PAU MARTIN GALVEZ"
+            }
+          ]
+        }
+      },
+      "created_at": {
+        "timestampValue": "2026-09-06T12:19:51.913Z"
+      },
+      "score_a": {
+        "integerValue": "6"
+      },
+      "score_b": {
+        "integerValue": "3"
+      },
+      "status": {
+        "stringValue": "finished"
+      },
+      "processed_at": {
+        "stringValue": "2026-09-06T16:19:51.022Z"
+      },
+      "delta_a": {
+        "doubleValue": 0.038
+      },
+      "delta_b": {
+        "doubleValue": -0.038
+      }
+    }
+  },
+  {
+    "id": "cAQm0QSx2pxoumJ2HtW1",
+    "round": 2,
+    "court": 1,
+    "teamA": [
+      "ABRAHAM ROSELL CLAVERAS",
+      "TONI MILLÁN DEU"
+    ],
+    "teamB": [
+      "DAVID COCA PINÉ",
+      "ERNESTO RODERA"
+    ],
+    "scoreA": 6,
+    "scoreB": 3,
+    "status": "finished",
+    "raw": {
+      "round": {
+        "integerValue": "2"
+      },
+      "teamB": {
+        "stringValue": ""
+      },
+      "createdAt": {
+        "stringValue": "2026-09-06T16:19:52.338Z"
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "DAVID COCA PINÉ"
+            },
+            {
+              "stringValue": "ERNESTO RODERA"
+            }
+          ]
+        }
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "ABRAHAM ROSELL CLAVERAS"
+            },
+            {
+              "stringValue": "TONI MILLÁN DEU"
+            }
+          ]
+        }
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_625882517"
+            },
+            {
+              "stringValue": "u_648096123"
+            }
+          ]
+        }
+      },
+      "court": {
+        "integerValue": "1"
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_656989230"
+            },
+            {
+              "stringValue": "u_619730816"
+            }
+          ]
+        }
+      },
+      "created_at": {
+        "timestampValue": "2026-09-06T16:19:52.730Z"
+      },
+      "score_a": {
+        "integerValue": "6"
+      },
+      "score_b": {
+        "integerValue": "3"
+      },
+      "status": {
+        "stringValue": "finished"
+      },
+      "processed_at": {
+        "stringValue": "2026-09-06T16:40:41.627Z"
+      },
+      "delta_a": {
+        "doubleValue": 0.038
+      },
+      "delta_b": {
+        "doubleValue": -0.038
+      }
+    }
+  },
+  {
+    "id": "qUjQGV9ET12eyRpsAQeL",
+    "round": 2,
+    "court": 2,
+    "teamA": [
+      "MANUEL GAMERO PLAZA",
+      "OCTAVI NAVARRO CARBONELL"
+    ],
+    "teamB": [
+      "PAU MARTIN GALVEZ",
+      "JOEL SANCHEZ PORTILLO"
+    ],
+    "scoreA": 6,
+    "scoreB": 3,
+    "status": "finished",
+    "raw": {
+      "createdAt": {
+        "stringValue": "2026-09-06T16:19:52.689Z"
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_618353118"
+            },
+            {
+              "stringValue": "u_687806479"
+            }
+          ]
+        }
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "round": {
+        "integerValue": "2"
+      },
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "PAU MARTIN GALVEZ"
+            },
+            {
+              "stringValue": "JOEL SANCHEZ PORTILLO"
+            }
+          ]
+        }
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "MANUEL GAMERO PLAZA"
+            },
+            {
+              "stringValue": "OCTAVI NAVARRO CARBONELL"
+            }
+          ]
+        }
+      },
+      "teamB": {
+        "stringValue": ""
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_636776592"
+            },
+            {
+              "stringValue": "u_650521668"
+            }
+          ]
+        }
+      },
+      "court": {
+        "integerValue": "2"
+      },
+      "created_at": {
+        "timestampValue": "2026-09-06T16:19:52.988Z"
+      },
+      "score_a": {
+        "integerValue": "6"
+      },
+      "score_b": {
+        "integerValue": "3"
+      },
+      "status": {
+        "stringValue": "finished"
+      },
+      "processed_at": {
+        "stringValue": "2026-09-06T16:40:56.326Z"
+      },
+      "delta_a": {
+        "doubleValue": 0.038
+      },
+      "delta_b": {
+        "doubleValue": -0.038
+      }
+    }
+  },
+  {
+    "id": "SxFjRh6HoWzoT9STkrdK",
+    "round": 2,
+    "court": 3,
+    "teamA": [
+      "ALEJANDRO COSCOLÍN",
+      "ALEX  CUADRA CABEZAS"
+    ],
+    "teamB": [
+      "DAVID NAVEA VIDA",
+      "TONI BECERRA"
+    ],
+    "scoreA": 7,
+    "scoreB": 1,
+    "status": "finished",
+    "raw": {
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "DAVID NAVEA VIDA"
+            },
+            {
+              "stringValue": "TONI BECERRA"
+            }
+          ]
+        }
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "ALEJANDRO COSCOLÍN"
+            },
+            {
+              "stringValue": "ALEX  CUADRA CABEZAS"
+            }
+          ]
+        }
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_605036686"
+            },
+            {
+              "stringValue": "CrcYmt7H1M3ktLsSwbOv"
+            }
+          ]
+        }
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "court": {
+        "integerValue": "3"
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "wN7cOTCl3Vg3ZWCLfeha"
+            },
+            {
+              "stringValue": "u_696422128"
+            }
+          ]
+        }
+      },
+      "createdAt": {
+        "stringValue": "2026-09-06T16:19:52.867Z"
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "teamB": {
+        "stringValue": ""
+      },
+      "round": {
+        "integerValue": "2"
+      },
+      "created_at": {
+        "timestampValue": "2026-09-06T16:19:53.153Z"
+      },
+      "score_a": {
+        "integerValue": "7"
+      },
+      "score_b": {
+        "integerValue": "1"
+      },
+      "status": {
+        "stringValue": "finished"
+      },
+      "processed_at": {
+        "stringValue": "2026-09-06T16:41:07.843Z"
+      },
+      "delta_a": {
+        "doubleValue": 0.042
+      },
+      "delta_b": {
+        "doubleValue": -0.042
+      }
+    }
+  },
+  {
+    "id": "5FIs2gx7f8C8qgR7mGNj",
+    "round": 3,
+    "court": 1,
+    "teamA": [
+      "ABRAHAM ROSELL CLAVERAS",
+      "OCTAVI NAVARRO CARBONELL"
+    ],
+    "teamB": [
+      "MANUEL GAMERO PLAZA",
+      "TONI MILLÁN DEU"
+    ],
+    "scoreA": 6,
+    "scoreB": 1,
+    "status": "finished",
+    "raw": {
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "MANUEL GAMERO PLAZA"
+            },
+            {
+              "stringValue": "TONI MILLÁN DEU"
+            }
+          ]
+        }
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "ABRAHAM ROSELL CLAVERAS"
+            },
+            {
+              "stringValue": "OCTAVI NAVARRO CARBONELL"
+            }
+          ]
+        }
+      },
+      "createdAt": {
+        "stringValue": "2026-09-06T16:41:17.716Z"
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "round": {
+        "integerValue": "3"
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "court": {
+        "integerValue": "1"
+      },
+      "teamB": {
+        "stringValue": ""
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_656989230"
+            },
+            {
+              "stringValue": "u_650521668"
+            }
+          ]
+        }
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_636776592"
+            },
+            {
+              "stringValue": "u_619730816"
+            }
+          ]
+        }
+      },
+      "created_at": {
+        "timestampValue": "2026-09-06T16:41:17.999Z"
+      },
+      "score_a": {
+        "integerValue": "6"
+      },
+      "score_b": {
+        "integerValue": "1"
+      },
+      "status": {
+        "stringValue": "finished"
+      },
+      "processed_at": {
+        "stringValue": "2026-09-06T17:03:37.217Z"
+      },
+      "delta_a": {
+        "doubleValue": 0.042
+      },
+      "delta_b": {
+        "doubleValue": -0.042
+      }
+    }
+  },
+  {
+    "id": "6XknBekFyMlOXHbs76jg",
+    "round": 3,
+    "court": 2,
+    "teamA": [
+      "ALEJANDRO COSCOLÍN",
+      "DAVID COCA PINÉ"
+    ],
+    "teamB": [
+      "ALEX  CUADRA CABEZAS",
+      "ERNESTO RODERA"
+    ],
+    "scoreA": 3,
+    "scoreB": 5,
+    "status": "finished",
+    "raw": {
+      "teamA": {
+        "stringValue": ""
+      },
+      "court": {
+        "integerValue": "2"
+      },
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "ALEX  CUADRA CABEZAS"
+            },
+            {
+              "stringValue": "ERNESTO RODERA"
+            }
+          ]
+        }
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "ALEJANDRO COSCOLÍN"
+            },
+            {
+              "stringValue": "DAVID COCA PINÉ"
+            }
+          ]
+        }
+      },
+      "teamB": {
+        "stringValue": ""
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "createdAt": {
+        "stringValue": "2026-09-06T16:41:17.948Z"
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "wN7cOTCl3Vg3ZWCLfeha"
+            },
+            {
+              "stringValue": "u_625882517"
+            }
+          ]
+        }
+      },
+      "round": {
+        "integerValue": "3"
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_696422128"
+            },
+            {
+              "stringValue": "u_648096123"
+            }
+          ]
+        }
+      },
+      "created_at": {
+        "timestampValue": "2026-09-06T16:41:18.234Z"
+      },
+      "score_a": {
+        "integerValue": "3"
+      },
+      "score_b": {
+        "integerValue": "5"
+      },
+      "status": {
+        "stringValue": "finished"
+      },
+      "processed_at": {
+        "stringValue": "2026-09-06T17:03:06.861Z"
+      },
+      "delta_a": {
+        "doubleValue": -0.061
+      },
+      "delta_b": {
+        "doubleValue": 0.061
+      }
+    }
+  },
+  {
+    "id": "1xoXcipXJQLqtW2bbufV",
+    "round": 3,
+    "court": 3,
+    "teamA": [
+      "DAVID NAVEA VIDA",
+      "PAU MARTIN GALVEZ"
+    ],
+    "teamB": [
+      "JOEL SANCHEZ PORTILLO",
+      "TONI BECERRA"
+    ],
+    "scoreA": 5,
+    "scoreB": 4,
+    "status": "finished",
+    "raw": {
+      "createdAt": {
+        "stringValue": "2026-09-06T16:41:18.130Z"
+      },
+      "round": {
+        "integerValue": "3"
+      },
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "JOEL SANCHEZ PORTILLO"
+            },
+            {
+              "stringValue": "TONI BECERRA"
+            }
+          ]
+        }
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "DAVID NAVEA VIDA"
+            },
+            {
+              "stringValue": "PAU MARTIN GALVEZ"
+            }
+          ]
+        }
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_605036686"
+            },
+            {
+              "stringValue": "u_618353118"
+            }
+          ]
+        }
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_687806479"
+            },
+            {
+              "stringValue": "CrcYmt7H1M3ktLsSwbOv"
+            }
+          ]
+        }
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "court": {
+        "integerValue": "3"
+      },
+      "teamB": {
+        "stringValue": ""
+      },
+      "created_at": {
+        "timestampValue": "2026-09-06T16:41:18.425Z"
+      },
+      "score_a": {
+        "integerValue": "5"
+      },
+      "score_b": {
+        "integerValue": "4"
+      },
+      "status": {
+        "stringValue": "finished"
+      },
+      "processed_at": {
+        "stringValue": "2026-09-06T17:04:04.355Z"
+      },
+      "delta_a": {
+        "doubleValue": 0.036
+      },
+      "delta_b": {
+        "doubleValue": -0.036
+      }
+    }
+  },
+  {
+    "id": "EFzHlile8VHf9Lm1XNwn",
+    "round": 4,
+    "court": 1,
+    "teamA": [
+      "ABRAHAM ROSELL CLAVERAS",
+      "ALEX  CUADRA CABEZAS"
+    ],
+    "teamB": [
+      "ERNESTO RODERA",
+      "OCTAVI NAVARRO CARBONELL"
+    ],
+    "scoreA": 5,
+    "scoreB": 4,
+    "status": "finished",
+    "raw": {
+      "teamA": {
+        "stringValue": ""
+      },
+      "round": {
+        "integerValue": "4"
+      },
+      "teamB": {
+        "stringValue": ""
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "ABRAHAM ROSELL CLAVERAS"
+            },
+            {
+              "stringValue": "ALEX  CUADRA CABEZAS"
+            }
+          ]
+        }
+      },
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "ERNESTO RODERA"
+            },
+            {
+              "stringValue": "OCTAVI NAVARRO CARBONELL"
+            }
+          ]
+        }
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_656989230"
+            },
+            {
+              "stringValue": "u_696422128"
+            }
+          ]
+        }
+      },
+      "createdAt": {
+        "stringValue": "2026-09-06T17:04:05.103Z"
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_648096123"
+            },
+            {
+              "stringValue": "u_650521668"
+            }
+          ]
+        }
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "court": {
+        "integerValue": "1"
+      },
+      "created_at": {
+        "timestampValue": "2026-09-06T17:04:05.389Z"
+      },
+      "score_a": {
+        "integerValue": "5"
+      },
+      "score_b": {
+        "integerValue": "4"
+      },
+      "processed_at": {
+        "stringValue": "2026-09-06T17:24:45.799Z"
+      },
+      "delta_a": {
+        "doubleValue": 0.048
+      },
+      "delta_b": {
+        "doubleValue": -0.048
+      },
+      "status": {
+        "stringValue": "finished"
+      }
+    }
+  },
+  {
+    "id": "cPtROrHLxzo05AFiwhpE",
+    "round": 4,
+    "court": 2,
+    "teamA": [
+      "DAVID NAVEA VIDA",
+      "TONI MILLÁN DEU"
+    ],
+    "teamB": [
+      "PAU MARTIN GALVEZ",
+      "MANUEL GAMERO PLAZA"
+    ],
+    "scoreA": 3,
+    "scoreB": 6,
+    "status": "finished",
+    "raw": {
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_618353118"
+            },
+            {
+              "stringValue": "u_636776592"
+            }
+          ]
+        }
+      },
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "PAU MARTIN GALVEZ"
+            },
+            {
+              "stringValue": "MANUEL GAMERO PLAZA"
+            }
+          ]
+        }
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "DAVID NAVEA VIDA"
+            },
+            {
+              "stringValue": "TONI MILLÁN DEU"
+            }
+          ]
+        }
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "teamB": {
+        "stringValue": ""
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_605036686"
+            },
+            {
+              "stringValue": "u_619730816"
+            }
+          ]
+        }
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "round": {
+        "integerValue": "4"
+      },
+      "createdAt": {
+        "stringValue": "2026-09-06T17:04:05.292Z"
+      },
+      "court": {
+        "integerValue": "2"
+      },
+      "created_at": {
+        "timestampValue": "2026-09-06T17:04:05.584Z"
+      },
+      "score_a": {
+        "integerValue": "3"
+      },
+      "score_b": {
+        "integerValue": "6"
+      },
+      "processed_at": {
+        "stringValue": "2026-09-06T17:27:12.773Z"
+      },
+      "delta_a": {
+        "doubleValue": -0.035
+      },
+      "delta_b": {
+        "doubleValue": 0.035
+      },
+      "status": {
+        "stringValue": "finished"
+      }
+    }
+  },
+  {
+    "id": "H40Lnp0o9qJEb5W6HfiW",
+    "round": 4,
+    "court": 3,
+    "teamA": [
+      "ALEJANDRO COSCOLÍN",
+      "TONI BECERRA"
+    ],
+    "teamB": [
+      "DAVID COCA PINÉ",
+      "JOEL SANCHEZ PORTILLO"
+    ],
+    "scoreA": 4,
+    "scoreB": 5,
+    "status": "finished",
+    "raw": {
+      "createdAt": {
+        "stringValue": "2026-09-06T17:04:05.526Z"
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "teamB": {
+        "stringValue": ""
+      },
+      "round": {
+        "integerValue": "4"
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_625882517"
+            },
+            {
+              "stringValue": "u_687806479"
+            }
+          ]
+        }
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "ALEJANDRO COSCOLÍN"
+            },
+            {
+              "stringValue": "TONI BECERRA"
+            }
+          ]
+        }
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "wN7cOTCl3Vg3ZWCLfeha"
+            },
+            {
+              "stringValue": "CrcYmt7H1M3ktLsSwbOv"
+            }
+          ]
+        }
+      },
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "DAVID COCA PINÉ"
+            },
+            {
+              "stringValue": "JOEL SANCHEZ PORTILLO"
+            }
+          ]
+        }
+      },
+      "court": {
+        "integerValue": "3"
+      },
+      "created_at": {
+        "timestampValue": "2026-09-06T17:04:05.802Z"
+      },
+      "score_b": {
+        "integerValue": "5"
+      },
+      "delta_a": {
+        "doubleValue": -0.036
+      },
+      "delta_b": {
+        "doubleValue": 0.036
+      },
+      "score_a": {
+        "integerValue": "4"
+      },
+      "status": {
+        "stringValue": "finished"
+      },
+      "processed_at": {
+        "stringValue": "2026-09-12T09:34:11.312Z"
+      }
+    }
+  },
+  {
+    "id": "b3z1uNwETr7JPU04CZYJ",
+    "round": 5,
+    "court": 1,
+    "teamA": [
+      "ABRAHAM ROSELL CLAVERAS",
+      "MANUEL GAMERO PLAZA"
+    ],
+    "teamB": [
+      "ALEX  CUADRA CABEZAS",
+      "PAU MARTIN GALVEZ"
+    ],
+    "scoreA": 4,
+    "scoreB": 5,
+    "status": "finished",
+    "raw": {
+      "teamB": {
+        "stringValue": ""
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "round": {
+        "integerValue": "5"
+      },
+      "createdAt": {
+        "stringValue": "2026-09-06T18:38:20.969Z"
+      },
+      "court": {
+        "integerValue": "1"
+      },
+      "created_at": {
+        "timestampValue": "2026-09-06T18:38:21.348Z"
+      },
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "ALEX  CUADRA CABEZAS"
+            },
+            {
+              "stringValue": "PAU MARTIN GALVEZ"
+            }
+          ]
+        }
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_696422128"
+            },
+            {
+              "stringValue": "u_618353118"
+            }
+          ]
+        }
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_656989230"
+            },
+            {
+              "stringValue": "u_636776592"
+            }
+          ]
+        }
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "ABRAHAM ROSELL CLAVERAS"
+            },
+            {
+              "stringValue": "MANUEL GAMERO PLAZA"
+            }
+          ]
+        }
+      },
+      "score_a": {
+        "integerValue": "4"
+      },
+      "score_b": {
+        "integerValue": "5"
+      },
+      "status": {
+        "stringValue": "finished"
+      },
+      "processed_at": {
+        "stringValue": "2026-09-12T10:02:02.006Z"
+      },
+      "delta_a": {
+        "doubleValue": -0.045
+      },
+      "delta_b": {
+        "doubleValue": 0.045
+      }
+    }
+  },
+  {
+    "id": "SwiaP0gGDij1Weq64Yn3",
+    "round": 5,
+    "court": 2,
+    "teamA": [
+      "ERNESTO RODERA",
+      "JOEL SANCHEZ PORTILLO"
+    ],
+    "teamB": [
+      "DAVID COCA PINÉ",
+      "OCTAVI NAVARRO CARBONELL"
+    ],
+    "scoreA": 0,
+    "scoreB": 7,
+    "status": "finished",
+    "raw": {
+      "createdAt": {
+        "stringValue": "2026-09-06T18:38:21.575Z"
+      },
+      "court": {
+        "integerValue": "2"
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "round": {
+        "integerValue": "5"
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "teamB": {
+        "stringValue": ""
+      },
+      "created_at": {
+        "timestampValue": "2026-09-06T18:38:21.888Z"
+      },
+      "delta_a": {
+        "doubleValue": 0.045
+      },
+      "delta_b": {
+        "doubleValue": -0.045
+      },
+      "status": {
+        "stringValue": "finished"
+      },
+      "processed_at": {
+        "stringValue": "2026-09-12T10:01:59.310Z"
+      },
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "DAVID COCA PINÉ"
+            },
+            {
+              "stringValue": "OCTAVI NAVARRO CARBONELL"
+            }
+          ]
+        }
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_625882517"
+            },
+            {
+              "stringValue": "u_650521668"
+            }
+          ]
+        }
+      },
+      "score_b": {
+        "integerValue": "7"
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_648096123"
+            },
+            {
+              "stringValue": "u_687806479"
+            }
+          ]
+        }
+      },
+      "score_a": {
+        "integerValue": "0"
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "ERNESTO RODERA"
+            },
+            {
+              "stringValue": "JOEL SANCHEZ PORTILLO"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "id": "wFPz4SvwsMnVvvxKZfzP",
+    "round": 5,
+    "court": 3,
+    "teamA": [
+      "DAVID NAVEA VIDA",
+      "ALEJANDRO COSCOLÍN"
+    ],
+    "teamB": [
+      "TONI MILLÁN DEU",
+      "TONI BECERRA"
+    ],
+    "scoreA": 3,
+    "scoreB": 2,
+    "status": "finished",
+    "raw": {
+      "createdAt": {
+        "stringValue": "2026-09-06T18:38:21.963Z"
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "teamB": {
+        "stringValue": ""
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "round": {
+        "integerValue": "5"
+      },
+      "court": {
+        "integerValue": "3"
+      },
+      "created_at": {
+        "timestampValue": "2026-09-06T18:38:22.357Z"
+      },
+      "score_a": {
+        "integerValue": "3"
+      },
+      "score_b": {
+        "integerValue": "2"
+      },
+      "delta_a": {
+        "doubleValue": 0.037
+      },
+      "delta_b": {
+        "doubleValue": -0.037
+      },
+      "status": {
+        "stringValue": "finished"
+      },
+      "processed_at": {
+        "stringValue": "2026-09-12T10:02:05.602Z"
+      },
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "TONI MILLÁN DEU"
+            },
+            {
+              "stringValue": "TONI BECERRA"
+            }
+          ]
+        }
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_619730816"
+            },
+            {
+              "stringValue": "CrcYmt7H1M3ktLsSwbOv"
+            }
+          ]
+        }
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_605036686"
+            },
+            {
+              "stringValue": "wN7cOTCl3Vg3ZWCLfeha"
+            }
+          ]
+        }
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "DAVID NAVEA VIDA"
+            },
+            {
+              "stringValue": "ALEJANDRO COSCOLÍN"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "id": "ez1Q5x2acCEKiMpIeC4P",
+    "round": 6,
+    "court": 1,
+    "teamA": [
+      "OCTAVI NAVARRO CARBONELL",
+      "ALEX  CUADRA CABEZAS"
+    ],
+    "teamB": [
+      "PAU MARTIN GALVEZ",
+      "DAVID COCA PINÉ"
+    ],
+    "scoreA": 2,
+    "scoreB": 4,
+    "status": "finished",
+    "raw": {
+      "createdAt": {
+        "stringValue": "2026-09-12T10:02:03.780Z"
+      },
+      "court": {
+        "integerValue": "1"
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "round": {
+        "integerValue": "6"
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "teamB": {
+        "stringValue": ""
+      },
+      "created_at": {
+        "timestampValue": "2026-09-12T10:02:05.046Z"
+      },
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "PAU MARTIN GALVEZ"
+            },
+            {
+              "stringValue": "DAVID COCA PINÉ"
+            }
+          ]
+        }
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_618353118"
+            },
+            {
+              "stringValue": "u_625882517"
+            }
+          ]
+        }
+      },
+      "score_b": {
+        "integerValue": "4"
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_650521668"
+            },
+            {
+              "stringValue": "u_696422128"
+            }
+          ]
+        }
+      },
+      "score_a": {
+        "integerValue": "2"
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "OCTAVI NAVARRO CARBONELL"
+            },
+            {
+              "stringValue": "ALEX  CUADRA CABEZAS"
+            }
+          ]
+        }
+      },
+      "status": {
+        "stringValue": "finished"
+      }
+    }
+  },
+  {
+    "id": "6BL6xl0KsSlHSPK7hmov",
+    "round": 6,
+    "court": 2,
+    "teamA": [
+      "DAVID NAVEA VIDA",
+      "ABRAHAM ROSELL CLAVERAS"
+    ],
+    "teamB": [
+      "ALEJANDRO COSCOLÍN",
+      "MANUEL GAMERO PLAZA"
+    ],
+    "scoreA": 4,
+    "scoreB": 2,
+    "status": "finished",
+    "raw": {
+      "teamB": {
+        "stringValue": ""
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "createdAt": {
+        "stringValue": "2026-09-12T10:02:03.939Z"
+      },
+      "round": {
+        "integerValue": "6"
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "court": {
+        "integerValue": "2"
+      },
+      "created_at": {
+        "timestampValue": "2026-09-12T10:02:05.205Z"
+      },
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "ALEJANDRO COSCOLÍN"
+            },
+            {
+              "stringValue": "MANUEL GAMERO PLAZA"
+            }
+          ]
+        }
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "wN7cOTCl3Vg3ZWCLfeha"
+            },
+            {
+              "stringValue": "u_636776592"
+            }
+          ]
+        }
+      },
+      "score_b": {
+        "integerValue": "2"
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_605036686"
+            },
+            {
+              "stringValue": "u_656989230"
+            }
+          ]
+        }
+      },
+      "score_a": {
+        "integerValue": "4"
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "DAVID NAVEA VIDA"
+            },
+            {
+              "stringValue": "ABRAHAM ROSELL CLAVERAS"
+            }
+          ]
+        }
+      },
+      "status": {
+        "stringValue": "finished"
+      }
+    }
+  },
+  {
+    "id": "62XkZ94bBHf6OOlTBtjv",
+    "round": 6,
+    "court": 3,
+    "teamA": [
+      "TONI MILLÁN DEU",
+      "JOEL SANCHEZ PORTILLO"
+    ],
+    "teamB": [
+      "TONI BECERRA",
+      "ERNESTO RODERA"
+    ],
+    "scoreA": 4,
+    "scoreB": 4,
+    "status": "finished",
+    "raw": {
+      "createdAt": {
+        "stringValue": "2026-09-12T10:02:04.122Z"
+      },
+      "teamA": {
+        "stringValue": ""
+      },
+      "americana_id": {
+        "stringValue": "O5mx3o3g1vODCngHU98P"
+      },
+      "teamB": {
+        "stringValue": ""
+      },
+      "court": {
+        "integerValue": "3"
+      },
+      "round": {
+        "integerValue": "6"
+      },
+      "created_at": {
+        "timestampValue": "2026-09-12T10:02:05.382Z"
+      },
+      "team_b_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "TONI BECERRA"
+            },
+            {
+              "stringValue": "ERNESTO RODERA"
+            }
+          ]
+        }
+      },
+      "team_b_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "CrcYmt7H1M3ktLsSwbOv"
+            },
+            {
+              "stringValue": "u_648096123"
+            }
+          ]
+        }
+      },
+      "score_b": {
+        "integerValue": "4"
+      },
+      "team_a_ids": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "u_619730816"
+            },
+            {
+              "stringValue": "u_687806479"
+            }
+          ]
+        }
+      },
+      "score_a": {
+        "integerValue": "4"
+      },
+      "team_a_names": {
+        "arrayValue": {
+          "values": [
+            {
+              "stringValue": "TONI MILLÁN DEU"
+            },
+            {
+              "stringValue": "JOEL SANCHEZ PORTILLO"
+            }
+          ]
+        }
+      },
+      "status": {
+        "stringValue": "finished"
+      }
+    }
+  }
+]

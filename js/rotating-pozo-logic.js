@@ -23,8 +23,10 @@ const RotatingPozoLogic = {
         // 1. Identificar jugadores y su estado actual
         const playerMap = {};
         players.forEach(p => {
-            playerMap[p.id] = {
+            const key = String(p.id || p.uid || "");
+            playerMap[key] = {
                 ...p,
+                id: key,
                 current_court: parseInt(p.current_court || maxCourts), // Por defecto abajo si no tiene pista
                 won: false,
                 played: false
@@ -53,11 +55,22 @@ const RotatingPozoLogic = {
 
                     [...teamA, ...teamB].forEach(id => {
                         // Find key that matches loosely
-                        const pKey = Object.keys(playerMap).find(k => String(k) === String(id));
+                        const pKey = Object.keys(playerMap).find(k => 
+                            String(k) === String(id) || 
+                            String(playerMap[k]?.uid || "") === String(id) || 
+                            String(playerMap[k]?.id || "") === String(id)
+                        );
                         if (pKey && playerMap[pKey]) {
                             const pObj = playerMap[pKey];
                             pObj.played = true;
                             pObj.won = winners.includes(String(id));
+
+                            // 🛡️ CRITICAL FIX: El punto de partida de la pista es SIEMPRE la pista
+                            // donde el jugador acaba de disputar este partido (m.court),
+                            // NUNCA un estado desincronizado o desfasado de rondas anteriores.
+                            if (courtNum > 0) {
+                                pObj.current_court = courtNum;
+                            }
 
                             // TRACK LAST PARTNER (For Twister Logic)
                             // If I am in Team A, my partner is the other guy in Team A.
@@ -68,9 +81,9 @@ const RotatingPozoLogic = {
                                 const currentHistory = pObj.partner_history || (pObj.last_partner ? [pObj.last_partner] : []);
                                 pObj.last_partner = partnerId;
                                 
-                                // Keep history of last 2 partners (exclude duplicates)
+                                // Guardar historial de compañeros de todo el torneo (sin duplicados inmediatos)
                                 const newHistory = [partnerId, ...currentHistory.filter(hid => String(hid) !== String(partnerId))];
-                                pObj.partner_history = newHistory.slice(0, 2);
+                                pObj.partner_history = newHistory;
                             }
                         }
                     });
@@ -273,7 +286,7 @@ const RotatingPozoLogic = {
     /**
      * Creates pairs for Entreno trying to maximize teammate HEAD-TO-HEAD rivalries.
      * Scores every possible combination and picks the best one.
-     * Also penalizes repeating the same partner from the last 2 rounds.
+     * Also penalizes repeating the same partner from the tournament.
      */
     _createEntrenoPairs(players) {
         if (players.length < 4) return { teamA: players.slice(0, 2), teamB: players.slice(2, 4) };
@@ -289,33 +302,50 @@ const RotatingPozoLogic = {
         let maxScore = -Infinity;
         let tiedOptions = [];
 
+        // Helper para comprobar si 2 jugadores comparten equipo de club (soporta arrays de equipos)
+        const shareClubTeam = (player1, player2) => {
+            if (!player1 || !player2) return false;
+            const t1 = player1.team || player1.team_somospadel;
+            const t2 = player2.team || player2.team_somospadel;
+            if (!t1 || !t2) return false;
+            const arr1 = Array.isArray(t1) ? t1 : [t1];
+            const arr2 = Array.isArray(t2) ? t2 : [t2];
+            return arr1.some(item1 => item1 && arr2.includes(item1));
+        };
+
         options.forEach(opt => {
             let score = 0;
-            const teamA1 = opt.teamA[0].team || opt.teamA[0].team_somospadel;
-            const teamA2 = opt.teamA[1].team || opt.teamA[1].team_somospadel;
-            const teamB1 = opt.teamB[0].team || opt.teamB[0].team_somospadel;
-            const teamB2 = opt.teamB[1].team || opt.teamB[1].team_somospadel;
 
-            const checkRival = (t1, t2) => (t1 && t2 && t1 === t2) ? 1 : 0;
-            score += checkRival(teamA1, teamB1);
-            score += checkRival(teamA1, teamB2);
-            score += checkRival(teamA2, teamB1);
-            score += checkRival(teamA2, teamB2);
+            // Fomentar rivalidades directas entre compañeros de club (enfrentarlos)
+            if (shareClubTeam(opt.teamA[0], opt.teamB[0])) score += 1;
+            if (shareClubTeam(opt.teamA[0], opt.teamB[1])) score += 1;
+            if (shareClubTeam(opt.teamA[1], opt.teamB[0])) score += 1;
+            if (shareClubTeam(opt.teamA[1], opt.teamB[1])) score += 1;
 
-            if (teamA1 && teamA2 && teamA1 === teamA2) score -= 2;
-            if (teamB1 && teamB2 && teamB1 === teamB2) score -= 2;
+            // Desincentivar poner compañeros del mismo club en la misma pareja si pueden enfrentarse
+            if (shareClubTeam(opt.teamA[0], opt.teamA[1])) score -= 2;
+            if (shareClubTeam(opt.teamB[0], opt.teamB[1])) score -= 2;
 
-            // 🛡️ CRITICAL: Penalize repeating partners based on partner_history (last 2 rounds)
+            // 🛡️ CRITICAL: Penalizar severamente repetir pareja en base al historial del torneo
             const getPartnerPenalty = (player, partner) => {
                 const history = player.partner_history || (player.last_partner ? [player.last_partner] : []);
+                const partnerIdStr = String(partner.id || partner.uid || "");
                 
-                // Repitió en el partido anterior (depth 1) -> Penalización masiva
-                if (history[0] && String(history[0]) === String(partner.id)) {
+                // Repitió en el partido inmediatamente anterior (depth 1) -> PROHIBICIÓN ABSOLUTA (-10000)
+                if (history[0] && String(history[0]) === partnerIdStr) {
+                    return -10000;
+                }
+                // Repitió hace 2 partidos (depth 2) -> Penalización muy alta (-1000)
+                if (history[1] && String(history[1]) === partnerIdStr) {
                     return -1000;
                 }
-                // Repitió hace 2 partidos (depth 2) -> Penalización moderada-alta
-                if (history[1] && String(history[1]) === String(partner.id)) {
-                    return -300;
+                // Repitió hace 3 partidos (depth 3) -> Penalización moderada (-500)
+                if (history[2] && String(history[2]) === partnerIdStr) {
+                    return -500;
+                }
+                // Repitió hace 4 o más partidos en el torneo -> Penalización menor (-200)
+                if (history.slice(3).some(hid => String(hid) === partnerIdStr)) {
+                    return -200;
                 }
                 return 0;
             };
@@ -367,8 +397,11 @@ const RotatingPozoLogic = {
             const slice1 = h1.slice(0, depth);
             const slice2 = h2.slice(0, depth);
 
-            if (slice1.some(id => String(id) === String(p2.id))) return true;
-            if (slice2.some(id => String(id) === String(p1.id))) return true;
+            const p1Key = String(p1.id || p1.uid || "");
+            const p2Key = String(p2.id || p2.uid || "");
+
+            if (slice1.some(id => String(id) === p2Key)) return true;
+            if (slice2.some(id => String(id) === p1Key)) return true;
             return false;
         };
 
