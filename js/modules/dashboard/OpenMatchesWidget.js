@@ -29,9 +29,9 @@
 
             this.injectStyles();
             
-            // Mostrar esqueleto shimmer de carga en la primera inicialización
+            // Mostrar tarjeta inicial activa en la primera inicialización
             if (!this.hasInitialized) {
-                this.renderSkeleton();
+                this.renderInitialCard();
             }
             
             this.startRealTimeSync();
@@ -338,7 +338,7 @@
             document.head.appendChild(style);
         }
 
-        renderSkeleton() {
+        renderInitialCard() {
             const container = document.getElementById(this.containerId);
             if (!container) return;
 
@@ -346,25 +346,26 @@
                 <div class="open-matches-widget-container">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="display: inline-block; width: 8px; height: 8px; background: #cbd5e1; border-radius: 50%;"></span>
-                            <span style="font-size: 0.85rem; font-weight: 950; color: #94a3b8; letter-spacing: -0.5px; text-transform: uppercase;">
+                            <span style="display: inline-block; width: 8px; height: 8px; background: #CCFF00; border-radius: 50%; box-shadow: 0 0 8px #CCFF00;"></span>
+                            <span style="font-size: 0.85rem; font-weight: 950; color: #0f172a; letter-spacing: -0.5px; text-transform: uppercase;">
                                 Partidas Abiertas
                             </span>
                         </div>
                     </div>
                     <div class="matches-carousel" style="overflow: hidden;">
-                        <div class="match-promo-card" style="opacity: 0.5; border-color: #f1f5f9; pointer-events: none;">
-                            <div style="display: flex; gap: 12px; align-items: center;">
-                                <div style="width: 52px; height: 52px; border-radius: 14px; background: #f1f5f9;" class="skeleton-shimmer"></div>
-                                <div style="flex: 1;">
-                                    <div style="height: 12px; width: 60%; background: #f1f5f9; border-radius: 4px;" class="skeleton-shimmer"></div>
-                                    <div style="height: 8px; width: 80%; background: #f1f5f9; border-radius: 4px; margin-top: 6px;" class="skeleton-shimmer"></div>
+                        <div class="match-promo-card" onclick="if(window.Router) window.Router.navigate('open-matches')" style="background: linear-gradient(135deg, #090f1e 0%, #172554 100%); border: 1.5px solid rgba(204, 255, 0, 0.3); color: white; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border-radius: 20px; padding: 20px;">
+                            <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 14px;">
+                                <div style="width: 52px; height: 52px; border-radius: 16px; background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="fas fa-table-tennis-paddle-ball" style="font-size: 1.4rem; color: #CCFF00;"></i>
+                                </div>
+                                <div>
+                                    <h4 style="font-size: 0.95rem; font-weight: 900; color: white; margin: 0; font-family: 'Outfit';">PARTIDAS ABIERTAS 🎾</h4>
+                                    <p style="font-size: 0.72rem; color: rgba(255,255,255,0.7); margin: 3px 0 0 0; font-weight: 600;">¿Buscas pareja o rivales? Únete o crea una pista libre</p>
                                 </div>
                             </div>
-                            <div style="height: 48px; background: #f8fafc; border-radius: 12px;" class="skeleton-shimmer"></div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 12px;">
-                                <div style="height: 14px; width: 40%; background: #f1f5f9; border-radius: 4px;" class="skeleton-shimmer"></div>
-                                <div style="height: 24px; width: 30%; background: #f1f5f9; border-radius: 8px;" class="skeleton-shimmer"></div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px; margin-top: 10px;">
+                                <span style="font-size: 0.7rem; font-weight: 800; color: #CCFF00; text-transform: uppercase; letter-spacing: 0.5px;">Comunidad Activa</span>
+                                <button style="background: #CCFF00; color: #000; border: none; padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 0.75rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Outfit';">VER PARTIDAS 🚀</button>
                             </div>
                         </div>
                     </div>

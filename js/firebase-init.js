@@ -24,12 +24,50 @@ window.onerror = function (msg, url, line, col, error) {
 };
 
 window.addEventListener('unhandledrejection', function (event) {
+    const reason = event.reason;
+    const msg = (reason && (reason.message || (typeof reason === 'string' ? reason : reason.toString()))) || '';
+    const lowerMsg = msg.toLowerCase();
+
+    // Silenciar errores benignos propios del ciclo de vida móvil, suspensión de pestañas en iOS Safari o cancelaciones de usuario
+    if (
+        lowerMsg.includes('the client has already been terminated') ||
+        lowerMsg.includes('failed-precondition') ||
+        lowerMsg.includes('aborterror') ||
+        lowerMsg.includes('the request was aborted') ||
+        lowerMsg.includes('resizeobserver loop') ||
+        lowerMsg.includes('networkerror') ||
+        lowerMsg.includes('failed to fetch') ||
+        lowerMsg.includes('load failed') ||
+        lowerMsg.includes('quotaexceedederror')
+    ) {
+        console.warn("⚠️ [unhandledrejection] Error benigno o de ciclo de vida móvil suprimido:", msg);
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+        return;
+    }
+
     if (window.PremiumModal) {
         window.PremiumModal.alert({
             title: "🔴 ERROR ASÍNCRONO",
             message: event.reason,
             type: 'danger'
         });
+    }
+});
+
+// Auto-recuperación de Firestore si la pestaña vuelve del segundo plano (ej: tras abrir WhatsApp)
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        if (window.db) {
+            try {
+                const isTerminated = window.db._delegate?._firestoreClient?.asyncQueue?.isShuttingDown;
+                if (isTerminated) {
+                    console.warn("🔄 [FirebaseInit] Cliente Firestore terminado en segundo plano. Recargando para restablecer conexión...");
+                    window.location.reload();
+                }
+            } catch (e) {
+                // Ignore
+            }
+        }
     }
 });
 
@@ -152,6 +190,18 @@ if (typeof firebase === 'undefined') {
 // FIRESTORE HELPERS
 // ============================================
 
+async function _updatePlayersSyncToken() {
+    if (!db) return;
+    try {
+        await db.collection('metadata').doc('players').set({
+            last_updated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log("🔄 [Sync Token] Server sync token updated successfully.");
+    } catch (err) {
+        console.warn("⚠️ [Sync Token] Failed to update server sync token:", err);
+    }
+}
+
 const FirebaseDB = {
     // Players Collection
     players: {
@@ -159,20 +209,82 @@ const FirebaseDB = {
             if (!db) throw new Error("Firebase DB not initialized yet");
 
             const fetchFn = async () => {
-                const snapshot = await db.collection('players').get();
-                return snapshot.docs.map(doc => {
-                    const data = doc.data();
-                    return { ...data, id: doc.id, uid: data.uid || doc.id };
-                });
+                try {
+                    const snapshot = await db.collection('players').get();
+                    return snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return { ...data, id: doc.id, uid: data.uid || doc.id };
+                    });
+                } catch (err) {
+                    console.warn("⚠️ [fetchFn] Firestore server fetch failed, attempting offline cache fallback:", err.message);
+                    try {
+                        const cacheSnapshot = await db.collection('players').get({ source: 'cache' });
+                        if (cacheSnapshot && !cacheSnapshot.empty) {
+                            console.log("🛡️ [fetchFn] Retrieved", cacheSnapshot.size, "players from Firestore offline cache.");
+                            return cacheSnapshot.docs.map(doc => {
+                                const data = doc.data();
+                                return { ...data, id: doc.id, uid: data.uid || doc.id };
+                            });
+                        }
+                    } catch (cacheErr) {
+                        console.warn("⚠️ [fetchFn] Firestore offline cache not available:", cacheErr.message);
+                    }
+                    throw err;
+                }
             };
 
-            // Turbo Cache: Instant load with SWR (unless forced)
+            // === CONDITIONAL SYNC TOKEN CACHE VALIDATION ===
             if (window.CacheService && !force) {
-                return await window.CacheService.swr('players', 'all', fetchFn, null, 1000 * 60 * 15); // Revalidate every 15 mins
+                try {
+                    // 1. Obtener el Sync Token más reciente del servidor (1 sola lectura ligera)
+                    const serverMeta = await db.collection('metadata').doc('players').get();
+                    if (serverMeta.exists) {
+                        const serverTime = serverMeta.data().last_updated?.toDate?.()?.getTime() || 0;
+                        const localTime = parseInt(localStorage.getItem('players_sync_token') || '0');
+
+                        // 2. Si coinciden y tenemos caché local, servimos de IndexedDB de inmediato
+                        if (serverTime > 0 && localTime === serverTime) {
+                            const cached = await window.CacheService.get('players', 'all');
+                            if (cached && Array.isArray(cached) && cached.length > 0) {
+                                console.log("⚡ [Sync Token] Cache HIT. Serving players from IndexedDB. ServerTime:", serverTime);
+                                return cached;
+                            }
+                        }
+                        
+                        // 3. Si difieren o no hay caché, descargamos de red y actualizamos tokens
+                        console.log("🔄 [Sync Token] Cache MISS/Stale. Fetching players from Firestore...", { localTime, serverTime });
+                        const fresh = await fetchFn();
+                        await window.CacheService.set('players', 'all', fresh);
+                        localStorage.setItem('players_sync_token', serverTime.toString());
+                        return fresh;
+                    }
+                } catch (cacheErr) {
+                    console.warn("⚠️ [Sync Token] Fallback to standard SWR cache due to error:", cacheErr);
+                }
+                
+                // Fallback standard SWR cache if metadata collection fails or is empty
+                return await window.CacheService.swr('players', 'all', fetchFn, null, 1000 * 60 * 15);
             }
-            const fresh = await fetchFn();
-            if (window.CacheService) window.CacheService.set('players', 'all', fresh);
-            return fresh;
+
+            try {
+                const fresh = await fetchFn();
+                if (window.CacheService) window.CacheService.set('players', 'all', fresh);
+                return fresh;
+            } catch (networkErr) {
+                console.warn("⚠️ [players.getAll] Network fetch failed, checking local caches:", networkErr.message);
+                if (window.CacheService) {
+                    const cached = await window.CacheService.get('players', 'all');
+                    if (cached && Array.isArray(cached) && cached.length > 0) {
+                        console.log("🛡️ [players.getAll] Recovered", cached.length, "players from IndexedDB CacheService.");
+                        return cached;
+                    }
+                }
+                if (window.allUsersCache && Array.isArray(window.allUsersCache) && window.allUsersCache.length > 0) {
+                    console.log("🛡️ [players.getAll] Recovered players from memory cache.");
+                    return window.allUsersCache;
+                }
+                throw networkErr;
+            }
         },
 
         async getById(id) {
@@ -231,6 +343,7 @@ const FirebaseDB = {
 
             // Invalidate Cache
             if (window.CacheService) window.CacheService.remove('players', 'all');
+            await _updatePlayersSyncToken();
 
             const doc = await docRef.get();
             return { ...doc.data(), id: doc.id };
@@ -244,6 +357,7 @@ const FirebaseDB = {
                 await db.collection('players').doc(cleanId).update(data);
                 // Invalidate Cache
                 if (window.CacheService) window.CacheService.remove('players', 'all');
+                await _updatePlayersSyncToken();
 
                 const doc = await db.collection('players').doc(cleanId).get();
                 return { id: doc.id, ...doc.data() };
@@ -265,6 +379,7 @@ const FirebaseDB = {
                 await docRef.delete();
                 // Invalidate Cache
                 if (window.CacheService) window.CacheService.remove('players', 'all');
+                await _updatePlayersSyncToken();
             } catch (err) {
                 console.error("Error direct deleting:", err);
                 throw new Error(`Error de Firebase: ${err.message}`);

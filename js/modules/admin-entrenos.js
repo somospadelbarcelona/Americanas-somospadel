@@ -11,6 +11,7 @@ window.AdminViews = window.AdminViews || {};
 // 1. GESTOR DE ENTRENOS (Listado y Filtros)
 // 1. GESTOR DE ENTRENOS (Listado y Filtros)
 window.AdminViews.entrenos_mgmt = async function () {
+    const navId = window._currentAdminNavId;
     const content = document.getElementById('content-area');
     const titleEl = document.getElementById('page-title');
 
@@ -18,7 +19,9 @@ window.AdminViews.entrenos_mgmt = async function () {
 
     // Diagnostic Helper
     const updateStatus = (msg) => {
-        content.innerHTML = `<div class="loading-container"><div class="loader"></div><p>${msg}</p></div>`;
+        if (navId === window._currentAdminNavId) {
+            content.innerHTML = `<div class="loading-container"><div class="loader"></div><p>${msg}</p></div>`;
+        }
     };
 
     updateStatus("🚀 Iniciando Gestor...");
@@ -29,22 +32,38 @@ window.AdminViews.entrenos_mgmt = async function () {
         if (!window.AppConstants) throw new Error("AppConstants no cargado");
         if (!window.FirebaseDB) throw new Error("FirebaseDB no cargado");
 
-        // Force reload
-        if (window.CacheService) window.CacheService.remove('entrenos', 'all');
-
         updateStatus("📡 Conectando con Base de Datos...");
 
-        // Race Condition: 8s Timeout vs Data Fetch
-        const fetchPromise = EventService.getAll(AppConstants.EVENT_TYPES.ENTRENO);
-        const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("⌛ Tiempo de espera agotado (8s). Revisa tu conexión.")), 8000)
-        );
+        // Fetch resiliente: soporte SWR y fallback a caché en caso de red lenta
+        let entrenos = [];
+        try {
+            const fetchPromise = EventService.getAll(AppConstants.EVENT_TYPES.ENTRENO);
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("⌛ Tiempo de espera de red (20s).")), 20000)
+            );
+            entrenos = await Promise.race([fetchPromise, timeoutPromise]);
+        } catch (fetchErr) {
+            console.warn("⚠️ [entrenos_mgmt] Red lenta o error, comprobando caché local:", fetchErr.message);
+            if (window.CacheService) {
+                const cached = await window.CacheService.get('entrenos', 'all');
+                if (cached && Array.isArray(cached) && cached.length > 0) {
+                    console.log("🛡️ [entrenos_mgmt] Recuperados entrenos desde caché local.");
+                    entrenos = cached;
+                }
+            }
+            if (!entrenos || !entrenos.length) throw fetchErr;
+        }
 
-        const entrenos = await Promise.race([fetchPromise, timeoutPromise]);
+        // Si el usuario navegó a otra vista mientras cargaban los datos, salir sin sobreescribir pantalla
+        if (navId !== window._currentAdminNavId) {
+            console.log(`⚠️ [entrenos_mgmt] Token de navegación caducado (#${navId} -> #${window._currentAdminNavId}), omitiendo render.`);
+            return;
+        }
 
         updateStatus("✅ Datos recibidos. Procesando...");
 
         const sortedEntrenos = entrenos.sort((a, b) => new Date(b.date) - new Date(a.date));
+        window._currentEntrenosCache = sortedEntrenos; // En memoria para acceso instantáneo y resiliente
 
         // 📅 Get available months for filter list
         const availableMonths = [...new Set(sortedEntrenos.map(e => {
@@ -113,6 +132,10 @@ window.AdminViews.entrenos_mgmt = async function () {
         setupFilters();
 
     } catch (e) {
+        if (navId !== window._currentAdminNavId) {
+            console.warn(`⚠️ [entrenos_mgmt] Error ignorado porque la vista activa es #${window._currentAdminNavId}:`, e.message);
+            return;
+        }
         console.error("Error en Gestor Entrenos:", e);
         content.innerHTML = `<div class="error-box" style="padding:40px; text-align:center;">
             <i class="fas fa-exclamation-triangle" style="font-size:3rem; color:#ff4444; margin-bottom:20px;"></i>
@@ -183,7 +206,7 @@ window.AdminViews.entrenos_create = async function () {
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
                         <div class="form-group">
                             <label>MODO DE JUEGO</label>
                             <select name="pair_mode" class="pro-input">
@@ -202,6 +225,17 @@ window.AdminViews.entrenos_create = async function () {
                                 <option value="finished">🏁 FINALIZADA</option>
                                 <option value="cancelled">⛔ ANULADO</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label><i class="fas fa-signal" style="color: #CCFF00;"></i> NIVEL MÍNIMO</label>
+                            <input type="text" name="level_min" class="pro-input" placeholder="Ej: 3.5" value="3.5">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-signal" style="color: #CCFF00;"></i> NIVEL MÁXIMO</label>
+                            <input type="text" name="level_max" class="pro-input" placeholder="Ej: 4.5" value="4.5">
                         </div>
                     </div>
 
@@ -314,6 +348,9 @@ function renderEntrenoCard(e) {
         }
     }
 
+    // Level Text
+    const levelText = (e.level && String(e.level).trim()) || (e.level_min && e.level_max ? `${e.level_min} - ${e.level_max}` : (e.level_min ? `${e.level_min}` : (e.level_max ? `Hasta ${e.level_max}` : '3.5 - 4.5')));
+
     return `
         <div class="glass-card-enterprise entreno-card-item" 
              data-month="${month}" 
@@ -332,6 +369,7 @@ function renderEntrenoCard(e) {
                     <div style="display: flex; gap: 0.8rem; font-size: 0.75rem; color: #333333; flex-wrap: wrap; align-items: center;">
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-calendar-alt" style="color: #60A5FA;"></i> <span style="color:#333; font-weight: 600;">${formatDate(e.date)}</span></span>
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-clock" style="color: #A78BFA;"></i> <span style="color:#333; font-weight: 600;">${e.time || '10:00'}</span></span>
+                         <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-signal" style="color: #F59E0B;"></i> <span style="color:#333; font-weight: 700;">Niv. ${levelText}</span></span>
                          <span onclick='window.openEditEntrenoModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' style="cursor:pointer; display: flex; align-items: center; gap: 5px;" title="Gestionar participantes">
                             <i class="fas fa-users" style="color: #10B981;"></i> <span style="color:#000; font-weight:800;">${playersCount}</span><span style="opacity:0.5;">/${maxPlayers}</span>
                          </span>
@@ -627,6 +665,16 @@ window.openEditEntrenoModal = async (entreno) => {
         if (input) input.value = value;
     }
 
+    // Ensure level fields have values if undefined
+    const minInput = form.querySelector('[name="level_min"]');
+    if (minInput && (entreno.level_min === undefined || entreno.level_min === null || entreno.level_min === '')) {
+        minInput.value = '3.5';
+    }
+    const maxInput = form.querySelector('[name="level_max"]');
+    if (maxInput && (entreno.level_max === undefined || entreno.level_max === null || entreno.level_max === '')) {
+        maxInput.value = '4.5';
+    }
+
     // Special Image Preview
     const preview = document.getElementById('edit-entreno-img-preview');
     if (preview && entreno.image_url) preview.src = entreno.image_url;
@@ -705,24 +753,42 @@ window.closeEntrenoModal = () => {
 };
 
 // WhatsApp Share - Using Unified Service
-window.launchWhatsAppShareEntreno = (id) => {
+window.launchWhatsAppShareEntreno = async (id) => {
     console.log("🔗 launchWhatsAppShareEntreno called for:", id);
-    EventService.getById('entreno', id).then(evt => {
-        if (!evt) return;
+    try {
+        // 1. Intentar obtener el entreno desde la memoria activa (instantáneo, 0 peticiones de red)
+        let evt = window._currentEntrenosCache?.find(e => e.id === id);
 
-        // Ensure WhatsAppService is ready (Small safety delay for Mobile)
-        const triggerShare = () => {
-            if (window.WhatsAppService) {
-                console.log("🚀 Triggering Unified WhatsApp Service...");
-                window.WhatsAppService.shareStartFromAdmin(evt);
-            } else {
-                console.warn("⚠️ WhatsAppService not found, retrying...");
-                setTimeout(triggerShare, 500);
+        // 2. Si no está en memoria, consultar EventService con fallback a CacheService
+        if (!evt && window.EventService) {
+            try {
+                evt = await EventService.getById('entreno', id);
+            } catch (fetchErr) {
+                console.warn("⚠️ [launchWhatsAppShareEntreno] Error al consultar Firestore, buscando en caché local:", fetchErr.message);
+                if (window.CacheService) {
+                    const cached = await window.CacheService.get('entrenos', 'all');
+                    evt = cached?.find(e => e.id === id);
+                }
             }
-        };
+        }
 
-        triggerShare();
-    });
+        if (!evt) {
+            console.warn("⚠️ [launchWhatsAppShareEntreno] Entreno no encontrado:", id);
+            if (window.PremiumModal) {
+                window.PremiumModal.alert({ title: "WhatsApp", message: "No se encontró la información del entreno para compartir.", type: 'warning' });
+            }
+            return;
+        }
+
+        if (window.WhatsAppService) {
+            console.log("🚀 Triggering Unified WhatsApp Service...");
+            await window.WhatsAppService.shareStartFromAdmin(evt);
+        } else {
+            console.warn("⚠️ WhatsAppService not found");
+        }
+    } catch (err) {
+        console.error("❌ Error en launchWhatsAppShareEntreno:", err);
+    }
 };
 
 // --- SUB-UI MANAGERS (Participants & Helpers) --- //

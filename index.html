@@ -203,6 +203,69 @@
                     }
                 }
             };
+            
+            // Marca de tiempo de arranque de la página
+            const bootTime = Date.now();
+
+            async function triggerActiveRecovery(errType, errMsg) {
+                // Solo recuperar en los primeros 5 segundos de carga de la página
+                if (Date.now() - bootTime > 5000) return;
+
+                // Evitar bucles infinitos de recarga
+                const lastAttempt = sessionStorage.getItem('sp_recovery_attempt');
+                if (lastAttempt && Date.now() - parseInt(lastAttempt) < 15000) {
+                    console.warn("⚠️ [Resilience] Bucle de recuperación detectado. Saltando auto-recarga.");
+                    return;
+                }
+
+                console.error(`🚨 [Resilience] Error crítico detectado al iniciar (${errType}: ${errMsg}). Iniciando auto-recuperación activa...`);
+                sessionStorage.setItem('sp_recovery_attempt', Date.now().toString());
+
+                // Mostrar overlay elegante de recuperación activa para tranquilizar al usuario
+                let overlay = document.getElementById('sp-recovery-overlay');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'sp-recovery-overlay';
+                    overlay.style = "position:fixed; inset:0; z-index:999999; background:#0a0a12; color:white; font-family:'Outfit',sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; animation: fadeIn 0.3s ease;";
+                    overlay.innerHTML = `
+                        <div style="width:70px; height:70px; margin-bottom:20px; position:relative; display:flex; align-items:center; justify-content:center;">
+                            <div style="position:absolute; width:100%; height:100%; border:3px solid rgba(204,255,0,0.1); border-top-color:#CCFF00; border-radius:50%; animation:spin 1s linear infinite;"></div>
+                            <i class="fas fa-magic" style="color:#CCFF00; font-size:1.8rem; animation:pulseGlow 1.5s infinite;"></i>
+                        </div>
+                        <h2 style="font-weight:900; margin:0 0 10px 0; font-size:1.4rem; letter-spacing:0.5px;">Auto-recuperación Activa</h2>
+                        <p style="color:#94a3b8; font-size:0.85rem; max-width:320px; margin:0 0 15px 0; line-height:1.5;">Hemos detectado una inconsistencia de caché tras la actualización. Limpiando el sistema para ti...</p>
+                        <span style="font-size:0.65rem; color:#64748b; font-family:monospace; text-transform:uppercase; letter-spacing:1px;">Limpiando Caché PWA & Recargando</span>
+                    `;
+                    
+                    // Inyectar animaciones clave si no existen
+                    if (!document.getElementById('sp-recovery-animations')) {
+                        const styleAnim = document.createElement('style');
+                        styleAnim.id = 'sp-recovery-animations';
+                        styleAnim.innerHTML = `
+                            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                            @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+                        `;
+                        document.head.appendChild(styleAnim);
+                    }
+                    
+                    document.body.appendChild(overlay);
+                }
+
+                // Ejecutar la limpieza forzada y recarga de la app en background
+                if (typeof window.forceUpdateApp === 'function') {
+                    setTimeout(async () => {
+                        await window.forceUpdateApp();
+                    }, 1200);
+                } else {
+                    try {
+                        if ('caches' in window) {
+                            const keys = await caches.keys();
+                            for (const key of keys) await caches.delete(key);
+                        }
+                    } catch(e) {}
+                    window.location.reload(true);
+                }
+            }
 
             window.onerror = function(message, source, lineno, colno, error) {
                 if (source && (source.includes('chrome-extension') || source.includes('safari-extension'))) return;
@@ -224,6 +287,9 @@
                 panel.style.display = 'block';
                 updatePanelUI();
                 
+                // Activar protocolo de auto-recuperación resiliente
+                triggerActiveRecovery('Crash en Script', message);
+                
                 return false;
             };
 
@@ -244,6 +310,10 @@
                 panel = document.getElementById('sp-diagnostic-panel');
                 panel.style.display = 'block';
                 updatePanelUI();
+
+                // Activar protocolo de auto-recuperación resiliente
+                const msg = event.reason ? (event.reason.message || String(event.reason)) : 'Promise Rejection';
+                triggerActiveRecovery('Promise Rejection', msg);
             };
 
             if (document.readyState === 'loading') {
@@ -377,13 +447,13 @@
             height: 50px;
             overflow: hidden;
             display: inline-block;
-            background: rgba(255, 255, 255, 0.05);
+            background: #e2e8f0;
             border-radius: 16px;
             min-width: 50px;
             text-align: center;
             vertical-align: middle;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+            border: 1px solid #cbd5e1;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
         }
 
         .odometer-digit-strip {
@@ -399,7 +469,7 @@
             justify-content: center;
             font-size: 1.8rem;
             font-weight: 950;
-            color: #ffffff;
+            color: #0f172a;
             width: 50px;
         }
 
@@ -413,39 +483,29 @@
             box-shadow: 0 0 25px rgba(204, 255, 0, 0.5);
         }
 
-        /* ✨ SKELETON SHIMMER EFFECT */
+        /* ✨ SKELETON SHIMMER EFFECT DEFENSIVE OVERRIDE */
         @keyframes shimmer {
-            0% { background-position: -468px 0; }
-            100% { background-position: 468px 0; }
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
         }
 
         .skeleton-box {
-            background: #e2e8f0;
-            background-image: linear-gradient(to right, #e2e8f0 0%, #f1f5f9 20%, #e2e8f0 40%, #e2e8f0 100%);
-            background-repeat: no-repeat;
-            background-size: 800px 100%;
-            display: inline-block;
-            position: relative;
-            animation: shimmer 1.5s infinite linear;
-            border-radius: 4px;
+            background: transparent !important;
+            display: none !important;
         }
 
         .skeleton-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 20px;
-            padding: 24px;
+            padding: 20px;
             margin-bottom: 15px;
-            height: 160px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.025);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
         .skeleton-line {
-            height: 16px;
-            border-radius: 8px;
+            display: none !important;
         }
 
 
@@ -677,6 +737,10 @@
             <div class="ticker-container" onclick="window.Router && window.Router.navigate('entrenos')"
                 style="cursor: pointer; background: #00d2ff !important; height: 40px; display: flex; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05);">
                 <div class="ticker-track" id="ticker-track">
+                    <div class="ticker-item" onclick="event.stopPropagation(); window.SeasonCampaignView && window.SeasonCampaignView.openModal();" style="color: #ffffff !important; font-weight: 800; font-size: 0.75rem; cursor: pointer;">
+                        <span style="background: #CCFF00; color: #000; padding: 2px 8px; border-radius: 5px; margin-right: 10px; font-weight: 950; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">🔥 EQUIPOS 2027</span>
+                        Inscripciones Equipos SomosPadel (Fem 2ª-3ª-4ª, Mix 3ª-4ª, Masc 3ª-4ª). Toca aquí para ver.
+                    </div>
                     <div class="ticker-item" style="color: #ffffff !important; font-weight: 800; font-size: 0.75rem;">
                         <span
                             style="background: #CCFF00; color: #000; padding: 2px 8px; border-radius: 5px; margin-right: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">V.2.9</span>
@@ -870,7 +934,7 @@
                     if (e) e.stopPropagation();
                 };
                 window._navAndCollapse = function (route) {
-                    if (window.Router) window.Router.navigate(route);
+                    if (window.Router) window.Router.navigate(route, false, true);
                     setTimeout(function () {
                         var w = document.getElementById('nav-tabs-wrapper');
                         if (w) w.classList.remove('expanded');
@@ -948,26 +1012,57 @@
         <!-- Main Content Area (Scrollable) -->
         <!-- Added pt-130 class logic conceptually via CSS .full-width-mobile applied to children or logic -->
         <main id="content-area" style="min-height: 100vh; padding-top: 108px; background: #ffffff;">
-            <!-- Loading Skeletons Premium -->
-            <div style="padding: 15px;">
-                <div class="skeleton-card">
-                    <div class="skeleton-box skeleton-line" style="width: 30%; opacity: 0.3;"></div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div class="skeleton-box skeleton-line" style="width: 50%; height: 25px;"></div>
-                        <div class="skeleton-box" style="width: 40px; height: 40px; border-radius: 10px;"></div>
+            <!-- Live Active Initial Cards (Sin Skeletons Grises) -->
+            <div style="padding: 15px; display: flex; flex-direction: column; gap: 16px;">
+                <!-- Tarjeta 1: Partidas Abiertas Destacadas -->
+                <div class="match-promo-card" onclick="if(window.Router) window.Router.navigate('open-matches')" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 22px; color: white; position: relative; overflow: hidden; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15); border: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer;">
+                    <div style="position: absolute; top: -30px; right: -30px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(204, 255, 0, 0.25) 0%, rgba(204, 255, 0, 0) 70%); pointer-events: none;"></div>
+                    <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 14px;">
+                        <div style="width: 52px; height: 52px; border-radius: 16px; background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fas fa-table-tennis-paddle-ball" style="font-size: 1.4rem; color: #CCFF00;"></i>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.65rem; font-weight: 900; background: rgba(204, 255, 0, 0.2); color: #CCFF00; padding: 3px 8px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 4px;">
+                                <i class="fas fa-bolt" style="margin-right: 4px;"></i> Pistas Activas
+                            </span>
+                            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 900; color: #ffffff; letter-spacing: -0.3px; line-height: 1.2;">
+                                Partidas Abiertas en Barcelona
+                            </h3>
+                        </div>
                     </div>
-                    <div style="height: 1px; background: #e2e8f0;"></div>
+                    <p style="font-size: 0.82rem; color: #94a3b8; margin: 0 0 16px 0; line-height: 1.4; font-weight: 500;">
+                        Encuentra parejas y rivales de tu mismo nivel. ¡Apúntate en 1 clic y sal a la pista!
+                    </p>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div class="skeleton-box skeleton-line" style="width: 40%; height: 25px;"></div>
-                        <div class="skeleton-box" style="width: 40px; height: 40px; border-radius: 10px;"></div>
+                        <span style="font-size: 0.75rem; color: #cbd5e1; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                            <span style="display: inline-block; width: 8px; height: 8px; background: #00E36D; border-radius: 50%; box-shadow: 0 0 8px #00E36D;"></span>
+                            Partidas en directo disponibles
+                        </span>
+                        <div style="background: #CCFF00; color: #0f172a; font-weight: 950; font-size: 0.8rem; padding: 9px 18px; border-radius: 12px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(204, 255, 0, 0.3);">
+                            <span>Ver Partidas</span>
+                            <i class="fas fa-arrow-right" style="font-size: 0.75rem;"></i>
+                        </div>
                     </div>
                 </div>
-                <div class="skeleton-card">
-                    <div class="skeleton-box skeleton-line" style="width: 25%; opacity: 0.3;"></div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div class="skeleton-box skeleton-line" style="width: 60%; height: 25px;"></div>
-                        <div class="skeleton-box" style="width: 40px; height: 40px; border-radius: 10px;"></div>
+
+                <!-- Tarjeta 2: Comunidad & Ranking -->
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 22px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <span style="font-size: 0.65rem; font-weight: 900; background: rgba(59, 130, 246, 0.1); color: #2563eb; padding: 3px 8px; border-radius: 8px; text-transform: uppercase;">
+                            💡 CONSEJO DE COMUNIDAD
+                        </span>
+                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 700;">SomosPadel BCN</span>
                     </div>
+                    <h4 style="margin: 0 0 6px 0; font-size: 1rem; font-weight: 900; color: #0f172a;">
+                        ¡Compite, suma puntos y sube de nivel!
+                    </h4>
+                    <p style="font-size: 0.82rem; color: #64748b; margin: 0 0 14px 0; line-height: 1.4;">
+                        Mantén tu racha activa de partidos para desbloquear estadísticas avanzadas y premios exclusivos.
+                    </p>
+                    <button onclick="if(window.Router) window.Router.navigate('community')" style="width: 100%; background: #f8fafc; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 900; font-size: 0.82rem; padding: 10px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <i class="fas fa-users" style="color: #2563eb;"></i>
+                        <span>Ver Ranking de Jugadores</span>
+                    </button>
                 </div>
             </div>
         </main>
@@ -1139,7 +1234,7 @@
             <!-- === WIDGET: NAVEGACIÓN RÁPIDA === -->
             <div class="dsb-card" style="padding: 10px 8px;">
                 <p class="dsb-card-title" style="margin-bottom:8px;"><i class="fas fa-compass"></i> Navegar</p>
-                <div onclick="window.Router?.navigate('dashboard')"    class="dsb-nav-item" id="dsbl-nav-inicio">
+                <div onclick="window.Router?.navigate('dashboard', false, true)"    class="dsb-nav-item" id="dsbl-nav-inicio">
                     <div class="dsb-nav-icon" style="background:rgba(0,210,255,0.1); color:#00d2ff;"><i class="fas fa-home"></i></div> Inicio
                 </div>
                 <div onclick="window.Router?.navigate('ranking')"     class="dsb-nav-item" id="dsbl-nav-ranking">
@@ -2244,7 +2339,7 @@
         <div id="nav-hud-msg" class="nav-hud-msg"></div>
         <nav class="bottom-nav-bar">
             <div class="nav-item active haptic-feedback"
-                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('dashboard')"
+                onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('dashboard', false, true)"
                 id="nav-dashboard">
                 <i class="fas fa-th-large"></i>
                 <span>Inicio</span>
@@ -3139,7 +3234,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js" defer></script>
     <script src="js/firebase-config.js" defer></script>
-    <script src="js/firebase-init.js?v=1.1" defer></script>
+    <script src="js/firebase-init.js?v=1.2" defer></script>
     
     <!-- CORE SERVICES -->
     <script src="js/modules/core/Constants.js?v=2001" defer></script>
@@ -3148,7 +3243,7 @@
     <script src="js/core/CacheService.js" defer></script>
     <script src="js/core/DatabaseService.js" defer></script>
     <script src="js/core/AuthService.js?v=12.3" defer></script>
-    <script src="js/core/Router.js?v=5.7" defer></script>
+    <script src="js/core/Router.js?v=5.8" defer></script>
     <script src="js/core/SmartTicker.js?v=2" defer></script>
 
     <!-- Layer 3: Logic Business -->
@@ -3165,12 +3260,12 @@
     <script src="js/modules/americanas/AmericanaLogic.js" defer></script>
     <script src="js/modules/americanas/AmericanaService.js?v=1014" defer></script>
     <script src="js/app-init.js" defer></script>
-    <script src="js/app.js?v=3003" defer></script>
-    <script src="js/modules/common/WhatsAppService.js?v=8.5" defer charset="UTF-8"></script>
+    <script src="js/app.js?v=3004" defer></script>
+    <script src="js/modules/common/WhatsAppService.js?v=8.9" defer charset="UTF-8"></script>
     <script src="js/fixed-pairs-logic.js?v=5013" defer></script>
     <script src="js/rotating-pozo-logic.js?v=5013" defer></script>
     <script src="js/modules/logic/LevelAdjustmentService.js" defer></script>
-    <script src="js/modules/auth/AuthController.js?v=12.2" defer></script>
+    <script src="js/modules/auth/AuthController.js?v=12.3" defer></script>
     <script src="js/modules/common/PartnerSynergyService.js" defer></script>
     <script src="js/modules/common/PartnerSynergyWidget.js" defer></script>
     <script src="js/modules/core/NetworkPulseService.js" defer></script>
@@ -3188,9 +3283,9 @@
     <script src="js/modules/dashboard/StoryFeedWidget.js?v=6" defer></script>
     <script src="js/modules/dashboard/PadelPulse.js?v=6.2" defer></script>
     <script src="js/modules/dashboard/OpenMatchesWidget.js?v=1.3" defer></script>
-    <script src="js/modules/dashboard/TacticalCourt3D.js?v=1.1" defer></script>
-    <script src="js/modules/dashboard/Tactical3DWidget.js?v=1.1" defer></script>
-    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=COMPACT_V24" defer></script>
+    <script src="js/modules/dashboard/TacticalCourt3D.js?v=2.0" defer></script>
+    <script src="js/modules/dashboard/Tactical3DWidget.js?v=2.0" defer></script>
+    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=WHITE_THEME_v1" defer></script>
     <script src="js/modules/dashboard/DashboardController.js" defer></script>
     <script src="js/utils/RoleService.js" defer></script>
     <script src="js/modules/players/PlayerView.js?v=401" defer></script>
@@ -3204,7 +3299,7 @@
     <script src="js/modules/chat/ChatService.js?v=1.1" defer></script>
     <script src="js/modules/chat/ChatView.js?v=1.2" defer></script>
     <script src="js/modules/americanas/EntrenoLiveView.js" defer></script>
-    <script src="js/modules/americanas/EventsController_V6.js?v=10.4" defer></script>
+    <script src="js/modules/americanas/EventsController_V6.js?v=10.6" defer></script>
     <script src="js/modules/common/SocialShareService.js" defer></script>
     <script src="js/modules/admin/SocialShareView.js" defer></script>
 
@@ -3217,7 +3312,7 @@
     <script src="js/modules/ui/PremiumModal.js" defer></script>
     <script src="js/modules/ui/PlayerAutocomplete.js" defer></script>
     <script src="js/modules/ui/EventModals.js" defer></script>
-    <script src="js/modules/ui/MatchCard.js" defer></script>
+    <script src="js/modules/ui/MatchCard.js?v=2.0" defer></script>
     <script src="js/modules/ui/EventHeader.js" defer></script>
 
     <!-- Chart.js CDN -->
@@ -3228,13 +3323,16 @@
     <script src="js/modules/ranking/RankingController.js?v=2" defer></script>
 
     <!-- Partidas Abiertas Module -->
-    <script src="js/modules/open_matches/OpenMatchesView.js?v=2" defer></script>
-    <script src="js/modules/open_matches/OpenMatchesController.js?v=2" defer></script>
+    <script src="js/modules/open_matches/OpenMatchesView.js?v=10" defer></script>
+    <script src="js/modules/open_matches/OpenMatchesController.js?v=10" defer></script>
 
     <!-- Teams Module -->
     <script src="js/modules/teams/teams_data.js?v=12" defer></script>
-    <script src="js/modules/teams/TeamView.js?v=15" defer></script>
-    <script src="js/modules/teams/TeamController.js?v=31" defer></script>
+    <script src="js/modules/teams/TeamConvocatoriaService.js?v=1.1" defer></script>
+    <script src="js/modules/teams/SeasonCampaignService.js?v=2.4" defer></script>
+    <script src="js/modules/teams/SeasonCampaignView.js?v=GENDER_COLORS_v1" defer></script>
+    <script src="js/modules/teams/TeamView.js?v=17" defer></script>
+    <script src="js/modules/teams/TeamController.js?v=33" defer></script>
     <script src="js/modules/tournaments/TournamentView.js?v=11" defer></script>
     <script src="js/modules/tournaments/TournamentController.js?v=11" defer></script>
 
@@ -3595,6 +3693,9 @@
   'use strict';
 
   var _tips = [
+    { e: '🔥', t: '¡Abiertas inscripciones de Octubre-Noviembre! Únete a los equipos de competición del club.' },
+    { e: '🎯', t: '¿Quieres llegar al máximo a la nueva temporada? Reserva tu plaza en Entrenos de Tecnificación.' },
+    { e: '⚡', t: '¡Compite en las Americanas en Vivo! Puntuación en directo, sin esperas y ranking de club.' },
     { e: '🎾', t: 'Juega cerca de la pared. ¡El vidrio es tu aliado!' },
     { e: '🛡️', t: '¿Sabías que tu login está protegido por Seguridad Biométrica Activa y láser cibernético?' },
     { e: '💨', t: 'Con viento, bola más corta y rápida. Anticipa!' },

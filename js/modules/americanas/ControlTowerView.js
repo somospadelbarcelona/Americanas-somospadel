@@ -770,21 +770,14 @@
 
         renderActiveContent(data, roundData) {
             if (data?.status === 'LOADING') {
-                const skeletons = Array.from({ length: 3 }, () => `
-                    <div class="skeleton-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 20px; margin-bottom: 15px;">
-                        <div class="skeleton-box skeleton-line" style="width: 40%; height: 12px; background: #f1f5f9;"></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                            <div class="skeleton-box skeleton-line" style="width: 60%; height: 30px; background: #f1f5f9;"></div>
-                            <div class="skeleton-box" style="width: 50px; height: 50px; border-radius: 12px; background: #f1f5f9;"></div>
+                return `
+                    <div style="padding: 15px;">
+                        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 28px; text-align: center; color: white; margin-bottom: 15px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+                            <i class="fas fa-trophy fa-spin" style="font-size: 2.2rem; color: #CCFF00; margin-bottom: 12px;"></i>
+                            <h4 style="margin: 0 0 6px 0; font-size: 1.1rem; font-weight: 900; color: #ffffff;">Sincronizando Torre de Control...</h4>
+                            <p style="margin: 0; font-size: 0.82rem; color: #94a3b8;">Cargando clasificación y resultados en tiempo real</p>
                         </div>
-                        <div style="height: 1px; background: #e2e8f0; margin: 15px 0;"></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div class="skeleton-box skeleton-line" style="width: 50%; height: 30px; background: #f1f5f9;"></div>
-                            <div class="skeleton-box" style="width: 50px; height: 50px; border-radius: 12px; background: #f1f5f9;"></div>
-                        </div>
-                    </div>
-                `).join('');
-                return `<div style="padding: 15px;">${skeletons}</div>`;
+                    </div>`;
             }
 
             switch (this.activeTab) {
@@ -839,10 +832,19 @@
                 let el = document.getElementById(cardId);
 
                 if (el) {
+                    const isFinished = match.status === 'finished' || match.status === 'finalizado';
+                    const hasEditControls = !!el.querySelector(`button[onclick*="adjustScore"]`);
+                    const hasUnlockBtn = !!el.querySelector(`button[onclick*="unlockMatch"]`);
+
+                    // Si el estado del partido cambió entre finalizado y editable, re-renderizamos la tarjeta completa
+                    if ((isFinished && !hasUnlockBtn) || (!isFinished && !hasEditControls)) {
+                        el.outerHTML = this.renderTournamentCard(match);
+                        return;
+                    }
+
                     // --- UPDATE EXISTING CARD ---
                     // 1. Status Badge & Card Container Styles
                     const statusArea = el.querySelector('.status-area');
-                    const isFinished = match.status === 'finished' || match.status === 'finalizado';
                     const evtStatus = this.currentAmericanaDoc?.status;
                     const isLive = evtStatus === 'live' && !isFinished;
 
@@ -950,19 +952,11 @@
                 }
             });
 
-            // 4. SYNC "NEXT ROUND" PROMPT
-            const existingPrompt = document.getElementById('next-round-btn-container');
-            const maxRound = this.allMatches.length > 0 ? Math.max(...this.allMatches.map(m => parseInt(m.round || 1))) : 1;
-            const isRoundComplete = roundData.matches.length > 0 && roundData.matches.every(m => m.isFinished);
-            const shouldShowPrompt = isRoundComplete &&
-                parseInt(roundData.number) === maxRound &&
-                this.currentAmericanaDoc?.status === 'live';
-
-            if (!shouldShowPrompt && existingPrompt) {
-                existingPrompt.remove();
-            } else if (shouldShowPrompt && !existingPrompt) {
-                // If the prompt should be shown but isn't present, force a full re-render
-                // to ensure it's inserted correctly by renderResultsView.
+            // 4. SYNC ROUND CONTROL TOOLBAR
+            const existingToolbar = document.getElementById('round-control-toolbar');
+            if (existingToolbar) {
+                existingToolbar.outerHTML = this.renderRoundControlToolbar(roundData, this.roundsData || []);
+            } else {
                 return false;
             }
 
@@ -972,54 +966,9 @@
         renderResultsView(roundData, allRounds, isLiveEvent = false) {
             const tabs = this.renderRoundTabs(allRounds, roundData.number);
 
-            // 🏁 SMART PROMPT LOGIC: Only show prompt if viewing the HIGHEST existing round
-            const maxRound = this.allMatches.length > 0 ? Math.max(...this.allMatches.map(m => parseInt(m.round || 1))) : 1;
-            const isViewingMaxRound = parseInt(roundData.number) === maxRound;
-
-            const isRoundComplete = roundData.matches.length > 0 && roundData.matches.every(m => m.isFinished);
-            let nextRoundUI = '';
-
-                if (isRoundComplete && isViewingMaxRound && this.currentAmericanaDoc?.status === 'live') {
-                nextRoundUI = `
-                    <div id="next-round-btn-container" class="animate-pop-in" style="margin-top: 30px; background: #ffffff; padding: 25px; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.04); text-align: center;">
-                        <h3 style="margin: 0 0 15px 0; font-weight: 950; font-size: 1.1rem; color: #0a192f;">🏁 RONDA ${roundData.number} FINALIZADA</h3>
-                        <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 20px; font-weight: 500;">
-                            Todos los resultados han sido introducidos. ¿Deseas generar la siguiente ronda?
-                        </p>
-                        <div style="display: flex; gap: 15px; justify-content: center;">
-                             <button onclick="window.ControlTowerView.triggerNextRound(${roundData.number})" 
-                                    class="btn-primary-pro"
-                                    style="padding: 15px 30px; font-size: 1rem; background: #72a800; color: white; border: none; box-shadow: 0 8px 25px rgba(114, 168, 0, 0.2);">
-                                SI, SIGUIENTE RONDA 🚀
-                            </button>
-                             <button onclick="document.getElementById('next-round-btn-container').innerHTML='<p>Puedes editar los resultados usando el botón ✏️ en cada tarjeta.</p>'; setTimeout(() => window.ControlTowerView.recalc(), 3000);" 
-                                    style="padding: 15px 20px; font-size: 0.9rem; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; font-weight: 800; color: #64748b; cursor: pointer;">
-                                NO, QUIERO EDITAR
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }
-
             let emptyMessage = isLiveEvent ?
                 '<div style="display:flex; justify-content:center; padding:40px;"><div class="loader"></div></div>' :
                 'Selecciona una ronda válida...';
-
-            const user = window.Store ? window.Store.getState('currentUser') : null;
-            const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain', 'capitan', 'capitanes', 'organizador', 'organizadores'].includes((user?.role || '').toLowerCase());
-
-            let adminNextRoundBtn = '';
-
-            if (isAdmin && this.currentAmericanaDoc?.status === 'live') {
-                adminNextRoundBtn = `
-                    <div style="flex-shrink:0; padding-left: 10px;">
-                        <button onclick="window.ControlTowerView.triggerNextRound(${maxRound})" 
-                                style="background: #ffffff; color: #72a800; border: 1px solid #72a800; padding: 10px 15px; border-radius: 12px; font-weight: 950; font-size: 0.7rem; letter-spacing: 0.5px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(114, 168, 0, 0.1);">
-                            🚀 SIG. RONDA
-                        </button>
-                    </div>
-                `;
-            }
 
             return `
                 <div class="tour-filter-bar" style="position: sticky; top: 122px; z-index: 1000; background: rgba(255,255,255,0.9); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
@@ -1046,31 +995,153 @@
                        <span style="font-size: 0.65rem; color: #666; font-weight: 700; background: #eee; padding: 4px 8px; border-radius: 10px; display: flex; align-items: center;">
                            <span class="live-pulse-dot"></span> VIVO
                        </span>
-                       ${adminNextRoundBtn}
                    </div>
                 </div>
                 <div class="tour-grid-container" style="padding: 16px; display: grid; gap: 16px; padding-bottom: 100px;">
                     ${roundData.matches.length ? '' : `<div style="color:#999; width:100%; text-align:center; padding:80px; font-weight:700; line-height:1.5;">${emptyMessage}</div>`}
                     ${roundData.matches.map(match => this.renderTournamentCard(match)).join('')}
-                    ${nextRoundUI}
+                    ${this.renderRoundControlToolbar(roundData, allRounds)}
                 </div>
-                <script>
-                    if (typeof window._rollbackCheckedRounds === 'undefined') window._rollbackCheckedRounds = new Set();
-                    if (${isAdmin && parseInt(roundData.number) < maxRound} && !window._rollbackCheckedRounds.has(${roundData.number})) {
-                        window._rollbackCheckedRounds.add(${roundData.number});
-                        setTimeout(() => {
-                            window.PremiumModal.confirm({
-                                title: "⚠️ MODO CORRECCIÓN DETECTADO",
-                                message: "Estás viendo una ronda anterior. Cualquier cambio en estos marcadores requiere reiniciar las rondas posteriores.<br><br>¿Deseas activar el modo corrección ahora?",
-                                confirmText: "SÍ, ACTIVAR",
-                                cancelText: "SÓLO MIRAR",
-                                type: 'danger'
-                            }).then(ok => {
-                                if(ok) window.ControlTowerView.rollbackTournament(${roundData.number});
-                            });
-                        }, 500);
-                    }
-                </script>
+            `;
+        }
+
+        renderRoundControlToolbar(roundData, allRounds) {
+            const user = window.Store ? window.Store.getState('currentUser') : null;
+            const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain', 'capitan', 'capitanes', 'organizador', 'organizadores'].includes((user?.role || '').toLowerCase());
+
+            const roundNum = parseInt(roundData?.number || 1);
+            const matches = roundData?.matches || [];
+            const totalMatches = matches.length;
+
+            const isFinishedMatch = m => m.status === 'finished' || m.status === 'finalizado' || m.isFinished === true;
+            const finishedMatches = matches.filter(isFinishedMatch);
+            const finishedCount = finishedMatches.length;
+            const isRoundComplete = totalMatches > 0 && finishedCount === totalMatches;
+
+            const maxRound = this.allMatches.length > 0 ? Math.max(...this.allMatches.map(m => parseInt(m.round || 1))) : 1;
+            const isViewingMaxRound = roundNum === maxRound;
+            const isPastRound = roundNum < maxRound;
+
+            const totalRoundsPlanned = parseInt(this.currentAmericanaDoc?.total_rounds || this.currentAmericanaDoc?.max_rounds || 6);
+            const isLastPlannedRound = roundNum >= totalRoundsPlanned;
+            const isLive = this.currentAmericanaDoc?.status === 'live' || this.currentAmericanaDoc?.status === 'in_progress';
+
+            return `
+                <div id="round-control-toolbar" class="animate-pop-in" style="margin-top: 24px; background: #ffffff; padding: 22px 20px; border-radius: 22px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.04);">
+                    ${isPastRound ? `
+                        <!-- MODO RONDA ANTERIOR / CORRECCIÓN -->
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 18px; border-bottom: 1px solid #fee2e2; padding-bottom: 14px;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 950; color: #e11d48; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                                    <span>⚠️</span> MODO CORRECCIÓN (RONDA ${roundNum})
+                                </div>
+                                <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px; line-height: 1.4;">
+                                    Estás en una ronda previa. La ronda más avanzada en juego es la <b>Ronda ${maxRound}</b>.<br>
+                                    Si hubo un error al introducir los resultados de la Ronda ${roundNum}, pulsa el botón para <b>reiniciar desde aquí</b>: se eliminarán las rondas posteriores y podrás corregir marcadores y regenerar el orden correcto in situ.
+                                </div>
+                            </div>
+                            <span style="background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; padding: 4px 10px; border-radius: 10px; font-weight: 950; font-size: 0.65rem; white-space: nowrap;">
+                                R${roundNum} / R${maxRound}
+                            </span>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <button onclick="window.ControlTowerView.rollbackTournament(${roundNum})"
+                                    class="btn-primary-pro"
+                                    style="padding: 16px 20px; font-size: 0.95rem; background: #e11d48; color: white; border: none; border-radius: 14px; font-weight: 950; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 8px 25px rgba(225, 29, 72, 0.25); cursor: pointer; transition: all 0.2s;">
+                                🔄 REINICIAR Y CORREGIR DESDE RONDA ${roundNum}
+                            </button>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button onclick="window.ControlTowerView.unlockRoundMatches(${roundNum})"
+                                        style="flex: 1; min-width: 170px; padding: 12px 16px; font-size: 0.8rem; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    🔓 Desbloquear Marcadores R${roundNum}
+                                </button>
+                                <button onclick="window.ControlTowerView.goToRound(${maxRound})"
+                                        style="flex: 1; min-width: 170px; padding: 12px 16px; font-size: 0.8rem; background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    ➡️ Volver a Ronda ${maxRound} (Actual)
+                                </button>
+                            </div>
+                        </div>
+                    ` : `
+                        <!-- MODO RONDA ACTIVA / MÁS RECIENTE -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 14px;">
+                            <div>
+                                <div style="font-weight: 950; color: #0a192f; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                                    ${isRoundComplete ? '🏁' : '🎾'} RONDA ${roundNum} ${isRoundComplete ? 'COMPLETADA' : 'EN JUEGO'}
+                                </div>
+                                <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">
+                                    ${isRoundComplete 
+                                        ? '¡Todos los partidos han sido confirmados!' 
+                                        : `Progreso: <b>${finishedCount} de ${totalMatches}</b> pistas cerradas.`}
+                                </div>
+                            </div>
+                            <span style="background: ${isRoundComplete ? '#dcfce7' : '#f1f5f9'}; color: ${isRoundComplete ? '#15803d' : '#64748b'}; border: 1px solid ${isRoundComplete ? '#86efac' : '#e2e8f0'}; padding: 4px 10px; border-radius: 10px; font-weight: 950; font-size: 0.65rem;">
+                                ${isRoundComplete ? 'LISTA PARA AVANZAR' : `${finishedCount}/${totalMatches} CONFIRMADAS`}
+                            </span>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            ${isRoundComplete ? `
+                                <!-- AVANCE DE RONDA / FINALIZACIÓN -->
+                                ${isLastPlannedRound ? `
+                                    <button onclick="window.ControlTowerView.finishTournament()"
+                                            class="btn-primary-pro"
+                                            style="padding: 16px 24px; font-size: 1rem; background: linear-gradient(135deg, #72a800 0%, #00e36d 100%); color: white; border: none; border-radius: 16px; font-weight: 950; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 30px rgba(114, 168, 0, 0.35); cursor: pointer;">
+                                        🏆 FINALIZAR TORNEO Y VER CLASIFICACIÓN
+                                    </button>
+                                    <button onclick="window.ControlTowerView.triggerNextRound(${roundNum})"
+                                            style="padding: 12px 18px; font-size: 0.85rem; background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        ➕ Añadir Ronda Extra (Ronda ${roundNum + 1})
+                                    </button>
+                                ` : `
+                                    <button onclick="window.ControlTowerView.triggerNextRound(${roundNum})"
+                                            class="btn-primary-pro"
+                                            style="padding: 16px 24px; font-size: 1.05rem; background: linear-gradient(135deg, #72a800 0%, #00e36d 100%); color: white; border: none; border-radius: 16px; font-weight: 950; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 30px rgba(114, 168, 0, 0.35); cursor: pointer;">
+                                        🚀 GENERAR SIGUIENTE RONDA (RONDA ${roundNum + 1})
+                                    </button>
+                                `}
+
+                                <!-- OPCIONES DE EDICIÓN IN SITU -->
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px;">
+                                    <button onclick="window.ControlTowerView.unlockRoundMatches(${roundNum})"
+                                            style="flex: 1; min-width: 170px; padding: 11px 16px; font-size: 0.8rem; background: #f8fafc; color: #0284c7; border: 1px solid #bae6fd; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        ✏️ Corregir Marcadores R${roundNum}
+                                    </button>
+                                    <button onclick="window.ControlTowerView.regenerateCurrentRound(${roundNum})"
+                                            style="flex: 1; min-width: 170px; padding: 11px 16px; font-size: 0.8rem; background: #fffbeb; color: #d97706; border: 1px solid #fde68a; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        🎲 Regenerar Cruces R${roundNum}
+                                    </button>
+                                </div>
+                            ` : `
+                                <!-- RONDA EN CURSO (INCOMPLETA) -->
+                                ${finishedCount < totalMatches ? `
+                                    <button onclick="window.ControlTowerView.finalizeAllRoundMatches(${roundNum})"
+                                            style="padding: 14px 20px; font-size: 0.9rem; background: #f0fdf4; color: #166534; border: 1px solid #86efac; border-radius: 14px; font-weight: 950; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(22, 101, 52, 0.08);">
+                                        ✓ CONFIRMAR TODOS LOS RESULTADOS (${finishedCount}/${totalMatches})
+                                    </button>
+                                ` : ''}
+
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <button onclick="window.ControlTowerView.unlockRoundMatches(${roundNum})"
+                                            style="flex: 1; min-width: 170px; padding: 12px 16px; font-size: 0.8rem; background: #f8fafc; color: #0284c7; border: 1px solid #bae6fd; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        🔓 Desbloquear Marcadores
+                                    </button>
+                                    <button onclick="window.ControlTowerView.regenerateCurrentRound(${roundNum})"
+                                            style="flex: 1; min-width: 170px; padding: 12px 16px; font-size: 0.8rem; background: #fffbeb; color: #d97706; border: 1px solid #fde68a; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        🎲 Regenerar Cruces de esta Ronda
+                                    </button>
+                                </div>
+
+                                ${isAdmin ? `
+                                    <button onclick="window.ControlTowerView.triggerNextRound(${roundNum}, true)"
+                                            style="padding: 10px 16px; font-size: 0.75rem; background: transparent; color: #64748b; border: 1px dashed #cbd5e1; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        ⏩ Forzar Siguiente Ronda (${roundNum + 1}) sin completar
+                                    </button>
+                                ` : ''}
+                            `}
+                        </div>
+                    `}
+                </div>
             `;
         }
 
@@ -1100,6 +1171,9 @@
                 currentUser: user,
                 isEntreno: this.currentAmericanaDoc?.isEntreno,
                 eventStatus: this.currentAmericanaDoc?.status,
+                isControlTower: true,
+                canEdit: true,
+                canUnlock: true,
                 theme: {
                     grad: 'linear-gradient(135deg, #CCFF00 0%, #00E36D 100%)',
                     accent: '#CCFF00',
@@ -1275,9 +1349,23 @@
             }
 
             try {
+                const match = this.allMatches.find(m => m.id === matchId);
+                const sA = parseInt(match?.score_a || 0);
+                const sB = parseInt(match?.score_b || 0);
+
                 await window.db.collection(collection).doc(matchId).update({
-                    status: 'finished'
+                    status: 'finished',
+                    score_a: sA,
+                    score_b: sB
                 });
+                if (match) {
+                    match.status = 'finished';
+                    match.score_a = sA;
+                    match.score_b = sB;
+                }
+                if (matchCardEl) {
+                    matchCardEl.style.pointerEvents = '';
+                }
                 console.log("Match finished:", matchId);
 
                 // 🎊 CONFETTI FEEDBACK (Punto 6)
@@ -1290,16 +1378,22 @@
                     });
                 }
 
-
                 if (window.LevelService) {
-                    const match = this.allMatches.find(m => m.id === matchId);
                     if (match) {
-                        const updatedMatch = { ...match, status: 'finished' };
+                        const updatedMatch = { ...match, status: 'finished', score_a: sA, score_b: sB };
                         window.LevelService.processMatchResult(updatedMatch, isEntreno ? 'entreno' : 'americana');
                     }
                 }
+                // Reemplazo instantáneo de la tarjeta en el DOM con la vista finalizada
+                if (matchCardEl && match) {
+                    matchCardEl.outerHTML = this.renderTournamentCard(match);
+                }
+                this.recalc();
             } catch (e) {
                 console.error("Finish match failed:", e);
+                if (matchCardEl) {
+                    matchCardEl.style.pointerEvents = '';
+                }
             }
         }
 
@@ -1307,7 +1401,7 @@
         async rollbackTournament(fromRound) {
             const confirmed = await window.PremiumModal.confirm({
                 title: "⚠️ REINICIAR TORNEO",
-                message: `¿Estás SEGURO de querer reiniciar desde la RONDA ${fromRound}?<br><br>Se BORRARÁN todos los partidos de la Ronda ${fromRound + 1} en adelante. Esta acción no se puede deshacer.`,
+                message: `¿Estás SEGURO de querer reiniciar desde la RONDA ${fromRound}?<br><br>Se BORRARÁN todos los partidos de la Ronda ${fromRound + 1} en adelante y se desbloqueará la Ronda ${fromRound} para corregir sus resultados. Esta acción no se puede deshacer.`,
                 confirmText: "SÍ, REINICIAR",
                 cancelText: "CANCELAR",
                 type: 'danger'
@@ -1317,27 +1411,40 @@
 
             const isEntreno = this.currentAmericanaDoc?.isEntreno;
             const type = isEntreno ? 'entreno' : 'americana';
+            const eventId = this.currentAmericanaDoc?.id;
 
             try {
                 // 1. Purge all subsequent rounds
-                // We use a safe loop to prevent orphans
                 const nextRound = fromRound + 1;
                 const maxR = Math.max(...this.allMatches.map(m => parseInt(m.round) || 1));
 
                 for (let r = nextRound; r <= maxR; r++) {
                     console.log(`🗑️ Purging round ${r}...`);
-                    await window.AmericanaService.deleteRound(this.currentAmericanaDoc.id, r, type);
+                    await window.AmericanaService.deleteRound(eventId, r, type);
                 }
 
-                // 2. Unlock current round matches (Optional but helpful)
+                // 2. Unlock current round matches
                 const currentMatches = this.allMatches.filter(m => parseInt(m.round) === fromRound);
                 const collection = isEntreno ? 'entrenos_matches' : 'matches';
 
                 const batch = window.db.batch();
                 currentMatches.forEach(m => {
                     batch.update(window.db.collection(collection).doc(m.id), { status: 'live' });
+                    m.status = 'live';
+                    m.isFinished = false;
                 });
                 await batch.commit();
+
+                // 3. Update main tournament document to live and current_round = fromRound
+                const eventCol = isEntreno ? 'entrenos' : 'americanas';
+                await window.db.collection(eventCol).doc(eventId).update({
+                    current_round: fromRound,
+                    status: 'live'
+                });
+                if (this.currentAmericanaDoc) {
+                    this.currentAmericanaDoc.current_round = fromRound;
+                    this.currentAmericanaDoc.status = 'live';
+                }
 
                 window.PremiumModal.alert({
                     title: "✅ TORNEO REINICIADO",
@@ -1345,7 +1452,7 @@
                     type: 'success'
                 });
 
-                this.recalc();
+                this.goToRound(fromRound);
             } catch (e) {
                 console.error("Rollback failed:", e);
                 window.PremiumModal.alert({
@@ -1356,11 +1463,247 @@
             }
         }
 
-        async unlockMatch(matchId) {
+        async unlockRoundMatches(roundNum) {
             const confirmed = await window.PremiumModal.confirm({
-                title: "🔓 DESBLOQUEAR PARTIDO",
-                message: "¿Quieres desbloquear este partido para corregir el resultado?",
-                confirmText: "DESBLOQUEAR",
+                title: `🔓 DESBLOQUEAR RONDA ${roundNum}`,
+                message: `¿Deseas desbloquear todos los partidos de la <b>Ronda ${roundNum}</b>?<br><br>Podrás ajustar los tanteos directamente en cada tarjeta.`,
+                confirmText: "SÍ, DESBLOQUEAR",
+                cancelText: "CANCELAR"
+            });
+            if (!confirmed) return;
+
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const collection = isEntreno ? 'entrenos_matches' : 'matches';
+            const roundMatches = this.allMatches.filter(m => parseInt(m.round) === roundNum);
+
+            try {
+                const batch = window.db.batch();
+                roundMatches.forEach(m => {
+                    batch.update(window.db.collection(collection).doc(m.id), { status: 'live' });
+                    m.status = 'live';
+                    m.isFinished = false;
+                });
+                await batch.commit();
+
+                // Asegurar que el evento esté en live
+                const eventCol = isEntreno ? 'entrenos' : 'americanas';
+                await window.db.collection(eventCol).doc(this.currentAmericanaDoc.id).update({
+                    status: 'live'
+                });
+                if (this.currentAmericanaDoc) {
+                    this.currentAmericanaDoc.status = 'live';
+                }
+
+                // Reemplazar inmediatamente cada tarjeta en el DOM con sus controles de tanteo
+                roundMatches.forEach(m => {
+                    const cardEl = document.getElementById(`card-${m.id}`);
+                    if (cardEl) {
+                        cardEl.outerHTML = this.renderTournamentCard(m);
+                    }
+                });
+
+                window.PremiumModal.alert({
+                    title: "✅ MARCADORES DESBLOQUEADOS",
+                    message: `Ya puedes modificar los resultados de la Ronda ${roundNum}. Cuando termines, confirma cada partido o pulsa 'Confirmar todos los resultados'.`,
+                    type: 'success'
+                });
+                this.recalc();
+            } catch (e) {
+                console.error("Unlock round matches failed:", e);
+                window.PremiumModal.alert({ title: "❌ ERROR AL DESBLOQUEAR", message: e.message, type: 'error' });
+            }
+        }
+
+        async finalizeAllRoundMatches(roundNum) {
+            const roundMatches = this.allMatches.filter(m => parseInt(m.round) === roundNum);
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const collection = isEntreno ? 'entrenos_matches' : 'matches';
+
+            // Comprobar empates en modo entreno
+            if (isEntreno) {
+                const tied = roundMatches.find(m => {
+                    const sA = parseInt(m.score_a || 0);
+                    const sB = parseInt(m.score_b || 0);
+                    return sA === sB;
+                });
+                if (tied) {
+                    window.PremiumModal.alert({
+                        title: "⚠️ EMPATE DETECTADO",
+                        message: `La Pista ${tied.court} tiene un empate (${tied.score_a || 0} - ${tied.score_b || 0}). En los entrenos no se permiten empates. Ajusta el resultado antes de confirmar.`,
+                        type: 'warning'
+                    });
+                    return;
+                }
+            }
+
+            const confirmed = await window.PremiumModal.confirm({
+                title: `🏁 CONFIRMAR RONDA ${roundNum}`,
+                message: `¿Deseas dar por confirmados los resultados de todos los partidos de la Ronda ${roundNum}?`,
+                confirmText: "SÍ, CONFIRMAR TODOS",
+                cancelText: "CANCELAR"
+            });
+            if (!confirmed) return;
+
+            try {
+                const batch = window.db.batch();
+                roundMatches.forEach(m => {
+                    const sA = parseInt(m.score_a || 0);
+                    const sB = parseInt(m.score_b || 0);
+                    batch.update(window.db.collection(collection).doc(m.id), {
+                        status: 'finished',
+                        score_a: sA,
+                        score_b: sB
+                    });
+                    m.status = 'finished';
+                    m.score_a = sA;
+                    m.score_b = sB;
+                    m.isFinished = true;
+                });
+                await batch.commit();
+
+                roundMatches.forEach(m => {
+                    const cardEl = document.getElementById(`card-${m.id}`);
+                    if (cardEl) {
+                        cardEl.outerHTML = this.renderTournamentCard(m);
+                    }
+                });
+
+                if (window.confetti) {
+                    window.confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#CCFF00', '#00E36D', '#ffffff'] });
+                }
+
+                this.recalc();
+            } catch (e) {
+                console.error("Finalize all matches failed:", e);
+                window.PremiumModal.alert({ title: "❌ ERROR", message: e.message, type: 'error' });
+            }
+        }
+
+        async regenerateCurrentRound(roundNum) {
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const eventType = isEntreno ? 'entreno' : 'americana';
+            const eventId = this.currentAmericanaDoc?.id;
+
+            let msg = `¿Deseas <b>VOLVER A GENERAR</b> los cruces y pistas de la <b>Ronda ${roundNum}</b>?<br><br>Se borrarán los partidos actuales de la Ronda ${roundNum} y se volverán a calcular`;
+            if (roundNum > 1) {
+                msg += ` a partir de los resultados de la <b>Ronda ${roundNum - 1}</b>.`;
+            } else {
+                msg += ` desde el sorteo inicial.`;
+            }
+
+            const confirmed = await window.PremiumModal.confirm({
+                title: `🎲 REGENERAR RONDA ${roundNum}`,
+                message: msg,
+                confirmText: "SÍ, REGENERAR",
+                cancelText: "CANCELAR",
+                type: 'warning'
+            });
+            if (!confirmed) return;
+
+            try {
+                const maxR = Math.max(...this.allMatches.map(m => parseInt(m.round) || 1));
+                // 1. Borrar rondas posteriores si las hubiera
+                for (let r = roundNum + 1; r <= maxR; r++) {
+                    console.log(`🗑️ Pruning round ${r}...`);
+                    await window.AmericanaService.deleteRound(eventId, r, eventType);
+                }
+
+                // 2. Borrar ronda actual
+                console.log(`🗑️ Deleting current round ${roundNum}...`);
+                await window.AmericanaService.deleteRound(eventId, roundNum, eventType);
+
+                // 3. Generar la ronda de nuevo
+                if (roundNum === 1) {
+                    await window.AmericanaService.generateFirstRoundMatches(eventId, eventType);
+                } else {
+                    if (window.MatchMakingService) {
+                        await window.MatchMakingService.generateRound(eventId, eventType, roundNum, true);
+                    } else if (window.AmericanaService?.generateNextRound) {
+                        await window.AmericanaService.generateNextRound(eventId, roundNum - 1, eventType);
+                    }
+                }
+
+                // 4. Actualizar documento principal
+                const col = isEntreno ? 'entrenos' : 'americanas';
+                await window.db.collection(col).doc(eventId).update({
+                    current_round: roundNum,
+                    status: 'live'
+                });
+                if (this.currentAmericanaDoc) {
+                    this.currentAmericanaDoc.current_round = roundNum;
+                    this.currentAmericanaDoc.status = 'live';
+                }
+
+                window.PremiumModal.alert({
+                    title: "✅ RONDA REGENERADA",
+                    message: `La Ronda ${roundNum} se ha vuelto a calcular y generar correctamente.`,
+                    type: 'success'
+                });
+
+                this.goToRound(roundNum);
+            } catch (e) {
+                console.error("Error regenerating round:", e);
+                window.PremiumModal.alert({ title: "❌ ERROR AL REGENERAR", message: e.message, type: 'error' });
+                this.recalc();
+            }
+        }
+
+        async finishTournament() {
+            const confirmed = await window.PremiumModal.confirm({
+                title: "🏆 FINALIZAR TORNEO",
+                message: "¿Estás seguro de dar por finalizado el evento? Se guardará el estado final y podrás consultar la clasificación definitiva.",
+                confirmText: "SÍ, FINALIZAR",
+                cancelText: "CANCELAR",
+                type: 'success'
+            });
+            if (!confirmed) return;
+
+            const isEntreno = this.currentAmericanaDoc?.isEntreno;
+            const col = isEntreno ? 'entrenos' : 'americanas';
+            try {
+                await window.db.collection(col).doc(this.currentAmericanaDoc.id).update({
+                    status: 'finished'
+                });
+                if (this.currentAmericanaDoc) {
+                    this.currentAmericanaDoc.status = 'finished';
+                }
+                if (window.confetti) {
+                    window.confetti({ particleCount: 200, spread: 90, origin: { y: 0.5 }, colors: ['#CCFF00', '#00E36D', '#ffffff'] });
+                }
+                window.PremiumModal.alert({
+                    title: "🎉 ¡EVENTO FINALIZADO!",
+                    message: "El evento ha concluido. Consulta ahora el podio y la clasificación general.",
+                    type: 'success'
+                });
+                this.setTab('standings');
+            } catch (e) {
+                console.error("Finish tournament failed:", e);
+                window.PremiumModal.alert({ title: "❌ ERROR", message: e.message, type: 'error' });
+            }
+        }
+
+        async unlockMatch(matchId) {
+            const match = this.allMatches.find(m => m.id === matchId);
+            const matchRound = parseInt(match?.round || 1);
+            const maxRound = this.allMatches.length > 0 ? Math.max(...this.allMatches.map(m => parseInt(m.round || 1))) : 1;
+
+            if (matchRound < maxRound) {
+                const confirmed = await window.PremiumModal.confirm({
+                    title: "⚠️ MODO CORRECCIÓN",
+                    message: `Este partido pertenece a la <b>Ronda ${matchRound}</b> y ya se ha generado la Ronda ${matchRound + 1}.<br><br>Cualquier cambio en este resultado requiere <b>reiniciar desde la Ronda ${matchRound}</b> (se borrarán las rondas posteriores).<br><br>¿Deseas reiniciar y editar ahora?`,
+                    confirmText: "SÍ, REINICIAR Y EDITAR",
+                    cancelText: "CANCELAR",
+                    type: 'danger'
+                });
+                if (!confirmed) return;
+                await this.rollbackTournament(matchRound);
+                return;
+            }
+
+            const confirmed = await window.PremiumModal.confirm({
+                title: "✏️ CORREGIR MARCADOR",
+                message: "¿Deseas desbloquear este partido para modificar el resultado antes de generar la siguiente ronda?",
+                confirmText: "SÍ, MODIFICAR",
                 cancelText: "CANCELAR"
             });
             if (!confirmed) return;
@@ -1371,10 +1714,36 @@
                 await window.db.collection(collection).doc(matchId).update({
                     status: 'live'
                 });
+                if (match) {
+                    match.status = 'live';
+                    match.isFinished = false;
+                }
+
+                // Si el evento estaba finalizado, reactivarlo a 'live'
+                const eventCol = isEntreno ? 'entrenos' : 'americanas';
+                await window.db.collection(eventCol).doc(this.currentAmericanaDoc.id).update({
+                    status: 'live'
+                });
+                if (this.currentAmericanaDoc) {
+                    this.currentAmericanaDoc.status = 'live';
+                }
+
                 console.log("Match unlocked:", matchId);
+
+                // Reemplazo instantáneo de la tarjeta en el DOM por su versión editable
+                const cardEl = document.getElementById(`card-${matchId}`);
+                if (cardEl && match) {
+                    cardEl.outerHTML = this.renderTournamentCard(match);
+                }
+
                 this.recalc();
             } catch (e) {
                 console.error("Unlock failed:", e);
+                window.PremiumModal.alert({
+                    title: "❌ ERROR AL DESBLOQUEAR",
+                    message: e.message,
+                    type: 'error'
+                });
             }
         }
 
@@ -1410,7 +1779,7 @@
             }
         }
 
-        async triggerNextRound(round) {
+        async triggerNextRound(round, force = false) {
             const isEntreno = this.currentAmericanaDoc?.isEntreno;
             const eventType = isEntreno ? 'entreno' : 'americana';
             const nextRound = round + 1;
@@ -1418,13 +1787,16 @@
             const nextRoundExists = this.allMatches.some(m => parseInt(m.round) === nextRound);
 
             let title = "🚀 SIGUIENTE RONDA";
-            let msg = "¿CONFIRMAR CAMBIO DE RONDA?\n\nAsegúrate de que todos los resultados sean correctos.";
+            let msg = `¿CONFIRMAR GENERACIÓN DE LA RONDA ${nextRound}?\n\nAsegúrate de que todos los resultados de la Ronda ${round} sean correctos.`;
             let color = "#CCFF00";
 
             if (nextRoundExists) {
                 title = "⚠️ REGENERAR RONDA";
-                msg = `LA RONDA ${nextRound} YA EXISTE\n\nAl confirmar, SE BORRARÁ la Ronda ${nextRound} actual y se regenerará.\n\n¿Estás seguro?`;
+                msg = `LA RONDA ${nextRound} YA EXISTE\n\nAl confirmar, SE BORRARÁ la Ronda ${nextRound} actual y se volverá a sortear.\n\n¿Estás seguro?`;
                 color = "#FF3B30";
+            } else if (force) {
+                title = "⏩ FORZAR SIGUIENTE RONDA";
+                msg = `Hay partidos pendientes en la Ronda ${round}.\n\n¿Deseas FORZAR la generación de la Ronda ${nextRound} de todos modos?`;
             }
 
             const confirmed = await window.PremiumModal.confirm({
@@ -1436,9 +1808,9 @@
 
             if (!confirmed) return;
 
-            const btnContainer = document.getElementById('next-round-btn-container');
+            const btnContainer = document.getElementById('round-control-toolbar') || document.getElementById('next-round-btn-container');
             if (btnContainer) {
-                btnContainer.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; gap:15px; padding:20px;"><div class="loader"></div><span style="font-weight:800; color:#888;">GENERANDO...</span></div>';
+                btnContainer.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; gap:15px; padding:25px;"><div class="loader"></div><span style="font-weight:900; color:#15803d; font-size:1rem;">GENERANDO RONDA ${nextRound}...</span></div>`;
             }
 
             try {
@@ -1447,10 +1819,23 @@
                     await window.AmericanaService.deleteRound(this.currentAmericanaDoc.id, nextRound, eventType);
                 }
 
-                if (window.AmericanaService && window.AmericanaService.generateNextRound) {
+                if (window.MatchMakingService && force) {
+                    await window.MatchMakingService.generateRound(this.currentAmericanaDoc.id, eventType, nextRound, true);
+                } else if (window.AmericanaService && window.AmericanaService.generateNextRound) {
                     await window.AmericanaService.generateNextRound(this.currentAmericanaDoc.id, round, eventType);
                 } else if (window.AmericanaService && window.AmericanaService.generateEntrenoNextRound && isEntreno) {
                     await window.AmericanaService.generateEntrenoNextRound(this.currentAmericanaDoc.id, round);
+                }
+
+                // Sincronizar documento principal del evento
+                const eventCol = isEntreno ? 'entrenos' : 'americanas';
+                await window.db.collection(eventCol).doc(this.currentAmericanaDoc.id).update({
+                    current_round: nextRound,
+                    status: 'live'
+                });
+                if (this.currentAmericanaDoc) {
+                    this.currentAmericanaDoc.current_round = nextRound;
+                    this.currentAmericanaDoc.status = 'live';
                 }
 
                 // --- AUTO-TRANSITION LOGIC ---
@@ -1460,9 +1845,6 @@
                 const waitForMatches = async () => {
                     let attempts = 0;
                     while (attempts < 20) { // Try for ~10 seconds
-                        // Force a check/re-render might be needed if state is external, 
-                        // but usually this.allMatches updates via listener. 
-                        // We check this.allMatches directly.
                         const matchesForNextRound = this.allMatches.filter(m => parseInt(m.round) === nextRound);
                         if (matchesForNextRound.length > 0) return matchesForNextRound;
 
@@ -1490,7 +1872,7 @@
                     this.goToRound(nextRound);
                     window.PremiumModal.alert({
                         title: "✅ RONDA GENERADA",
-                        message: "Ronda generada correctamente (Animación omitida por sincronización)."
+                        message: `Ronda ${nextRound} generada correctamente.`
                     });
                 }
 

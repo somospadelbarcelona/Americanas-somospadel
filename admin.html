@@ -1101,6 +1101,13 @@
                     </div>
                 </div>
 
+                <!-- 🚀 Equipos Nueva Temporada 2027 -->
+                <button class="nav-item-pro btn-season-campaign" data-view="season_campaign" onclick="loadAdminView('season_campaign')" style="position: relative; border-left: 3px solid #CCFF00;">
+                    <span class="icon-box" style="color: #CCFF00; background: rgba(204, 255, 0, 0.12);"><i class="fas fa-users-rays"></i></span>
+                    <span class="nav-text" style="font-weight: 800;">Equipos 2027</span>
+                    <span style="background: #CCFF00; color: #000; font-size: 0.58rem; font-weight: 950; padding: 2px 6px; border-radius: 6px; margin-left: auto;">OCT-NOV</span>
+                </button>
+
                 <!-- Base de Datos (Usuarios) -->
                 <button class="nav-item-pro btn-database" data-view="users" onclick="loadAdminView('users')">
                     <span class="icon-box"><i class="fas fa-users-gear"></i></span>
@@ -1146,10 +1153,13 @@
                     </button>
                     <div class="submenu-content">
                         <button class="submenu-item nav-group-open-matches-sub" data-view="open_matches_mgmt" onclick="loadAdminView('open_matches_mgmt')">
-                            <span class="nav-text">Gestor</span>
+                            <span class="nav-text">Gestor de Partidas Abiertas</span>
                         </button>
                         <button class="submenu-item nav-group-open-matches-sub" data-view="open_matches_create" onclick="loadAdminView('open_matches_create')">
                             <span class="nav-text">Crear</span>
+                        </button>
+                        <button class="submenu-item nav-group-open-matches-sub" data-view="open_matches_results" onclick="loadAdminView('open_matches_results')">
+                            <span class="nav-text">Resultados</span>
                         </button>
                     </div>
                 </div>
@@ -1598,7 +1608,7 @@
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
                             <div class="form-group">
                                 <label>MODO DE JUEGO</label>
                                 <select name="pair_mode" class="pro-input">
@@ -1617,6 +1627,17 @@
                                     <option value="finished">🏁 FINALIZADA</option>
                                     <option value="cancelled">⛔ ANULADO</option>
                                 </select>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label><i class="fas fa-signal" style="color: #CCFF00;"></i> NIVEL MÍNIMO</label>
+                                <input type="text" name="level_min" class="pro-input" placeholder="Ej: 3.5">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-signal" style="color: #CCFF00;"></i> NIVEL MÁXIMO</label>
+                                <input type="text" name="level_max" class="pro-input" placeholder="Ej: 4.5">
                             </div>
                         </div>
 
@@ -1808,6 +1829,17 @@
                     </div>
                 </div>
 
+                <div class="form-row-compact">
+                    <div class="form-group">
+                        <label><i class="fas fa-signal"></i> NIVEL MÍNIMO</label>
+                        <input type="text" name="level_min" class="pro-input" placeholder="Ej: 3.5">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-signal"></i> NIVEL MÁXIMO</label>
+                        <input type="text" name="level_max" class="pro-input" placeholder="Ej: 4.5">
+                    </div>
+                </div>
+
                 <!-- Bloque 4: Logística y Precios -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
                     <div class="form-group">
@@ -1992,7 +2024,7 @@
 
             <!-- App Config -->
             <script src="js/firebase-config.js"></script>
-            <script src="js/firebase-init.js?v=5006"></script>
+            <script src="js/firebase-init.js?v=5007"></script>
 
             <!-- CORE ARCHITECTURE (Absolute Priority) -->
             <script src="js/modules/core/Constants.js?v=2000"></script>
@@ -2003,7 +2035,7 @@
 
             <!-- SERVICES & AUTH (Session Management) -->
             <script src="js/core/AuthService.js?v=1101"></script>
-            <script src="js/admin.js?v=1121"></script>
+            <script src="js/admin.js?v=1122"></script>
 
             <!-- Module Logic -->
             <script src="js/modules/ui/PlayerAutocomplete.js"></script>
@@ -2044,7 +2076,7 @@
 
             <script src="js/utils/RoleService.js"></script>
             <script src="js/modules/admin-users.js?v=1.1"></script>
-            <script src="js/modules/admin-americanas.js"></script>
+            <script src="js/modules/admin-americanas.js?v=5012"></script>
             <script src="js/modules/admin-matches.js"></script>
             <script src="js/modules/admin-results.js"></script>
 
@@ -2054,9 +2086,9 @@
             <script src="js/modules/admin-pairs-ui.js?v=2000"></script>
             <script src="js/modules/admin-dashboard.js"></script>
             <script src="js/modules/admin-analytics.js"></script>
-            <script src="js/modules/common/WhatsAppService.js?v=7015"></script>
-            <script src="js/modules/admin-entrenos.js?v=5010"></script>
-            <script src="js/modules/admin-open-matches.js" defer></script>
+            <script src="js/modules/common/WhatsAppService.js?v=7019"></script>
+            <script src="js/modules/admin-entrenos.js?v=5012"></script>
+            <script src="js/modules/admin-open-matches.js?v=3" defer></script>
             <script src="js/modules/admin-database-health.js"></script>
             <script src="js/modules/admin-fix-players.js"></script>
 
@@ -2068,6 +2100,10 @@
             <script src="js/modules/tournaments/TournamentView.js?v=13"></script>
             <script src="js/modules/tournaments/TournamentController.js?v=13"></script>
             <script src="js/modules/admin/AdminTournaments.js?v=1"></script>
+
+            <!-- 🚀 Campaña Nueva Temporada Octubre-Noviembre -->
+            <script src="js/modules/teams/SeasonCampaignService.js?v=2.3"></script>
+            <script src="js/modules/admin-season-campaign.js?v=2.1"></script>
 
 
             <!-- DIAGNOSTIC SCRIPT (Optional) -->

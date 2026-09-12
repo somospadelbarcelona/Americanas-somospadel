@@ -120,15 +120,22 @@
                                 const winA = isFinished && sA > sB;
                                 const winB = isFinished && sB > sA;
 
+                                const formatTeamName = (names, fallback) => {
+                                    if (window.MatchCard && typeof window.MatchCard.parseTeam === 'function') {
+                                        return window.MatchCard.parseTeam(names, fallback).fullText;
+                                    }
+                                    return Array.isArray(names) ? names.join(' / ') : (names || fallback);
+                                };
+
                                 return `
                                     <div class="bracket-match-node">
                                         <div class="bracket-team">
-                                            <span class="bracket-team-name ${winA ? 'bracket-winner' : ''}">${Array.isArray(m.team_a_names) ? m.team_a_names.join('/') : (m.team_a_names || 'TEAM A')}</span>
+                                            <span class="bracket-team-name ${winA ? 'bracket-winner' : ''}">${formatTeamName(m.team_a_names, 'TEAM A')}</span>
                                             <span class="bracket-score ${winA ? 'bracket-winner-score' : ''}">${isFinished ? sA : '-'}</span>
                                         </div>
                                         <div style="height: 1px; background: #f1f5f9; margin: 4px 0;"></div>
                                         <div class="bracket-team">
-                                            <span class="bracket-team-name ${winB ? 'bracket-winner' : ''}">${Array.isArray(m.team_b_names) ? m.team_b_names.join('/') : (m.team_b_names || 'TEAM B')}</span>
+                                            <span class="bracket-team-name ${winB ? 'bracket-winner' : ''}">${formatTeamName(m.team_b_names, 'TEAM B')}</span>
                                             <span class="bracket-score ${winB ? 'bracket-winner-score' : ''}">${isFinished ? sB : '-'}</span>
                                         </div>
                                         ${parseInt(r) < totalRounds ? '<div class="bracket-connector"></div>' : ''}

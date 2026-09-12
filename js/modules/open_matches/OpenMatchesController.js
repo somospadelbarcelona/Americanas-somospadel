@@ -33,7 +33,9 @@
                 this.unsubscribe();
             }
 
-            const todayStr = new Date().toISOString().split('T')[0];
+            const d = new Date();
+            d.setDate(d.getDate() - 7);
+            const dateLimitStr = d.toISOString().split('T')[0];
 
             console.log("📡 [OpenMatchesController] Connecting to 'open_matches' collection...");
             
@@ -45,7 +47,7 @@
                         const matches = [];
                         snapshot.forEach(doc => {
                             const data = doc.data();
-                            if (data.date && data.date >= todayStr) {
+                            if (data.date && data.date >= dateLimitStr) {
                                 matches.push({ id: doc.id, ...data });
                             }
                         });

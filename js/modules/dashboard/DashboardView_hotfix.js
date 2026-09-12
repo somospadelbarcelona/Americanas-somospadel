@@ -656,6 +656,13 @@
                     const mtcEl = document.getElementById('user-matches-val');
                     if (mtcEl) mtcEl.innerText = user ? (user.total_matches || '0') : '0';
 
+                    // Update Campaign Banner Visibility
+                    const bannerEl = document.getElementById('season-campaign-banner-root');
+                    if (bannerEl) {
+                        const isSyncActive = window.SeasonCampaignService ? window.SeasonCampaignService.isCampaignActiveSync() : false;
+                        bannerEl.style.display = isSyncActive ? 'block' : 'none';
+                    }
+
                     // Build fresh context and load dynamic widgets
                     const context = await this.buildContext(user);
                     await this.loadLiveWidgetContent(context);
@@ -770,6 +777,162 @@
                     <!-- 0. HERO CARD (CONTEXT AWARE) -->
                     <div id="hero-card-root" style="animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS (HeroCard) -->
+                    </div>
+
+                    <!-- 🔥 BANNER CAMPAÑA TEMPORADA OCTUBRE - NOVIEMBRE 2026 (Controlable desde Admin) -->
+                    <div id="season-campaign-banner-root" style="display: none; margin: 0 15px 18px !important; animation: floatUp 0.5s ease-out forwards;">
+                        <div style="
+                            background: #ffffff;
+                            border: 1.5px solid #e2e8f0;
+                            border-radius: 24px;
+                            padding: 20px;
+                            position: relative;
+                            overflow: hidden;
+                            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05), 0 0 20px rgba(204, 255, 0, 0.12);
+                        ">
+                            <!-- Glow decorativo superior -->
+                            <div style="position: absolute; top: -40px; right: -40px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(204, 255, 0, 0.25) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                            <!-- Header del Banner: Badges -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="background: #CCFF00; color: #000000; font-size: 0.65rem; font-weight: 950; padding: 3px 9px; border-radius: 8px; letter-spacing: 0.5px; text-transform: uppercase;">
+                                        🔥 TEMPORADA 2027 | EQUIPOS
+                                    </span>
+                                    <span style="background: #f1f5f9; color: #475569; font-size: 0.65rem; font-weight: 800; padding: 3px 9px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                        PLAZAS LIMITADAS
+                                    </span>
+                                </div>
+                                <span style="font-size: 0.68rem; color: #64748b; font-weight: 700;">
+                                    SomosPadel BCN
+                                </span>
+                            </div>
+
+                            <!-- Título principal -->
+                            <h3 style="margin: 0 0 6px; font-size: 1.22rem; font-weight: 950; color: #0f172a; line-height: 1.25; letter-spacing: -0.3px;">
+                                🏆 INSCRIPCIONES EQUIPOS | TEMPORADA 2027
+                            </h3>
+
+                            <!-- Subtítulo con las 3 funciones clave -->
+                            <p style="margin: 0 0 14px; font-size: 0.78rem; color: #64748b; font-weight: 600; line-height: 1.4;">
+                                Convocatoria oficial de plazas para equipos del club (Octubre - Noviembre) • Entrenos • Americanas
+                            </p>
+
+                            <!-- Mini-features pills -->
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;">
+                                <span style="background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 10px;">
+                                    🏆 Fem (2ª, 3ª, 4ª) • Mix (3ª, 4ª) • Masc (3ª, 4ª)
+                                </span>
+                                <span style="background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 10px;">
+                                    🎯 Clases & Físico
+                                </span>
+                                <span style="background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 10px;">
+                                    ⚡ Ranking en Tiempo Real
+                                </span>
+                            </div>
+
+                            <!-- CTA Principal -->
+                            <button 
+                                type="button" 
+                                onclick="window.SeasonCampaignView && window.SeasonCampaignView.openModal();" 
+                                style="
+                                    width: 100%;
+                                    padding: 13px 18px;
+                                    background: #CCFF00;
+                                    color: #000000;
+                                    border: 1px solid #b5e600;
+                                    border-radius: 14px;
+                                    font-weight: 950;
+                                    font-size: 0.88rem;
+                                    letter-spacing: 0.5px;
+                                    cursor: pointer;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    gap: 8px;
+                                    box-shadow: 0 4px 16px rgba(204, 255, 0, 0.35);
+                                    transition: transform 0.2s, box-shadow 0.2s;
+                                    margin-bottom: 10px;
+                                "
+                                onmouseover="this.style.transform='translateY(-2px)';"
+                                onmouseout="this.style.transform='none';">
+                                <i class="fas fa-rocket" style="font-size: 0.95rem;"></i>
+                                PRE-INSCRIBIRSE / DESCUBRIR
+                            </button>
+
+                            <!-- Accesos rápidos secundarios -->
+                            <div style="display: flex; gap: 8px;">
+                                <button 
+                                    type="button" 
+                                    onclick="window.Router && window.Router.navigate('americanas');" 
+                                    style="
+                                        flex: 1;
+                                        padding: 8px 10px;
+                                        background: #f8fafc;
+                                        border: 1px solid #e2e8f0;
+                                        border-radius: 10px;
+                                        color: #334155;
+                                        font-size: 0.72rem;
+                                        font-weight: 800;
+                                        cursor: pointer;
+                                        transition: background 0.2s;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        gap: 5px;
+                                    "
+                                    onmouseover="this.style.background='#f1f5f9';"
+                                    onmouseout="this.style.background='#f8fafc';">
+                                    <span>⚡</span> Americanas
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onclick="window.Router && window.Router.navigate('entrenos');" 
+                                    style="
+                                        flex: 1;
+                                        padding: 8px 10px;
+                                        background: #f8fafc;
+                                        border: 1px solid #e2e8f0;
+                                        border-radius: 10px;
+                                        color: #334155;
+                                        font-size: 0.72rem;
+                                        font-weight: 800;
+                                        cursor: pointer;
+                                        transition: background 0.2s;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        gap: 5px;
+                                    "
+                                    onmouseover="this.style.background='#f1f5f9';"
+                                    onmouseout="this.style.background='#f8fafc';">
+                                    <span>🎯</span> Entrenos
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onclick="window.SeasonCampaignView && window.SeasonCampaignView.openModal('equipos');" 
+                                    style="
+                                        flex: 1;
+                                        padding: 8px 10px;
+                                        background: #f8fafc;
+                                        border: 1px solid #e2e8f0;
+                                        border-radius: 10px;
+                                        color: #334155;
+                                        font-size: 0.72rem;
+                                        font-weight: 800;
+                                        cursor: pointer;
+                                        transition: background 0.2s;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        gap: 5px;
+                                    "
+                                    onmouseover="this.style.background='#f1f5f9';"
+                                    onmouseout="this.style.background='#f8fafc';">
+                                    <span>🏆</span> Equipos
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
 
@@ -957,8 +1120,22 @@
                 </style>
     `;
 
+            // Control de Visibilidad de la Campaña de Temporada (Activación desde Admin)
+            try {
+                const bannerEl = document.getElementById('season-campaign-banner-root');
+                if (bannerEl) {
+                    const isSyncActive = window.SeasonCampaignService ? window.SeasonCampaignService.isCampaignActiveSync() : false;
+                    bannerEl.style.display = isSyncActive ? 'block' : 'none';
 
-
+                    if (window.SeasonCampaignService && typeof window.SeasonCampaignService.isCampaignActive === 'function') {
+                        window.SeasonCampaignService.isCampaignActive().then(isActive => {
+                            if (bannerEl) bannerEl.style.display = isActive ? 'block' : 'none';
+                        }).catch(() => {});
+                    }
+                }
+            } catch (e) {
+                console.warn('[DashboardView] Error checking campaign visibility:', e);
+            }
 
             // 4. ASYNC LOADING OF DATA-DEPENDENT COMPONENTS
             try {
@@ -1187,18 +1364,24 @@
                 if (tacticalRoot && window.Tactical3DWidget) {
                     tacticalRoot.innerHTML = window.Tactical3DWidget.renderHTML();
                     
+                    const startWidget = () => {
+                        setTimeout(() => {
+                            if (document.getElementById('three-tactical-canvas') && window.Tactical3DWidget) {
+                                window.Tactical3DWidget.init('three-tactical-canvas');
+                            }
+                        }, 50);
+                    };
+
                     if (!window.THREE) {
                         console.log("🌐 [DashboardView] Three.js no está en window, cargando dinámicamente...");
                         window.loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'THREE')
                             .then(() => {
                                 console.log("✅ [DashboardView] Three.js cargado dinámicamente con éxito para el widget táctico.");
-                                if (document.getElementById('three-tactical-canvas')) {
-                                    window.Tactical3DWidget.init('three-tactical-canvas');
-                                }
+                                startWidget();
                             })
                             .catch(err => console.error("❌ [DashboardView] Error al cargar Three.js para Tactical3DWidget:", err));
                     } else {
-                        window.Tactical3DWidget.init('three-tactical-canvas');
+                        startWidget();
                     }
                 }
             } catch (e) {
@@ -1511,16 +1694,28 @@
                     </div>
                     
                     <div id="dynamic-blog-posts-container" style="display: flex; flex-direction: column; gap: 10px;">
-                        ${[0,1,2].map(i => `
-                            <div style="display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 14px; background: #f8fafc; border: 1px solid rgba(0,0,0,0.03);">
-                                <div style="width: 76px; height: 76px; border-radius: 12px; background: rgba(0,0,0,0.04); flex-shrink: 0;" class="skeleton-shim"></div>
-                                <div style="flex: 1;">
-                                    <div style="height: 8px; width: 30%; background: rgba(0,0,0,0.04); border-radius: 4px; margin-bottom: 8px;" class="skeleton-shim"></div>
-                                    <div style="height: 12px; width: 80%; background: rgba(0,0,0,0.06); border-radius: 4px; margin-bottom: 6px;" class="skeleton-shim"></div>
-                                    <div style="height: 8px; width: 60%; background: rgba(0,0,0,0.04); border-radius: 4px;" class="skeleton-shim"></div>
-                                </div>
+                        <div onclick="if(window.DashboardView) window.DashboardView.openBlogPost('tip_bandeja')" style="display: flex; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 16px; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); cursor: pointer; transition: all 0.25s; box-shadow: 0 4px 12px rgba(0,0,0,0.03);" class="premium-blog-compact-card">
+                            <div style="width: 60px; height: 60px; border-radius: 12px; background: linear-gradient(135deg, #090f1e 0%, #1e293b 100%); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #CCFF00; font-size: 1.3rem;">
+                                💡
                             </div>
-                        `).join('')}
+                            <div style="flex: 1;">
+                                <span style="font-size: 0.55rem; font-weight: 950; letter-spacing: 0.5px; color: #4d7c0f; text-transform: uppercase;">CONSEJOS TÁCTICOS</span>
+                                <h4 style="font-size: 0.82rem; font-weight: 900; color: #0f172a; margin: 2px 0 3px 0; font-family: 'Outfit';">Claves para la Bandeja de Control y Ataque</h4>
+                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 600;">Mejora tu empuñadura y posicionamiento en pista</span>
+                            </div>
+                            <i class="fas fa-chevron-right compact-chevron" style="color: #94a3b8; font-size: 0.8rem; transition: transform 0.2s;"></i>
+                        </div>
+                        <div onclick="if(window.DashboardView) window.DashboardView.openBlogPost('tip_remate')" style="display: flex; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 16px; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); cursor: pointer; transition: all 0.25s; box-shadow: 0 4px 12px rgba(0,0,0,0.03);" class="premium-blog-compact-card">
+                            <div style="width: 60px; height: 60px; border-radius: 12px; background: linear-gradient(135deg, #172554 0%, #1e1b4b 100%); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #CCFF00; font-size: 1.3rem;">
+                                🎾
+                            </div>
+                            <div style="flex: 1;">
+                                <span style="font-size: 0.55rem; font-weight: 950; letter-spacing: 0.5px; color: #3b82f6; text-transform: uppercase;">COMUNIDAD BCN</span>
+                                <h4 style="font-size: 0.82rem; font-weight: 900; color: #0f172a; margin: 2px 0 3px 0; font-family: 'Outfit';">Próximos Torneos y Americanas Semanales</h4>
+                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 600;">Compite en partidos equilibrados de tu nivel</span>
+                            </div>
+                            <i class="fas fa-chevron-right compact-chevron" style="color: #94a3b8; font-size: 0.8rem; transition: transform 0.2s;"></i>
+                        </div>
                     </div>
                 </div>
                 
@@ -2070,28 +2265,41 @@
 
                 // Inicializar la pizarra interactiva 3D con carga diferida y segura de Three.js
                 if (window.TacticalCourt3D) {
+                    const startSimulator = () => {
+                        setTimeout(() => {
+                            if (document.getElementById('three-warroom-canvas') && window.TacticalCourt3D) {
+                                window.TacticalCourt3D.init('three-warroom-canvas');
+                            }
+                        }, 50);
+                    };
+
                     if (!window.THREE) {
                         console.log("🌐 [WarRoom] Cargando Three.js dinámicamente...");
                         window.loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'THREE')
                             .then(() => {
                                 console.log("✅ [WarRoom] Three.js cargado dinámicamente con éxito para el simulador.");
-                                if (document.getElementById('three-warroom-canvas')) {
-                                    window.TacticalCourt3D.init('three-warroom-canvas');
-                                }
+                                startSimulator();
                             })
                             .catch(err => console.error("❌ [WarRoom] Error al cargar Three.js para TacticalCourt3D:", err));
                     } else {
-                        window.TacticalCourt3D.init('three-warroom-canvas');
+                        startSimulator();
                     }
                 }
 
-                // Configurar cierre
+                // Configurar cierre y limpieza de memoria WebGL
+                const closeModal = () => {
+                    if (window.TacticalCourt3D && typeof window.TacticalCourt3D.destroy === 'function') {
+                        window.TacticalCourt3D.destroy();
+                    }
+                    modal.remove();
+                };
+
                 const closeBtn = modal.querySelector('#warroom-modal-close-btn');
                 if (closeBtn) {
-                    closeBtn.onclick = () => modal.remove();
+                    closeBtn.onclick = closeModal;
                 }
                 modal.onclick = (e) => {
-                    if (e.target === modal) modal.remove();
+                    if (e.target === modal) closeModal();
                 };
 
                 // Eventos de cámara

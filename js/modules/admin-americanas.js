@@ -186,6 +186,7 @@ function renderAmericanaCard(e) {
                     <div style="display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap;">
                          <span>📅 <span style="color:#eee">${e.date}</span></span>
                          <span>🕒 <span style="color:#eee">${e.time || '18:30'}</span></span>
+                         <span>📶 <span style="color:#eee">Niv. ${(e.level && String(e.level).trim()) || (e.level_min && e.level_max ? `${e.level_min} - ${e.level_max}` : (e.level_min ? `${e.level_min}` : (e.level_max ? `Hasta ${e.level_max}` : '3.5 - 4.5')))}</span></span>
                          <span onclick='window.openEditAmericanaModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' style="cursor:pointer;" title="Gestionar participantes">👥 <span style="color:var(--primary); font-weight:800;">${playersCount}</span><span style="opacity:0.5">/${maxPlayers}</span></span>
                     </div>
                 </div>
@@ -315,6 +316,17 @@ function renderCreateAmericanaForm() {
                 <div class="form-group">
                     <label><i class="fas fa-image"></i> IMAGEN (URL)</label>
                     <input type="text" name="image_url" id="create-americana-img-input" class="pro-input" placeholder="https://..." value="img/americana masculina.jpg" oninput="document.getElementById('create-americana-img-preview').src=this.value; document.getElementById('create-americana-img-preview').style.display='block';">
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div class="form-group">
+                    <label><i class="fas fa-signal"></i> NIVEL MÍNIMO</label>
+                    <input type="text" name="level_min" class="pro-input" placeholder="Ej: 3.5" value="3.5">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-signal"></i> NIVEL MÁXIMO</label>
+                    <input type="text" name="level_max" class="pro-input" placeholder="Ej: 4.5" value="4.5">
                 </div>
             </div>
 
@@ -483,6 +495,8 @@ window.openEditAmericanaModal = async (e) => {
         if (form.querySelector('[name=price_members]')) form.querySelector('[name=price_members]').value = e.price_members || '';
         if (form.querySelector('[name=price_external]')) form.querySelector('[name=price_external]').value = e.price_external || '';
         if (form.querySelector('[name=image_url]')) form.querySelector('[name=image_url]').value = e.image_url || '';
+        if (form.querySelector('[name=level_min]')) form.querySelector('[name=level_min]').value = (e.level_min !== undefined && e.level_min !== null && e.level_min !== '') ? e.level_min : '3.5';
+        if (form.querySelector('[name=level_max]')) form.querySelector('[name=level_max]').value = (e.level_max !== undefined && e.level_max !== null && e.level_max !== '') ? e.level_max : '4.5';
 
         // --- DYNAMIC VISIBILITY OF FIXED PAIRS (AMERICANA) ---
         const pairModeSelect = form.querySelector('[name=pair_mode]');

@@ -58,9 +58,52 @@ window.AdminAuth = {
             }
             this.updateProfileUI();
 
-            // Wait for everything to be settled
+            // 🔐 FIX: Siempre establecer sesión Firebase Auth ANTES de cargar cualquier vista
+            // Sin esto, Firestore devuelve permission-denied porque request.auth == null
+            try {
+                console.log("🔐 [AdminAuth.init] Re-estableciendo sesión Firebase Auth (anonymous)...");
+                const currentFirebaseUser = firebase.auth().currentUser;
+                
+                if (!currentFirebaseUser) {
+                    // No hay sesión Firebase activa - necesitamos crear una
+                    const creds = await firebase.auth().signInAnonymously();
+                    const uid = creds.user.uid;
+                    console.log("✅ [AdminAuth.init] Sesión anónima establecida. UID:", uid);
+                    
+                    // Elevar privilegios en Firestore para que las reglas reconozcan al admin
+                    if (window.db) {
+                        try {
+                            await window.db.collection('players').doc(uid).set({
+                                id: uid,
+                                uid: uid,
+                                name: `[Session] ${this.user.name}`,
+                                role: this.user.role,
+                                status: 'active',
+                                isSessionAdmin: true,
+                                createdAt: new Date().toISOString()
+                            }, { merge: true });
+                            console.log("🛡️ [AdminAuth.init] Privilegios elevados OK para sesión restaurada.");
+                        } catch (elevErr) {
+                            console.warn("⚠️ [AdminAuth.init] Elevación falló (puede que ya exista):", elevErr.message);
+                        }
+                    }
+                } else {
+                    console.log("✅ [AdminAuth.init] Sesión Firebase ya activa. UID:", currentFirebaseUser.uid);
+                }
+            } catch (authErr) {
+                console.error("🛑 [AdminAuth.init] Firebase Auth falló:", authErr.message);
+                // Continuamos igualmente - puede que las reglas de Firestore permitan el acceso
+            }
+
+            // Cargar la vista inicial: respetar hash de URL, última vista guardada o 'users' por defecto
+            const hashView = window.location.hash ? window.location.hash.replace('#', '').trim() : null;
+            const savedView = sessionStorage.getItem('admin_last_view');
+            const targetInitialView = hashView || savedView || 'users';
+
             setTimeout(() => {
-                if (window.loadAdminView) window.loadAdminView('users');
+                if (!window._currentAdminView && window.loadAdminView) {
+                    window.loadAdminView(targetInitialView);
+                }
 
                 // --- BATSEÑAL 2.0 (Proactive Agent) ---
                 if (window.BatSignalAgent) {
@@ -72,8 +115,8 @@ window.AdminAuth = {
                     if (window.AutoBlogEngine && typeof window.AutoBlogEngine.checkAndGeneratePassive === 'function') {
                         window.AutoBlogEngine.checkAndGeneratePassive();
                     }
-                }, 1500); // 1.5s delay to ensure Firebase initializes first
-            }, 500);
+                }, 1500);
+            }, 300);
         } else {
             console.log("🔒 No active session. Waiting for PIN...");
             if (localStorage.getItem('admin_remember_pin')) {
@@ -156,7 +199,9 @@ window.AdminAuth = {
         localStorage.setItem('adminUser', JSON.stringify(user));
         document.getElementById('admin-auth-modal').style.display = 'none';
         this.updateProfileUI();
-        window.loadAdminView('users');
+        const hashView = window.location.hash ? window.location.hash.replace('#', '').trim() : null;
+        const targetView = hashView || sessionStorage.getItem('admin_last_view') || 'users';
+        window.loadAdminView(targetView);
     },
 
     logout() {
@@ -196,12 +241,24 @@ window.AdminAuth = {
 };
 
 // --- NAVIGATION ROUTER ---
+window._currentAdminNavId = 0;
+window._currentAdminView = null;
+
 window.loadAdminView = async function (viewName) {
-    console.log("Navigate to:", viewName);
+    window._currentAdminView = viewName;
+    const navId = ++window._currentAdminNavId;
+    console.log(`🧭 [Navigation #${navId}] Navigate to:`, viewName);
+
+    sessionStorage.setItem('admin_last_view', viewName);
+    try {
+        if (window.location.hash !== '#' + viewName) {
+            history.replaceState(null, '', '#' + viewName);
+        }
+    } catch (e) {}
 
     // Sidebar Active State
-    document.querySelectorAll('.nav-item-pro').forEach(el => el.classList.remove('active'));
-    document.querySelector(`.nav-item-pro[data-view="${viewName}"]`)?.classList.add('active');
+    document.querySelectorAll('.nav-item-pro, .submenu-item').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.nav-item-pro[data-view="${viewName}"], .submenu-item[data-view="${viewName}"]`)?.classList.add('active');
 
     // Close Mobile Menu
     document.getElementById('admin-sidebar')?.classList.remove('open');
@@ -214,6 +271,13 @@ window.loadAdminView = async function (viewName) {
     try {
         if (viewName === 'users' && window.AdminViews.users) {
             await window.AdminViews.users();
+        }
+        else if (viewName === 'season_campaign') {
+            if (window.AdminViews && window.AdminViews.season_campaign) {
+                await window.AdminViews.season_campaign();
+            } else {
+                throw new Error("Season Campaign Admin Module not loaded");
+            }
         }
         else if (viewName === 'americanas_mgmt' && window.AdminViews.americanas_mgmt) {
             await window.AdminViews.americanas_mgmt();
@@ -234,6 +298,9 @@ window.loadAdminView = async function (viewName) {
         }
         else if (viewName === 'open_matches_create' && window.AdminViews && window.AdminViews.open_matches_create) {
             await window.AdminViews.open_matches_create();
+        }
+        else if (viewName === 'open_matches_results' && window.AdminViews && window.AdminViews.open_matches_results) {
+            await window.AdminViews.open_matches_results();
         }
         else if (viewName === 'matches') {
             if (window.loadResultsView) await window.loadResultsView('americana');
@@ -268,6 +335,10 @@ window.loadAdminView = async function (viewName) {
             }
         }
     } catch (e) {
+        if (navId !== window._currentAdminNavId) {
+            console.warn(`⚠️ [Navigation #${navId}] Ignored error from previous view "${viewName}" because active view is #${window._currentAdminNavId}`);
+            return;
+        }
         console.error("View Load Error:", e);
         if (content) content.innerHTML = `<div class="error-box">Error UI: ${e.message}</div>`;
     }

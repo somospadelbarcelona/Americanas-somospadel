@@ -175,6 +175,13 @@
             this.teams = [];
             this.unsubscribe = null;
             this.localBackup = [];
+            this.activeConvoUnsubscribe = null;
+            this.activeConvoJornada = null;
+            this.activeConvoTeamId = null;
+            this.activeDetailTeamId = null;
+            this.currentConvoData = null;
+            this.currentSelectedRsvpStatus = null;
+            this.activeRsvpModalData = null;
         }
 
         async init() {
@@ -185,6 +192,23 @@
                 this.localBackup = JSON.parse(JSON.stringify(window.ClubTeamsData));
                 this.teams = window.ClubTeamsData;
                 this.render();
+            }
+
+            // Detección automática de enlaces RSVP profundos (?action=rsvp&team=...&j=...)
+            this.checkUrlForRsvp();
+
+            // Escuchar actualizaciones de convocatorias interactivas entre pestañas/componentes
+            if (typeof window !== 'undefined' && window.addEventListener) {
+                window.addEventListener('somospadel:convocatoria_updated', (e) => {
+                    if (e.detail && e.detail.convoId) {
+                        if (this.activeConvoTeamId && this.activeConvoJornada) {
+                            const expectedId = window.TeamConvocatoriaService?.normalizeId(this.activeConvoTeamId, this.activeConvoJornada);
+                            if (e.detail.convoId === expectedId) {
+                                this.renderConvocatoriaData(this.activeConvoTeamId, e.detail.data);
+                            }
+                        }
+                    }
+                });
             }
 
             if (window.db || (window.firebase && firebase.firestore)) {
@@ -233,6 +257,488 @@
                 console.log("🔌 [TeamController] Unsubscribing from Firestore real-time listener.");
                 this.unsubscribe();
                 this.unsubscribe = null;
+            }
+            this.cleanupConvocatoriaListener();
+        }
+
+        cleanupConvocatoriaListener() {
+            if (this.activeConvoUnsubscribe && typeof this.activeConvoUnsubscribe === 'function') {
+                try {
+                    this.activeConvoUnsubscribe();
+                } catch (e) {}
+                this.activeConvoUnsubscribe = null;
+            }
+        }
+
+        checkUrlForRsvp() {
+            try {
+                if (typeof window === 'undefined' || !window.location) return;
+
+                const url = new URL(window.location.href);
+                let action = url.searchParams.get('action');
+                let teamId = url.searchParams.get('team');
+                let jornada = url.searchParams.get('j') || url.searchParams.get('jornada');
+
+                if (!action && window.location.hash) {
+                    const hash = window.location.hash.replace(/^#/, '');
+                    if (hash.includes('rsvp')) {
+                        action = 'rsvp';
+                    }
+                    const queryPart = hash.includes('?') ? hash.split('?')[1] : hash;
+                    const hashParams = new URLSearchParams(queryPart);
+                    teamId = teamId || hashParams.get('team');
+                    jornada = jornada || hashParams.get('j') || hashParams.get('jornada');
+                }
+
+                if (action === 'rsvp' && teamId) {
+                    console.log(`📋 [TeamController] RSVP link detectado -> Equipo: ${teamId}, Jornada: ${jornada}`);
+                    const attemptOpen = (retries = 0) => {
+                        const team = this.teams.find(t => t.id === teamId || t.id.toLowerCase() === String(teamId).toLowerCase())
+                            || (window.ClubTeamsData && window.ClubTeamsData.find(t => t.id === teamId || t.id.toLowerCase() === String(teamId).toLowerCase()));
+                        
+                        if (team || retries >= 10) {
+                            this.openPlayerRsvpModal(teamId, jornada);
+                        } else {
+                            setTimeout(() => attemptOpen(retries + 1), 200);
+                        }
+                    };
+                    setTimeout(() => attemptOpen(), 250);
+                }
+            } catch (err) {
+                console.warn('⚠️ [TeamController] Error detectando URL RSVP:', err);
+            }
+        }
+
+        cleanRsvpUrl() {
+            try {
+                if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('action');
+                    url.searchParams.delete('team');
+                    url.searchParams.delete('j');
+                    url.searchParams.delete('jornada');
+                    let cleanHash = window.location.hash;
+                    if (cleanHash.includes('rsvp')) {
+                        cleanHash = '';
+                    }
+                    const queryStr = url.searchParams.toString();
+                    const newUrl = url.pathname + (queryStr ? '?' + queryStr : '') + (cleanHash ? cleanHash : '');
+                    window.history.replaceState({}, document.title, newUrl);
+                }
+            } catch (e) {}
+        }
+
+        async openPlayerRsvpModal(teamId, jornada) {
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(25);
+
+            const team = this.teams.find(t => t.id === teamId || t.id.toLowerCase() === String(teamId).toLowerCase())
+                || (window.ClubTeamsData && window.ClubTeamsData.find(t => t.id === teamId || t.id.toLowerCase() === String(teamId).toLowerCase()))
+                || { id: teamId, name: 'Somos Pádel BCN', roster: [] };
+
+            // Determinar jornada si no viene dada
+            const pendingMatch = team.schedule?.find(m => m.status !== 'completed' && m.opponent !== 'BYE' && !m.opponent.includes('BYE')) 
+                || (team.schedule && team.schedule[0]) || {};
+            const jNum = jornada ? String(jornada).replace(/^[jJ]/, '').trim() : (pendingMatch.j || '1');
+
+            const match = team.schedule?.find(m => String(m.j) === String(jNum)) || pendingMatch;
+            const matchDate = match.date ? parseDateText(match.date) : 'Por definir';
+            const matchTime = (match.time || 'TBD').replace(/h/gi, '');
+            const convTime = getConvocatoriaTime(matchTime);
+            const venue = match.venue || 'Club por definir';
+            const address = getClubAddress(venue);
+            const opponent = match.opponent || 'Por definir';
+            const isHome = match.isHome !== false;
+
+            // Cargar datos previos de la convocatoria
+            let convoData = null;
+            if (window.TeamConvocatoriaService) {
+                try {
+                    convoData = await window.TeamConvocatoriaService.getConvocatoria(team.id, jNum);
+                } catch (e) {
+                    console.warn('Error loading convoData for RSVP modal:', e);
+                }
+            }
+
+            this.activeRsvpModalData = {
+                teamId: team.id,
+                jornada: jNum,
+                convoData: convoData
+            };
+            this.currentSelectedRsvpStatus = null;
+
+            // Eliminar modal previo si existiera
+            const existingOverlay = document.getElementById('rsvp-player-modal-overlay');
+            if (existingOverlay) existingOverlay.remove();
+
+            const roster = team.roster || [];
+            const sortedRoster = [...roster].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es', { sensitivity: 'base' }));
+
+            const overlay = document.createElement('div');
+            overlay.id = 'rsvp-player-modal-overlay';
+            overlay.className = 'pm-overlay';
+            overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 9999999; display: flex; align-items: center; justify-content: center; padding: 12px; box-sizing: border-box; font-family: Outfit, sans-serif;';
+
+            overlay.innerHTML = `
+                <div class="pm-card pm-light" style="width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; border-radius: 28px; position: relative; padding: 25px 20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); background: #ffffff; border: 1px solid #e2e8f0; animation: pm-scale-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
+                    
+                    <!-- Close button -->
+                    <button onclick="window.TeamController.closePlayerRsvpModal()" 
+                            style="position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; border: 1px solid #e2e8f0; color: #64748b; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; z-index: 10;"
+                            onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';"
+                            onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">
+                        <i class="fas fa-times"></i>
+                    </button>
+
+                    <!-- Header with Club Shield and Team Name -->
+                    <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 16px; padding-right: 35px;">
+                        <div style="width: 52px; height: 52px; border-radius: 16px; background: #f8fafc; border: 1.5px solid #edf2f7; padding: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
+                            <img src="${team.logo || 'img/logo_somospadel.png'}" style="width: 100%; height: 100%; object-fit: contain;">
+                        </div>
+                        <div>
+                            <span style="font-size: 0.62rem; color: #38b000; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">SOMOS PÁDEL BARCELONA</span>
+                            <h2 style="color: #0f172a; margin: 1px 0 0; font-size: 1.25rem; font-weight: 950; letter-spacing: -0.5px; line-height: 1.15;">
+                                ${team.name}
+                            </h2>
+                        </div>
+                    </div>
+
+                    <!-- Match Details Banner -->
+                    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 20px; padding: 14px 16px; color: white; margin-bottom: 20px; border-left: 4px solid #38b000; box-shadow: 0 8px 20px rgba(15,23,42,0.15);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 0.58rem; color: #94a3b8; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">Próximo Reto • Jornada ${jNum}</span>
+                            <span style="font-size: 0.55rem; background: rgba(56,176,0,0.2); color: #70e000; font-weight: 900; padding: 2px 8px; border-radius: 8px; text-transform: uppercase;">
+                                ${isHome ? 'Casa' : 'Fuera'}
+                            </span>
+                        </div>
+                        <div style="font-size: 1.05rem; font-weight: 950; color: #ffffff; display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                            <span>vs ${opponent}</span>
+                        </div>
+                        <div style="font-size: 0.68rem; color: #cbd5e1; font-weight: 700; display: flex; flex-direction: column; gap: 3px;">
+                            <div><i class="far fa-calendar-alt" style="color: #38b000; margin-right: 5px;"></i>${matchDate} • ${matchTime}h (Convo: ${convTime})</div>
+                            <div><i class="fas fa-map-marker-alt" style="color: #38b000; margin-right: 5px;"></i>${venue} ${address ? `(${address})` : ''}</div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 1: Select Player Name -->
+                    <div style="margin-bottom: 18px;">
+                        <label for="rsvp-modal-player-select" style="display: block; font-size: 0.72rem; font-weight: 900; color: #0f172a; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
+                            <i class="fas fa-user-check" style="color: #0ea5e9; margin-right: 4px;"></i> 1. Elige tu nombre del roster:
+                        </label>
+                        <select id="rsvp-modal-player-select" onchange="window.TeamController.onRsvpPlayerSelected('${team.id}', '${jNum}', this.value)" 
+                                style="width: 100%; padding: 12px 14px; border-radius: 16px; border: 2px solid #e2e8f0; font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 800; color: #0f172a; background: #f8fafc; outline: none; cursor: pointer; transition: border-color 0.2s;">
+                            <option value="">-- Selecciona quién eres --</option>
+                            ${sortedRoster.map(p => {
+                                const pName = typeof p === 'string' ? p : p.name;
+                                const pPts = typeof p === 'object' && p.pts !== undefined ? ` (${p.pts} pts)` : '';
+                                return `<option value="${pName}">${pName}${pPts}</option>`;
+                            }).join('')}
+                            <option value="__custom__">➕ No estoy en la lista (Escribir mi nombre)</option>
+                        </select>
+                        <div id="rsvp-custom-name-box" style="display: none; margin-top: 8px;">
+                            <input type="text" id="rsvp-modal-custom-player-name" placeholder="Escribe tu nombre y apellido..." 
+                                   style="width: 100%; padding: 10px 14px; border-radius: 14px; border: 2px solid #0ea5e9; font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 800; color: #0f172a; outline: none; background: #f0f9ff; box-sizing: border-box;">
+                        </div>
+                        <div id="rsvp-player-already-notice" style="display: none; font-size: 0.62rem; color: #0ea5e9; font-weight: 800; margin-top: 5px; padding: 4px 8px; background: rgba(14,165,233,0.08); border-radius: 8px;"></div>
+                    </div>
+
+                    <!-- STEP 2: Choose Availability (3 Big Buttons) -->
+                    <div style="margin-bottom: 18px;">
+                        <div style="font-size: 0.72rem; font-weight: 900; color: #0f172a; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">
+                            <i class="fas fa-check-circle" style="color: #38b000; margin-right: 4px;"></i> 2. Indica tu disponibilidad:
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- OPTION 1: Available -->
+                            <div id="rsvp-opt-available" onclick="window.TeamController.selectRsvpStatusOption('available')" 
+                                 style="border: 2px solid #e2e8f0; border-radius: 18px; padding: 14px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s ease; background: #ffffff;">
+                                <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(56,176,0,0.1); color: #38b000; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+                                    🟢
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 0.88rem; font-weight: 950; color: #15803d; line-height: 1.2;">
+                                        ¡ESTOY DISPONIBLE!
+                                    </div>
+                                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; margin-top: 2px;">
+                                        Cuenta conmigo para jugar (100% titular)
+                                    </div>
+                                </div>
+                                <i id="rsvp-check-available" class="fas fa-check-circle" style="color: #38b000; font-size: 1.2rem; display: none;"></i>
+                            </div>
+
+                            <!-- OPTION 2: Conditional -->
+                            <div id="rsvp-opt-conditional" onclick="window.TeamController.selectRsvpStatusOption('conditional')" 
+                                 style="border: 2px solid #e2e8f0; border-radius: 18px; padding: 14px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s ease; background: #ffffff;">
+                                <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(245,158,11,0.1); color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+                                    🟡
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 0.88rem; font-weight: 950; color: #b45309; line-height: 1.2;">
+                                        CON RESTRICCIÓN HORARIA
+                                    </div>
+                                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; margin-top: 2px;">
+                                        Puedo jugar con limitaciones de hora o logística
+                                    </div>
+                                </div>
+                                <i id="rsvp-check-conditional" class="fas fa-check-circle" style="color: #d97706; font-size: 1.2rem; display: none;"></i>
+                            </div>
+
+                            <!-- OPTION 3: Unavailable -->
+                            <div id="rsvp-opt-unavailable" onclick="window.TeamController.selectRsvpStatusOption('unavailable')" 
+                                 style="border: 2px solid #e2e8f0; border-radius: 18px; padding: 14px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s ease; background: #ffffff;">
+                                <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(239,68,68,0.1); color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+                                    🔴
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 0.88rem; font-weight: 950; color: #b91c1c; line-height: 1.2;">
+                                        NO PUEDO / BAJA
+                                    </div>
+                                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; margin-top: 2px;">
+                                        No estaré disponible para esta jornada
+                                    </div>
+                                </div>
+                                <i id="rsvp-check-unavailable" class="fas fa-check-circle" style="color: #dc2626; font-size: 1.2rem; display: none;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: Conditional Note Input Box -->
+                    <div id="rsvp-note-box" style="display: none; margin-bottom: 20px;">
+                        <label for="rsvp-modal-note-input" style="display: block; font-size: 0.68rem; font-weight: 800; color: #b45309; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">
+                            <i class="fas fa-clock" style="margin-right: 4px;"></i> Detalle de restricción o nota para el capitán:
+                        </label>
+                        <input type="text" id="rsvp-modal-note-input" placeholder="Ej: Puedo a partir de las 18h / Llego justo de viaje / Si falta uno juego" 
+                               maxlength="80"
+                               style="width: 100%; padding: 12px 14px; border-radius: 14px; border: 2px solid #f59e0b; font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 700; color: #0f172a; outline: none; background: #fffbeb; box-sizing: border-box;">
+                    </div>
+
+                    <!-- STEP 4: Confirm Availability Button -->
+                    <button id="rsvp-confirm-submit-btn" onclick="window.TeamController.confirmPlayerRsvp('${team.id}', '${jNum}')" 
+                            style="width: 100%; padding: 16px; border-radius: 18px; border: none; background: linear-gradient(135deg, #38b000 0%, #70e000 100%); color: white; font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 950; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 25px rgba(56,176,0,0.3); transition: transform 0.2s, box-shadow 0.2s;"
+                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 12px 28px rgba(56,176,0,0.38)';"
+                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 25px rgba(56,176,0,0.3)';">
+                        <i class="fas fa-check-circle"></i> CONFIRMAR DISPONIBILIDAD
+                    </button>
+
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            // Cerrar al pulsar el fondo oscuro
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    this.closePlayerRsvpModal();
+                }
+            });
+        }
+
+        closePlayerRsvpModal() {
+            const overlay = document.getElementById('rsvp-player-modal-overlay');
+            if (overlay) {
+                overlay.style.transition = 'opacity 0.2s ease-out';
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.remove(), 200);
+            }
+            this.cleanRsvpUrl();
+        }
+
+        selectRsvpStatusOption(status) {
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+            this.currentSelectedRsvpStatus = status;
+
+            const opts = ['available', 'conditional', 'unavailable'];
+            const styles = {
+                available: { border: '#38b000', bg: 'rgba(56,176,0,0.06)', shadow: '0 4px 12px rgba(56,176,0,0.15)' },
+                conditional: { border: '#f59e0b', bg: 'rgba(245,158,11,0.06)', shadow: '0 4px 12px rgba(245,158,11,0.15)' },
+                unavailable: { border: '#ef4444', bg: 'rgba(239,68,68,0.06)', shadow: '0 4px 12px rgba(239,68,68,0.15)' }
+            };
+
+            opts.forEach(opt => {
+                const el = document.getElementById(`rsvp-opt-${opt}`);
+                const check = document.getElementById(`rsvp-check-${opt}`);
+                if (!el) return;
+
+                if (opt === status) {
+                    el.style.borderColor = styles[opt].border;
+                    el.style.background = styles[opt].bg;
+                    el.style.boxShadow = styles[opt].shadow;
+                    el.style.transform = 'scale(1.02)';
+                    if (check) check.style.display = 'block';
+                } else {
+                    el.style.borderColor = '#e2e8f0';
+                    el.style.background = '#ffffff';
+                    el.style.boxShadow = 'none';
+                    el.style.transform = 'scale(1)';
+                    if (check) check.style.display = 'none';
+                }
+            });
+
+            // Mostrar/Ocultar campo de notas
+            const noteBox = document.getElementById('rsvp-note-box');
+            const noteInput = document.getElementById('rsvp-modal-note-input');
+            if (noteBox) {
+                if (status === 'conditional') {
+                    noteBox.style.display = 'block';
+                    if (noteInput && !noteInput.value) {
+                        setTimeout(() => noteInput.focus(), 150);
+                    }
+                } else {
+                    noteBox.style.display = 'none';
+                }
+            }
+        }
+
+        onRsvpPlayerSelected(teamId, jornada, playerName) {
+            const customBox = document.getElementById('rsvp-custom-name-box');
+            if (playerName === '__custom__') {
+                if (customBox) {
+                    customBox.style.display = 'block';
+                    const customInput = document.getElementById('rsvp-modal-custom-player-name');
+                    if (customInput) setTimeout(() => customInput.focus(), 100);
+                }
+                const notice = document.getElementById('rsvp-player-already-notice');
+                if (notice) notice.style.display = 'none';
+                return;
+            } else {
+                if (customBox) customBox.style.display = 'none';
+            }
+
+            if (!playerName) {
+                const notice = document.getElementById('rsvp-player-already-notice');
+                if (notice) notice.style.display = 'none';
+                return;
+            }
+
+            const convoData = this.activeRsvpModalData?.convoData;
+            const existing = convoData?.responses?.[playerName];
+            const notice = document.getElementById('rsvp-player-already-notice');
+
+            if (existing) {
+                this.selectRsvpStatusOption(existing.status);
+                const noteInput = document.getElementById('rsvp-modal-note-input');
+                if (noteInput && existing.note) {
+                    noteInput.value = existing.note;
+                }
+                if (notice) {
+                    notice.textContent = `ℹ️ Ya habías respondido: "${existing.status.toUpperCase()}". Puedes modificar tu respuesta ahora.`;
+                    notice.style.display = 'block';
+                }
+            } else {
+                if (notice) notice.style.display = 'none';
+            }
+        }
+
+        async confirmPlayerRsvp(teamId, jornada) {
+            const playerSelect = document.getElementById('rsvp-modal-player-select');
+            let playerName = playerSelect ? playerSelect.value : '';
+
+            if (playerName === '__custom__') {
+                const customInput = document.getElementById('rsvp-modal-custom-player-name');
+                playerName = customInput ? customInput.value.trim() : '';
+            }
+
+            if (!playerName) {
+                if (playerSelect) {
+                    playerSelect.style.borderColor = '#ef4444';
+                    playerSelect.focus();
+                }
+                if (window.PremiumModal?.alert) {
+                    window.PremiumModal.alert({
+                        title: 'NOMBRE REQUERIDO',
+                        message: 'Por favor, selecciona tu nombre del roster o escribe tu nombre para registrar tu disponibilidad.',
+                        type: 'warning'
+                    });
+                }
+                return;
+            }
+
+            if (!this.currentSelectedRsvpStatus) {
+                if (window.PremiumModal?.alert) {
+                    window.PremiumModal.alert({
+                        title: 'SELECCIONA UNA OPCIÓN',
+                        message: 'Por favor, elige si estás Disponible 🟢, con Restricción 🟡 o Baja 🔴.',
+                        type: 'warning'
+                    });
+                }
+                return;
+            }
+
+            const noteInput = document.getElementById('rsvp-modal-note-input');
+            const note = noteInput ? noteInput.value.trim() : '';
+
+            const submitBtn = document.getElementById('rsvp-confirm-submit-btn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> GUARDANDO RESPUESTA...`;
+                submitBtn.style.opacity = '0.7';
+            }
+
+            try {
+                if (window.TeamConvocatoriaService) {
+                    await window.TeamConvocatoriaService.submitPlayerResponse(teamId, jornada, playerName, this.currentSelectedRsvpStatus, note);
+                }
+
+                // Haptic feedback
+                if (window.PlayerView?.haptic) window.PlayerView.haptic(50);
+                if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([40, 60, 40]);
+
+                // Mostrar tarjeta de éxito visual
+                const card = document.querySelector('#rsvp-player-modal-overlay .pm-card');
+                if (card) {
+                    const statusLabels = {
+                        available: { text: 'DISPONIBLE 🟢', color: '#16a34a' },
+                        conditional: { text: 'CON RESTRICCIÓN HORARIA 🟡', color: '#d97706' },
+                        unavailable: { text: 'NO PUEDO / BAJA 🔴', color: '#dc2626' }
+                    };
+                    const sel = statusLabels[this.currentSelectedRsvpStatus] || statusLabels.available;
+
+                    card.innerHTML = `
+                        <div style="text-align: center; padding: 25px 15px;">
+                            <div style="width: 72px; height: 72px; border-radius: 50%; background: rgba(56,176,0,0.1); color: #38b000; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; font-size: 2.2rem; border: 2px solid rgba(56,176,0,0.25); box-shadow: 0 10px 25px rgba(56,176,0,0.2);">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <h3 style="color: #0f172a; font-weight: 950; font-size: 1.4rem; margin-bottom: 8px;">¡DISPONIBILIDAD REGISTRADA!</h3>
+                            <p style="color: #64748b; font-size: 0.88rem; font-weight: 700; margin-bottom: 18px; line-height: 1.4;">
+                                Gracias, <strong>${playerName}</strong>. El capitán y tu equipo ya tienen tu respuesta actualizada en tiempo real.
+                            </p>
+                            <div style="background: #f8fafc; border-radius: 16px; padding: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+                                <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Estado registrado:</div>
+                                <div style="font-size: 1rem; font-weight: 950; color: ${sel.color}; margin-top: 2px;">${sel.text}</div>
+                                ${note ? `<div style="font-size: 0.72rem; color: #475569; font-style: italic; margin-top: 4px;">"${note}"</div>` : ''}
+                            </div>
+                            <button onclick="window.TeamController.closePlayerRsvpModal()" 
+                                    style="width: 100%; padding: 14px; border-radius: 16px; border: none; background: #0f172a; color: white; font-weight: 900; font-size: 0.85rem; cursor: pointer; transition: 0.2s;">
+                                CERRAR Y CONTINUAR
+                            </button>
+                        </div>
+                    `;
+                }
+
+                this.cleanRsvpUrl();
+
+                // Si el modal de detalle del equipo está abierto en este equipo, refrescar vista en vivo
+                if (this.activeDetailTeamId === teamId) {
+                    this.initConvocatoriaTab(teamId, jornada);
+                }
+
+                setTimeout(() => {
+                    this.closePlayerRsvpModal();
+                }, 2200);
+
+            } catch (err) {
+                console.error('Error submitting RSVP:', err);
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `<i class="fas fa-check-circle"></i> REINTENTAR`;
+                    submitBtn.style.opacity = '1';
+                }
+                if (window.PremiumModal?.alert) {
+                    window.PremiumModal.alert({
+                        title: 'ERROR AL REGISTRAR',
+                        message: err.message || 'No se pudo registrar la respuesta en este momento.',
+                        type: 'danger'
+                    });
+                }
             }
         }
 
@@ -357,10 +863,13 @@
             const winsInStreak = streak.filter(res => res === 'W').length;
             const consistenciaScore = streak.length > 0 ? Math.min(99, Math.max(35, Math.round((winsInStreak / streak.length) * 100))) : 50;
 
+            this.activeDetailTeamId = teamId;
             const isTactica = initialTab === 'tactica';
+            const isConvo = initialTab === 'convocatoria';
+            const isLiderazgo = !isTactica && !isConvo;
             const addressText = getClubAddress(nextMatch.venue);
 
-            window.PremiumModal.alert({
+            const modalPromise = window.PremiumModal.alert({
                 title: team.name,
                 logo: team.logo || 'img/logo_somospadel.png',
                 theme: 'light',
@@ -438,7 +947,7 @@
                         <!-- 🎛️ PREMIUM PILL TABS -->
                         <div class="pm-responsive-tabs" style="display: flex; background: #f1f5f9; padding: 4px; border-radius: 18px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
                             <button id="btn-tab-liderazgo" onclick="window.TeamController.switchTab(this, 'tab-liderazgo', '#f59e0b', '#ffffff')" 
-                                    style="flex: 1; padding: 10px 5px; border-radius: 14px; background: ${isTactica ? 'transparent' : '#f59e0b'}; color: ${isTactica ? '#64748b' : '#ffffff'}; border: none; font-weight: ${isTactica ? '800' : '950'}; font-size: 0.65rem; cursor: pointer; min-width: 80px; transition: 0.2s; ${isTactica ? '' : 'box-shadow: 0 4px 12px #f59e0b40;' }">
+                                    style="flex: 1; padding: 10px 5px; border-radius: 14px; background: ${isLiderazgo ? '#f59e0b' : 'transparent'}; color: ${isLiderazgo ? '#ffffff' : '#64748b'}; border: none; font-weight: ${isLiderazgo ? '950' : '800'}; font-size: 0.65rem; cursor: pointer; min-width: 80px; transition: 0.2s; ${isLiderazgo ? 'box-shadow: 0 4px 12px #f59e0b40;' : ''}">
                                 <i class="fas fa-user-tie" style="margin-right: 4px;"></i> LIDERAZGO
                             </button>
                             <button id="btn-tab-tactica" onclick="window.TeamController.switchTab(this, 'tab-tactica', '#10b981', '#ffffff')" 
@@ -446,8 +955,8 @@
                                 <i class="fas fa-clipboard-list" style="margin-right: 4px;"></i> ALINEACIÓN
                             </button>
                             <button id="btn-tab-convocatoria" onclick="window.TeamController.switchTab(this, 'tab-convocatoria', '#0ea5e9', '#ffffff')" 
-                                    style="flex: 1; padding: 10px 5px; border-radius: 14px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.65rem; cursor: pointer; min-width: 80px; transition: 0.2s;">
-                                <i class="fas fa-bullhorn" style="margin-right: 4px;"></i> CONVO
+                                    style="flex: 1; padding: 10px 5px; border-radius: 14px; background: ${isConvo ? '#0ea5e9' : 'transparent'}; color: ${isConvo ? '#ffffff' : '#64748b'}; border: none; font-weight: ${isConvo ? '950' : '800'}; font-size: 0.65rem; cursor: pointer; min-width: 80px; transition: 0.2s; ${isConvo ? 'box-shadow: 0 4px 12px #0ea5e940;' : ''}">
+                                <i class="fas fa-bullhorn" style="margin-right: 4px;"></i> CONVO & RSVP
                             </button>
                             <button id="btn-tab-stats" onclick="window.TeamController.switchTab(this, 'tab-stats', '#8b5cf6', '#ffffff')" 
                                     style="flex: 1; padding: 10px 5px; border-radius: 14px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.65rem; cursor: pointer; min-width: 80px; transition: 0.2s;">
@@ -459,7 +968,7 @@
                         <div id="team-modal-tabs-content" style="min-height: 380px;">
                             
                             <!-- ℹ️ LIDERAZGO SECTION -->
-                            <div id="tab-liderazgo" style="display: ${isTactica ? 'none' : 'block'}; animation: fadeIn 0.3s ease-out;">
+                            <div id="tab-liderazgo" style="display: ${isLiderazgo ? 'block' : 'none'}; animation: fadeIn 0.3s ease-out;">
                                 <div class="pm-inner-scroll">
                                     <div class="pm-responsive-grid" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 15px; margin-bottom: 15px;">
                                         <div style="background: #ffffff; border-radius: 20px; padding: 18px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.01); display: flex; flex-direction: column; gap: 12px;">
@@ -809,61 +1318,121 @@
                             </div>
 
                             <!-- 📢 CONVOCATORIA SECTION -->
-                            <div id="tab-convocatoria" style="display: none; animation: fadeIn 0.3s ease-out;">
+                            <div id="tab-convocatoria" style="display: ${isConvo ? 'block' : 'none'}; animation: fadeIn 0.3s ease-out;">
                                 <div class="pm-inner-scroll">
                                     <div style="background: #ffffff; border-radius: 20px; padding: 18px; border: 1px solid #f1f5f9; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
-                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+                                        
+                                        <!-- Header & Jornada Selector -->
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; flex-wrap: wrap; gap: 8px;">
                                             <div style="display: flex; align-items: center; gap: 8px;">
-                                                <i class="fas fa-check-double" style="color: #0ea5e9;"></i>
-                                                <span style="font-size: 0.75rem; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Control de Asistencia Activa</span>
+                                                <div style="width: 32px; height: 32px; border-radius: 10px; background: rgba(14, 165, 233, 0.1); color: #0ea5e9; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">
+                                                    <i class="fas fa-bullhorn"></i>
+                                                </div>
+                                                <div>
+                                                    <span style="font-size: 0.78rem; font-weight: 950; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Panel de Convocatoria en Vivo</span>
+                                                    <div style="font-size: 0.55rem; color: #64748b; font-weight: 700;">Disponibilidad interactiva sincronizada en tiempo real</div>
+                                                </div>
                                             </div>
-                                            <span id="convocatoria-stats" style="font-size: 0.55rem; font-weight: 900; background: rgba(14, 165, 233, 0.08); color: #0ea5e9; padding: 2px 8px; border-radius: 10px;">Confirmados: 0 / 0</span>
+                                            
+                                            <!-- Selector de Jornada -->
+                                            <div style="display: flex; align-items: center; gap: 6px;">
+                                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 800;">Jornada:</span>
+                                                <select id="convo-jornada-select-${team.id}" onchange="window.TeamController.changeConvocatoriaJornada('${team.id}', this.value)" 
+                                                        style="background: #f8fafc; border: 1.5px solid #0ea5e9; color: #0f172a; padding: 5px 10px; border-radius: 10px; font-family: 'Outfit', sans-serif; font-size: 0.75rem; font-weight: 900; outline: none; cursor: pointer;">
+                                                </select>
+                                            </div>
                                         </div>
 
-                                        <div style="font-size: 0.6rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 6px;">Selección de Disponibles (${roster.length} jugadores):</div>
-                                        <div class="pm-checkboxes-scroll pm-responsive-grid">
-                                            ${roster.length > 0 ? roster.map((p, idx) => `
-                                                <label style="display: flex; align-items: center; gap: 6px; font-size: 0.68rem; font-weight: 800; color: #334155; cursor: pointer; background: white; padding: 5px 8px; border-radius: 8px; border: 1px solid #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: none; transition: 0.2s;" onmouseover="this.style.borderColor='#0ea5e9'" onmouseout="this.style.borderColor='#e2e8f0'">
-                                                    <input type="checkbox" class="convocatoria-player-checkbox" value="${p.name}" checked onchange="window.TeamController.updateConvocatoriaPreview('${team.id}')" style="accent-color: #0ea5e9;">
-                                                    <span>${p.name}</span>
+                                        <!-- Match Card Info -->
+                                        <div id="convo-match-info-card-${team.id}" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 16px; padding: 12px 14px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
+                                            <div style="font-size: 0.7rem; color: #64748b; text-align: center; padding: 8px;">Cargando detalles del partido...</div>
+                                        </div>
+
+                                        <!-- 📊 4 KPI RESUMEN CARDS -->
+                                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;">
+                                            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 14px; padding: 10px 4px; text-align: center;">
+                                                <div style="font-size: 0.52rem; color: #15803d; font-weight: 900; text-transform: uppercase;">🟢 Disponibles</div>
+                                                <div id="convo-kpi-available-${team.id}" style="font-size: 1.4rem; color: #16a34a; font-weight: 950; line-height: 1.1; margin-top: 2px;">0</div>
+                                            </div>
+                                            <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 14px; padding: 10px 4px; text-align: center;">
+                                                <div style="font-size: 0.52rem; color: #b45309; font-weight: 900; text-transform: uppercase;">🟡 Restricción</div>
+                                                <div id="convo-kpi-conditional-${team.id}" style="font-size: 1.4rem; color: #d97706; font-weight: 950; line-height: 1.1; margin-top: 2px;">0</div>
+                                            </div>
+                                            <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 14px; padding: 10px 4px; text-align: center;">
+                                                <div style="font-size: 0.52rem; color: #b91c1c; font-weight: 900; text-transform: uppercase;">🔴 Bajas</div>
+                                                <div id="convo-kpi-unavailable-${team.id}" style="font-size: 1.4rem; color: #dc2626; font-weight: 950; line-height: 1.1; margin-top: 2px;">0</div>
+                                            </div>
+                                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 10px 4px; text-align: center;">
+                                                <div style="font-size: 0.52rem; color: #64748b; font-weight: 900; text-transform: uppercase;">⚪ Pendientes</div>
+                                                <div id="convo-kpi-pending-${team.id}" style="font-size: 1.4rem; color: #64748b; font-weight: 950; line-height: 1.1; margin-top: 2px;">0</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 🎛️ CAPTAIN ACTION BUTTONS ROW -->
+                                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
+                                            <button onclick="window.TeamController.copyConvocatoriaVoteLink('${team.id}')" 
+                                                    style="flex: 1; min-width: 140px; padding: 10px 12px; background: #ffffff; color: #0284c7; border: 1.5px solid #0ea5e9; border-radius: 12px; font-weight: 900; font-size: 0.65rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;"
+                                                    onmouseover="this.style.background='rgba(14,165,233,0.06)'" onmouseout="this.style.background='#ffffff'">
+                                                <i class="fas fa-link"></i> COPIAR LINK VOTACIÓN
+                                            </button>
+                                            <button onclick="window.TeamController.shareConvocatoriaToWhatsApp('${team.id}')" 
+                                                    style="flex: 1.1; min-width: 150px; padding: 10px 12px; background: #25D366; color: white; border: none; border-radius: 12px; font-weight: 900; font-size: 0.65rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(37,211,102,0.2); transition: all 0.2s;"
+                                                    onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+                                                <i class="fab fa-whatsapp"></i> ENVIAR A WHATSAPP
+                                            </button>
+                                            <button onclick="window.TeamController.applyConfirmadosToTactica('${team.id}')" 
+                                                    style="flex: 1.1; min-width: 150px; padding: 10px 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 12px; font-weight: 900; font-size: 0.65rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(16,185,129,0.2); transition: all 0.2s;"
+                                                    onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+                                                <i class="fas fa-magic"></i> PASAR A TÁCTICA
+                                            </button>
+                                        </div>
+
+                                        <!-- ROSTER INTERACTIVO TITLE & EXPLANATION -->
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                            <div style="font-size: 0.65rem; color: #0f172a; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                <i class="fas fa-users" style="color: #0ea5e9; margin-right: 4px;"></i> Respuestas del Roster (${roster.length} jugadores):
+                                            </div>
+                                            <div style="font-size: 0.52rem; color: #94a3b8; font-weight: 700;">
+                                                Pulsa 🟢 / 🟡 / 🔴 / ⚪ para cambiar manualmente
+                                            </div>
+                                        </div>
+
+                                        <!-- ROSTER LIST -->
+                                        <div id="convo-roster-list-${team.id}" class="pm-checkboxes-scroll" style="display: flex; flex-direction: column; gap: 6px; max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                                            <div style="text-align: center; color: #94a3b8; padding: 20px; font-size: 0.7rem;">Cargando respuestas...</div>
+                                        </div>
+
+                                        <!-- LOGISTICS CHECKBOXES -->
+                                        <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+                                            <div style="font-size: 0.6rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 6px;">Opciones complementarias para WhatsApp:</div>
+                                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                                <label style="flex:1; min-width: 90px; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.65rem; font-weight: 800; color: #475569; cursor: pointer; background: #f8fafc; padding: 6px 8px; border-radius: 8px; border: 1px solid #e2e8f0; user-select: none;">
+                                                    <input type="checkbox" id="conv-opt-beer-${team.id}" checked onchange="window.TeamController.refreshConvocatoriaPreview('${team.id}')" style="accent-color: #0ea5e9;">
+                                                    <span>🍻 3er Tiempo</span>
                                                 </label>
-                                            `).join('') : '<div style="font-size:0.65rem; color:#94a3b8;">Sin roster asignado</div>'}
-                                        </div>
-
-                                        <div style="font-size: 0.6rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 6px;">Opciones Personalizadas de Encuesta:</div>
-                                        <div style="display: flex; gap: 10px; margin-bottom: 5px;">
-                                            <label style="flex:1; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.65rem; font-weight: 800; color: #475569; cursor: pointer; background: #f8fafc; padding: 6px; border-radius: 8px; border: 1px solid #e2e8f0; user-select: none; transition: 0.2s;">
-                                                <input type="checkbox" id="conv-opt-beer" checked onchange="window.TeamController.updateConvocatoriaPreview('${team.id}')" style="accent-color: #0ea5e9;">
-                                                <span>🍻 3er Tiempo</span>
-                                            </label>
-                                            <label style="flex:1; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.65rem; font-weight: 800; color: #475569; cursor: pointer; background: #f8fafc; padding: 6px; border-radius: 8px; border: 1px solid #e2e8f0; user-select: none; transition: 0.2s;">
-                                                <input type="checkbox" id="conv-opt-car" checked onchange="window.TeamController.updateConvocatoriaPreview('${team.id}')" style="accent-color: #0ea5e9;">
-                                                <span>🚗 Coches</span>
-                                            </label>
-                                            <label style="flex:1; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.65rem; font-weight: 800; color: #475569; cursor: pointer; background: #f8fafc; padding: 6px; border-radius: 8px; border: 1px solid #e2e8f0; user-select: none; transition: 0.2s;">
-                                                <input type="checkbox" id="conv-opt-time" checked onchange="window.TeamController.updateConvocatoriaPreview('${team.id}')" style="accent-color: #0ea5e9;">
-                                                <span>⏱️ Puntualidad</span>
-                                            </label>
+                                                <label style="flex:1; min-width: 90px; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.65rem; font-weight: 800; color: #475569; cursor: pointer; background: #f8fafc; padding: 6px 8px; border-radius: 8px; border: 1px solid #e2e8f0; user-select: none;">
+                                                    <input type="checkbox" id="conv-opt-car-${team.id}" checked onchange="window.TeamController.refreshConvocatoriaPreview('${team.id}')" style="accent-color: #0ea5e9;">
+                                                    <span>🚗 Coches</span>
+                                                </label>
+                                                <label style="flex:1; min-width: 90px; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.65rem; font-weight: 800; color: #475569; cursor: pointer; background: #f8fafc; padding: 6px 8px; border-radius: 8px; border: 1px solid #e2e8f0; user-select: none;">
+                                                    <input type="checkbox" id="conv-opt-time-${team.id}" checked onchange="window.TeamController.refreshConvocatoriaPreview('${team.id}')" style="accent-color: #0ea5e9;">
+                                                    <span>⏱️ Puntualidad</span>
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
-                                    
-                                    <div id="convocatoria-live-list" class="pm-responsive-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;"></div>
 
+                                    <!-- LIVE WHATSAPP PREVIEW -->
                                     <div style="background: #ffffff; border-radius: 20px; padding: 15px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
-                                        <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 900; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Vista Previa de Encuesta WhatsApp:</div>
-                                        <div id="convocatoria-preview-box" style="background: #f8fafc; border-radius: 12px; padding: 12px; border: 1px solid #edf2f7; font-family: 'Courier New', Courier, monospace; font-size: 0.68rem; color: #1e293b; line-height: 1.45; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); white-space: pre-wrap; word-break: break-word;"></div>
-                                    </div>
-                                    <div style="display: flex; gap: 8px; margin-top: 10px;">
-                                        <button onclick="window.TeamController.shareConvocatoria('${team.id}', true)" 
-                                                style="flex: 1.1; padding: 12px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white; border: none; border-radius: 16px; font-weight: 900; font-size: 0.68rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.2); transition: 0.2s;"
-                                                 onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
-                                            <i class="fab fa-whatsapp" style="font-size: 0.85rem;"></i> ENVIAR CONVO LIMPIA
-                                        </button>
-                                        <button onclick="window.TeamController.shareConvocatoria('${team.id}', false)" 
-                                                style="flex: 0.9; padding: 12px; background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; border-radius: 16px; font-weight: 900; font-size: 0.68rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(100, 116, 139, 0.2); transition: 0.2s;"
-                                                 onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
-                                            <i class="fas fa-list-check" style="font-size: 0.85rem;"></i> ENVIAR CON ASISTENCIA
-                                        </button>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                            <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                <i class="fab fa-whatsapp" style="color: #25D366; margin-right: 4px;"></i> Mensaje Oficial que se enviará a WhatsApp:
+                                            </div>
+                                            <button onclick="window.TeamController.copyConvocatoriaText('${team.id}')" style="background: transparent; border: none; color: #0ea5e9; font-size: 0.62rem; font-weight: 900; cursor: pointer;">
+                                                <i class="far fa-copy"></i> Copiar Texto
+                                            </button>
+                                        </div>
+                                        <div id="convocatoria-preview-box-${team.id}" style="background: #f8fafc; border-radius: 12px; padding: 12px; border: 1px solid #edf2f7; font-family: 'Courier New', Courier, monospace; font-size: 0.68rem; color: #1e293b; line-height: 1.45; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); white-space: pre-wrap; word-break: break-word; max-height: 180px; overflow-y: auto;"></div>
                                     </div>
                                 </div>
                             </div>
@@ -1202,9 +1771,15 @@
                 type: 'info'
             });
 
+            modalPromise.then(() => {
+                this.cleanupConvocatoriaListener();
+            }).catch(() => {
+                this.cleanupConvocatoriaListener();
+            });
+
             setTimeout(() => {
                 this.setupTactica(teamId);
-                this.updateConvocatoriaPreview(teamId);
+                this.initConvocatoriaTab(teamId);
             }, 50);
         }
 
@@ -1245,6 +1820,13 @@
 
             const target = document.getElementById(tabId);
             if(target) target.style.display = 'block';
+
+            if (tabId === 'tab-convocatoria') {
+                const activeId = this.activeDetailTeamId || this.activeConvoTeamId;
+                if (activeId) {
+                    this.initConvocatoriaTab(activeId, this.activeConvoJornada);
+                }
+            }
             
             if(window.navigator.vibrate) window.navigator.vibrate(10);
         }
@@ -1780,11 +2362,18 @@
             // Renderizar el banquillo de disponibles en la pizarra interactiva
             const banquilloScroll = document.getElementById(`banquillo-tactica-scroll-${teamId}`);
             if (banquilloScroll) {
-                // Obtener confirmados de los checkboxes de convo
-                const checkboxes = document.querySelectorAll('.convocatoria-player-checkbox');
+                // Obtener confirmados de la convocatoria en vivo o de los checkboxes de convo
                 let confirmados = [];
-                if (checkboxes.length > 0) {
-                    confirmados = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+                if (this.currentConvoData && this.currentConvoData.responses) {
+                    confirmados = Object.entries(this.currentConvoData.responses)
+                        .filter(([_, r]) => r && (r.status === 'available' || r.status === 'conditional'))
+                        .map(([name]) => name);
+                }
+                if (confirmados.length === 0) {
+                    const checkboxes = document.querySelectorAll('.convocatoria-player-checkbox');
+                    if (checkboxes.length > 0) {
+                        confirmados = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+                    }
                 }
                 
                 // Si no hay confirmados en la Convo, usamos todo el roster del equipo
@@ -2136,21 +2725,36 @@
             this.updateTactica(teamId);
         }
 
-        suggestOptimalAlineacion(teamId) {
+        suggestOptimalAlineacion(teamId, candidateNames = null) {
             if (window.PlayerView?.haptic) window.PlayerView.haptic(40);
             const team = this.teams.find(t => t.id === teamId);
             if (!team || !team.roster || team.roster.length === 0) return;
 
             // Integración reactiva inteligente con la pestaña de Convo
-            const checkboxes = document.querySelectorAll('.convocatoria-player-checkbox');
             let rosterToUse = team.roster;
             let usedConfirmados = false;
             
-            if (checkboxes.length > 0) {
-                const confirmados = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-                if (confirmados.length >= 6) {
-                    rosterToUse = team.roster.filter(p => confirmados.includes(p.name));
+            if (Array.isArray(candidateNames) && candidateNames.length >= 6) {
+                rosterToUse = team.roster.filter(p => candidateNames.includes(p.name));
+                usedConfirmados = true;
+            } else if (this.currentConvoData && this.currentConvoData.responses) {
+                const confirmedFromConvo = Object.entries(this.currentConvoData.responses)
+                    .filter(([_, r]) => r && (r.status === 'available' || r.status === 'conditional'))
+                    .map(([name]) => name);
+                if (confirmedFromConvo.length >= 6) {
+                    rosterToUse = team.roster.filter(p => confirmedFromConvo.includes(p.name));
                     usedConfirmados = true;
+                }
+            }
+
+            if (!usedConfirmados) {
+                const checkboxes = document.querySelectorAll('.convocatoria-player-checkbox');
+                if (checkboxes.length > 0) {
+                    const confirmados = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+                    if (confirmados.length >= 6) {
+                        rosterToUse = team.roster.filter(p => confirmados.includes(p.name));
+                        usedConfirmados = true;
+                    }
                 }
             }
 
@@ -2297,108 +2901,380 @@
             });
         }
 
-        updateConvocatoriaPreview(teamId) {
+        initConvocatoriaTab(teamId, jornada = null) {
+            this.activeConvoTeamId = teamId;
             const team = this.teams.find(t => t.id === teamId);
             if (!team) return;
 
-            const nextMatch = team.schedule?.find(m => m.status !== 'completed' && m.opponent !== 'BYE' && !m.opponent.includes('BYE')) || {};
-            const parsedDate = parseDateText(nextMatch.date);
-            const matchTime = (nextMatch.time || 'TBD').replace(/h/gi, '');
-            const convTime = getConvocatoriaTime(matchTime);
-            const homeAway = nextMatch.isHome ? 'Casa' : 'Fuera';
-            const addressText = getClubAddress(nextMatch.venue);
-            const groupText = team.group || '';
-            const phaseStr = groupText.toUpperCase().includes('FASE 1') ? 'Fase 1' : 'Fase 2';
-            const addressLabel = addressText ? `\n📍 *Dirección:* _${addressText}_` : '';
-            const jNum = nextMatch.j || 'X';
+            // 1. Detectar jornada objetivo
+            let targetJornada = jornada;
+            if (!targetJornada) {
+                const nextMatch = team.schedule?.find(m => m.status !== 'completed' && m.opponent !== 'BYE' && !m.opponent.includes('BYE')) || team.schedule?.[0] || { j: 1 };
+                targetJornada = parseInt(nextMatch.j || 1, 10);
+            } else {
+                targetJornada = parseInt(targetJornada, 10);
+            }
+            this.activeConvoJornada = targetJornada;
 
-            // Get Checkboxes
-            const checkboxes = document.querySelectorAll('.convocatoria-player-checkbox');
-            const confirmados = [];
-            const bajas = [];
-
-            checkboxes.forEach(cb => {
-                if (cb.checked) {
-                    confirmados.push(cb.value);
+            // 2. Poblar selector de jornada
+            const selectEl = document.getElementById(`convo-jornada-select-${teamId}`);
+            if (selectEl) {
+                const schedule = team.schedule || [];
+                if (schedule.length > 0) {
+                    selectEl.innerHTML = schedule.map(m => `
+                        <option value="${m.j}" ${parseInt(m.j, 10) === targetJornada ? 'selected' : ''}>
+                            Jornada ${m.j} vs ${m.opponent || 'TBD'} ${m.status === 'completed' ? '✓' : ''}
+                        </option>
+                    `).join('');
                 } else {
-                    bajas.push(cb.value);
+                    selectEl.innerHTML = Array.from({ length: 8 }, (_, i) => i + 1).map(j => `
+                        <option value="${j}" ${j === targetJornada ? 'selected' : ''}>Jornada ${j}</option>
+                    `).join('');
                 }
-            });
-
-            // Update stats badge
-            const statsBadge = document.getElementById('convocatoria-stats');
-            if (statsBadge) {
-                statsBadge.textContent = `Confirmados: ${confirmados.length} / ${checkboxes.length}`;
             }
 
-            // Update Live lists visual blocks
-            const liveList = document.getElementById('convocatoria-live-list');
-            if (liveList) {
-                liveList.innerHTML = `
-                    <div style="background: rgba(16, 185, 129, 0.05); padding: 10px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2);">
-                        <div style="font-size: 0.6rem; font-weight: 900; color: #16a34a; text-transform: uppercase; margin-bottom: 5px;">✅ Confirmados (${confirmados.length})</div>
-                        <div style="font-size: 0.65rem; color: #334155; font-weight: 700; max-height: 80px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;">
-                            ${confirmados.map(name => `<span>• ${name.split(' ')[0]} ${name.split(' ')[1] || ''}</span>`).join('') || '<span style="color:#94a3b8; font-style:italic;">Ninguno</span>'}
-                        </div>
+            // 3. Renderizado síncrono inmediato (0ms de espera) con datos locales o estructura inicial
+            const initialConvo = (this.currentConvoData && parseInt(this.currentConvoData.jornada, 10) === targetJornada)
+                ? this.currentConvoData
+                : {
+                    id: `${teamId}_j${targetJornada}`,
+                    teamId: teamId,
+                    jornada: targetJornada,
+                    status: 'open',
+                    responses: {}
+                };
+            this.currentConvoData = initialConvo;
+            this.renderConvocatoriaData(teamId, initialConvo);
+
+            // 4. Limpiar suscripciones previas y conectar listener en tiempo real
+            this.cleanupConvocatoriaListener();
+            if (window.TeamConvocatoriaService) {
+                this.activeConvoUnsubscribe = window.TeamConvocatoriaService.listenConvocatoria(teamId, targetJornada, (data) => {
+                    this.currentConvoData = data;
+                    this.renderConvocatoriaData(teamId, data);
+                });
+            }
+        }
+
+        changeConvocatoriaJornada(teamId, newJornada) {
+            const j = parseInt(newJornada, 10);
+            this.initConvocatoriaTab(teamId, j);
+        }
+
+        renderConvocatoriaData(teamId, convoData) {
+            const team = this.teams.find(t => t.id === teamId);
+            if (!team) return;
+
+            const j = this.activeConvoJornada || 1;
+            const match = team.schedule?.find(m => parseInt(m.j, 10) === j) || team.schedule?.find(m => m.status !== 'completed' && !m.opponent.includes('BYE')) || {};
+
+            // 1. Tarjeta informativa del partido
+            const matchCard = document.getElementById(`convo-match-info-card-${teamId}`);
+            if (matchCard) {
+                const parsedDate = parseDateText(match.date || 'Por definir');
+                const matchTime = (match.time || 'TBD').replace(/h/gi, '');
+                const convTime = getConvocatoriaTime(matchTime);
+                const homeAway = match.isHome !== false ? '🏠 Casa' : '✈️ Fuera';
+                const venue = match.venue || 'Club por confirmar';
+                const address = getClubAddress(venue);
+                const opponent = match.opponent || 'Por definir';
+
+                matchCard.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 6px;">
+                        <span style="font-size: 0.62rem; font-weight: 950; color: #0284c7; text-transform: uppercase;">
+                            ⚔️ JORNADA ${j} • ${homeAway}
+                        </span>
+                        <span style="font-size: 0.58rem; color: #64748b; font-weight: 800;">
+                            ${parsedDate} • ${matchTime}h (Convo: ${convTime})
+                        </span>
                     </div>
-                    <div style="background: rgba(239, 68, 68, 0.05); padding: 10px; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.2);">
-                        <div style="font-size: 0.6rem; font-weight: 900; color: #dc2626; text-transform: uppercase; margin-bottom: 5px;">❌ Bajas / Dudas (${bajas.length})</div>
-                        <div style="font-size: 0.65rem; color: #334155; font-weight: 700; max-height: 80px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;">
-                            ${bajas.map(name => `<span>• ${name.split(' ')[0]} ${name.split(' ')[1] || ''}</span>`).join('') || '<span style="color:#94a3b8; font-style:italic;">Ninguna</span>'}
+                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <div style="font-size: 0.85rem; font-weight: 950; color: #0f172a;">
+                            vs ${opponent}
+                        </div>
+                        <div style="font-size: 0.65rem; color: #475569; font-weight: 700; text-align: right;">
+                            📍 ${venue}${address ? ` <span style="font-size:0.55rem; color:#94a3b8;">(${address})</span>` : ''}
                         </div>
                     </div>
                 `;
             }
 
-            // Options custom survey additionals
-            const optBeer = document.getElementById('conv-opt-beer')?.checked;
-            const optCar = document.getElementById('conv-opt-car')?.checked;
-            const optTime = document.getElementById('conv-opt-time')?.checked;
+            // 2. Resumen y 4 KPIs
+            const summary = window.TeamConvocatoriaService 
+                ? window.TeamConvocatoriaService.getConvocatoriaSummary(convoData, team.roster || [])
+                : { available: [], conditional: [], unavailable: [], pending: team.roster || [], counts: { available: 0, conditional: 0, unavailable: 0, pending: (team.roster || []).length } };
 
-            let extraSection = "";
+            const kpiAvail = document.getElementById(`convo-kpi-available-${teamId}`);
+            const kpiCond = document.getElementById(`convo-kpi-conditional-${teamId}`);
+            const kpiUnavail = document.getElementById(`convo-kpi-unavailable-${teamId}`);
+            const kpiPend = document.getElementById(`convo-kpi-pending-${teamId}`);
+
+            if (kpiAvail) kpiAvail.textContent = summary.counts.available;
+            if (kpiCond) kpiCond.textContent = summary.counts.conditional;
+            if (kpiUnavail) kpiUnavail.textContent = summary.counts.unavailable;
+            if (kpiPend) kpiPend.textContent = summary.counts.pending;
+
+            // 3. Lista interactiva del Roster con badges y botones táctiles de cambio de estado
+            const rosterContainer = document.getElementById(`convo-roster-list-${teamId}`);
+            if (rosterContainer && team.roster) {
+                const responses = convoData?.responses || {};
+
+                rosterContainer.innerHTML = team.roster.map(player => {
+                    const resp = responses[player.name];
+                    const status = resp ? resp.status : 'pending';
+                    const note = resp?.note || '';
+                    const time = resp?.updatedAt ? new Date(resp.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+                    let badgeBg = '#f1f5f9';
+                    let badgeCol = '#64748b';
+                    let badgeBorder = '#cbd5e1';
+                    let badgeLabel = '⚪ Sin responder';
+
+                    if (status === 'available') {
+                        badgeBg = 'rgba(16, 185, 129, 0.12)';
+                        badgeCol = '#16a34a';
+                        badgeBorder = 'rgba(16, 185, 129, 0.3)';
+                        badgeLabel = '🟢 Disponible';
+                    } else if (status === 'conditional') {
+                        badgeBg = 'rgba(245, 158, 11, 0.12)';
+                        badgeCol = '#d97706';
+                        badgeBorder = 'rgba(245, 158, 11, 0.3)';
+                        badgeLabel = '🟡 Restricción';
+                    } else if (status === 'unavailable') {
+                        badgeBg = 'rgba(239, 68, 68, 0.12)';
+                        badgeCol = '#dc2626';
+                        badgeBorder = 'rgba(239, 68, 68, 0.3)';
+                        badgeLabel = '🔴 Baja';
+                    }
+
+                    return `
+                        <div style="background: #ffffff; border-radius: 12px; padding: 8px 10px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                                <div style="display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1;">
+                                    <span style="font-size: 0.72rem; font-weight: 900; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        ${player.name}
+                                    </span>
+                                    <span style="font-size: 0.55rem; font-weight: 800; color: #94a3b8;">
+                                        (${player.pts || 0} pts)
+                                    </span>
+                                </div>
+                                
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="background: ${badgeBg}; color: ${badgeCol}; border: 1px solid ${badgeBorder}; border-radius: 8px; font-size: 0.58rem; font-weight: 900; padding: 2px 7px;">
+                                        ${badgeLabel}
+                                    </span>
+
+                                    <!-- Botones de cambio rápido para capitán -->
+                                    <div style="display: flex; gap: 2px; background: #f8fafc; padding: 2px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                        <button title="Marcar Disponible" onclick="window.TeamController.setPlayerStatusManual('${teamId}', '${player.name}', 'available')" 
+                                                style="background: ${status === 'available' ? 'rgba(16,185,129,0.25)' : 'transparent'}; border: none; border-radius: 6px; padding: 2px 4px; cursor: pointer; font-size: 0.65rem; line-height: 1;">
+                                            🟢
+                                        </button>
+                                        <button title="Marcar Condicional / Duda" onclick="window.TeamController.setPlayerStatusManual('${teamId}', '${player.name}', 'conditional')" 
+                                                style="background: ${status === 'conditional' ? 'rgba(245,158,11,0.25)' : 'transparent'}; border: none; border-radius: 6px; padding: 2px 4px; cursor: pointer; font-size: 0.65rem; line-height: 1;">
+                                            🟡
+                                        </button>
+                                        <button title="Marcar Baja" onclick="window.TeamController.setPlayerStatusManual('${teamId}', '${player.name}', 'unavailable')" 
+                                                style="background: ${status === 'unavailable' ? 'rgba(239,68,68,0.25)' : 'transparent'}; border: none; border-radius: 6px; padding: 2px 4px; cursor: pointer; font-size: 0.65rem; line-height: 1;">
+                                            🔴
+                                        </button>
+                                        <button title="Restablecer a Pendiente" onclick="window.TeamController.setPlayerStatusManual('${teamId}', '${player.name}', 'pending')" 
+                                                style="background: ${status === 'pending' ? '#e2e8f0' : 'transparent'}; border: none; border-radius: 6px; padding: 2px 4px; cursor: pointer; font-size: 0.65rem; line-height: 1;">
+                                            ⚪
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            ${note ? `
+                                <div style="font-size: 0.6rem; color: #b45309; font-weight: 700; background: rgba(245, 158, 11, 0.08); padding: 4px 8px; border-radius: 6px; border: 1px dashed rgba(245, 158, 11, 0.3);">
+                                    💬 <em>"${note}"</em> ${time ? `<span style="color: #94a3b8; font-size: 0.52rem; margin-left: 4px;">(${time})</span>` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // 4. Actualizar caja de previsualización de WhatsApp
+            this.refreshConvocatoriaPreview(teamId);
+
+            // 5. Sincronizar banquillo táctico si está activo
+            this.updateTactica(teamId);
+        }
+
+        refreshConvocatoriaPreview(teamId) {
+            const team = this.teams.find(t => t.id === teamId);
+            if (!team) return;
+
+            const j = this.activeConvoJornada || 1;
+            const match = team.schedule?.find(m => parseInt(m.j, 10) === j) || team.schedule?.find(m => m.status !== 'completed' && !m.opponent.includes('BYE')) || {};
+
+            let text = window.TeamConvocatoriaService
+                ? window.TeamConvocatoriaService.generateWhatsAppConvocatoriaText(team, match, this.currentConvoData)
+                : '';
+
+            // Opciones logísticas complementarias
+            const optBeer = document.getElementById(`conv-opt-beer-${teamId}`)?.checked;
+            const optCar = document.getElementById(`conv-opt-car-${teamId}`)?.checked;
+            const optTime = document.getElementById(`conv-opt-time-${teamId}`)?.checked;
+
+            let extraSection = '';
             if (optBeer || optCar || optTime) {
-                extraSection += `\n*INFORMACIÓN LOGÍSTICA COMPLEMENTARIA:*\n`;
-                if (optTime) extraSection += `${E.clock} *Puntualidad:* Se solicita presentarse rigurosamente a la hora de convocatoria (-30min) para el calentamiento preventivo.\n`;
+                extraSection += `*INFORMACIÓN LOGÍSTICA COMPLEMENTARIA:*\n`;
+                if (optTime) extraSection += `⏱️ *Puntualidad:* Se solicita presentarse rigurosamente a la hora de convocatoria (-30min) para el calentamiento preventivo.\n`;
                 if (optCar) extraSection += `🚗 *Logística:* Indicad en el grupo si disponéis de coche y plazas libres para coordinar trayectos conjuntos cuando juguemos fuera de casa.\n`;
                 if (optBeer) extraSection += `🍻 *Tercer Tiempo:* Confirmada reserva en sede para la posterior ronda de análisis y cervezas.\n`;
             }
 
-            // Build survey text
-            let text = `${E.tennis} *CONVO - JORNADA ${jNum}* ${E.tennis}
-━━━━━━━━━━━━━━━━━━
-${E.book} *Competición:* ${phaseStr} (${homeAway})
-${E.cal} *Día:* ${parsedDate}
-${E.timer} *Hora partido:* ${matchTime}h
-${E.clock} *Hora convo:* ${convTime}
-${E.vs} *Rival:* ${nextMatch.opponent || 'Por definir'}
-${E.stadium} *Club:* ${nextMatch.venue || 'Por definir'}${addressLabel}
-━━━━━━━━━━━━━━━━━━
-${E.check} *ESTADO DE LA PLANTILLA:*\n`;
-
-            if (confirmados.length > 0) {
-                text += `\n*Confirmados (${confirmados.length}):*\n`;
-                confirmados.forEach((name, i) => {
-                    text += `${i+1}. ${name} ✅\n`;
-                });
-            }
-            if (bajas.length > 0) {
-                text += `\n*Bajas declaradas (${bajas.length}):*\n`;
-                bajas.forEach((name, i) => {
-                    text += `${i+1}. ${name} ❌\n`;
-                });
+            if (extraSection) {
+                if (text.includes('¡Vamos Somos Pádel BCN!')) {
+                    text = text.replace('¡Vamos Somos Pádel BCN!', extraSection + '\n¡Vamos Somos Pádel BCN!');
+                } else {
+                    text += '\n' + extraSection;
+                }
             }
 
-            text += extraSection;
-            text += `\n¡Vamos Somos Pádel BCN a por la victoria! ${E.strong}${E.green}`;
-
-            // Update WhatsApp Preview box
-            const previewBox = document.getElementById('convocatoria-preview-box');
+            const previewBox = document.getElementById(`convocatoria-preview-box-${teamId}`) || document.getElementById('convocatoria-preview-box');
             if (previewBox) {
                 previewBox.textContent = text;
             }
 
-            // Save text in sessionStorage for sharing method
             sessionStorage.setItem(`conv_text_${teamId}`, text);
+        }
+
+        updateConvocatoriaPreview(teamId) {
+            this.refreshConvocatoriaPreview(teamId);
+        }
+
+        async setPlayerStatusManual(teamId, playerName, status) {
+            if (!window.TeamConvocatoriaService) return;
+            try {
+                if (window.PlayerView?.haptic) window.PlayerView.haptic(15);
+                const j = this.activeConvoJornada || 1;
+
+                if (status === 'conditional') {
+                    const currentNote = this.currentConvoData?.responses?.[playerName]?.note || '';
+                    const promptVal = prompt(`Introduce horario o restricción para ${playerName} (opcional):`, currentNote);
+                    if (promptVal === null) return; // Cancelado por el usuario
+                    await window.TeamConvocatoriaService.submitPlayerResponse(teamId, j, playerName, 'conditional', promptVal.trim());
+                } else if (status === 'pending') {
+                    let convo = await window.TeamConvocatoriaService.getConvocatoria(teamId, j);
+                    if (convo && convo.responses && convo.responses[playerName]) {
+                        delete convo.responses[playerName];
+                        await window.TeamConvocatoriaService.saveConvocatoria(convo);
+                    }
+                } else {
+                    await window.TeamConvocatoriaService.submitPlayerResponse(teamId, j, playerName, status, '');
+                }
+            } catch (err) {
+                console.error("Error setting player status manually:", err);
+                if (window.PremiumModal?.alert) {
+                    window.PremiumModal.alert({
+                        title: 'Error al actualizar',
+                        message: err.message,
+                        type: 'error'
+                    });
+                }
+            }
+        }
+
+        copyConvocatoriaVoteLink(teamId) {
+            if (!window.TeamConvocatoriaService) return;
+            const j = this.activeConvoJornada || 1;
+            const url = window.TeamConvocatoriaService.generateShareUrl(teamId, j);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => {
+                    if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
+                    window.PremiumModal.alert({
+                        title: '¡LINK COPIADO! 📋',
+                        message: `El enlace de votación rápida para la <strong>Jornada ${j}</strong> ha sido copiado a tu portapapeles.<br><br><span style="font-size:0.72rem; color:#0284c7; word-break:break-all;">${url}</span><br><br>Pégalo en el chat de WhatsApp del equipo para que los jugadores respondan en 1 clic.`,
+                        type: 'success'
+                    });
+                }).catch(() => {
+                    prompt('Copia este enlace para el grupo:', url);
+                });
+            } else {
+                prompt('Copia este enlace para el grupo:', url);
+            }
+        }
+
+        copyConvocatoriaText(teamId) {
+            const previewBox = document.getElementById(`convocatoria-preview-box-${teamId}`) || document.getElementById('convocatoria-preview-box');
+            const text = previewBox ? previewBox.textContent : sessionStorage.getItem(`conv_text_${teamId}`);
+            if (!text) return;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    if (window.PlayerView?.haptic) window.PlayerView.haptic(20);
+                    window.PremiumModal.alert({
+                        title: '¡TEXTO COPIADO! 📝',
+                        message: 'El texto oficial de la convocatoria está en tu portapapeles listo para pegar en WhatsApp.',
+                        type: 'success'
+                    });
+                }).catch(() => {
+                    prompt('Copia el texto oficial:', text);
+                });
+            } else {
+                prompt('Copia el texto oficial:', text);
+            }
+        }
+
+        shareConvocatoriaToWhatsApp(teamId) {
+            const previewBox = document.getElementById(`convocatoria-preview-box-${teamId}`) || document.getElementById('convocatoria-preview-box');
+            const text = previewBox ? previewBox.textContent : (sessionStorage.getItem(`conv_text_${teamId}`) || '');
+            if (!text) return;
+
+            if (window.PlayerView?.haptic) window.PlayerView.haptic(25);
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+
+        applyConfirmedToTactica(teamId, jornada) {
+            return this.applyConfirmadosToTactica(teamId);
+        }
+
+        applyConfirmadosToTactica(teamId) {
+            if (!this.currentConvoData || !this.currentConvoData.responses) {
+                window.PremiumModal.alert({
+                    title: 'Sin Respuestas',
+                    message: 'Aún no hay respuestas registradas en esta convocatoria.',
+                    type: 'info'
+                });
+                return;
+            }
+
+            const confirmed = Object.entries(this.currentConvoData.responses)
+                .filter(([_, r]) => r && (r.status === 'available' || r.status === 'conditional'))
+                .map(([name]) => name);
+
+            if (confirmed.length < 6) {
+                window.PremiumModal.alert({
+                    title: 'Confirmados Insuficientes ⚠️',
+                    message: `Se requieren al menos 6 jugadores confirmados (disponibles o condicionales) para auto-alinear 3 pistas completas.<br><br>Actualmente hay <strong>${confirmed.length}</strong> confirmados.`,
+                    type: 'warning'
+                });
+                return;
+            }
+
+            // Cambiar a la pestaña de pizarra táctica
+            const tabsContainer = document.getElementById('team-modal-tabs-header');
+            if (tabsContainer) {
+                const btnTactica = Array.from(tabsContainer.querySelectorAll('button')).find(b => b.getAttribute('onclick')?.includes('tab-tactica'));
+                if (btnTactica) {
+                    btnTactica.click();
+                }
+            } else {
+                const btnTactica = document.getElementById('btn-tab-tactica');
+                if (btnTactica) {
+                    btnTactica.click();
+                }
+            }
+
+            // Ejecutar auto-alineación óptima con los confirmados
+            setTimeout(() => {
+                this.suggestOptimalAlineacion(teamId, confirmed);
+            }, 150);
         }
 
         shareTactica(teamId) {
@@ -2660,6 +3536,7 @@ ${E.check} *ESTADO DE LA PLANTILLA:*\n`;
                 const phaseStr = groupText.toUpperCase().includes('FASE 1') ? 'Fase 1' : 'Fase 2';
                 const jNum = nextMatch.j || 'X';
                 
+                const shareUrl = window.TeamConvocatoriaService?.generateShareUrl(team.id, jNum) || '';
                 finalText = `${E.tennis} *CONVO - JORNADA ${jNum}* ${E.tennis}
 ━━━━━━━━━━━━━━━━━━
 ${E.book} *Competición:* ${phaseStr} (${homeAway})
@@ -2670,7 +3547,7 @@ ${E.vs} *Rival:* ${nextMatch.opponent || 'Por definir'}
 ${E.stadium} *Club:* ${nextMatch.venue || 'Por definir'}${addressLabel}
 ━━━━━━━━━━━━━━━━━━
 ${E.check} *Confirmar disponibilidad:*
-Responde con un *SÍ* o un *NO* en este grupo.
+${shareUrl ? `📲 *RESPONDE TU DISPONIBILIDAD EN 1-CLIC:*\n${shareUrl}\n\nO responde con un *SÍ* o un *NO* en este grupo.` : 'Responde con un *SÍ* o un *NO* en este grupo.'}
 
 ¡Vamos Somos Pádel BCN! ${E.strong}${E.green}`;
             } else {

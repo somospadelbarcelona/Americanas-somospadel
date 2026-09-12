@@ -295,8 +295,14 @@
             const s1 = parseInt(m.score_a || 0);
             const s2 = parseInt(m.score_b || 0);
             const isFinished = m.status === 'finished';
-            const tA = m.team_a_names || 'Equipo A';
-            const tB = m.team_b_names || 'Equipo B';
+            const formatTeam = (names, fallback) => {
+                if (window.MatchCard && typeof window.MatchCard.parseTeam === 'function') {
+                    return window.MatchCard.parseTeam(names, fallback).fullText;
+                }
+                return Array.isArray(names) ? names.join(' / ') : (names || fallback);
+            };
+            const tA = formatTeam(m.team_a_names, 'Equipo A');
+            const tB = formatTeam(m.team_b_names, 'Equipo B');
 
             if (!isEditing) {
                 return `<div onclick="window.EntrenoLiveView.openEditScore('${m.id}')" style="background:white; border-radius:28px; padding:25px; box-shadow:0 15px 40px rgba(0,0,0,0.03); display:flex; flex-direction:column; gap:15px;">

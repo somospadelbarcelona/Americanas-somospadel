@@ -47,13 +47,6 @@ window.WhatsAppService = {
         const isMixed = type === 'mixed' || type === 'mixto' || type === 'mixta';
         const isAmericana = name.includes('AMERICANA') || event.type === 'americana';
 
-        // 1. HEADER LOGIC
-        let headerTitle = isAmericana ? 'AMERICANA' : 'ENTRENO';
-        let catEmoji = E.TENNIS;
-        if (isMale) { catEmoji = E.MALE; headerTitle += ' MASCULINO'; }
-        else if (isFemale) { catEmoji = E.FEMALE; headerTitle += ' FEMENINO'; }
-        else if (isMixed) { catEmoji = E.MIXED; headerTitle += ' MIXTO'; }
-
         const dateStr = this._formatDate(event.date);
         const timeStr = event.time || '10:00';
         const endTimeStr = event.time_end ? " a " + event.time_end : '';
@@ -63,130 +56,212 @@ window.WhatsAppService = {
         const maxPlayers = (parseInt(event.max_courts) || 4) * 4;
         const spotsLeft = Math.max(0, maxPlayers - players.length);
 
-        const pMember = event.price_members || 20;
-        const pExt = event.price_external || 25;
+        const pMember = event.price_members || 10;
+        const pExt = event.price_external || 10;
 
-        // --- START MESSAGE CONSTRUCTION ---
-        let msg = `${E.SPARKLE} *${name}* ${E.SPARKLE}\n`;
-        msg += "━━━━━━━━━━━━━━━━━━\n\n";
+        // Level text
+        let levelText = '3.5 - 4.5';
+        if (event.level && String(event.level).trim()) {
+            levelText = String(event.level).trim();
+        } else if (event.level_min && event.level_max) {
+            levelText = `${event.level_min} - ${event.level_max}`;
+        } else if (event.level_min) {
+            levelText = `${event.level_min}`;
+        } else if (event.level_max) {
+            levelText = `Hasta ${event.level_max}`;
+        }
 
-        // SECTION: LOGISTICS
-        msg += `${E.CALENDAR} *DÍA:* ${dateStr}\n`;
-        msg += `${E.TIMER} *HORA:* ${timeStr}${endTimeStr}\n`;
-        msg += `${E.PIN} *LUGAR:* ${location}\n\n`;
-
-        // SECTION: DETAILS
-        msg += `◈ *TIPO:* ${headerTitle}\n`;
-        msg += `◈ *MODO:* ${event.pair_mode === 'rotating' ? 'Individual / Twister' : 'Pareja Fija'}\n`;
-        msg += `◈ *NIVEL:* ${event.level_min || '3.5'} - ${event.level_max || '4.5'}\n\n`;
-
-        // SECTION: BENEFITS (Professional Bullet Points)
-        msg += "*INCLUYE:*\n";
-        msg += `• Pelotas Nuevas ${E.TENNIS}\n`;
+        // Pair mode detection
+        const isFixed = event.pair_mode === 'fixed' || event.pair_mode === 'fixed_auto' || event.pair_mode === 'fixed_admin' || name.includes('FIJA');
+        const modeLabel = isFixed ? 'Pareja Fija' : 'Twister (Individual)';
 
         // Water policy: Only in El Prat, strictly NOT in Delfos
         const isDelfos = location.toUpperCase().includes('DELFOS');
         const isPrat = location.toUpperCase().includes('PRAT');
-        if (isPrat && !isDelfos) {
-            msg += `• Agua para cada jugador ${E.WATER}\n`;
-        }
 
-        if (isAmericana) msg += `• Premios para ganadores ${E.GIFT}\n`;
-        msg += `• Gestión y Cuadros automatizados a través de la app a tiempo real ${E.STAR}\n\n`;
+        let extras = ['Bolas Nuevas 🎾'];
+        if (isPrat && !isDelfos) extras.push('Agua 💦');
+        if (isAmericana) extras.push('Premios 🏆');
+        extras.push('App en Directo 📱');
+        const extrasStr = extras.join(' · ');
 
-        msg += "━━━━━━━━━━━━━━━━━━\n\n";
+        // --- START MESSAGE CONSTRUCTION ---
+        let msg = `🎾✨ *SOMOSPADEL BCN* ✨🎾\n`;
+        msg += `🏆 *${name}* 🏆\n`;
+        msg += "═════════════════════════\n\n";
 
-        // SECTION: AVAILABILITY
+        // SECTION: DATOS ENTRENO / DATOS AMERICANA
+        const sectionTitle = isAmericana ? 'DATOS AMERICANA' : 'DATOS ENTRENO';
+        msg += `📍 *${sectionTitle}:*\n`;
+        msg += `🔹 📅 *Fecha:* ${dateStr}\n`;
+        msg += `🔹 ⏱️ *Hora:* ${timeStr}${endTimeStr}\n`;
+        msg += `🔹 🏟️ *Club:* ${location}\n\n`;
+
+        // SECTION: DETALLES
+        msg += `🎯 *DETALLES:*\n`;
+        msg += `🔸 🌪️ *Modo:* ${modeLabel}\n`;
+        msg += `🔸 📊 *Nivel:* ${levelText}\n`;
+        msg += `🔸 🎁 *Extras:* ${extrasStr}\n\n`;
+
+        // SECTION: AVAILABILITY & BALANCE
         if (spotsLeft === 0) {
-            msg += `${E.RED} *CUADRO COMPLETO*\n\n`;
+            msg += `🔴 *¡CUADRO COMPLETO!* 🔴\n`;
         } else {
-            msg += `${E.BOLT} *¡ÚLTIMAS ${spotsLeft} PLAZAS!* ${E.BOLT}\n\n`;
+            msg += `🔥 *¡ÚLTIMAS ${spotsLeft} PLAZAS DISPONIBLES!* 🔥\n`;
         }
 
-        // SECTION: BALANCE (Explicit for Mixed/Female)
         if ((isMixed || isFemale) && richPlayers) {
             const m = richPlayers.filter(p => ['male', 'chico', 'hombre', 'masculino'].includes((p.gender || '').toLowerCase())).length;
             const f = richPlayers.filter(p => ['female', 'chica', 'mujer', 'femenino'].includes((p.gender || '').toLowerCase())).length;
 
             if (isMixed && (m + f > 0)) {
-                msg += `${E.BALANCE} *Balance:* ${E.MALE} ${m} - ${E.FEMALE} ${f}\n\n`;
+                msg += `⚖️ *Balance:* 🚹 ${m} Chicos · 🚺 ${f} Chicas\n`;
             } else if (isFemale && f > 0) {
-                msg += `${E.BALANCE} *Jugadoras:* ${E.FEMALE} ${f}\n\n`;
+                msg += `⚖️ *Jugadoras:* 🚺 ${f}\n`;
             }
         }
+        msg += `\n`;
+
+        // Helper for badges with emoji keycaps (1️⃣..9️⃣, 1️⃣0️⃣, 1️⃣1️⃣, 1️⃣2️⃣...)
+        const digitEmojis = {
+            '0': '0️⃣',
+            '1': '1️⃣',
+            '2': '2️⃣',
+            '3': '3️⃣',
+            '4': '4️⃣',
+            '5': '5️⃣',
+            '6': '6️⃣',
+            '7': '7️⃣',
+            '8': '8️⃣',
+            '9': '9️⃣'
+        };
+        const getNumBadge = (num) => {
+            return String(num).split('').map(d => digitEmojis[d] || d).join('');
+        };
 
         // SECTION: PLAYER LIST
-        msg += "*LISTA DE INSCRITOS:*\n";
-
         const displayList = richPlayers || players;
         const processedIds = new Set();
         let displayCount = 0;
 
-        displayList.forEach((p) => {
-            const pId = p.id || p.uid;
-            if (processedIds.has(pId)) return;
+        const isPairLayout = isFixed;
+        const totalRows = isPairLayout ? Math.floor(maxPlayers / 2) : maxPlayers;
 
-            displayCount++;
-            let pName = p.name ? p.name.trim() : 'Jugador';
-            const lvl = p.level || p.playtomic_level || '';
-            const lvlStr = lvl ? ` (N${lvl})` : "";
+        msg += `👥 *INSCRIPCIONES (${players.length}/${maxPlayers}):*\n`;
 
-            // --- PAIR DETECTION & LOGIC (Professional Format) ---
-            const isFixed = event.pair_mode === 'fixed' || event.pair_mode === 'fixed_auto' || name.includes('FIJA');
-            const shouldForcePairLayout = isFixed || isMixed || (p.partner_name && String(p.partner_name).trim().length > 0);
+        if (isPairLayout) {
+            displayList.forEach((p) => {
+                const pId = p.id || p.uid;
+                if (processedIds.has(pId)) return;
 
-            if (shouldForcePairLayout) {
-                if (p.partner_name) {
-                    let partnerName = p.partner_name;
+                displayCount++;
+                const badge = getNumBadge(displayCount);
+                let pName = p.name ? p.name.trim() : 'Jugador';
+                const lvl = p.level || p.playtomic_level || '';
+                const lvlStr = lvl ? ` 🎖️ _N${lvl}_` : '';
+
+                if (p.partner_name && String(p.partner_name).trim().length > 0) {
+                    let partnerName = p.partner_name.trim();
                     let partnerLvlStr = "";
 
                     let partnerObj = null;
                     if (p.partner_id) {
                         partnerObj = displayList.find(x => (x.id || x.uid) === p.partner_id);
                     } else {
-                        partnerObj = displayList.find(x => x.name && x.name.toLowerCase() === p.partner_name.toLowerCase() && (x.id || x.uid) !== pId);
+                        partnerObj = displayList.find(x => x.name && x.name.toLowerCase() === partnerName.toLowerCase() && (x.id || x.uid) !== pId);
                     }
 
                     if (partnerObj) {
                         processedIds.add(partnerObj.id || partnerObj.uid);
-                        if (partnerObj.level) partnerLvlStr = ` (N${partnerObj.level})`;
+                        if (partnerObj.level || partnerObj.playtomic_level) {
+                            partnerLvlStr = ` 🎖️ _N${partnerObj.level || partnerObj.playtomic_level}_`;
+                        }
                     }
 
-                    msg += `${displayCount}. ${E.TENNIS} *${pName}*${lvlStr} & *${partnerName}*${partnerLvlStr}\n`;
+                    msg += `${badge} 🎾 *${pName}*${lvlStr} & *${partnerName}*${partnerLvlStr}\n`;
                 } else {
-                    msg += `${displayCount}. ${E.TENNIS} *${pName}*${lvlStr} - _(Busca Pareja)_\n`;
+                    msg += `${badge} 🎾 *${pName}*${lvlStr} · _(Busca Pareja)_\n`;
                 }
                 processedIds.add(pId);
-                return;
+            });
+
+            for (let i = displayCount; i < totalRows; i++) {
+                const badge = getNumBadge(i + 1);
+                msg += `${badge} 🟢 _(Pareja Libre)_\n`;
             }
+        } else {
+            // Individual layout (Twister / Rotating)
+            displayList.forEach((p) => {
+                const pId = p.id || p.uid;
+                if (processedIds.has(pId)) return;
 
-            // Standard individual layout
-            let gIcon = '• ';
-            const g = (p.gender || '').toLowerCase();
-            if (['male', 'chico', 'hombre', 'masculino'].includes(g)) gIcon = E.MALE + " ";
-            else if (['female', 'chica', 'mujer', 'femenino'].includes(g)) gIcon = E.FEMALE + " ";
+                displayCount++;
+                const badge = getNumBadge(displayCount);
+                let pName = p.name ? p.name.trim() : 'Jugador';
+                const lvl = p.level || p.playtomic_level || '';
+                const lvlStr = lvl ? ` 🎖️ _N${lvl}_` : '';
 
-            msg += `${displayCount}. ${gIcon} *${pName}*${lvlStr}\n`;
-            processedIds.add(pId);
-        });
+                let gIcon = '🎾';
+                const g = (p.gender || '').toLowerCase();
+                if (['male', 'chico', 'hombre', 'masculino'].includes(g)) gIcon = '🚹';
+                else if (['female', 'chica', 'mujer', 'femenino'].includes(g)) gIcon = '🚺';
 
-        // Vacancy lines
-        const isPairLayout = event.pair_mode === 'fixed' || event.pair_mode === 'fixed_auto' || name.includes('FIJA') || isMixed;
-        const totalRows = isPairLayout ? (maxPlayers / 2) : maxPlayers;
-        for (let i = displayCount; i < totalRows; i++) {
-            msg += `${i + 1}. ${E.TENNIS} _(Libre)_\n`;
+                msg += `${badge} ${gIcon} *${pName}*${lvlStr}\n`;
+                processedIds.add(pId);
+            });
+
+            for (let i = displayCount; i < totalRows; i++) {
+                const badge = getNumBadge(i + 1);
+                msg += `${badge} 🟢 _(Disponible)_\n`;
+            }
         }
 
         // SECTION: PRICES & CTA
-        msg += "\n━━━━━━━━━━━━━━━━━━\n";
-        msg += `${E.MONEY} *PRECIO:* ${pMember}${E.EURO} socios / ${pExt}${E.EURO} externos\n\n`;
-        msg += `${E.DOWN} *RESERVA TU PLAZA AQUÍ:* \n`;
+        msg += `\n═════════════════════════\n`;
+        msg += `💳 *TARIFA:* ${pMember}€ socios 🤝 / ${pExt}€ externos\n`;
+        msg += `🚀 *¡APÚNTATE EN UN CLIC!*\n`;
 
         const baseUrl = "https://somospadelbarcelona.github.io/Americanas-somospadel";
         const sectionHash = isAmericana ? "#americanas" : "#entrenos";
-        msg += `${E.LINK} ${baseUrl}/${sectionHash}\n`;
+        msg += `👉 ${baseUrl}/${sectionHash}\n`;
+        msg += `═════════════════════════\n`;
 
         return msg;
+    },
+
+    /**
+     * Safely opens a WhatsApp URL without navigating the current window (prevents iOS Safari teardown/Firebase termination)
+     */
+    _openUrlSafely(url) {
+        try {
+            const win = window.open(url, '_blank');
+            if (!win || win.closed || typeof win.closed === 'undefined') {
+                const a = document.createElement('a');
+                a.href = url;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    if (a.parentNode) a.parentNode.removeChild(a);
+                }, 1000);
+            }
+        } catch (e) {
+            console.warn("⚠️ _openUrlSafely fallback:", e);
+            try {
+                const a = document.createElement('a');
+                a.href = url;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    if (a.parentNode) a.parentNode.removeChild(a);
+                }, 1000);
+            } catch (err2) {
+                window.open(url, '_blank');
+            }
+        }
     },
 
     /**
@@ -201,24 +276,31 @@ window.WhatsAppService = {
             if (event.players && event.players.length > 0) {
                 try {
                     // Try to get cached players from Admin context if available to save time
-                    let allUsers = window._allPlayersCache;
-                    if (!allUsers) {
-                        console.log("⏱️ Fetching players for share...");
-                        allUsers = await window.FirebaseDB.players.getAll();
-                        window._allPlayersCache = allUsers; // Cache it
+                    let allUsers = window._allPlayersCache || window.allUsersCache;
+                    if (!allUsers && window.FirebaseDB?.players?.getAll) {
+                        try {
+                            console.log("⏱️ Fetching players for share...");
+                            allUsers = await window.FirebaseDB.players.getAll();
+                            window._allPlayersCache = allUsers; // Cache it
+                        } catch (pErr) {
+                            console.warn("⚠️ [WhatsAppService] Error al obtener jugadores de BD, usando fallback local:", pErr.message);
+                            allUsers = window.allUsersCache || [];
+                        }
                     }
 
-                    richPlayers = event.players.map(p => {
-                        const pid = (typeof p === 'string') ? p : (p.id || p.uid);
-                        const user = allUsers.find(u => (u.id === pid) || (u.uid === pid));
-                        return {
-                            ...p,
-                            name: (user ? user.name : (p.name || 'Jugador')),
-                            level: user ? (user.level || user.self_rate_level || p.level) : p.level,
-                            gender: user ? user.gender : (p.gender || null),
-                            teams: user ? (user.team_somospadel || user.EQUIPOS || user.equipos || user.Equipos) : (p.teams || p.team_somospadel || p.EQUIPOS || null)
-                        };
-                    });
+                    if (allUsers && Array.isArray(allUsers) && allUsers.length > 0) {
+                        richPlayers = event.players.map(p => {
+                            const pid = (typeof p === 'string') ? p : (p.id || p.uid);
+                            const user = allUsers.find(u => (u.id === pid) || (u.uid === pid));
+                            return {
+                                ...p,
+                                name: (user ? user.name : (p.name || 'Jugador')),
+                                level: user ? (user.level || user.self_rate_level || p.level) : p.level,
+                                gender: user ? user.gender : (p.gender || null),
+                                teams: user ? (user.team_somospadel || user.EQUIPOS || user.equipos || user.Equipos) : (p.teams || p.team_somospadel || p.EQUIPOS || null)
+                            };
+                        });
+                    }
                 } catch (err) { console.warn("Player enrichment failed, using basic data", err); }
             }
 
@@ -234,19 +316,22 @@ window.WhatsAppService = {
                         text: text
                     });
                     return;
-                } catch (e) { console.warn("Native share failed", e); }
+                } catch (e) {
+                    if (e.name === 'AbortError' || (e.message && e.message.toLowerCase().includes('abort'))) {
+                        console.log("ℹ️ Compartir cancelado por el usuario.");
+                        return;
+                    }
+                    console.warn("Native share failed, fallback to direct WhatsApp URL", e);
+                }
             }
 
             const url = "https://api.whatsapp.com/send?text=" + encodedText;
-
-            if (isIOS) {
-                window.location.href = url;
-            } else {
-                window.open(url, '_blank');
-            }
+            this._openUrlSafely(url);
         } catch (e) {
             console.error("WhatsApp Error:", e);
-            alert("Error al compartir en WhatsApp");
+            if (window.PremiumModal) {
+                window.PremiumModal.alert({ title: "WhatsApp", message: "No se pudo compartir el evento.", type: 'warning' });
+            }
         }
     },
 
@@ -291,17 +376,18 @@ window.WhatsAppService = {
                     text: msg
                 });
                 return;
-            } catch (e) { console.warn("Native share failed", e); }
+            } catch (e) {
+                if (e.name === 'AbortError' || (e.message && e.message.toLowerCase().includes('abort'))) {
+                    console.log("ℹ️ Compartir ranking cancelado por el usuario.");
+                    return;
+                }
+                console.warn("Native share failed", e);
+            }
         }
 
         const encodedText = encodeURIComponent(msg);
         const url = "https://api.whatsapp.com/send?text=" + encodedText;
-
-        if (isIOS) {
-            window.location.href = url;
-        } else {
-            window.open(url, '_blank');
-        }
+        this._openUrlSafely(url);
     },
 
     /**
@@ -349,13 +435,17 @@ window.WhatsAppService = {
                     text: msg
                 });
                 return;
-            } catch (e) { }
+            } catch (e) {
+                if (e.name === 'AbortError' || (e.message && e.message.toLowerCase().includes('abort'))) {
+                    console.log("ℹ️ Compartir hall of fame cancelado por el usuario.");
+                    return;
+                }
+            }
         }
 
         const encodedText = encodeURIComponent(msg);
         const url = "https://api.whatsapp.com/send?text=" + encodedText;
-        if (isIOS) window.location.href = url;
-        else window.open(url, '_blank');
+        this._openUrlSafely(url);
     },
 
     /**
@@ -379,10 +469,7 @@ window.WhatsAppService = {
 
         const encodedText = encodeURIComponent(msg);
         const url = "https://api.whatsapp.com/send?text=" + encodedText;
-
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        if (isIOS) window.location.href = url;
-        else window.open(url, '_blank');
+        this._openUrlSafely(url);
     },
 
     /**
@@ -404,7 +491,11 @@ window.WhatsAppService = {
                     text: text
                 });
                 return;
-            } catch (e) { 
+            } catch (e) {
+                if (e.name === 'AbortError' || (e.message && e.message.toLowerCase().includes('abort'))) {
+                    console.log("ℹ️ shareText cancelado por el usuario.");
+                    return;
+                }
                 console.warn("Native share failed, falling back to WhatsApp link", e); 
             }
         }
@@ -412,12 +503,7 @@ window.WhatsAppService = {
         // Fallback to WhatsApp Web/App link
         const encodedText = encodeURIComponent(text);
         const url = "https://api.whatsapp.com/send?text=" + encodedText;
-
-        if (isIOS) {
-            window.location.href = url;
-        } else {
-            window.open(url, '_blank');
-        }
+        this._openUrlSafely(url);
     },
 
     /**

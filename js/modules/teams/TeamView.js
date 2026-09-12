@@ -391,7 +391,16 @@
                             </div>
                             <div style="font-size: 0.65rem; color: #cbd5e1; font-weight: 600; margin-top: 2px;"><i class="far fa-calendar-alt" style="color: #38b000;"></i> ${pendingMatchInfo.date} • ${pendingMatchInfo.venue}</div>
                         </div>
-                        <i class="fas fa-fire-alt" style="color: #f59e0b; font-size: 1.5rem; opacity: 0.8; animation: pulseGlow 2s infinite;"></i>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <button onclick="event.stopPropagation(); window.TeamController.openPlayerRsvpModal('${team.id}', '${pendingMatchInfo.j}')" 
+                                    style="background: rgba(14, 165, 233, 0.2); border: 1px solid #0ea5e9; color: #38bdf8; padding: 5px 12px; border-radius: 12px; font-size: 0.65rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;"
+                                    title="Responder Convocatoria RSVP"
+                                    onmouseover="this.style.background='rgba(14, 165, 233, 0.35)'; this.style.transform='scale(1.05)';" 
+                                    onmouseout="this.style.background='rgba(14, 165, 233, 0.2)'; this.style.transform='scale(1)';">
+                                <i class="fas fa-clipboard-check"></i> RSVP
+                            </button>
+                            <i class="fas fa-fire-alt" style="color: #f59e0b; font-size: 1.5rem; opacity: 0.8; animation: pulseGlow 2s infinite;"></i>
+                        </div>
                     </div>
                     ` : ''}
 
@@ -416,6 +425,10 @@
                                 <button id="btn-${team.id}-stats" onclick="window.TeamView.switchCardTab('${team.id}', 'stats')" 
                                         style="flex: 1; padding: 8px 4px; border-radius: 9px; background: transparent; color: #64748b; border: none; font-weight: 800; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; min-width: 60px;">
                                     📊 STATS
+                                </button>
+                                <button id="btn-${team.id}-convo" onclick="event.stopPropagation(); window.TeamController.showTeamDetail('${team.id}', 'convocatoria')" 
+                                        style="flex: 1; padding: 8px 4px; border-radius: 9px; background: transparent; color: #0284c7; border: none; font-weight: 900; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; min-width: 75px;">
+                                    📋 RSVP
                                 </button>
                                 <button id="btn-${team.id}-tactica" onclick="event.stopPropagation(); window.TeamController.showTeamDetail('${team.id}', 'tactica')" 
                                         style="flex: 1; padding: 8px 4px; border-radius: 9px; background: transparent; color: #10b981; border: none; font-weight: 900; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; min-width: 70px;">
@@ -613,14 +626,18 @@
                             </div>
 
                             <!-- 📲 FOOTER ACTION ROW -->
-                            <div style="display: flex; gap: 8px; margin-top: 15px;">
+                            <div style="display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap;">
                                 <button id="share-btn-${team.id}" onclick="window.TeamView.openShareModal('${team.id}', 'class')" 
-                                        style="flex: 1; background: #25D366; color: white; border: none; padding: 12px; border-radius: 16px; font-weight: 900; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.15); transition: all 0.2s ease;">
+                                        style="flex: 1.1; min-width: 140px; background: #25D366; color: white; border: none; padding: 12px; border-radius: 16px; font-weight: 900; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.15); transition: all 0.2s ease;">
                                     <i class="fab fa-whatsapp" style="font-size: 0.9rem;"></i> COMPARTIR TABLA
                                 </button>
+                                <button onclick="event.stopPropagation(); window.TeamController.showTeamDetail('${team.id}', 'convocatoria')" 
+                                        style="flex: 1.1; min-width: 150px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; border: none; padding: 12px; border-radius: 16px; font-weight: 900; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(2,132,199,0.2); transition: all 0.2s ease;">
+                                    <i class="fas fa-clipboard-check"></i> 📋 Convocatoria & RSVP
+                                </button>
                                 <a href="${officialLink}" target="_blank" onclick="event.stopPropagation();" 
-                                   style="background: #0f172a; color: white; border: none; padding: 12px 16px; border-radius: 16px; font-weight: 900; font-size: 0.7rem; text-decoration: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;">
-                                    WEB OFICIAL <i class="fas fa-external-link-alt" style="font-size: 0.6rem; color:#38b000;"></i>
+                                   style="background: #0f172a; color: white; border: none; padding: 12px 14px; border-radius: 16px; font-weight: 900; font-size: 0.7rem; text-decoration: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;">
+                                    WEB <i class="fas fa-external-link-alt" style="font-size: 0.6rem; color:#38b000;"></i>
                                 </a>
                             </div>
 

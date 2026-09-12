@@ -81,6 +81,11 @@
             this.autoStartInterval = null;
             this._onDataUpdateDebounce = null;
             this._personalMatchesDebounce = null;
+            this._pollingInterval = null;
+            this._isRefreshing = false;
+            this._currentInscritosEventId = null;
+            this._currentInscritosType = null;
+            this._visibilityBound = false;
 
             // AUTO-INIT: Start Background Services Immediately
             this.startBackgroundService();
@@ -102,6 +107,8 @@
             if (this.autoStartInterval) clearInterval(this.autoStartInterval);
             if (this._onDataUpdateDebounce) clearTimeout(this._onDataUpdateDebounce);
             if (this._personalMatchesDebounce) clearTimeout(this._personalMatchesDebounce);
+
+            this.stopAutoRefreshPolling();
 
             if (window.GeoService) window.GeoService.stopTracking();
             window.removeEventListener('geo_update', this._onGeoUpdate);
@@ -128,21 +135,33 @@
 
         startBackgroundService() {
             if (this.state.bgInitialized) return;
-            console.log("🤖 [EventsController] Starting Background Automation Service...");
+            if (!window.db || typeof window.db.collection !== 'function') {
+                console.warn("⏳ [EventsController] window.db no listo aún. Reintentando suscripción en 300ms...");
+                setTimeout(() => this.startBackgroundService(), 300);
+                return;
+            }
+            console.log("🤖 [EventsController] Starting Background Automation Service (Real-time Firestore Listeners)...");
             this.state.bgInitialized = true;
 
-            // 1. Data Listeners - Use a simpler query to be more robust
-            this.unsubscribeEvents = window.db.collection('americanas')
-                .onSnapshot(snap => {
-                    this.state.americanas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    this.onDataUpdate();
-                }, err => console.error("Error loading americanas:", err));
+            // 1. Data Listeners - Use robust query with logging
+            try {
+                this.unsubscribeEvents = window.db.collection('americanas')
+                    .onSnapshot(snap => {
+                        this.state.americanas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        console.log(`📡 [EventsController] Real-time Americanas update: ${this.state.americanas.length} events`);
+                        this.onDataUpdate();
+                    }, err => console.error("Error loading americanas:", err));
 
-            this.unsubscribeEntrenos = window.db.collection('entrenos')
-                .onSnapshot(snap => {
-                    this.state.entrenos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    this.onDataUpdate();
-                }, err => console.error("Error loading entrenos:", err));
+                this.unsubscribeEntrenos = window.db.collection('entrenos')
+                    .onSnapshot(snap => {
+                        this.state.entrenos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        console.log(`📡 [EventsController] Real-time Entrenos update: ${this.state.entrenos.length} events`);
+                        this.onDataUpdate();
+                    }, err => console.error("Error loading entrenos:", err));
+            } catch (listenErr) {
+                console.error("❌ [EventsController] Error iniciando listeners Firestore:", listenErr);
+                this.state.bgInitialized = false;
+            }
 
             // 2. Automation Loop (Check every 120s to save quota)
             if (this.autoStartInterval) clearInterval(this.autoStartInterval);
@@ -155,6 +174,25 @@
         }
 
         init() {
+            // Asegurar que el servicio de datos y el auto-refresh en segundo plano estén corriendo
+            this.startBackgroundService();
+            if (this.state.activeTab === 'events' || this.state.activeTab === 'entrenos') {
+                this.startAutoRefreshPolling();
+            }
+
+            // Refresco al recuperar el foco de la app/pestaña
+            if (!this._visibilityBound) {
+                this._visibilityBound = true;
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        if (this.state.viewInitialized && (this.state.activeTab === 'events' || this.state.activeTab === 'entrenos')) {
+                            console.log("👁️ [EventsController] App en primer plano: refresco automático");
+                            this.refreshInstantly(null, true);
+                        }
+                    }
+                });
+            }
+
             if (this.state.viewInitialized) {
                 this.render();
                 return;
@@ -348,6 +386,13 @@
 
             if (window.navigator && window.navigator.vibrate) {
                 window.navigator.vibrate(15);
+            }
+
+            // Gestionar polling en segundo plano según la pestaña
+            if (tabName === 'events' || tabName === 'entrenos') {
+                this.startAutoRefreshPolling();
+            } else {
+                this.stopAutoRefreshPolling();
             }
 
             // Cleanup open matches synchronization if switching away from open_matches
@@ -789,19 +834,39 @@
                             z-index: 5;
                         }
                     </style>
-                    <div style="padding: 20px 20px 16px; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 24px; margin: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; position: relative; overflow: hidden;">
+                    <div style="padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 24px; margin: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; position: relative; overflow: hidden; gap: 10px;">
                         <!-- Subtle accent line -->
                         <div style="position:absolute; top:0; left:0; width:100%; height:4px; background: linear-gradient(90deg, #72a800, #a3d900); border-radius:24px 24px 0 0;"></div>
-                        <div style="display: flex; align-items: center; gap: 14px; position: relative; z-index: 1;">
-                            <div style="width: 48px; height: 48px; background: #f1f5f9; border: 2px solid #e2e8f0; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; min-width: 0; flex: 1;">
+                            <!-- Botón pequeño a la izquierda de actualización instantánea -->
+                            <button id="btn-instant-refresh" 
+                                    onclick="window.EventsController.refreshInstantly(this)" 
+                                    title="Actualización instantánea"
+                                    aria-label="Actualizar inscripciones"
+                                    style="width: 44px; height: 44px; min-width: 44px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: #0a192f; box-shadow: 0 2px 6px rgba(0,0,0,0.04); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); position: relative; padding: 0; flex-shrink: 0;"
+                                    onmouseover="this.style.borderColor='#72a800'; this.style.transform='scale(1.05)';"
+                                    onmouseout="this.style.borderColor='#e2e8f0'; this.style.transform='scale(1)';"
+                                    onmousedown="this.style.transform='scale(0.92)';">
+                                <i id="instant-refresh-icon" class="fas fa-arrows-rotate" style="font-size: 1rem; color: #72a800; transition: transform 0.4s ease;"></i>
+                                <span id="instant-refresh-label" style="font-size: 0.46rem; font-weight: 900; color: #64748b; letter-spacing: 0.3px; margin-top: 2px; line-height: 1;">SYNC</span>
+                                <span id="instant-refresh-dot" style="position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; background: #22c55e; border-radius: 50%; border: 1.5px solid #ffffff; box-shadow: 0 0 6px rgba(34, 197, 94, 0.8);"></span>
+                            </button>
+                            <div style="width: 44px; height: 44px; min-width: 44px; background: #f1f5f9; border: 2px solid #e2e8f0; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; flex-shrink: 0;">
                                 🎾
                             </div>
-                            <div>
-                                <h2 style="font-size: 1.1rem; font-weight: 950; margin: 0; color: #0a192f; letter-spacing: -0.5px;">Eventos <span style="color: #72a800;">SomosPadel BCN</span></h2>
-                                <p style="color: #64748b; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin: 3px 0 0;">Inscripción en tiempo real</p>
+                            <div style="min-width: 0; overflow: hidden;">
+                                <h2 style="font-size: 1.05rem; font-weight: 950; margin: 0; color: #0a192f; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Eventos <span style="color: #72a800;">SomosPadel BCN</span></h2>
+                                <p style="color: #64748b; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 2px 0 0; display: flex; align-items: center; gap: 5px;">
+                                    <span>Inscripción en tiempo real</span>
+                                    <span style="display:inline-block; width:4px; height:4px; border-radius:50%; background:#22c55e;"></span>
+                                    <span style="color:#22c55e; font-size:0.58rem; font-weight:900;">EN VIVO</span>
+                                </p>
                             </div>
                         </div>
-                        <div style="background: #f1f5f9; padding: 8px 16px; border-radius: 14px; border: 1px solid #e2e8f0; color: #0a192f; font-weight: 950; display:flex; align-items:center; gap:6px; font-size:1rem;"><span style="color:#72a800; font-size:0.7rem; font-weight:900;">TOTAL</span> ${events.length}</div>
+                        <div style="background: #f1f5f9; padding: 6px 14px; border-radius: 14px; border: 1px solid #e2e8f0; color: #0a192f; font-weight: 950; display:flex; align-items:center; gap:6px; font-size:0.95rem; flex-shrink:0;">
+                            <span style="color:#72a800; font-size:0.7rem; font-weight:900;">TOTAL</span> 
+                            <span id="events-total-badge">${events.length}</span>
+                        </div>
                     </div>
                     ${filterBarHtml}
                     <div style="padding-bottom: 80px; padding-left:10px; padding-right:10px;">
@@ -1099,7 +1164,7 @@
             const isJoined = players.some(p => p.uid === uid || p.id === uid);
             const isFull = playerCount >= maxPlayers;
             const hasStarted = this.hasEventStarted(evt.date, evt.time);
-            const isLive = evt.status === 'live' || (evt.status === 'open' && hasStarted);
+            const isLive = evt.status === 'live';
             const isPairing = evt.status === 'pairing';
             const isCancelled = evt.status === 'cancelled';
             const isEntreno = evt.type === 'entreno';
@@ -1293,7 +1358,7 @@
 
                             <div style="position: absolute; bottom: 12px; left: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; z-index: 5;">
                                 ${isEntreno ? `
-                                    <span style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.45); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-user-ninja"></i> ACADEMIA PRO</span>
+                                    <span style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.45); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-user-ninja"></i> ENTRENO</span>
                                     ${isTwister ? 
                                         `<span style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 10px rgba(6, 182, 212, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-wind"></i> TWISTER INDIVIDUAL</span>` :
                                         `<span style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-lock"></i> PAREJA FIJA</span>`
@@ -1676,7 +1741,10 @@
             }
         }
 
-        async showInscritosModal(id, type) {
+        async showInscritosModal(id, type, silent = false) {
+            this._currentInscritosEventId = id;
+            this._currentInscritosType = type;
+
             const localEvents = type === 'entreno' ? this.state.entrenos : this.state.americanas;
             let evt = localEvents.find(e => e.id === id);
             if (!evt) return;
@@ -1688,9 +1756,11 @@
                 document.body.appendChild(modal);
             }
             modal.style.cssText = `position: fixed; inset: 0; background: #000; z-index: 30000; overflow-y: auto; font-family: 'Outfit', sans-serif; color: white; display: flex; flex-direction: column;`;
-            modal.innerHTML = `
+            if (!silent) {
+                modal.innerHTML = `
 <div style="padding: 100px; text-align: center;"><div class="loader"></div><p style="margin-top:20px; font-weight:900; letter-spacing:2px;">CARGANDO JUGADORES...</p></div>
-            `;
+                `;
+            }
             modal.style.display = 'block';
 
             // ✅ FIX V2: LECTURA DIRECTA desde Firestore (evita datos stale del snapshot local)
@@ -2002,7 +2072,7 @@
 
                     <!-- FOOTER ACTIONS -->
                     <div style="display: flex; justify-content: center; gap: 20px; padding-bottom: 60px;">
-                        <button onclick="document.getElementById('inscritos-modal').style.display = 'none';" 
+                        <button onclick="document.getElementById('inscritos-modal').style.display = 'none'; if(window.EventsController) window.EventsController._currentInscritosEventId = null;" 
                                 style="background: transparent; color: #CCFF00; border: 2px solid #CCFF00; padding: 15px 40px; border-radius: 12px; font-weight: 950; cursor: pointer; text-transform: uppercase; font-size: 0.85rem; box-shadow: 0 0 15px rgba(204,255,0,0.2);">
                             CERRAR VISTA
                         </button>
@@ -2127,12 +2197,34 @@
             const user = this.state.currentUser;
             const uid = user ? user.uid : '-';
 
+            // 0. Si no hay eventos, o si falta alguna tarjeta en el DOM, forzar render completo
+            if (!events || events.length === 0) {
+                return false;
+            }
+
+            // Purgar tarjetas del DOM que ya no están activas en events (ej. pasaron a finished o cancelled)
+            const activeIds = new Set(events.map(e => String(e.id)));
+            const domCards = document.querySelectorAll('[id^="event-card-"]');
+            domCards.forEach(card => {
+                const cardId = card.id.replace('event-card-', '');
+                if (!activeIds.has(cardId)) {
+                    card.remove();
+                }
+            });
+
+            const allCardsPresent = events.every(evt => document.getElementById(`event-card-${evt.id}`));
+            if (!allCardsPresent) {
+                return false; // Algún nuevo evento requiere renderizado completo
+            }
+
             let updatedCount = 0;
             events.forEach(evt => {
                 const card = document.getElementById(`event-card-${evt.id}`);
                 if (!card) return;
 
-                // 1. Update Player Count
+                const isEntreno = evt.type === 'entreno';
+
+                // 1. Update Player Count & Capacity
                 const players = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
                 const playerCount = players.length;
                 const maxCourts = parseInt(evt.max_courts || evt.courts || 4);
@@ -2147,21 +2239,21 @@
                         playersLabel.innerText = newText;
                         playersLabel.style.color = isFull ? '#FF3B30' : '#fff';
                         const icon = document.getElementById(`event-players-icon-${evt.id}`);
-                        if (icon) icon.style.color = isFull ? '#FF3B30' : '#84cc16';
+                        if (icon) icon.style.color = isFull ? '#FF3B30' : (isEntreno ? '#06b6d4' : '#FF2D55');
                     }
                 }
                 const wlLabel = document.getElementById(`event-waitlist-label-${evt.id}`);
                 if (wlLabel) {
-                    const newWl = waitlist.length > 0 ? `<small style="color:#eab308; margin-left:5px;">(+${waitlist.length} en espera)</small>` : '';
+                    const newWl = waitlist.length > 0 ? `<div style="margin-top: 5px; font-size: 0.65rem; font-weight: 900; color: #eab308; text-transform: uppercase;">+${waitlist.length} EN ESPERA</div>` : '';
                     if (wlLabel.innerHTML !== newWl) wlLabel.innerHTML = newWl;
                 }
 
-                // 2. Update FAB (Join Button)
+                // 2. Update FAB & Actions
                 const isJoined = players.some(p => p.uid === uid || p.id === uid);
-                const hasStarted = this.hasEventStarted(evt.date, evt.time);
-                const isLive = evt.status === 'live' || (evt.status === 'open' && hasStarted);
+                const isLive = evt.status === 'live';
                 const isFinished = evt.status === 'finished';
                 const isCancelled = evt.status === 'cancelled';
+                const isPairing = evt.status === 'pairing';
                 const isWaitlistPending = evt.waitlist_pending_user && (evt.waitlist_pending_user.uid === uid);
                 const isInWaitlist = waitlist.some(p => p.uid === uid);
                 const waitlistPos = waitlist.findIndex(p => p.uid === uid) + 1;
@@ -2169,21 +2261,24 @@
                 let btnLabel = 'ENTRAR';
                 let btnIcon = 'fa-play';
                 let btnColor = '#CCFF00';
-                let fabAction = `window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}')`;
+                let cardAction = `window.EventsController.openLiveEvent('${evt.id}', '${evt.type || 'americana'}')`;
+                let fabAction = cardAction;
 
                 if (isCancelled) {
                     btnLabel = 'ANULADO'; btnIcon = 'fa-ban'; btnColor = '#ef4444';
-                    fabAction = "window.PremiumModal.alert({ title: '⛔ ANULADO', message: 'Este evento ha sido cancelado por la organización.', type: 'error' })";
+                    cardAction = "window.PremiumModal.alert({ title: '⛔ ANULADO', message: 'Este evento ha sido cancelado por la organización.', type: 'error' })";
+                    fabAction = cardAction;
                 } else if (isFinished) {
                     btnLabel = 'VER'; btnIcon = 'fa-history'; btnColor = '#64748b';
-                    fabAction = `window.openResultsView('${evt.id}', '${evt.type || 'americana'}')`;
+                    cardAction = `window.openResultsView('${evt.id}', '${evt.type || 'americana'}')`;
+                    fabAction = cardAction;
                 } else if (isLive) {
                     btnLabel = 'LIVE'; btnIcon = 'fa-broadcast-tower'; btnColor = '#FF2D55';
                 } else if (isWaitlistPending) {
                     btnLabel = '¡NUEVA PLAZA! CONFIRMAR'; btnIcon = 'fa-star'; btnColor = '#CCFF00';
                     fabAction = `window.EventsController.confirmWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
                 } else if (isInWaitlist) {
-                    btnLabel = `ESPERA (Pos ${waitlistPos})`; btnIcon = 'fa-hourglass-half'; btnColor = '#94a3b8';
+                    btnLabel = `ESPERA (${waitlistPos})`; btnIcon = 'fa-hourglass-half'; btnColor = '#94a3b8';
                     fabAction = `window.EventsController.leaveWaitlist('${evt.id}', '${evt.type || 'americana'}')`;
                 } else if (isFull && !isJoined) {
                     btnLabel = 'LISTA ESPERA'; btnIcon = 'fa-clock'; btnColor = '#eab308';
@@ -2196,26 +2291,26 @@
                     fabAction = `window.EventsController.leaveEvent('${evt.id}', '${evt.type || 'americana'}')`;
                 }
 
+                card.setAttribute('onclick', cardAction);
+
                 const fab = document.getElementById(`event-fab-${evt.id}`);
                 const fabLabel = document.getElementById(`event-fab-label-${evt.id}`);
                 const fabIcon = document.getElementById(`event-fab-icon-${evt.id}`);
 
                 if (fab) {
-                    // Si el botón tiene texto (versiones antiguas), actualizarlo
                     if (fabLabel && fabLabel.innerText !== btnLabel) {
                         fabLabel.innerText = btnLabel;
                     }
-                    
-                    // Siempre actualizar atributos, colores e iconos del FAB
                     fab.setAttribute('onclick', `event.stopPropagation(); ${fabAction}`);
-                    fab.style.background = btnColor === '#fff' ? '#CCFF00' : (btnColor === '#CCFF00' ? '#38bdf8' : btnColor);
-                    fab.style.color = btnColor === '#CCFF00' ? '#fff' : (btnColor === '#fff' ? '#000' : 'white');
+                    fab.style.background = btnColor === '#fff' ? '#CCFF00' : btnColor;
+                    fab.style.color = btnColor === '#fff' ? '#000' : 'white';
+                    fab.style.animation = isLive ? 'pulse-border 2s infinite' : '';
                     if (fabIcon) {
                         fabIcon.className = `fas ${btnIcon}`;
                     }
                 }
 
-                // 2B. Update Progress Bar & Capacity State (Added for V6 circular cards)
+                // 2B. Update Progress Bar & Capacity State
                 const progressBar = document.getElementById(`event-progress-bar-${evt.id}`);
                 if (progressBar) {
                     const progress = Math.min((playerCount / maxPlayers) * 100, 100);
@@ -2235,25 +2330,196 @@
                 // 3. Update Status Badge
                 const statusBadge = document.getElementById(`event-status-badge-${evt.id}`);
                 if (statusBadge) {
-                    const newBadgeText = isLive ? 'EN VIVO' : (isCancelled ? 'ANULADO' : (evt.status === 'pairing' ? 'EMPAREJANDO' : (isFinished ? 'FINALIZADO' : 'ABIERTA')));
-                    if (statusBadge.innerText.trim() !== newBadgeText) {
-                        statusBadge.innerText = newBadgeText;
-                        const bgColor = isLive ? '#FF2D55' : (isCancelled ? '#ef4444' : (evt.status === 'pairing' ? '#38bdf8' : (isFinished ? '#64748b' : '#84cc16')));
-                        statusBadge.style.background = bgColor;
-                        statusBadge.style.color = '#fff';
-                        // Add subtle pulse for live status
-                        if (isLive) {
-                            statusBadge.style.animation = 'pulse-soft 2s infinite';
+                    let statusBg = '';
+                    let statusColorText = '#fff';
+                    let statusGlowColor = 'rgba(0,0,0,0.3)';
+
+                    if (isLive) {
+                        statusBg = 'linear-gradient(135deg, #FF2D55, #ff0844)';
+                        statusGlowColor = '#FF2D5566';
+                    } else if (isCancelled) {
+                        statusBg = 'linear-gradient(135deg, #666, #444)';
+                    } else if (isFinished) {
+                        statusBg = 'linear-gradient(135deg, #555, #333)';
+                    } else if (isPairing) {
+                        statusBg = 'linear-gradient(135deg, #38bdf8, #0284c7)';
+                        statusColorText = '#fff';
+                        statusGlowColor = 'rgba(56, 189, 248, 0.4)';
+                    } else {
+                        if (isEntreno) {
+                            statusBg = 'linear-gradient(135deg, #8b5cf6, #6366f1)';
+                            statusColorText = '#fff';
+                            statusGlowColor = 'rgba(139,92,246,0.4)';
                         } else {
-                            statusBadge.style.animation = '';
+                            statusBg = 'linear-gradient(135deg, #CCFF00, #a3e600)';
+                            statusColorText = '#000';
+                            statusGlowColor = '#CCFF0055';
                         }
                     }
+
+                    const badgeText = isLive ? 'EN VIVO' : (isCancelled ? 'ANULADO' : (isPairing ? 'EMPAREJANDO' : (isFinished ? 'FINALIZADO' : 'ABIERTA')));
+                    const badgeIcon = isLive ? 'fa-broadcast-tower' : (isCancelled ? 'fa-skull-crossbones' : (isFinished ? 'fa-flag-checkered' : (isPairing ? 'fa-shuffle' : 'fa-bolt')));
+                    const iconAnim = isLive ? 'animation: status-dot-ping 0.8s ease-in-out infinite; text-shadow: 0 0 8px #fff;' : (!isFinished && !isCancelled ? 'animation: status-dot-ping 1.5s ease-in-out infinite; text-shadow: 0 0 6px #000;' : 'opacity: 0.6;');
+
+                    statusBadge.style.background = statusBg;
+                    statusBadge.style.color = statusColorText;
+                    statusBadge.style.boxShadow = `0 6px 20px ${statusGlowColor}`;
+                    statusBadge.style.animation = isLive ? 'status-shake 0.5s ease-in-out infinite alternate' : '';
+                    statusBadge.innerHTML = `<i class="fas ${badgeIcon}" style="font-size: 0.75rem; ${iconAnim}"></i> ${badgeText}`;
                 }
 
                 updatedCount++;
             });
 
+            const totalBadge = document.getElementById('events-total-badge');
+            if (totalBadge && totalBadge.innerText !== String(events.length)) {
+                totalBadge.innerText = String(events.length);
+            }
+
             return updatedCount > 0 && updatedCount === events.length;
+        }
+
+        async refreshInstantly(btnEl = null, silent = false) {
+            if (this._isRefreshing) return;
+            this._isRefreshing = true;
+
+            const icon = document.getElementById('instant-refresh-icon');
+            const label = document.getElementById('instant-refresh-label');
+            const btn = btnEl || document.getElementById('btn-instant-refresh');
+
+            if (!silent) {
+                if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(25);
+                if (icon) icon.classList.add('fa-spin');
+                if (label) {
+                    label.textContent = 'SYNC...';
+                    label.style.color = '#72a800';
+                }
+                if (btn) {
+                    btn.style.borderColor = '#72a800';
+                    btn.style.background = '#f0fdf4';
+                }
+            }
+
+            try {
+                console.log("⚡ [EventsController] Sincronizando datos frescos con Firestore...");
+                let snapA = null, snapE = null;
+                try {
+                    [snapA, snapE] = await Promise.all([
+                        window.db.collection('americanas').get({ source: 'server' }),
+                        window.db.collection('entrenos').get({ source: 'server' })
+                    ]);
+                } catch (serverErr) {
+                    console.warn("⚠️ [EventsController] Fallback a get() estándar:", serverErr);
+                    [snapA, snapE] = await Promise.all([
+                        window.db.collection('americanas').get(),
+                        window.db.collection('entrenos').get()
+                    ]);
+                }
+
+                if (snapA && snapE) {
+                    this.state.americanas = snapA.docs.map(d => ({ id: d.id, ...d.data() }));
+                    this.state.entrenos = snapE.docs.map(d => ({ id: d.id, ...d.data() }));
+                    this.state.loading = false;
+                }
+
+                const currentTab = this.state.activeTab;
+                if (currentTab === 'events' || currentTab === 'entrenos') {
+                    const todayStr = this.getTodayStr();
+                    const events = this.getAllSortedEvents().filter(e => {
+                        const isCorrectType = (currentTab === 'entrenos' ? e.type === 'entreno' : e.type === 'americana');
+                        if (e.status === 'finished' || e.status === 'cancelled') return false;
+                        return isCorrectType && (e.status === 'live' || e.normDate >= todayStr);
+                    });
+
+                    const totalBadge = document.getElementById('events-total-badge');
+                    if (totalBadge) totalBadge.textContent = `${events.length}`;
+
+                    const patchOk = this.smartUpdate(events);
+                    if (!patchOk) {
+                        this.render();
+                    }
+                }
+
+                // Si el modal de inscritos está abierto para un evento, refrescarlo silenciosamente
+                const inscritosModal = document.getElementById('inscritos-modal');
+                if (inscritosModal && inscritosModal.style.display !== 'none' && this._currentInscritosEventId) {
+                    this.showInscritosModal(this._currentInscritosEventId, this._currentInscritosType, true);
+                }
+
+                if (!silent) {
+                    if (icon) {
+                        icon.classList.remove('fa-spin', 'fa-arrows-rotate');
+                        icon.classList.add('fa-check');
+                        icon.style.color = '#16a34a';
+                    }
+                    if (label) {
+                        label.textContent = '¡LISTO!';
+                        label.style.color = '#16a34a';
+                    }
+                    if (btn) {
+                        btn.style.borderColor = '#22c55e';
+                        btn.style.background = '#dcfce7';
+                    }
+
+                    setTimeout(() => {
+                        if (icon) {
+                            icon.classList.remove('fa-check');
+                            icon.classList.add('fa-arrows-rotate');
+                            icon.style.color = '#72a800';
+                        }
+                        if (label) {
+                            label.textContent = 'SYNC';
+                            label.style.color = '#64748b';
+                        }
+                        if (btn) {
+                            btn.style.borderColor = '#e2e8f0';
+                            btn.style.background = '#f8fafc';
+                        }
+                    }, 1200);
+                }
+            } catch (err) {
+                console.error("❌ [EventsController] Error en refreshInstantly:", err);
+                if (!silent) {
+                    if (icon) icon.classList.remove('fa-spin');
+                    if (label) label.textContent = 'ERROR';
+                    setTimeout(() => {
+                        if (label) label.textContent = 'SYNC';
+                    }, 1500);
+                }
+            } finally {
+                this._isRefreshing = false;
+            }
+        }
+
+        startAutoRefreshPolling() {
+            if (this._pollingInterval) clearInterval(this._pollingInterval);
+
+            // Polling en segundo plano cada 6.5 segundos
+            this._pollingInterval = setInterval(async () => {
+                if (!this.state.viewInitialized) return;
+                if (this.state.activeTab !== 'events' && this.state.activeTab !== 'entrenos') return;
+                if (document.hidden) return; // Si la app no está en pantalla, no gastar lecturas
+                if (this._isRefreshing) return;
+
+                await this.refreshInstantly(null, true);
+
+                // Micro destello en el dot LIVE
+                const dot = document.getElementById('instant-refresh-dot');
+                if (dot) {
+                    dot.style.transform = 'scale(1.4)';
+                    setTimeout(() => { if (dot) dot.style.transform = 'scale(1)'; }, 350);
+                }
+            }, 6500);
+
+            console.log("⏱️ [EventsController] Auto-refresh en segundo plano iniciado (6.5s).");
+        }
+
+        stopAutoRefreshPolling() {
+            if (this._pollingInterval) {
+                clearInterval(this._pollingInterval);
+                this._pollingInterval = null;
+                console.log("🛑 [EventsController] Auto-refresh en segundo plano detenido.");
+            }
         }
     }
 

@@ -166,7 +166,7 @@
 
             // Force initial render of the current route (Dashboard)
             if (window.Router) {
-                window.Router.navigate(window.Router.currentRoute || 'dashboard');
+                window.Router.navigate(window.Router.currentRoute || 'dashboard', false, true);
             }
 
             if (window.DashboardController) {
@@ -282,7 +282,7 @@
                 if (dockContainer) {
                     dockContainer.innerHTML = `
                         <nav class="nav-dock">
-                            <button class="p-nav-item" data-view="dashboard" onclick="window.Router.navigate('dashboard')">
+                            <button class="p-nav-item" data-view="dashboard" onclick="window.Router.navigate('dashboard', false, true)">
                                 <div class="nav-icon-box"><i class="fas fa-home"></i></div>
                                 <span>INICIO</span>
                             </button>

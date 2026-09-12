@@ -2,43 +2,11 @@
 window.AdminViews = window.AdminViews || {};
 
 window.AdminViews.users = async function () {
+    const navId = window._currentAdminNavId;
     const content = document.getElementById('content-area');
     const titleEl = document.getElementById('page-title');
 
     if (titleEl) titleEl.textContent = 'BBDD JUGADORES';
-    content.innerHTML = `
-        <div class="loading-container">
-            <div class="loader"></div>
-            <p>Conectando con la base de datos de jugadores...</p>
-        </div>`;
-
-    // FETCH REAL DATA
-    let users = [];
-    try {
-        console.log("🔍 Fetching players from Firebase...");
-        // Add a timeout of 15s for the fetch to be safe
-        users = await Promise.race([
-            FirebaseDB.players.getAll(true),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("La base de datos Firebase no responde (Timeout 15s)")), 15000))
-        ]);
-
-        console.log("👥 Usuarios cargados en Admin:", users.length);
-        window.allUsersCache = users;
-        window.filteredUsers = [...users];
-        window._allPlayersCache = users; // Unified cache for WhatsApp sharing
-    } catch (err) {
-        console.error("❌ Error fetching players:", err);
-        content.innerHTML = `
-            <div class="loading-container" style="color:var(--danger);">
-                <i class="fas fa-exclamation-triangle" style="font-size: 3rem;"></i>
-                <p>Error al cargar jugadores: ${err.message}</p>
-                <div style="display:flex; gap: 10px;">
-                    <button class="btn-primary-pro" onclick="window.loadAdminView('users')">REINTENTAR</button>
-                    <button class="btn-outline-pro" onclick="localStorage.clear(); sessionStorage.clear(); location.reload();">LIMPIAR CACHÉ Y RECARGAR</button>
-                </div>
-            </div>`;
-        return;
-    }
 
     // Setup Render Function
     window.renderUserRows = (data) => {
@@ -196,10 +164,17 @@ window.AdminViews.users = async function () {
         }).join('');
     };
 
-    content.innerHTML = `
+    window.renderUsersTableStructure = function (usersCount, syncStatusHtml = '') {
+        const content = document.getElementById('content-area');
+        if (!content) return;
+        content.innerHTML = `
         <div class="glass-card-enterprise" style="padding: 0; overflow-x: auto; overflow-y: hidden;">
             <div style="padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: var(--border-pro); flex-wrap: wrap; gap: 1rem;">
-                <h3 style="margin:0; font-weight: 900; color: #0f172a;">GOBERNANZA DE JUGADORES <span style="color:var(--text-muted); font-size: 0.8rem; margin-left: 10px;">TOTAL: ${users.length}</span></h3>
+                <h3 style="margin:0; font-weight: 900; color: #0f172a; display: flex; align-items: center; flex-wrap: wrap;">
+                    GOBERNANZA DE JUGADORES 
+                    <span id="players-total-count" style="color:var(--text-muted); font-size: 0.8rem; margin-left: 10px;">TOTAL: ${usersCount}</span>
+                    <span id="players-sync-indicator">${syncStatusHtml}</span>
+                </h3>
                 <div style="display:flex; gap: 0.8rem; flex-wrap: wrap;">
                     <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #16a34a; color: #16a34a; background: rgba(22, 163, 74, 0.05); font-weight: 800;" onclick="exportToExcel()">
                         📗 EXPORTAR EXCEL
@@ -305,9 +280,108 @@ window.AdminViews.users = async function () {
             </table>
             <div class="pro-table-footer">SISTEMA INTEGRADO DE BASE DE DATOS v2.1 PRO (Auto-Save Enabled)</div>
         </div>`;
+    };
 
-    // Initial Render
-    window.renderUserRows(window.filteredUsers);
+    // ==========================================
+    // 1. ESTRATEGIA STALE-WHILE-REVALIDATE: Carga instantánea desde caché local (0 ms)
+    // ==========================================
+    let initialUsers = (window.allUsersCache && window.allUsersCache.length > 0) ? window.allUsersCache : [];
+    
+    if (!initialUsers.length && window.CacheService) {
+        try {
+            const cached = await window.CacheService.get('players', 'all');
+            if (Array.isArray(cached) && cached.length > 0) initialUsers = cached;
+        } catch (e) {}
+    }
+    if (!initialUsers.length) {
+        try {
+            const raw = localStorage.getItem('cached_players_fallback');
+            if (raw) initialUsers = JSON.parse(raw);
+        } catch (e) {}
+    }
+
+    if (initialUsers && initialUsers.length > 0) {
+        console.log("⚡ [AdminUsers] Carga instantánea desde caché local:", initialUsers.length, "jugadores");
+        window.allUsersCache = initialUsers;
+        window.filteredUsers = [...initialUsers];
+        window._allPlayersCache = initialUsers;
+        
+        window.renderUsersTableStructure(initialUsers.length, '<span id="players-sync-indicator" style="font-size:0.75rem; color:#d97706; font-weight:700; margin-left:10px;"><i class="fas fa-sync fa-spin"></i> Sincronizando...</span>');
+        window.renderUserRows(window.filteredUsers);
+    } else {
+        content.innerHTML = `
+            <div class="loading-container">
+                <div class="loader"></div>
+                <p>Conectando con la base de datos de jugadores...</p>
+            </div>`;
+    }
+
+    // ==========================================
+    // 2. SINCRONIZACIÓN EN SEGUNDO PLANO (Background Fetch Resiliente)
+    // ==========================================
+    (async () => {
+        try {
+            console.log("🔍 Fetching players from Firebase (Background Sync)...");
+            // Timeout generoso de 25s y capturamos con fallback seguro
+            const fresh = await Promise.race([
+                FirebaseDB.players.getAll(true),
+                new Promise((_, reject) => setTimeout(() => reject(new Error("La base de datos Firebase tardó más de 25s")), 25000))
+            ]);
+
+            // Comprobación de carrera: si el usuario cambió de sección, descartar sin tocar la pantalla
+            if (navId !== window._currentAdminNavId) {
+                console.log(`⚠️ [users] El usuario navegó a otra sección (#${navId} -> #${window._currentAdminNavId}), omitiendo refresco de pantalla.`);
+                return;
+            }
+
+            console.log("👥 Usuarios actualizados en Admin:", fresh.length);
+            window.allUsersCache = fresh;
+            window.filteredUsers = [...fresh];
+            window._allPlayersCache = fresh;
+
+            try {
+                localStorage.setItem('cached_players_fallback', JSON.stringify(fresh.slice(0, 500)));
+            } catch (e) {}
+
+            const tbody = document.getElementById('users-tbody');
+            if (tbody && document.getElementById('global-search')) {
+                // La tabla ya está montada en el DOM, actualizamos filas fluidamente
+                if (window.multiFilterUsers) window.multiFilterUsers();
+                else if (window.renderUserRows) window.renderUserRows(window.filteredUsers);
+                
+                const countEl = document.getElementById('players-total-count');
+                if (countEl) countEl.textContent = `TOTAL: ${fresh.length}`;
+                const syncInd = document.getElementById('players-sync-indicator');
+                if (syncInd) syncInd.innerHTML = '<span style="font-size:0.75rem; color:#10b981; font-weight:800; margin-left:10px;">✅ En línea</span>';
+            } else {
+                window.renderUsersTableStructure(fresh.length, '<span id="players-sync-indicator" style="font-size:0.75rem; color:#10b981; font-weight:800; margin-left:10px;">✅ En línea</span>');
+                window.renderUserRows(window.filteredUsers);
+            }
+        } catch (err) {
+            // Si el usuario navegó a otra sección, no mostrar ningún error
+            if (navId !== window._currentAdminNavId) return;
+
+            console.warn("⚠️ [users] Error en sincronización de fondo:", err.message);
+
+            // Si ya hay datos en pantalla, NUNCA romper la vista con pantalla de error
+            if (window.allUsersCache && window.allUsersCache.length > 0) {
+                const syncInd = document.getElementById('players-sync-indicator');
+                if (syncInd) syncInd.innerHTML = `<span style="font-size:0.75rem; color:#d97706; font-weight:800; margin-left:10px;" title="${err.message}">⚠️ Modo caché</span>`;
+                return;
+            }
+
+            // Solo si la base de datos estaba vacía y la red falló, mostramos el panel de reintento
+            content.innerHTML = `
+                <div class="loading-container" style="color:var(--danger);">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem;"></i>
+                    <p>Error al cargar jugadores: ${err.message}</p>
+                    <div style="display:flex; gap: 10px;">
+                        <button class="btn-primary-pro" onclick="window.loadAdminView('users')">REINTENTAR</button>
+                        <button class="btn-outline-pro" onclick="localStorage.clear(); sessionStorage.clear(); location.reload();">LIMPIAR CACHÉ Y RECARGAR</button>
+                    </div>
+                </div>`;
+        }
+    })();
 
     // ==========================================
     // MODULE INTERNAL HELPERS

@@ -6,29 +6,29 @@ window.ExtractedTeamsData = [
     "category": "Masculina",
     "division": "Tercera",
     "group": "3MB FASE 2 G3",
-    "captain": "Abraham Rosell Claveras",
+    "captain": "Pendiente",
     "subcaptain": "Pendiente",
-    "ranking": 1,
-    "points": 10,
+    "ranking": 2,
+    "points": 13,
     "stats": {
-      "pj": 7,
-      "pg": 5,
-      "pp": 0,
+      "pj": 9,
+      "pg": 6,
+      "pp": 1,
       "sf": 0,
       "sc": 0
     },
     "roster": [
       {
         "name": "Abraham Rosell Claveras",
-        "pts": 85.0
+        "pts": 95.0
       },
       {
         "name": "Miquel Muñoz Gaudes",
-        "pts": 85.0
+        "pts": 90.0
       },
       {
         "name": "Carlos Lopez Mestre",
-        "pts": 75.0
+        "pts": 80.0
       },
       {
         "name": "Toni Palau Zaragoza",
@@ -43,12 +43,12 @@ window.ExtractedTeamsData = [
         "pts": 49.0
       },
       {
-        "name": "Víctor Illana Rodríguez",
-        "pts": 40.0
+        "name": "David Díaz Cotes",
+        "pts": 45.0
       },
       {
-        "name": "David Díaz Cotes",
-        "pts": 35.0
+        "name": "Víctor Illana Rodríguez",
+        "pts": 40.0
       },
       {
         "name": "Raul Garcia Alvarez",
@@ -59,19 +59,23 @@ window.ExtractedTeamsData = [
         "pts": 30.0
       },
       {
-        "name": "Carlos David Asmadt",
+        "name": "Eloy Arrabal",
         "pts": 25.0
       },
       {
         "name": "Alex Espinosa Espinosa Touzon",
-        "pts": 20.0
+        "pts": 25.0
+      },
+      {
+        "name": "Carlos David Asmadt",
+        "pts": 25.0
       },
       {
         "name": "Vicenç López Aguilar",
         "pts": 15.0
       },
       {
-        "name": "Eloy Arrabal",
+        "name": "Joel Sanchez Portillo",
         "pts": 15.0
       },
       {
@@ -80,10 +84,6 @@ window.ExtractedTeamsData = [
       },
       {
         "name": "Adrian Muñoz Perez",
-        "pts": 10.0
-      },
-      {
-        "name": "Joel Sanchez Portillo",
         "pts": 10.0
       },
       {
@@ -165,24 +165,24 @@ window.ExtractedTeamsData = [
         "date": "Diss 20 Jun",
         "time": "13:30h",
         "opponent": "CT ANDRÉS GIMENO 3M",
-        "score": "Pendiente",
+        "score": "1 - 2",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 8,
         "date": "Dium 06 Set",
         "time": "15:30h",
         "opponent": "CRAZYXPADEL 3M GRIS",
-        "score": "Pendiente",
+        "score": "2 - 1",
         "venue": "Aurial pàdel cornellà .",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 9,
-        "date": "Diss 12 Set",
+        "date": "Diss 24 Oct",
         "time": "13:30h",
         "opponent": "CLUB TENNIS I PADEL SEGUR 3M",
         "score": "Pendiente",
@@ -242,10 +242,10 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 7,
-      "date": "Diss 20 Jun",
+      "j": 9,
+      "date": "Diss 24 Oct",
       "time": "13:30h",
-      "opponent": "CT ANDRÉS GIMENO 3M",
+      "opponent": "CLUB TENNIS I PADEL SEGUR 3M",
       "score": "Pendiente",
       "venue": "Padel bcn - el prat",
       "isHome": true,
@@ -254,67 +254,67 @@ window.ExtractedTeamsData = [
     "groupStandings": [
       {
         "pos": 1,
-        "team": "SOMOS PÁDEL BCN 3MA",
+        "team": "CT ANDRÉS GIMENO 3M",
         "pj": 7,
         "pg": 5,
-        "pp": 0,
+        "pp": 2,
         "df": 0,
-        "pts": 10,
-        "isCurrent": true
+        "pts": 14
       },
       {
         "pos": 2,
-        "team": "CT ANDRÉS GIMENO 3M",
-        "pj": 4,
-        "pg": 3,
+        "team": "SOMOS PÁDEL BCN 3MA",
+        "pj": 9,
+        "pg": 6,
         "pp": 1,
         "df": 0,
-        "pts": 9
+        "pts": 13,
+        "isCurrent": true
       },
       {
         "pos": 3,
-        "team": "CRAZYXPADEL 3M GRIS",
-        "pj": 4,
-        "pg": 2,
-        "pp": 2,
+        "team": "PÁDEL PEÑA MALAGA 3G",
+        "pj": 6,
+        "pg": 3,
+        "pp": 3,
         "df": 0,
-        "pts": 6
+        "pts": 10
       },
       {
         "pos": 4,
-        "team": "PÁDEL PEÑA MALAGA 3G",
-        "pj": 4,
-        "pg": 2,
-        "pp": 2,
+        "team": "CRAZYXPADEL 3M GRIS",
+        "pj": 9,
+        "pg": 5,
+        "pp": 4,
         "df": 0,
-        "pts": 6
+        "pts": 15
       },
       {
         "pos": 5,
-        "team": "XTREM PADEL 3M",
-        "pj": 5,
+        "team": "DAVID LLOYD 3 M",
+        "pj": 6,
         "pg": 2,
-        "pp": 3,
+        "pp": 4,
         "df": 0,
-        "pts": 6
+        "pts": 8
       },
       {
         "pos": 6,
         "team": "CLUB TENNIS I PADEL SEGUR 3M",
-        "pj": 5,
-        "pg": 1,
-        "pp": 4,
+        "pj": 7,
+        "pg": 2,
+        "pp": 5,
         "df": 0,
-        "pts": 5
+        "pts": 8
       },
       {
         "pos": 7,
-        "team": "DAVID LLOYD 3 M",
-        "pj": 4,
-        "pg": 1,
-        "pp": 3,
+        "team": "XTREM PADEL 3M",
+        "pj": 7,
+        "pg": 2,
+        "pp": 5,
         "df": 0,
-        "pts": 5
+        "pts": 6
       }
     ],
     "logo": "img/logo_somospadel.png",
@@ -326,14 +326,14 @@ window.ExtractedTeamsData = [
     "category": "Masculina",
     "division": "Tercera",
     "group": "3MA FASE 2 G5",
-    "captain": "Miguel Ángel Méndez Ruiz",
+    "captain": "Pendiente",
     "subcaptain": "Pendiente",
     "ranking": 8,
     "points": 0,
     "stats": {
-      "pj": 6,
+      "pj": 8,
       "pg": 0,
-      "pp": 6,
+      "pp": 8,
       "sf": 0,
       "sc": 0
     },
@@ -517,25 +517,25 @@ window.ExtractedTeamsData = [
         "date": "Diss 20 Jun",
         "time": "15:00h",
         "opponent": "LAS FIERAS",
-        "score": "Pendiente",
+        "score": "0 - 3",
         "venue": "Padelarium gavá",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 8,
         "date": "Diss 05 Set",
-        "time": "16:30h",
+        "time": "19:00h",
         "opponent": "PÁDEL OXIGEN 3M",
-        "score": "Pendiente",
+        "score": "0 - 3",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 9,
-        "date": "Diss 12 Set",
-        "time": "17:00h",
+        "date": "Dium 13 Set",
+        "time": "10:00h",
         "opponent": "CLUB TENNIS VILANOVA 3M",
         "score": "Pendiente",
         "venue": "Club tennis vilanova",
@@ -575,7 +575,7 @@ window.ExtractedTeamsData = [
       {
         "j": 13,
         "date": "Diss 10 Oct",
-        "time": "15:00h",
+        "time": "16:00h",
         "opponent": "VILA PADEL INDOOR A",
         "score": "Pendiente",
         "venue": "Vilapadel .",
@@ -594,12 +594,12 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 7,
-      "date": "Diss 20 Jun",
-      "time": "15:00h",
-      "opponent": "LAS FIERAS",
+      "j": 9,
+      "date": "Dium 13 Set",
+      "time": "10:00h",
+      "opponent": "CLUB TENNIS VILANOVA 3M",
       "score": "Pendiente",
-      "venue": "Padelarium gavá",
+      "venue": "Club tennis vilanova",
       "isHome": false,
       "status": "upcoming"
     },
@@ -607,72 +607,72 @@ window.ExtractedTeamsData = [
       {
         "pos": 1,
         "team": "CLUB TENNIS VILANOVA 3M",
-        "pj": 6,
-        "pg": 5,
+        "pj": 8,
+        "pg": 7,
         "pp": 1,
         "df": 0,
-        "pts": 16
+        "pts": 21
       },
       {
         "pos": 2,
         "team": "CPI B EL CASINO GASTROBAR",
-        "pj": 6,
-        "pg": 5,
+        "pj": 9,
+        "pg": 8,
         "pp": 1,
         "df": 0,
-        "pts": 13
+        "pts": 19
       },
       {
         "pos": 3,
         "team": "LA PALETA INDOOR PÁDEL A",
-        "pj": 5,
-        "pg": 4,
-        "pp": 1,
+        "pj": 9,
+        "pg": 5,
+        "pp": 4,
         "df": 0,
-        "pts": 10
+        "pts": 15
       },
       {
         "pos": 4,
         "team": "HORIZON PADEL 3M",
-        "pj": 6,
-        "pg": 3,
-        "pp": 3,
+        "pj": 8,
+        "pg": 4,
+        "pp": 4,
         "df": 0,
-        "pts": 10
+        "pts": 13
       },
       {
         "pos": 5,
         "team": "LAS FIERAS",
-        "pj": 5,
-        "pg": 3,
-        "pp": 2,
+        "pj": 8,
+        "pg": 4,
+        "pp": 4,
         "df": 0,
-        "pts": 7
+        "pts": 11
       },
       {
         "pos": 6,
-        "team": "PÁDEL OXIGEN 3M",
-        "pj": 6,
-        "pg": 2,
-        "pp": 4,
+        "team": "VILA PADEL INDOOR A",
+        "pj": 9,
+        "pg": 3,
+        "pp": 6,
         "df": 0,
-        "pts": 6
+        "pts": 13
       },
       {
         "pos": 7,
-        "team": "VILA PADEL INDOOR A",
-        "pj": 6,
-        "pg": 1,
-        "pp": 5,
+        "team": "PÁDEL OXIGEN 3M",
+        "pj": 9,
+        "pg": 3,
+        "pp": 6,
         "df": 0,
-        "pts": 7
+        "pts": 9
       },
       {
         "pos": 8,
         "team": "SOMOS PÁDEL BCN 3MB",
-        "pj": 6,
+        "pj": 8,
         "pg": 0,
-        "pp": 6,
+        "pp": 8,
         "df": 0,
         "pts": 0,
         "isCurrent": true
@@ -687,25 +687,25 @@ window.ExtractedTeamsData = [
     "category": "Masculina",
     "division": "Cuarta",
     "group": "4MA FASE 2 G4",
-    "captain": "Miguel Muñoz Melero",
+    "captain": "Pendiente",
     "subcaptain": "Pendiente",
     "ranking": 7,
-    "points": 3,
+    "points": 5,
     "stats": {
-      "pj": 7,
-      "pg": 0,
-      "pp": 5,
+      "pj": 10,
+      "pg": 1,
+      "pp": 7,
       "sf": 0,
       "sc": 0
     },
     "roster": [
       {
-        "name": "Kevin Mancilla Serrano",
+        "name": "Alejandro Coscolin Peregrin",
         "pts": 60.0
       },
       {
-        "name": "Alejandro Coscolin Peregrin",
-        "pts": 57.0
+        "name": "Kevin Mancilla Serrano",
+        "pts": 60.0
       },
       {
         "name": "David Asensio Guerrero",
@@ -728,11 +728,19 @@ window.ExtractedTeamsData = [
         "pts": 16.0
       },
       {
+        "name": "Oscar Coscolín Génova",
+        "pts": 15.0
+      },
+      {
         "name": "Pau Martin Gálvez",
         "pts": 14.0
       },
       {
-        "name": "Oscar Coscolín Génova",
+        "name": "Pablo Mena Gutierrez",
+        "pts": 12.0
+      },
+      {
+        "name": "Sergio Albert",
         "pts": 12.0
       },
       {
@@ -741,14 +749,6 @@ window.ExtractedTeamsData = [
       },
       {
         "name": "Fernando Rodríguez Sequí",
-        "pts": 9.0
-      },
-      {
-        "name": "Pablo Mena Gutierrez",
-        "pts": 9.0
-      },
-      {
-        "name": "Sergio Albert",
         "pts": 9.0
       },
       {
@@ -866,30 +866,30 @@ window.ExtractedTeamsData = [
         "date": "Diss 20 Jun",
         "time": "17:00h",
         "opponent": "CLUB PADEL VALLIRANA 4M",
-        "score": "Pendiente",
+        "score": "2 - 1",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 8,
         "date": "Diss 05 Set",
-        "time": "16:30h",
+        "time": "19:00h",
         "opponent": "CEM TENNIS HOSPITALET 4M",
-        "score": "Pendiente",
+        "score": "0 - 3",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 9,
         "date": "Diss 12 Set",
         "time": "10:00h",
         "opponent": "PAPIOL PADEL CLUB 4M",
-        "score": "Pendiente",
+        "score": "0 - 3",
         "venue": "Papiol padel club .",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 10,
@@ -933,8 +933,8 @@ window.ExtractedTeamsData = [
       },
       {
         "j": 14,
-        "date": "Dium 18 Oct",
-        "time": "11:40h",
+        "date": "Diss 17 Oct",
+        "time": "16:00h",
         "opponent": "CLUB PADEL VALLIRANA 4M",
         "score": "Pendiente",
         "venue": "Club pàdel vallirana .",
@@ -943,78 +943,78 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 7,
-      "date": "Diss 20 Jun",
-      "time": "17:00h",
-      "opponent": "CLUB PADEL VALLIRANA 4M",
+      "j": 10,
+      "date": "Diss 19 Set",
+      "time": "13:30h",
+      "opponent": "PÁDEL OXIGEN 4M",
       "score": "Pendiente",
       "venue": "Padel bcn - el prat",
-      "isHome": true,
+      "isHome": false,
       "status": "upcoming"
     },
     "groupStandings": [
       {
         "pos": 1,
         "team": "INDOOR RUBI 4M",
-        "pj": 6,
-        "pg": 5,
-        "pp": 1,
+        "pj": 7,
+        "pg": 7,
+        "pp": 0,
         "df": 0,
-        "pts": 13
+        "pts": 18
       },
       {
         "pos": 2,
         "team": "CEM TENNIS HOSPITALET 4M",
-        "pj": 5,
-        "pg": 4,
+        "pj": 7,
+        "pg": 6,
         "pp": 1,
         "df": 0,
-        "pts": 10
+        "pts": 15
       },
       {
         "pos": 3,
-        "team": "CLUB PADEL VALLIRANA 4M",
-        "pj": 5,
-        "pg": 2,
-        "pp": 3,
+        "team": "PAPIOL PADEL CLUB 4M",
+        "pj": 8,
+        "pg": 3,
+        "pp": 5,
         "df": 0,
-        "pts": 7
+        "pts": 11
       },
       {
         "pos": 4,
-        "team": "PAPIOL PADEL CLUB 4M",
-        "pj": 4,
-        "pg": 2,
-        "pp": 2,
+        "team": "PÁDEL OXIGEN 4M",
+        "pj": 7,
+        "pg": 4,
+        "pp": 3,
         "df": 0,
-        "pts": 6
+        "pts": 9
       },
       {
         "pos": 5,
-        "team": "PÁDEL OXIGEN 4M",
-        "pj": 5,
-        "pg": 3,
-        "pp": 2,
+        "team": "CLUB PADEL VALLIRANA 4M",
+        "pj": 7,
+        "pg": 2,
+        "pp": 5,
         "df": 0,
-        "pts": 6
+        "pts": 9
       },
       {
         "pos": 6,
         "team": "PADELAND 4M",
-        "pj": 5,
-        "pg": 1,
-        "pp": 4,
+        "pj": 7,
+        "pg": 2,
+        "pp": 5,
         "df": 0,
-        "pts": 6
+        "pts": 8
       },
       {
         "pos": 7,
         "team": "SOMOS PÁDEL BCN 4M",
-        "pj": 7,
-        "pg": 0,
-        "pp": 5,
+        "pj": 10,
+        "pg": 1,
+        "pp": 7,
         "df": 0,
-        "pts": 3,
+        "pts": 5,
         "isCurrent": true
       }
     ],
@@ -1027,21 +1027,21 @@ window.ExtractedTeamsData = [
     "category": "Mixta",
     "division": "Cuarta",
     "group": "4XB FASE 2 G1",
-    "captain": "Sonia Rodriguez",
+    "captain": "Pendiente",
     "subcaptain": "Pendiente",
     "ranking": 1,
-    "points": 14,
+    "points": 17,
     "stats": {
-      "pj": 6,
-      "pg": 5,
-      "pp": 1,
+      "pj": 8,
+      "pg": 6,
+      "pp": 2,
       "sf": 0,
       "sc": 0
     },
     "roster": [
       {
         "name": "Alejandro Coscolin Peregrin",
-        "pts": 69.0
+        "pts": 72.0
       },
       {
         "name": "Sonja Dolinda Nijhof",
@@ -1052,12 +1052,12 @@ window.ExtractedTeamsData = [
         "pts": 57.0
       },
       {
-        "name": "Natalia Farré Roig",
-        "pts": 48.0
+        "name": "Juan Manuel León",
+        "pts": 52.0
       },
       {
-        "name": "Juan Manuel León",
-        "pts": 46.0
+        "name": "Natalia Farré Roig",
+        "pts": 48.0
       },
       {
         "name": "David Asensio Guerrero",
@@ -1077,6 +1077,10 @@ window.ExtractedTeamsData = [
       },
       {
         "name": "Sonia Rodriguez",
+        "pts": 18.0
+      },
+      {
+        "name": "Alex Cuadra Cabezas",
         "pts": 15.0
       },
       {
@@ -1084,23 +1088,31 @@ window.ExtractedTeamsData = [
         "pts": 15.0
       },
       {
-        "name": "Laura Baltic",
-        "pts": 14.0
+        "name": "Pili Jorques",
+        "pts": 15.0
       },
       {
-        "name": "Alex Cuadra Cabezas",
-        "pts": 12.0
+        "name": "Laura Baltic",
+        "pts": 14.0
       },
       {
         "name": "Lluisa Ramoneda Garcia",
         "pts": 12.0
       },
       {
-        "name": "Pili Jorques",
-        "pts": 12.0
+        "name": "Saray Muñoz Carod",
+        "pts": 9.0
       },
       {
-        "name": "Saray Muñoz Carod",
+        "name": "Mari Carmen Pérez Ruiz",
+        "pts": 9.0
+      },
+      {
+        "name": "Miguel Ángel Méndez Ruiz",
+        "pts": 6.0
+      },
+      {
+        "name": "Maria José Martínez Valdecantos",
         "pts": 6.0
       },
       {
@@ -1108,23 +1120,11 @@ window.ExtractedTeamsData = [
         "pts": 6.0
       },
       {
-        "name": "Mari Carmen Pérez Ruiz",
-        "pts": 6.0
-      },
-      {
         "name": "Kevin Mancilla Serrano",
         "pts": 3.0
       },
       {
-        "name": "Miguel Ángel Méndez Ruiz",
-        "pts": 3.0
-      },
-      {
         "name": "Esther Carrillo Conde",
-        "pts": 3.0
-      },
-      {
-        "name": "Maria José Martínez Valdecantos",
         "pts": 3.0
       },
       {
@@ -1210,20 +1210,20 @@ window.ExtractedTeamsData = [
         "date": "Dium 21 Jun",
         "time": "17:00h",
         "opponent": "AURIAL PADEL SABADELL 4X",
-        "score": "Pendiente",
+        "score": "1 - 2",
         "venue": "Aurial indoor sabadell",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 8,
         "date": "Diss 05 Set",
-        "time": "13:30h",
+        "time": "09:00h",
         "opponent": "BLACK PADEL PRAT 4X",
-        "score": "Pendiente",
+        "score": "2 - 1",
         "venue": "Padel bcn - el prat",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 9,
@@ -1287,86 +1287,86 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 7,
-      "date": "Dium 21 Jun",
-      "time": "17:00h",
-      "opponent": "AURIAL PADEL SABADELL 4X",
+      "j": 9,
+      "date": "Dium 13 Set",
+      "time": "13:30h",
+      "opponent": "CRAZYXPADEL 4MIXTA LILA",
       "score": "Pendiente",
-      "venue": "Aurial indoor sabadell",
-      "isHome": false,
+      "venue": "Padel bcn - el prat",
+      "isHome": true,
       "status": "upcoming"
     },
     "groupStandings": [
       {
         "pos": 1,
         "team": "SOMOS PÁDEL BCN 4XA",
-        "pj": 6,
-        "pg": 5,
-        "pp": 1,
+        "pj": 8,
+        "pg": 6,
+        "pp": 2,
         "df": 0,
-        "pts": 14,
+        "pts": 17,
         "isCurrent": true
       },
       {
         "pos": 2,
         "team": "AURIAL PADEL SABADELL 4X",
-        "pj": 6,
-        "pg": 5,
+        "pj": 8,
+        "pg": 7,
         "pp": 1,
         "df": 0,
-        "pts": 10
+        "pts": 15
       },
       {
         "pos": 3,
-        "team": "BLACK PADEL PRAT 4X",
-        "pj": 6,
-        "pg": 3,
+        "team": "CRAZYXPADEL 4MIXTA LILA",
+        "pj": 8,
+        "pg": 5,
         "pp": 3,
+        "df": 0,
+        "pts": 14
+      },
+      {
+        "pos": 4,
+        "team": "BLACK PADEL PRAT 4X",
+        "pj": 8,
+        "pg": 4,
+        "pp": 4,
+        "df": 0,
+        "pts": 12
+      },
+      {
+        "pos": 5,
+        "team": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
+        "pj": 8,
+        "pg": 3,
+        "pp": 5,
         "df": 0,
         "pts": 9
       },
       {
-        "pos": 4,
-        "team": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
-        "pj": 6,
-        "pg": 3,
-        "pp": 3,
-        "df": 0,
-        "pts": 8
-      },
-      {
-        "pos": 5,
-        "team": "SOMOS PÁDEL BCN 4XB",
-        "pj": 5,
-        "pg": 2,
-        "pp": 3,
-        "df": 0,
-        "pts": 7
-      },
-      {
         "pos": 6,
         "team": "MASQUEPADEL",
-        "pj": 6,
-        "pg": 1,
-        "pp": 5,
+        "pj": 8,
+        "pg": 2,
+        "pp": 6,
         "df": 0,
-        "pts": 7
+        "pts": 9
       },
       {
         "pos": 7,
-        "team": "CRAZYXPADEL 4MIXTA LILA",
-        "pj": 5,
+        "team": "SOMOS PÁDEL BCN 4XB",
+        "pj": 7,
         "pg": 2,
-        "pp": 3,
+        "pp": 5,
         "df": 0,
-        "pts": 6
+        "pts": 9
       },
       {
         "pos": 8,
         "team": "NPADEL MIXTE CASTELLAR",
-        "pj": 6,
+        "pj": 7,
         "pg": 2,
-        "pp": 4,
+        "pp": 5,
         "df": 0,
         "pts": 8
       }
@@ -1380,14 +1380,14 @@ window.ExtractedTeamsData = [
     "category": "Mixta",
     "division": "Cuarta",
     "group": "4XB FASE 2 G1",
-    "captain": "Javier Frauca Ferre",
+    "captain": "Pendiente",
     "subcaptain": "Pendiente",
-    "ranking": 5,
-    "points": 7,
+    "ranking": 7,
+    "points": 9,
     "stats": {
-      "pj": 5,
+      "pj": 7,
       "pg": 2,
-      "pp": 3,
+      "pp": 5,
       "sf": 0,
       "sc": 0
     },
@@ -1401,7 +1401,19 @@ window.ExtractedTeamsData = [
         "pts": 15.0
       },
       {
+        "name": "Carlota Calabuig",
+        "pts": 12.0
+      },
+      {
+        "name": "Bianca Barboza Stappung",
+        "pts": 12.0
+      },
+      {
         "name": "Roberto Jaime",
+        "pts": 12.0
+      },
+      {
+        "name": "Gregor Stajer",
         "pts": 12.0
       },
       {
@@ -1413,23 +1425,11 @@ window.ExtractedTeamsData = [
         "pts": 9.0
       },
       {
-        "name": "Carlota Calabuig",
-        "pts": 9.0
-      },
-      {
         "name": "Sara Vallmajo Gómez",
         "pts": 9.0
       },
       {
-        "name": "Bianca Barboza Stappung",
-        "pts": 9.0
-      },
-      {
         "name": "Silvia Martin Rodriguez",
-        "pts": 9.0
-      },
-      {
-        "name": "Gregor Stajer",
         "pts": 9.0
       },
       {
@@ -1453,10 +1453,6 @@ window.ExtractedTeamsData = [
         "pts": 3.0
       },
       {
-        "name": "Paula Alves De Araújo",
-        "pts": 3.0
-      },
-      {
         "name": "Francisco Javier Jobani Vidal",
         "pts": 3.0
       },
@@ -1466,6 +1462,10 @@ window.ExtractedTeamsData = [
       },
       {
         "name": "Jordi Seuba Garces",
+        "pts": 3.0
+      },
+      {
+        "name": "Antonio Navajas Lindez",
         "pts": 3.0
       },
       {
@@ -1482,10 +1482,6 @@ window.ExtractedTeamsData = [
       },
       {
         "name": "Montse Lopez Sans",
-        "pts": 0.0
-      },
-      {
-        "name": "Antonio Navajas Lindez",
         "pts": 0.0
       },
       {
@@ -1561,30 +1557,30 @@ window.ExtractedTeamsData = [
         "date": "Dium 05 Jul",
         "time": "13:30h",
         "opponent": "CRAZYXPADEL 4MIXTA LILA",
-        "score": "Pendiente",
+        "score": "1 - 2",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 7,
-        "date": "Dium 21 Jun",
-        "time": "16:30h",
+        "date": "Dium 30 Ago",
+        "time": "13:30h",
         "opponent": "MASQUEPADEL",
-        "score": "Pendiente",
+        "score": "1 - 2",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 8,
         "date": "Dium 06 Set",
         "time": "16:30h",
         "opponent": "NPADEL MIXTE CASTELLAR",
-        "score": "Pendiente",
+        "score": "En juego",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "live"
       },
       {
         "j": 9,
@@ -1648,86 +1644,86 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 6,
-      "date": "Dium 05 Jul",
-      "time": "13:30h",
-      "opponent": "CRAZYXPADEL 4MIXTA LILA",
+      "j": 9,
+      "date": "Dium 13 Set",
+      "time": "13:00h",
+      "opponent": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
       "score": "Pendiente",
-      "venue": "Padel bcn - el prat",
-      "isHome": true,
+      "venue": "Aurial Vilapadel",
+      "isHome": false,
       "status": "upcoming"
     },
     "groupStandings": [
       {
         "pos": 1,
         "team": "SOMOS PÁDEL BCN 4XA",
-        "pj": 6,
-        "pg": 5,
-        "pp": 1,
+        "pj": 8,
+        "pg": 6,
+        "pp": 2,
         "df": 0,
-        "pts": 14
+        "pts": 17
       },
       {
         "pos": 2,
         "team": "AURIAL PADEL SABADELL 4X",
-        "pj": 6,
-        "pg": 5,
+        "pj": 8,
+        "pg": 7,
         "pp": 1,
         "df": 0,
-        "pts": 10
+        "pts": 15
       },
       {
         "pos": 3,
-        "team": "BLACK PADEL PRAT 4X",
-        "pj": 6,
-        "pg": 3,
+        "team": "CRAZYXPADEL 4MIXTA LILA",
+        "pj": 8,
+        "pg": 5,
         "pp": 3,
+        "df": 0,
+        "pts": 14
+      },
+      {
+        "pos": 4,
+        "team": "BLACK PADEL PRAT 4X",
+        "pj": 8,
+        "pg": 4,
+        "pp": 4,
+        "df": 0,
+        "pts": 12
+      },
+      {
+        "pos": 5,
+        "team": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
+        "pj": 8,
+        "pg": 3,
+        "pp": 5,
         "df": 0,
         "pts": 9
       },
       {
-        "pos": 4,
-        "team": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
-        "pj": 6,
-        "pg": 3,
-        "pp": 3,
-        "df": 0,
-        "pts": 8
-      },
-      {
-        "pos": 5,
-        "team": "SOMOS PÁDEL BCN 4XB",
-        "pj": 5,
-        "pg": 2,
-        "pp": 3,
-        "df": 0,
-        "pts": 7,
-        "isCurrent": true
-      },
-      {
         "pos": 6,
         "team": "MASQUEPADEL",
-        "pj": 6,
-        "pg": 1,
-        "pp": 5,
+        "pj": 8,
+        "pg": 2,
+        "pp": 6,
         "df": 0,
-        "pts": 7
+        "pts": 9
       },
       {
         "pos": 7,
-        "team": "CRAZYXPADEL 4MIXTA LILA",
-        "pj": 5,
+        "team": "SOMOS PÁDEL BCN 4XB",
+        "pj": 7,
         "pg": 2,
-        "pp": 3,
+        "pp": 5,
         "df": 0,
-        "pts": 6
+        "pts": 9,
+        "isCurrent": true
       },
       {
         "pos": 8,
         "team": "NPADEL MIXTE CASTELLAR",
-        "pj": 6,
+        "pj": 7,
         "pg": 2,
-        "pp": 4,
+        "pp": 5,
         "df": 0,
         "pts": 8
       }
@@ -1741,13 +1737,13 @@ window.ExtractedTeamsData = [
     "category": "Mixta",
     "division": "Tercera",
     "group": "3XB FASE 2 G3",
-    "captain": "Toni Millan Deu",
+    "captain": "Pendiente",
     "subcaptain": "Pendiente",
-    "ranking": 3,
-    "points": 9,
+    "ranking": 4,
+    "points": 12,
     "stats": {
-      "pj": 8,
-      "pg": 4,
+      "pj": 9,
+      "pg": 5,
       "pp": 2,
       "sf": 0,
       "sc": 0
@@ -1755,11 +1751,15 @@ window.ExtractedTeamsData = [
     "roster": [
       {
         "name": "Cristina Garcia-Milà Mateu",
-        "pts": 65.0
+        "pts": 70.0
       },
       {
         "name": "Olga Pylypchuk Slobudiuk",
-        "pts": 65.0
+        "pts": 70.0
+      },
+      {
+        "name": "Ernesto Rodera",
+        "pts": 39.0
       },
       {
         "name": "Juan José Jiménez Valverde",
@@ -1778,10 +1778,6 @@ window.ExtractedTeamsData = [
         "pts": 35.0
       },
       {
-        "name": "Ernesto Rodera",
-        "pts": 34.0
-      },
-      {
         "name": "Lola Caro Burguillos",
         "pts": 33.0
       },
@@ -1794,35 +1790,31 @@ window.ExtractedTeamsData = [
         "pts": 20.0
       },
       {
+        "name": "Octavi Navarro Carbonell",
+        "pts": 20.0
+      },
+      {
+        "name": "Alberto Muñoz Algora",
+        "pts": 20.0
+      },
+      {
         "name": "Verónica Silva Cerdà",
         "pts": 17.0
+      },
+      {
+        "name": "Manuel Gamero Plaza",
+        "pts": 15.0
+      },
+      {
+        "name": "Natalie Sorolla Foster",
+        "pts": 15.0
       },
       {
         "name": "Sergio Serrano Vila",
         "pts": 15.0
       },
       {
-        "name": "Alberto Muñoz Algora",
-        "pts": 15.0
-      },
-      {
-        "name": "Manuel Gamero Plaza",
-        "pts": 10.0
-      },
-      {
-        "name": "Natalie Sorolla Foster",
-        "pts": 10.0
-      },
-      {
-        "name": "Octavi Navarro Carbonell",
-        "pts": 10.0
-      },
-      {
         "name": "Òscar Fort Saldaña",
-        "pts": 9.0
-      },
-      {
-        "name": "Ana Fort Saldaña",
         "pts": 9.0
       },
       {
@@ -1834,6 +1826,10 @@ window.ExtractedTeamsData = [
         "pts": 5.0
       },
       {
+        "name": "Clara Fernández Alegre",
+        "pts": 5.0
+      },
+      {
         "name": "Pedro Roca Roca",
         "pts": 5.0
       },
@@ -1842,8 +1838,8 @@ window.ExtractedTeamsData = [
         "pts": 5.0
       },
       {
-        "name": "Clara Fernández Alegre",
-        "pts": 0.0
+        "name": "Maria Anglès Ezquerra",
+        "pts": 5.0
       },
       {
         "name": "Josep Maria Rochera Revilla",
@@ -1859,6 +1855,10 @@ window.ExtractedTeamsData = [
       },
       {
         "name": "Mario Sanz López",
+        "pts": 0.0
+      },
+      {
+        "name": "Cristina Matamala",
         "pts": 0.0
       }
     ],
@@ -1938,10 +1938,10 @@ window.ExtractedTeamsData = [
         "date": "Dium 06 Set",
         "time": "13:30h",
         "opponent": "CLUB ESPORTIU GRANVIAMAR",
-        "score": "Pendiente",
+        "score": "3 - 0",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 9,
@@ -2005,77 +2005,77 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 8,
-      "date": "Dium 06 Set",
-      "time": "13:30h",
-      "opponent": "CLUB ESPORTIU GRANVIAMAR",
+      "j": 9,
+      "date": "Dium 13 Set",
+      "time": "15:00h",
+      "opponent": "MX3 INDOOR GAVÀ",
       "score": "Pendiente",
-      "venue": "Padel bcn - el prat",
-      "isHome": true,
+      "venue": "Padel indoor gavà",
+      "isHome": false,
       "status": "upcoming"
     },
     "groupStandings": [
       {
         "pos": 1,
-        "team": "CRAZYXPADEL 3MIXTA BLANCO",
-        "pj": 5,
+        "team": "CLUB SPORTS TENNIS Y PADEL CUNIT",
+        "pj": 8,
+        "pg": 6,
+        "pp": 2,
+        "df": 0,
+        "pts": 16
+      },
+      {
+        "pos": 2,
+        "team": "NOVA PADEL MIXTO PIH",
+        "pj": 7,
         "pg": 5,
-        "pp": 0,
+        "pp": 2,
+        "df": 0,
+        "pts": 15
+      },
+      {
+        "pos": 3,
+        "team": "CRAZYXPADEL 3MIXTA BLANCO",
+        "pj": 7,
+        "pg": 5,
+        "pp": 2,
         "df": 0,
         "pts": 12
       },
       {
-        "pos": 2,
-        "team": "CLUB SPORTS TENNIS Y PADEL CUNIT",
-        "pj": 5,
-        "pg": 4,
-        "pp": 1,
-        "df": 0,
-        "pts": 10
-      },
-      {
-        "pos": 3,
+        "pos": 4,
         "team": "SOMOS PÁDEL BCN 3X",
-        "pj": 8,
-        "pg": 4,
+        "pj": 9,
+        "pg": 5,
         "pp": 2,
         "df": 0,
-        "pts": 9,
+        "pts": 12,
         "isCurrent": true
       },
       {
-        "pos": 4,
-        "team": "NOVA PADEL MIXTO PIH",
-        "pj": 5,
+        "pos": 5,
+        "team": "CT ANDRÉS GIMENO 3X",
+        "pj": 8,
         "pg": 3,
-        "pp": 2,
+        "pp": 5,
         "df": 0,
-        "pts": 10
+        "pts": 12
       },
       {
-        "pos": 5,
+        "pos": 6,
         "team": "MX3 INDOOR GAVÀ",
-        "pj": 5,
+        "pj": 6,
         "pg": 1,
-        "pp": 4,
+        "pp": 5,
         "df": 0,
         "pts": 6
       },
       {
-        "pos": 6,
-        "team": "CT ANDRÉS GIMENO 3X",
-        "pj": 5,
-        "pg": 1,
-        "pp": 4,
-        "df": 0,
-        "pts": 5
-      },
-      {
         "pos": 7,
         "team": "CLUB ESPORTIU GRANVIAMAR",
-        "pj": 5,
+        "pj": 8,
         "pg": 0,
-        "pp": 5,
+        "pp": 8,
         "df": 0,
         "pts": 2
       }
@@ -2089,37 +2089,41 @@ window.ExtractedTeamsData = [
     "category": "Femenina",
     "division": "Cuarta",
     "group": "4FB FASE 2 G3",
-    "captain": "Gemma Saavedra",
+    "captain": "Pendiente",
     "subcaptain": "Pendiente",
-    "ranking": 4,
-    "points": 11,
+    "ranking": 3,
+    "points": 14,
     "stats": {
-      "pj": 6,
-      "pg": 4,
-      "pp": 2,
+      "pj": 9,
+      "pg": 5,
+      "pp": 4,
       "sf": 0,
       "sc": 0
     },
     "roster": [
       {
-        "name": "Lola Caro Burguillos",
-        "pts": 66.0
+        "name": "Cristina Matamala",
+        "pts": 69.0
       },
       {
-        "name": "Cristina Matamala",
-        "pts": 63.0
+        "name": "Lola Caro Burguillos",
+        "pts": 69.0
       },
       {
         "name": "Nadia Flora Costa",
-        "pts": 54.0
+        "pts": 63.0
       },
       {
         "name": "Saray Muñoz Carod",
-        "pts": 51.0
+        "pts": 54.0
       },
       {
         "name": "Marta Bassons Turú",
         "pts": 48.0
+      },
+      {
+        "name": "Berta Cañas Porte",
+        "pts": 36.0
       },
       {
         "name": "Mayte Vega Santos",
@@ -2130,12 +2134,12 @@ window.ExtractedTeamsData = [
         "pts": 33.0
       },
       {
-        "name": "Berta Cañas Porte",
-        "pts": 33.0
-      },
-      {
         "name": "Joana Garcia Cuadros",
         "pts": 30.0
+      },
+      {
+        "name": "Andrea Vivancos Cano",
+        "pts": 27.0
       },
       {
         "name": "Esther Carrillo Conde",
@@ -2144,10 +2148,6 @@ window.ExtractedTeamsData = [
       {
         "name": "Sonia López Fernández",
         "pts": 27.0
-      },
-      {
-        "name": "Andrea Vivancos Cano",
-        "pts": 24.0
       },
       {
         "name": "Ariadna Majua Montañes",
@@ -2167,18 +2167,18 @@ window.ExtractedTeamsData = [
       },
       {
         "name": "Yolanda Sanz Gonzalez",
-        "pts": 3.0
-      },
-      {
-        "name": "Raquel Fdez",
-        "pts": 3.0
+        "pts": 6.0
       },
       {
         "name": "Rosa Hens Hens",
-        "pts": 3.0
+        "pts": 6.0
       },
       {
         "name": "Elisenda Pigem Jubany",
+        "pts": 6.0
+      },
+      {
+        "name": "Raquel Fdez",
         "pts": 3.0
       },
       {
@@ -2253,33 +2253,33 @@ window.ExtractedTeamsData = [
       },
       {
         "j": 7,
-        "date": "Dium 21 Jun",
+        "date": "Dium 28 Jun",
         "time": "19:00h",
         "opponent": "AURIAL CORNELLÀ",
-        "score": "Pendiente",
+        "score": "2 - 1",
         "venue": "Aurial pàdel cornellà .",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 8,
         "date": "Diss 05 Set",
-        "time": "13:30h",
+        "time": "09:00h",
         "opponent": "ACCURA SANT BOI 4F",
-        "score": "Pendiente",
+        "score": "1 - 2",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 9,
         "date": "Diss 12 Set",
         "time": "16:00h",
         "opponent": "PCP FEMENÍ 4",
-        "score": "Pendiente",
+        "score": "0 - 3",
         "venue": "Padel center penedés",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 10,
@@ -2333,86 +2333,86 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 7,
-      "date": "Dium 21 Jun",
-      "time": "19:00h",
-      "opponent": "AURIAL CORNELLÀ",
+      "j": 10,
+      "date": "Diss 19 Set",
+      "time": "13:30h",
+      "opponent": "VALKIRIAS CPV",
       "score": "Pendiente",
-      "venue": "Aurial pàdel cornellà .",
-      "isHome": false,
+      "venue": "Padel bcn - el prat",
+      "isHome": true,
       "status": "upcoming"
     },
     "groupStandings": [
       {
         "pos": 1,
         "team": "ACCURA SANT BOI 4F",
-        "pj": 6,
-        "pg": 5,
+        "pj": 8,
+        "pg": 7,
         "pp": 1,
         "df": 0,
-        "pts": 14
+        "pts": 19
       },
       {
         "pos": 2,
         "team": "AURIAL CORNELLÀ",
-        "pj": 6,
+        "pj": 8,
+        "pg": 6,
+        "pp": 2,
+        "df": 0,
+        "pts": 16
+      },
+      {
+        "pos": 3,
+        "team": "SOMOS PÁDEL BCN 4FA",
+        "pj": 9,
         "pg": 5,
-        "pp": 1,
+        "pp": 4,
+        "df": 0,
+        "pts": 14,
+        "isCurrent": true
+      },
+      {
+        "pos": 4,
+        "team": "CRAZYXPADEL 4F LILA",
+        "pj": 7,
+        "pg": 4,
+        "pp": 3,
+        "df": 0,
+        "pts": 10
+      },
+      {
+        "pos": 5,
+        "team": "PCP FEMENÍ 4",
+        "pj": 9,
+        "pg": 4,
+        "pp": 5,
         "df": 0,
         "pts": 13
       },
       {
-        "pos": 3,
-        "team": "CRAZYXPADEL 4F LILA",
-        "pj": 6,
-        "pg": 4,
-        "pp": 2,
-        "df": 0,
-        "pts": 9
-      },
-      {
-        "pos": 4,
-        "team": "SOMOS PÁDEL BCN 4FA",
-        "pj": 6,
-        "pg": 4,
-        "pp": 2,
-        "df": 0,
-        "pts": 11,
-        "isCurrent": true
-      },
-      {
-        "pos": 5,
-        "team": "QUEENS OF PADEL",
-        "pj": 6,
+        "pos": 6,
+        "team": "VALKIRIAS CPV",
+        "pj": 7,
         "pg": 2,
-        "pp": 4,
+        "pp": 5,
+        "df": 0,
+        "pts": 8
+      },
+      {
+        "pos": 7,
+        "team": "QUEENS OF PADEL",
+        "pj": 7,
+        "pg": 2,
+        "pp": 5,
         "df": 0,
         "pts": 7
       },
       {
-        "pos": 6,
-        "team": "PCP FEMENÍ 4",
-        "pj": 6,
-        "pg": 2,
-        "pp": 4,
-        "df": 0,
-        "pts": 6
-      },
-      {
-        "pos": 7,
-        "team": "BLACK PADEL PRAT MUNAY CLUB 4F",
-        "pj": 6,
-        "pg": 1,
-        "pp": 5,
-        "df": 0,
-        "pts": 6
-      },
-      {
         "pos": 8,
-        "team": "VALKIRIAS CPV",
-        "pj": 6,
+        "team": "BLACK PADEL PRAT MUNAY CLUB 4F",
+        "pj": 7,
         "pg": 1,
-        "pp": 5,
+        "pp": 6,
         "df": 0,
         "pts": 6
       }
@@ -2426,25 +2426,29 @@ window.ExtractedTeamsData = [
     "category": "Femenina",
     "division": "Segunda",
     "group": "2FB FASE 2 G2",
-    "captain": "Silvia Serrano Pinilla",
+    "captain": "Pendiente",
     "subcaptain": "Pendiente",
     "ranking": 8,
-    "points": 3,
+    "points": 4,
     "stats": {
-      "pj": 6,
+      "pj": 8,
       "pg": 0,
-      "pp": 6,
+      "pp": 8,
       "sf": 0,
       "sc": 0
     },
     "roster": [
       {
+        "name": "Monica Carmona Merchan",
+        "pts": 80.0
+      },
+      {
         "name": "Silvia Serrano Pinilla",
         "pts": 72.0
       },
       {
-        "name": "Monica Carmona Merchan",
-        "pts": 72.0
+        "name": "María Muñoz Castaño",
+        "pts": 63.0
       },
       {
         "name": "Luisa Oganisyan",
@@ -2459,10 +2463,6 @@ window.ExtractedTeamsData = [
         "pts": 48.0
       },
       {
-        "name": "María Muñoz Castaño",
-        "pts": 47.0
-      },
-      {
         "name": "Merche Belmonte Rincón",
         "pts": 40.0
       },
@@ -2471,12 +2471,12 @@ window.ExtractedTeamsData = [
         "pts": 40.0
       },
       {
-        "name": "Maribel Campoy Álvarez",
-        "pts": 32.0
+        "name": "Marta Farre Foj",
+        "pts": 39.0
       },
       {
-        "name": "Marta Farre Foj",
-        "pts": 31.0
+        "name": "Maribel Campoy Álvarez",
+        "pts": 32.0
       },
       {
         "name": "Veronica Luque",
@@ -2562,23 +2562,23 @@ window.ExtractedTeamsData = [
       },
       {
         "j": 7,
-        "date": "Diss 20 Jun",
-        "time": "13:30h",
+        "date": "Dium 28 Jun",
+        "time": "20:30h",
         "opponent": "PÁDEL OXIGEN 2FA",
-        "score": "Pendiente",
+        "score": "0 - 3",
         "venue": "Padel bcn - el prat",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 8,
         "date": "Diss 05 Set",
-        "time": "13:30h",
+        "time": "12:00h",
         "opponent": "CPR FEMENI",
-        "score": "Pendiente",
+        "score": "1 - 2",
         "venue": "Club padel ripollet",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 9,
@@ -2642,87 +2642,87 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 7,
-      "date": "Diss 20 Jun",
-      "time": "13:30h",
-      "opponent": "PÁDEL OXIGEN 2FA",
+      "j": 9,
+      "date": "Dium 13 Set",
+      "time": "16:30h",
+      "opponent": "CLUB PADEL VILANOVA C",
       "score": "Pendiente",
       "venue": "Padel bcn - el prat",
-      "isHome": false,
+      "isHome": true,
       "status": "upcoming"
     },
     "groupStandings": [
       {
         "pos": 1,
         "team": "CPR FEMENI",
-        "pj": 6,
-        "pg": 4,
+        "pj": 9,
+        "pg": 7,
+        "pp": 2,
+        "df": 0,
+        "pts": 22
+      },
+      {
+        "pos": 2,
+        "team": "PÁDEL OXIGEN 2FA",
+        "pj": 8,
+        "pg": 7,
+        "pp": 1,
+        "df": 0,
+        "pts": 19
+      },
+      {
+        "pos": 3,
+        "team": "GALAS DELFOS 2FA",
+        "pj": 8,
+        "pg": 6,
         "pp": 2,
         "df": 0,
         "pts": 14
       },
       {
-        "pos": 2,
-        "team": "PÁDEL OXIGEN 2FA",
-        "pj": 5,
+        "pos": 4,
+        "team": "PANTERES GROGUES",
+        "pj": 7,
         "pg": 4,
-        "pp": 1,
+        "pp": 3,
         "df": 0,
         "pts": 11
       },
       {
-        "pos": 3,
-        "team": "CLUB PADEL VILANOVA C",
-        "pj": 5,
-        "pg": 3,
-        "pp": 2,
+        "pos": 5,
+        "team": "BCN PRO PADEL ACADEMY 2FA",
+        "pj": 8,
+        "pg": 4,
+        "pp": 4,
         "df": 0,
         "pts": 10
       },
       {
-        "pos": 4,
-        "team": "GALAS DELFOS 2FA",
-        "pj": 5,
-        "pg": 4,
-        "pp": 1,
+        "pos": 6,
+        "team": "CLUB PADEL VILANOVA C",
+        "pj": 7,
+        "pg": 3,
+        "pp": 4,
         "df": 0,
-        "pts": 9
+        "pts": 10
       },
       {
-        "pos": 5,
-        "team": "PANTERES GROGUES",
-        "pj": 4,
-        "pg": 2,
-        "pp": 2,
+        "pos": 7,
+        "team": "PADELARIUM - OLD SCHOOL",
+        "pj": 9,
+        "pg": 1,
+        "pp": 8,
         "df": 0,
         "pts": 6
       },
       {
-        "pos": 6,
-        "team": "PADELARIUM - OLD SCHOOL",
-        "pj": 5,
-        "pg": 1,
-        "pp": 4,
-        "df": 0,
-        "pts": 3
-      },
-      {
-        "pos": 7,
-        "team": "BCN PRO PADEL ACADEMY 2FA",
-        "pj": 4,
-        "pg": 2,
-        "pp": 2,
-        "df": 0,
-        "pts": 4
-      },
-      {
         "pos": 8,
         "team": "SOMOS PÁDEL BCN 2F",
-        "pj": 6,
+        "pj": 8,
         "pg": 0,
-        "pp": 6,
+        "pp": 8,
         "df": 0,
-        "pts": 3,
+        "pts": 4,
         "isCurrent": true
       }
     ],
