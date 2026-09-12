@@ -293,16 +293,19 @@
                 if (action === 'rsvp' && teamId) {
                     console.log(`📋 [TeamController] RSVP link detectado -> Equipo: ${teamId}, Jornada: ${jornada}`);
                     const attemptOpen = (retries = 0) => {
+                        if ((!this.teams || this.teams.length === 0) && window.ClubTeamsData && window.ClubTeamsData.length > 0) {
+                            this.teams = window.ClubTeamsData;
+                        }
                         const team = this.teams.find(t => t.id === teamId || t.id.toLowerCase() === String(teamId).toLowerCase())
                             || (window.ClubTeamsData && window.ClubTeamsData.find(t => t.id === teamId || t.id.toLowerCase() === String(teamId).toLowerCase()));
                         
-                        if (team || retries >= 10) {
+                        if (team || retries >= 15) {
                             this.openPlayerRsvpModal(teamId, jornada);
                         } else {
-                            setTimeout(() => attemptOpen(retries + 1), 200);
+                            setTimeout(() => attemptOpen(retries + 1), 150);
                         }
                     };
-                    setTimeout(() => attemptOpen(), 250);
+                    setTimeout(() => attemptOpen(), 100);
                 }
             } catch (err) {
                 console.warn('⚠️ [TeamController] Error detectando URL RSVP:', err);
@@ -4086,4 +4089,22 @@ Responde con un *SÍ* o un *NO* en este grupo.
     }
 
     window.TeamController = new TeamController();
+
+    // Auto-detección global de RSVP al cargar el script en cualquier pantalla
+    if (typeof window !== 'undefined') {
+        const triggerRsvpCheck = () => {
+            if (window.TeamController && typeof window.TeamController.checkUrlForRsvp === 'function') {
+                window.TeamController.checkUrlForRsvp();
+            }
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', triggerRsvpCheck);
+        } else {
+            setTimeout(triggerRsvpCheck, 50);
+        }
+
+        window.addEventListener('load', triggerRsvpCheck);
+        window.addEventListener('hashchange', triggerRsvpCheck);
+    }
 })();
