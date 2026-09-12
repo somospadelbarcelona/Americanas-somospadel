@@ -1504,35 +1504,44 @@
                                         <!-- LOGISTICS CHECKBOXES -->
                                         <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
                                             <div style="font-size: 0.6rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 6px;">Opciones complementarias para WhatsApp:</div>
-                                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                                <label style="flex:1; min-width: 90px; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.65rem; font-weight: 800; color: #475569; cursor: pointer; background: #f8fafc; padding: 6px 8px; border-radius: 8px; border: 1px solid #e2e8f0; user-select: none;">
-                                                    <input type="checkbox" id="conv-opt-beer-${team.id}" checked onchange="window.TeamController.refreshConvocatoriaPreview('${team.id}')" style="accent-color: #0ea5e9;">
-                                                    <span>🍻 3er Tiempo</span>
-                                                </label>
-                                                <label style="flex:1; min-width: 90px; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.65rem; font-weight: 800; color: #475569; cursor: pointer; background: #f8fafc; padding: 6px 8px; border-radius: 8px; border: 1px solid #e2e8f0; user-select: none;">
-                                                    <input type="checkbox" id="conv-opt-car-${team.id}" checked onchange="window.TeamController.refreshConvocatoriaPreview('${team.id}')" style="accent-color: #0ea5e9;">
-                                                    <span>🚗 Coches</span>
-                                                </label>
-                                                <label style="flex:1; min-width: 90px; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.65rem; font-weight: 800; color: #475569; cursor: pointer; background: #f8fafc; padding: 6px 8px; border-radius: 8px; border: 1px solid #e2e8f0; user-select: none;">
-                                                    <input type="checkbox" id="conv-opt-time-${team.id}" checked onchange="window.TeamController.refreshConvocatoriaPreview('${team.id}')" style="accent-color: #0ea5e9;">
-                                                    <span>⏱️ Puntualidad</span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
+                                             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                                 <label style="flex:1; min-width: 90px; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.65rem; font-weight: 800; color: #475569; cursor: pointer; background: #f8fafc; padding: 6px 8px; border-radius: 8px; border: 1px solid #e2e8f0; user-select: none;">
+                                                     <input type="checkbox" id="conv-opt-beer-${team.id}" onchange="window.TeamController.refreshConvocatoriaPreview('${team.id}')" style="accent-color: #0ea5e9;">
+                                                     <span>🍻 3er Tiempo</span>
+                                                 </label>
+                                                 <label style="flex:1; min-width: 90px; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.65rem; font-weight: 800; color: #475569; cursor: pointer; background: #f8fafc; padding: 6px 8px; border-radius: 8px; border: 1px solid #e2e8f0; user-select: none;">
+                                                     <input type="checkbox" id="conv-opt-car-${team.id}" onchange="window.TeamController.refreshConvocatoriaPreview('${team.id}')" style="accent-color: #0ea5e9;">
+                                                     <span>🚗 Coches</span>
+                                                 </label>
+                                                 <label style="flex:1; min-width: 90px; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.65rem; font-weight: 800; color: #475569; cursor: pointer; background: #f8fafc; padding: 6px 8px; border-radius: 8px; border: 1px solid #e2e8f0; user-select: none;">
+                                                     <input type="checkbox" id="conv-opt-time-${team.id}" onchange="window.TeamController.refreshConvocatoriaPreview('${team.id}')" style="accent-color: #0ea5e9;">
+                                                     <span>⏱️ Puntualidad</span>
+                                                 </label>
+                                             </div>
+                                         </div>
+                                     </div>
 
-                                    <!-- LIVE WHATSAPP PREVIEW -->
-                                    <div style="background: #ffffff; border-radius: 20px; padding: 15px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                            <div style="font-size: 0.55rem; color: #94a3b8; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
-                                                <i class="fab fa-whatsapp" style="color: #25D366; margin-right: 4px;"></i> Mensaje Oficial que se enviará a WhatsApp:
-                                            </div>
-                                            <button onclick="window.TeamController.copyConvocatoriaText('${team.id}')" style="background: transparent; border: none; color: #0ea5e9; font-size: 0.62rem; font-weight: 900; cursor: pointer;">
-                                                <i class="far fa-copy"></i> Copiar Texto
-                                            </button>
-                                        </div>
-                                        <div id="convocatoria-preview-box-${team.id}" style="background: #f8fafc; border-radius: 12px; padding: 12px; border: 1px solid #edf2f7; font-family: 'Courier New', Courier, monospace; font-size: 0.68rem; color: #1e293b; line-height: 1.45; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); white-space: pre-wrap; word-break: break-word; max-height: 180px; overflow-y: auto;"></div>
-                                    </div>
+                                     <!-- LIVE WHATSAPP PREVIEW & EASY SHARE -->
+                                     <div style="background: #ffffff; border-radius: 20px; padding: 16px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
+                                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                             <div style="font-size: 0.58rem; color: #0f172a; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                 <i class="fab fa-whatsapp" style="color: #25D366; margin-right: 4px;"></i> Mensaje Oficial para WhatsApp:
+                                             </div>
+                                             <button onclick="window.TeamController.copyConvocatoriaText('${team.id}')" style="background: transparent; border: none; color: #0ea5e9; font-size: 0.62rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                                 <i class="far fa-copy"></i> Copiar
+                                             </button>
+                                         </div>
+                                         
+                                         <div id="convocatoria-preview-box-${team.id}" style="background: #f8fafc; border-radius: 12px; padding: 12px; border: 1px solid #edf2f7; font-family: 'Courier New', Courier, monospace; font-size: 0.68rem; color: #1e293b; line-height: 1.45; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); white-space: pre-wrap; word-break: break-word; max-height: 180px; overflow-y: auto;"></div>
+
+                                         <!-- 📲 BOTÓN DESTACADO PARA ENVIAR DIRECTO AL WHATSAPP -->
+                                         <button onclick="window.TeamController.shareConvocatoriaToWhatsApp('${team.id}')" 
+                                                 style="width: 100%; margin-top: 12px; padding: 14px; background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: white; border: none; border-radius: 14px; font-family: 'Outfit', sans-serif; font-size: 0.82rem; font-weight: 950; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(37,211,102,0.3); transition: transform 0.2s, box-shadow 0.2s;"
+                                                 onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 18px rgba(37,211,102,0.4)';" 
+                                                 onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(37,211,102,0.3)';">
+                                             <i class="fab fa-whatsapp" style="font-size: 1.15rem;"></i> COMPARTIR EN WHATSAPP
+                                         </button>
+                                     </div>
                                 </div>
                             </div>
 
@@ -3325,8 +3334,19 @@
             if (!text) return;
 
             if (window.PlayerView?.haptic) window.PlayerView.haptic(25);
-            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-            window.open(url, '_blank');
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Convocatoria Somos Pádel BCN',
+                    text: text
+                }).catch(() => {
+                    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+                    window.open(url, '_blank');
+                });
+            } else {
+                const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+                window.open(url, '_blank');
+            }
         }
 
         applyConfirmedToTactica(teamId, jornada) {
