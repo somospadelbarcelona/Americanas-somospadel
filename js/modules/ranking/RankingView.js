@@ -11,6 +11,37 @@
             this.isSearching = false;
         }
 
+        /**
+         * Normalizes badge appearance to ensure WCAG AA/AAA contrast on light surfaces
+         */
+        getBadgeStyles(badge) {
+            const styleMap = {
+                'ELITE': { color: '#047857', bg: '#ecfdf5', border: '#a7f3d0', starColor: '#059669' },
+                'PLATINUM': { color: '#334155', bg: '#f1f5f9', border: '#cbd5e1', starColor: '#64748b' },
+                'GOLD': { color: '#b45309', bg: '#fef3c7', border: '#fcd34d', starColor: '#f59e0b' },
+                'SILVER': { color: '#4b5563', bg: '#f3f4f6', border: '#d1d5db', starColor: '#94a3b8' },
+                'BRONZE': { color: '#c2410c', bg: '#ffedd5', border: '#fed7aa', starColor: '#ea580c' }
+            };
+
+            const rawLabel = (badge && badge.label) ? String(badge.label).toUpperCase() : 'GOLD';
+            const mapped = styleMap[rawLabel] || styleMap['GOLD'];
+
+            const hasValidColor = badge && badge.color && 
+                !badge.color.toUpperCase().includes('CCFF00') && 
+                !badge.color.toUpperCase().includes('E5E4E2') && 
+                badge.color !== '#FFD700' && 
+                badge.color !== '#C0C0C0';
+
+            return {
+                label: rawLabel,
+                stars: (badge && typeof badge.stars === 'number') ? badge.stars : 3,
+                color: (hasValidColor && badge.bg) ? badge.color : mapped.color,
+                bg: (badge && badge.bg) ? badge.bg : mapped.bg,
+                border: (badge && badge.border) ? badge.border : mapped.border,
+                starColor: (badge && badge.starColor) ? badge.starColor : mapped.starColor
+            };
+        }
+
         render(players) {
             this.playersData = players;
             const container = document.getElementById('content-area');
@@ -25,7 +56,7 @@
                     min-height: 100vh; 
                     font-family: 'Outfit', sans-serif; 
                     color: #0a192f; 
-                    padding-bottom: 100px;
+                    padding-bottom: calc(140px + env(safe-area-inset-bottom, 20px));
                     position: relative;
                     overflow-x: hidden;
                 ">
@@ -34,25 +65,25 @@
                     <div style="position: absolute; top: 200px; right: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(59, 130, 246, 0.05) 0%, transparent 70%); pointer-events: none;"></div>
                     
                     <!-- 1. PREMIUM HEADER -->
-                    <div style="padding: 40px 25px 20px; position: relative; z-index: 5;">
-                        <div style="position: absolute; top: -10px; right: -10px; font-size: 8rem; color: rgba(255, 255, 255, 0.02); font-weight: 950; transform: rotate(-5deg); pointer-events: none;">RANK</div>
+                    <div style="padding: 35px 25px 20px; position: relative; z-index: 5;">
+                        <div style="position: absolute; top: -10px; right: -10px; font-size: 8rem; color: rgba(0, 0, 0, 0.02); font-weight: 950; transform: rotate(-5deg); pointer-events: none;">RANK</div>
                         
                         <div style="display: flex; justify-content: space-between; align-items: center; position: relative;">
                             <div>
                                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
-                                    <div style="width: 10px; height: 10px; border-radius: 2px; background: #84cc16; box-shadow: 0 0 15px #84cc16;"></div>
+                                    <div style="width: 10px; height: 10px; border-radius: 2px; background: #65a30d; box-shadow: 0 0 10px rgba(101, 163, 13, 0.4);"></div>
                                     <span style="color: #64748b; font-size: 0.65rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">Somospadel World Tour</span>
                                 </div>
-                                <h1 style="font-weight: 950; font-size: 2.5rem; margin: 0; letter-spacing: -1.5px; color: #0a192f; line-height: 1.1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                                    RANKING <span style="background: linear-gradient(90deg, #CCFF00, #84cc16); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">PRO</span>
-                                    <span onclick="window.showRolesLegendModal()" style="cursor: pointer; font-size: 0.6rem; font-weight: 950; padding: 4px 10px; border-radius: 10px; background: rgba(100, 116, 139, 0.08); color: #475569; border: 1px solid rgba(100, 116, 139, 0.15); text-transform: uppercase; letter-spacing: 1px; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='rgba(204,255,0,0.1)'; this.style.borderColor='rgba(204,255,0,0.3)'; this.style.color='#72a800';" onmouseout="this.style.background='rgba(100, 116, 139, 0.08)'; this.style.borderColor='rgba(100, 116, 139, 0.15)'; this.style.color='#475569';">
-                                        <i class="fas fa-question-circle"></i> Info Roles
+                                <h1 style="font-weight: 950; font-size: 2.3rem; margin: 0; letter-spacing: -1.5px; color: #0f172a; line-height: 1.1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    RANKING <span style="background: linear-gradient(135deg, #15803d 0%, #4d7c0f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">PRO</span>
+                                    <span onclick="window.showRolesLegendModal()" style="cursor: pointer; font-size: 0.62rem; font-weight: 900; padding: 4px 10px; border-radius: 10px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; text-transform: uppercase; letter-spacing: 0.8px; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#334155';">
+                                        <i class="fas fa-question-circle" style="color: #059669;"></i> Info Roles
                                     </span>
                                 </h1>
                             </div>
                             <!-- 🏆 TOP RÉCORDS ACCESS -->
                             <button onclick="window.Router.navigate('records')" 
-                                    style="background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%); color: black; border: none; padding: 10px 18px; border-radius: 14px; font-weight: 950; font-size: 0.65rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 20px rgba(255, 215, 0, 0.2); cursor: pointer; transition: 0.3s; transform: rotate(1deg);">
+                                    style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); color: #ffffff; border: none; padding: 10px 18px; border-radius: 14px; font-weight: 950; font-size: 0.65rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 8px 20px rgba(180, 83, 9, 0.25); cursor: pointer; transition: 0.3s; transform: rotate(1deg);">
                                 <i class="fas fa-award"></i> TOP RÉCORDS
                             </button>
                         </div>
@@ -122,15 +153,19 @@
                     const pos = userStats.rank;
 
                     return `
-                                        <div style="text-align: left; border-right: 1px solid rgba(255,255,255,0.05); padding-right: 15px;">
+                                        <div style="text-align: left; border-right: 1px solid #e2e8f0; padding-right: 15px;">
                                             <div style="font-size: 0.6rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">POSICIÓN ACTUAL</div>
                                             <div style="font-size: 2rem; font-weight: 950; color: #0a192f; line-height: 1.2;">#${pos}</div>
-                                            <div style="font-size: 0.7rem; color: #CCFF00; font-weight: 800;">TOP ${(pos / rankedData.length * 100).toFixed(0)}% EN ${this.currentCategory.toUpperCase()}</div>
+                                            <div style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.65rem; color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 7px; border-radius: 6px; font-weight: 900; margin-top: 4px; letter-spacing: 0.3px;">
+                                                <i class="fas fa-chart-line" style="font-size: 0.6rem; color: #059669;"></i> TOP ${(pos / rankedData.length * 100).toFixed(0)}% EN ${this.currentCategory.toUpperCase()}
+                                            </div>
                                         </div>
-                                        <div style="text-align: left; padding-left: 5px;">
+                                        <div style="text-align: left; padding-left: 10px;">
                                             <div style="font-size: 0.6rem; color: #64748b; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">EFECTIVIDAD</div>
                                             <div style="font-size: 2rem; font-weight: 950; color: #0a192f; line-height: 1.2;">${winRate}%</div>
-                                            <div style="font-size: 0.7rem; color: #64748b; font-weight: 800;"><i class="fas fa-fire" style="color:#ef4444;"></i> ${displayStats.won}W / ${displayStats.played - displayStats.won}L</div>
+                                            <div style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.65rem; color: #1e293b; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 2px 7px; border-radius: 6px; font-weight: 900; margin-top: 4px;">
+                                                <i class="fas fa-fire" style="color: #ef4444; font-size: 0.65rem;"></i> ${displayStats.won}V / ${displayStats.played - displayStats.won}D
+                                            </div>
                                         </div>
                                     `;
                 })()}
@@ -144,23 +179,23 @@
                     </div>
 
                     <!-- STICKY HEADER: TABS + SEARCH -->
-                    <div style="position: sticky; top: 154px; z-index: 1001; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 15px 25px 20px;">
+                    <div style="position: sticky; top: 108px; z-index: 1001; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 15px 25px 20px;">
                         
-                        <!-- Navigation Tabs -->
-                        <div style="background: #f1f5f9; padding: 5px; border-radius: 20px; display: flex; border: 1px solid #e2e8f0; margin-bottom: 15px;">
+                        <!-- Navigation Tabs (AMERICANAS / ENTRENOS) -->
+                        <div style="background: #e2e8f0; padding: 4px; border-radius: 18px; display: flex; border: 1px solid #cbd5e1; margin-bottom: 14px; gap: 4px;">
                             <button onclick="window.RankingView.switchView('americanas')" 
-                                style="flex: 1; padding: 12px; border-radius: 16px; border: none; font-weight: 950; transition: 0.3s; cursor: pointer; background: ${this.currentView === 'americanas' ? '#CCFF00' : 'transparent'}; color: ${this.currentView === 'americanas' ? 'black' : '#64748b'}; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px;">
-                                AMERICANAS
+                                style="flex: 1; padding: 11px; border-radius: 14px; border: none; font-weight: 950; transition: all 0.25s ease; cursor: pointer; background: ${this.currentView === 'americanas' ? '#0f172a' : 'transparent'}; color: ${this.currentView === 'americanas' ? '#ccff00' : '#475569'}; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 1px; box-shadow: ${this.currentView === 'americanas' ? '0 4px 12px rgba(15, 23, 42, 0.2)' : 'none'};">
+                                <i class="fas fa-trophy" style="margin-right: 5px; font-size: 0.7rem; ${this.currentView === 'americanas' ? 'color: #ccff00;' : 'color: #94a3b8;'}"></i> AMERICANAS
                             </button>
                             <button onclick="window.RankingView.switchView('entrenos')" 
-                                style="flex: 1; padding: 12px; border-radius: 16px; border: none; font-weight: 950; transition: 0.3s; cursor: pointer; background: ${this.currentView === 'entrenos' ? '#CCFF00' : 'transparent'}; color: ${this.currentView === 'entrenos' ? 'black' : '#64748b'}; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px;">
-                                ENTRENOS
+                                style="flex: 1; padding: 11px; border-radius: 14px; border: none; font-weight: 950; transition: all 0.25s ease; cursor: pointer; background: ${this.currentView === 'entrenos' ? '#0f172a' : 'transparent'}; color: ${this.currentView === 'entrenos' ? '#ccff00' : '#475569'}; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 1px; box-shadow: ${this.currentView === 'entrenos' ? '0 4px 12px rgba(15, 23, 42, 0.2)' : 'none'};">
+                                <i class="fas fa-dumbbell" style="margin-right: 5px; font-size: 0.7rem; ${this.currentView === 'entrenos' ? 'color: #ccff00;' : 'color: #94a3b8;'}"></i> ENTRENOS
                             </button>
                         </div>
 
-                        <!-- SEARCH BAR PREMIUM INVERTED -->
-                        <div style="position: relative; margin-bottom: 15px;">
-                            <div style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #000; font-size: 0.9rem; z-index: 2;">
+                        <!-- SEARCH BAR PRO -->
+                        <div style="position: relative; margin-bottom: 14px;">
+                            <div style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 0.85rem; z-index: 2; pointer-events: none;">
                                 <i class="fas fa-search"></i>
                             </div>
                             <input type="text" 
@@ -169,47 +204,68 @@
                                 onkeyup="window.RankingView.handleSearch(this.value)"
                                 style="
                                     width: 100%; 
-                                    background: #CCFF00; 
-                                    border: 2px solid #CCFF00; 
-                                    border-radius: 18px; 
-                                    padding: 14px 14px 14px 50px; 
-                                    color: #000; 
-                                    font-family: 'Outfit'; 
-                                    font-weight: 800; 
-                                    font-size: 0.95rem; 
+                                    background: #ffffff; 
+                                    border: 1.5px solid #cbd5e1; 
+                                    border-radius: 16px; 
+                                    padding: 12px 14px 12px 44px; 
+                                    color: #0f172a; 
+                                    font-family: 'Outfit', sans-serif; 
+                                    font-weight: 700; 
+                                    font-size: 0.88rem; 
                                     outline: none; 
-                                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                                    box-sizing: border-box;
-                                    box-shadow: 0 10px 30px rgba(204, 255, 0, 0.2);
+                                    transition: all 0.25s ease; 
+                                    box-sizing: border-box; 
+                                    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
                                 "
-                                onfocus="this.style.boxShadow='0 0 40px rgba(204,255,0,0.4)';"
-                                onblur="this.style.boxShadow='0 10px 30px rgba(204, 255, 0, 0.2)';"
+                                onfocus="this.style.borderColor='#0f172a'; this.style.boxShadow='0 0 0 3px rgba(15, 23, 42, 0.1)';"
+                                onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.03)';"
                             >
                             ${this.isSearching ? `
-                                <div onclick="document.getElementById('ranking-search-input').value=''; window.RankingView.handleSearch('');" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #000; cursor: pointer; padding: 5px; opacity: 0.6; z-index: 2;">
+                                <div onclick="document.getElementById('ranking-search-input').value=''; window.RankingView.handleSearch('');" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #64748b; cursor: pointer; padding: 6px; z-index: 2;">
                                     <i class="fas fa-times-circle"></i>
                                 </div>
                             ` : ''}
                         </div>
 
                         <!-- CATEGORIES HORIZONTAL -->
-                        <div style="display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; align-items: center; padding-bottom: 5px;">
-                            ${['todas', 'male', 'female', 'mixed'].map(cat => `
-                                <button onclick="window.RankingView.filterByCategory('${cat}')" 
-                                    style="white-space: nowrap; padding: 8px 18px; border-radius: 12px; border: 1px solid ${this.currentCategory === cat ? '#CCFF00' : 'rgba(255,255,255,0.08)'}; background: ${this.currentCategory === cat ? 'rgba(204,255,0,0.1)' : 'transparent'}; color: ${this.currentCategory === cat ? '#CCFF00' : '#64748b'}; font-weight: 950; font-size: 0.6rem; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px;">
-                                    ${cat === 'todas' ? 'GLOBAL' : (cat === 'male' ? 'MASC.' : (cat === 'female' ? 'FEM.' : 'MIXTA'))}
-                                </button>
-                            `).join('')}
+                        <div style="display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; align-items: center; padding-bottom: 4px;">
+                            ${['todas', 'male', 'female', 'mixed'].map(cat => {
+                                const isActive = this.currentCategory === cat;
+                                const label = cat === 'todas' ? 'GLOBAL' : (cat === 'male' ? 'MASC.' : (cat === 'female' ? 'FEM.' : 'MIXTA'));
+                                return `
+                                    <button onclick="window.RankingView.filterByCategory('${cat}')" 
+                                        style="
+                                            white-space: nowrap; 
+                                            padding: 8px 18px; 
+                                            border-radius: 12px; 
+                                            border: 1.5px solid ${isActive ? '#0f172a' : '#e2e8f0'}; 
+                                            background: ${isActive ? '#0f172a' : '#ffffff'}; 
+                                            color: ${isActive ? '#ccff00' : '#475569'}; 
+                                            font-weight: 950; 
+                                            font-size: 0.65rem; 
+                                            transition: all 0.2s ease; 
+                                            text-transform: uppercase; 
+                                            letter-spacing: 0.6px;
+                                            box-shadow: ${isActive ? '0 4px 12px rgba(15, 23, 42, 0.18)' : '0 1px 3px rgba(0,0,0,0.02)'};
+                                            cursor: pointer;
+                                        ">
+                                        ${label}
+                                    </button>
+                                `;
+                            }).join('')}
                             
                             <button onclick="window.RankingView.shareCurrentRanking()" 
-                                style="margin-left: auto; background: #25D366; color: white; border: none; padding: 8px 15px; border-radius: 12px; font-weight: 950; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.2);">
-                                <i class="fab fa-whatsapp" style="font-size: 0.8rem;"></i>
+                                title="Compartir ranking por WhatsApp"
+                                style="margin-left: auto; background: #25D366; color: white; border: none; padding: 8px 15px; border-radius: 12px; font-weight: 950; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25); cursor: pointer; transition: transform 0.2s ease;"
+                                onmouseover="this.style.transform='scale(1.05)'"
+                                onmouseout="this.style.transform='scale(1)'">
+                                <i class="fab fa-whatsapp" style="font-size: 0.9rem;"></i>
                             </button>
                         </div>
                     </div>
 
                     <!-- Player List Container -->
-                    <div id="ranking-list-body" style="padding: 0 20px 100px;">
+                    <div id="ranking-list-body" style="padding: 0 20px calc(140px + env(safe-area-inset-bottom, 20px));">
                         ${this.renderRankingList('')}
                     </div>
                 </div>
@@ -475,24 +531,55 @@
             if (top3[0]) displayOrder.push({ ...top3[0], rank: 1 });
             if (top3[2]) displayOrder.push({ ...top3[2], rank: 3 });
 
-            return `
-                <div style="display: flex; justify-content: center; align-items: flex-end; gap: 8px; padding: 20px 10px 40px; position: relative;">
-                    ${displayOrder.map(p => {
-                const isFirst = p.rank === 1;
-                const size = isFirst ? '100px' : '82px';
-                const color = p.rank === 1 ? '#FFD700' : (p.rank === 2 ? '#E5E7EB' : '#CD7F32');
-                const elevate = isFirst ? 'translateY(-20px)' : 'translateY(0)';
+            const podiumConfig = {
+                1: {
+                    borderColor: '#f59e0b',
+                    badgeBg: '#f59e0b',
+                    badgeText: '#0f172a',
+                    textColor: '#b45309',
+                    shadow: '0 12px 28px rgba(245, 158, 11, 0.22)',
+                    size: '98px',
+                    crown: '👑'
+                },
+                2: {
+                    borderColor: '#94a3b8',
+                    badgeBg: '#64748b',
+                    badgeText: '#ffffff',
+                    textColor: '#334155',
+                    shadow: '0 8px 22px rgba(100, 116, 139, 0.16)',
+                    size: '82px',
+                    crown: '🥈'
+                },
+                3: {
+                    borderColor: '#ea580c',
+                    badgeBg: '#ea580c',
+                    badgeText: '#ffffff',
+                    textColor: '#c2410c',
+                    shadow: '0 8px 22px rgba(234, 88, 12, 0.16)',
+                    size: '82px',
+                    crown: '🥉'
+                }
+            };
 
-                return `
-                            <div style="flex: 1; max-width: 110px; display: flex; flex-direction: column; align-items: center; transform: ${elevate}; animation: floatUp 0.8s ease-out both;">
-                                <div style="position: relative; margin-bottom: 12px;">
+            return `
+                <div style="display: flex; justify-content: center; align-items: flex-end; gap: 10px; padding: 20px 10px 35px; position: relative;">
+                    ${displayOrder.map(p => {
+                        const isFirst = p.rank === 1;
+                        const cfg = podiumConfig[p.rank] || podiumConfig[1];
+                        const elevate = isFirst ? 'translateY(-18px)' : 'translateY(0)';
+                        const pts = this.currentCategory === 'todas' ? (p.stats[this.currentView]?.points || 0) : (p.stats[this.currentView]?.categories[this.currentCategory]?.points || 0);
+
+                        return `
+                            <div style="flex: 1; max-width: 112px; display: flex; flex-direction: column; align-items: center; transform: ${elevate}; animation: floatUp 0.8s ease-out both;">
+                                <div style="position: relative; margin-bottom: 10px;">
+                                    ${isFirst ? `<div style="position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 1.3rem; filter: drop-shadow(0 2px 6px rgba(245, 158, 11, 0.4));">👑</div>` : ''}
                                     <div style="
-                                        width: ${size}; height: ${size}; 
+                                        width: ${cfg.size}; height: ${cfg.size}; 
                                         border-radius: 50%; 
-                                        border: 3px solid ${color};
+                                        border: 3.5px solid ${cfg.borderColor};
                                         background: #ffffff;
-                                        padding: 4px;
-                                        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+                                        padding: 3px;
+                                        box-shadow: ${cfg.shadow};
                                     ">
                                         <div style="
                                             width: 100%; height: 100%; 
@@ -501,32 +588,32 @@
                                             display: flex; align-items: center; justify-content: center;
                                             overflow: hidden;
                                         ">
-                                            ${!p.photo_url ? `<span style="font-weight:950; color:#444; font-size:1.8rem;">${p.name.charAt(0)}</span>` : ''}
+                                            ${!p.photo_url ? `<span style="font-weight:950; color:#334155; font-size:1.6rem;">${p.name.charAt(0)}</span>` : ''}
                                         </div>
                                     </div>
                                     <div style="
-                                        position: absolute; bottom: -2px; right: -2px;
+                                        position: absolute; bottom: -3px; right: -3px;
                                         width: 28px; height: 28px;
-                                        background: ${color}; color: #000;
+                                        background: ${cfg.badgeBg}; color: ${cfg.badgeText};
                                         border-radius: 50%;
                                         display: flex; align-items: center; justify-content: center;
                                         font-weight: 950; font-size: 0.8rem;
-                                        border: 3px solid #ffffff;
-                                        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+                                        border: 2.5px solid #ffffff;
+                                        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
                                     ">${p.rank}</div>
                                 </div>
-                                <div style="text-align: center;">
-                                    <div style="font-weight: 950; font-size: 0.75rem; color: #0a192f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 95px;" title="${p.name}">
+                                <div style="text-align: center; width: 100%;">
+                                    <div style="font-weight: 950; font-size: 0.78rem; color: #0a192f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 98px; margin: 0 auto;" title="${p.name}">
                                         ${p.name}
                                     </div>
-                                    <div style="font-weight: 950; font-size: 0.75rem; color: ${color}; opacity: 0.9;">
-                                        ${this.currentCategory === 'todas' ? (p.stats[this.currentView]?.points || 0) : (p.stats[this.currentView]?.categories[this.currentCategory]?.points || 0)} 
-                                        <span style="font-size: 0.55rem; font-weight: 700;">PTS</span>
+                                    <div style="font-weight: 950; font-size: 0.78rem; color: ${cfg.textColor}; margin-top: 2px;">
+                                        ${pts} 
+                                        <span style="font-size: 0.58rem; font-weight: 800; color: #64748b;">PTS</span>
                                     </div>
                                 </div>
                             </div>
                         `;
-            }).join('')}
+                    }).join('')}
                 </div>
             `;
         }
@@ -601,16 +688,20 @@
             const index = rank - 1;
 
             // Gamification Badge
-            const badge = p.badge || { stars: 3, label: 'GOLD', color: '#FFD700', shadow: 'none' };
+            const badge = p.badge || (window.RankingController ? window.RankingController.getLevelBadge(p.level) : { stars: 3, label: 'GOLD', color: '#b45309', bg: '#fef3c7', border: '#fcd34d', starColor: '#f59e0b', shadow: 'none' });
+            const badgeColor = badge.color || '#b45309';
+            const badgeBg = badge.bg || '#fef3c7';
+            const badgeBorder = badge.border || '#fcd34d';
+            const starColor = badge.starColor || badgeColor;
             const starsHtml = Array(5).fill(0).map((_, i) => 
-                `<i class="fas fa-star" style="font-size: 0.55rem; color: ${i < badge.stars ? badge.color : 'rgba(255,255,255,0.05)'}; margin-right: 1px; ${i < badge.stars ? 'text-shadow:' + badge.shadow : ''}"></i>`
+                `<i class="fas fa-star" style="font-size: 0.55rem; color: ${i < badge.stars ? starColor : '#cbd5e1'}; margin-right: 1.5px; ${i < badge.stars && badge.shadow ? 'filter: drop-shadow(' + badge.shadow + ');' : ''}"></i>`
             ).join('');
 
             // Note: pointsToNext logic will be slightly inaccurate when filtered but UX is better this way
             const pointsToNext = prevPlayer ? (prevPlayer.stats[this.currentView].points - pStats.points) : 0;
 
             const trend = (index < 5 && Math.random() > 0.6) ? 'up' : (index > 10 && Math.random() > 0.8 ? 'down' : 'stable');
-            const trendIcon = trend === 'up' ? '<i class="fas fa-caret-up" style="color:#84cc16;"></i>' : (trend === 'down' ? '<i class="fas fa-caret-down" style="color:#ef4444;"></i>' : '');
+            const trendIcon = trend === 'up' ? '<i class="fas fa-caret-up" style="color:#16a34a; font-size:0.85rem;"></i>' : (trend === 'down' ? '<i class="fas fa-caret-down" style="color:#dc2626; font-size:0.85rem;"></i>' : '');
 
             return `
                 <div style="
@@ -640,12 +731,12 @@
                             width: 52px; height: 52px; 
                             border-radius: 16px; 
                             background: #f1f5f9;
-                            border: 2px solid ${isTop3 ? rankColor + '44' : 'rgba(255,255,255,0.05)'};
+                            border: 2px solid ${isTop3 ? rankColor + '66' : '#e2e8f0'};
                             background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#f1f5f9'};
                             display: flex; align-items: center; justify-content: center;
                             overflow: hidden;
                         ">
-                            ${!p.photo_url ? `<span style="font-weight:950; color:#333; font-size:1.1rem;">${p.name.substring(0, 2).toUpperCase()}</span>` : ''}
+                            ${!p.photo_url ? `<span style="font-weight:950; color:#334155; font-size:1.1rem;">${p.name.substring(0, 2).toUpperCase()}</span>` : ''}
                         </div>
                         ${isTop3 ? `<div style="position:absolute; top:-8px; left:-8px; font-size:1rem; filter: drop-shadow(0 0 5px ${rankColor});">👑</div>` : ''}
                     </div>
@@ -653,10 +744,10 @@
                     <!-- Info Area -->
                     <div style="flex: 1; min-width: 0; z-index: 2;">
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <div style="font-weight: 950; font-size: 1.1rem; color: #0a192f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <div style="font-weight: 950; font-size: 1.05rem; color: #0a192f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                 ${p.name}
                             </div>
-                            <div style="font-size: 0.5rem; font-weight: 950; padding: 1px 6px; border-radius: 4px; background: ${badge.color}22; color: ${badge.color}; border: 1px solid ${badge.color}44; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <div style="font-size: 0.55rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder}; text-transform: uppercase; letter-spacing: 0.5px;">
                                 ${badge.label}
                             </div>
                         </div>
@@ -670,18 +761,18 @@
                         </div>
 
                         ${pointsToNext > 0 && pointsToNext < 15 ? `
-                            <div style="font-size: 0.55rem; color: #CCFF00; font-weight: 900; margin-top: 4px; letter-spacing: 0.3px;">
-                                <i class="fas fa-fire"></i> A ${pointsToNext} PTS DEL PROX. PUESTO
+                            <div style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.6rem; background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 6px; font-weight: 900; margin-top: 5px; letter-spacing: 0.3px;">
+                                <i class="fas fa-fire" style="color: #ea580c; font-size: 0.6rem;"></i> A ${pointsToNext} PTS DEL PROX. PUESTO
                             </div>
                         ` : ''}
                     </div>
 
                     <!-- Score Card -->
-                    <div style="text-align: right; background: ${isTop3 ? 'rgba(204, 255, 0, 0.15)' : '#f8fafc'}; padding: 10px 16px; border-radius: 12px; min-width: 80px; border: 1px solid ${isTop3 ? '#72a80044' : '#e2e8f0'}; z-index: 2;">
+                    <div style="text-align: right; background: ${isTop3 ? '#fefce8' : '#f8fafc'}; padding: 10px 14px; border-radius: 14px; min-width: 82px; border: 1.5px solid ${isTop3 ? '#fef08a' : '#e2e8f0'}; z-index: 2; box-shadow: ${isTop3 ? '0 4px 12px rgba(250, 204, 21, 0.12)' : 'none'};">
                         <div style="font-weight: 950; font-size: 1.35rem; color: #0a192f; line-height: 1;">
                             ${pStats.points}
                         </div>
-                        <div style="font-size: 0.6rem; color: #72a800; font-weight: 950; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 4px;">
+                        <div style="font-size: 0.62rem; color: ${isTop3 ? '#854d0e' : '#64748b'}; font-weight: 950; letter-spacing: 0.8px; text-transform: uppercase; margin-top: 4px;">
                             PUNTOS
                         </div>
                     </div>

@@ -135,7 +135,8 @@ function createMockEnvironment() {
                 classList: { add: () => {}, remove: () => {} },
                 remove: () => {},
                 setAttribute: () => {},
-                appendChild: () => {}
+                appendChild: () => {},
+                addEventListener: () => {}
             }),
             createElement: (tag) => ({
                 tagName: tag,
@@ -282,6 +283,21 @@ async function runSmartTickerTests() {
     content = await smartTicker.generateMassiveContent();
     equiposItems = content.filter(item => item.category === 'equipos');
     assertEqual(equiposItems.length, 1, 'Tras setCampaignActive(true), el item de equipos aparece dinámicamente');
+
+    // 4.5 Fallback sin SeasonCampaignService disponible (sólo localStorage)
+    console.log(`\n${YELLOW}6. Prueba de Fallback Directo de localStorage (sin SeasonCampaignService):${RESET}`);
+    const { context: envFallback, mockLocalStorage: storageFallback } = createMockEnvironment();
+    // Cargamos SmartTicker SIN cargar SeasonCampaignService
+    vm.runInContext(tickerCode, envFallback);
+    storageFallback.clear();
+    let fbContent = await envFallback.window.SmartTicker.generateMassiveContent();
+    let fbEquipos = fbContent.filter(i => i.category === 'equipos');
+    assertEqual(fbEquipos.length, 0, 'Fallback sin SeasonCampaignService e inactivo: 0 items de equipos');
+
+    storageFallback.setItem('sp_season_campaign_active', 'true');
+    fbContent = await envFallback.window.SmartTicker.generateMassiveContent();
+    fbEquipos = fbContent.filter(i => i.category === 'equipos');
+    assertEqual(fbEquipos.length, 1, 'Fallback sin SeasonCampaignService y activo en localStorage: 1 item de equipos');
 
     // Resumen final
     console.log(`\n${CYAN}======================================================================${RESET}`);

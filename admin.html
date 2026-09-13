@@ -1112,6 +1112,7 @@
                 <button class="nav-item-pro btn-database" data-view="users" onclick="loadAdminView('users')">
                     <span class="icon-box"><i class="fas fa-users-gear"></i></span>
                     <span class="nav-text">Base de Datos</span>
+                    <span id="sidebar-pending-badge" style="display: none; background: #f59e0b; color: #000; font-size: 0.65rem; font-weight: 900; padding: 2px 7px; border-radius: 10px; margin-left: auto; box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);">0</span>
                 </button>
 
                 <!-- Americanas (Submenú) -->
@@ -1208,6 +1209,11 @@
                         <span class="submenu-arrow"><i class="fas fa-chevron-right"></i></span>
                     </button>
                     <div class="submenu-content">
+                        <!-- Telemetría & Caché (Sistema) -->
+                        <button class="submenu-item btn-maint-sub" data-view="system_telemetry" onclick="loadAdminView('system_telemetry')">
+                            <span class="nav-text"><i class="fas fa-heartbeat" style="color:#CCFF00; margin-right:6px;"></i> Telemetría & Caché 🩺</span>
+                        </button>
+                        
                         <!-- OP CENTER -->
                         <button class="submenu-item btn-maint-sub" data-view="network_pulse" onclick="loadAdminView('network_pulse')">
                             <span class="nav-text">OP Center 🔬</span>
@@ -1378,6 +1384,10 @@
                     style="margin-right: 15px; background: transparent; border: none; font-size: 1.5rem; color: white;">☰</button>
                 <div class="top-title" id="page-title">CONSOLA DE ADMINISTRACIÓN</div>
                 <div class="top-actions" style="display:flex; align-items:center; gap:15px;">
+                    <button id="admin-telemetry-trigger" class="haptic-feedback" title="Telemetría & Diagnóstico del Sistema" onclick="window.toggleDiagnosticPanel ? window.toggleDiagnosticPanel() : (window.loadAdminView && window.loadAdminView('system_telemetry'))"
+                        style="width: 32px; height: 32px; background: rgba(15,23,42,0.9); border: 1.5px solid #CCFF00; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 10px rgba(204,255,0,0.4); transition: all 0.3s ease; animation: pulseGlow 2s infinite; padding: 0;">
+                        <i class="fas fa-heartbeat" style="font-size: 0.85rem; color: #CCFF00;"></i>
+                    </button>
                     <img src="C:/Users/acoscolin/.gemini/antigravity/brain/98319fa2-90ca-4f13-a003-bff232fc3974/corporate_elite_ai_logo_somospadel_1777754306402.png"
                         class="ai-pulse-trigger haptic-feedback" onclick="window.AICopilot && window.AICopilot.open()"
                         style="width: 30px; height: 30px; border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px rgba(255,255,255,0.2); animation: aiPulseGlow 5s infinite; object-fit: cover;">
@@ -2073,6 +2083,7 @@
             <script src="js/modules/admin/AICopilot_v4.js"></script>
             <script src="js/modules/admin/NeuralAgent_v6.js"></script>
             <script src="js/modules/admin/BatSignalAgent.js"></script>
+            <script src="js/modules/admin/AdminNotifications.js?v=1.0"></script>
 
             <script src="js/utils/RoleService.js"></script>
             <script src="js/modules/admin-users.js?v=1.1"></script>
@@ -2086,11 +2097,12 @@
             <script src="js/modules/admin-pairs-ui.js?v=2000"></script>
             <script src="js/modules/admin-dashboard.js"></script>
             <script src="js/modules/admin-analytics.js"></script>
-            <script src="js/modules/common/WhatsAppService.js?v=7019"></script>
+            <script src="js/modules/common/WhatsAppService.js?v=9000"></script>
             <script src="js/modules/admin-entrenos.js?v=5012"></script>
             <script src="js/modules/admin-open-matches.js?v=3" defer></script>
             <script src="js/modules/admin-database-health.js"></script>
             <script src="js/modules/admin-fix-players.js"></script>
+            <script src="js/modules/admin-telemetry.js?v=1001"></script>
 
             <!-- 📰 Blog & Noticias -->
             <script src="js/modules/auto-blog-engine.js?v=1001"></script>

@@ -700,26 +700,22 @@
             container.innerHTML = `
                 <div class="tournament-layout fade-in" style="background: #ffffff; color: #0a192f;">
                     
-                    <!-- PREMIUM DARK LED SUBMENU -->
-                    <style>
-                        @keyframes ledPulse {
-                            0% { box-shadow: 0 0 5px rgba(255,149,0,0.1), inset 0 0 5px rgba(255,149,0,0.05); }
-                            50% { box-shadow: 0 0 15px rgba(255,149,0,0.4), inset 0 0 8px rgba(255,149,0,0.2); }
-                            100% { box-shadow: 0 0 5px rgba(255,149,0,0.1), inset 0 0 5px rgba(255,149,0,0.05); }
-                        }
-                        .led-tab-active {
-                            animation: ledPulse 2.5s infinite ease-in-out;
-                            border: 1px solid #ff9500 !important;
-                            color: #ff9500 !important;
-                            background: rgba(255,149,0,0.05) !important;
-                            text-shadow: 0 0 8px rgba(255,149,0,0.3);
-                        }
-                    </style>
-
-                    <div style="background: #ffffff; backdrop-filter: blur(20px); padding: 14px; display: flex; justify-content: center; gap: 12px; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 1002; box-shadow: 0 10px 40px rgba(0,0,0,0.05);">
-                        <button onclick="window.ControlTowerView.switchSection('playing')" class="${this.mainSection === 'playing' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #e2e8f0; background: #f8fafc; color: #0a192f; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer;">EN JUEGO</button>
-                        <button onclick="window.ControlTowerView.switchSection('history')" class="${this.mainSection === 'history' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #e2e8f0; background: #f8fafc; color: #0a192f; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer;">MI PASADO</button>
-                        <button onclick="window.ControlTowerView.switchSection('help')" class="${this.mainSection === 'help' ? 'led-tab-active' : ''}" style="flex:1; border: 1px solid #e2e8f0; background: #f8fafc; color: #0a192f; padding: 14px 6px; border-radius: 14px; font-weight: 950; font-size: 0.7rem; transition: 0.4s; text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer;">INFO</button>
+                    <div style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 7px 12px; display: flex; justify-content: center; gap: 8px; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 1002; box-shadow: 0 4px 20px rgba(0,0,0,0.03); height: 48px; box-sizing: border-box;">
+                        <button type="button" onclick="window.ControlTowerView.switchSection('playing')" 
+                                style="flex: 1; border: 1px solid ${this.mainSection === 'playing' ? '#0f172a' : '#e2e8f0'}; background: ${this.mainSection === 'playing' ? '#0f172a' : '#f8fafc'}; color: ${this.mainSection === 'playing' ? '#ffffff' : '#64748b'}; padding: 0 6px; border-radius: 12px; font-weight: 950; font-size: 0.68rem; transition: all 0.25s; text-transform: uppercase; letter-spacing: 0.8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <i class="fas fa-play-circle" style="${this.mainSection === 'playing' ? 'color: #ccff00;' : ''}"></i>
+                            <span>EN JUEGO</span>
+                        </button>
+                        <button type="button" onclick="window.ControlTowerView.switchSection('history')" 
+                                style="flex: 1; border: 1px solid ${this.mainSection === 'history' ? '#0f172a' : '#e2e8f0'}; background: ${this.mainSection === 'history' ? '#0f172a' : '#f8fafc'}; color: ${this.mainSection === 'history' ? '#ffffff' : '#64748b'}; padding: 0 6px; border-radius: 12px; font-weight: 950; font-size: 0.68rem; transition: all 0.25s; text-transform: uppercase; letter-spacing: 0.8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <i class="fas fa-history" style="${this.mainSection === 'history' ? 'color: #38bdf8;' : ''}"></i>
+                            <span>MI PASADO</span>
+                        </button>
+                        <button type="button" onclick="window.ControlTowerView.switchSection('help')" 
+                                style="flex: 1; border: 1px solid ${this.mainSection === 'help' ? '#0f172a' : '#e2e8f0'}; background: ${this.mainSection === 'help' ? '#0f172a' : '#f8fafc'}; color: ${this.mainSection === 'help' ? '#ffffff' : '#64748b'}; padding: 0 6px; border-radius: 12px; font-weight: 950; font-size: 0.68rem; transition: all 0.25s; text-transform: uppercase; letter-spacing: 0.8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <i class="fas fa-info-circle" style="${this.mainSection === 'help' ? 'color: #fbbf24;' : ''}"></i>
+                            <span>INFO</span>
+                        </button>
                     </div>
 
                     ${this.renderMainArea(data, isPlayingHere)}
@@ -729,6 +725,9 @@
             // --- RPG RADAR CHART INIT ---
             if (this.mainSection === 'history') {
                 setTimeout(() => this.initRadarChart(user), 100);
+            }
+            if (this.mainSection === 'help') {
+                setTimeout(() => this.initHelpGuide(), 50);
             }
 
 
@@ -856,17 +855,18 @@
                     const isMyMatch = (match.team_a_ids || []).includes(uid) || (match.team_b_ids || []).includes(uid);
 
                     if (isFinished) {
-                        cardStyle = 'border: 1px solid #e2e8f0; opacity: 0.6; filter: grayscale(100%); z-index: 1;';
-                        cardBg = '#f8fafc';
+                        cardStyle = 'border: 1px solid #e2e8f0; z-index: 1;';
+                        cardBg = '#fafcff';
                     } else if (isMyMatch && isLive) {
-                        cardStyle = 'border: 3px solid #72a800; box-shadow: 0 15px 45px rgba(114, 168, 0, 0.2); transform: scale(1.03); z-index: 10;';
+                        cardStyle = 'border: 2px solid #72a800; box-shadow: 0 8px 30px rgba(114, 168, 0, 0.15); z-index: 10;';
+                        cardBg = 'linear-gradient(180deg, #fafef5 0%, #ffffff 40px)';
                     }
                     el.style.cssText += cardStyle;
                     el.style.background = cardBg;
 
                     const newStatusHTML = isFinished ?
-                        '<span style="background: #25D366; color: white; padding: 4px 10px; border-radius: 12px; font-weight: 950; font-size: 0.6rem; letter-spacing: 0.5px; text-transform:uppercase;">FINALIZADO</span>' :
-                        (isLive ? '<span class="status-badge-live" style="animation: pulse 1s infinite alternate;">⚡ EN JUEGO</span>' : '<span style="background: rgba(255,255,255,0.1); color: #888; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">PROGRAMADO</span>');
+                        '<div style="display:inline-flex; align-items:center; gap:5px; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 3px 9px; border-radius: 20px;"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span><span style="color: #065f46; font-weight: 950; font-size: 0.6rem; letter-spacing: 0.5px; text-transform:uppercase;">CONFIRMADO</span></div>' :
+                        (isLive ? '<div style="display:inline-flex; align-items:center; gap:5px; background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.35); padding: 3px 9px; border-radius: 20px;"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#22c55e; animation: livePulseDot 1.5s infinite;"></span><span style="color: #15803d; font-weight: 950; font-size: 0.6rem; letter-spacing: 0.5px; text-transform:uppercase;">EN JUEGO</span></div>' : '<div style="display:inline-flex; align-items:center; gap:4px; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 3px 9px; border-radius: 20px;"><span style="color: #64748b; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.5px;">PROGRAMADO</span></div>');
 
                     if (statusArea && statusArea.innerHTML !== newStatusHTML) statusArea.innerHTML = newStatusHTML;
 
@@ -965,13 +965,33 @@
 
         renderResultsView(roundData, allRounds, isLiveEvent = false) {
             const tabs = this.renderRoundTabs(allRounds, roundData.number);
+            const user = window.Store ? window.Store.getState('currentUser') : null;
+            const isAdmin = ['super_admin', 'superadmin', 'admin', 'admin_player', 'captain', 'capitan', 'capitanes', 'organizador', 'organizadores'].includes((user?.role || '').toLowerCase());
+            const hasMatches = roundData?.matches && roundData.matches.length > 0;
 
-            let emptyMessage = isLiveEvent ?
-                '<div style="display:flex; justify-content:center; padding:40px;"><div class="loader"></div></div>' :
-                'Selecciona una ronda válida...';
+            const emptyStateMarkup = `
+                <div class="animate-pop-in" style="background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 22px; padding: 42px 20px; text-align: center; margin: 8px 0 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
+                    <div style="width: 68px; height: 68px; border-radius: 50%; background: #f8fafc; border: 1.5px solid #e2e8f0; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.05);">
+                        <i class="fas fa-tennis-ball" style="font-size: 1.8rem; color: #72a800;"></i>
+                    </div>
+                    <h3 style="font-family: 'Outfit', sans-serif; font-weight: 1000; font-size: 1.25rem; color: #0f172a; margin: 0 0 6px 0; letter-spacing: -0.3px;">
+                        Ronda ${roundData.number || 1} en Espera
+                    </h3>
+                    <p style="font-size: 0.8rem; color: #64748b; margin: 0 auto 18px; max-width: 320px; line-height: 1.5; font-weight: 600;">
+                        ${isLiveEvent ? 'Generando emparejamientos y asignando pistas en tiempo real...' : 'Los cruces de esta ronda se generarán automáticamente al cerrar la ronda anterior o cuando el organizador active el sorteo.'}
+                    </p>
+                    ${isAdmin ? `
+                        <button type="button" onclick="window.ControlTowerView.regenerateCurrentRound(${roundData.number || 1})"
+                                style="background: linear-gradient(135deg, #72a800 0%, #00e36d 100%); color: #000000; border: none; padding: 12px 22px; border-radius: 14px; font-weight: 1000; font-size: 0.8rem; cursor: pointer; box-shadow: 0 6px 20px rgba(114, 168, 0, 0.28); display: inline-flex; align-items: center; gap: 8px; transition: transform 0.15s;">
+                            <i class="fas fa-random"></i>
+                            <span>GENERAR CRUCES RONDA ${roundData.number || 1}</span>
+                        </button>
+                    ` : ''}
+                </div>
+            `;
 
             return `
-                <div class="tour-filter-bar" style="position: sticky; top: 122px; z-index: 1000; background: rgba(255,255,255,0.9); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+                <div class="tour-filter-bar" style="position: sticky; top: 96px; z-index: 1000; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgba(0,0,0,0.06); box-shadow: 0 2px 12px rgba(0,0,0,0.02);">
                    <div style="flex: 1; overflow-x: auto; display: flex; align-items: center; scrollbar-width: none; -ms-overflow-style: none;">
                        <style>
                            .tour-filter-bar div::-webkit-scrollbar { display: none; }
@@ -984,21 +1004,21 @@
                            
                            @keyframes pulseLive {
                                0% { transform: scale(1); opacity: 1; }
-                               50% { transform: scale(1.5); opacity: 0.5; }
+                               50% { transform: scale(1.4); opacity: 0.5; }
                                100% { transform: scale(1); opacity: 1; }
                            }
-                           .live-pulse-dot { width: 8px; height: 8px; background: #00E36D; border-radius: 50%; display: inline-block; margin-right: 8px; animation: pulseLive 2s infinite; }
+                           .live-pulse-dot { width: 7px; height: 7px; background: #00E36D; border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulseLive 2s infinite; }
                        </style>
                        ${tabs}
                    </div>
-                   <div style="display:flex; align-items:center; gap:10px;">
-                       <span style="font-size: 0.65rem; color: #666; font-weight: 700; background: #eee; padding: 4px 8px; border-radius: 10px; display: flex; align-items: center;">
-                           <span class="live-pulse-dot"></span> VIVO
+                   <div style="display:flex; align-items:center; gap:6px; flex-shrink: 0;">
+                       <span style="font-size: 0.62rem; color: #15803d; font-weight: 900; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 4px 9px; border-radius: 20px; display: flex; align-items: center;">
+                           <span class="live-pulse-dot"></span> EN VIVO
                        </span>
                    </div>
                 </div>
-                <div class="tour-grid-container" style="padding: 16px; display: grid; gap: 16px; padding-bottom: 100px;">
-                    ${roundData.matches.length ? '' : `<div style="color:#999; width:100%; text-align:center; padding:80px; font-weight:700; line-height:1.5;">${emptyMessage}</div>`}
+                <div class="tour-grid-container" style="padding: 14px 14px; display: grid; gap: 12px; padding-bottom: calc(140px + env(safe-area-inset-bottom, 24px));">
+                    ${hasMatches ? '' : emptyStateMarkup}
                     ${roundData.matches.map(match => this.renderTournamentCard(match)).join('')}
                     ${this.renderRoundControlToolbar(roundData, allRounds)}
                 </div>
@@ -1017,124 +1037,150 @@
             const finishedMatches = matches.filter(isFinishedMatch);
             const finishedCount = finishedMatches.length;
             const isRoundComplete = totalMatches > 0 && finishedCount === totalMatches;
+            const progressPct = totalMatches > 0 ? Math.round((finishedCount / totalMatches) * 100) : 0;
 
             const maxRound = this.allMatches.length > 0 ? Math.max(...this.allMatches.map(m => parseInt(m.round || 1))) : 1;
-            const isViewingMaxRound = roundNum === maxRound;
             const isPastRound = roundNum < maxRound;
 
             const totalRoundsPlanned = parseInt(this.currentAmericanaDoc?.total_rounds || this.currentAmericanaDoc?.max_rounds || 6);
             const isLastPlannedRound = roundNum >= totalRoundsPlanned;
-            const isLive = this.currentAmericanaDoc?.status === 'live' || this.currentAmericanaDoc?.status === 'in_progress';
 
             return `
-                <div id="round-control-toolbar" class="animate-pop-in" style="margin-top: 24px; background: #ffffff; padding: 22px 20px; border-radius: 22px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.04);">
+                <div id="round-control-toolbar" class="animate-pop-in" 
+                     style="margin-top: 18px; margin-bottom: 24px; background: #ffffff; padding: 18px 18px; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 8px 25px rgba(0,0,0,0.04);">
                     ${isPastRound ? `
                         <!-- MODO RONDA ANTERIOR / CORRECCIÓN -->
-                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 18px; border-bottom: 1px solid #fee2e2; padding-bottom: 14px;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; border-bottom: 1px solid #fee2e2; padding-bottom: 12px;">
                             <div style="flex: 1;">
-                                <div style="font-weight: 950; color: #e11d48; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                                <div style="font-weight: 950; color: #e11d48; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
                                     <span>⚠️</span> MODO CORRECCIÓN (RONDA ${roundNum})
                                 </div>
-                                <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px; line-height: 1.4;">
+                                <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px; line-height: 1.4;">
                                     Estás en una ronda previa. La ronda más avanzada en juego es la <b>Ronda ${maxRound}</b>.<br>
-                                    Si hubo un error al introducir los resultados de la Ronda ${roundNum}, pulsa el botón para <b>reiniciar desde aquí</b>: se eliminarán las rondas posteriores y podrás corregir marcadores y regenerar el orden correcto in situ.
+                                    Si necesitas corregir marcadores de la Ronda ${roundNum}, puedes reiniciar desde aquí.
                                 </div>
                             </div>
-                            <span style="background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; padding: 4px 10px; border-radius: 10px; font-weight: 950; font-size: 0.65rem; white-space: nowrap;">
+                            <span style="background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; padding: 4px 9px; border-radius: 10px; font-weight: 950; font-size: 0.62rem; white-space: nowrap;">
                                 R${roundNum} / R${maxRound}
                             </span>
                         </div>
 
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <button onclick="window.ControlTowerView.rollbackTournament(${roundNum})"
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button type="button" onclick="window.ControlTowerView.rollbackTournament(${roundNum})"
                                     class="btn-primary-pro"
-                                    style="padding: 16px 20px; font-size: 0.95rem; background: #e11d48; color: white; border: none; border-radius: 14px; font-weight: 950; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 8px 25px rgba(225, 29, 72, 0.25); cursor: pointer; transition: all 0.2s;">
+                                    style="padding: 14px 18px; font-size: 0.88rem; background: #e11d48; color: white; border: none; border-radius: 14px; font-weight: 950; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 6px 20px rgba(225, 29, 72, 0.22); cursor: pointer;">
                                 🔄 REINICIAR Y CORREGIR DESDE RONDA ${roundNum}
                             </button>
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                                <button onclick="window.ControlTowerView.unlockRoundMatches(${roundNum})"
-                                        style="flex: 1; min-width: 170px; padding: 12px 16px; font-size: 0.8rem; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                    🔓 Desbloquear Marcadores R${roundNum}
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button type="button" onclick="window.ControlTowerView.unlockRoundMatches(${roundNum})"
+                                        style="flex: 1; min-width: 150px; padding: 10px 14px; font-size: 0.76rem; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    🔓 Desbloquear Marcadores
                                 </button>
-                                <button onclick="window.ControlTowerView.goToRound(${maxRound})"
-                                        style="flex: 1; min-width: 170px; padding: 12px 16px; font-size: 0.8rem; background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                    ➡️ Volver a Ronda ${maxRound} (Actual)
+                                <button type="button" onclick="window.ControlTowerView.goToRound(${maxRound})"
+                                        style="flex: 1; min-width: 150px; padding: 10px 14px; font-size: 0.76rem; background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    ➡️ Volver a Ronda ${maxRound}
                                 </button>
                             </div>
                         </div>
                     ` : `
                         <!-- MODO RONDA ACTIVA / MÁS RECIENTE -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 14px;">
-                            <div>
-                                <div style="font-weight: 950; color: #0a192f; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
-                                    ${isRoundComplete ? '🏁' : '🎾'} RONDA ${roundNum} ${isRoundComplete ? 'COMPLETADA' : 'EN JUEGO'}
+                        <div style="margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                                <div>
+                                    <div style="font-weight: 1000; color: #0a192f; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+                                        <span>${isRoundComplete ? '🏁' : '🎾'}</span>
+                                        <span>RONDA ${roundNum} ${isRoundComplete ? 'COMPLETADA' : (totalMatches === 0 ? 'EN ESPERA' : 'EN JUEGO')}</span>
+                                    </div>
+                                    <div style="font-size: 0.74rem; color: #64748b; margin-top: 3px;">
+                                        ${totalMatches === 0 
+                                            ? 'Cruces pendientes de sorteo o asignación de pista.'
+                                            : (isRoundComplete 
+                                                ? '¡Todos los partidos confirmados!' 
+                                                : `Progreso: <b>${finishedCount} de ${totalMatches}</b> pistas cerradas (${progressPct}%).`)}
+                                    </div>
                                 </div>
-                                <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">
-                                    ${isRoundComplete 
-                                        ? '¡Todos los partidos han sido confirmados!' 
-                                        : `Progreso: <b>${finishedCount} de ${totalMatches}</b> pistas cerradas.`}
-                                </div>
+                                <span style="background: ${isRoundComplete ? '#ecfdf5' : (totalMatches === 0 ? '#f1f5f9' : '#f0fdf4')}; color: ${isRoundComplete ? '#059669' : (totalMatches === 0 ? '#64748b' : '#166534')}; border: 1px solid ${isRoundComplete ? '#a7f3d0' : '#e2e8f0'}; padding: 4px 10px; border-radius: 12px; font-weight: 950; font-size: 0.64rem;">
+                                    ${isRoundComplete ? 'LISTA PARA AVANZAR' : (totalMatches === 0 ? 'PENDIENTE' : `${finishedCount}/${totalMatches} CONFIRMADAS`)}
+                                </span>
                             </div>
-                            <span style="background: ${isRoundComplete ? '#dcfce7' : '#f1f5f9'}; color: ${isRoundComplete ? '#15803d' : '#64748b'}; border: 1px solid ${isRoundComplete ? '#86efac' : '#e2e8f0'}; padding: 4px 10px; border-radius: 10px; font-weight: 950; font-size: 0.65rem;">
-                                ${isRoundComplete ? 'LISTA PARA AVANZAR' : `${finishedCount}/${totalMatches} CONFIRMADAS`}
-                            </span>
+
+                            ${totalMatches > 0 ? `
+                                <!-- Visual Progress Bar -->
+                                <div style="width: 100%; height: 6px; background: #f1f5f9; border-radius: 10px; overflow: hidden; margin-top: 10px;">
+                                    <div style="width: ${progressPct}%; height: 100%; background: linear-gradient(90deg, #72a800, #00e36d); border-radius: 10px; transition: width 0.4s ease;"></div>
+                                </div>
+                            ` : ''}
                         </div>
 
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            ${isRoundComplete ? `
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            ${totalMatches === 0 ? `
+                                <!-- CASO 0 PARTIDOS: BOTÓN DIRECTO DE SORTEO -->
+                                ${isAdmin ? `
+                                    <button type="button" onclick="window.ControlTowerView.regenerateCurrentRound(${roundNum})"
+                                            class="btn-primary-pro"
+                                            style="padding: 14px 20px; font-size: 0.88rem; background: linear-gradient(135deg, #72a800 0%, #00e36d 100%); color: #000000; border: none; border-radius: 14px; font-weight: 1000; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 6px 20px rgba(114, 168, 0, 0.28); cursor: pointer;">
+                                        <i class="fas fa-random"></i>
+                                        <span>SORTEAR Y GENERAR PISTAS DE RONDA ${roundNum}</span>
+                                    </button>
+                                ` : `
+                                    <div style="text-align:center; padding: 6px; font-size: 0.72rem; color: #94a3b8; font-weight: 700;">
+                                        Esperando activación de la ronda por el organizador...
+                                    </div>
+                                `}
+                            ` : isRoundComplete ? `
                                 <!-- AVANCE DE RONDA / FINALIZACIÓN -->
                                 ${isLastPlannedRound ? `
-                                    <button onclick="window.ControlTowerView.finishTournament()"
+                                    <button type="button" onclick="window.ControlTowerView.finishTournament()"
                                             class="btn-primary-pro"
-                                            style="padding: 16px 24px; font-size: 1rem; background: linear-gradient(135deg, #72a800 0%, #00e36d 100%); color: white; border: none; border-radius: 16px; font-weight: 950; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 30px rgba(114, 168, 0, 0.35); cursor: pointer;">
-                                        🏆 FINALIZAR TORNEO Y VER CLASIFICACIÓN
+                                            style="padding: 15px 22px; font-size: 0.95rem; background: linear-gradient(135deg, #72a800 0%, #00e36d 100%); color: #000000; border: none; border-radius: 16px; font-weight: 1000; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 25px rgba(114, 168, 0, 0.32); cursor: pointer;">
+                                        🏆 FINALIZAR EVENTO Y VER CLASIFICACIÓN
                                     </button>
-                                    <button onclick="window.ControlTowerView.triggerNextRound(${roundNum})"
-                                            style="padding: 12px 18px; font-size: 0.85rem; background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    <button type="button" onclick="window.ControlTowerView.triggerNextRound(${roundNum})"
+                                            style="padding: 11px 16px; font-size: 0.8rem; background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
                                         ➕ Añadir Ronda Extra (Ronda ${roundNum + 1})
                                     </button>
                                 ` : `
-                                    <button onclick="window.ControlTowerView.triggerNextRound(${roundNum})"
+                                    <button type="button" onclick="window.ControlTowerView.triggerNextRound(${roundNum})"
                                             class="btn-primary-pro"
-                                            style="padding: 16px 24px; font-size: 1.05rem; background: linear-gradient(135deg, #72a800 0%, #00e36d 100%); color: white; border: none; border-radius: 16px; font-weight: 950; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 30px rgba(114, 168, 0, 0.35); cursor: pointer;">
+                                            style="padding: 15px 22px; font-size: 0.95rem; background: linear-gradient(135deg, #72a800 0%, #00e36d 100%); color: #000000; border: none; border-radius: 16px; font-weight: 1000; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 25px rgba(114, 168, 0, 0.32); cursor: pointer;">
                                         🚀 GENERAR SIGUIENTE RONDA (RONDA ${roundNum + 1})
                                     </button>
                                 `}
 
                                 <!-- OPCIONES DE EDICIÓN IN SITU -->
-                                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px;">
-                                    <button onclick="window.ControlTowerView.unlockRoundMatches(${roundNum})"
-                                            style="flex: 1; min-width: 170px; padding: 11px 16px; font-size: 0.8rem; background: #f8fafc; color: #0284c7; border: 1px solid #bae6fd; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px;">
+                                    <button type="button" onclick="window.ControlTowerView.unlockRoundMatches(${roundNum})"
+                                            style="flex: 1; min-width: 150px; padding: 10px 14px; font-size: 0.76rem; background: #f8fafc; color: #0284c7; border: 1px solid #bae6fd; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
                                         ✏️ Corregir Marcadores R${roundNum}
                                     </button>
-                                    <button onclick="window.ControlTowerView.regenerateCurrentRound(${roundNum})"
-                                            style="flex: 1; min-width: 170px; padding: 11px 16px; font-size: 0.8rem; background: #fffbeb; color: #d97706; border: 1px solid #fde68a; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    <button type="button" onclick="window.ControlTowerView.regenerateCurrentRound(${roundNum})"
+                                            style="flex: 1; min-width: 150px; padding: 10px 14px; font-size: 0.76rem; background: #fffbeb; color: #d97706; border: 1px solid #fde68a; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
                                         🎲 Regenerar Cruces R${roundNum}
                                     </button>
                                 </div>
                             ` : `
                                 <!-- RONDA EN CURSO (INCOMPLETA) -->
                                 ${finishedCount < totalMatches ? `
-                                    <button onclick="window.ControlTowerView.finalizeAllRoundMatches(${roundNum})"
-                                            style="padding: 14px 20px; font-size: 0.9rem; background: #f0fdf4; color: #166534; border: 1px solid #86efac; border-radius: 14px; font-weight: 950; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(22, 101, 52, 0.08);">
+                                    <button type="button" onclick="window.ControlTowerView.finalizeAllRoundMatches(${roundNum})"
+                                            style="padding: 13px 18px; font-size: 0.85rem; background: #f0fdf4; color: #166534; border: 1px solid #86efac; border-radius: 14px; font-weight: 1000; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(22, 101, 52, 0.08);">
                                         ✓ CONFIRMAR TODOS LOS RESULTADOS (${finishedCount}/${totalMatches})
                                     </button>
                                 ` : ''}
 
-                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                                    <button onclick="window.ControlTowerView.unlockRoundMatches(${roundNum})"
-                                            style="flex: 1; min-width: 170px; padding: 12px 16px; font-size: 0.8rem; background: #f8fafc; color: #0284c7; border: 1px solid #bae6fd; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button type="button" onclick="window.ControlTowerView.unlockRoundMatches(${roundNum})"
+                                            style="flex: 1; min-width: 150px; padding: 10px 14px; font-size: 0.76rem; background: #f8fafc; color: #0284c7; border: 1px solid #bae6fd; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
                                         🔓 Desbloquear Marcadores
                                     </button>
-                                    <button onclick="window.ControlTowerView.regenerateCurrentRound(${roundNum})"
-                                            style="flex: 1; min-width: 170px; padding: 12px 16px; font-size: 0.8rem; background: #fffbeb; color: #d97706; border: 1px solid #fde68a; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                        🎲 Regenerar Cruces de esta Ronda
+                                    <button type="button" onclick="window.ControlTowerView.regenerateCurrentRound(${roundNum})"
+                                            style="flex: 1; min-width: 150px; padding: 10px 14px; font-size: 0.76rem; background: #fffbeb; color: #d97706; border: 1px solid #fde68a; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        🎲 Regenerar Cruces
                                     </button>
                                 </div>
 
                                 ${isAdmin ? `
-                                    <button onclick="window.ControlTowerView.triggerNextRound(${roundNum}, true)"
-                                            style="padding: 10px 16px; font-size: 0.75rem; background: transparent; color: #64748b; border: 1px dashed #cbd5e1; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    <button type="button" onclick="window.ControlTowerView.triggerNextRound(${roundNum}, true)"
+                                            style="padding: 9px 14px; font-size: 0.72rem; background: transparent; color: #64748b; border: 1px dashed #cbd5e1; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
                                         ⏩ Forzar Siguiente Ronda (${roundNum + 1}) sin completar
                                     </button>
                                 ` : ''}
@@ -1151,17 +1197,17 @@
 
         renderStandingsView() {
             if (!window.ControlTowerStandings) return '<div style="padding:40px; text-align:center;">Cargando...</div>';
-            return window.ControlTowerStandings.render(this.allMatches, this.currentAmericanaDoc);
+            return `<div style="padding-bottom: calc(140px + env(safe-area-inset-bottom, 24px));">${window.ControlTowerStandings.render(this.allMatches, this.currentAmericanaDoc)}</div>`;
         }
 
         renderBracketsView() {
             if (!window.ControlTowerBrackets) return '<div style="padding:40px; text-align:center; color:white;">Cargando cuadros...</div>';
-            return window.ControlTowerBrackets.render(this.allMatches, this.currentAmericanaDoc);
+            return `<div style="padding-bottom: calc(140px + env(safe-area-inset-bottom, 24px));">${window.ControlTowerBrackets.render(this.allMatches, this.currentAmericanaDoc)}</div>`;
         }
 
         renderSummaryView() {
             if (!window.ControlTowerStats) return '<div style="padding:40px; text-align:center;">Cargando...</div>';
-            return window.ControlTowerStats.render(this.allMatches, this.currentAmericanaDoc);
+            return `<div style="padding-bottom: calc(140px + env(safe-area-inset-bottom, 24px));">${window.ControlTowerStats.render(this.allMatches, this.currentAmericanaDoc)}</div>`;
         }
 
         renderTournamentCard(match, options = {}) {
@@ -1341,10 +1387,8 @@
             // OPTIMISTIC UI: Instant visual feedback to the user before Firebase responds
             const matchCardEl = document.getElementById(`card-${matchId}`);
             if (matchCardEl) {
-                matchCardEl.style.transition = 'all 0.3s ease-out';
-                matchCardEl.style.opacity = '0.5';
-                matchCardEl.style.filter = 'grayscale(100%)';
-                matchCardEl.style.transform = 'scale(0.98)';
+                matchCardEl.style.transition = 'all 0.25s ease-out';
+                matchCardEl.style.opacity = '0.85';
                 matchCardEl.style.pointerEvents = 'none'; // Lock interaction momentarily
             }
 
@@ -2028,109 +2072,1491 @@
 
         renderHelpContent() {
             return `
-                <div class="fade-in" style="padding: 25px; min-height: 80vh; background: #000; padding-bottom: 120px; font-family: 'Inter', sans-serif; color: white;">
-                    <div style="margin-bottom: 30px; border-bottom: 3px solid #CCFF00; padding-bottom: 15px; display: inline-block;">
-                        <h2 style="font-family:'Outfit'; font-weight: 950; color: #fff; font-size: 1.8rem; margin: 0; letter-spacing: -0.5px;">GUÍA <span style="color: #CCFF00;">SMART</span> JUGADOR</h2>
+                <div class="sp-help-container fade-in">
+                    <style>
+                        .sp-help-container {
+                            padding: 24px 16px 120px 16px;
+                            min-height: 85vh;
+                            background: radial-gradient(circle at 50% 0%, #121929 0%, #06080e 70%);
+                            color: #f1f5f9;
+                            font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+                            max-width: 1100px;
+                            margin: 0 auto;
+                        }
+                        .sp-help-badge {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 8px;
+                            padding: 6px 14px;
+                            background: rgba(204, 255, 0, 0.1);
+                            border: 1px solid rgba(204, 255, 0, 0.3);
+                            border-radius: 999px;
+                            font-size: 0.72rem;
+                            font-weight: 900;
+                            color: #CCFF00;
+                            letter-spacing: 1.5px;
+                            text-transform: uppercase;
+                            margin-bottom: 12px;
+                            box-shadow: 0 0 20px rgba(204, 255, 0, 0.15);
+                        }
+                        .sp-help-title {
+                            font-size: 2.2rem;
+                            font-weight: 950;
+                            letter-spacing: -0.8px;
+                            margin: 0 0 10px 0;
+                            line-height: 1.1;
+                            color: #ffffff;
+                        }
+                        .sp-help-subtitle {
+                            font-size: 0.95rem;
+                            color: #94a3b8;
+                            line-height: 1.6;
+                            margin: 0 0 24px 0;
+                            max-width: 780px;
+                            font-family: 'Inter', sans-serif;
+                        }
+                        .sp-quick-chips {
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 10px;
+                            margin-bottom: 28px;
+                        }
+                        .sp-chip {
+                            background: rgba(255, 255, 255, 0.04);
+                            border: 1px solid rgba(255, 255, 255, 0.08);
+                            padding: 6px 12px;
+                            border-radius: 12px;
+                            font-size: 0.75rem;
+                            font-weight: 750;
+                            color: #cbd5e1;
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+                        }
+                        .sp-help-nav {
+                            display: flex;
+                            gap: 8px;
+                            overflow-x: auto;
+                            padding-bottom: 12px;
+                            margin-bottom: 28px;
+                            scrollbar-width: none;
+                            -webkit-overflow-scrolling: touch;
+                        }
+                        .sp-help-nav::-webkit-scrollbar {
+                            display: none;
+                        }
+                        .sp-help-nav-btn {
+                            flex: 0 0 auto;
+                            background: rgba(255, 255, 255, 0.03);
+                            border: 1px solid rgba(255, 255, 255, 0.08);
+                            color: #94a3b8;
+                            padding: 10px 18px;
+                            border-radius: 16px;
+                            font-size: 0.82rem;
+                            font-weight: 850;
+                            cursor: pointer;
+                            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            font-family: 'Outfit', sans-serif;
+                            white-space: nowrap;
+                        }
+                        .sp-help-nav-btn:hover {
+                            background: rgba(255, 255, 255, 0.08);
+                            color: #fff;
+                            border-color: rgba(255, 255, 255, 0.2);
+                        }
+                        .sp-help-nav-btn.sp-tab-active {
+                            background: #CCFF00;
+                            color: #06080e;
+                            border-color: #CCFF00;
+                            font-weight: 950;
+                            box-shadow: 0 0 25px rgba(204, 255, 0, 0.35);
+                            transform: translateY(-1px);
+                        }
+                        .sp-help-panel {
+                            display: none;
+                            animation: spFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                        }
+                        @keyframes spFadeIn {
+                            from { opacity: 0; transform: translateY(8px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+                        .sp-card {
+                            background: rgba(255, 255, 255, 0.025);
+                            border: 1px solid rgba(255, 255, 255, 0.07);
+                            border-radius: 24px;
+                            padding: 24px;
+                            margin-bottom: 22px;
+                            backdrop-filter: blur(12px);
+                            -webkit-backdrop-filter: blur(12px);
+                            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
+                            transition: border-color 0.25s;
+                        }
+                        .sp-card:hover {
+                            border-color: rgba(255, 255, 255, 0.14);
+                        }
+                        .sp-card-highlight {
+                            border-color: rgba(204, 255, 0, 0.35);
+                            background: linear-gradient(135deg, rgba(204, 255, 0, 0.06) 0%, rgba(6, 8, 14, 0.6) 100%);
+                        }
+                        .sp-card-header {
+                            display: flex;
+                            align-items: center;
+                            gap: 14px;
+                            margin-bottom: 18px;
+                        }
+                        .sp-card-icon {
+                            width: 44px;
+                            height: 44px;
+                            border-radius: 14px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 1.25rem;
+                            flex-shrink: 0;
+                        }
+                        .sp-card-title {
+                            font-size: 1.22rem;
+                            font-weight: 900;
+                            color: #ffffff;
+                            letter-spacing: -0.3px;
+                            margin: 0;
+                        }
+                        .sp-card-subtitle {
+                            font-size: 0.8rem;
+                            color: #94a3b8;
+                            margin-top: 2px;
+                            font-family: 'Inter', sans-serif;
+                        }
+                        .sp-scale-track {
+                            height: 12px;
+                            border-radius: 999px;
+                            background: linear-gradient(to right, #f97316 0%, #cbd5e1 25%, #f59e0b 50%, #38bdf8 75%, #00E36D 100%);
+                            position: relative;
+                            margin: 32px 10px 48px 10px;
+                            box-shadow: 0 0 20px rgba(0, 227, 109, 0.2);
+                        }
+                        .sp-scale-marker {
+                            position: absolute;
+                            top: -26px;
+                            transform: translateX(-50%);
+                            font-size: 0.7rem;
+                            font-weight: 900;
+                            color: #fff;
+                            white-space: nowrap;
+                        }
+                        .sp-scale-pin {
+                            position: absolute;
+                            top: 18px;
+                            transform: translateX(-50%);
+                            font-size: 0.68rem;
+                            font-weight: 800;
+                            color: #64748b;
+                            text-align: center;
+                            white-space: nowrap;
+                        }
+                        .sp-cat-grid {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+                            gap: 12px;
+                            margin-bottom: 20px;
+                        }
+                        .sp-cat-btn {
+                            background: rgba(255, 255, 255, 0.03);
+                            border: 1.5px solid rgba(255, 255, 255, 0.08);
+                            border-radius: 18px;
+                            padding: 14px 12px;
+                            text-align: center;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                        }
+                        .sp-cat-btn:hover {
+                            transform: translateY(-2px);
+                            background: rgba(255, 255, 255, 0.06);
+                        }
+                        .sp-cat-btn.sp-cat-active {
+                            border-width: 2px;
+                            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+                            transform: translateY(-2px);
+                        }
+                        .sp-stat-pill {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 6px;
+                            padding: 4px 10px;
+                            border-radius: 8px;
+                            font-size: 0.72rem;
+                            font-weight: 850;
+                        }
+                        .sp-faq-item {
+                            background: rgba(255, 255, 255, 0.025);
+                            border: 1px solid rgba(255, 255, 255, 0.07);
+                            border-radius: 18px;
+                            margin-bottom: 12px;
+                            overflow: hidden;
+                            transition: border-color 0.2s;
+                        }
+                        .sp-faq-item:hover {
+                            border-color: rgba(255, 255, 255, 0.16);
+                        }
+                        .sp-faq-question {
+                            padding: 18px 20px;
+                            font-weight: 850;
+                            font-size: 0.95rem;
+                            color: #f1f5f9;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            gap: 12px;
+                            user-select: none;
+                        }
+                        .sp-faq-answer {
+                            padding: 0 20px 18px 20px;
+                            font-size: 0.88rem;
+                            color: #94a3b8;
+                            line-height: 1.65;
+                            font-family: 'Inter', sans-serif;
+                            display: none;
+                        }
+                        .sp-faq-icon {
+                            transition: transform 0.25s ease;
+                            color: #CCFF00;
+                            font-size: 0.85rem;
+                        }
+                        .sp-sim-input-group {
+                            margin-bottom: 18px;
+                        }
+                        .sp-sim-label {
+                            display: flex;
+                            justify-content: space-between;
+                            font-size: 0.82rem;
+                            font-weight: 800;
+                            color: #e2e8f0;
+                            margin-bottom: 8px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                        }
+                        .sp-sim-select, .sp-sim-slider {
+                            width: 100%;
+                            background: #0f1420;
+                            border: 1px solid rgba(255, 255, 255, 0.12);
+                            color: #fff;
+                            padding: 12px 14px;
+                            border-radius: 14px;
+                            font-family: 'Outfit', sans-serif;
+                            font-weight: 700;
+                            font-size: 0.88rem;
+                            outline: none;
+                            transition: border-color 0.2s;
+                        }
+                        .sp-sim-select:focus {
+                            border-color: #CCFF00;
+                        }
+                        .sp-sim-slider {
+                            -webkit-appearance: none;
+                            height: 8px;
+                            padding: 0;
+                            background: #1e293b;
+                            border: none;
+                            border-radius: 4px;
+                            cursor: pointer;
+                        }
+                        .sp-sim-slider::-webkit-slider-thumb {
+                            -webkit-appearance: none;
+                            width: 22px;
+                            height: 22px;
+                            border-radius: 50%;
+                            background: #CCFF00;
+                            cursor: pointer;
+                            box-shadow: 0 0 10px rgba(204, 255, 0, 0.6);
+                        }
+                        .sp-timeline-step {
+                            position: relative;
+                            padding-left: 36px;
+                            margin-bottom: 22px;
+                        }
+                        .sp-timeline-step::before {
+                            content: '';
+                            position: absolute;
+                            left: 11px;
+                            top: 26px;
+                            bottom: -16px;
+                            width: 2px;
+                            background: rgba(255, 255, 255, 0.1);
+                        }
+                        .sp-timeline-step:last-child::before {
+                            display: none;
+                        }
+                        .sp-timeline-badge {
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            width: 24px;
+                            height: 24px;
+                            border-radius: 50%;
+                            background: #CCFF00;
+                            color: #000;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 0.75rem;
+                            font-weight: 950;
+                        }
+                        @media (max-width: 640px) {
+                            .sp-help-title { font-size: 1.7rem; }
+                            .sp-card { padding: 18px 16px; }
+                            .sp-cat-grid { grid-template-columns: repeat(2, 1fr); }
+                        }
+                    </style>
+
+                    <!-- HERO BANNER -->
+                    <div style="margin-bottom: 24px;">
+                        <div class="sp-help-badge">
+                            <i class="fas fa-bolt"></i> SOMOSPADEL BCN • MANUAL DE COMPETICIÓN & OPERATIVA
+                        </div>
+                        <h1 class="sp-help-title">
+                            GUÍA <span style="color: #CCFF00; text-shadow: 0 0 25px rgba(204,255,0,0.45);">SMART</span> JUGADOR
+                        </h1>
+                        <p class="sp-help-subtitle">
+                            Todo lo que necesitas dominar: la escala de niveles ELO (0.0 a 7.5), el cálculo inteligente de décimas, los formatos de torneo, la Torre de Control en directo y las alertas comunitarias.
+                        </p>
+                        
+                        <!-- QUICK STAT CHIPS -->
+                        <div class="sp-quick-chips">
+                            <div class="sp-chip"><i class="fas fa-layer-group" style="color: #CCFF00;"></i> Escala 0.00 — 7.50</div>
+                            <div class="sp-chip"><i class="fas fa-calculator" style="color: #38bdf8;"></i> Algoritmo ELO 60/40</div>
+                            <div class="sp-chip"><i class="fas fa-trophy" style="color: #f59e0b;"></i> 3 Pts por Victoria</div>
+                            <div class="sp-chip"><i class="fas fa-tv" style="color: #ef4444;"></i> Modo TV Center Court</div>
+                            <div class="sp-chip"><i class="fas fa-bell" style="color: #ec4899;"></i> Alerta SOS Express</div>
+                        </div>
                     </div>
 
-                    <div style="display: grid; gap: 25px;">
+                    <!-- INTERACTIVE HORIZONTAL TABS -->
+                    <div class="sp-help-nav" role="tablist">
+                        <button class="sp-help-nav-btn sp-tab-active" data-tab="levels" onclick="window.ControlTowerView.switchHelpTab('levels')">
+                            <i class="fas fa-tachometer-alt"></i> 1. Niveles & ELO
+                        </button>
+                        <button class="sp-help-nav-btn" data-tab="ranking" onclick="window.ControlTowerView.switchHelpTab('ranking')">
+                            <i class="fas fa-medal"></i> 2. Ranking Oficial
+                        </button>
+                        <button class="sp-help-nav-btn" data-tab="formats" onclick="window.ControlTowerView.switchHelpTab('formats')">
+                            <i class="fas fa-sitemap"></i> 3. Formatos Reales
+                        </button>
+                        <button class="sp-help-nav-btn" data-tab="ops" onclick="window.ControlTowerView.switchHelpTab('ops')">
+                            <i class="fas fa-mobile-alt"></i> 4. En Pista & TV
+                        </button>
+                        <button class="sp-help-nav-btn" data-tab="community" onclick="window.ControlTowerView.switchHelpTab('community')">
+                            <i class="fas fa-users"></i> 5. Comunidad & SOS
+                        </button>
+                        <button class="sp-help-nav-btn" data-tab="radar" onclick="window.ControlTowerView.switchHelpTab('radar')">
+                            <i class="fas fa-chart-pie"></i> 6. Radar RPG
+                        </button>
+                        <button class="sp-help-nav-btn" data-tab="faq" onclick="window.ControlTowerView.switchHelpTab('faq')">
+                            <i class="fas fa-question-circle"></i> 7. Dudas Frecuentes
+                        </button>
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- TAB 1: NIVELES & ALGORITMO ELO SMART       -->
+                    <!-- ========================================== -->
+                    <div id="sp-help-panel-levels" class="sp-help-panel" style="display: block;">
                         
-                        <!-- 1. NIVEL Y RANKING ANUAL -->
-                        <div style="background: linear-gradient(135deg, rgba(204,255,0,0.1) 0%, rgba(0,0,0,0) 100%); padding: 25px; border-radius: 30px; border: 1px solid rgba(204,255,0,0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-                            <div style="font-weight: 950; margin-bottom: 20px; color: #CCFF00; font-size: 1.2rem; display: flex; align-items: center; gap: 12px; text-transform: uppercase;">
-                                <div style="width: 40px; height: 40px; background: #CCFF00; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #000;">
-                                    <i class="fas fa-chart-line"></i>
+                        <!-- 1.1 Visual Scale -->
+                        <div class="sp-card sp-card-highlight">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(204,255,0,0.15); color: #CCFF00;">
+                                    <i class="fas fa-award"></i>
                                 </div>
-                                Nivel y Ranking Anual
+                                <div>
+                                    <h3 class="sp-card-title">Escala Oficial SomosPadel (0.00 — 7.50)</h3>
+                                    <div class="sp-card-subtitle">Tu huella competitiva calibrada partido a partido mediante precisión decimal</div>
+                                </div>
                             </div>
                             
-                            <p style="font-size: 0.9rem; color: #aaa; line-height: 1.6; margin-bottom: 20px;">
-                                Tu nivel SomosPadel (0.0 - 7.0) es tu <b>huella competitiva</b>. El <b>Ranking Oficial</b> es el resultado de la <u>suma de todos tus partidos registrados anualmente</u>. A más actividad y victorias, mejor posición.
+                            <p style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 24px;">
+                                A diferencia de los sistemas tradicionales estáticos, tu nivel en SomosPadel es un <b>valor numérico vivo</b> que oscila con exactitud matemática según tu rendimiento real en la pista y la dificultad de cada emparejamiento.
                             </p>
 
-                            <div style="display: grid; gap: 15px;">
-                                <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);">
-                                    <div style="color: #22c55e; font-weight: 900; font-size: 0.75rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-                                        <i class="fas fa-plus-circle"></i> ¿CÓMO SUMAR?
+                            <!-- Gradient Level Bar -->
+                            <div class="sp-scale-track">
+                                <div class="sp-scale-marker" style="left: 0%; color: #f97316;">0.00</div>
+                                <div class="sp-scale-pin" style="left: 18%;">BRONZE<br><span style="font-size: 0.6rem;">&lt; 3.00</span></div>
+                                <div class="sp-scale-pin" style="left: 42%;">SILVER<br><span style="font-size: 0.6rem;">3.00 - 3.49</span></div>
+                                <div class="sp-scale-pin" style="left: 64%; color: #CCFF00;">GOLD ★<br><span style="font-size: 0.6rem;">3.50 - 3.99</span></div>
+                                <div class="sp-scale-pin" style="left: 82%;">PLATINUM<br><span style="font-size: 0.6rem;">4.00 - 4.49</span></div>
+                                <div class="sp-scale-marker" style="left: 100%; color: #00E36D;">7.50</div>
+                                <div class="sp-scale-pin" style="left: 96%;">ELITE<br><span style="font-size: 0.6rem;">4.50+</span></div>
+                            </div>
+                        </div>
+
+                        <!-- 1.2 Five Official Categories Selector -->
+                        <div class="sp-card">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(56,189,248,0.15); color: #38bdf8;">
+                                    <i class="fas fa-layer-group"></i>
+                                </div>
+                                <div>
+                                    <h3 class="sp-card-title">Las 5 Categorías Oficiales</h3>
+                                    <div class="sp-card-subtitle">Haz clic en una categoría para inspeccionar su perfil técnico, estrellas y requisitos</div>
+                                </div>
+                            </div>
+
+                            <div class="sp-cat-grid">
+                                <div id="sp-cat-btn-bronze" class="sp-cat-btn" onclick="window.ControlTowerView.selectHelpCategory('bronze')" style="border-color: rgba(249,115,22,0.4);">
+                                    <div style="font-size: 0.75rem; color: #f97316; font-weight: 900; margin-bottom: 4px;">★☆☆☆☆</div>
+                                    <div style="font-weight: 950; font-size: 0.95rem; color: #fff;">BRONZE</div>
+                                    <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">&lt; 3.00</div>
+                                </div>
+                                <div id="sp-cat-btn-silver" class="sp-cat-btn" onclick="window.ControlTowerView.selectHelpCategory('silver')" style="border-color: rgba(203,213,225,0.4);">
+                                    <div style="font-size: 0.75rem; color: #cbd5e1; font-weight: 900; margin-bottom: 4px;">★★☆☆☆</div>
+                                    <div style="font-weight: 950; font-size: 0.95rem; color: #fff;">SILVER</div>
+                                    <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">3.00 — 3.49</div>
+                                </div>
+                                <div id="sp-cat-btn-gold" class="sp-cat-btn sp-cat-active" onclick="window.ControlTowerView.selectHelpCategory('gold')" style="border-color: #f59e0b; background: rgba(245,158,11,0.12);">
+                                    <div style="font-size: 0.75rem; color: #f59e0b; font-weight: 900; margin-bottom: 4px;">★★★☆☆</div>
+                                    <div style="font-weight: 950; font-size: 0.95rem; color: #fff;">GOLD</div>
+                                    <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">3.50 — 3.99</div>
+                                </div>
+                                <div id="sp-cat-btn-platinum" class="sp-cat-btn" onclick="window.ControlTowerView.selectHelpCategory('platinum')" style="border-color: rgba(56,189,248,0.4);">
+                                    <div style="font-size: 0.75rem; color: #38bdf8; font-weight: 900; margin-bottom: 4px;">★★★★☆</div>
+                                    <div style="font-weight: 950; font-size: 0.95rem; color: #fff;">PLATINUM</div>
+                                    <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">4.00 — 4.49</div>
+                                </div>
+                                <div id="sp-cat-btn-elite" class="sp-cat-btn" onclick="window.ControlTowerView.selectHelpCategory('elite')" style="border-color: rgba(0,227,109,0.4);">
+                                    <div style="font-size: 0.75rem; color: #00E36D; font-weight: 900; margin-bottom: 4px;">★★★★★</div>
+                                    <div style="font-weight: 950; font-size: 0.95rem; color: #fff;">ELITE</div>
+                                    <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">4.50+</div>
+                                </div>
+                            </div>
+
+                            <!-- Dynamic Category Detail Card -->
+                            <div id="sp-cat-detail-card" style="background: rgba(15,20,32,0.85); border: 1.5px solid #f59e0b; border-radius: 20px; padding: 22px; transition: all 0.3s ease;">
+                                <!-- Will be hydrated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- 1.3 Algoritmo ELO PRO Smart: 60/40 -->
+                        <div class="sp-card">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(139,92,246,0.15); color: #a78bfa;">
+                                    <i class="fas fa-brain"></i>
+                                </div>
+                                <div>
+                                    <h3 class="sp-card-title">Algoritmo ELO PRO Smart (60/40)</h3>
+                                    <div class="sp-card-subtitle">Fórmula de calibración basada en rendimiento numérico y dificultad competitiva</div>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 18px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                        <span style="font-size: 0.75rem; font-weight: 950; color: #CCFF00; letter-spacing: 1px;">COMPONENTE 1</span>
+                                        <span style="font-size: 1.2rem; font-weight: 950; color: #CCFF00;">60%</span>
                                     </div>
-                                    <p style="margin: 0; font-size: 0.8rem; color: #888;">Gana partidos, participa en eventos y vence a parejas de nivel superior para subir décimas y escalar en el ranking.</p>
+                                    <div style="font-size: 1rem; font-weight: 900; color: #fff; margin-bottom: 6px;">Rendimiento Real (Juegos)</div>
+                                    <p style="font-size: 0.82rem; color: #94a3b8; line-height: 1.5; margin: 0;">
+                                        Mide la <b>diferencia neta de juegos</b> en el marcador. Ganar 6-1 suma mucho más que un 6-5. Una derrota ajustada (5-6) minimiza el impacto negativo porque demuestra que competiste al límite.
+                                    </p>
                                 </div>
-                                <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);">
-                                    <div style="color: #64748b; font-weight: 900; font-size: 0.75rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-                                        <i class="fas fa-calendar-check"></i> CICLO ANUAL
+
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 18px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                        <span style="font-size: 0.75rem; font-weight: 950; color: #38bdf8; letter-spacing: 1px;">COMPONENTE 2</span>
+                                        <span style="font-size: 1.2rem; font-weight: 950; color: #38bdf8;">40%</span>
                                     </div>
-                                    <p style="margin: 0; font-size: 0.8rem; color: #888;">El ranking se reinicia cada temporada, premiando la regularidad y el esfuerzo de todo el año.</p>
+                                    <div style="font-size: 1rem; font-weight: 900; color: #fff; margin-bottom: 6px;">Dificultad del Cruce</div>
+                                    <p style="font-size: 0.82rem; color: #94a3b8; line-height: 1.5; margin: 0;">
+                                        Compara el <b>nivel medio de tu pareja vs el nivel medio de tus rivales</b>. Vencer a una pareja de ranking superior multiplica tus décimas ganadas; perder contra rivales muy superiores no penaliza casi nada.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; flex-wrap: wrap; gap: 12px; background: rgba(0,0,0,0.3); padding: 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                                <div style="flex: 1 1 180px;">
+                                    <div style="font-size: 0.7rem; color: #64748b; font-weight: 900; text-transform: uppercase;">Ajuste por Partido</div>
+                                    <div style="font-size: 1.1rem; font-weight: 950; color: #fff;">±0.010 a ±0.030</div>
+                                </div>
+                                <div style="flex: 1 1 180px;">
+                                    <div style="font-size: 0.7rem; color: #64748b; font-weight: 900; text-transform: uppercase;">Por Americana (4-5 rondas)</div>
+                                    <div style="font-size: 1.1rem; font-weight: 950; color: #CCFF00;">~0.12 a 0.18 décimas</div>
+                                </div>
+                                <div style="flex: 1 1 220px;">
+                                    <div style="font-size: 0.7rem; color: #64748b; font-weight: 900; text-transform: uppercase;">Filtro Anti-Racha</div>
+                                    <div style="font-size: 0.82rem; color: #cbd5e1; line-height: 1.4;">Protege contra días malos accidentales y premia la regularidad sostenida en el tiempo.</div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 2. CHAT TÁCTICO (OPS ROOM) -->
-                        <div style="background: rgba(255,255,255,0.02); padding: 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.05);">
-                            <div style="font-weight: 950; margin-bottom: 15px; color: #fff; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
-                                <div style="width: 36px; height: 36px; background: rgba(59,130,246,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #3b82f6;">
-                                    <i class="fas fa-comments"></i>
+                        <!-- 1.4 Mini Simulador Interactivo de Décimas -->
+                        <div class="sp-card" style="border-color: rgba(204,255,0,0.3); background: linear-gradient(135deg, rgba(204,255,0,0.04) 0%, rgba(15,20,32,0.9) 100%);">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: #CCFF00; color: #000;">
+                                    <i class="fas fa-calculator"></i>
                                 </div>
-                                CHAT EVENTO
+                                <div>
+                                    <h3 class="sp-card-title">Simulador Interactivo de Décimas</h3>
+                                    <div class="sp-card-subtitle">Experimenta en directo cómo reaccionará tu nivel tras tu próximo partido</div>
+                                </div>
                             </div>
-                            <div style="font-size: 0.9rem; color: #888; line-height: 1.7;">
-                                Canal de comunicación en tiempo real exclusivo de cada evento.
-                                <br><br>
-                                • <b>SOS:</b> grafía gigante y alto contraste para leer tu pista desde cualquier lugar , es un aviso para los demas compañeros/as por si quieren apuntarse y cubrir la posicion.
-                            </div>
-                        </div>
 
-                        <!-- 3. MODO TV (CENTER COURT) -->
-                        <div style="background: rgba(255,255,255,0.02); padding: 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.05);">
-                            <div style="font-weight: 950; margin-bottom: 15px; color: #fff; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
-                                <div style="width: 36px; height: 36px; background: rgba(239,68,68,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #ef4444;">
-                                    <i class="fas fa-tv"></i>
-                                </div>
-                                Modo TV
-                            </div>
-                            <div style="font-size: 0.9rem; color: #888; line-height: 1.7;">
-                                Diseñado para monitores , tablets  y Smart TVs. Accede desde cualquier evento activo. 
-                                <br><br>
-                                • <b>ROTACIÓN AUTO:</b> Pasa solo entre marcadores en vivo, clasificación y próximos cruces.
-                                <br>• <b>ALTA VISIBILIDAD:</b> Tipografía gigante y alto contraste para leer tu pista desde cualquier lugar 
-                            </div>
-                        </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; align-items: center;">
+                                <div>
+                                    <!-- User Level Slider -->
+                                    <div class="sp-sim-input-group">
+                                        <div class="sp-sim-label">
+                                            <span>Tu Nivel Actual</span>
+                                            <span id="sp-sim-val-user" style="color: #CCFF00; font-size: 1rem;">3.50</span>
+                                        </div>
+                                        <input id="sp-sim-user-level" class="sp-sim-slider" type="range" min="1.50" max="6.50" step="0.05" value="3.50" oninput="window.ControlTowerView.calculateEloSimulation()">
+                                    </div>
 
-                        <!-- 4. FORMATOS -->
-                        <div style="background: rgba(255,255,255,0.02); padding: 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.05);">
-                            <div style="font-weight: 950; margin-bottom: 15px; color: #fff; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
-                                <div style="width: 36px; height: 36px; background: rgba(124,58,237,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #8b5cf6;">
-                                    <i class="fas fa-sitemap"></i>
-                                </div>
-                                Formatos de Competición
-                            </div>
-                            <div style="font-size: 0.9rem; color: #888; line-height: 1.7;">
-                                • <b style="color: #0ea5e9;">🌪️ TWISTER:</b> Cambias de pareja en cada ronda. Sumas juegos individuales.
-                                <br><br>
-                                • <b style="color: #8b5cf6;">🔒 PAREJA FIJA (Pozo):</b> Juegas siempre con el mismo compañero. Ganas = Subes pista / Pierdes = Bajas pista.
-                            </div>
-                        </div>
+                                    <!-- Rival Difficulty Dropdown -->
+                                    <div class="sp-sim-input-group">
+                                        <div class="sp-sim-label">Nivel de la Pareja Rival</div>
+                                        <select id="sp-sim-rival-diff" class="sp-sim-select" onchange="window.ControlTowerView.calculateEloSimulation()">
+                                            <option value="0.40">Pareja Rival Muy Superior (+0.40 nivel)</option>
+                                            <option value="0.20">Pareja Rival Superior (+0.20 nivel)</option>
+                                            <option value="0.00" selected>Parejas de Nivel Idéntico (0.00)</option>
+                                            <option value="-0.20">Pareja Rival Inferior (-0.20 nivel)</option>
+                                            <option value="-0.40">Pareja Rival Muy Inferior (-0.40 nivel)</option>
+                                        </select>
+                                    </div>
 
-                        <!-- 5. ANALYTICS (MÉTRICAS AVANZADAS) -->
-                        <div style="background: rgba(255,255,255,0.02); padding: 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.05);">
-                            <div style="font-weight: 950; margin-bottom: 15px; color: #fff; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
-                                <div style="width: 36px; height: 36px; background: rgba(16,185,129,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #10b981;">
-                                    <i class="fas fa-robot"></i>
+                                    <!-- Match Result Dropdown -->
+                                    <div class="sp-sim-input-group" style="margin-bottom: 0;">
+                                        <div class="sp-sim-label">Resultado del Partido</div>
+                                        <select id="sp-sim-result" class="sp-sim-select" onchange="window.ControlTowerView.calculateEloSimulation()">
+                                            <option value="win_huge" selected>Victoria Contundente (6-0 / 6-1 / 6-2)</option>
+                                            <option value="win_close">Victoria Ajustada (6-4 / 6-5)</option>
+                                            <option value="loss_close">Derrota Ajustada (4-6 / 5-6)</option>
+                                            <option value="loss_huge">Derrota Contundente (0-6 / 1-6 / 2-6)</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                Análisis de Rendimiento
-                            </div>
-                            <div style="font-size: 0.9rem; color: #888; line-height: 1.7;">
-                                Tras cada evento, nuestro sistema analiza tu juego basándose en:
-                                <br><br>
-                                • <b style="color: white;">EFECTIVIDAD:</b> Mide tu peso real en el marcador. ¿Cuántos de los puntos ganados han pasado por tu pala?
-                                <br>• <b style="color: white;">CONSISTENCIA:</b> Evalúa si mantienes el mismo nivel técnico en todas las rondas o si tienes picos y valles.
-                                <br>• <b style="color: white;">RESISTENCIA:</b> Analiza si tu rendimiento baja en los últimos partidos por cansancio o si mantienes el ritmo.
+
+                                <!-- Live Simulation Output Card -->
+                                <div id="sp-sim-output" style="background: rgba(0,0,0,0.45); border: 1.5px solid rgba(204,255,0,0.3); border-radius: 20px; padding: 22px; text-align: center;">
+                                    <div style="font-size: 0.72rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">VARIACIÓN ESTIMADA</div>
+                                    <div id="sp-sim-delta-badge" style="font-size: 2.2rem; font-weight: 950; color: #CCFF00; line-height: 1; margin-bottom: 6px;">+0.024</div>
+                                    <div style="font-size: 0.85rem; color: #fff; margin-bottom: 16px;">
+                                        Nivel proyectado: <b id="sp-sim-projected" style="color: #CCFF00; font-size: 1.1rem;">3.524</b>
+                                    </div>
+                                    
+                                    <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 14px;">
+                                        <span id="sp-sim-perf-chip" class="sp-stat-pill" style="background: rgba(204,255,0,0.15); color: #CCFF00;">60% Rend: +0.018</span>
+                                        <span id="sp-sim-diff-chip" class="sp-stat-pill" style="background: rgba(56,189,248,0.15); color: #38bdf8;">40% Dif: +0.006</span>
+                                    </div>
+
+                                    <p id="sp-sim-verdict" style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.5; margin: 0; font-family: 'Inter', sans-serif;">
+                                        ¡Gran partido! Has dominado el cruce con holgura frente a rivales de tu categoría, sumando fuerte en rendimiento.
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
                     </div>
+
+                    <!-- ========================================== -->
+                    <!-- TAB 2: RANKING OFICIAL SOMOSPADEL          -->
+                    <!-- ========================================== -->
+                    <div id="sp-help-panel-ranking" class="sp-help-panel">
+                        
+                        <div class="sp-card sp-card-highlight">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(245,158,11,0.2); color: #f59e0b;">
+                                    <i class="fas fa-trophy"></i>
+                                </div>
+                                <div>
+                                    <h3 class="sp-card-title">Sistema de Puntuación Oficial</h3>
+                                    <div class="sp-card-subtitle">3 Puntos por cada victoria para coronar a los Reyes del año</div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 20px; text-align: center;">
+                                    <div style="font-size: 2.5rem; font-weight: 950; color: #CCFF00; line-height: 1; margin-bottom: 4px;">+3 PTS</div>
+                                    <div style="font-size: 0.95rem; font-weight: 850; color: #fff; margin-bottom: 6px;">Por Victoria Oficial</div>
+                                    <div style="font-size: 0.8rem; color: #94a3b8;">Otorgados en cada partido ganado en Americanas, Entrenos y Partidas Abiertas.</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 20px; text-align: center;">
+                                    <div style="font-size: 2.5rem; font-weight: 950; color: #38bdf8; line-height: 1; margin-bottom: 4px;">+1 PT</div>
+                                    <div style="font-size: 0.95rem; font-weight: 850; color: #fff; margin-bottom: 6px;">Empate / Participación</div>
+                                    <div style="font-size: 0.8rem; color: #94a3b8;">Premio a la regularidad y deportividad por completar los torneos convocados.</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 20px; text-align: center;">
+                                    <div style="font-size: 2.5rem; font-weight: 950; color: #f59e0b; line-height: 1; margin-bottom: 4px;">ANUAL</div>
+                                    <div style="font-size: 0.95rem; font-weight: 850; color: #fff; margin-bottom: 6px;">Ciclo de Temporada</div>
+                                    <div style="font-size: 0.8rem; color: #94a3b8;">De Enero a Diciembre. A final de temporada se entregan los Trofeos SomosPadel.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Clasificaciones y Filtros -->
+                        <div class="sp-card">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(16,185,129,0.15); color: #10b981;">
+                                    <i class="fas fa-filter"></i>
+                                </div>
+                                <div>
+                                    <h3 class="sp-card-title">Cuadros & Filtros de Clasificación</h3>
+                                    <div class="sp-card-subtitle">Dos rankings independientes con segmentación por categoría</div>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                                <div style="background: rgba(255,255,255,0.02); border-left: 4px solid #CCFF00; padding: 16px; border-radius: 12px;">
+                                    <div style="font-weight: 900; color: #fff; font-size: 0.95rem; margin-bottom: 4px;">🏆 Ranking de Americanas</div>
+                                    <div style="font-size: 0.82rem; color: #94a3b8; line-height: 1.5;">Registra tus puntos, victorias y visitas a Pista 1 en torneos dinámicos de fin de semana y entre semana.</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.02); border-left: 4px solid #38bdf8; padding: 16px; border-radius: 12px;">
+                                    <div style="font-weight: 900; color: #fff; font-size: 0.95rem; margin-bottom: 4px;">🎯 Ranking de Entrenos</div>
+                                    <div style="font-size: 0.82rem; color: #94a3b8; line-height: 1.5;">Puntuación específica acumulada en sesiones de tecnificación y partidos guiados por nivel.</div>
+                                </div>
+                            </div>
+
+                            <div style="font-size: 0.75rem; font-weight: 900; color: #64748b; text-transform: uppercase; margin-bottom: 10px;">Filtros de Cuadro Disponibles:</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                <span class="sp-chip" style="background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); color: #60a5fa;"><i class="fas fa-mars"></i> Masculino</span>
+                                <span class="sp-chip" style="background: rgba(236,72,153,0.1); border-color: rgba(236,72,153,0.3); color: #f472b6;"><i class="fas fa-venus"></i> Femenino</span>
+                                <span class="sp-chip" style="background: rgba(168,85,247,0.1); border-color: rgba(168,85,247,0.3); color: #c084fc;"><i class="fas fa-venus-mars"></i> Mixto</span>
+                                <span class="sp-chip" style="background: rgba(204,255,0,0.1); border-color: rgba(204,255,0,0.3); color: #CCFF00;"><i class="fas fa-globe"></i> General Absoluto</span>
+                            </div>
+                        </div>
+
+                        <!-- Métricas Oficiales -->
+                        <div class="sp-card">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(59,130,246,0.15); color: #3b82f6;">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                <div>
+                                    <h3 class="sp-card-title">Métricas Oficiales de tu Ficha</h3>
+                                    <div class="sp-card-subtitle">Indicadores avanzados que miden tu consistencia y nivel competitivo</div>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 14px;">
+                                    <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 850;">PJ (Partidos Jugados)</div>
+                                    <div style="font-size: 1.2rem; font-weight: 950; color: #fff; margin-top: 4px;">Volumen Total</div>
+                                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Experiencia acumulada en pista.</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 14px;">
+                                    <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 850;">PG / PP</div>
+                                    <div style="font-size: 1.2rem; font-weight: 950; color: #22c55e; margin-top: 4px;">Victorias / Derrotas</div>
+                                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Tu balance directo de éxito.</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 14px;">
+                                    <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 850;">Dif. Juegos (+/-)</div>
+                                    <div style="font-size: 1.2rem; font-weight: 950; color: #38bdf8; margin-top: 4px;">Balance de Juegos</div>
+                                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Criterio oficial de desempate.</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 14px;">
+                                    <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 850;">👑 Pista 1 (Rey de Pista)</div>
+                                    <div style="font-size: 1.2rem; font-weight: 950; color: #f59e0b; margin-top: 4px;">Visitas al Trono</div>
+                                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Rondas defendidas en Pista 1.</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 14px;">
+                                    <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 850;">Win Rate %</div>
+                                    <div style="font-size: 1.2rem; font-weight: 950; color: #CCFF00; margin-top: 4px;">% Efectividad</div>
+                                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Porcentaje de victorias totales.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- TAB 3: FORMATOS DE JUEGO REALES            -->
+                    <!-- ========================================== -->
+                    <div id="sp-help-panel-formats" class="sp-help-panel">
+                        
+                        <!-- 1. Twister -->
+                        <div class="sp-card" style="border-left: 4px solid #0ea5e9;">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(14,165,233,0.15); color: #0ea5e9;">
+                                    <i class="fas fa-wind"></i>
+                                </div>
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <h3 class="sp-card-title">Americanas Twister</h3>
+                                        <span class="sp-stat-pill" style="background: rgba(14,165,233,0.2); color: #38bdf8;">Rotación Individual</span>
+                                    </div>
+                                    <div class="sp-card-subtitle">Conoce a toda la comunidad jugando con un compañero diferente cada ronda</div>
+                                </div>
+                            </div>
+
+                            <p style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 16px;">
+                                En el formato Twister te inscribes de forma <b>individual</b>. El algoritmo genera emparejamientos dinámicos de 15-20 minutos. Cada juego anotado en tu pista suma a tu casillero personal.
+                            </p>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+                                <div style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06);">
+                                    <b style="color: #38bdf8;">🔄 Rotación Continua:</b> Nunca repites compañero en el mismo torneo.
+                                </div>
+                                <div style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06);">
+                                    <b style="color: #38bdf8;">🎯 Puntuación Personal:</b> Todos tus juegos ganados se suman en tu perfil.
+                                </div>
+                                <div style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06);">
+                                    <b style="color: #38bdf8;">👑 Podio Individual:</b> El jugador con más juegos acumulados es el Campeón.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Pozo / Pareja Fija -->
+                        <div class="sp-card" style="border-left: 4px solid #8b5cf6;">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(139,92,246,0.15); color: #8b5cf6;">
+                                    <i class="fas fa-chess-king"></i>
+                                </div>
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <h3 class="sp-card-title">Americanas Pozo (Pareja Fija)</h3>
+                                        <span class="sp-stat-pill" style="background: rgba(139,92,246,0.2); color: #a78bfa;">Escalera al Rey de la Pista</span>
+                                    </div>
+                                    <div class="sp-card-subtitle">Compite con tu compañero habitual en una batalla sin tregua por coronar la Pista 1</div>
+                                </div>
+                            </div>
+
+                            <p style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 16px;">
+                                Juegas todas las rondas con la misma pareja. La pista en la que juegas depende de tus resultados en la ronda anterior:
+                            </p>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 14px;">
+                                <div style="background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); padding: 14px; border-radius: 14px;">
+                                    <div style="color: #22c55e; font-weight: 900; font-size: 0.85rem; margin-bottom: 4px;">
+                                        <i class="fas fa-arrow-up"></i> GANAS EL PARTIDO
+                                    </div>
+                                    <div style="font-size: 0.8rem; color: #cbd5e1;"><b>Subes de pista</b> hacia la Pista 1 (Rey de la Pista). Si ya estás en Pista 1, retienes el trono.</div>
+                                </div>
+                                <div style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); padding: 14px; border-radius: 14px;">
+                                    <div style="color: #ef4444; font-weight: 900; font-size: 0.85rem; margin-bottom: 4px;">
+                                        <i class="fas fa-arrow-down"></i> PIERDES EL PARTIDO
+                                    </div>
+                                    <div style="font-size: 0.8rem; color: #cbd5e1;"><b>Bajas de pista</b> hacia la pista inferior. Si estás en la última pista, defiendes tu puesto.</div>
+                                </div>
+                            </div>
+                            <div style="background: rgba(204,255,0,0.08); border: 1px solid rgba(204,255,0,0.25); padding: 14px; border-radius: 14px; text-align: center;">
+                                <b style="color: #CCFF00;">👑 CONDICIÓN DE VICTORIA:</b> La pareja que juegue y gane el partido de la última ronda en la <b>Pista 1</b> se corona Campeona del Pozo.
+                            </div>
+                        </div>
+
+                        <!-- 3. Entrenos por Nivel -->
+                        <div class="sp-card" style="border-left: 4px solid #10b981;">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(16,185,129,0.15); color: #10b981;">
+                                    <i class="fas fa-bullseye"></i>
+                                </div>
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <h3 class="sp-card-title">Entrenos por Nivel</h3>
+                                        <span class="sp-stat-pill" style="background: rgba(16,185,129,0.2); color: #34d399;">90 Minutos • Nivel Homogéneo</span>
+                                    </div>
+                                    <div class="sp-card-subtitle">Sesiones de tecnificación táctica y partidos guiados para acelerar tu progresión</div>
+                                </div>
+                            </div>
+
+                            <p style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; margin: 0;">
+                                Grupos reducidos de 4 a 8 jugadores con nivel idéntico. Se trabajan automatismos de pared, colocación táctica de globo, transiciones defensa-ataque y situaciones de alta presión (Punto de Oro) con supervisión técnica.
+                            </p>
+                        </div>
+
+                        <!-- 4. Partidas Abiertas -->
+                        <div class="sp-card" style="border-left: 4px solid #f59e0b;">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(245,158,11,0.15); color: #f59e0b;">
+                                    <i class="fas fa-handshake"></i>
+                                </div>
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <h3 class="sp-card-title">Partidas Abiertas Autogestionadas</h3>
+                                        <span class="sp-stat-pill" style="background: rgba(245,158,11,0.2); color: #fbbf24;">4/4 Plazas • Matchmaking Libre</span>
+                                    </div>
+                                    <div class="sp-card-subtitle">Abre un partido o súmate a uno existente en tu club favorito</div>
+                                </div>
+                            </div>
+
+                            <p style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; margin: 0;">
+                                Encuentra partidos disponibles filtrando por tu club preferido, horario y franja de nivel (ej. 3.40 a 3.80). En cuanto se completan las 4 plazas (4/4), la pista queda confirmada automáticamente en la app.
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- TAB 4: EN PISTA & MODO TV                  -->
+                    <!-- ========================================== -->
+                    <div id="sp-help-panel-ops" class="sp-help-panel">
+                        
+                        <!-- Flujo de una Ronda Timeline -->
+                        <div class="sp-card">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(204,255,0,0.15); color: #CCFF00;">
+                                    <i class="fas fa-stopwatch"></i>
+                                </div>
+                                <div>
+                                    <h3 class="sp-card-title">Flujo de una Ronda en Vivo</h3>
+                                    <div class="sp-card-subtitle">Cómo funciona la dinámica de juego desde que suena la bocina</div>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 18px;">
+                                <div class="sp-timeline-step">
+                                    <div class="sp-timeline-badge">1</div>
+                                    <div style="font-weight: 900; color: #fff; font-size: 0.95rem; margin-bottom: 4px;">Aviso de Ronda & Pista</div>
+                                    <div style="font-size: 0.82rem; color: #94a3b8; line-height: 1.5;">Tu móvil te notifica tu número de pista, tu compañero asignado y tus rivales. Tienes 2-3 minutos para ocupar la pista.</div>
+                                </div>
+
+                                <div class="sp-timeline-step">
+                                    <div class="sp-timeline-badge">2</div>
+                                    <div style="font-weight: 900; color: #fff; font-size: 0.95rem; margin-bottom: 4px;">Sonido de Inicio & Juego (15-20 min)</div>
+                                    <div style="font-size: 0.82rem; color: #94a3b8; line-height: 1.5;">Juego continuo sin descanso. A 40-40 se disputa siempre <b>Punto de Oro</b> (la pareja restadora decide quién resta).</div>
+                                </div>
+
+                                <div class="sp-timeline-step">
+                                    <div class="sp-timeline-badge">3</div>
+                                    <div style="font-weight: 900; color: #fff; font-size: 0.95rem; margin-bottom: 4px;">Anotación Móvil Inmediata</div>
+                                    <div style="font-size: 0.82rem; color: #94a3b8; line-height: 1.5;">Al sonar la bocina de fin de tiempo, cualquier jugador abre la Torre de Control en su teléfono e introduce el resultado final (ej. 5-3).</div>
+                                </div>
+
+                                <div class="sp-timeline-step">
+                                    <div class="sp-timeline-badge">4</div>
+                                    <div style="font-weight: 900; color: #fff; font-size: 0.95rem; margin-bottom: 4px;">Smart Matchmaking Instantáneo</div>
+                                    <div style="font-size: 0.82rem; color: #94a3b8; line-height: 1.5;">El sistema cruza los resultados de todas las pistas, actualiza la clasificación y genera la siguiente ronda en milisegundos.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modo TV Center Court -->
+                        <div class="sp-card" style="border-color: rgba(239,68,68,0.3); background: linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(6,8,14,0.7) 100%);">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(239,68,68,0.2); color: #ef4444;">
+                                    <i class="fas fa-tv"></i>
+                                </div>
+                                <div>
+                                    <h3 class="sp-card-title">Modo TV (Center Court Screen)</h3>
+                                    <div class="sp-card-subtitle">Vista panorámica de alto impacto para Smart TVs, tablets y monitores de club</div>
+                                </div>
+                            </div>
+
+                            <p style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 18px;">
+                                Diseñado para proyectarse en la terraza, bar o pista central del club. Permite a todos los jugadores seguir el torneo sin tocar el móvil.
+                            </p>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px;">
+                                    <b style="color: #ef4444;"><i class="fas fa-sync-alt"></i> Rotación Automática:</b> Alterna de forma suave entre marcadores en vivo, clasificación provisional y próximos cruces.
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px;">
+                                    <b style="color: #ef4444;"><i class="fas fa-clock"></i> Cronómetro Sincronizado:</b> Cuenta atrás gigante con alerta acústica sincronizada con la Torre de Control.
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px;">
+                                    <b style="color: #ef4444;"><i class="fas fa-eye"></i> Tipografía Gigante:</b> Contraste optimizado para ser legible a más de 15 metros de distancia.
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- TAB 5: COMUNIDAD & ALERTA SOS              -->
+                    <!-- ========================================== -->
+                    <div id="sp-help-panel-community" class="sp-help-panel">
+                        
+                        <!-- Chat Evento -->
+                        <div class="sp-card">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(59,130,246,0.15); color: #3b82f6;">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                <div>
+                                    <h3 class="sp-card-title">Chat Táctico en Vivo por Evento</h3>
+                                    <div class="sp-card-subtitle">Canal de comunicación instantáneo exclusivo para cada torneo activo</div>
+                                </div>
+                            </div>
+
+                            <p style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 14px;">
+                                Cada evento tiene su propio canal de mensajería en tiempo real. Utilízalo para avisar de retrasos en el tráfico, coordinarte con tu pareja o recibir avisos directos del organizador.
+                            </p>
+                        </div>
+
+                        <!-- Alerta SOS Express -->
+                        <div class="sp-card" style="border-color: rgba(236,72,153,0.4); background: linear-gradient(135deg, rgba(236,72,153,0.08) 0%, rgba(6,8,14,0.7) 100%);">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(236,72,153,0.2); color: #ec4899;">
+                                    <i class="fas fa-ambulance"></i>
+                                </div>
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <h3 class="sp-card-title">Alerta SOS / Vacante Express</h3>
+                                        <span class="sp-stat-pill" style="background: rgba(236,72,153,0.25); color: #f472b6;">¡Nadie se queda sin jugar!</span>
+                                    </div>
+                                    <div class="sp-card-subtitle">Sistema inteligente para cubrir bajas imprevistas de última hora en 1 clic</div>
+                                </div>
+                            </div>
+
+                            <p style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 16px;">
+                                Si un jugador sufre una lesión o causa baja a escasos minutos del inicio, el sistema dispara automáticamente una <b>Alerta SOS de alta visibilidad</b> a los miembros de la comunidad con nivel afín.
+                            </p>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px;">
+                                    <b style="color: #ec4899;">⚡ Notificación Push Prioritaria:</b> Se notifica a jugadores activos de la zona con el nivel exacto requerido.
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px;">
+                                    <b style="color: #ec4899;">👆 Reserva en 1-Clic:</b> El primer jugador que confirma cubre la plaza sin esperas burocráticas.
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- TAB 6: RADAR RPG & ANÁLISIS DE ATRIBUTOS   -->
+                    <!-- ========================================== -->
+                    <div id="sp-help-panel-radar" class="sp-help-panel">
+                        
+                        <div class="sp-card">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(16,185,129,0.15); color: #10b981;">
+                                    <i class="fas fa-chart-pie"></i>
+                                </div>
+                                <div>
+                                    <h3 class="sp-card-title">Los 5 Atributos RPG de tu Pala</h3>
+                                    <div class="sp-card-subtitle">Evaluación multidimensional de tus fortalezas técnicas y tácticas</div>
+                                </div>
+                            </div>
+
+                            <p style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 22px;">
+                                Al registrar partidos, nuestro motor analiza tus golpes y resultados para perfilar tu <b>Tarjeta de Jugador SomosPadel</b> con 5 estadísticas de estilo de juego:
+                            </p>
+
+                            <!-- Level Selector for Radar -->
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px;">
+                                <span style="font-size: 0.75rem; font-weight: 850; color: #94a3b8; align-self: center; margin-right: 6px;">PREVISUALIZAR PERFIL SEGÚN NIVEL:</span>
+                                <button class="sp-chip" onclick="window.ControlTowerView.updateHelpRadar(2.5)" style="cursor: pointer;">Bronze (2.5)</button>
+                                <button class="sp-chip" onclick="window.ControlTowerView.updateHelpRadar(3.2)" style="cursor: pointer;">Silver (3.2)</button>
+                                <button class="sp-chip" onclick="window.ControlTowerView.updateHelpRadar(3.8)" style="cursor: pointer; border-color: #f59e0b; color: #f59e0b;">Gold (3.8)</button>
+                                <button class="sp-chip" onclick="window.ControlTowerView.updateHelpRadar(4.2)" style="cursor: pointer;">Platinum (4.2)</button>
+                                <button class="sp-chip" onclick="window.ControlTowerView.updateHelpRadar(4.8)" style="cursor: pointer; border-color: #00E36D; color: #00E36D;">Elite (4.8+)</button>
+                            </div>
+
+                            <!-- Visual Attribute Bars -->
+                            <div style="display: grid; gap: 14px;">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 900; margin-bottom: 6px;">
+                                        <span><i class="fas fa-bolt" style="color: #ef4444; width: 20px;"></i> ATAQUE (Volea, Bajada de Pared & Presión)</span>
+                                        <span id="sp-radar-val-atk" style="color: #ef4444;">76%</span>
+                                    </div>
+                                    <div style="height: 8px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden;">
+                                        <div id="sp-radar-bar-atk" style="height: 100%; width: 76%; background: #ef4444; border-radius: 999px; transition: width 0.4s ease;"></div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 900; margin-bottom: 6px;">
+                                        <span><i class="fas fa-shield-alt" style="color: #3b82f6; width: 20px;"></i> DEFENSA (Pared de Fondo, Doble Pared & Globos)</span>
+                                        <span id="sp-radar-val-def" style="color: #3b82f6;">78%</span>
+                                    </div>
+                                    <div style="height: 8px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden;">
+                                        <div id="sp-radar-bar-def" style="height: 100%; width: 78%; background: #3b82f6; border-radius: 999px; transition: width 0.4s ease;"></div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 900; margin-bottom: 6px;">
+                                        <span><i class="fas fa-magic" style="color: #a855f7; width: 20px;"></i> TÉCNICA (Efectos, Precisión & Control de Errores)</span>
+                                        <span id="sp-radar-val-tec" style="color: #a855f7;">74%</span>
+                                    </div>
+                                    <div style="height: 8px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden;">
+                                        <div id="sp-radar-bar-tec" style="height: 100%; width: 74%; background: #a855f7; border-radius: 999px; transition: width 0.4s ease;"></div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 900; margin-bottom: 6px;">
+                                        <span><i class="fas fa-heartbeat" style="color: #10b981; width: 20px;"></i> FÍSICO (Desplazamiento, Reacción & Resistencia)</span>
+                                        <span id="sp-radar-val-fis" style="color: #10b981;">80%</span>
+                                    </div>
+                                    <div style="height: 8px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden;">
+                                        <div id="sp-radar-bar-fis" style="height: 100%; width: 80%; background: #10b981; border-radius: 999px; transition: width 0.4s ease;"></div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 900; margin-bottom: 6px;">
+                                        <span><i class="fas fa-meteor" style="color: #f59e0b; width: 20px;"></i> REMATE (Definición Aérea, Smash x3 & Traérsela)</span>
+                                        <span id="sp-radar-val-rem" style="color: #f59e0b;">72%</span>
+                                    </div>
+                                    <div style="height: 8px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden;">
+                                        <div id="sp-radar-bar-rem" style="height: 100%; width: 72%; background: #f59e0b; border-radius: 999px; transition: width 0.4s ease;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- TAB 7: PREGUNTAS FRECUENTES (FAQ)          -->
+                    <!-- ========================================== -->
+                    <div id="sp-help-panel-faq" class="sp-help-panel">
+                        
+                        <div class="sp-card sp-card-highlight">
+                            <div class="sp-card-header">
+                                <div class="sp-card-icon" style="background: rgba(204,255,0,0.15); color: #CCFF00;">
+                                    <i class="fas fa-question-circle"></i>
+                                </div>
+                                <div>
+                                    <h3 class="sp-card-title">Preguntas Frecuentes de la Comunidad</h3>
+                                    <div class="sp-card-subtitle">Respuestas claras y directas a las consultas más habituales</div>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 18px;">
+                                
+                                <div class="sp-faq-item">
+                                    <div class="sp-faq-question" onclick="window.ControlTowerView.toggleHelpFaq(1)">
+                                        <span>¿Cómo y cuándo se actualiza mi nivel SomosPadel?</span>
+                                        <i id="sp-faq-icon-1" class="fas fa-chevron-down sp-faq-icon"></i>
+                                    </div>
+                                    <div id="sp-faq-ans-1" class="sp-faq-answer">
+                                        Tu nivel se recalcula de forma automática al finalizar cada evento oficial. El algoritmo ELO Smart analiza cada partido ponderando el 60% por diferencia de juegos y el 40% por la dificultad de tus rivales, aplicando ajustes entre ±0.010 y ±0.030 décimas por encuentro.
+                                    </div>
+                                </div>
+
+                                <div class="sp-faq-item">
+                                    <div class="sp-faq-question" onclick="window.ControlTowerView.toggleHelpFaq(2)">
+                                        <span>¿Puedo apuntarme a una Americana Twister sin tener pareja?</span>
+                                        <i id="sp-faq-icon-2" class="fas fa-chevron-down sp-faq-icon"></i>
+                                    </div>
+                                    <div id="sp-faq-ans-2" class="sp-faq-answer">
+                                        ¡Totalmente! Las Americanas Twister son de inscripción individual. En cada ronda el algoritmo te asigna una pareja distinta y rivales de tu misma categoría. Es el formato estrella para conocer nuevos jugadores.
+                                    </div>
+                                </div>
+
+                                <div class="sp-faq-item">
+                                    <div class="sp-faq-question" onclick="window.ControlTowerView.toggleHelpFaq(3)">
+                                        <span>¿Qué diferencia hay entre una Americana Twister y un Pozo?</span>
+                                        <i id="sp-faq-icon-3" class="fas fa-chevron-down sp-faq-icon"></i>
+                                    </div>
+                                    <div id="sp-faq-ans-3" class="sp-faq-answer">
+                                        En el <b>Twister</b> cambias de pareja cada ronda y sumas juegos individuales. En el <b>Pozo</b> juegas todo el torneo con la misma pareja en una escalera dinámica: ganar te hace subir hacia la Pista 1 y perder te hace bajar de pista. Quien gana la última ronda en Pista 1 se proclama campeón.
+                                    </div>
+                                </div>
+
+                                <div class="sp-faq-item">
+                                    <div class="sp-faq-question" onclick="window.ControlTowerView.toggleHelpFaq(4)">
+                                        <span>Si pierdo un partido muy ajustado (ej. 5-6), ¿pierdo muchas décimas?</span>
+                                        <i id="sp-faq-icon-4" class="fas fa-chevron-down sp-faq-icon"></i>
+                                    </div>
+                                    <div id="sp-faq-ans-4" class="sp-faq-answer">
+                                        No. Gracias al 60% de peso por rendimiento en juegos, un 5-6 apenas supone una variación negativa mínima (~ -0.005). Si además tus rivales eran de mayor nivel que tú, el 40% de dificultad puede hacer que tu ajuste sea prácticamente 0.000.
+                                    </div>
+                                </div>
+
+                                <div class="sp-faq-item">
+                                    <div class="sp-faq-question" onclick="window.ControlTowerView.toggleHelpFaq(5)">
+                                        <span>¿Qué ocurre si hay una baja de última hora en un evento?</span>
+                                        <i id="sp-faq-icon-5" class="fas fa-chevron-down sp-faq-icon"></i>
+                                    </div>
+                                    <div id="sp-faq-ans-5" class="sp-faq-answer">
+                                        Se activa de inmediato el protocolo <b>Alerta SOS / Vacante Express</b>. La app notifica a todos los jugadores del mismo nivel disponibles en la zona para que cualquiera pueda cubrir la posición en 1 clic y la pista comience puntual.
+                                    </div>
+                                </div>
+
+                                <div class="sp-faq-item">
+                                    <div class="sp-faq-question" onclick="window.ControlTowerView.toggleHelpFaq(6)">
+                                        <span>¿Cómo se consiguen puntos para el Ranking Oficial Anual?</span>
+                                        <i id="sp-faq-icon-6" class="fas fa-chevron-down sp-faq-icon"></i>
+                                    </div>
+                                    <div id="sp-faq-ans-6" class="sp-faq-answer">
+                                        Cada victoria en partido oficial de Americana o Partida Abierta otorga 3 puntos netos. Los empates o completar torneos otorgan 1 punto de deportividad. Los puntos se acumulan durante la temporada natural (Enero a Diciembre).
+                                    </div>
+                                </div>
+
+                                <div class="sp-faq-item">
+                                    <div class="sp-faq-question" onclick="window.ControlTowerView.toggleHelpFaq(7)">
+                                        <span>¿Cómo funciona el Punto de Oro en caso de 40-40?</span>
+                                        <i id="sp-faq-icon-7" class="fas fa-chevron-down sp-faq-icon"></i>
+                                    </div>
+                                    <div id="sp-faq-ans-7" class="sp-faq-answer">
+                                        No hay ventajas. Al llegar a 40-40 se juega un punto definitivo ("Punto de Oro"). La pareja que resta tiene el derecho reglamentario a elegir si el saque va al lado derecho o izquierdo. Quien gane esa bola se anota el juego.
+                                    </div>
+                                </div>
+
+                                <div class="sp-faq-item">
+                                    <div class="sp-faq-question" onclick="window.ControlTowerView.toggleHelpFaq(8)">
+                                        <span>¿Cómo abro el Modo TV en una pantalla gigante o tablet?</span>
+                                        <i id="sp-faq-icon-8" class="fas fa-chevron-down sp-faq-icon"></i>
+                                    </div>
+                                    <div id="sp-faq-ans-8" class="sp-faq-answer">
+                                        Abre el navegador web de la Smart TV o tablet, entra en SomosPadel con la cuenta del evento y pulsa en el botón "Modo TV". La pantalla entrará en modo panorámico con pantalla completa, rotación continua y cronómetro sincronizado.
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- AUTO-INITIALIZATION TRIGGER -->
+                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="display:none;" onload="(function(){ if(window.ControlTowerView && window.ControlTowerView.initHelpGuide) window.ControlTowerView.initHelpGuide(); })()">
+
                 </div>
             `;
         }
+
+        /**
+         * Initializes dynamic states for categories, simulator and radar
+         */
+        initHelpGuide() {
+            try {
+                this.selectHelpCategory('gold');
+                this.calculateEloSimulation();
+                this.updateHelpRadar(3.8);
+            } catch (e) {
+                console.warn("[ControlTowerView] initHelpGuide notice:", e);
+            }
+        }
+
+        /**
+         * Switches the active tab inside the Help Guide
+         */
+        switchHelpTab(tabKey) {
+            try {
+                const container = document.querySelector('.sp-help-container');
+                if (!container) return;
+
+                // Update tab buttons
+                container.querySelectorAll('.sp-help-nav-btn').forEach(btn => {
+                    const match = btn.getAttribute('data-tab') === tabKey;
+                    if (match) {
+                        btn.classList.add('sp-tab-active');
+                    } else {
+                        btn.classList.remove('sp-tab-active');
+                    }
+                });
+
+                // Update panels
+                container.querySelectorAll('.sp-help-panel').forEach(panel => {
+                    if (panel.id === `sp-help-panel-${tabKey}`) {
+                        panel.style.display = 'block';
+                    } else {
+                        panel.style.display = 'none';
+                    }
+                });
+            } catch (e) {
+                console.error("[ControlTowerView] switchHelpTab error:", e);
+            }
+        }
+
+        /**
+         * Dynamic category inspector in Level Tab
+         */
+        selectHelpCategory(catKey) {
+            try {
+                const categories = {
+                    elite: {
+                        name: 'ELITE',
+                        range: '4.50 a 7.50',
+                        stars: '★★★★★',
+                        color: '#00E36D',
+                        bg: 'rgba(0, 227, 109, 0.12)',
+                        border: 'rgba(0, 227, 109, 0.45)',
+                        icon: 'fa-crown',
+                        summary: 'Competición Federada & Primera Categoría',
+                        desc: 'Jugadores con técnica depurada, ritmo de bola vertiginoso y toma de decisiones tácticas óptima bajo máxima presión. Dominan transiciones rápidas y juego aéreo.',
+                        shots: ['Remate x3 y x4 desde tres cuartos de pista', 'Bajadas de pared agresivas a la verja y esquinas', 'Bloqueo reflejo en red y chiquitas con ángulo', 'Defensa de dobles paredes y contraparedes precisas'],
+                        tips: 'Para consolidarte en Elite necesitas alta regularidad ante jugadores de 4.50+, dominar los Puntos de Oro y conquistar la Pista 1 en torneos Pozo.'
+                    },
+                    platinum: {
+                        name: 'PLATINUM',
+                        range: '4.00 a 4.49',
+                        stars: '★★★★☆',
+                        color: '#38bdf8',
+                        bg: 'rgba(56, 189, 248, 0.12)',
+                        border: 'rgba(56, 189, 248, 0.45)',
+                        icon: 'fa-gem',
+                        summary: 'Nivel Avanzado Consolidado',
+                        desc: 'Jugadores con amplia experiencia de competición, velocidad de reacción notable y recursos consolidados en todas las fases del juego.',
+                        shots: ['Víbora profunda con aceleración y efecto cortado', 'Voleas con peso dirigidas a los pies del rival', 'Lectura de juego para anticipar y castigar el remate', 'Globos tácticos con altura y profundidad milimétrica'],
+                        tips: 'Para dar el salto a Elite, minimiza los errores no forzados en situaciones de contraataque y gana agresividad en la definición aérea.'
+                    },
+                    gold: {
+                        name: 'GOLD',
+                        range: '3.50 a 3.99',
+                        stars: '★★★☆☆',
+                        color: '#f59e0b',
+                        bg: 'rgba(245, 158, 11, 0.12)',
+                        border: 'rgba(245, 158, 11, 0.45)',
+                        icon: 'fa-medal',
+                        summary: 'Nivel Intermedio-Alto Competitivo',
+                        desc: 'La categoría más vibrante y disputada de la comunidad SomosPadel. Duelos intensos con gran ritmo, colocación y sincronización de pareja.',
+                        shots: ['Salidas de pared de fondo consistentes', 'Bandejas profundas para retener la red', 'Voleas ofensivas al espacio libre o al cuerpo', 'Saque con intención y subida coordinada a la red'],
+                        tips: 'Para ascender a Platinum, trabaja la paciencia en peloteos largos de fondo, la defensa de paredes difíciles y la aceleración en bolas francas.'
+                    },
+                    silver: {
+                        name: 'SILVER',
+                        range: '3.00 a 3.49',
+                        stars: '★★☆☆☆',
+                        color: '#cbd5e1',
+                        bg: 'rgba(203, 213, 225, 0.12)',
+                        border: 'rgba(203, 213, 225, 0.35)',
+                        icon: 'fa-shield-alt',
+                        summary: 'Nivel Intermedio Rodado',
+                        desc: 'Jugadores con buena regularidad en peloteo continuo, saques fiables y capacidad para sostener puntos en fondo y disputar la red.',
+                        shots: ['Peloteo seguro de fondo con control de altura', 'Volea de colocación al centro de la pista', 'Uso inteligente del globo para ganar posición', 'Posicionamiento básico coordinado con el compañero'],
+                        tips: 'Para alcanzar Gold, atrévete a apoyarte más en las paredes de cristal, gana confianza en la volea de ataque y participa en Entrenos por Nivel.'
+                    },
+                    bronze: {
+                        name: 'BRONZE',
+                        range: '< 3.00 (0.00 — 2.99)',
+                        stars: '★☆☆☆☆',
+                        color: '#f97316',
+                        bg: 'rgba(249, 115, 22, 0.12)',
+                        border: 'rgba(249, 115, 22, 0.35)',
+                        icon: 'fa-seedling',
+                        summary: 'Iniciación & Rodaje Competitivo',
+                        desc: 'La puerta de entrada al universo competitivo SomosPadel. Ideal para conocer jugadores afines, asimilar normas de torneo y progresar con rapidez.',
+                        shots: ['Saque reglamentario consistente al recuadro', 'Golpes básicos de derecha y revés de fondo', 'Iniciación al juego con rebote en cristal', 'Comprensión de tanteo, cambios de pista y normas'],
+                        tips: 'Juega Americanas Twister para sumar volumen de partidos y asiste a Entrenos guiados para automatizar la salida de pared.'
+                    }
+                };
+
+                const cat = categories[catKey] || categories.gold;
+
+                // Update Category Buttons styling
+                ['bronze', 'silver', 'gold', 'platinum', 'elite'].forEach(k => {
+                    const btn = document.getElementById(`sp-cat-btn-${k}`);
+                    if (!btn) return;
+                    if (k === catKey) {
+                        btn.classList.add('sp-cat-active');
+                        btn.style.background = categories[k].bg;
+                        btn.style.borderColor = categories[k].color;
+                    } else {
+                        btn.classList.remove('sp-cat-active');
+                        btn.style.background = 'rgba(255, 255, 255, 0.03)';
+                        btn.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                    }
+                });
+
+                // Update detail card
+                const detailCard = document.getElementById('sp-cat-detail-card');
+                if (!detailCard) return;
+
+                detailCard.style.borderColor = cat.border;
+                detailCard.innerHTML = `
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 42px; height: 42px; border-radius: 12px; background: ${cat.bg}; color: ${cat.color}; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                <i class="fas ${cat.icon}"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.25rem; font-weight: 950; color: #fff;">CATEGORÍA ${cat.name}</div>
+                                <div style="font-size: 0.78rem; color: ${cat.color}; font-weight: 850;">${cat.stars} • Rango Oficial: ${cat.range}</div>
+                            </div>
+                        </div>
+                        <span class="sp-stat-pill" style="background: ${cat.bg}; color: ${cat.color}; border: 1px solid ${cat.border}; font-size: 0.78rem;">
+                            ${cat.summary}
+                        </span>
+                    </div>
+
+                    <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 16px; font-family: 'Inter', sans-serif;">
+                        ${cat.desc}
+                    </p>
+
+                    <div style="margin-bottom: 14px;">
+                        <div style="font-size: 0.72rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px;">Golpes & Habilidades Clave:</div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px;">
+                            ${cat.shots.map(s => `
+                                <div style="font-size: 0.78rem; color: #e2e8f0; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px;">
+                                    <i class="fas fa-check-circle" style="color: ${cat.color}; font-size: 0.75rem;"></i> ${s}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(0,0,0,0.35); border-left: 3px solid ${cat.color}; padding: 12px 14px; border-radius: 8px; font-size: 0.8rem; color: #94a3b8; line-height: 1.5;">
+                        <b style="color: #fff;"><i class="fas fa-arrow-circle-up" style="color: ${cat.color};"></i> Clave para ascender:</b> ${cat.tips}
+                    </div>
+                `;
+            } catch (e) {
+                console.error("[ControlTowerView] selectHelpCategory error:", e);
+            }
+        }
+
+        /**
+         * Interactive ELO simulator calculation
+         */
+        calculateEloSimulation() {
+            try {
+                const userLevelInput = document.getElementById('sp-sim-user-level');
+                const rivalDiffSelect = document.getElementById('sp-sim-rival-diff');
+                const resultSelect = document.getElementById('sp-sim-result');
+                const valUserSpan = document.getElementById('sp-sim-val-user');
+
+                if (!userLevelInput || !rivalDiffSelect || !resultSelect) return;
+
+                const userLevel = parseFloat(userLevelInput.value) || 3.50;
+                const rivalDiff = parseFloat(rivalDiffSelect.value) || 0.00;
+                const resultKey = resultSelect.value;
+
+                if (valUserSpan) valUserSpan.textContent = userLevel.toFixed(2);
+
+                // 60% Rendimiento component (games diff)
+                let perfComponent = 0.018; // default win_huge
+                let perfLabel = "+0.018";
+                if (resultKey === 'win_huge') {
+                    perfComponent = 0.018;
+                    perfLabel = "+0.018";
+                } else if (resultKey === 'win_close') {
+                    perfComponent = 0.008;
+                    perfLabel = "+0.008";
+                } else if (resultKey === 'loss_close') {
+                    perfComponent = -0.006;
+                    perfLabel = "-0.006";
+                } else if (resultKey === 'loss_huge') {
+                    perfComponent = -0.018;
+                    perfLabel = "-0.018";
+                }
+
+                // 40% Dificultad component
+                let diffComponent = 0.000;
+                if (rivalDiff > 0) {
+                    // Playing against harder rivals
+                    if (resultKey.startsWith('win')) {
+                        diffComponent = rivalDiff * 0.025; // boost for winning against harder
+                    } else {
+                        diffComponent = rivalDiff * 0.015; // cushion for losing against harder
+                    }
+                } else if (rivalDiff < 0) {
+                    // Playing against easier rivals
+                    if (resultKey.startsWith('win')) {
+                        diffComponent = rivalDiff * 0.012; // lower reward for beating easier
+                    } else {
+                        diffComponent = rivalDiff * 0.025; // penalty for losing to easier
+                    }
+                }
+                const diffLabel = (diffComponent >= 0 ? "+" : "") + diffComponent.toFixed(3);
+
+                // Combined delta
+                let delta = perfComponent + diffComponent;
+                // Clamp between -0.030 and +0.030
+                delta = Math.max(-0.030, Math.min(0.030, delta));
+
+                const projected = Math.max(0.00, Math.min(7.50, userLevel + delta));
+
+                // Update UI elements
+                const deltaBadge = document.getElementById('sp-sim-delta-badge');
+                const projectedEl = document.getElementById('sp-sim-projected');
+                const perfChip = document.getElementById('sp-sim-perf-chip');
+                const diffChip = document.getElementById('sp-sim-diff-chip');
+                const verdictEl = document.getElementById('sp-sim-verdict');
+
+                const isPositive = delta >= 0;
+                const deltaFormatted = (isPositive ? "+" : "") + delta.toFixed(3);
+
+                if (deltaBadge) {
+                    deltaBadge.textContent = deltaFormatted;
+                    deltaBadge.style.color = isPositive ? '#CCFF00' : '#ef4444';
+                }
+
+                if (projectedEl) {
+                    projectedEl.textContent = projected.toFixed(3);
+                    projectedEl.style.color = isPositive ? '#CCFF00' : '#ef4444';
+                }
+
+                if (perfChip) {
+                    perfChip.textContent = `60% Rend: ${perfLabel}`;
+                    perfChip.style.color = perfComponent >= 0 ? '#CCFF00' : '#ef4444';
+                }
+
+                if (diffChip) {
+                    diffChip.textContent = `40% Dif: ${diffLabel}`;
+                    diffChip.style.color = diffComponent >= 0 ? '#38bdf8' : '#f59e0b';
+                }
+
+                if (verdictEl) {
+                    if (resultKey === 'win_huge' && rivalDiff >= 0.20) {
+                        verdictEl.textContent = "¡Victoria memorable! Batir con solvencia a una pareja de mayor rango multiplica tu calibración tanto por rendimiento como por dificultad.";
+                    } else if (resultKey === 'win_huge') {
+                        verdictEl.textContent = "¡Dominio total de pista! Has ganado con holgura acumulando el máximo beneficio de rendimiento numérico (+0.018).";
+                    } else if (resultKey === 'win_close' && rivalDiff >= 0.20) {
+                        verdictEl.textContent = "¡Triunfo de mérito! Un partido de máxima paridad resuelto a tu favor contra rivales superiores añade décimas valiosas a tu casillero.";
+                    } else if (resultKey === 'win_close') {
+                        verdictEl.textContent = "Victoria ajustada en un duelo muy parejo. Tu nivel sube con prudencia (+0.008 a +0.012) manteniendo la estabilidad.";
+                    } else if (resultKey === 'loss_close' && rivalDiff >= 0.20) {
+                        verdictEl.textContent = "Derrota por la mínima ante una pareja superior. Gracias a la dificultad del cruce, tu nivel apenas sufre impacto negativo (-0.003 aprox.).";
+                    } else if (resultKey === 'loss_close') {
+                        verdictEl.textContent = "Partido muy disputado resuelto por detalles. La diferencia en juegos es escasa, por lo que el ajuste a la baja es muy moderado.";
+                    } else if (resultKey === 'loss_huge' && rivalDiff <= -0.20) {
+                        verdictEl.textContent = "Derrota amplia ante rivales con menor ranking. El algoritmo ajusta tu ELO a la baja para recalibrar tu índice competitivo.";
+                    } else {
+                        verdictEl.textContent = "Resultado adverso. Recuerda que el filtro anti-racha protege tu historial acumulado para que un tropiezo puntual no arruine tu nivel global.";
+                    }
+                }
+            } catch (e) {
+                console.error("[ControlTowerView] calculateEloSimulation error:", e);
+            }
+        }
+
+        /**
+         * Updates radar attribute bars preview according to level
+         */
+        updateHelpRadar(levelVal) {
+            try {
+                const l = parseFloat(levelVal) || 3.5;
+                const stats = {
+                    atk: Math.min(99, Math.round(l * 13 + 24)),
+                    def: Math.min(99, Math.round(l * 12 + 32)),
+                    tec: Math.min(99, Math.round(l * 14 + 18)),
+                    fis: Math.min(99, Math.round(l * 10 + 42)),
+                    rem: Math.min(99, Math.round(l * 15 + 15))
+                };
+
+                const updateAttr = (key, val) => {
+                    const bar = document.getElementById(`sp-radar-bar-${key}`);
+                    const valEl = document.getElementById(`sp-radar-val-${key}`);
+                    if (bar) bar.style.width = `${val}%`;
+                    if (valEl) valEl.textContent = `${val}%`;
+                };
+
+                updateAttr('atk', stats.atk);
+                updateAttr('def', stats.def);
+                updateAttr('tec', stats.tec);
+                updateAttr('fis', stats.fis);
+                updateAttr('rem', stats.rem);
+            } catch (e) {
+                console.error("[ControlTowerView] updateHelpRadar error:", e);
+            }
+        }
+
+        /**
+         * FAQ accordion toggle
+         */
+        toggleHelpFaq(faqId) {
+            try {
+                const ans = document.getElementById(`sp-faq-ans-${faqId}`);
+                const icon = document.getElementById(`sp-faq-icon-${faqId}`);
+                if (!ans) return;
+
+                const isOpen = ans.style.display === 'block';
+                if (isOpen) {
+                    ans.style.display = 'none';
+                    if (icon) icon.style.transform = 'rotate(0deg)';
+                } else {
+                    ans.style.display = 'block';
+                    if (icon) icon.style.transform = 'rotate(180deg)';
+                }
+            } catch (e) {
+                console.error("[ControlTowerView] toggleHelpFaq error:", e);
+            }
+        }
+
 
         initRadarChart(user) {
             const ctx = document.getElementById('playerRadarChart');

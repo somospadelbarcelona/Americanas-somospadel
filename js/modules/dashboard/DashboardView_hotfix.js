@@ -1041,52 +1041,25 @@
 
 
 
-                    <!-- 3. SOMOSPADEL PLAYER COMMAND CENTER (PRO MATCH & ACTION HUB) -->
+                    <!-- 3. SOMOSPADEL SMART COMPACT EVENT STRIP -->
                     <style>
-                        @keyframes pulseDot {
-                            0%, 100% { opacity: 1; transform: scale(1); }
-                            50% { opacity: 0.4; transform: scale(0.85); }
+                        @keyframes stripSkeletonShimmer {
+                            0% { background-position: 200% 0; }
+                            100% { background-position: -200% 0; }
                         }
                     </style>
-                    <div id="registration-widget-root" style="margin: 0 15px 20px !important; animation: floatUp 0.8s ease-out forwards;">
-                        <!-- Match Hub Card Container (Dark Sport Club: Slate #131b2e to #0d1322 + Neon Lima #CCFF00 + Accents) -->
-                        <div style="background: linear-gradient(180deg, #131b2e 0%, #0d1322 100%); border-radius: 24px; border: 1.5px solid rgba(255, 255, 255, 0.08); box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4); padding: 18px; position: relative; overflow: hidden;">
-                            
-                            <!-- Ambient Light Accents (Subtle Glow) -->
-                            <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(204, 255, 0, 0.06) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
-                            <div style="position: absolute; bottom: -40px; left: -40px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
-
-                            <!-- Header Bar: Dot Neón Lima + CENTRO DE JUEGO + Live Status Pill -->
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; position: relative; z-index: 2;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #CCFF00; display: inline-block; box-shadow: 0 0 10px #CCFF00; animation: pulseDot 1.5s infinite; flex-shrink: 0;"></span>
-                                    <span style="font-size: 0.78rem; font-weight: 950; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase;">CENTRO DE JUEGO</span>
-                                </div>
-                                <div id="header-hub-status" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); padding: 4px 10px; border-radius: 10px; font-size: 0.65rem; color: #cbd5e1; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
-                                    <span id="header-hub-status-dot" style="width: 6px; height: 6px; border-radius: 50%; background: #22c55e; flex-shrink: 0; display: inline-block;"></span>
-                                    <span id="header-hub-status-text">EN DIRECTO</span>
-                                </div>
-                            </div>
-
-                            <!-- Chips de Navegación Rápida / Filtros de Categoría -->
-                            <div id="command-center-chips-root" style="margin-bottom: 12px; position: relative; z-index: 2;"></div>
-
-                            <!-- Dynamic Content Container -->
-                            <div id="live-scroller-inner">
-                                <div style="display: flex; flex-direction: column; gap: 12px;">
-                                    <!-- Skeleton for 2-column Top Cards -->
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                        <div style="height: 140px; border-radius: 20px; background: #1e2638; border: 1px solid rgba(255,255,255,0.08);"></div>
-                                        <div style="height: 140px; border-radius: 20px; background: #1e2638; border: 1px solid rgba(255,255,255,0.08);"></div>
-                                    </div>
-                                    <!-- Skeleton for 4 Quick Actions -->
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                        <div style="height: 64px; border-radius: 16px; background: #1e2638; border: 1px solid rgba(255,255,255,0.08);"></div>
-                                        <div style="height: 64px; border-radius: 16px; background: #1e2638; border: 1px solid rgba(255,255,255,0.08);"></div>
-                                        <div style="height: 64px; border-radius: 16px; background: #1e2638; border: 1px solid rgba(255,255,255,0.08);"></div>
-                                        <div style="height: 64px; border-radius: 16px; background: #1e2638; border: 1px solid rgba(255,255,255,0.08);"></div>
+                    <div id="registration-widget-root" style="margin: 0 15px 14px !important; animation: floatUp 0.8s ease-out forwards;">
+                        <div id="live-scroller-inner">
+                            <!-- Skeleton 75px ultracompacto -->
+                            <div style="height: 75px; border-radius: 18px; background: linear-gradient(90deg, #131b2e 0%, #1e293b 50%, #131b2e 100%); background-size: 200% 100%; border: 1px solid rgba(255, 255, 255, 0.08); animation: stripSkeletonShimmer 1.8s infinite; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; box-sizing: border-box;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(255,255,255,0.06);"></div>
+                                    <div>
+                                        <div style="width: 120px; height: 13px; border-radius: 4px; background: rgba(255,255,255,0.08); margin-bottom: 6px;"></div>
+                                        <div style="width: 85px; height: 10px; border-radius: 4px; background: rgba(255,255,255,0.04);"></div>
                                     </div>
                                 </div>
+                                <div style="width: 75px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.08);"></div>
                             </div>
                         </div>
                     </div>
@@ -3311,7 +3284,7 @@
                     };
                 }
 
-                // 1. DATA GATHERING (INTEL) - Fresh fetch with memory caching for sub-millisecond filtering
+                // 1. DATA GATHERING (INTEL)
                 let allEvents = [];
                 let weatherData = [];
 
@@ -3329,453 +3302,181 @@
                     setTimeout(() => { window._ccEventsFetchedRecently = false; }, 30000); // 30s cache
                 }
 
-                console.log(`🧠 [Match Command Center] Processing ${allEvents.length} events for player command hub.`);
-
-                // 2. USER CONTEXT & EVENT CLASSIFICATION
-                const user = (window.Store ? window.Store.getState('currentUser') : null) || {};
-                const userLevel = parseFloat(user.level || user.self_rate_level || 3.5).toFixed(2);
-                const userRank = (context && context.newRank && context.newRank !== '-') ? context.newRank : (user.rank || '12');
-                const upcomingCount = (context && context.upcomingMatches) ? context.upcomingMatches : 0;
+                // Weather data extraction for subtle micro-pill
+                const w = (weatherData && weatherData[0]) ? weatherData[0] : null;
+                const weatherTemp = (w && w.temp !== undefined && w.temp !== '--') ? `${w.temp}°C` : '24°C';
+                const weatherIcon = (w && w.icon) ? w.icon : '☀️';
+                const weatherCity = (w && w.name) ? w.name : 'EL PRAT';
 
                 // Open active events sorted by date
                 const openEvents = allEvents
                     .filter(a => ['open', 'upcoming', 'scheduled'].includes(a.status))
                     .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                const openEntrenos = openEvents.filter(e => this.getEventCategoryTheme(e).categoryName === 'entreno');
-                const openAmericanas = openEvents.filter(e => this.getEventCategoryTheme(e).categoryName !== 'entreno');
+                let stripHtml = '';
 
-                // Current Active Filter ('todos' default)
-                const activeFilter = window._ccActiveFilter || 'todos';
-
-                // Update Live Status Pill in Centro de Juego Header (No arbitrary redirection)
-                const hubStatusText = document.getElementById('header-hub-status-text');
-                const hubStatusDot = document.getElementById('header-hub-status-dot');
-                if (hubStatusText) {
-                    let statusLabel = `${openEvents.length} ACTIVOS`;
-                    if (activeFilter === 'entrenos') {
-                        statusLabel = `${openEntrenos.length} ${openEntrenos.length === 1 ? 'ENTRENO' : 'ENTRENOS'}`;
-                    } else if (activeFilter === 'americanas') {
-                        statusLabel = `${openAmericanas.length} ${openAmericanas.length === 1 ? 'AMERICANA' : 'AMERICANAS'}`;
-                    } else if (openEvents.length > 0) {
-                        statusLabel = `${openEvents.length} ACTIVOS`;
-                    } else {
-                        statusLabel = 'EN DIRECTO';
-                    }
-                    hubStatusText.textContent = statusLabel;
-                    if (hubStatusDot) {
-                        hubStatusDot.style.background = (openEvents.length > 0) ? '#22c55e' : '#94a3b8';
-                        hubStatusDot.style.boxShadow = (openEvents.length > 0) ? '0 0 6px rgba(34, 197, 94, 0.6)' : 'none';
-                    }
-                }
-
-                // Render Quick Category Filter Chips in header root
-                const chipsRoot = document.getElementById('command-center-chips-root');
-                if (chipsRoot) {
-                    const chipsConfig = [
-                        { id: 'todos', label: 'Todos', badge: '' },
-                        { id: 'entrenos', label: '🎾 Entrenos', badge: openEntrenos.length > 0 ? `${openEntrenos.length}` : '' },
-                        { id: 'americanas', label: '🏆 Americanas', badge: openAmericanas.length > 0 ? `${openAmericanas.length}` : '' },
-                        { id: 'partidas', label: '⚡ Partidas', badge: '' }
-                    ];
-
-                    let chipsHtml = `
-                    <div style="display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px;">
-                    `;
-
-                    chipsConfig.forEach(chip => {
-                        const isActive = activeFilter === chip.id;
-                        const activeStyle = isActive 
-                            ? 'background: rgba(204, 255, 0, 0.15); border: 1.5px solid #CCFF00; color: #CCFF00; box-shadow: 0 0 12px rgba(204, 255, 0, 0.35); font-weight: 950;' 
-                            : 'background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; font-weight: 800;';
-                        const dotHtml = (chip.id === 'todos' && isActive) 
-                            ? '<span style="width: 6px; height: 6px; background: #CCFF00; border-radius: 50%; display: inline-block; box-shadow: 0 0 6px #CCFF00;"></span>' 
-                            : '';
-                        const badgeCountHtml = chip.badge 
-                            ? `<span style="background: ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.15)'}; color: ${isActive ? '#0a192f' : '#ffffff'}; font-size: 0.54rem; font-weight: 900; padding: 1px 5px; border-radius: 6px; margin-left: 3px;">${chip.badge}</span>` 
-                            : '';
-
-                        chipsHtml += `
-                        <button onclick="window.filterCommandCenterCategory('${chip.id}')" 
-                                style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 9999px; font-size: 0.68rem; cursor: pointer; white-space: nowrap; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); user-select: none; -webkit-tap-highlight-color: transparent; outline: none; ${activeStyle}">
-                            ${dotHtml}
-                            <span>${chip.label}</span>
-                            ${badgeCountHtml}
-                        </button>
-                        `;
-                    });
-                    chipsHtml += `</div>`;
-                    chipsRoot.innerHTML = chipsHtml;
-                }
-
-                // Filter events based on active category
-                let displayEvents = openEvents;
-                if (activeFilter === 'entrenos') {
-                    displayEvents = openEntrenos;
-                } else if (activeFilter === 'americanas') {
-                    displayEvents = openAmericanas;
-                }
-
-                // Weather data extraction for Meteo Card
-                const w = (weatherData && weatherData[0]) ? weatherData[0] : null;
-                const weatherTemp = (w && w.temp !== undefined && w.temp !== '--') ? w.temp : 24;
-                const weatherIcon = (w && w.icon) ? w.icon : '☁️';
-                const weatherCity = (w && w.name) ? w.name : 'EL PRAT';
-                const weatherHumidity = (w && w.humidity !== undefined && w.humidity !== '--') ? w.humidity : 79;
-                let ballSpeed = 'RÁPIDA';
-                if (w && w.intelligence && w.intelligence.ballSpeed) {
-                    ballSpeed = w.intelligence.ballSpeed;
-                } else if (w && w.temp !== undefined && w.temp !== '--') {
-                    ballSpeed = w.temp > 20 ? 'RÁPIDA' : 'LENTA';
-                }
-
-                // Tactical tip recommendation based on real padel conditions
-                let tacticalTip = 'Condiciones óptimas • Varía efectos';
-                if (weatherHumidity > 70) {
-                    tacticalTip = 'Paredes pesadas • Usa tiros planos';
-                } else if (weatherTemp > 22) {
-                    tacticalTip = 'Bola viva • Acelera el remate';
-                } else if (weatherTemp < 16) {
-                    tacticalTip = 'Bola lenta • Construye el punto';
-                }
-
-                let hubHtml = '';
-
-                // 3. METEO CARD (LEFT COLUMN) WITH TACTICAL PADEL TIP
-                const meteoCardHtml = `
-                <div onclick="if(window.showWeatherDetails){window.showWeatherDetails();}else if(window.DashboardView&&window.DashboardView.toggleWeatherDetails){window.DashboardView.toggleWeatherDetails('EL_PRAT');}" 
-                     style="background: linear-gradient(145deg, #1a2232 0%, #242f44 100%); border-radius: 20px; border: 1px solid rgba(56, 189, 248, 0.25); padding: 13px 12px; display: flex; flex-direction: column; justify-content: space-between; min-height: 154px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 8px 22px rgba(0,0,0,0.3); position: relative; overflow: hidden;" 
-                     onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
-                    
-                    <!-- Ambient Glow -->
-                    <div style="position: absolute; top: -20px; right: -20px; width: 70px; height: 70px; background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
-
-                    <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2;">
-                        <span style="background: #2563eb; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(37,99,235,0.4);">
-                            METEO
-                        </span>
-                        <div style="background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 2px 5px; font-size: 0.56rem; font-weight: 800; color: #38bdf8; display: inline-flex; align-items: center; gap: 2px; white-space: nowrap;">
-                            <span>💧</span> ${weatherHumidity}%
-                        </div>
+                // Weather micro-pill HTML component
+                const weatherPillHtml = `
+                    <div onclick="event.stopPropagation(); if(window.showWeatherDetails){window.showWeatherDetails();}else if(window.DashboardView&&window.DashboardView.toggleWeatherDetails){window.DashboardView.toggleWeatherDetails('EL_PRAT');}" 
+                         style="cursor: pointer; display: inline-flex; align-items: center; gap: 3px; font-size: 0.58rem; font-weight: 800; color: #cbd5e1; background: rgba(0, 0, 0, 0.4); padding: 1.5px 6px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08); user-select: none; -webkit-tap-highlight-color: transparent;" 
+                         title="Meteo ${weatherCity}: ${weatherTemp}">
+                        <span>${weatherIcon}</span> <span>${weatherTemp}</span>
                     </div>
-
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin: 2px 0; position: relative; z-index: 2;">
-                        <span style="color: #ffffff; font-size: 1.85rem; font-weight: 900; line-height: 1; letter-spacing: -1px;">${weatherTemp}°C</span>
-                        <span style="font-size: 1.45rem; line-height: 1; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));">${weatherIcon}</span>
-                    </div>
-
-                    <div style="position: relative; z-index: 2;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.60rem; margin-bottom: 3px;">
-                            <span style="color: #ffffff; font-weight: 900; letter-spacing: 0.4px; text-transform: uppercase;">${weatherCity}</span>
-                            <span style="color: #94a3b8; font-weight: 750;">BOLA: <span style="color: #38bdf8; font-weight: 900;">${ballSpeed.toUpperCase()}</span></span>
-                        </div>
-
-                        <!-- Mini Tactical Tip Widget (Inteligencia de Juego) -->
-                        <div style="background: rgba(10, 16, 30, 0.75); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 4px 6px; display: flex; align-items: center; gap: 5px;" title="Consejo táctico según el clima">
-                            <span style="font-size: 0.65rem; line-height: 1; flex-shrink: 0;">🎯</span>
-                            <div style="color: #cbd5e1; font-size: 0.54rem; font-weight: 800; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                ${tacticalTip}
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 `;
 
-                // 4. FEATURED / MULTI-EVENT SWIPE TRACK (RIGHT COLUMN)
-                let featuredCardHtml = '';
-
+                // CASE 1: EL USUARIO TIENE PARTIDO HOY
                 if (context && (context.hasMatchToday || context.hasMatchThisWeek)) {
-                    // Personal upcoming match priority card
                     const isMyEntreno = (context.matchType === 'entreno') || ((context.eventName || '').toLowerCase().includes('entreno')) || ((context.eventName || '').toLowerCase().includes('pozo'));
-                    const matchBadgeText = isMyEntreno ? '🎾 TU ENTRENO' : '🏆 TU PARTIDO';
                     const targetRoute = isMyEntreno ? 'entrenos' : 'agenda';
-                    const myMatchTitle = (context.eventName || (isMyEntreno ? 'Entreno Semanal' : 'Partido Oficial')).toUpperCase();
-                    const myMatchTime = `${context.matchTime || 'Hoy'} • PISTA ${context.court || '?'}`;
+                    const myMatchTitle = (context.eventName || (isMyEntreno ? 'Entreno Programado' : 'Tu Partido Hoy')).trim();
+                    const matchTime = context.matchTime || '19:30';
+                    const courtText = context.court ? `Pista ${context.court}` : 'Pista 3';
 
-                    featuredCardHtml = `
-                    <div onclick="window.dashNavigate('${targetRoute}', 'featured_match')" 
-                         style="background: linear-gradient(145deg, #0c1a2e 0%, #172c4c 100%); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 20px; padding: 13px 12px; display: flex; flex-direction: column; justify-content: space-between; min-height: 154px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 8px 22px rgba(0,0,0,0.3);" 
-                         onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+                    stripHtml = `
+                    <div onclick="window.dashNavigate('${targetRoute}', 'strip_my_match')" 
+                         style="background: linear-gradient(135deg, #091a33 0%, #0d284f 100%); border: 1px solid rgba(56, 189, 248, 0.45); border-radius: 18px; padding: 10px 14px; min-height: 76px; max-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                         onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="background: #2563eb; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 0 14px rgba(37, 99, 235, 0.5);">
-                                ${matchBadgeText}
+                        <!-- Ambient Glow -->
+                        <div style="position: absolute; top: -30px; right: -30px; width: 90px; height: 90px; background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                        <!-- Left: Badge & Time -->
+                        <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
+                            <span style="background: #0284c7; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 2.5px 7px; border-radius: 6px; letter-spacing: 0.6px; text-transform: uppercase; box-shadow: 0 0 12px rgba(2, 132, 199, 0.5); display: inline-flex; align-items: center; gap: 3px;">
+                                🎾 ${isMyEntreno ? 'ENTRENO' : 'PARTIDO'}
                             </span>
-                            <i class="fas fa-calendar-check" style="color: #38bdf8; font-size: 0.95rem;"></i>
+                            <span style="font-size: 0.62rem; color: #38bdf8; font-weight: 850; display: inline-flex; align-items: center; gap: 3px;">
+                                <i class="far fa-clock" style="font-size: 0.56rem;"></i> ${matchTime}
+                            </span>
                         </div>
 
-                        <div style="margin: 2px 0;">
-                            <div style="color: #ffffff; font-size: 0.84rem; font-weight: 900; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                        <!-- Center: Match Info -->
+                        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2;">
+                            <div style="color: #ffffff; font-size: 0.84rem; font-weight: 900; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                 ${myMatchTitle}
                             </div>
-                            <div style="font-size: 0.62rem; color: #94a3b8; font-weight: 700; margin-top: 3px;">
-                                ${myMatchTime}
+                            <div style="font-size: 0.62rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px;">
+                                <span style="color: #38bdf8; font-weight: 900;">🎾 ${courtText}</span> • Convocatoria confirmada
                             </div>
                         </div>
 
-                        <div style="color: #CCFF00; font-size: 0.65rem; font-weight: 950; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.5px;">
-                            VER PISTA <i class="fas fa-arrow-right" style="font-size: 0.55rem;"></i>
+                        <!-- Right: Micro-clima & Direct CTA -->
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
+                            ${weatherPillHtml}
+                            <button onclick="event.stopPropagation(); window.dashNavigate('${targetRoute}', 'strip_my_match')" 
+                                    style="background: #38bdf8; color: #071629; font-size: 0.64rem; font-weight: 950; padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.4px; box-shadow: 0 2px 10px rgba(56, 189, 248, 0.4); white-space: nowrap; transition: transform 0.15s ease;"
+                                    onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                                <span>VER PISTA</span> <i class="fas fa-arrow-right" style="font-size: 0.52rem;"></i>
+                            </button>
                         </div>
                     </div>
                     `;
-                } else if (displayEvents.length > 0) {
-                    // Multi-event swipe track with exact chromatic identity per category
+                } else if (openEvents.length > 0) {
+                    // CASE 2: EVENTOS DISPONIBLES (SMART COMPACT EVENT STRIP)
+                    const displayEvents = openEvents.slice(0, 6);
+
                     const slidesHtml = displayEvents.map((evt, idx) => {
                         const theme = this.getEventCategoryTheme(evt);
-                        const eventNameText = (evt.name || evt.title || (theme.categoryName === 'entreno' ? 'ENTRENO MIXTO' : 'AMERICANA')).toUpperCase();
-                        const dateText = this.formatDateShort ? this.formatDateShort(evt.date) : 'HOY';
-                        const timeText = `${dateText} • ${evt.time || '18:00'}`;
+                        const eventNameText = (evt.name || evt.title || (theme.categoryName === 'entreno' ? 'Entreno Mixto' : 'Americana Oficial')).trim();
+                        const dateText = this.formatDateShort ? this.formatDateShort(evt.date) : 'Hoy';
+                        const timeStr = evt.time || '19:30';
+                        const timeDisplay = `${dateText === 'HOY' ? 'Hoy' : dateText} ${timeStr}`;
 
-                        // Urgency & Capacity calculations
+                        // Capacity & Urgency
                         const max = evt.max_players || evt.maxPlayers || 16;
                         const current = (evt.registeredPlayers || evt.players || []).length;
                         const spotsLeft = Math.max(0, max - current);
-                        const percentFilled = Math.min(100, Math.max(8, Math.round((current / max) * 100)));
+                        const urgencyColor = spotsLeft <= 3 ? '#ef4444' : (spotsLeft <= 6 ? '#f59e0b' : '#34d399');
+                        const urgencyText = spotsLeft > 0 ? `${spotsLeft} plazas libres` : 'Completo';
                         const minLevel = evt.min_level || evt.minLevel || '2.5';
                         const maxLevel = evt.max_level || evt.maxLevel || '4.5';
 
-                        const urgencyColor = spotsLeft <= 3 ? '#ef4444' : (spotsLeft <= 6 ? '#f59e0b' : '#34d399');
-                        const urgencyText = spotsLeft > 0 ? `${spotsLeft} libres` : 'Completo';
-                        const barGradient = spotsLeft <= 3 
-                            ? 'linear-gradient(90deg, #f59e0b, #ef4444)' 
-                            : 'linear-gradient(90deg, #10b981, #38bdf8)';
-
                         return `
-                        <div onclick="window.dashNavigate('${theme.targetRoute}', 'featured_event')" 
-                             style="min-width: 100%; max-width: 100%; flex-shrink: 0; scroll-snap-align: start; box-sizing: border-box; background: ${theme.cardBg}; border: ${theme.cardBorder}; border-radius: 20px; padding: 13px 12px; display: flex; flex-direction: column; justify-content: space-between; min-height: 154px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 8px 22px rgba(0,0,0,0.3); position: relative; overflow: hidden;" 
-                             onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+                        <div onclick="window.dashNavigate('${theme.targetRoute}', 'strip_card')" 
+                             style="min-width: 100%; max-width: 100%; flex-shrink: 0; scroll-snap-align: start; box-sizing: border-box; background: ${theme.cardBg}; border: ${theme.cardBorder}; border-radius: 18px; padding: 10px 14px; min-height: 76px; max-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                             onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                             
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="background: ${theme.badgeBg}; color: ${theme.badgeTextColor || '#ffffff'}; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase; ${theme.badgeShadow}">
+                            <!-- Ambient Category Glow -->
+                            <div style="position: absolute; top: -25px; right: -25px; width: 80px; height: 80px; background: radial-gradient(circle, ${theme.accentColor}25 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                            <!-- Left: Badge & Time -->
+                            <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
+                                <span style="background: ${theme.badgeBg}; color: ${theme.badgeTextColor || '#ffffff'}; font-size: 0.58rem; font-weight: 950; padding: 2.5px 7px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase; ${theme.badgeShadow || ''} display: inline-flex; align-items: center; gap: 3px;">
                                     ${theme.badgeText}
                                 </span>
-                                <div style="display: flex; align-items: center; gap: 5px;">
-                                    ${displayEvents.length > 1 ? `<span style="font-size: 0.50rem; color: #94a3b8; font-weight: 850; background: rgba(0,0,0,0.45); padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08);">${idx + 1}/${displayEvents.length}</span>` : ''}
-                                    <span style="font-size: 0.90rem; line-height: 1; filter: drop-shadow(0 0 6px ${theme.accentColor});">${theme.iconHtml}</span>
-                                </div>
+                                <span style="font-size: 0.62rem; color: #cbd5e1; font-weight: 800; display: inline-flex; align-items: center; gap: 3px;">
+                                    <i class="far fa-clock" style="font-size: 0.56rem; color: #94a3b8;"></i> ${timeDisplay}
+                                </span>
                             </div>
 
-                            <div style="margin: 2px 0;">
-                                <div style="color: #ffffff; font-size: 0.82rem; font-weight: 900; line-height: 1.18; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;" title="${eventNameText}">
+                            <!-- Center: Title & Subtitle -->
+                            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2; padding: 0 2px;">
+                                <div style="color: #ffffff; font-size: 0.82rem; font-weight: 900; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
                                     ${eventNameText}
                                 </div>
-                                <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 700; margin-top: 2px;">
-                                    ${timeText} • <span style="color: #cbd5e1; font-weight: 800;">Niv ${minLevel}-${maxLevel}</span>
-                                </div>
-
-                                <!-- Mini Progress Bar / Aforo Urgente -->
-                                <div style="margin-top: 4px;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.54rem; font-weight: 850; margin-bottom: 2px;">
-                                        <span style="color: ${urgencyColor}; display: inline-flex; align-items: center; gap: 2px;">
-                                            <span>⚡</span> ${urgencyText}
-                                        </span>
-                                        <span style="color: #64748b; font-size: 0.50rem;">${current}/${max}</span>
-                                    </div>
-                                    <div style="width: 100%; height: 3px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
-                                        <div style="width: ${percentFilled}%; height: 100%; background: ${barGradient}; border-radius: 3px;"></div>
-                                    </div>
+                                <div style="font-size: 0.62rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px;">
+                                    <span style="color: ${urgencyColor}; font-weight: 900;">⚡ ${urgencyText}</span> • <span style="color: #cbd5e1;">Nivel ${minLevel}-${maxLevel}</span>
                                 </div>
                             </div>
 
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div style="color: ${theme.ctaColor}; font-size: 0.65rem; font-weight: 950; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.5px;">
-                                    RESERVAR AHORA <i class="fas fa-arrow-right" style="font-size: 0.55rem;"></i>
+                            <!-- Right: Micro-clima & Button -->
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
+                                <div style="display: inline-flex; align-items: center; gap: 4px;">
+                                    ${displayEvents.length > 1 ? `<span style="font-size: 0.50rem; color: #94a3b8; font-weight: 850; background: rgba(0,0,0,0.4); padding: 1px 4px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08);">${idx + 1}/${displayEvents.length}</span>` : ''}
+                                    ${weatherPillHtml}
                                 </div>
-                                ${displayEvents.length > 1 ? `<span style="font-size: 0.48rem; color: #64748b; font-weight: 700; letter-spacing: 0.2px;">👉 desliza</span>` : ''}
+                                <button onclick="event.stopPropagation(); window.dashNavigate('${theme.targetRoute}', 'strip_cta')" 
+                                        style="background: ${theme.ctaColor}; color: ${theme.categoryName === 'especial' ? '#0a192f' : '#ffffff'}; font-size: 0.64rem; font-weight: 950; padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.4px; box-shadow: 0 2px 10px rgba(0,0,0,0.35); white-space: nowrap; transition: transform 0.15s ease;"
+                                        onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                                    <span>RESERVAR</span> <i class="fas fa-arrow-right" style="font-size: 0.52rem;"></i>
+                                </button>
                             </div>
                         </div>
                         `;
                     }).join('');
 
-                    featuredCardHtml = `
-                    <div style="width: 100%; overflow: hidden; position: relative; border-radius: 20px;">
-                        <div class="events-carousel-track" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; width: 100%; gap: 8px;">
-                            ${slidesHtml}
-                        </div>
+                    stripHtml = `
+                    <style>
+                        .compact-strip-track::-webkit-scrollbar { display: none !important; }
+                    </style>
+                    <div class="compact-strip-track" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; width: 100%; gap: 8px;">
+                        ${slidesHtml}
                     </div>
                     `;
                 } else {
-                    // Empty state fallback tailored to current filter
-                    const emptyTitle = activeFilter === 'entrenos' ? 'Sin Entrenos Hoy' : (activeFilter === 'americanas' ? 'Sin Americanas' : '¿Ganas de jugar?');
-                    const emptySub = activeFilter === 'entrenos' ? 'Ver americanas abiertas' : 'Monta una partida libre';
-                    const emptyRoute = activeFilter === 'entrenos' ? 'americanas' : 'partidas_abiertas';
-                    const emptyAction = activeFilter === 'entrenos' ? 'VER AMERICANAS' : 'BUSCAR PISTA';
-
-                    featuredCardHtml = `
-                    <div onclick="window.dashNavigate('${emptyRoute}', 'featured_empty')" 
-                         style="background: linear-gradient(145deg, #0d1527 0%, #152038 100%); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 20px; padding: 13px 12px; display: flex; flex-direction: column; justify-content: space-between; min-height: 154px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 8px 22px rgba(0,0,0,0.3);" 
-                         onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="background: #0284c7; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase;">
-                                🎾 ACTIVIDADES
+                    // CASE 3: SIN EVENTOS ABIERTOS (TIRA DELGADA ELEGANTE ~60px)
+                    stripHtml = `
+                    <div onclick="window.dashNavigate('partidas_abiertas', 'strip_empty')" 
+                         style="background: linear-gradient(135deg, #0b1528 0%, #13223f 100%); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 16px; padding: 8px 14px; min-height: 60px; max-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                         onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+                        
+                        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; z-index: 2;">
+                            <span style="background: rgba(2, 132, 199, 0.2); color: #38bdf8; font-size: 0.58rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.35); letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0;">
+                                🎾 PARTIDAS ABIERTAS
                             </span>
-                            <i class="fas fa-bolt" style="color: #38bdf8; font-size: 0.95rem;"></i>
-                        </div>
-
-                        <div style="margin: 2px 0;">
-                            <div style="color: #ffffff; font-size: 0.84rem; font-weight: 900; line-height: 1.2;">
-                                ${emptyTitle}
-                            </div>
-                            <div style="font-size: 0.62rem; color: #94a3b8; font-weight: 600; margin-top: 3px;">
-                                ${emptySub}
+                            <div style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <div style="color: #ffffff; font-size: 0.78rem; font-weight: 850; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Encuentra o crea partida hoy</div>
+                                <div style="color: #94a3b8; font-size: 0.58rem; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Juega con jugadores de tu nivel</div>
                             </div>
                         </div>
 
-                        <div style="color: #38bdf8; font-size: 0.65rem; font-weight: 950; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.5px;">
-                            ${emptyAction} <i class="fas fa-arrow-right" style="font-size: 0.55rem;"></i>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; z-index: 2;">
+                            ${weatherPillHtml}
+                            <button onclick="event.stopPropagation(); window.dashNavigate('partidas_abiertas', 'strip_empty')" 
+                                    style="background: #38bdf8; color: #071629; font-size: 0.64rem; font-weight: 950; padding: 5px 11px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.4px; box-shadow: 0 2px 10px rgba(56, 189, 248, 0.35); white-space: nowrap; transition: transform 0.15s ease;"
+                                    onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                                <span>JUGAR</span> <i class="fas fa-arrow-right" style="font-size: 0.52rem;"></i>
+                            </button>
                         </div>
                     </div>
                     `;
                 }
-
-                // Combine Top Grid (Meteo + Featured / Swipe Carousel)
-                hubHtml += `
-                <style>
-                    .events-carousel-track::-webkit-scrollbar { display: none !important; }
-                    @keyframes pulseBadgeDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
-                </style>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; user-select: none; -webkit-tap-highlight-color: transparent;">
-                    ${meteoCardHtml}
-                    ${featuredCardHtml}
-                </div>
-                `;
-
-                // 5. SMART QUICK ACTIONS DOCK 2x2 WITH LUMINOUS IDENTITY PER CARD
-                // Dock Card 1 (Eventos / Entrenos) adapts directly to the top active activity
-                let eventCardTitle = 'Americanas & Entrenos';
-                let eventCardIcon = '🏆';
-                let eventCardBadge = `${openEvents.length} DISPONIBLES`;
-                let eventCardBadgeBg = 'rgba(16, 185, 129, 0.18)';
-                let eventCardBadgeBorder = 'rgba(16, 185, 129, 0.35)';
-                let eventCardBadgeColor = '#34d399';
-                let eventCardBadgeShadow = '0 0 10px rgba(16, 185, 129, 0.25)';
-                let eventCardSubtext = 'Torneos y pozos';
-                let eventCardRoute = 'americanas';
-                let eventCardBg = 'linear-gradient(145deg, #111a2c 0%, #17243b 100%)';
-                let eventCardBorder = '1px solid rgba(56, 189, 248, 0.28)';
-
-                if (openEvents.length > 0) {
-                    const leaderTheme = this.getEventCategoryTheme(openEvents[0]);
-                    eventCardBorder = leaderTheme.cardBorder;
-                    eventCardBg = leaderTheme.cardBg;
-
-                    if (openEntrenos.length > 0 && openAmericanas.length === 0) {
-                        eventCardTitle = 'Entrenos & Pozos';
-                        eventCardIcon = '🎾';
-                        eventCardBadge = `${openEntrenos.length} DISPONIBLE${openEntrenos.length > 1 ? 'S' : ''}`;
-                        eventCardBadgeBg = 'rgba(239, 68, 68, 0.22)';
-                        eventCardBadgeBorder = 'rgba(239, 68, 68, 0.4)';
-                        eventCardBadgeColor = '#f87171';
-                        eventCardBadgeShadow = '0 0 10px rgba(239, 68, 68, 0.3)';
-                        eventCardSubtext = 'Pozos y técnica';
-                        eventCardRoute = 'entrenos';
-                    } else if (openAmericanas.length > 0 && openEntrenos.length === 0) {
-                        eventCardTitle = leaderTheme.categoryName === 'femenino' ? 'Torneo Femenino' : (leaderTheme.categoryName === 'mixto' ? 'Torneo Mixto' : 'Americanas');
-                        eventCardIcon = leaderTheme.categoryName === 'femenino' ? '🌸' : (leaderTheme.categoryName === 'mixto' ? '⚡' : '🏆');
-                        eventCardBadge = `${openAmericanas.length} DISPONIBLE${openAmericanas.length > 1 ? 'S' : ''}`;
-                        eventCardBadgeBg = leaderTheme.badgeBg;
-                        eventCardBadgeBorder = leaderTheme.cardBorder;
-                        eventCardBadgeColor = leaderTheme.badgeTextColor || '#ffffff';
-                        eventCardBadgeShadow = leaderTheme.badgeShadow;
-                        eventCardSubtext = 'Competición oficial';
-                        eventCardRoute = 'americanas';
-                    } else if (openAmericanas.length > 0 && openEntrenos.length > 0) {
-                        eventCardTitle = 'Americanas & Entrenos';
-                        eventCardIcon = '🏆';
-                        eventCardBadge = `${openAmericanas.length} Am • ${openEntrenos.length} Ent`;
-                        eventCardBadgeBg = 'rgba(56, 189, 248, 0.2)';
-                        eventCardBadgeBorder = 'rgba(56, 189, 248, 0.4)';
-                        eventCardBadgeColor = '#38bdf8';
-                        eventCardBadgeShadow = '0 0 10px rgba(56, 189, 248, 0.25)';
-                        eventCardSubtext = 'Torneos y pozos activos';
-                        eventCardRoute = 'americanas';
-                    }
-                } else {
-                    eventCardTitle = 'Torneos & Entrenos';
-                    eventCardIcon = '🏆';
-                    eventCardBadge = 'PRÓXIMAMENTE';
-                    eventCardBadgeBg = 'rgba(148, 163, 184, 0.12)';
-                    eventCardBadgeBorder = 'rgba(148, 163, 184, 0.2)';
-                    eventCardBadgeColor = '#94a3b8';
-                    eventCardBadgeShadow = 'none';
-                    eventCardSubtext = 'Nuevas convocatorias';
-                    eventCardRoute = 'americanas';
-                }
-
-                // Dock Card 3 (Nivel) calculations
-                const levelNum = parseFloat(userLevel) || 3.5;
-                const levelPct = Math.min(100, Math.max(15, Math.round((levelNum / 7.0) * 100)));
-
-                hubHtml += `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; user-select: none; -webkit-tap-highlight-color: transparent;">
-                    
-                    <!-- 1. RETOS / ENTRENOS / AMERICANAS (Cromática según Categoría) -->
-                    <div onclick="window.dashNavigate('${eventCardRoute}', 'command_hub')" 
-                         style="background: ${eventCardBg}; border: ${eventCardBorder}; border-radius: 16px; padding: 12px 13px; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.25);" 
-                         onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px;">
-                            <span style="font-size: 1.25rem;">${eventCardIcon}</span>
-                            <span style="background: ${eventCardBadgeBg}; color: ${eventCardBadgeColor}; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; border: 1px solid ${eventCardBadgeBorder}; box-shadow: ${eventCardBadgeShadow};">
-                                ${eventCardBadge}
-                            </span>
-                        </div>
-                        <div style="color: #ffffff; font-size: 0.84rem; font-weight: 950; margin-bottom: 2px;">${eventCardTitle}</div>
-                        <div style="color: #94a3b8; font-size: 0.63rem; font-weight: 650;">${eventCardSubtext}</div>
-                    </div>
-
-                    <!-- 2. PARTIDAS ABIERTAS (Acento Cyan Neón #0284c7 / #38bdf8) -->
-                    <div onclick="window.dashNavigate('partidas_abiertas', 'command_hub')" 
-                         style="background: linear-gradient(145deg, #07192c 0%, #0d2546 100%); border: 1px solid rgba(56, 189, 248, 0.32); border-radius: 16px; padding: 12px 13px; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.25);" 
-                         onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px;">
-                            <span style="font-size: 1.25rem; filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.6));">⚡</span>
-                            <span style="background: rgba(2, 132, 199, 0.22); color: #38bdf8; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.38); box-shadow: 0 0 10px rgba(56, 189, 248, 0.25); display: inline-flex; align-items: center; gap: 4px;">
-                                <span style="width: 5px; height: 5px; background: #38bdf8; border-radius: 50%; box-shadow: 0 0 5px #38bdf8; animation: pulseBadgeDot 1.5s infinite;"></span> EN VIVO
-                            </span>
-                        </div>
-                        <div style="color: #ffffff; font-size: 0.84rem; font-weight: 950; margin-bottom: 2px;">Partidas Libres</div>
-                        <div style="color: #94a3b8; font-size: 0.63rem; font-weight: 650;">Buscar o montar</div>
-                    </div>
-
-                    <!-- 3. MI RANKING & NIVEL (Acento Púrpura Neón #8b5cf6) -->
-                    <div onclick="window.dashNavigate('ranking', 'command_hub')" 
-                         style="background: linear-gradient(145deg, #170d2b 0%, #22123d 100%); border: 1px solid rgba(139, 92, 246, 0.32); border-radius: 16px; padding: 12px 13px; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.25);" 
-                         onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px;">
-                            <span style="font-size: 1.25rem;">📈</span>
-                            <span style="background: rgba(139, 92, 246, 0.22); color: #c084fc; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; border: 1px solid rgba(139, 92, 246, 0.38); box-shadow: 0 0 10px rgba(139, 92, 246, 0.25);">
-                                #${userRank !== '-' ? userRank : 'PRO'} RANK
-                            </span>
-                        </div>
-                        <div style="color: #ffffff; font-size: 0.84rem; font-weight: 950; margin-bottom: 2px;">Nivel ${userLevel}</div>
-                        <div style="width: 100%; height: 3px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden; margin: 3px 0 2px;">
-                            <div style="width: ${levelPct}%; height: 100%; background: linear-gradient(90deg, #8b5cf6, #38bdf8); border-radius: 3px;"></div>
-                        </div>
-                        <div style="color: #94a3b8; font-size: 0.60rem; font-weight: 650;">Progreso y ranking</div>
-                    </div>
-
-                    <!-- 4. MI AGENDA (Acento Esmeralda #10b981) -->
-                    <div onclick="window.dashNavigate('agenda', 'command_hub')" 
-                         style="background: linear-gradient(145deg, #081d16 0%, #0e2d22 100%); border: 1px solid rgba(16, 185, 129, 0.32); border-radius: 16px; padding: 12px 13px; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.25);" 
-                         onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px;">
-                            <span style="font-size: 1.25rem;">📅</span>
-                            <span style="background: ${upcomingCount > 0 ? 'rgba(16, 185, 129, 0.22)' : 'rgba(148, 163, 184, 0.12)'}; color: ${upcomingCount > 0 ? '#34d399' : '#94a3b8'}; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; border: 1px solid ${upcomingCount > 0 ? 'rgba(16, 185, 129, 0.38)' : 'rgba(148, 163, 184, 0.2)'}; box-shadow: ${upcomingCount > 0 ? '0 0 10px rgba(16, 185, 129, 0.25)' : 'none'};">
-                                ${upcomingCount} CITA${upcomingCount === 1 ? '' : 'S'}
-                            </span>
-                        </div>
-                        <div style="color: #ffffff; font-size: 0.84rem; font-weight: 950; margin-bottom: 2px;">Mi Agenda</div>
-                        <div style="color: #94a3b8; font-size: 0.63rem; font-weight: 650;">${upcomingCount > 0 ? 'Tienes partidos agendados' : 'Tus partidos y horarios'}</div>
-                    </div>
-
-                </div>
-                `;
 
                 const container = document.getElementById('live-scroller-inner');
                 if (container) {
-                    container.innerHTML = hubHtml;
+                    container.innerHTML = stripHtml;
                 }
-                return hubHtml;
+                return stripHtml;
             } catch (err) {
                 console.error("renderLiveWidget Error:", err);
                 return '';
