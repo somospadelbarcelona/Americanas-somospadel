@@ -606,6 +606,10 @@
                 }
             };
 
+            // Helpers de Categoría y Centro de Juego
+            window.getEventCategoryTheme = (evt) => this.getEventCategoryTheme(evt);
+            window.filterCommandCenterCategory = (cat) => this.filterCommandCenterCategory(cat);
+
             if (window.Store) {
                 this.unsubDashboard = window.Store.subscribe('dashboardData', (data) => {
                     if (window.Router && window.Router.currentRoute === 'dashboard') {
@@ -779,7 +783,6 @@
                         <!-- Content loaded via JS (HeroCard) -->
                     </div>
 
-<<<<<<< HEAD
                     <!-- 🔥 HERO CARD PREMIUM: TEMPORADA 2027 | EQUIPOS SOMOSPADEL -->
                     <div id="season-campaign-banner-root" style="margin: 0 15px 20px !important; animation: floatUp 0.5s ease-out forwards;">
                         <div style="
@@ -796,164 +799,6 @@
                             <!-- Glows y Auras Neón de Alta Competición -->
                             <div style="position: absolute; top: -50px; right: -50px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(204, 255, 0, 0.25) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
                             <div style="position: absolute; bottom: -50px; left: -50px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(56, 189, 248, 0.16) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
-=======
-                    <!-- 🔥 BANNER CAMPAÑA TEMPORADA OCTUBRE - NOVIEMBRE 2026 (Controlable desde Admin) -->
-                    <div id="season-campaign-banner-root" style="display: none; margin: 0 15px 18px !important; animation: floatUp 0.5s ease-out forwards;">
-                        <div style="
-                            background: #ffffff;
-                            border: 1.5px solid #e2e8f0;
-                            border-radius: 24px;
-                            padding: 20px;
-                            position: relative;
-                            overflow: hidden;
-                            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05), 0 0 20px rgba(204, 255, 0, 0.12);
-                        ">
-                            <!-- Glow decorativo superior -->
-                            <div style="position: absolute; top: -40px; right: -40px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(204, 255, 0, 0.25) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
-
-                            <!-- Header del Banner: Badges -->
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="background: #CCFF00; color: #000000; font-size: 0.65rem; font-weight: 950; padding: 3px 9px; border-radius: 8px; letter-spacing: 0.5px; text-transform: uppercase;">
-                                        🔥 TEMPORADA 2027 | EQUIPOS
-                                    </span>
-                                    <span style="background: #f1f5f9; color: #475569; font-size: 0.65rem; font-weight: 800; padding: 3px 9px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                                        PLAZAS LIMITADAS
-                                    </span>
-                                </div>
-                                <span style="font-size: 0.68rem; color: #64748b; font-weight: 700;">
-                                    SomosPadel BCN
-                                </span>
-                            </div>
-
-                            <!-- Título principal -->
-                            <h3 style="margin: 0 0 6px; font-size: 1.22rem; font-weight: 950; color: #0f172a; line-height: 1.25; letter-spacing: -0.3px;">
-                                🏆 INSCRIPCIONES EQUIPOS | TEMPORADA 2027
-                            </h3>
-
-                            <!-- Subtítulo con las 3 funciones clave -->
-                            <p style="margin: 0 0 14px; font-size: 0.78rem; color: #64748b; font-weight: 600; line-height: 1.4;">
-                                Convocatoria oficial de plazas para equipos del club (Octubre - Noviembre) • Entrenos • Americanas
-                            </p>
-
-                            <!-- Mini-features pills -->
-                            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;">
-                                <span style="background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 10px;">
-                                    🏆 Fem (2ª, 3ª, 4ª) • Mix (3ª, 4ª) • Masc (3ª, 4ª)
-                                </span>
-                                <span style="background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 10px;">
-                                    🎯 Clases & Físico
-                                </span>
-                                <span style="background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 10px;">
-                                    ⚡ Ranking en Tiempo Real
-                                </span>
-                            </div>
-
-                            <!-- CTA Principal -->
-                            <button 
-                                type="button" 
-                                onclick="window.SeasonCampaignView && window.SeasonCampaignView.openModal();" 
-                                style="
-                                    width: 100%;
-                                    padding: 13px 18px;
-                                    background: #CCFF00;
-                                    color: #000000;
-                                    border: 1px solid #b5e600;
-                                    border-radius: 14px;
-                                    font-weight: 950;
-                                    font-size: 0.88rem;
-                                    letter-spacing: 0.5px;
-                                    cursor: pointer;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    gap: 8px;
-                                    box-shadow: 0 4px 16px rgba(204, 255, 0, 0.35);
-                                    transition: transform 0.2s, box-shadow 0.2s;
-                                    margin-bottom: 10px;
-                                "
-                                onmouseover="this.style.transform='translateY(-2px)';"
-                                onmouseout="this.style.transform='none';">
-                                <i class="fas fa-rocket" style="font-size: 0.95rem;"></i>
-                                PRE-INSCRIBIRSE / DESCUBRIR
-                            </button>
-
-                            <!-- Accesos rápidos secundarios -->
-                            <div style="display: flex; gap: 8px;">
-                                <button 
-                                    type="button" 
-                                    onclick="window.Router && window.Router.navigate('americanas');" 
-                                    style="
-                                        flex: 1;
-                                        padding: 8px 10px;
-                                        background: #f8fafc;
-                                        border: 1px solid #e2e8f0;
-                                        border-radius: 10px;
-                                        color: #334155;
-                                        font-size: 0.72rem;
-                                        font-weight: 800;
-                                        cursor: pointer;
-                                        transition: background 0.2s;
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                        gap: 5px;
-                                    "
-                                    onmouseover="this.style.background='#f1f5f9';"
-                                    onmouseout="this.style.background='#f8fafc';">
-                                    <span>⚡</span> Americanas
-                                </button>
-                                <button 
-                                    type="button" 
-                                    onclick="window.Router && window.Router.navigate('entrenos');" 
-                                    style="
-                                        flex: 1;
-                                        padding: 8px 10px;
-                                        background: #f8fafc;
-                                        border: 1px solid #e2e8f0;
-                                        border-radius: 10px;
-                                        color: #334155;
-                                        font-size: 0.72rem;
-                                        font-weight: 800;
-                                        cursor: pointer;
-                                        transition: background 0.2s;
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                        gap: 5px;
-                                    "
-                                    onmouseover="this.style.background='#f1f5f9';"
-                                    onmouseout="this.style.background='#f8fafc';">
-                                    <span>🎯</span> Entrenos
-                                </button>
-                                <button 
-                                    type="button" 
-                                    onclick="window.SeasonCampaignView && window.SeasonCampaignView.openModal('equipos');" 
-                                    style="
-                                        flex: 1;
-                                        padding: 8px 10px;
-                                        background: #f8fafc;
-                                        border: 1px solid #e2e8f0;
-                                        border-radius: 10px;
-                                        color: #334155;
-                                        font-size: 0.72rem;
-                                        font-weight: 800;
-                                        cursor: pointer;
-                                        transition: background 0.2s;
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                        gap: 5px;
-                                    "
-                                    onmouseover="this.style.background='#f1f5f9';"
-                                    onmouseout="this.style.background='#f8fafc';">
-                                    <span>🏆</span> Equipos
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
->>>>>>> 08f2fdfe948f5da42084ef798a118048ad329d0d
 
                             <!-- Header: Badges Oficiales -->
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; position: relative; z-index: 2;">
@@ -1196,31 +1041,25 @@
 
 
 
-                    <!-- 3. DESTACADOS — DARK ISLAND EDITORIAL -->
-                    <div id="registration-widget-root" style="margin: 0 0 20px !important; background: linear-gradient(180deg, #070c18 0%, #090e1c 100%); border-radius: 0; padding: 20px 0 24px; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); animation: floatUp 0.8s ease-out forwards;">
-                        <!-- Header editorial -->
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:0 20px;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <span style="width:8px; height:8px; border-radius:50%; background:#CCFF00; display:inline-block; box-shadow: 0 0 8px #CCFF00, 0 0 20px rgba(204,255,0,0.4); animation: pulseDot 1.5s infinite; flex-shrink:0;"></span>
-                                <span style="font-size:0.7rem; font-weight:950; color:#ffffff; letter-spacing:2px; text-transform:uppercase;">Destacados</span>
-                            </div>
-                            <span onclick="window.Router.navigate('americanas')" style="font-size:0.65rem; color:rgba(255,255,255,0.45); font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:8px; border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s;" onmouseover="this.style.borderColor='rgba(204,255,0,0.4)'; this.style.color='#CCFF00';" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='rgba(255,255,255,0.45)';">Ver todo <i class="fas fa-arrow-right" style="font-size:0.5rem;"></i></span>
-                        </div>
-                        <!-- Scroller -->
-                        <div id="live-scroller-content" class="live-scroller-container" style="width:100%; position:relative; overflow-x:auto; -webkit-overflow-scrolling:touch; scroll-behavior:smooth; scroll-snap-type:x mandatory;">
-                            <style>
-                                .live-scroller-container::-webkit-scrollbar { display: none !important; }
-                                .registration-ticker-card { transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1); flex-shrink:0; scroll-snap-align: start; }
-                                .live-track { display:flex; gap:10px; padding:4px 20px 12px; width:max-content; }
-                                .holo-card { transition: all 0.3s ease; scroll-snap-align: start; }
-                                .holo-card:active { transform: scale(0.96); opacity: 0.92; }
-                                @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-                                .destacados-skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.6s infinite; border-radius:16px; flex-shrink:0; }
-                            </style>
-                            <div id="live-scroller-inner" class="live-track">
-                                <div class="destacados-skeleton" style="min-width:min(85vw,300px); height:160px;"></div>
-                                <div class="destacados-skeleton" style="min-width:220px; height:150px;"></div>
-                                <div class="destacados-skeleton" style="min-width:200px; height:140px;"></div>
+                    <!-- 3. SOMOSPADEL SMART COMPACT EVENT STRIP -->
+                    <style>
+                        @keyframes stripSkeletonShimmer {
+                            0% { background-position: 200% 0; }
+                            100% { background-position: -200% 0; }
+                        }
+                    </style>
+                    <div id="registration-widget-root" style="margin: 0 15px 14px !important; animation: floatUp 0.8s ease-out forwards;">
+                        <div id="live-scroller-inner">
+                            <!-- Skeleton 75px ultracompacto -->
+                            <div style="height: 75px; border-radius: 18px; background: linear-gradient(90deg, #131b2e 0%, #1e293b 50%, #131b2e 100%); background-size: 200% 100%; border: 1px solid rgba(255, 255, 255, 0.08); animation: stripSkeletonShimmer 1.8s infinite; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; box-sizing: border-box;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(255,255,255,0.06);"></div>
+                                    <div>
+                                        <div style="width: 120px; height: 13px; border-radius: 4px; background: rgba(255,255,255,0.08); margin-bottom: 6px;"></div>
+                                        <div style="width: 85px; height: 10px; border-radius: 4px; background: rgba(255,255,255,0.04);"></div>
+                                    </div>
+                                </div>
+                                <div style="width: 75px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.08);"></div>
                             </div>
                         </div>
                     </div>
@@ -2029,68 +1868,44 @@
             }, 100);
 
             return `
-                <div class="blog-widget-main-container" style="background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(10, 25, 47, 0.03); position: relative; overflow: hidden; perspective: 1000px; transform-style: preserve-3d;">
+                <div class="blog-widget-main-container" style="background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 28px; padding: 20px; box-shadow: 0 10px 30px rgba(10, 25, 47, 0.03); position: relative; overflow: hidden; perspective: 1000px; transform-style: preserve-3d;">
                     <!-- Efectos de brillo de fondo ultra sutiles (marca SomosPadel) -->
                     <div style="position: absolute; top: -60px; right: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(204,255,0,0.06) 0%, transparent 70%); pointer-events: none; filter: blur(25px);"></div>
                     <div style="position: absolute; bottom: -60px; left: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(46,97,255,0.04) 0%, transparent 70%); pointer-events: none; filter: blur(25px);"></div>
                     
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid rgba(15, 23, 42, 0.06);">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 34px; height: 34px; border-radius: 12px; background: #000000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(204,255,0,0.25); border: 1.5px solid #CCFF00;">
-                                <i class="fas fa-newspaper" style="font-size: 0.85rem; color: #CCFF00;"></i>
+                            <div style="width: 38px; height: 38px; border-radius: 12px; background: #000000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(204,255,0,0.25); border: 1.5px solid #CCFF00; flex-shrink: 0;">
+                                <i class="fas fa-newspaper" style="font-size: 0.95rem; color: #CCFF00;"></i>
                             </div>
                             <div>
-                                <div style="font-size: 0.84rem; font-weight: 1000; color: #0f172a; letter-spacing: -0.3px; text-transform: uppercase; font-family: 'Outfit', sans-serif;">Somos Pádel Journal</div>
-                                <div style="font-size: 0.52rem; color: #64748b; font-weight: 900; letter-spacing: 0.8px; text-transform: uppercase;">NOTICIAS, TÁCTICA Y NOVEDADES</div>
+                                <div style="font-size: 0.95rem; font-weight: 1000; color: #0f172a; letter-spacing: -0.3px; text-transform: uppercase; font-family: 'Outfit', sans-serif;">Somos Pádel Journal</div>
+                                <div style="font-size: 0.62rem; color: #64748b; font-weight: 850; letter-spacing: 0.6px; text-transform: uppercase;">NOTICIAS, TÁCTICA Y NOVEDADES</div>
                             </div>
                         </div>
-                        <div style="background: rgba(204,255,0,0.12); border: 1px solid rgba(132,204,22,0.25); padding: 4px 10px; border-radius: 20px; font-size: 0.52rem; font-weight: 1000; color: #4d7c0f; letter-spacing: 0.8px; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
-                            <span style="width: 5px; height: 5px; background: #CCFF00; border-radius: 50%; display: inline-block; animation: neonPulseGreen 1.5s infinite alternate; box-shadow: 0 0 5px #CCFF00;"></span>OFICIAL
+                        <div style="background: rgba(204,255,0,0.14); border: 1px solid rgba(132,204,22,0.3); padding: 5px 12px; border-radius: 20px; font-size: 0.62rem; font-weight: 1000; color: #3f6212; letter-spacing: 0.8px; text-transform: uppercase; display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
+                            <span style="width: 6px; height: 6px; background: #CCFF00; border-radius: 50%; display: inline-block; animation: neonPulseGreen 1.5s infinite alternate; box-shadow: 0 0 5px #CCFF00;"></span>OFICIAL
                         </div>
                     </div>
 
                     <!-- Fila de filtros de categoría premium con máscara degradada de desvanecimiento horizontal -->
                     <div style="position: relative; margin-bottom: 16px;">
-                        <div class="blog-categories-filter" style="display: flex; gap: 7px; overflow-x: auto; padding-bottom: 4px; padding-right: 20px; scrollbar-width: none; -ms-overflow-style: none; -webkit-mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%); mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%);">
-                            <button onclick="window.DashboardView.filterBlogCategory('ALL')" class="blog-filter-btn active" style="flex-shrink: 0; background: #CCFF00; border: 1px solid #CCFF00; color: #000; padding: 6px 14px; border-radius: 14px; font-size: 0.62rem; font-weight: 900; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 4px 10px rgba(204,255,0,0.2);">TODAS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('TORNEOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 6px 14px; border-radius: 14px; font-size: 0.62rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🏆 TORNEOS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('CONSEJOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 6px 14px; border-radius: 14px; font-size: 0.62rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">💡 CONSEJOS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('RANKING')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 6px 14px; border-radius: 14px; font-size: 0.62rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📊 RANKING</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('CRÓNICAS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 6px 14px; border-radius: 14px; font-size: 0.62rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📝 CRÓNICAS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('COMUNIDAD')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 6px 14px; border-radius: 14px; font-size: 0.62rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">👥 COMUNIDAD</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('FAVORITOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 6px 14px; border-radius: 14px; font-size: 0.62rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">⭐ GUARDADOS</button>
+                        <div class="blog-categories-filter" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; padding-right: 20px; scrollbar-width: none; -ms-overflow-style: none; -webkit-mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%); mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%);">
+                            <button onclick="window.DashboardView.filterBlogCategory('ALL')" class="blog-filter-btn active" style="flex-shrink: 0; background: #CCFF00; border: 1px solid #CCFF00; color: #000; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 900; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 4px 10px rgba(204,255,0,0.2);">TODAS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('TORNEOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🏆 TORNEOS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('CONSEJOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">💡 CONSEJOS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('RANKING')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📊 RANKING</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('CRÓNICAS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📝 CRÓNICAS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('COMUNIDAD')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">👥 COMUNIDAD</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('FAVORITOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">⭐ GUARDADOS</button>
                         </div>
                     </div>
                     
-                    <div id="dynamic-blog-posts-container" style="display: flex; flex-direction: column; gap: 10px;">
-<<<<<<< HEAD
+                    <div id="dynamic-blog-posts-container" style="display: flex; flex-direction: column; gap: 12px;">
                         <!-- Cargando posts dinámicos -->
                         <div style="text-align: center; padding: 25px; color: #94a3b8; font-size: 0.75rem; font-family: 'Outfit';">
                             <i class="fas fa-circle-notch fa-spin" style="color: #CCFF00; font-size: 1.2rem; margin-bottom: 6px; display: block;"></i>
                             Cargando las últimas noticias...
-=======
-                        <div onclick="if(window.DashboardView) window.DashboardView.openBlogPost('tip_bandeja')" style="display: flex; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 16px; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); cursor: pointer; transition: all 0.25s; box-shadow: 0 4px 12px rgba(0,0,0,0.03);" class="premium-blog-compact-card">
-                            <div style="width: 60px; height: 60px; border-radius: 12px; background: linear-gradient(135deg, #090f1e 0%, #1e293b 100%); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #CCFF00; font-size: 1.3rem;">
-                                💡
-                            </div>
-                            <div style="flex: 1;">
-                                <span style="font-size: 0.55rem; font-weight: 950; letter-spacing: 0.5px; color: #4d7c0f; text-transform: uppercase;">CONSEJOS TÁCTICOS</span>
-                                <h4 style="font-size: 0.82rem; font-weight: 900; color: #0f172a; margin: 2px 0 3px 0; font-family: 'Outfit';">Claves para la Bandeja de Control y Ataque</h4>
-                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 600;">Mejora tu empuñadura y posicionamiento en pista</span>
-                            </div>
-                            <i class="fas fa-chevron-right compact-chevron" style="color: #94a3b8; font-size: 0.8rem; transition: transform 0.2s;"></i>
-                        </div>
-                        <div onclick="if(window.DashboardView) window.DashboardView.openBlogPost('tip_remate')" style="display: flex; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 16px; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); cursor: pointer; transition: all 0.25s; box-shadow: 0 4px 12px rgba(0,0,0,0.03);" class="premium-blog-compact-card">
-                            <div style="width: 60px; height: 60px; border-radius: 12px; background: linear-gradient(135deg, #172554 0%, #1e1b4b 100%); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #CCFF00; font-size: 1.3rem;">
-                                🎾
-                            </div>
-                            <div style="flex: 1;">
-                                <span style="font-size: 0.55rem; font-weight: 950; letter-spacing: 0.5px; color: #3b82f6; text-transform: uppercase;">COMUNIDAD BCN</span>
-                                <h4 style="font-size: 0.82rem; font-weight: 900; color: #0f172a; margin: 2px 0 3px 0; font-family: 'Outfit';">Próximos Torneos y Americanas Semanales</h4>
-                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 600;">Compite en partidos equilibrados de tu nivel</span>
-                            </div>
-                            <i class="fas fa-chevron-right compact-chevron" style="color: #94a3b8; font-size: 0.8rem; transition: transform 0.2s;"></i>
->>>>>>> 08f2fdfe948f5da42084ef798a118048ad329d0d
                         </div>
                     </div>
                 </div>
@@ -2123,40 +1938,83 @@
                         transform: scale(1.08);
                     }
                     
-                    /* Microbotones interactivos en hover */
+                    /* Botones táctiles optimizados para móvil y escritorio */
                     .card-quick-actions {
                         display: flex;
                         align-items: center;
-                        gap: 6px;
+                        gap: 8px;
                     }
                     .card-quick-btn {
-                        width: 28px;
-                        height: 28px;
+                        width: 36px;
+                        height: 36px;
                         border-radius: 50%;
                         display: inline-flex;
                         align-items: center;
                         justify-content: center;
                         background: rgba(15, 23, 42, 0.04);
-                        border: 1px solid rgba(15, 23, 42, 0.08);
+                        border: 1px solid rgba(15, 23, 42, 0.09);
                         color: #64748b;
                         cursor: pointer;
                         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-                        font-size: 0.72rem;
+                        font-size: 0.88rem;
+                        touch-action: manipulation;
+                        -webkit-tap-highlight-color: transparent;
+                        flex-shrink: 0;
                     }
-                    .card-quick-btn:hover {
-                        transform: scale(1.15);
+                    .card-quick-btn:hover, .card-quick-btn:active {
+                        transform: scale(1.1);
                         background: #090f1e;
                         color: #CCFF00;
                         border-color: #CCFF00;
-                        box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+                        box-shadow: 0 3px 8px rgba(0,0,0,0.15);
                     }
-                    .card-quick-btn.whatsapp-btn:hover {
-                        background: #25D366;
-                        color: #ffffff;
-                        border-color: #25D366;
-                        box-shadow: 0 3px 8px rgba(37,211,102,0.4);
+                    .card-quick-btn.whatsapp-btn {
+                        background: rgba(37, 211, 102, 0.1);
+                        border-color: rgba(37, 211, 102, 0.25);
+                        color: #16a34a;
+                    }
+                    .card-quick-btn.whatsapp-btn:hover, .card-quick-btn.whatsapp-btn:active {
+                        background: #25D366 !important;
+                        color: #ffffff !important;
+                        border-color: #25D366 !important;
+                        box-shadow: 0 3px 10px rgba(37,211,102,0.35);
                     }
                     
+                    /* Responsive Móvil Exclusivo - Full-Width Experience */
+                    @media (max-width: 600px) {
+                        #blog-news-widget-root {
+                            margin: 0 6px 14px !important;
+                        }
+                        .blog-widget-main-container {
+                            padding: 14px 10px !important;
+                            border-radius: 22px !important;
+                        }
+                        .blog-categories-filter {
+                            gap: 7px !important;
+                            padding-bottom: 4px !important;
+                        }
+                        .blog-filter-btn {
+                            padding: 7px 14px !important;
+                            font-size: 0.72rem !important;
+                            border-radius: 12px !important;
+                        }
+                        .premium-blog-magazine-card {
+                            border-radius: 18px !important;
+                        }
+                        .magazine-card-thumb-wrap {
+                            height: 150px !important;
+                        }
+                        .magazine-card-title {
+                            font-size: 1.08rem !important;
+                            line-height: 1.3 !important;
+                        }
+                        .magazine-card-snippet {
+                            font-size: 0.8rem !important;
+                            line-height: 1.4 !important;
+                            -webkit-line-clamp: 2 !important;
+                        }
+                    }
+
                     /* Animación premium de desvanecimiento para las tarjetas del blog */
                     .blog-animate-fade-in {
                         animation: postFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -2376,43 +2234,65 @@
 
             const compactCards = rest.map((post, index) => {
                 const isSaved = this.isPostSaved(post.id);
+                const catName = (post.category || 'NOTICIAS').replace(/^[^\s]+\s/, '');
                 return `
                     <div onclick="window.DashboardView.openBlogPost('${post.id}')"
-                         class="premium-blog-compact-card blog-animate-fade-in"
-                         style="display: flex; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 18px; cursor: pointer; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.07); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(10,25,47,0.02); animation-delay: ${(index + 1) * 0.04}s;"
-                         onmouseover="this.style.background='#f8fafc';this.style.borderColor='rgba(15,23,42,0.12)';this.style.transform='translateX(4px)';"
-                         onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(15,23,42,0.07)';this.style.transform='translateX(0)';"
+                         class="premium-blog-magazine-card blog-animate-fade-in"
+                         style="display: flex; flex-direction: column; border-radius: 22px; cursor: pointer; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 4px 18px rgba(10,25,47,0.04); animation-delay: ${(index + 1) * 0.04}s;"
+                         onmouseover="this.style.background='#ffffff';this.style.borderColor='rgba(15,23,42,0.16)';this.style.transform='translateY(-2px)';"
+                         onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(15,23,42,0.08)';this.style.transform='translateY(0)';"
                     >
-                        <!-- Miniatura Realista de Pádel -->
-                        <div style="width: 76px; height: 76px; border-radius: 14px; overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid rgba(15,23,42,0.06);">
-                            <div class="compact-blog-thumb" style="width: 100%; height: 100%; background-image: url('${postImagesMap[post.id]}'); background-size: cover; background-position: center; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);"></div>
-                        </div>
-                        
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="font-size: 0.52rem; font-weight: 1000; letter-spacing: 0.8px; color: #4d7c0f; text-transform: uppercase; background: rgba(204,255,0,0.14); border: 1px solid rgba(204,255,0,0.28); padding: 2px 7px; border-radius: 6px;">${(post.category||'NOTICIAS').replace(/^[^\s]+\s/,'')}</span>
-                                <span style="font-size: 0.56rem; color: #64748b; font-weight: 800; display: flex; align-items: center; gap: 3px;"><i class="far fa-clock" style="font-size: 0.48rem; color: #4d7c0f;"></i>${post.readTime||'3 min'}</span>
+                        <!-- Imagen Panorámica Grande de Pádel -->
+                        <div class="magazine-card-thumb-wrap" style="position: relative; width: 100%; height: 165px; overflow: hidden; background: #0f172a;">
+                            <div style="width: 100%; height: 100%; background-image: url('${postImagesMap[post.id]}'); background-size: cover; background-position: center; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);" class="compact-blog-thumb"></div>
+                            
+                            <!-- Degradado suave superior e inferior sobre la imagen -->
+                            <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,0.45) 0%, transparent 40%, rgba(15,23,42,0.65) 100%); pointer-events: none;"></div>
+
+                            <!-- Badge de Categoría Flotante (Esquina Superior Izquierda) -->
+                            <div style="position: absolute; top: 12px; left: 12px; z-index: 2;">
+                                <span style="background: #CCFF00; color: #000000; font-size: 0.64rem; font-weight: 1000; padding: 4px 10px; border-radius: 8px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-family: 'Outfit', sans-serif;">${catName}</span>
                             </div>
-                            <h4 style="margin: 0 0 3px 0; color: #0f172a; font-weight: 900; font-size: 0.88rem; line-height: 1.25; letter-spacing: -0.2px; font-family: 'Outfit', sans-serif;">${post.title}</h4>
-                            <p style="margin: 0; color: #475569; font-size: 0.68rem; font-weight: 550; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${post.snippet}</p>
+
+                            <!-- Acciones Rápidas Flotantes (WhatsApp + Favorito) (Esquina Superior Derecha) -->
+                            <div style="position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; align-items: center; gap: 7px;">
+                                <button onclick="window.DashboardView.shareToWhatsApp('${post.id}', '${post.title.replace(/'/g, "\\'")}', event)"
+                                        class="card-quick-btn whatsapp-btn"
+                                        style="background: rgba(0,0,0,0.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.25); color: #25D366; width: 34px; height: 34px;"
+                                        title="Compartir por WhatsApp">
+                                    <i class="fab fa-whatsapp" style="font-size: 0.95rem;"></i>
+                                </button>
+                                <button onclick="window.DashboardView.toggleSaveBlogPost('${post.id}', event)"
+                                        class="card-quick-btn journal-bookmark-btn"
+                                        data-post-id="${post.id}"
+                                        style="background: rgba(0,0,0,0.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid ${isSaved ? '#CCFF00' : 'rgba(255,255,255,0.25)'}; color: ${isSaved ? '#CCFF00' : '#ffffff'}; width: 34px; height: 34px;"
+                                        title="${isSaved ? 'Eliminar de guardados' : 'Guardar táctica'}">
+                                    <i class="${isSaved ? 'fas' : 'far'} fa-bookmark" style="font-size: 0.85rem;"></i>
+                                </button>
+                            </div>
+
+                            <!-- Meta info sobre la foto (Esquina Inferior Izquierda) -->
+                            <div style="position: absolute; bottom: 10px; left: 14px; z-index: 2; display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 0.68rem; color: #ffffff; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 4px;">
+                                    <i class="far fa-clock" style="color: #CCFF00; font-size: 0.62rem;"></i> ${post.readTime||'3 min'}
+                                </span>
+                                <span style="font-size: 0.68rem; color: rgba(255,255,255,0.85); font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">
+                                    ${post.date||'Hoy'}
+                                </span>
+                            </div>
                         </div>
                         
-                        <!-- Acciones Rápidas (WhatsApp + Favorito) y Flecha -->
-                        <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-                            <button onclick="window.DashboardView.shareToWhatsApp('${post.id}', '${post.title.replace(/'/g, "\\'")}', event)"
-                                    class="card-quick-btn whatsapp-btn"
-                                    title="Compartir por WhatsApp">
-                                <i class="fab fa-whatsapp"></i>
-                            </button>
-                            <button onclick="window.DashboardView.toggleSaveBlogPost('${post.id}', event)"
-                                    class="card-quick-btn journal-bookmark-btn"
-                                    data-post-id="${post.id}"
-                                    style="${isSaved ? 'color:#4d7c0f; border-color:#84cc16; background:rgba(204,255,0,0.15);' : ''}"
-                                    title="${isSaved ? 'Eliminar de guardados' : 'Guardar táctica'}">
-                                <i class="${isSaved ? 'fas' : 'far'} fa-bookmark"></i>
-                            </button>
-                            <div style="color: #94a3b8; font-size: 0.7rem; transition: transform 0.2s; margin-left: 2px;" class="compact-chevron">
-                                <i class="fas fa-chevron-right"></i>
+                        <!-- Contenido Principal: 100% Ancho, Título Grande y Legible -->
+                        <div style="padding: 14px 16px 14px; display: flex; flex-direction: column; gap: 5px;">
+                            <h4 class="magazine-card-title" style="margin: 0; color: #0f172a; font-weight: 950; font-size: 1.15rem; line-height: 1.3; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif;">${post.title}</h4>
+                            <p class="magazine-card-snippet" style="margin: 0; color: #475569; font-size: 0.82rem; font-weight: 500; line-height: 1.45; font-family: 'Inter', sans-serif; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${post.snippet}</p>
+                            
+                            <!-- Pie con enlace "Leer artículo completo" -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; padding-top: 8px; border-top: 1px solid rgba(15, 23, 42, 0.06);">
+                                <span style="font-size: 0.76rem; font-weight: 900; color: #15803d; display: flex; align-items: center; gap: 5px; font-family: 'Outfit', sans-serif;">
+                                    LEER ARTÍCULO <i class="fas fa-arrow-right" style="font-size: 0.65rem; transition: transform 0.2s;"></i>
+                                </span>
+                                <span style="font-size: 0.62rem; color: #94a3b8; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">SOMOSPADEL JOURNAL</span>
                             </div>
                         </div>
                     </div>
@@ -2420,19 +2300,19 @@
             }).join('');
 
             const historyButtonHtml = `
-                <div style="margin-top: 15px; text-align: center;" class="blog-animate-fade-in" style="animation-delay: 0.16s;">
+                <div style="margin-top: 16px; text-align: center;" class="blog-animate-fade-in" style="animation-delay: 0.16s;">
                     <button onclick="window.DashboardView.openBlogHistory()"
                             id="blog-history-open-btn"
-                            style="background: rgba(15, 23, 42, 0.03); border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 8px 18px; border-radius: 14px; font-size: 0.65rem; font-weight: 850; cursor: pointer; transition: all 0.25s; display: inline-flex; align-items: center; gap: 6px; font-family: 'Outfit', sans-serif;"
-                            onmouseover="this.style.background='rgba(15, 23, 42, 0.06)';this.style.color='#0f172a';this.style.borderColor='rgba(15, 23, 42, 0.15)';this.style.transform='scale(1.02)';"
-                            onmouseout="this.style.background='rgba(15, 23, 42, 0.03)';this.style.color='#475569';this.style.borderColor='rgba(15, 23, 42, 0.08)';this.style.transform='scale(1)';"
+                            style="width: 100%; background: #ffffff; border: 1.5px solid rgba(15, 23, 42, 0.09); color: #0f172a; padding: 13px 20px; border-radius: 16px; font-size: 0.82rem; font-weight: 900; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Outfit', sans-serif; box-shadow: 0 4px 14px rgba(10,25,47,0.02);"
+                            onmouseover="this.style.background='#f8fafc';this.style.borderColor='rgba(15, 23, 42, 0.16)';this.style.transform='translateY(-1px)';"
+                            onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(15, 23, 42, 0.09)';this.style.transform='translateY(0)';"
                     >
-                        <i class="fas fa-history" style="font-size: 0.6rem; color: #4d7c0f;"></i> VER MÁS NOTICIAS (HISTÓRICO)
+                        <i class="fas fa-history" style="font-size: 0.85rem; color: #4d7c0f;"></i> VER MÁS NOTICIAS (HISTÓRICO COMPLETO)
                     </button>
                 </div>
             `;
 
-            container.innerHTML = featuredCard + `<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">${compactCards}</div>` + historyButtonHtml;
+            container.innerHTML = featuredCard + `<div style="display:flex;flex-direction:column;gap:14px;margin-top:14px;">${compactCards}</div>` + historyButtonHtml;
         }
 
         async openBlogHistory() {
@@ -3235,133 +3115,368 @@
                 </div>`;
         }
 
-        async renderLiveWidget(context) {
+        /**
+         * SISTEMA CROMÁTICO INTELIGENTE POR CATEGORÍA DE EVENTO
+         * Retorna la identidad visual deportiva premium según la naturaleza de la actividad
+         * @param {Object} evt 
+         * @returns {Object} Tema completo con colores, gradientes, bordes, badges e iconos
+         */
+        getEventCategoryTheme(evt) {
+            if (!evt) {
+                return {
+                    categoryName: 'open',
+                    badgeText: '🏆 OPEN',
+                    badgeBg: '#0284c7',
+                    badgeTextColor: '#ffffff',
+                    badgeShadow: 'box-shadow: 0 0 14px rgba(2, 132, 199, 0.5);',
+                    iconHtml: '<i class="fas fa-trophy" style="color: #38bdf8;"></i>',
+                    cardBg: 'linear-gradient(145deg, #071629 0%, #0e2746 100%)',
+                    cardBorder: '1px solid rgba(56, 189, 248, 0.3)',
+                    ctaColor: '#38bdf8',
+                    targetRoute: 'americanas',
+                    accentColor: '#38bdf8'
+                };
+            }
+
+            const type = (evt.type || evt.event_type || evt.eventType || '').toLowerCase();
+            const name = (evt.name || evt.title || evt.eventName || evt.tournamentName || '').toLowerCase();
+            const format = (evt.format || evt.mode || '').toLowerCase();
+            const cat = (evt.category || '').toLowerCase();
+            const gender = (evt.gender || evt.sexo || '').toLowerCase();
+            const combined = `${type} ${name} ${format} ${cat} ${gender}`;
+
+            // 1. 🎾 Entreno / Pozo / Clase Técnica
+            if (
+                type === 'entreno' || type === 'pozo' || type === 'clase' ||
+                combined.includes('entreno') || combined.includes('entrenamiento') ||
+                combined.includes('pozo') || combined.includes('clase') ||
+                combined.includes('tecnica') || combined.includes('técnica')
+            ) {
+                return {
+                    categoryName: 'entreno',
+                    badgeText: '🎾 ENTRENO',
+                    badgeBg: '#ef4444',
+                    badgeTextColor: '#ffffff',
+                    badgeShadow: 'box-shadow: 0 0 14px rgba(239, 68, 68, 0.5);',
+                    iconHtml: '<i class="fas fa-fire-alt" style="color: #ef4444;"></i>',
+                    cardBg: 'linear-gradient(145deg, #18080c 0%, #2a0c14 100%)',
+                    cardBorder: '1px solid rgba(239, 68, 68, 0.3)',
+                    ctaColor: '#ff7a59',
+                    targetRoute: 'entrenos',
+                    accentColor: '#ef4444'
+                };
+            }
+
+            // 5. ⭐ Torneo Especial / Master / Express
+            if (
+                combined.includes('master') || combined.includes('especial') ||
+                combined.includes('express') || combined.includes('oro') ||
+                combined.includes('pro') || combined.includes('final') ||
+                combined.includes('champions') || combined.includes('nocturna')
+            ) {
+                return {
+                    categoryName: 'especial',
+                    badgeText: '⭐ MASTER',
+                    badgeBg: '#CCFF00',
+                    badgeTextColor: '#0a192f',
+                    badgeShadow: 'box-shadow: 0 0 14px rgba(204, 255, 0, 0.4);',
+                    iconHtml: '<i class="fas fa-medal" style="color: #CCFF00;"></i>',
+                    cardBg: 'linear-gradient(145deg, #1a1804 0%, #2d2a07 100%)',
+                    cardBorder: '1px solid rgba(204, 255, 0, 0.3)',
+                    ctaColor: '#CCFF00',
+                    targetRoute: 'americanas',
+                    accentColor: '#CCFF00'
+                };
+            }
+
+            // 2. 🌸 Americana / Torneo Femenino
+            if (
+                combined.includes('femenin') || combined.includes('chicas') ||
+                combined.includes('women') || combined.includes('fem') ||
+                gender === 'f' || gender === 'femenino'
+            ) {
+                return {
+                    categoryName: 'femenino',
+                    badgeText: '🌸 FEMENINO',
+                    badgeBg: '#d946ef',
+                    badgeTextColor: '#ffffff',
+                    badgeShadow: 'box-shadow: 0 0 14px rgba(217, 70, 239, 0.5);',
+                    iconHtml: '<i class="fas fa-crown" style="color: #d946ef;"></i>',
+                    cardBg: 'linear-gradient(145deg, #190a24 0%, #2a0e3a 100%)',
+                    cardBorder: '1px solid rgba(217, 70, 239, 0.3)',
+                    ctaColor: '#f472b6',
+                    targetRoute: 'americanas',
+                    accentColor: '#d946ef'
+                };
+            }
+
+            // 3. ⚡ Americana / Torneo Mixto
+            if (
+                combined.includes('mixt') || combined.includes('mix') ||
+                gender === 'mxt' || gender === 'mixto'
+            ) {
+                return {
+                    categoryName: 'mixto',
+                    badgeText: '⚡ MIXTO',
+                    badgeBg: '#f97316',
+                    badgeTextColor: '#ffffff',
+                    badgeShadow: 'box-shadow: 0 0 14px rgba(249, 115, 22, 0.5);',
+                    iconHtml: '<i class="fas fa-bolt" style="color: #f97316;"></i>',
+                    cardBg: 'linear-gradient(145deg, #1f1205 0%, #331e08 100%)',
+                    cardBorder: '1px solid rgba(249, 115, 22, 0.3)',
+                    ctaColor: '#fb923c',
+                    targetRoute: 'americanas',
+                    accentColor: '#f97316'
+                };
+            }
+
+            // 4. 🏆 Americana / Torneo Masculino u Open
+            const isMasc = combined.includes('masculin') || combined.includes('chicos') || combined.includes('men') || gender === 'm' || gender === 'masculino';
+            return {
+                categoryName: isMasc ? 'masculino' : 'open',
+                badgeText: isMasc ? '🏆 MASCULINO' : '🏆 OPEN',
+                badgeBg: '#0284c7',
+                badgeTextColor: '#ffffff',
+                badgeShadow: 'box-shadow: 0 0 14px rgba(2, 132, 199, 0.5);',
+                iconHtml: '<i class="fas fa-trophy" style="color: #38bdf8;"></i>',
+                cardBg: 'linear-gradient(145deg, #071629 0%, #0e2746 100%)',
+                cardBorder: '1px solid rgba(56, 189, 248, 0.3)',
+                ctaColor: '#38bdf8',
+                targetRoute: 'americanas',
+                accentColor: '#38bdf8'
+            };
+        }
+
+        /**
+         * Manejador de filtrado y navegación rápida por categorías en el Centro de Juego
+         * @param {string} cat 'todos' | 'entrenos' | 'americanas' | 'partidas'
+         */
+        filterCommandCenterCategory(cat) {
+            if (window._ccActiveFilter === cat && cat !== 'todos') {
+                // Segundo toque: navegación directa al listado completo
+                const route = (cat === 'entrenos') ? 'entrenos' : (cat === 'partidas' ? 'partidas_abiertas' : 'americanas');
+                window.dashNavigate(route, 'chips_double_tap');
+                return;
+            }
+            if (cat === 'partidas') {
+                window.dashNavigate('partidas_abiertas', 'chips');
+                return;
+            }
+            window._ccActiveFilter = cat;
+            if (window.DashboardView && typeof window.DashboardView.renderLiveWidget === 'function') {
+                window.DashboardView.renderLiveWidget(window._lastDashboardContext || {});
+            }
+        }
+
+        async renderLiveWidget(context = {}) {
             try {
-                // 1. DATA GATHERING (INTEL) - Fresh fetch for real-time accuracy
-                const [allEvents, weatherData] = await Promise.all([
-                    window.AmericanaService ? window.AmericanaService.getAllActiveEvents() : [],
-                    window.WeatherService ? window.WeatherService.getDashboardWeather() : []
-                ]);
+                // Ensure global helpers exist
+                window._lastDashboardContext = context || {};
+                window.getEventCategoryTheme = (evt) => this.getEventCategoryTheme(evt);
+                window.filterCommandCenterCategory = (cat) => this.filterCommandCenterCategory(cat);
 
-                console.log(`🧠[AI News Motor] Processing ${allEvents.length} events for priority feed.`);
-
-                let itemsHtml = [];
-
-                // A. WEATHER INTEL CARD — PRO REDESIGN
-                if (weatherData && weatherData[0]) {
-                    const w = weatherData[0];
-                    itemsHtml.push(`
-                    <div class="registration-ticker-card holo-card" onclick="window.showWeatherDetails()" style="cursor:pointer; min-width:220px; width:220px; height:150px; background:linear-gradient(145deg, #0c1a3a 0%, #0f2050 100%); border-radius:18px; padding:15px; flex-shrink:0; box-shadow:0 8px 28px rgba(15,23,42,0.45), 0 0 0 1px rgba(59,130,246,0.2); position:relative; overflow:hidden; border:none; display:flex; flex-direction:column; justify-content:space-between; margin-right:0;">
-                        <div style="position:absolute; right:-15px; bottom:-15px; font-size:6rem; opacity:0.07; filter:blur(2px); pointer-events:none; line-height:1;">${w.icon}</div>
-                        <div style="position:absolute; top:-20px; left:-20px; width:80px; height:80px; background:#3b82f6; filter:blur(35px); opacity:0.25; pointer-events:none;"></div>
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; position:relative; z-index:2;">
-                            <span style="font-size:0.52rem; font-weight:950; color:white; background:#3b82f6; padding:3px 8px; border-radius:6px; letter-spacing:1px; text-transform:uppercase; box-shadow:0 0 10px rgba(59,130,246,0.5);">METEO</span>
-                            <span style="font-size:1.5rem; font-weight:900; color:white; line-height:1;">${w.temp}\u00baC</span>
-                        </div>
-                        <div style="position:relative; z-index:2;">
-                            <div style="color:white; font-weight:800; font-size:0.78rem; letter-spacing:0.5px; margin-bottom:4px;">${w.name.toUpperCase()}</div>
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="color:#38bdf8; font-size:0.58rem; font-weight:700;">BOLA: ${w.temp > 20 ? 'R\u00c1PIDA' : 'LENTA'}</span>
-                                <span style="font-size:0.55rem; color:rgba(255,255,255,0.65); font-weight:800; background:rgba(0,0,0,0.35); padding:2px 7px; border-radius:5px; display:flex; align-items:center; gap:3px;"><i class="fas fa-tint" style="color:#38bdf8; font-size:0.5rem;"></i>${w.humidity}% HUM</span>
-                            </div>
-                        </div>
-                    </div>
-                    `);
+                if (!window.showWeatherDetails) {
+                    window.showWeatherDetails = function() {
+                        const weatherWidget = document.getElementById('weather-widget-root');
+                        if (weatherWidget) {
+                            weatherWidget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    };
                 }
 
-                // B. PRIORITY EVENT — HERO CARD PRO
+                // 1. DATA GATHERING (INTEL)
+                let allEvents = [];
+                let weatherData = [];
+
+                if (window._lastEventsData && window._lastWeatherData && window._ccEventsFetchedRecently) {
+                    allEvents = window._lastEventsData;
+                    weatherData = window._lastWeatherData;
+                } else {
+                    [allEvents, weatherData] = await Promise.all([
+                        window.AmericanaService ? window.AmericanaService.getAllActiveEvents() : [],
+                        window.WeatherService ? window.WeatherService.getDashboardWeather() : []
+                    ]);
+                    window._lastEventsData = allEvents;
+                    window._lastWeatherData = weatherData;
+                    window._ccEventsFetchedRecently = true;
+                    setTimeout(() => { window._ccEventsFetchedRecently = false; }, 30000); // 30s cache
+                }
+
+                // Weather data extraction for subtle micro-pill
+                const w = (weatherData && weatherData[0]) ? weatherData[0] : null;
+                const weatherTemp = (w && w.temp !== undefined && w.temp !== '--') ? `${w.temp}°C` : '24°C';
+                const weatherIcon = (w && w.icon) ? w.icon : '☀️';
+                const weatherCity = (w && w.name) ? w.name : 'EL PRAT';
+
+                // Open active events sorted by date
                 const openEvents = allEvents
-                    .filter(a => ['open', 'upcoming'].includes(a.status))
+                    .filter(a => ['open', 'upcoming', 'scheduled'].includes(a.status))
                     .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                if (openEvents.length > 0) {
-                    const topEvt = openEvents[0];
-                    itemsHtml.push(`
-                    <div class="holo-card" onclick="window.dashNavigate('entrenos', 'event')" style="min-width:min(85vw,300px); width:min(85vw,300px); height:160px; background:linear-gradient(145deg, #1a0305 0%, #2d0408 50%, #0a0f1e 100%); border-radius:20px; padding:18px; margin-right:0; flex-shrink:0; box-shadow:0 12px 36px rgba(239,68,68,0.18), 0 4px 14px rgba(0,0,0,0.55); position:relative; overflow:hidden; cursor:pointer; border:none; display:flex; flex-direction:column; justify-content:space-between;">
-                        <div style="position:absolute; top:-30px; right:-30px; width:110px; height:110px; background:#ef4444; filter:blur(55px); opacity:0.32; pointer-events:none;"></div>
-                        <div style="position:absolute; bottom:-25px; left:-20px; width:90px; height:90px; background:#f97316; filter:blur(45px); opacity:0.18; pointer-events:none;"></div>
-                        <div style="position:absolute; inset:0; background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 3px); pointer-events:none;"></div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:3;">
-                            <span style="font-size:0.52rem; font-weight:950; color:white; background:#ef4444; padding:4px 10px; border-radius:7px; letter-spacing:1.5px; text-transform:uppercase; box-shadow:0 0 14px rgba(239,68,68,0.55);">PR\u00d3XIMO RETO</span>
-                            <i class="fas fa-fire-alt" style="color:#ef4444; font-size:1rem; filter:drop-shadow(0 0 6px #ef4444);"></i>
+                let stripHtml = '';
+
+                // Weather micro-pill HTML component
+                const weatherPillHtml = `
+                    <div onclick="event.stopPropagation(); if(window.showWeatherDetails){window.showWeatherDetails();}else if(window.DashboardView&&window.DashboardView.toggleWeatherDetails){window.DashboardView.toggleWeatherDetails('EL_PRAT');}" 
+                         style="cursor: pointer; display: inline-flex; align-items: center; gap: 3px; font-size: 0.58rem; font-weight: 800; color: #cbd5e1; background: rgba(0, 0, 0, 0.4); padding: 1.5px 6px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08); user-select: none; -webkit-tap-highlight-color: transparent;" 
+                         title="Meteo ${weatherCity}: ${weatherTemp}">
+                        <span>${weatherIcon}</span> <span>${weatherTemp}</span>
+                    </div>
+                `;
+
+                // CASE 1: EL USUARIO TIENE PARTIDO HOY
+                if (context && (context.hasMatchToday || context.hasMatchThisWeek)) {
+                    const isMyEntreno = (context.matchType === 'entreno') || ((context.eventName || '').toLowerCase().includes('entreno')) || ((context.eventName || '').toLowerCase().includes('pozo'));
+                    const targetRoute = isMyEntreno ? 'entrenos' : 'agenda';
+                    const myMatchTitle = (context.eventName || (isMyEntreno ? 'Entreno Programado' : 'Tu Partido Hoy')).trim();
+                    const matchTime = context.matchTime || '19:30';
+                    const courtText = context.court ? `Pista ${context.court}` : 'Pista 3';
+
+                    stripHtml = `
+                    <div onclick="window.dashNavigate('${targetRoute}', 'strip_my_match')" 
+                         style="background: linear-gradient(135deg, #091a33 0%, #0d284f 100%); border: 1px solid rgba(56, 189, 248, 0.45); border-radius: 18px; padding: 10px 14px; min-height: 76px; max-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                         onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+                        
+                        <!-- Ambient Glow -->
+                        <div style="position: absolute; top: -30px; right: -30px; width: 90px; height: 90px; background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                        <!-- Left: Badge & Time -->
+                        <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
+                            <span style="background: #0284c7; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 2.5px 7px; border-radius: 6px; letter-spacing: 0.6px; text-transform: uppercase; box-shadow: 0 0 12px rgba(2, 132, 199, 0.5); display: inline-flex; align-items: center; gap: 3px;">
+                                🎾 ${isMyEntreno ? 'ENTRENO' : 'PARTIDO'}
+                            </span>
+                            <span style="font-size: 0.62rem; color: #38bdf8; font-weight: 850; display: inline-flex; align-items: center; gap: 3px;">
+                                <i class="far fa-clock" style="font-size: 0.56rem;"></i> ${matchTime}
+                            </span>
                         </div>
-                        <div style="position:relative; z-index:3;">
-                            <h4 style="margin:0 0 8px; color:white; font-size:0.95rem; font-weight:900; line-height:1.2; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; text-shadow:0 2px 8px rgba(0,0,0,0.6);">${(topEvt.name || 'Evento').toUpperCase()}</h4>
-                            <div style="display:inline-flex; align-items:center; gap:5px; color:#ff8a65; font-size:0.62rem; font-weight:850; border-bottom:1px solid rgba(255,138,101,0.4); padding-bottom:1px;">
-                                RESERVAR AHORA <i class="fas fa-arrow-right" style="font-size:0.55rem;"></i>
+
+                        <!-- Center: Match Info -->
+                        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2;">
+                            <div style="color: #ffffff; font-size: 0.84rem; font-weight: 900; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${myMatchTitle}
+                            </div>
+                            <div style="font-size: 0.62rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px;">
+                                <span style="color: #38bdf8; font-weight: 900;">🎾 ${courtText}</span> • Convocatoria confirmada
                             </div>
                         </div>
-                    </div>
-                    `);
-                }
 
-                openEvents.slice(1).forEach(am => {
-                    const isWomen = am.name.toLowerCase().includes('fem') || am.name.toLowerCase().includes('wom');
-                    const cardBg = isWomen
-                        ? 'linear-gradient(145deg, #1a0b2e 0%, #0d0a1a 100%)'
-                        : 'linear-gradient(145deg, #051a2e 0%, #060d1a 100%)';
-                    itemsHtml.push(`
-                    <div class="holo-card" onclick="window.dashNavigate('entrenos', 'event')" style="min-width:200px; width:200px; height:140px; background:${cardBg}; border-radius:18px; padding:14px; margin-right:0; flex-shrink:0; box-shadow:0 6px 22px rgba(15,23,42,0.4); position:relative; overflow:hidden; cursor:pointer; border:none; display:flex; flex-direction:column; justify-content:space-between;">
-                        <div style="position:absolute; top:-8px; right:-8px; font-size:4rem; opacity:0.04; color:white; pointer-events:none;"><i class="fas fa-medal"></i></div>
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:0.52rem; color:rgba(255,255,255,0.8); font-weight:950; letter-spacing:1px; border:1px solid rgba(255,255,255,0.15); padding:3px 8px; border-radius:6px; background:rgba(255,255,255,0.06);">${this.formatDateShort(am.date)}</span>
-                            <i class="fas fa-calendar-alt" style="color:rgba(255,255,255,0.3); font-size:0.75rem;"></i>
+                        <!-- Right: Micro-clima & Direct CTA -->
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
+                            ${weatherPillHtml}
+                            <button onclick="event.stopPropagation(); window.dashNavigate('${targetRoute}', 'strip_my_match')" 
+                                    style="background: #38bdf8; color: #071629; font-size: 0.64rem; font-weight: 950; padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.4px; box-shadow: 0 2px 10px rgba(56, 189, 248, 0.4); white-space: nowrap; transition: transform 0.15s ease;"
+                                    onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                                <span>VER PISTA</span> <i class="fas fa-arrow-right" style="font-size: 0.52rem;"></i>
+                            </button>
                         </div>
-                        <div>
-                            <h4 style="margin:0 0 6px; color:white; font-size:0.85rem; font-weight:900; line-height:1.2; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${am.name}</h4>
-                            <div style="font-size:0.6rem; color:#86efac; font-weight:800; display:flex; align-items:center; gap:4px;">
-                                VER EVENTO <i class="fas fa-chevron-right" style="font-size:0.5rem;"></i>
+                    </div>
+                    `;
+                } else if (openEvents.length > 0) {
+                    // CASE 2: EVENTOS DISPONIBLES (SMART COMPACT EVENT STRIP)
+                    const displayEvents = openEvents.slice(0, 6);
+
+                    const slidesHtml = displayEvents.map((evt, idx) => {
+                        const theme = this.getEventCategoryTheme(evt);
+                        const eventNameText = (evt.name || evt.title || (theme.categoryName === 'entreno' ? 'Entreno Mixto' : 'Americana Oficial')).trim();
+                        const dateText = this.formatDateShort ? this.formatDateShort(evt.date) : 'Hoy';
+                        const timeStr = evt.time || '19:30';
+                        const timeDisplay = `${dateText === 'HOY' ? 'Hoy' : dateText} ${timeStr}`;
+
+                        // Capacity & Urgency
+                        const max = evt.max_players || evt.maxPlayers || 16;
+                        const current = (evt.registeredPlayers || evt.players || []).length;
+                        const spotsLeft = Math.max(0, max - current);
+                        const urgencyColor = spotsLeft <= 3 ? '#ef4444' : (spotsLeft <= 6 ? '#f59e0b' : '#34d399');
+                        const urgencyText = spotsLeft > 0 ? `${spotsLeft} plazas libres` : 'Completo';
+                        const minLevel = evt.min_level || evt.minLevel || '2.5';
+                        const maxLevel = evt.max_level || evt.maxLevel || '4.5';
+
+                        return `
+                        <div onclick="window.dashNavigate('${theme.targetRoute}', 'strip_card')" 
+                             style="min-width: 100%; max-width: 100%; flex-shrink: 0; scroll-snap-align: start; box-sizing: border-box; background: ${theme.cardBg}; border: ${theme.cardBorder}; border-radius: 18px; padding: 10px 14px; min-height: 76px; max-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                             onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+                            
+                            <!-- Ambient Category Glow -->
+                            <div style="position: absolute; top: -25px; right: -25px; width: 80px; height: 80px; background: radial-gradient(circle, ${theme.accentColor}25 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                            <!-- Left: Badge & Time -->
+                            <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
+                                <span style="background: ${theme.badgeBg}; color: ${theme.badgeTextColor || '#ffffff'}; font-size: 0.58rem; font-weight: 950; padding: 2.5px 7px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase; ${theme.badgeShadow || ''} display: inline-flex; align-items: center; gap: 3px;">
+                                    ${theme.badgeText}
+                                </span>
+                                <span style="font-size: 0.62rem; color: #cbd5e1; font-weight: 800; display: inline-flex; align-items: center; gap: 3px;">
+                                    <i class="far fa-clock" style="font-size: 0.56rem; color: #94a3b8;"></i> ${timeDisplay}
+                                </span>
+                            </div>
+
+                            <!-- Center: Title & Subtitle -->
+                            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; z-index: 2; padding: 0 2px;">
+                                <div style="color: #ffffff; font-size: 0.82rem; font-weight: 900; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eventNameText}">
+                                    ${eventNameText}
+                                </div>
+                                <div style="font-size: 0.62rem; color: #94a3b8; font-weight: 750; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px;">
+                                    <span style="color: ${urgencyColor}; font-weight: 900;">⚡ ${urgencyText}</span> • <span style="color: #cbd5e1;">Nivel ${minLevel}-${maxLevel}</span>
+                                </div>
+                            </div>
+
+                            <!-- Right: Micro-clima & Button -->
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; height: 56px; flex-shrink: 0; z-index: 2;">
+                                <div style="display: inline-flex; align-items: center; gap: 4px;">
+                                    ${displayEvents.length > 1 ? `<span style="font-size: 0.50rem; color: #94a3b8; font-weight: 850; background: rgba(0,0,0,0.4); padding: 1px 4px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08);">${idx + 1}/${displayEvents.length}</span>` : ''}
+                                    ${weatherPillHtml}
+                                </div>
+                                <button onclick="event.stopPropagation(); window.dashNavigate('${theme.targetRoute}', 'strip_cta')" 
+                                        style="background: ${theme.ctaColor}; color: ${theme.categoryName === 'especial' ? '#0a192f' : '#ffffff'}; font-size: 0.64rem; font-weight: 950; padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.4px; box-shadow: 0 2px 10px rgba(0,0,0,0.35); white-space: nowrap; transition: transform 0.15s ease;"
+                                        onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                                    <span>RESERVAR</span> <i class="fas fa-arrow-right" style="font-size: 0.52rem;"></i>
+                                </button>
                             </div>
                         </div>
+                        `;
+                    }).join('');
+
+                    stripHtml = `
+                    <style>
+                        .compact-strip-track::-webkit-scrollbar { display: none !important; }
+                    </style>
+                    <div class="compact-strip-track" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; width: 100%; gap: 8px;">
+                        ${slidesHtml}
                     </div>
-                    `);
-                });
-
-                // C. DYNAMIC ENGAGING TIPS
-                const dynamicPool = [
-                    {
-                        tag: '📈 TU NIVEL',
-                        icon: 'fa-chart-line',
-                        accent: '#38bdf8',
-                        title: 'Nivel Dinámico',
-                        desc: 'Tu nivel evoluciona con cada set. ¡Juega y demuestra tu progreso!',
-                        route: 'profile'
-                    },
-                    {
-                        tag: '🏆 COMPETICIÓN',
-                        icon: 'fa-trophy',
-                        accent: '#f472b6',
-                        title: 'Puntos y Ascensos',
-                        desc: 'Gana partidos para subir de pista y alcanzar el Top 1 del Ranking.',
-                        route: 'ranking'
-                    }
-                ];
-
-                dynamicPool.forEach((tip) => {
-                    itemsHtml.push(`
-                    <div class="holo-card" onclick="window.dashNavigate('${tip.route}', 'tip')" style="cursor: pointer; min-width: 260px; width: 260px; height: 135px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 20px; padding: 15px; margin-right: 15px; flex-shrink: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); display:flex; flex-direction:column; justify-content:space-between;">
-                        <!-- Ambient glow -->
-                        <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: ${tip.accent}; filter: blur(30px); opacity: 0.25; pointer-events: none;"></div>
+                    `;
+                } else {
+                    // CASE 3: SIN EVENTOS ABIERTOS (TIRA DELGADA ELEGANTE ~60px)
+                    stripHtml = `
+                    <div onclick="window.dashNavigate('partidas_abiertas', 'strip_empty')" 
+                         style="background: linear-gradient(135deg, #0b1528 0%, #13223f 100%); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 16px; padding: 8px 14px; min-height: 60px; max-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                         onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                         
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span class="premium-tag" style="font-size:0.55rem; font-weight:950; color:white; background:rgba(0,0,0,0.4); padding:3px 8px; border-radius:6px; border:1px solid ${tip.accent}80; letter-spacing:1px; white-space:nowrap;">${tip.tag}</span>
-                            <i class="fas ${tip.icon}" style="color:${tip.accent}; font-size:0.85rem;"></i>
+                        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; z-index: 2;">
+                            <span style="background: rgba(2, 132, 199, 0.2); color: #38bdf8; font-size: 0.58rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.35); letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0;">
+                                🎾 PARTIDAS ABIERTAS
+                            </span>
+                            <div style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <div style="color: #ffffff; font-size: 0.78rem; font-weight: 850; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Encuentra o crea partida hoy</div>
+                                <div style="color: #94a3b8; font-size: 0.58rem; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Juega con jugadores de tu nivel</div>
+                            </div>
                         </div>
-                        
-                        <div>
-                            <div style="color:white; font-weight:900; font-size:0.9rem; margin-bottom:3px; letter-spacing:-0.3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${tip.title}</div>
-                            <div style="color:rgba(255,255,255,0.6); font-size:0.65rem; font-weight:600; line-height:1.25; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${tip.desc}</div>
+
+                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; z-index: 2;">
+                            ${weatherPillHtml}
+                            <button onclick="event.stopPropagation(); window.dashNavigate('partidas_abiertas', 'strip_empty')" 
+                                    style="background: #38bdf8; color: #071629; font-size: 0.64rem; font-weight: 950; padding: 5px 11px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.4px; box-shadow: 0 2px 10px rgba(56, 189, 248, 0.35); white-space: nowrap; transition: transform 0.15s ease;"
+                                    onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                                <span>JUGAR</span> <i class="fas fa-arrow-right" style="font-size: 0.52rem;"></i>
+                            </button>
                         </div>
                     </div>
-                    `);
-                });
-
-                const scroller = document.getElementById('live-scroller-inner');
-                const html = itemsHtml.join('');
-                if (scroller) {
-                    scroller.innerHTML = html;
+                    `;
                 }
-                return html;
+
+                const container = document.getElementById('live-scroller-inner');
+                if (container) {
+                    container.innerHTML = stripHtml;
+                }
+                return stripHtml;
             } catch (err) {
                 console.error("renderLiveWidget Error:", err);
                 return '';
@@ -3469,14 +3584,18 @@
                 // 2026 UPDATE: Fetch active tournaments for ActionGrid badge
                 if (window.AmericanaService) {
                     const activeEvents = await window.AmericanaService.getAllActiveEvents();
-                    context.activeTournaments = activeEvents.filter(e => e.type === 'americana' && e.status !== 'finished').length;
+                    context.activeTournaments = activeEvents.filter(e => {
+                        const title = (e.name || e.title || '').toLowerCase();
+                        const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase');
+                        return !isEnt && e.status !== 'finished';
+                    }).length;
 
                     // Specific active tournament for QuickStats (if user is in one)
-                    context.activeTournament = activeEvents.find(e =>
-                        e.type === 'americana' &&
-                        e.status !== 'finished' &&
-                        (e.players || []).some(p => p.id === userId)
-                    );
+                    context.activeTournament = activeEvents.find(e => {
+                        const title = (e.name || e.title || '').toLowerCase();
+                        const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase');
+                        return !isEnt && e.status !== 'finished' && (e.players || []).some(p => p.id === userId);
+                    });
                 }
 
                 // 5. User's specific participation (re-ordered)

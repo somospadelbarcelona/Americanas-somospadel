@@ -104,7 +104,6 @@
             maxLevel: 2.75
         },
         {
-<<<<<<< HEAD
             id: 'masculina-2',
             name: 'Masculina 2ª División',
             category: 'Masculina',
@@ -118,8 +117,6 @@
             maxLevel: 4.75
         },
         {
-=======
->>>>>>> 08f2fdfe948f5da42084ef798a118048ad329d0d
             id: 'masculina-3',
             name: 'Masculina 3ª División',
             category: 'Masculina',
@@ -843,18 +840,11 @@
          */
         isCampaignActiveSync() {
             try {
-<<<<<<< HEAD
-                if (typeof localStorage === 'undefined') return true;
-                const val = localStorage.getItem(CONFIG.STORAGE_KEY_ACTIVE);
-                return val !== 'false';
-            } catch (e) {
-                return true;
-=======
                 if (typeof localStorage === 'undefined') return false;
-                return localStorage.getItem(CONFIG.STORAGE_KEY_ACTIVE) === 'true';
+                const val = localStorage.getItem(CONFIG.STORAGE_KEY_ACTIVE);
+                return val === 'true';
             } catch (e) {
                 return false;
->>>>>>> 08f2fdfe948f5da42084ef798a118048ad329d0d
             }
         }
 
@@ -906,6 +896,13 @@
                     console.log(`✅ [SeasonCampaignService] Estado de campaña en INICIO actualizado a: ${isActive ? 'ACTIVADA' : 'DESACTIVADA'}`);
                 } catch (err) {
                     console.warn('⚠️ [SeasonCampaignService] Error guardando estado en Firestore:', err.message);
+                }
+            }
+
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('sp_campaign_status_changed', { detail: { active: isActive } }));
+                if (window.SmartTicker && typeof window.SmartTicker.update === 'function') {
+                    window.SmartTicker.update();
                 }
             }
 

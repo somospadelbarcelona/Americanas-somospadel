@@ -51,16 +51,13 @@
                     </div>
                     `}
 
-                    <!-- PLAYTOMIC TABS (Disponible vs Resultados vs Tus Competiciones) -->
+                    <!-- PLAYTOMIC TABS (Disponible vs Resultados) -->
                     <div class="playtomic-tabs-container">
                         <button class="playtomic-tab-btn ${this.activeTab === 'disponible' ? 'active' : ''}" onclick="window.OpenMatchesView.changeTab('disponible')">
                             Disponible
                         </button>
                         <button class="playtomic-tab-btn ${this.activeTab === 'resultados' ? 'active' : ''}" onclick="window.OpenMatchesView.changeTab('resultados')">
                             Resultados
-                        </button>
-                        <button class="playtomic-tab-btn ${this.activeTab === 'mis_partidas' ? 'active' : ''}" onclick="window.OpenMatchesView.changeTab('mis_partidas')">
-                            Tus competiciones
                         </button>
                     </div>
 
@@ -1226,6 +1223,10 @@
         }
 
         changeTab(tabName) {
+            if (tabName === 'mis_partidas') {
+                if (window.Router) window.Router.navigate('profile');
+                return;
+            }
             if (this.activeTab === tabName) return;
 
             this.activeTab = tabName;
@@ -1234,8 +1235,7 @@
             document.querySelectorAll('.playtomic-tab-btn').forEach(btn => {
                 const text = btn.textContent.trim().toLowerCase();
                 const isActive = (text === 'disponible' && tabName === 'disponible') ||
-                                 (text === 'resultados' && tabName === 'resultados') ||
-                                 (text === 'tus competiciones' && tabName === 'mis_partidas');
+                                 (text === 'resultados' && tabName === 'resultados');
                 btn.classList.toggle('active', isActive);
             });
 
@@ -1384,8 +1384,7 @@
             const myName = currentUser ? (currentUser.name || currentUser.displayName || "") : "";
 
             if (this.activeTab === 'mis_partidas') {
-                this.renderAiHistoryView();
-                return;
+                this.activeTab = 'disponible';
             }
 
             // 1. Apply tab filters
@@ -4664,6 +4663,9 @@
         }
 
         openAiTelemetryModal(matchId) {
+            if (window.PlayerView && typeof window.PlayerView.openAiTelemetryModal === 'function') {
+                return window.PlayerView.openAiTelemetryModal(matchId);
+            }
             const currentUser = window.Store ? window.Store.getState('currentUser') : null;
             const myName = currentUser ? (currentUser.name || currentUser.displayName || "Jugador") : "Jugador";
             const userLevel = currentUser ? parseFloat(currentUser.level || 3.25) : 3.25;

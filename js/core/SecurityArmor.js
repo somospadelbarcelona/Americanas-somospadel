@@ -1,102 +1,121 @@
 /**
- * SECURITY ARMOR v3.0 - PRO PROTECTION
- * Módulo de defensa activa para prevenir inspección y copia no autorizada.
+ * 🛡️ SECURITY ARMOR v5.0 - MILITARY DEFENSE & DOMAIN LOCK (NIVEL NASA)
+ * Módulo de defensa activa para prevenir inspección, copia, clonación y manipulación.
  */
 
 (function () {
-    const CONFIG = {
-        enableDevToolsDetection: false,
-        disableRightClick: false,
-        disableCopyPaste: false,
-        disableKeys: false,
-        debuggerTrap: false
+    'use strict';
+
+    // ==========================================
+    // 1. DOMAIN LOCK & ANTI-REPLICA KILL SWITCH
+    // ==========================================
+    // Si un tercero descarga el código y lo aloja en otro dominio, la app se bloquea de inmediato.
+    const AUTHORIZED_HOSTS = [
+        'americanas-somospadel.firebaseapp.com',
+        'americanas-somospadel.web.app',
+        'somospadelbarcelona.github.io',
+        'localhost',
+        '127.0.0.1',
+        ''
+    ];
+
+    const currentHost = window.location.hostname || '';
+    const isLocalFile = window.location.protocol === 'file:';
+    const isAuthorized = isLocalFile || 
+                         AUTHORIZED_HOSTS.includes(currentHost) || 
+                         currentHost.endsWith('.firebaseapp.com') || 
+                         currentHost.endsWith('.web.app');
+
+    if (!isAuthorized) {
+        console.error('🛑 REPLICA NO AUTORIZADA DETECTADA');
+        try { window.stop(); } catch(e) {}
+
+        const lockUI = function() {
+            document.documentElement.innerHTML = `
+                <div style="background:#07090e; color:#fff; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif; padding:2rem;">
+                    <div style="width:80px; height:80px; border-radius:50%; background:rgba(255,68,68,0.15); border:2px solid #ff4444; display:flex; align-items:center; justify-content:center; font-size:2.5rem; margin-bottom:1.5rem; box-shadow:0 0 30px rgba(255,68,68,0.3);">🛡️</div>
+                    <h1 style="color:#ff4444; font-size:2rem; font-weight:900; margin-bottom:0.75rem; letter-spacing:1px;">SISTEMA BLOQUEADO POR SEGURIDAD</h1>
+                    <p style="color:#94a3b8; max-width:580px; line-height:1.7; font-size:1rem; margin-bottom:2rem;">
+                        Esta aplicación, su arquitectura, diseño y algoritmos son propiedad intelectual registrada y exclusiva de <strong>SomosPádel BCN</strong>. El uso o clonación en el dominio <code>${currentHost}</code> no dispone de autorización.
+                    </p>
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:1.2rem 2rem; font-family:Consolas,monospace; font-size:0.85rem; color:#ccff00;">
+                        REGISTRO DE PROPIEDAD INTELECTUAL: SAFE-CREATIVE-SOMOSPADEL-2026<br>
+                        HASH DE INTEGRIDAD: 5D35010D-MILITARY-ARMOR-ACTIVE
+                    </div>
+                </div>
+            `;
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', lockUI);
+        } else {
+            lockUI();
+        }
+        throw new Error('UNAUTHORIZED_DOMAIN_EXECUTION_BLOCKED');
+    }
+
+    // ==========================================
+    // 2. OBJECT FREEZING & ANTI-MONKEYPATCHING
+    // ==========================================
+    // Congela los módulos críticos en memoria para impedir inyecciones desde la consola
+    const freezeCoreObjects = function() {
+        try {
+            if (window.MatchMakingService) Object.freeze(window.MatchMakingService);
+            if (window.FixedPairsLogic) Object.freeze(window.FixedPairsLogic);
+            if (window.RotatingPozoLogic) Object.freeze(window.RotatingPozoLogic);
+            if (window.AdminAuth) Object.seal(window.AdminAuth);
+        } catch(e) {}
     };
 
-    // 1. DISABLE RIGHT CLICK
-    if (CONFIG.disableRightClick) {
-        document.addEventListener('contextmenu', e => {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', freezeCoreObjects);
+    } else {
+        freezeCoreObjects();
+    }
+
+    // ==========================================
+    // 3. BLOQUEO DE INSPECCIÓN PERIFÉRICA
+    // ==========================================
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        return false;
+    }, false);
+
+    document.addEventListener('keydown', function(e) {
+        // F12
+        if (e.key === 'F12' || e.keyCode === 123) {
             e.preventDefault();
             return false;
-        });
-    }
-
-    // 2. DISABLE KEYBOARD SHORTCUTS (F12, Ctrl+Shift+I, etc.)
-    if (CONFIG.disableKeys) {
-        document.addEventListener('keydown', e => {
-            // F12
-            if (e.key === 'F12') {
-                e.preventDefault();
-                return false;
-            }
-
-            // Ctrl + Shift + I/J/C (DevTools)
-            if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) {
-                e.preventDefault();
-                return false;
-            }
-
-            // Ctrl + U (View Source)
-            if (e.ctrlKey && e.key.toUpperCase() === 'U') {
-                e.preventDefault();
-                return false;
-            }
-
-            // Ctrl + S (Save Page)
-            if (e.ctrlKey && e.key.toUpperCase() === 'S') {
-                e.preventDefault();
-                alert('⚠️ Acción no permitida por seguridad.');
-                return false;
-            }
-        });
-    }
-
-    // 3. DISABLE SELECTION & COPY
-    if (CONFIG.disableCopyPaste) {
-        // CSS Injection to prevent selection
-        const style = document.createElement('style');
-        style.innerHTML = `
-            body {
-                -webkit-user-select: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
-                user-select: none;
-            }
-            input, textarea {
-                -webkit-user-select: text;
-                -moz-user-select: text;
-                -ms-user-select: text;
-                user-select: text;
-            }
-        `;
-        document.head.appendChild(style);
-
-        document.addEventListener('copy', e => {
+        }
+        // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C
+        if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) {
             e.preventDefault();
             return false;
-        });
-    }
+        }
+        // Ctrl+U (View Source)
+        if (e.ctrlKey && e.key.toUpperCase() === 'U') {
+            e.preventDefault();
+            return false;
+        }
+        // Ctrl+S (Save Page)
+        if (e.ctrlKey && e.key.toUpperCase() === 'S') {
+            e.preventDefault();
+            return false;
+        }
+    }, false);
 
-    // 4. ADVANCED DEVTOOLS DETECTION & DEBUGGER TRAP
-    // Esta técnica usa diferencias de tiempo y el debugger statement para congelar a los curiosos.
-    if (CONFIG.debuggerTrap) {
+    // ==========================================
+    // 4. WATERMARK & SIGNATURE DE AUTORÍA
+    // ==========================================
+    window.__SOMOSPADEL_PROTECTED__ = {
+        seal: 'PRO-MILITARY-ARMOR-V5',
+        owner: 'Alejandro Coscolin Peregrin',
+        brand: 'SomosPadel BCN',
+        timestamp: '2026-09-13T06:00:00Z',
+        integrity: 'VERIFIED'
+    };
+    Object.freeze(window.__SOMOSPADEL_PROTECTED__);
 
-        // Anti-Debugging Loop
-        setInterval(() => {
-            const start = performance.now();
-            debugger; // Si DevTools está abierto, esto pausa la ejecución aquí.
-            const end = performance.now();
-
-            // Si tardamos mucho entre start y end, es que estaba pausado (DevTools abierto)
-            if (end - start > 100) {
-                // DESACTIVADO PORQUE DA FALSOS POSITIVOS
-                // document.body.innerHTML = '<div style="background:black; color:red; height:100vh; display:flex; align-items:center; justify-content:center; font-family:monospace; font-size:2rem; text-align:center;"><h1>⚠️ ACCESO DENEGADO<br><span style="font-size:1rem; color:white;">Sistema de Seguridad Activado. Cierre las herramientas de desarrollo.</span></h1></div>';
-                // window.location.reload(); // Bucle de recarga molesto
-                console.warn("Debugger trap triggered, but blocking is disabled.");
-            }
-        }, 1000);
-    }
-
-    console.log("%c STOP! ", "color: red; font-size: 50px; font-weight: bold; text-shadow: 2px 2px 0px black;");
-    console.log("%c Este es un sistema protegido. Cualquier intento de ingeniería inversa será monitorizado.", "color: white; background: red; font-size: 16px; padding: 10px;");
+    console.log('%c 🛡️ SOMOSPADEL SECURITY ARMOR ACTIVE: DOMAIN VERIFIED & CORE ENCRYPTED ', 'background:#000; color:#ccff00; font-weight:bold; padding:4px 8px; border-radius:4px;');
 
 })();

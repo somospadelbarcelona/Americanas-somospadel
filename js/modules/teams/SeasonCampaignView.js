@@ -451,10 +451,7 @@
                 { id: 'femenina-4', name: 'Femenina 4ª División', category: 'Femenina', division: '4ª División', type: 'team', icon: '✨', badge: 'Iniciación / Promoción', levelRange: '2.0 - 2.75', description: 'Equipo femenino de desarrollo e iniciación a la competición por equipos.' },
                 { id: 'mixta-3', name: 'Mixta 3ª División', category: 'Mixta', division: '3ª División', type: 'team', icon: '🚻', badge: 'Competición Intermedia', levelRange: '2.75 - 3.75', description: 'Equipo mixto de competición regular. Formato dinámico y competitivo en jornadas de club.' },
                 { id: 'mixta-4', name: 'Mixta 4ª División', category: 'Mixta', division: '4ª División', type: 'team', icon: '⚡', badge: 'Iniciación / Social', levelRange: '2.0 - 2.75', description: 'Equipo mixto de iniciación y nivel medio para disfrutar de la competición en pareja.' },
-<<<<<<< HEAD
                 { id: 'masculina-2', name: 'Masculina 2ª División', category: 'Masculina', division: '2ª División', type: 'team', icon: '🔥', badge: 'Competición Alta', levelRange: '3.75 - 4.75', description: 'Equipo masculino de alta competición. Ritmo intenso y máxima exigencia en ligas oficiales.' },
-=======
->>>>>>> 08f2fdfe948f5da42084ef798a118048ad329d0d
                 { id: 'masculina-3', name: 'Masculina 3ª División', category: 'Masculina', division: '3ª División', type: 'team', icon: '🏆', badge: 'Competición Consolidada', levelRange: '3.0 - 3.75', description: 'Equipo masculino de 3ª División. Nuestro equipo referente en ligas intercomarcales.' },
                 { id: 'masculina-4', name: 'Masculina 4ª División', category: 'Masculina', division: '4ª División', type: 'team', icon: '🛡️', badge: 'Promoción y Ritmo', levelRange: '2.0 - 3.0', description: 'Equipo masculino de 4ª División. Ideal para sumar partidos oficiales y progresar de nivel.' }
             ];
@@ -1169,7 +1166,6 @@
                     <div class="sp-season-close-icon" onclick="window.SeasonCampaignView.closeModal()" title="Cerrar modal">
                         <i class="fas fa-times"></i>
                     </div>
-<<<<<<< HEAD
                     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
                         <div class="sp-season-badge-top" style="margin: 0;">
                             <i class="fas fa-fire"></i> LIGA SUMMAPADEL 2027 | EQUIPOS
@@ -1196,13 +1192,6 @@
                     </div>
                     <h2 class="sp-season-title">SOMOSPÁDEL BARCELONA</h2>
                     <p class="sp-season-subtitle">Convocatoria oficial para los equipos de la Liga Summapadel 2027 (Barcelona y Baix Llobregat).</p>
-=======
-                    <div class="sp-season-badge-top">
-                        <i class="fas fa-fire"></i> EQUIPOS | TEMPORADA 2027 (OCT-NOV)
-                    </div>
-                    <h2 class="sp-season-title">SOMOSPÁDEL BARCELONA</h2>
-                    <p class="sp-season-subtitle">Inscripciones oficiales para los equipos de competición, tecnificación y americanas.</p>
->>>>>>> 08f2fdfe948f5da42084ef798a118048ad329d0d
                 </div>
 
                 <!-- TABS -->

@@ -207,7 +207,21 @@
                 // --- HELPERS ---
                 const getPodium = (list, sortFn) => {
                     const sorted = [...list].sort(sortFn);
-                    return { winner: sorted[0], top3: sorted.slice(0, 3).map(c => ({ name: getName(c.id), value: c.display, raw: c.val })) };
+                    return {
+                        winner: sorted[0],
+                        top3: sorted.slice(0, 3).map(c => {
+                            const p = playerMap.get(String(c.id));
+                            return {
+                                id: c.id,
+                                name: getName(c.id),
+                                photo_url: p?.photo_url || p?.photoURL || null,
+                                level: getLevel(c.id),
+                                role: p?.role || null,
+                                value: c.display,
+                                raw: c.val
+                            };
+                        })
+                    };
                 };
 
                 const pStreak = getPodium(candidates.streak, (a, b) => b.val - a.val);
@@ -221,23 +235,92 @@
                 const pAme = getPodium(candidates.ame, (a, b) => b.val - a.val);
                 const pEnt = getPodium(candidates.ent, (a, b) => b.val - a.val);
 
-                const build = (p, title, icon, desc, color, analysis, vac) => {
-                    if (!p || !p.winner) return { name: "VACANTE", id: null, title, icon, desc, deepAnalysis: vac, value: "-", color: "#444", top3: [] };
-                    return { id: p.winner.id, name: getName(p.winner.id), title, icon, desc, value: String(p.winner.display).split(' ')[0], count: p.winner.display, color, top3: p.top3, deepAnalysis: analysis(p.winner, p.top3) };
+                const build = (key, category, p, title, icon, desc, color, analysis, vac, unit) => {
+                    if (!p || !p.winner) {
+                        return {
+                            key,
+                            category,
+                            name: "VACANTE",
+                            id: null,
+                            player: null,
+                            title,
+                            icon,
+                            desc,
+                            deepAnalysis: vac,
+                            value: "-",
+                            count: "-",
+                            unit: unit || "",
+                            color: "#64748b",
+                            top3: []
+                        };
+                    }
+                    const winPlayer = playerMap.get(String(p.winner.id)) || null;
+                    return {
+                        key,
+                        category,
+                        id: p.winner.id,
+                        player: winPlayer ? {
+                            id: p.winner.id,
+                            name: getName(p.winner.id),
+                            photo_url: winPlayer.photo_url || winPlayer.photoURL || null,
+                            level: getLevel(p.winner.id),
+                            role: winPlayer.role || null
+                        } : null,
+                        name: getName(p.winner.id),
+                        title,
+                        icon,
+                        desc,
+                        value: String(p.winner.display).split(' ')[0],
+                        count: p.winner.display,
+                        unit: unit || "",
+                        color,
+                        top3: p.top3,
+                        deepAnalysis: analysis(p.winner, p.top3)
+                    };
                 };
 
                 // --- FINAL ASSEMBLY ---
                 this.state.records = {
-                    alpha: build(pAlpha, "Rey de la 1", "👑", "Dominancia absoluta en la pista principal.", "#FFD700", (w) => `Dueño de la central: ha competido <b>${w.val} veces</b> en la pista de los elegidos.`, "La Pista 1 sigue esperando a su dueño."),
-                    punisher: build(pPunisher, "El Verdugo", "⚔️", "Ratio letal de juegos ganados vs perdidos.", "#f43f5e", (w) => `No tiene piedad: gana <b>${w.val.toFixed(2)} juegos</b> por cada uno que cede.`, "Se busca jugador letal (mín. 5 partidos)."),
-                    ame: build(pAme, "El Todoterreno", "⚡", "Máximo rendimiento en todos los formatos del club.", "#c026d3", (w) => `Jugador total: domina el club sumando <b>${w.val} puntos</b> entre Americanas y Entrenos.`, "Se busca jugador polivalente."),
-                    ent: build(pEnt, "Rey de Copas", "🍷", "Especialista en los entrenos diarios del club.", "#2dd4bf", (w) => `Dominador de los entrenos: el más laureado del día a día con <b>${w.val} puntos</b>.`, "Los entrenos buscan a su Rey."),
-                    streak: build(pStreak, "La Muralla", "🧱", "Racha invicta en la temporada.", "#fbbf24", (w) => `Imparable con una racha de <b>${w.val} victorias</b> consecutivas.`, "Rachas en proceso."),
-                    giant: build(pGiant, "Mata-Gigantes", "🔴", "Venció al rival con más nivel de diferencia.", "#ef4444", (w) => `Victoria heroica superando una desventaja de <b>+${w.val.toFixed(2)} de nivel</b>.`, "Aún no hay gestas."),
-                    catalyst: build(pCatalyst, "Socio de Oro", "🤝", "Gana con la mayor variedad de parejas.", "#3b82f6", (w) => `Camaleón: ha ganado con <b>${w.val} socios</b> distintos.`, "Falta diversidad."),
-                    sniper: build(pSniper, "Francotirador", "🎯", "Win Rate de máxima efectividad.", "#10b981", (w) => `Ratio quirúrgico: <b>${w.display}</b>.`, "Mínimo 5 partidos."),
-                    ironman: build(pIron, "El Infatigable", "⛓️", "Presencia constante en el club.", "#8b5cf6", (w) => `Pulmón del club: <b>${w.val} semanas</b> sin faltar.`, "Temporada joven."),
-                    wall: build(pWall, "El Intocable", "🛡️", "Menos juegos encajados por partido.", "#6366f1", (w) => `Muralla defensiva: solo concede <b>${w.val.toFixed(2)} juegos</b>/p.`, "Datos en proceso.")
+                    alpha: build("alpha", "court", pAlpha, "Rey de la 1", "👑", "Dominancia absoluta en la pista principal.", "#f59e0b", (w) => `Dueño de la central: ha competido <b>${w.val} veces</b> en la pista de los elegidos.`, "La Pista 1 sigue esperando a su dueño.", "Partidos"),
+                    punisher: build("punisher", "combat", pPunisher, "El Verdugo", "⚔️", "Ratio letal de juegos ganados vs perdidos.", "#ef4444", (w) => `No tiene piedad: gana <b>${w.val.toFixed(2)} juegos</b> por cada uno que cede.`, "Se busca jugador letal (mín. 5 partidos).", "Ratio Games"),
+                    ame: build("ame", "court", pAme, "El Todoterreno", "⚡", "Máximo rendimiento en todos los formatos del club.", "#8b5cf6", (w) => `Jugador total: domina el club sumando <b>${w.val} puntos</b> entre Americanas y Entrenos.`, "Se busca jugador polivalente.", "Pts Totales"),
+                    ent: build("ent", "court", pEnt, "Rey de Copas", "🍷", "Especialista en los entrenos diarios del club.", "#06b6d4", (w) => `Dominador de los entrenos: el más laureado del día a día con <b>${w.val} puntos</b>.`, "Los entrenos buscan a su Rey.", "Pts Entrenos"),
+                    streak: build("streak", "grit", pStreak, "La Muralla", "🧱", "Racha invicta en la temporada.", "#f97316", (w) => `Imparable con una racha de <b>${w.val} victorias</b> consecutivas.`, "Rachas en proceso.", "Victorias"),
+                    giant: build("giant", "combat", pGiant, "Mata-Gigantes", "🔴", "Venció al rival con más nivel de diferencia.", "#dc2626", (w) => `Victoria heroica superando una desventaja de <b>+${w.val.toFixed(2)} de nivel</b>.`, "Aún no hay gestas.", "Nivel"),
+                    catalyst: build("catalyst", "grit", pCatalyst, "Socio de Oro", "🤝", "Gana con la mayor variedad de parejas.", "#3b82f6", (w) => `Camaleón: ha ganado con <b>${w.val} socios</b> distintos.`, "Falta diversidad.", "Parejas"),
+                    sniper: build("sniper", "combat", pSniper, "Francotirador", "🎯", "Win Rate de máxima efectividad.", "#10b981", (w) => `Ratio quirúrgico: <b>${w.display}</b>.`, "Mínimo 5 partidos.", "Win Rate"),
+                    ironman: build("ironman", "grit", pIron, "El Infatigable", "⛓️", "Presencia constante en el club.", "#6366f1", (w) => `Pulmón del club: <b>${w.val} semanas</b> sin faltar.`, "Temporada joven.", "Semanas"),
+                    wall: build("wall", "grit", pWall, "El Intocable", "🛡️", "Menos juegos encajados por partido.", "#0ea5e9", (w) => `Muralla defensiva: solo concede <b>${w.val.toFixed(2)} juegos</b>/p.`, "Datos en proceso.", "Juegos /p")
+                };
+
+                // Hall of Fame Summary & MVP
+                const titleCounts = {};
+                Object.values(this.state.records).forEach(rec => {
+                    if (rec && rec.id && rec.name !== 'VACANTE') {
+                        titleCounts[rec.id] = (titleCounts[rec.id] || 0) + 1;
+                    }
+                });
+                let mvpId = null;
+                let maxTitles = 0;
+                Object.entries(titleCounts).forEach(([pid, count]) => {
+                    if (count > maxTitles) {
+                        maxTitles = count;
+                        mvpId = pid;
+                    }
+                });
+
+                const mvpPlayer = mvpId ? playerMap.get(String(mvpId)) : null;
+                this.state.summary = {
+                    totalRecords: Object.keys(this.state.records).length,
+                    activeRecords: Object.values(this.state.records).filter(r => r.name !== 'VACANTE').length,
+                    mvp: mvpId ? {
+                        id: mvpId,
+                        name: getName(mvpId),
+                        titles: maxTitles,
+                        level: getLevel(mvpId),
+                        photo_url: mvpPlayer?.photo_url || mvpPlayer?.photoURL || null,
+                        role: mvpPlayer?.role || null
+                    } : null
                 };
 
                 console.log("🏆 Premium Records Cooked!");
@@ -248,6 +331,8 @@
                 this.isCalculating = false;
             }
         }
+
+        getSummary() { return this.state.summary || null; }
 
         parseDate(d) { if (!d) return new Date(0); if (d.toDate) return d.toDate(); return new Date(d); }
         getRecords() { return this.state.records; }

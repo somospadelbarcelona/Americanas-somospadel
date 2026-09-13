@@ -107,7 +107,12 @@
                 const [ams, ents] = results;
 
                 const all = [
-                    ...ams.map(e => ({ ...e, type: 'americana' })),
+                    ...ams.map(e => {
+                        const title = (e.name || e.title || e.eventName || '').toLowerCase();
+                        const format = (e.format || e.mode || '').toLowerCase();
+                        const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase') || format.includes('entreno') || format.includes('pozo');
+                        return { ...e, type: isEnt ? 'entreno' : (e.type || 'americana') };
+                    }),
                     ...ents.map(e => ({ ...e, type: 'entreno' }))
                 ];
 

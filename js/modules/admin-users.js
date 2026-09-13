@@ -13,6 +13,32 @@ window.AdminViews.users = async function () {
         const tbody = document.getElementById('users-tbody');
         if (!tbody) return;
 
+        // Actualizar contador del botón de pendientes y badges globales
+        const allUsers = window.allUsersCache || data || [];
+        const pendingCount = allUsers.filter(u => u.status === 'pending').length;
+        const pendingBadge = document.getElementById('pending-counter-badge');
+        const pendingBtn = document.getElementById('btn-pending-players');
+        if (pendingBadge) {
+            pendingBadge.textContent = pendingCount;
+            if (pendingCount > 0) {
+                pendingBadge.style.background = '#f59e0b';
+                if (pendingBtn) {
+                    pendingBtn.style.borderColor = '#f59e0b';
+                    pendingBtn.style.background = 'rgba(245, 158, 11, 0.15)';
+                    pendingBtn.style.boxShadow = '0 0 12px rgba(245, 158, 11, 0.3)';
+                }
+            } else {
+                pendingBadge.style.background = '#64748b';
+                if (pendingBtn) {
+                    pendingBtn.style.boxShadow = 'none';
+                    pendingBtn.style.background = 'rgba(245, 158, 11, 0.08)';
+                }
+            }
+        }
+        if (window.AdminNotifications && typeof window.AdminNotifications.updatePendingCount === 'function') {
+            window.AdminNotifications.updatePendingCount(pendingCount);
+        }
+
         if (data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 2rem;">No se encontraron jugadores.</td></tr>';
             return;
@@ -176,6 +202,12 @@ window.AdminViews.users = async function () {
                     <span id="players-sync-indicator">${syncStatusHtml}</span>
                 </h3>
                 <div style="display:flex; gap: 0.8rem; flex-wrap: wrap;">
+                    <!-- BOTÓN JUGADORES PENDIENTES DE VALIDACIÓN -->
+                    <button id="btn-pending-players" class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #f59e0b; color: #d97706; background: rgba(245, 158, 11, 0.08); font-weight: 900; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border-radius: 8px; transition: all 0.2s;" onclick="window.togglePendingUsersFilter()" title="Filtrar jugadores pendientes de validar">
+                        <i class="fas fa-user-clock" style="font-size: 0.9rem;"></i>
+                        <span>PENDIENTES</span>
+                        <span id="pending-counter-badge" style="background: #f59e0b; color: white; font-size: 0.68rem; font-weight: 900; padding: 2px 7px; border-radius: 10px; min-width: 18px; text-align: center;">0</span>
+                    </button>
                     <button class="btn-outline-pro" style="padding: 0.5rem 1rem; border-color: #16a34a; color: #16a34a; background: rgba(22, 163, 74, 0.05); font-weight: 800;" onclick="exportToExcel()">
                         📗 EXPORTAR EXCEL
                     </button>
@@ -308,6 +340,7 @@ window.AdminViews.users = async function () {
         
         window.renderUsersTableStructure(initialUsers.length, '<span id="players-sync-indicator" style="font-size:0.75rem; color:#d97706; font-weight:700; margin-left:10px;"><i class="fas fa-sync fa-spin"></i> Sincronizando...</span>');
         window.renderUserRows(window.filteredUsers);
+        if (typeof window.checkAndApplyPendingFocus === 'function') window.checkAndApplyPendingFocus();
     } else {
         content.innerHTML = `
             <div class="loading-container">
@@ -357,6 +390,7 @@ window.AdminViews.users = async function () {
                 window.renderUsersTableStructure(fresh.length, '<span id="players-sync-indicator" style="font-size:0.75rem; color:#10b981; font-weight:800; margin-left:10px;">✅ En línea</span>');
                 window.renderUserRows(window.filteredUsers);
             }
+            if (typeof window.checkAndApplyPendingFocus === 'function') window.checkAndApplyPendingFocus();
         } catch (err) {
             // Si el usuario navegó a otra sección, no mostrar ningún error
             if (navId !== window._currentAdminNavId) return;
@@ -584,11 +618,126 @@ window.AdminViews.users = async function () {
         document.getElementById('filter-phone').value = "";
         document.getElementById('filter-level').value = "";
         document.getElementById('filter-gender').value = "";
-        document.getElementById('filter-gender').value = "";
-        document.getElementById('filter-status').value = "";
+        const statusEl = document.getElementById('filter-status');
+        if (statusEl) {
+            statusEl.value = "";
+            statusEl.style.borderColor = "";
+            statusEl.style.background = "";
+            statusEl.style.fontWeight = "";
+        }
         document.getElementById('filter-team').value = "";
         document.getElementById('filter-reliability').value = "";
+        document.getElementById('pending-focus-banner')?.remove();
         window.multiFilterUsers();
+    };
+
+    window.checkAndApplyPendingFocus = () => {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isPendingFromUrl = urlParams.get('filter') === 'pending' || 
+                                     urlParams.get('status') === 'pending' || 
+                                     window.location.hash.includes('pending');
+            const isPendingFromSession = sessionStorage.getItem('admin_filter_status') === 'pending' || 
+                                         sessionStorage.getItem('admin_pending_review') === 'true';
+
+            if (isPendingFromUrl || isPendingFromSession) {
+                sessionStorage.removeItem('admin_filter_status');
+                sessionStorage.removeItem('admin_pending_review');
+
+                const statusSelect = document.getElementById('filter-status');
+                if (statusSelect) {
+                    statusSelect.value = 'pending';
+                    statusSelect.style.borderColor = '#f59e0b';
+                    statusSelect.style.background = 'rgba(245, 158, 11, 0.12)';
+                    statusSelect.style.fontWeight = '800';
+                }
+
+                if (typeof window.multiFilterUsers === 'function') {
+                    window.multiFilterUsers();
+                }
+
+                // Inyectar banner destacado de atención inmediata
+                const container = document.querySelector('.glass-card-enterprise');
+                if (container && !document.getElementById('pending-focus-banner')) {
+                    const banner = document.createElement('div');
+                    banner.id = 'pending-focus-banner';
+                    banner.style = "background: linear-gradient(90deg, rgba(245, 158, 11, 0.22), rgba(204, 255, 0, 0.12)); border-left: 5px solid #f59e0b; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; border-bottom: 1px solid rgba(245, 158, 11, 0.3); animation: slideDown 0.3s ease-out;";
+                    banner.innerHTML = `
+                        <div style="display:flex; align-items:center; gap: 12px;">
+                            <span style="font-size: 1.5rem;">⏳</span>
+                            <div>
+                                <div style="font-weight: 800; color: #b45309; font-size: 0.95rem; letter-spacing: 0.5px;">SOLICITUDES DE REGISTRO PENDIENTES</div>
+                                <div style="font-size: 0.82rem; color: #334155;">Filtrando jugadores a la espera de aprobación. Pulsa el botón verde <strong>VALIDAR</strong> en la columna de acciones para activarlos.</div>
+                            </div>
+                        </div>
+                        <button class="btn-micro" onclick="window.resetFilters();" style="background: white; border: 1px solid #cbd5e1; font-weight: 800; color: #0f172a; padding: 7px 14px; border-radius: 8px; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                            ✕ Ver Todos los Jugadores
+                        </button>
+                    `;
+                    const filtersRow = container.querySelector('.filters-row');
+                    if (filtersRow && filtersRow.nextSibling) {
+                        container.insertBefore(banner, filtersRow.nextSibling);
+                    } else {
+                        container.prepend(banner);
+                    }
+                }
+
+                // Scroll suave hacia la tabla
+                setTimeout(() => {
+                    const table = document.getElementById('users-tbody');
+                    if (table) table.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+        } catch (e) {
+            console.warn("Error en checkAndApplyPendingFocus:", e);
+        }
+    };
+
+    window.togglePendingUsersFilter = () => {
+        const statusSelect = document.getElementById('filter-status');
+        if (!statusSelect) return;
+
+        if (statusSelect.value === 'pending') {
+            window.resetFilters();
+        } else {
+            statusSelect.value = 'pending';
+            statusSelect.style.borderColor = '#f59e0b';
+            statusSelect.style.background = 'rgba(245, 158, 11, 0.12)';
+            statusSelect.style.fontWeight = '800';
+            window.multiFilterUsers();
+
+            // Inyectar banner destacado de atención inmediata
+            const container = document.querySelector('.glass-card-enterprise');
+            if (container && !document.getElementById('pending-focus-banner')) {
+                const banner = document.createElement('div');
+                banner.id = 'pending-focus-banner';
+                banner.style = "background: linear-gradient(90deg, rgba(245, 158, 11, 0.22), rgba(204, 255, 0, 0.12)); border-left: 5px solid #f59e0b; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; border-bottom: 1px solid rgba(245, 158, 11, 0.3); animation: slideDown 0.3s ease-out;";
+                banner.innerHTML = `
+                    <div style="display:flex; align-items:center; gap: 12px;">
+                        <span style="font-size: 1.5rem;">⏳</span>
+                        <div>
+                            <div style="font-weight: 800; color: #b45309; font-size: 0.95rem; letter-spacing: 0.5px;">SOLICITUDES DE REGISTRO PENDIENTES</div>
+                            <div style="font-size: 0.82rem; color: #334155;">Filtrando jugadores a la espera de aprobación. Pulsa el botón verde <strong>VALIDAR</strong> en la columna de acciones para activarlos.</div>
+                        </div>
+                    </div>
+                    <button class="btn-micro" onclick="window.resetFilters();" style="background: white; border: 1px solid #cbd5e1; font-weight: 800; color: #0f172a; padding: 7px 14px; border-radius: 8px; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        ✕ Ver Todos los Jugadores
+                    </button>
+                `;
+                const filtersRow = container.querySelector('.filters-row');
+                if (filtersRow && filtersRow.nextSibling) {
+                    container.insertBefore(banner, filtersRow.nextSibling);
+                } else {
+                    container.prepend(banner);
+                }
+            }
+
+            // Scroll suave hacia la tabla
+            setTimeout(() => {
+                const table = document.getElementById('users-tbody');
+                if (table) table.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 200);
+        }
     };
 
     window.approveUser = async (id) => {
@@ -605,6 +754,9 @@ window.AdminViews.users = async function () {
             const users = await FirebaseDB.players.getAll();
             window.allUsersCache = users;
             window.multiFilterUsers(); // Re-apply filters
+            if (window.AdminNotifications && typeof window.AdminNotifications.fetchNotifications === 'function') {
+                window.AdminNotifications.fetchNotifications();
+            }
 
             window.PremiumModal.alert({
                 title: "✅ ÉXITO",
@@ -668,6 +820,8 @@ window.AdminViews.users = async function () {
     window.resetFilters = resetFilters;
     window.approveUser = approveUser;
     window.exportToExcel = exportToExcel;
+    window.togglePendingUsersFilter = togglePendingUsersFilter;
+    window.checkAndApplyPendingFocus = checkAndApplyPendingFocus;
 
     // ========================================================
     // 👁️ PREMIUM COLUMN SELECTOR & SEARCH LOGIC

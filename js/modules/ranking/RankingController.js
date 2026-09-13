@@ -29,11 +29,59 @@
          */
         getLevelBadge(level) {
             const l = parseFloat(level || 3.5);
-            if (l >= 4.5) return { stars: 5, label: 'ELITE', color: '#CCFF00', shadow: '0 0 15px #CCFF00' };
-            if (l >= 4.0) return { stars: 4, label: 'PLATINUM', color: '#E5E4E2', shadow: '0 0 10px rgba(255,255,255,0.5)' };
-            if (l >= 3.5) return { stars: 3, label: 'GOLD', color: '#FFD700', shadow: '0 0 10px rgba(255,215,0,0.5)' };
-            if (l >= 3.0) return { stars: 2, label: 'SILVER', color: '#C0C0C0', shadow: 'none' };
-            return { stars: 1, label: 'BRONZE', color: '#CD7F32', shadow: 'none' };
+            if (l >= 4.5) {
+                return {
+                    stars: 5,
+                    label: 'ELITE',
+                    color: '#047857',
+                    bg: '#ecfdf5',
+                    border: '#a7f3d0',
+                    starColor: '#059669',
+                    shadow: '0 2px 8px rgba(4, 120, 87, 0.15)'
+                };
+            }
+            if (l >= 4.0) {
+                return {
+                    stars: 4,
+                    label: 'PLATINUM',
+                    color: '#334155',
+                    bg: '#f1f5f9',
+                    border: '#cbd5e1',
+                    starColor: '#64748b',
+                    shadow: '0 2px 8px rgba(51, 65, 85, 0.1)'
+                };
+            }
+            if (l >= 3.5) {
+                return {
+                    stars: 3,
+                    label: 'GOLD',
+                    color: '#b45309',
+                    bg: '#fef3c7',
+                    border: '#fcd34d',
+                    starColor: '#f59e0b',
+                    shadow: '0 2px 8px rgba(180, 83, 9, 0.12)'
+                };
+            }
+            if (l >= 3.0) {
+                return {
+                    stars: 2,
+                    label: 'SILVER',
+                    color: '#4b5563',
+                    bg: '#f3f4f6',
+                    border: '#d1d5db',
+                    starColor: '#94a3b8',
+                    shadow: 'none'
+                };
+            }
+            return {
+                stars: 1,
+                label: 'BRONZE',
+                color: '#c2410c',
+                bg: '#ffedd5',
+                border: '#fed7aa',
+                starColor: '#ea580c',
+                shadow: 'none'
+            };
         }
 
         /**
@@ -386,5 +434,8 @@
     }
 
     window.RankingControllerClass = RankingController;
-    console.log("📊 RankingController Module Loaded (Class definition)");
+    if (!window.RankingController) {
+        window.RankingController = new RankingController();
+    }
+    console.log("📊 RankingController Module Loaded (Class & Instance definition)");
 })();

@@ -96,7 +96,7 @@ window.AdminAuth = {
             }
 
             // Cargar la vista inicial: respetar hash de URL, última vista guardada o 'users' por defecto
-            const hashView = window.location.hash ? window.location.hash.replace('#', '').trim() : null;
+            const hashView = window.location.hash ? window.location.hash.replace('#', '').split('?')[0].trim() : null;
             const savedView = sessionStorage.getItem('admin_last_view');
             const targetInitialView = hashView || savedView || 'users';
 
@@ -199,7 +199,7 @@ window.AdminAuth = {
         localStorage.setItem('adminUser', JSON.stringify(user));
         document.getElementById('admin-auth-modal').style.display = 'none';
         this.updateProfileUI();
-        const hashView = window.location.hash ? window.location.hash.replace('#', '').trim() : null;
+        const hashView = window.location.hash ? window.location.hash.replace('#', '').split('?')[0].trim() : null;
         const targetView = hashView || sessionStorage.getItem('admin_last_view') || 'users';
         window.loadAdminView(targetView);
     },
@@ -244,7 +244,8 @@ window.AdminAuth = {
 window._currentAdminNavId = 0;
 window._currentAdminView = null;
 
-window.loadAdminView = async function (viewName) {
+window.loadAdminView = async function (rawViewName) {
+    const viewName = String(rawViewName || 'users').split('?')[0].trim();
     window._currentAdminView = viewName;
     const navId = ++window._currentAdminNavId;
     console.log(`🧭 [Navigation #${navId}] Navigate to:`, viewName);
@@ -279,7 +280,7 @@ window.loadAdminView = async function (viewName) {
                 throw new Error("Season Campaign Admin Module not loaded");
             }
         }
-        else if (viewName === 'americanas_mgmt' && window.AdminViews.americanas_mgmt) {
+        else if ((viewName === 'americanas_mgmt' || viewName === 'events') && window.AdminViews.americanas_mgmt) {
             await window.AdminViews.americanas_mgmt();
         }
 
@@ -321,6 +322,15 @@ window.loadAdminView = async function (viewName) {
         else if (viewName === 'database_health') {
             if (window.AdminViews.database_health) await window.AdminViews.database_health();
             else throw new Error("Health Module not loaded");
+        }
+        else if (viewName === 'system_telemetry') {
+            if (window.AdminViews && window.AdminViews.system_telemetry) {
+                await window.AdminViews.system_telemetry();
+            } else if (window.toggleDiagnosticPanel) {
+                window.toggleDiagnosticPanel();
+            } else {
+                throw new Error("Telemetry Module not loaded");
+            }
         }
         else if (viewName === 'tournaments_mgmt') {
             if (window.AdminTournaments) window.AdminTournaments.init();
