@@ -2259,29 +2259,31 @@
 
             const compactCards = rest.map((post, index) => {
                 const isSaved = this.isPostSaved(post.id);
+                const catName = (post.category || 'NOTICIAS').replace(/^[^\s]+\s/, '');
                 return `
                     <div onclick="window.DashboardView.openBlogPost('${post.id}')"
                          class="premium-blog-compact-card blog-animate-fade-in"
-                         style="display: flex; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 18px; cursor: pointer; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.07); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(10,25,47,0.02); animation-delay: ${(index + 1) * 0.04}s;"
-                         onmouseover="this.style.background='#f8fafc';this.style.borderColor='rgba(15,23,42,0.12)';this.style.transform='translateX(4px)';"
-                         onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(15,23,42,0.07)';this.style.transform='translateX(0)';"
+                         style="display: flex; gap: 14px; align-items: center; padding: 14px 16px; border-radius: 20px; cursor: pointer; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(10,25,47,0.03); animation-delay: ${(index + 1) * 0.04}s;"
+                         onmouseover="this.style.background='#f8fafc';this.style.borderColor='rgba(15,23,42,0.14)';this.style.transform='translateX(3px)';"
+                         onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(15,23,42,0.08)';this.style.transform='translateX(0)';"
                     >
                         <!-- Miniatura Realista de Pádel -->
-                        <div style="width: 76px; height: 76px; border-radius: 14px; overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid rgba(15,23,42,0.06);">
+                        <div class="compact-blog-thumb-box" style="width: 88px; height: 88px; border-radius: 16px; overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid rgba(15,23,42,0.06);">
                             <div class="compact-blog-thumb" style="width: 100%; height: 100%; background-image: url('${postImagesMap[post.id]}'); background-size: cover; background-position: center; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);"></div>
                         </div>
                         
+                        <!-- Contenido Principal Legible y Amplio -->
                         <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="font-size: 0.52rem; font-weight: 1000; letter-spacing: 0.8px; color: #4d7c0f; text-transform: uppercase; background: rgba(204,255,0,0.14); border: 1px solid rgba(204,255,0,0.28); padding: 2px 7px; border-radius: 6px;">${(post.category||'NOTICIAS').replace(/^[^\s]+\s/,'')}</span>
-                                <span style="font-size: 0.56rem; color: #64748b; font-weight: 800; display: flex; align-items: center; gap: 3px;"><i class="far fa-clock" style="font-size: 0.48rem; color: #4d7c0f;"></i>${post.readTime||'3 min'}</span>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; gap: 6px;">
+                                <span class="compact-blog-cat" style="font-size: 0.65rem; font-weight: 1000; letter-spacing: 0.6px; color: #3f6212; text-transform: uppercase; background: rgba(204,255,0,0.18); border: 1px solid rgba(204,255,0,0.32); padding: 3px 8px; border-radius: 6px;">${catName}</span>
+                                <span class="compact-blog-time" style="font-size: 0.68rem; color: #64748b; font-weight: 750; display: flex; align-items: center; gap: 4px; white-space: nowrap;"><i class="far fa-clock" style="font-size: 0.6rem; color: #4d7c0f;"></i>${post.readTime||'3 min'}</span>
                             </div>
-                            <h4 style="margin: 0 0 3px 0; color: #0f172a; font-weight: 900; font-size: 0.88rem; line-height: 1.25; letter-spacing: -0.2px; font-family: 'Outfit', sans-serif;">${post.title}</h4>
-                            <p style="margin: 0; color: #475569; font-size: 0.68rem; font-weight: 550; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${post.snippet}</p>
+                            <h4 class="compact-blog-title" style="margin: 3px 0 4px 0; color: #0f172a; font-weight: 950; font-size: 1.02rem; line-height: 1.32; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif;">${post.title}</h4>
+                            <p class="compact-blog-snippet" style="margin: 0; color: #475569; font-size: 0.78rem; font-weight: 500; line-height: 1.42; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${post.snippet}</p>
                         </div>
                         
-                        <!-- Acciones Rápidas (WhatsApp + Favorito) y Flecha -->
-                        <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                        <!-- Acciones Táctiles (WhatsApp + Favorito) con target táctil cómodo -->
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; margin-left: 2px;">
                             <button onclick="window.DashboardView.shareToWhatsApp('${post.id}', '${post.title.replace(/'/g, "\\'")}', event)"
                                     class="card-quick-btn whatsapp-btn"
                                     title="Compartir por WhatsApp">
@@ -2290,32 +2292,29 @@
                             <button onclick="window.DashboardView.toggleSaveBlogPost('${post.id}', event)"
                                     class="card-quick-btn journal-bookmark-btn"
                                     data-post-id="${post.id}"
-                                    style="${isSaved ? 'color:#4d7c0f; border-color:#84cc16; background:rgba(204,255,0,0.15);' : ''}"
+                                    style="${isSaved ? 'color:#15803d; border-color:#86efac; background:rgba(34,197,94,0.15);' : ''}"
                                     title="${isSaved ? 'Eliminar de guardados' : 'Guardar táctica'}">
                                 <i class="${isSaved ? 'fas' : 'far'} fa-bookmark"></i>
                             </button>
-                            <div style="color: #94a3b8; font-size: 0.7rem; transition: transform 0.2s; margin-left: 2px;" class="compact-chevron">
-                                <i class="fas fa-chevron-right"></i>
-                            </div>
                         </div>
                     </div>
                 `;
             }).join('');
 
             const historyButtonHtml = `
-                <div style="margin-top: 15px; text-align: center;" class="blog-animate-fade-in" style="animation-delay: 0.16s;">
+                <div style="margin-top: 16px; text-align: center;" class="blog-animate-fade-in" style="animation-delay: 0.16s;">
                     <button onclick="window.DashboardView.openBlogHistory()"
                             id="blog-history-open-btn"
-                            style="background: rgba(15, 23, 42, 0.03); border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 8px 18px; border-radius: 14px; font-size: 0.65rem; font-weight: 850; cursor: pointer; transition: all 0.25s; display: inline-flex; align-items: center; gap: 6px; font-family: 'Outfit', sans-serif;"
-                            onmouseover="this.style.background='rgba(15, 23, 42, 0.06)';this.style.color='#0f172a';this.style.borderColor='rgba(15, 23, 42, 0.15)';this.style.transform='scale(1.02)';"
-                            onmouseout="this.style.background='rgba(15, 23, 42, 0.03)';this.style.color='#475569';this.style.borderColor='rgba(15, 23, 42, 0.08)';this.style.transform='scale(1)';"
+                            style="width: 100%; background: #ffffff; border: 1.5px solid rgba(15, 23, 42, 0.09); color: #0f172a; padding: 13px 20px; border-radius: 16px; font-size: 0.82rem; font-weight: 900; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Outfit', sans-serif; box-shadow: 0 4px 14px rgba(10,25,47,0.02);"
+                            onmouseover="this.style.background='#f8fafc';this.style.borderColor='rgba(15, 23, 42, 0.16)';this.style.transform='translateY(-1px)';"
+                            onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(15, 23, 42, 0.09)';this.style.transform='translateY(0)';"
                     >
-                        <i class="fas fa-history" style="font-size: 0.6rem; color: #4d7c0f;"></i> VER MÁS NOTICIAS (HISTÓRICO)
+                        <i class="fas fa-history" style="font-size: 0.85rem; color: #4d7c0f;"></i> VER MÁS NOTICIAS (HISTÓRICO COMPLETO)
                     </button>
                 </div>
             `;
 
-            container.innerHTML = featuredCard + `<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">${compactCards}</div>` + historyButtonHtml;
+            container.innerHTML = featuredCard + `<div style="display:flex;flex-direction:column;gap:12px;margin-top:12px;">${compactCards}</div>` + historyButtonHtml;
         }
 
         async openBlogHistory() {
