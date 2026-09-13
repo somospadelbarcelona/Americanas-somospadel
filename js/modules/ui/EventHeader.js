@@ -59,6 +59,7 @@
                                 <i class="fas fa-broadcast-tower" style="color: #ef4444; font-size: 0.75rem;"></i>
                                 <span>EN VIVO / TV</span>
                             </button>
+                            </button>
                         </div>
                     </div>
 
