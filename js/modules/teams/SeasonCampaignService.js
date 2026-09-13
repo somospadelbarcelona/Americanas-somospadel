@@ -104,6 +104,19 @@
             maxLevel: 2.75
         },
         {
+            id: 'masculina-2',
+            name: 'Masculina 2ª División',
+            category: 'Masculina',
+            division: '2ª División',
+            type: 'team',
+            icon: '🔥',
+            badge: 'Competición Alta',
+            description: 'Equipo masculino de alta competición. Ritmo intenso y máxima exigencia en ligas oficiales.',
+            levelRange: '3.75 - 4.75',
+            minLevel: 3.75,
+            maxLevel: 4.75
+        },
+        {
             id: 'masculina-3',
             name: 'Masculina 3ª División',
             category: 'Masculina',
@@ -827,10 +840,11 @@
          */
         isCampaignActiveSync() {
             try {
-                if (typeof localStorage === 'undefined') return false;
-                return localStorage.getItem(CONFIG.STORAGE_KEY_ACTIVE) === 'true';
+                if (typeof localStorage === 'undefined') return true;
+                const val = localStorage.getItem(CONFIG.STORAGE_KEY_ACTIVE);
+                return val !== 'false';
             } catch (e) {
-                return false;
+                return true;
             }
         }
 

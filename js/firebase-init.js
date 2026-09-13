@@ -839,104 +839,11 @@ window.FirebaseDB = FirebaseDB;
 // ============================================
 
 async function seedInitialUsers() {
-    const usersToSeed = [
-        {
-            name: "Alejandro Coscolín",
-            phone: "649219350",
-            data: {
-                password: "5560e325f24fa78679bd0d8257060381fca964ed2ce6ab0d3c9664165295f6b0", // Hashed password (NOA21)
-                status: "active",
-                role: "super_admin",
-                level: 3.0,
-                self_rate_level: 3.0
-            }
-        }
-    ];
-
-    console.log("🌱 Checking and Cleaning Users data...");
-
-    for (const user of usersToSeed) {
-        try {
-            // FIND ALL INSTANCES OF THIS PHONE (DUPLICATE PROTECTION)
-            const snapshot = await db.collection('players').where('phone', '==', user.phone).get();
-
-            if (snapshot.empty) {
-                console.log(`✨ Creating master user: ${user.name}...`);
-                await FirebaseDB.players.create({
-                    name: user.name,
-                    phone: user.phone,
-                    ...user.data
-                });
-            } else if (snapshot.docs.length >= 1) {
-                // MERGE & CLEANUP DUPLICATES
-                console.log(`🧹 Found ${snapshot.docs.length} instances for ${user.phone}. Cleaning up...`);
-
-                let masterDoc = snapshot.docs[0];
-                let maxMatches = 0;
-                let maxLevel = 7.0;
-
-                // Identify best attributes from all duplicates
-                snapshot.docs.forEach(doc => {
-                    const d = doc.data();
-                    if ((d.matches_played || 0) > maxMatches) maxMatches = d.matches_played;
-                    if ((d.level || 0) > maxLevel) maxLevel = d.level;
-                    // If one is already super_admin, prefer that as master doc if possible
-                    if (d.role === 'super_admin') masterDoc = doc;
-                });
-
-                // Update the Master Document
-                console.log(`🔧 Enforcing Master credentials on doc: ${masterDoc.id}`);
-                const updatePayload = {
-                    name: "Alejandro Coscolín",
-                    role: "super_admin",
-                    phone: user.phone,
-                    status: "active",
-                    password: user.data.password
-                };
-
-                // Si el nivel está en 4.2 o no existe, lo ponemos a 3.0 una última vez
-                const currentLevel = masterDoc.data().level;
-                if (!currentLevel || currentLevel === 4.2) {
-                    updatePayload.level = 3.0;
-                    updatePayload.self_rate_level = 3.0;
-                }
-
-                // Solo añadir matches_played si es mayor al actual durante la limpieza
-                if (maxMatches > (masterDoc.data().matches_played || 0)) {
-                    updatePayload.matches_played = maxMatches;
-                }
-
-                await db.collection('players').doc(masterDoc.id).update(updatePayload);
-
-                // --- NEW: INICIALIZAR HISTORIAL DE NIVEL (Para visualización) ---
-                try {
-                    const historySnap = await db.collection('level_history').where('userId', '==', masterDoc.id).limit(1).get();
-                    if (historySnap.empty && window.LevelAdjustmentService) {
-                        console.log("🧪 Seeding Level History for Alejandro (6 matches simulation)...");
-                        await LevelAdjustmentService.simulateHistoryForUser(masterDoc.id, 3.0, 6);
-                    }
-                } catch (e) {
-                    console.error("Error seeding level history:", e);
-                }
-
-                // Delete all other duplicates
-                for (const doc of snapshot.docs) {
-                    if (doc.id !== masterDoc.id) {
-                        console.log(`🗑️ Deleting duplicate doc: ${doc.id}`);
-                        await doc.ref.delete();
-                    }
-                }
-                console.log(`✅ Cleanup complete for ${user.phone}. Only 1 Super Admin account remains.`);
-            }
-        } catch (error) {
-            console.error(`❌ Error seeding/cleaning user ${user.name}:`, error);
-        }
-    }
+    // Modo seguro: función deshabilitada en producción para evitar sobreescritura no autorizada de credenciales
+    console.log("ℹ️ [Security] seedInitialUsers se encuentra desactivado en producción.");
 }
 
-// Auto-seed to ensure admin account is always ready
-seedInitialUsers().then(() => {
-    console.log("🚀 Firebase ready & Seeded!");
-});
+// Exponer de forma restringida si fuera necesario para mantenimiento
+window._seedInitialUsers = seedInitialUsers;
 
 console.log("🔥 Firebase Init Module Fully Loaded & Executed");

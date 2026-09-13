@@ -57,158 +57,258 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                     <!-- ① WELCOME HERO — PadelPulse -->
                     <div id="padel-pulse-widget-root" style="animation: floatUp 0.4s ease-out forwards;"></div>
 
-                    <!-- 🔥 BANNER CAMPAÑA TEMPORADA OCTUBRE - NOVIEMBRE 2026 -->
-                    <div id="season-campaign-banner-root" style="margin: 0 15px 18px !important; animation: floatUp 0.5s ease-out forwards;">
+                    <!-- 🔥 HERO CARD PREMIUM: TEMPORADA 2027 | EQUIPOS SOMOSPADEL -->
+                    <div id="season-campaign-banner-root" style="margin: 0 15px 20px !important; animation: floatUp 0.5s ease-out forwards;">
                         <div style="
-                            background: #ffffff;
-                            border: 1.5px solid #e2e8f0;
-                            border-radius: 24px;
-                            padding: 20px;
+                            background: linear-gradient(145deg, #090e1a 0%, #0f172a 45%, #152238 100%);
+                            border: 1.5px solid rgba(204, 255, 0, 0.45);
+                            border-radius: 26px;
+                            padding: 22px 20px;
                             position: relative;
                             overflow: hidden;
-                            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05), 0 0 20px rgba(204, 255, 0, 0.12);
+                            box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.65), 0 0 35px rgba(204, 255, 0, 0.15);
+                            color: #ffffff;
+                            font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
                         ">
-                            <!-- Glow decorativo superior -->
-                            <div style="position: absolute; top: -40px; right: -40px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(204, 255, 0, 0.25) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                            <!-- Glows y Auras Neón de Alta Competición -->
+                            <div style="position: absolute; top: -50px; right: -50px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(204, 255, 0, 0.25) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                            <div style="position: absolute; bottom: -50px; left: -50px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(56, 189, 248, 0.16) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
 
-                            <!-- Header del Banner: Badges -->
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="background: #CCFF00; color: #000000; font-size: 0.65rem; font-weight: 950; padding: 3px 9px; border-radius: 8px; letter-spacing: 0.5px; text-transform: uppercase;">
-                                        🔥 TEMPORADA 2027 | EQUIPOS
+                            <!-- Header: Badges Oficiales -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; position: relative; z-index: 2;">
+                                <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+                                    <span style="background: #CCFF00; color: #000000; font-size: 0.68rem; font-weight: 950; padding: 4px 10px; border-radius: 8px; letter-spacing: 0.6px; text-transform: uppercase; box-shadow: 0 2px 10px rgba(204,255,0,0.35);">
+                                        🔥 LIGA SUMMAPADEL 2027
                                     </span>
-                                    <span style="background: #f1f5f9; color: #475569; font-size: 0.65rem; font-weight: 800; padding: 3px 9px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                                        PLAZAS LIMITADAS
+                                    <span style="background: rgba(239, 68, 68, 0.18); color: #fca5a5; font-size: 0.65rem; font-weight: 850; padding: 4px 9px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.35);">
+                                        ⚡ PLAZAS LIMITADAS
+                                    </span>
+                                    <span style="background: rgba(56, 189, 248, 0.16); color: #7dd3fc; font-size: 0.65rem; font-weight: 850; padding: 4px 9px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.35);">
+                                        🎯 PRUEBA DE NIVEL
                                     </span>
                                 </div>
-                                <span style="font-size: 0.68rem; color: #64748b; font-weight: 700;">
-                                    SomosPadel BCN
+                                <span style="font-size: 0.70rem; color: #94a3b8; font-weight: 700; display: flex; align-items: center; gap: 4px;">
+                                    <span>📍</span> SomosPadel BCN • Bcn & Baix Llobregat
                                 </span>
                             </div>
 
-                            <!-- Título principal -->
-                            <h3 style="margin: 0 0 6px; font-size: 1.22rem; font-weight: 950; color: #0f172a; line-height: 1.25; letter-spacing: -0.3px;">
-                                🏆 INSCRIPCIONES EQUIPOS | TEMPORADA 2027
-                            </h3>
-
-                            <!-- Subtítulo con las 3 funciones clave -->
-                            <p style="margin: 0 0 14px; font-size: 0.78rem; color: #64748b; font-weight: 600; line-height: 1.4;">
-                                Convocatoria oficial de plazas para equipos del club (Octubre - Noviembre) • Entrenos • Americanas
-                            </p>
-
-                            <!-- Mini-features pills -->
-                            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;">
-                                <span style="background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 10px;">
-                                    🏆 Fem (2ª, 3ª, 4ª) • Mix (3ª, 4ª) • Masc (3ª, 4ª)
-                                </span>
-                                <span style="background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 10px;">
-                                    🎯 Clases & Físico
-                                </span>
-                                <span style="background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 10px;">
-                                    ⚡ Ranking en Tiempo Real
-                                </span>
+                            <!-- Título y Claim de Temporada -->
+                            <div style="position: relative; z-index: 2; margin-bottom: 14px;">
+                                <h3 style="margin: 0 0 6px; font-size: 1.35rem; font-weight: 950; color: #ffffff; line-height: 1.25; letter-spacing: -0.3px;">
+                                    🏆 ÚNETE AL EQUIPO | <span style="color: #CCFF00; text-shadow: 0 0 16px rgba(204,255,0,0.4);">TEMPORADA 2027</span>
+                                </h3>
+                                <p style="margin: 0; font-size: 0.82rem; color: #cbd5e1; font-weight: 500; line-height: 1.45;">
+                                    Todo el pádel, en una sola app. Compite defendiendo nuestros colores en la Liga Summapadel y vive una experiencia de club única.
+                                </p>
                             </div>
 
-                            <!-- CTA Principal -->
+                            <!-- Grid Central: Mini-Preview interactivo del Cartel + 4 Beneficios Clave -->
+                            <div style="position: relative; z-index: 2; display: grid; grid-template-columns: 105px 1fr; gap: 14px; align-items: stretch; margin-bottom: 16px;">
+                                
+                                <!-- Mini Preview del Cartel Oficial (Abre Lightbox HD al pulsar) -->
+                                <div 
+                                    onclick="window.openSeasonFlyerModal();"
+                                    title="Toca para ver el Cartel Oficial completo"
+                                    style="
+                                        position: relative;
+                                        border-radius: 14px;
+                                        overflow: hidden;
+                                        border: 1.5px solid rgba(204, 255, 0, 0.55);
+                                        cursor: pointer;
+                                        box-shadow: 0 8px 22px rgba(0,0,0,0.55);
+                                        background: #000000;
+                                        display: flex;
+                                        flex-direction: column;
+                                        transition: transform 0.2s, box-shadow 0.2s;
+                                    "
+                                    onmouseover="this.style.transform='scale(1.03)'; this.style.boxShadow='0 10px 25px rgba(204,255,0,0.4)';"
+                                    onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 22px rgba(0,0,0,0.55)';">
+                                    <img 
+                                        src="img/flyer_temporada_2027.jpg" 
+                                        alt="Cartel Oficial Temporada 2027 SomosPadel" 
+                                        style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                                    />
+                                    <div style="
+                                        position: absolute;
+                                        bottom: 0;
+                                        left: 0;
+                                        right: 0;
+                                        background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
+                                        padding: 18px 4px 6px;
+                                        text-align: center;
+                                    ">
+                                        <span style="
+                                            background: #CCFF00;
+                                            color: #000000;
+                                            font-size: 0.60rem;
+                                            font-weight: 950;
+                                            padding: 3px 6px;
+                                            border-radius: 6px;
+                                            display: inline-flex;
+                                            align-items: center;
+                                            gap: 3px;
+                                            letter-spacing: 0.4px;
+                                        ">
+                                            🔍 VER CARTEL
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- 4 Beneficios Exclusivos del Equipo -->
+                                <div style="display: flex; flex-direction: column; justify-content: space-between; gap: 7px;">
+                                    <div style="display: flex; align-items: flex-start; gap: 8px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.07); padding: 7px 10px; border-radius: 10px;">
+                                        <span style="font-size: 1rem; line-height: 1;">👕</span>
+                                        <div style="font-size: 0.73rem; color: #f1f5f9; line-height: 1.3;">
+                                            <strong style="color: #CCFF00; font-weight: 800;">Camiseta técnica oficial:</strong> con tu nombre personalizado.
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: flex-start; gap: 8px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.07); padding: 7px 10px; border-radius: 10px;">
+                                        <span style="font-size: 1rem; line-height: 1;">📱</span>
+                                        <div style="font-size: 0.73rem; color: #f1f5f9; line-height: 1.3;">
+                                            <strong style="color: #38bdf8; font-weight: 800;">Gestión en App oficial:</strong> convocatorias, actas, ranking y chat.
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: flex-start; gap: 8px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.07); padding: 7px 10px; border-radius: 10px;">
+                                        <span style="font-size: 1rem; line-height: 1;">🎯</span>
+                                        <div style="font-size: 0.73rem; color: #f1f5f9; line-height: 1.3;">
+                                            <strong style="color: #fbbf24; font-weight: 800;">Clases de tecnificación:</strong> oferta exclusiva con Rubén Rosende.
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: flex-start; gap: 8px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.07); padding: 7px 10px; border-radius: 10px;">
+                                        <span style="font-size: 1rem; line-height: 1;">🤝</span>
+                                        <div style="font-size: 0.73rem; color: #c084fc; font-weight: 800;">
+                                            Americanas & Teambuilding:</strong> eventos y dinamización todo el año.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Barra de Categorías y Precios Oficiales -->
+                            <div style="
+                                position: relative;
+                                z-index: 2;
+                                background: rgba(15, 23, 42, 0.75);
+                                border: 1px solid rgba(255, 255, 255, 0.08);
+                                border-radius: 14px;
+                                padding: 10px 12px;
+                                margin-bottom: 14px;
+                                display: flex;
+                                flex-direction: column;
+                                gap: 8px;
+                            ">
+                                <!-- Categorías oficiales -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                                    <span style="font-size: 0.66rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        CATEGORÍAS:
+                                    </span>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                                        <span style="background: rgba(236, 72, 153, 0.15); border: 1px solid rgba(236, 72, 153, 0.3); color: #f472b6; font-size: 0.67rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">
+                                            🚺 Fem (2ª, 3ª, 4ª)
+                                        </span>
+                                        <span style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; font-size: 0.67rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">
+                                            🚹 Masc (2ª, 3ª, 4ª)
+                                        </span>
+                                        <span style="background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 0.67rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">
+                                            🚻 Mixto (3ª, 4ª)
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Precios oficiales -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.08); flex-wrap: wrap; gap: 6px;">
+                                    <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 700;">
+                                        Cuota de inscripción:
+                                    </span>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="background: rgba(204, 255, 0, 0.12); border: 1px solid rgba(204, 255, 0, 0.35); color: #CCFF00; font-size: 0.75rem; font-weight: 950; padding: 3px 9px; border-radius: 7px;">
+                                            1 EQUIPO: 55€
+                                        </span>
+                                        <span style="background: rgba(204, 255, 0, 0.18); border: 1px solid rgba(204, 255, 0, 0.55); color: #CCFF00; font-size: 0.75rem; font-weight: 950; padding: 3px 9px; border-radius: 7px; box-shadow: 0 0 10px rgba(204,255,0,0.2);">
+                                            2 EQUIPOS: 95€
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CTA Principal Brillante #CCFF00 -->
                             <button 
                                 type="button" 
-                                onclick="window.SeasonCampaignView && window.SeasonCampaignView.openModal();" 
+                                onclick="window.SeasonCampaignView && window.SeasonCampaignView.openModal('equipos');" 
                                 style="
                                     width: 100%;
-                                    padding: 13px 18px;
+                                    padding: 14px 18px;
                                     background: #CCFF00;
                                     color: #000000;
-                                    border: 1px solid #b5e600;
+                                    border: none;
                                     border-radius: 14px;
                                     font-weight: 950;
-                                    font-size: 0.88rem;
+                                    font-size: 0.90rem;
                                     letter-spacing: 0.5px;
                                     cursor: pointer;
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
                                     gap: 8px;
-                                    box-shadow: 0 4px 16px rgba(204, 255, 0, 0.35);
+                                    box-shadow: 0 4px 20px rgba(204, 255, 0, 0.4);
                                     transition: transform 0.2s, box-shadow 0.2s;
                                     margin-bottom: 10px;
                                 "
-                                onmouseover="this.style.transform='translateY(-2px)';"
-                                onmouseout="this.style.transform='none';">
-                                <i class="fas fa-rocket" style="font-size: 0.95rem;"></i>
-                                PRE-INSCRIBIRSE / DESCUBRIR
+                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 24px rgba(204, 255, 0, 0.55)';"
+                                onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 20px rgba(204, 255, 0, 0.4)';">
+                                <i class="fas fa-rocket" style="font-size: 1rem;"></i>
+                                <span>🚀 PRE-INSCRIBIRME EN UN EQUIPO</span>
                             </button>
 
-                            <!-- Accesos rápidos secundarios -->
-                            <div style="display: flex; gap: 8px;">
+                            <!-- CTAs Secundarios: Ver Cartel Oficial y WhatsApp Directo -->
+                            <div style="display: flex; gap: 8px; position: relative; z-index: 2;">
                                 <button 
                                     type="button" 
-                                    onclick="window.Router && window.Router.navigate('americanas');" 
+                                    onclick="window.openSeasonFlyerModal();" 
                                     style="
                                         flex: 1;
-                                        padding: 8px 10px;
-                                        background: #f8fafc;
-                                        border: 1px solid #e2e8f0;
-                                        border-radius: 10px;
-                                        color: #334155;
-                                        font-size: 0.72rem;
-                                        font-weight: 800;
+                                        padding: 10px 12px;
+                                        background: rgba(255, 255, 255, 0.08);
+                                        border: 1px solid rgba(255, 255, 255, 0.18);
+                                        border-radius: 11px;
+                                        color: #ffffff;
+                                        font-size: 0.74rem;
+                                        font-weight: 850;
                                         cursor: pointer;
-                                        transition: background 0.2s;
+                                        transition: background 0.2s, transform 0.2s;
                                         display: flex;
                                         align-items: center;
                                         justify-content: center;
-                                        gap: 5px;
+                                        gap: 6px;
                                     "
-                                    onmouseover="this.style.background='#f1f5f9';"
-                                    onmouseout="this.style.background='#f8fafc';">
-                                    <span>⚡</span> Americanas
+                                    onmouseover="this.style.background='rgba(255, 255, 255, 0.14)';"
+                                    onmouseout="this.style.background='rgba(255, 255, 255, 0.08)';">
+                                    <span>🖼️</span> Ver Cartel Oficial
                                 </button>
-                                <button 
-                                    type="button" 
-                                    onclick="window.Router && window.Router.navigate('entrenos');" 
+                                <a 
+                                    href="https://wa.me/34649219350?text=¡Hola%20SomosPadel!%20Quiero%20más%20información%20sobre%20los%20Equipos%20de%20la%20Temporada%202027." 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
                                     style="
                                         flex: 1;
-                                        padding: 8px 10px;
-                                        background: #f8fafc;
-                                        border: 1px solid #e2e8f0;
-                                        border-radius: 10px;
-                                        color: #334155;
-                                        font-size: 0.72rem;
-                                        font-weight: 800;
+                                        padding: 10px 12px;
+                                        background: rgba(37, 211, 102, 0.14);
+                                        border: 1px solid rgba(37, 211, 102, 0.35);
+                                        border-radius: 11px;
+                                        color: #25D366;
+                                        font-size: 0.74rem;
+                                        font-weight: 850;
                                         cursor: pointer;
-                                        transition: background 0.2s;
+                                        text-decoration: none;
+                                        transition: background 0.2s, transform 0.2s;
                                         display: flex;
                                         align-items: center;
                                         justify-content: center;
-                                        gap: 5px;
+                                        gap: 6px;
                                     "
-                                    onmouseover="this.style.background='#f1f5f9';"
-                                    onmouseout="this.style.background='#f8fafc';">
-                                    <span>🎯</span> Entrenos
-                                </button>
-                                <button 
-                                    type="button" 
-                                    onclick="window.SeasonCampaignView && window.SeasonCampaignView.openModal('equipos');" 
-                                    style="
-                                        flex: 1;
-                                        padding: 8px 10px;
-                                        background: #f8fafc;
-                                        border: 1px solid #e2e8f0;
-                                        border-radius: 10px;
-                                        color: #334155;
-                                        font-size: 0.72rem;
-                                        font-weight: 800;
-                                        cursor: pointer;
-                                        transition: background 0.2s;
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                        gap: 5px;
-                                    "
-                                    onmouseover="this.style.background='#f1f5f9';"
-                                    onmouseout="this.style.background='#f8fafc';">
-                                    <span>🏆</span> Equipos
-                                </button>
+                                    onmouseover="this.style.background='rgba(37, 211, 102, 0.22)';"
+                                    onmouseout="this.style.background='rgba(37, 211, 102, 0.14)';">
+                                    <span>💬</span> Dudas por WhatsApp
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -1229,10 +1329,6 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
                         </div>
                         <p style="margin: 0; font-size: 0.75rem; color: #475569; font-weight: 600; line-height: 1.4;">
                             ${intel.recommendation.replace('la IA', 'el sistema').replace('predictivo', 'estimado')}
-                        </p>
-                    </div>
-                </div>
-            `;           ${intel.recommendation.replace('la IA', 'el sistema').replace('predictivo', 'estimado')}
                         </p>
                     </div>
                 </div>
@@ -2929,5 +3025,200 @@ console.log("âœ… [v40] DashboardView Loaded Correctly");
     }
 
     window.DashboardView = new DashboardView();
-    console.log("ðŸš€ Vibrant Dashboard Loaded");
+
+    /**
+     * 🖼️ Lightbox Oficial de Temporada 2027: Cartel SomosPadel
+     */
+    if (typeof window.openSeasonFlyerModal !== 'function') {
+        window.openSeasonFlyerModal = function() {
+            let overlay = document.getElementById('sp-season-flyer-lightbox');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'sp-season-flyer-lightbox';
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    background: rgba(8, 12, 22, 0.88);
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    z-index: 9999999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 16px;
+                    box-sizing: border-box;
+                    opacity: 0;
+                    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+                    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                `;
+
+                overlay.innerHTML = `
+                    <div id="sp-season-flyer-container" style="
+                        position: relative;
+                        width: 100%;
+                        max-width: 480px;
+                        max-height: 94vh;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        background: #090d16;
+                        border: 1.5px solid rgba(204, 255, 0, 0.45);
+                        border-radius: 22px;
+                        padding: 14px 14px 18px;
+                        box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 35px rgba(204,255,0,0.2);
+                        transform: scale(0.92);
+                        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+                    ">
+                        <!-- Botón de Cierre Superior Circular -->
+                        <button 
+                            type="button" 
+                            onclick="window.closeSeasonFlyerModal()" 
+                            aria-label="Cerrar cartel"
+                            style="
+                                position: absolute;
+                                top: -14px;
+                                right: -14px;
+                                width: 38px;
+                                height: 38px;
+                                border-radius: 50%;
+                                background: #0f172a;
+                                color: #CCFF00;
+                                border: 2px solid #CCFF00;
+                                font-size: 1.15rem;
+                                font-weight: 900;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+                                z-index: 20;
+                                transition: transform 0.15s;
+                            "
+                            onmouseover="this.style.transform='scale(1.1) rotate(90deg)';"
+                            onmouseout="this.style.transform='scale(1) rotate(0deg)';">
+                            ✕
+                        </button>
+
+                        <!-- Header del Lightbox -->
+                        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 4px;">
+                            <span style="background: #CCFF00; color: #000000; font-size: 0.65rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px;">
+                                🏆 CARTEL OFICIAL 2027
+                            </span>
+                            <span style="font-size: 0.70rem; color: #94a3b8; font-weight: 700;">
+                                Liga Summapadel • SomosPadel BCN
+                            </span>
+                        </div>
+
+                        <!-- Contenedor del Cartel -->
+                        <div style="
+                            width: 100%;
+                            overflow: hidden;
+                            border-radius: 14px;
+                            border: 1px solid rgba(255,255,255,0.1);
+                            background: #000000;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+                        ">
+                            <img 
+                                src="img/flyer_temporada_2027.jpg" 
+                                alt="Flyer Temporada 2027 SomosPadel" 
+                                style="
+                                    width: 100%;
+                                    height: auto;
+                                    max-height: 65vh;
+                                    object-fit: contain;
+                                    display: block;
+                                "
+                            />
+                        </div>
+
+                        <!-- Botones de Acción al pie del Lightbox -->
+                        <div style="display: flex; gap: 8px; width: 100%; margin-top: 14px;">
+                            <button 
+                                type="button" 
+                                onclick="window.closeSeasonFlyerModal(); window.SeasonCampaignView && window.SeasonCampaignView.openModal('equipos');" 
+                                style="
+                                    flex: 2;
+                                    padding: 12px 14px;
+                                    background: #CCFF00;
+                                    color: #000000;
+                                    border: none;
+                                    border-radius: 12px;
+                                    font-weight: 950;
+                                    font-size: 0.85rem;
+                                    cursor: pointer;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    gap: 6px;
+                                    box-shadow: 0 4px 14px rgba(204,255,0,0.35);
+                                ">
+                                <span>🚀</span> PRE-INSCRIBIRME EN UN EQUIPO
+                            </button>
+                            <button 
+                                type="button" 
+                                onclick="window.closeSeasonFlyerModal()" 
+                                style="
+                                    flex: 1;
+                                    padding: 12px 14px;
+                                    background: rgba(255, 255, 255, 0.08);
+                                    border: 1px solid rgba(255, 255, 255, 0.2);
+                                    border-radius: 12px;
+                                    color: #ffffff;
+                                    font-weight: 800;
+                                    font-size: 0.80rem;
+                                    cursor: pointer;
+                                ">
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        window.closeSeasonFlyerModal();
+                    }
+                });
+
+                document.body.appendChild(overlay);
+            }
+
+            const onEsc = (e) => {
+                if (e.key === 'Escape') {
+                    window.closeSeasonFlyerModal();
+                    document.removeEventListener('keydown', onEsc);
+                }
+            };
+            document.addEventListener('keydown', onEsc);
+
+            overlay.style.display = 'flex';
+            requestAnimationFrame(() => {
+                overlay.style.opacity = '1';
+                const container = document.getElementById('sp-season-flyer-container');
+                if (container) container.style.transform = 'scale(1)';
+            });
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.closeSeasonFlyerModal = function() {
+            const overlay = document.getElementById('sp-season-flyer-lightbox');
+            if (overlay) {
+                const container = document.getElementById('sp-season-flyer-container');
+                if (container) container.style.transform = 'scale(0.92)';
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    document.body.style.overflow = '';
+                }, 220);
+            }
+        };
+    }
+
+    console.log("🚀 Vibrant Dashboard Loaded");
 })();
