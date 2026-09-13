@@ -610,6 +610,46 @@
             window.getEventCategoryTheme = (evt) => this.getEventCategoryTheme(evt);
             window.filterCommandCenterCategory = (cat) => this.filterCommandCenterCategory(cat);
 
+            // REAL-TIME EVENT SYNC: Escucha modificaciones de americanas / entrenos
+            if (!this._eventModifiedListenerAttached) {
+                this._eventModifiedListenerAttached = true;
+                window.addEventListener('eventModified', (evt) => {
+                    console.log('⚡ [DashboardView] Evento modificado en tiempo real:', evt.detail);
+                    delete window._lastEventsData;
+                    window._ccEventsFetchedRecently = false;
+                    if (window.clearDatabaseCache) {
+                        window.clearDatabaseCache('americanas');
+                        window.clearDatabaseCache('entrenos');
+                    }
+                    if (window.CacheService) {
+                        window.CacheService.remove('americanas', 'all');
+                        window.CacheService.remove('entrenos', 'all');
+                        window.CacheService.remove('database', 'all_americanas');
+                        window.CacheService.remove('database', 'all_entrenos');
+                    }
+                    // DEBOUNCE: evita ráfagas de renders si llegan varios eventModified seguidos
+                    clearTimeout(this._eventModifiedDebounce);
+                    this._eventModifiedDebounce = setTimeout(() => {
+                        if (window.Router && window.Router.currentRoute === 'dashboard') {
+                            const currentUser = window.Store ? window.Store.getState('currentUser') : null;
+                            if (currentUser && typeof this.buildContext === 'function') {
+                                this.buildContext(currentUser).then(freshContext => {
+                                    this.renderLiveWidget(freshContext, true);
+                                    if (window.HeroCard) {
+                                        const heroRoot = document.getElementById('hero-card-root');
+                                        if (heroRoot) heroRoot.innerHTML = window.HeroCard.render(freshContext);
+                                    }
+                                }).catch(() => {
+                                    this.renderLiveWidget(window._lastDashboardContext || {}, true);
+                                });
+                            } else {
+                                this.renderLiveWidget(window._lastDashboardContext || {}, true);
+                            }
+                        }
+                    }, 400);
+                });
+            }
+
             if (window.Store) {
                 this.unsubDashboard = window.Store.subscribe('dashboardData', (data) => {
                     if (window.Router && window.Router.currentRoute === 'dashboard') {
@@ -642,6 +682,21 @@
             console.log("📊 [DashboardView] Rendering started...", data);
             const container = document.getElementById('content-area');
             if (!container) return;
+
+            // Invalida caché de eventos para cargar SIEMPRE los datos más recientes modificados
+            window._ccEventsFetchedRecently = false;
+            delete window._lastEventsData;
+            if (window.clearDatabaseCache) {
+                window.clearDatabaseCache('americanas');
+                window.clearDatabaseCache('entrenos');
+            }
+            // NOTE: window.DatabaseService no existe — ya cubierto por clearDatabaseCache arriba
+            if (window.CacheService) {
+                window.CacheService.remove('americanas', 'all');
+                window.CacheService.remove('entrenos', 'all');
+                window.CacheService.remove('database', 'all_americanas');
+                window.CacheService.remove('database', 'all_entrenos');
+            }
 
             // 1. Get Real User Data
             const user = window.Store ? window.Store.getState('currentUser') : null;
@@ -1074,9 +1129,6 @@
                         <!-- Content loaded via JS -->
                     </div>
 
-                    <!-- 🎾 PARTIDAS ABIERTAS — Widget de publicidad interactivo -->
-                    <div id="open-matches-widget-root" style="animation: floatUp 0.8s ease-out forwards;"></div>
-
                     <!-- 🏆 RANKING SPOTLIGHT -->
                     <div id="ranking-spotlight-root" style="margin:0 15px 16px; animation:floatUp 0.8s ease-out forwards;">
                         <style>
@@ -1447,15 +1499,6 @@
                 }
             } catch (e) {
                 console.error("Error rendering StoryFeedWidget:", e);
-            }
-
-            // 🎾 PARTIDAS ABIERTAS — Widget de publicidad en tiempo real
-            try {
-                if (window.OpenMatchesWidget) {
-                    window.OpenMatchesWidget.render('open-matches-widget-root');
-                }
-            } catch (e) {
-                console.error("Error rendering OpenMatchesWidget:", e);
             }
 
             // 🎾 WAR ROOM 3D TACTICAL WIDGET
@@ -3254,21 +3297,21 @@
         filterCommandCenterCategory(cat) {
             if (window._ccActiveFilter === cat && cat !== 'todos') {
                 // Segundo toque: navegación directa al listado completo
-                const route = (cat === 'entrenos') ? 'entrenos' : (cat === 'partidas' ? 'partidas_abiertas' : 'americanas');
+                const route = (cat === 'entrenos') ? 'entrenos' : 'americanas';
                 window.dashNavigate(route, 'chips_double_tap');
                 return;
             }
             if (cat === 'partidas') {
-                window.dashNavigate('partidas_abiertas', 'chips');
+                window.dashNavigate('entrenos', 'chips');
                 return;
             }
             window._ccActiveFilter = cat;
             if (window.DashboardView && typeof window.DashboardView.renderLiveWidget === 'function') {
-                window.DashboardView.renderLiveWidget(window._lastDashboardContext || {});
+                window.DashboardView.renderLiveWidget(window._lastDashboardContext || {}, true);
             }
         }
 
-        async renderLiveWidget(context = {}) {
+        async renderLiveWidget(context = {}, force = false) {
             try {
                 // Ensure global helpers exist
                 window._lastDashboardContext = context || {};
@@ -3284,14 +3327,30 @@
                     };
                 }
 
+                if (force) {
+                    delete window._lastEventsData;
+                    window._ccEventsFetchedRecently = false;
+                }
+
                 // 1. DATA GATHERING (INTEL)
                 let allEvents = [];
                 let weatherData = [];
 
-                if (window._lastEventsData && window._lastWeatherData && window._ccEventsFetchedRecently) {
+                if (!force && window._lastEventsData && window._lastWeatherData && window._ccEventsFetchedRecently) {
                     allEvents = window._lastEventsData;
                     weatherData = window._lastWeatherData;
                 } else {
+                    if (window.clearDatabaseCache) {
+                        window.clearDatabaseCache('americanas');
+                        window.clearDatabaseCache('entrenos');
+                    }
+                    // NOTE: window.DatabaseService no existe — ya cubierto por clearDatabaseCache arriba
+                    if (window.CacheService) {
+                        window.CacheService.remove('americanas', 'all');
+                        window.CacheService.remove('entrenos', 'all');
+                        window.CacheService.remove('database', 'all_americanas');
+                        window.CacheService.remove('database', 'all_entrenos');
+                    }
                     [allEvents, weatherData] = await Promise.all([
                         window.AmericanaService ? window.AmericanaService.getAllActiveEvents() : [],
                         window.WeatherService ? window.WeatherService.getDashboardWeather() : []
@@ -3393,7 +3452,7 @@
 
                         return `
                         <div onclick="window.dashNavigate('${theme.targetRoute}', 'strip_card')" 
-                             style="min-width: 100%; max-width: 100%; flex-shrink: 0; scroll-snap-align: start; box-sizing: border-box; background: ${theme.cardBg}; border: ${theme.cardBorder}; border-radius: 18px; padding: 10px 14px; min-height: 76px; max-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                             style="min-width: 100%; max-width: 100%; flex-shrink: 0; scroll-snap-align: start; box-sizing: border-box; margin-right: 8px; background: ${theme.cardBg}; border: ${theme.cardBorder}; border-radius: 18px; padding: 10px 14px; min-height: 76px; max-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
                              onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                             
                             <!-- Ambient Category Glow -->
@@ -3439,33 +3498,33 @@
                     <style>
                         .compact-strip-track::-webkit-scrollbar { display: none !important; }
                     </style>
-                    <div class="compact-strip-track" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; width: 100%; gap: 8px;">
+                    <div class="compact-strip-track" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; width: 100%; gap: 0;">
                         ${slidesHtml}
                     </div>
                     `;
                 } else {
                     // CASE 3: SIN EVENTOS ABIERTOS (TIRA DELGADA ELEGANTE ~60px)
                     stripHtml = `
-                    <div onclick="window.dashNavigate('partidas_abiertas', 'strip_empty')" 
+                    <div onclick="window.dashNavigate('entrenos', 'strip_empty')" 
                          style="background: linear-gradient(135deg, #0b1528 0%, #13223f 100%); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 16px; padding: 8px 14px; min-height: 60px; max-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
                          onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                         
                         <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; z-index: 2;">
                             <span style="background: rgba(2, 132, 199, 0.2); color: #38bdf8; font-size: 0.58rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.35); letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0;">
-                                🎾 PARTIDAS ABIERTAS
+                                🎾 PRÓXIMOS EVENTOS
                             </span>
                             <div style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                <div style="color: #ffffff; font-size: 0.78rem; font-weight: 850; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Encuentra o crea partida hoy</div>
-                                <div style="color: #94a3b8; font-size: 0.58rem; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Juega con jugadores de tu nivel</div>
+                                <div style="color: #ffffff; font-size: 0.78rem; font-weight: 850; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Descubre próximos entrenos y americanas</div>
+                                <div style="color: #94a3b8; font-size: 0.58rem; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Consulta las fechas disponibles y resérvalas</div>
                             </div>
                         </div>
 
                         <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; z-index: 2;">
                             ${weatherPillHtml}
-                            <button onclick="event.stopPropagation(); window.dashNavigate('partidas_abiertas', 'strip_empty')" 
+                            <button onclick="event.stopPropagation(); window.dashNavigate('entrenos', 'strip_empty')" 
                                     style="background: #38bdf8; color: #071629; font-size: 0.64rem; font-weight: 950; padding: 5px 11px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.4px; box-shadow: 0 2px 10px rgba(56, 189, 248, 0.35); white-space: nowrap; transition: transform 0.15s ease;"
                                     onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                                <span>JUGAR</span> <i class="fas fa-arrow-right" style="font-size: 0.52rem;"></i>
+                                <span>VER</span> <i class="fas fa-arrow-right" style="font-size: 0.52rem;"></i>
                             </button>
                         </div>
                     </div>

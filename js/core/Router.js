@@ -19,7 +19,7 @@
                 'agenda': () => this.handleControllerTab('EventsController', 'agenda'),
                 'results': () => this.handleControllerTab('EventsController', 'results'),
                 'entrenos': () => this.handleControllerTab('EventsController', 'entrenos'),
-                'partidas_abiertas': () => this.handleControllerTab('EventsController', 'open_matches'),
+                'partidas_abiertas': () => this.handleControllerTab('EventsController', 'entrenos'),
                 'records': () => {
                     console.log("🛣️ [Router] Executing records route...");
                     if (window.RecordsController) {
@@ -148,13 +148,12 @@
             const controllersToCleanup = [
                 { name: 'DashboardView', routes: ['dashboard'] },
                 { name: 'DashboardController', routes: ['dashboard'] },
-                { name: 'EventsController', routes: ['events', 'americanas', 'results', 'agenda', 'entrenos', 'partidas_abiertas', 'open_matches'] },
+                { name: 'EventsController', routes: ['events', 'americanas', 'results', 'agenda', 'entrenos'] },
                 { name: 'ControlTowerView', routes: ['live'] },
                 { name: 'TVView', routes: ['tv'] },
                 { name: 'PlayerController', routes: ['profile'] },
                 { name: 'RecordsController', routes: ['records'] },
                 { name: 'RankingController', routes: ['ranking'] },
-                { name: 'OpenMatchesController', routes: ['partidas_abiertas'] },
                 { name: 'TeamController', routes: ['teams', 'equipos'] }
             ];
 

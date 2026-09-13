@@ -47,17 +47,11 @@
                                 <i class="fas fa-random" style="color: ${heroAccent}; font-size: 0.75rem;"></i>
                                 <span>SORTEO</span>
                             </button>
-                            <button type="button" onclick="window.ChatView.init('${americanaDoc?.id}', '${amName}')" 
-                                    title="Abrir chat del evento"
+                            <button type="button" onclick="window.ControlTowerView ? window.ControlTowerView.switchTab('live_feed') : window.openTVMode('${americanaDoc?.id}', '${isEntreno ? 'entreno' : 'americana'}')" 
+                                    title="Abrir Centro en Vivo y Minuto a Minuto"
                                     style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #ffffff; padding: 7px 13px; border-radius: 12px; font-weight: 900; font-size: 0.68rem; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.16); display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                                <i class="fas fa-comment-dots" style="color: #38bdf8; font-size: 0.75rem;"></i>
-                                <span>CHAT</span>
-                            </button>
-                            <button type="button" onclick="window.openTVMode('${americanaDoc?.id}', '${isEntreno ? 'entreno' : 'americana'}')" 
-                                    title="Abrir pantalla TV Pistas"
-                                    style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #ffffff; padding: 7px 13px; border-radius: 12px; font-weight: 900; font-size: 0.68rem; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.16); display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                                <i class="fas fa-tv" style="color: #4ade80; font-size: 0.75rem;"></i>
-                                <span>TV</span>
+                                <i class="fas fa-broadcast-tower" style="color: #ef4444; font-size: 0.75rem;"></i>
+                                <span>EN VIVO / TV</span>
                             </button>
                         </div>
                     </div>
@@ -97,13 +91,19 @@
                     </div>
                 </div>
 
-                <!-- Sub Navigation Bar (CALENDARIO | POSICIONES | CUADROS | STATS) -->
-                <div class="tour-sub-nav" style="background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 8px 12px; display: flex; gap: 6px; border-bottom: 1px solid #e2e8f0; position: sticky; top: 50px; z-index: 1001; box-shadow: 0 4px 20px rgba(0,0,0,0.04); overflow-x: auto; scrollbar-width: none;">
+                <!-- Sub Navigation Bar (CALENDARIO | EN VIVO | POSICIONES | CUADROS | STATS) -->
+                <div class="tour-sub-nav" style="background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 8px 10px; display: flex; gap: 5px; border-bottom: 1px solid #e2e8f0; position: sticky; top: 50px; z-index: 1001; box-shadow: 0 4px 20px rgba(0,0,0,0.04); overflow-x: auto; scrollbar-width: none;">
                     <button class="tour-subnav-btn ${activeTab === 'results' ? 'active' : ''}" 
                             onclick="window.ControlTowerView.switchTab('results')"
                             style="${activeTab === 'results' ? 'background: #0f172a; color: #ffffff; border-color: #0f172a; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);' : 'background: #f1f5f9; color: #64748b; border-color: #e2e8f0;'}">
-                        <i class="fas fa-calendar-check" style="${activeTab === 'results' ? `color: ${heroAccent};` : ''}"></i>
-                        <span>CALENDARIO</span>
+                        <i class="fas fa-clipboard-check" style="${activeTab === 'results' ? `color: ${heroAccent};` : ''}"></i>
+                        <span>RESULTADOS</span>
+                    </button>
+                    <button class="tour-subnav-btn ${activeTab === 'live_feed' ? 'active' : ''}" 
+                            onclick="window.ControlTowerView.switchTab('live_feed')"
+                            style="${activeTab === 'live_feed' ? 'background: #0f172a; color: #ffffff; border-color: #0f172a; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);' : 'background: #f1f5f9; color: #64748b; border-color: #e2e8f0;'}">
+                        <i class="fas fa-broadcast-tower" style="color: #ef4444; animation: livePulseDot 1.8s infinite;"></i>
+                        <span>EN VIVO</span>
                     </button>
                     ${americanaDoc?.status !== 'scheduled' ? `
                         <button class="tour-subnav-btn ${activeTab === 'standings' ? 'active' : ''}" 

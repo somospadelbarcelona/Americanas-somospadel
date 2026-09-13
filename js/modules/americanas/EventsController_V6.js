@@ -417,12 +417,6 @@
             } else {
                 this.stopAutoRefreshPolling();
             }
-
-            // Cleanup open matches synchronization if switching away from open_matches
-            if (tabName !== 'open_matches' && window.OpenMatchesController) {
-                window.OpenMatchesController.destroy();
-            }
-
             if (tabName === 'results' && this.state.currentUser) {
                 if (this.state.resultsInitialized) {
                     // Already initialized and listening. Just render.
@@ -581,7 +575,6 @@
             const tabs = [
                 { id: 'entrenos', label: 'ENTRENOS', icon: 'fa-user-ninja' },
                 { id: 'events', label: 'AMERICANAS', icon: 'fa-trophy' },
-                { id: 'open_matches', label: 'PARTIDAS ABIERTAS', icon: 'fa-table-tennis-paddle-ball' },
                 { id: 'agenda', label: 'AGENDA', icon: 'fa-circle' },
                 { id: 'help', label: 'INFO', icon: 'fa-info-circle' },
                 { id: 'finished', label: 'FINALIZADOS', icon: 'fa-history' }
@@ -739,7 +732,6 @@
                 switch (this.state.activeTab) {
                     case 'events': contentHtml = this.renderEventsList(false, false); break;
                     case 'entrenos': contentHtml = this.renderEventsList(false, true); break;
-                    case 'open_matches': contentHtml = '<div id="events-tab-content" style="min-height: 80vh;"></div>'; break;
                     case 'agenda': contentHtml = this.renderAgendaView(); break;
                     case 'results': contentHtml = await this.renderResultsView(); break;
                     case 'finished': contentHtml = this.renderFinishedView(); break;
@@ -751,13 +743,6 @@
 
             // TRIGGER ASYNC CONTENT
             this.loadGeoRadarWidget();
-            if (this.state.activeTab === 'open_matches') {
-                if (window.OpenMatchesView && window.OpenMatchesController) {
-                    window.OpenMatchesView.containerId = 'events-tab-content';
-                    window.OpenMatchesView.renderLayout();
-                    window.OpenMatchesController.init();
-                }
-            }
 
             // Inicializar interacciones avanzadas de scroll (drag, rueda, auto-center)
             this.initSubmenuScrollInteractions();

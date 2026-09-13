@@ -769,50 +769,65 @@
                 case 'equipos':
                     contentHtml = `
                         <div style="color: white; width: 100%; max-width: 420px; display: flex; flex-direction: column; animation: fadeIn 0.35s ease-out;">
-                            <div style="text-align: center; margin-bottom: 16px;">
-                                <span style="background: rgba(14,165,233,0.18); color: #0ea5e9; border: 1px solid rgba(14,165,233,0.35); padding: 4px 14px; border-radius: 50px; font-weight: 950; font-size: 0.65rem; letter-spacing: 0.8px;">COMPETICIÓN OFICIAL</span>
-                                <h2 style="font-size: 1.8rem; font-weight: 950; margin: 8px 0 4px; font-family: 'Outfit', sans-serif;">EQUIPOS <span style="color: #0ea5e9;">SOMOSPADEL</span></h2>
-                                <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; margin: 0; font-weight: 600;">Liga Interclubs de Cataluña & Torneos Federados</p>
+                            <div style="text-align: center; margin-bottom: 14px;">
+                                <span style="background: rgba(14,165,233,0.18); color: #0ea5e9; border: 1px solid rgba(14,165,233,0.35); padding: 4px 14px; border-radius: 50px; font-weight: 950; font-size: 0.65rem; letter-spacing: 0.8px;">COMPETICIÓN OFICIAL 2026</span>
+                                <h2 style="font-size: 1.75rem; font-weight: 950; margin: 8px 0 4px; font-family: 'Outfit', sans-serif;">EQUIPOS <span style="color: #0ea5e9;">SOMOSPADEL</span></h2>
+                                <p style="color: rgba(255,255,255,0.65); font-size: 0.74rem; margin: 0; font-weight: 600;">Lliga GuinotPrunera • 8 Equipos en Competición</p>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px;">
+                                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 8px 6px; text-align: center;">
+                                    <div style="font-size: 1.15rem; font-weight: 950; color: #0ea5e9;">8</div>
+                                    <div style="font-size: 0.62rem; color: rgba(255,255,255,0.5); font-weight: 700; text-transform: uppercase;">Equipos</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 8px 6px; text-align: center;">
+                                    <div style="font-size: 1.15rem; font-weight: 950; color: #10b981;">3</div>
+                                    <div style="font-size: 0.62rem; color: rgba(255,255,255,0.5); font-weight: 700; text-transform: uppercase;">Ramas</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 8px 6px; text-align: center;">
+                                    <div style="font-size: 1.15rem; font-weight: 950; color: #f59e0b;">+140</div>
+                                    <div style="font-size: 0.62rem; color: rgba(255,255,255,0.5); font-weight: 700; text-transform: uppercase;">Jugadores</div>
+                                </div>
                             </div>
 
                             <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
-                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(14,165,233,0.25); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(14,165,233,0.25); border-radius: 14px; padding: 11px 13px; display: flex; align-items: center; justify-content: space-between;">
                                     <div style="display: flex; align-items: center; gap: 12px;">
-                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(14,165,233,0.15); display: flex; align-items: center; justify-content: center;">
+                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(14,165,233,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                             <i class="fas fa-users" style="color: #0ea5e9;"></i>
                                         </div>
                                         <div>
-                                            <h4 style="margin: 0; font-size: 0.86rem; font-weight: 850; color: white;">Masculino A & B</h4>
-                                            <span style="font-size: 0.68rem; color: rgba(255,255,255,0.5);">1ª y 3ª División Federada</span>
+                                            <h4 style="margin: 0; font-size: 0.85rem; font-weight: 850; color: white;">Masculinos (3MA, 3MB, 4M)</h4>
+                                            <span style="font-size: 0.68rem; color: rgba(255,255,255,0.6);">3ª y 4ª División • Lliga GuinotPrunera</span>
                                         </div>
                                     </div>
-                                    <span style="font-size: 0.65rem; color: #38bdf8; font-weight: 900; background: rgba(56,189,248,0.15); padding: 3px 8px; border-radius: 6px;">ACTIVO</span>
+                                    <span style="font-size: 0.63rem; color: #38bdf8; font-weight: 900; background: rgba(56,189,248,0.15); padding: 3px 8px; border-radius: 6px; white-space: nowrap;">3 EQUIPOS</span>
                                 </div>
 
-                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(236,72,153,0.25); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(236,72,153,0.25); border-radius: 14px; padding: 11px 13px; display: flex; align-items: center; justify-content: space-between;">
                                     <div style="display: flex; align-items: center; gap: 12px;">
-                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(236,72,153,0.15); display: flex; align-items: center; justify-content: center;">
+                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(236,72,153,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                             <i class="fas fa-venus" style="color: #ec4899;"></i>
                                         </div>
                                         <div>
-                                            <h4 style="margin: 0; font-size: 0.86rem; font-weight: 850; color: white;">Femenino SomosPadel</h4>
-                                            <span style="font-size: 0.68rem; color: rgba(255,255,255,0.5);">2ª División FCP</span>
+                                            <h4 style="margin: 0; font-size: 0.85rem; font-weight: 850; color: white;">Femeninos (2F, 4FA)</h4>
+                                            <span style="font-size: 0.68rem; color: rgba(255,255,255,0.6);">2ª y 4ª División • Lliga GuinotPrunera</span>
                                         </div>
                                     </div>
-                                    <span style="font-size: 0.65rem; color: #f472b6; font-weight: 900; background: rgba(244,114,182,0.15); padding: 3px 8px; border-radius: 6px;">ACTIVO</span>
+                                    <span style="font-size: 0.63rem; color: #f472b6; font-weight: 900; background: rgba(244,114,182,0.15); padding: 3px 8px; border-radius: 6px; white-space: nowrap;">2 EQUIPOS</span>
                                 </div>
 
-                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(245,158,11,0.25); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+                                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(245,158,11,0.25); border-radius: 14px; padding: 11px 13px; display: flex; align-items: center; justify-content: space-between;">
                                     <div style="display: flex; align-items: center; gap: 12px;">
-                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(245,158,11,0.15); display: flex; align-items: center; justify-content: center;">
+                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(245,158,11,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                             <i class="fas fa-handshake" style="color: #f59e0b;"></i>
                                         </div>
                                         <div>
-                                            <h4 style="margin: 0; font-size: 0.86rem; font-weight: 850; color: white;">Equipo Mixto</h4>
-                                            <span style="font-size: 0.68rem; color: rgba(255,255,255,0.5);">Liga Interclubs Fin de Semana</span>
+                                            <h4 style="margin: 0; font-size: 0.85rem; font-weight: 850; color: white;">Mixtos (3XA, 4XA, 4XB)</h4>
+                                            <span style="font-size: 0.68rem; color: rgba(255,255,255,0.6);">3ª y 4ª División • Lliga GuinotPrunera</span>
                                         </div>
                                     </div>
-                                    <span style="font-size: 0.65rem; color: #fbbf24; font-weight: 900; background: rgba(251,191,36,0.15); padding: 3px 8px; border-radius: 6px;">OPEN</span>
+                                    <span style="font-size: 0.63rem; color: #fbbf24; font-weight: 900; background: rgba(251,191,36,0.15); padding: 3px 8px; border-radius: 6px; white-space: nowrap;">3 EQUIPOS</span>
                                 </div>
                             </div>
 

@@ -90,7 +90,11 @@
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
             });
             // Clear cache for this collection
+            delete memoryCache[`all_${this.collectionName}`];
             if (window.CacheService) window.CacheService.remove('database', `all_${this.collectionName}`);
+
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { collection: this.collectionName, id: docRef.id } }));
+
             return { id: docRef.id, ...data };
         }
 
@@ -98,10 +102,15 @@
             if (!this.collection) return { id, ...data };
             await this.collection.doc(id).update(data);
             // Clear cache
+            delete memoryCache[`all_${this.collectionName}`];
+            delete memoryCache[`doc_${this.collectionName}_${id}`];
             if (window.CacheService) {
                 window.CacheService.remove('database', `all_${this.collectionName}`);
                 window.CacheService.remove('database', `doc_${this.collectionName}_${id}`);
             }
+
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { collection: this.collectionName, id } }));
+
             return { id, ...data };
         }
 
@@ -109,12 +118,29 @@
             if (!this.collection) return;
             await this.collection.doc(id).delete();
             // Clear cache
+            delete memoryCache[`all_${this.collectionName}`];
+            delete memoryCache[`doc_${this.collectionName}_${id}`];
             if (window.CacheService) {
                 window.CacheService.remove('database', `all_${this.collectionName}`);
                 window.CacheService.remove('database', `doc_${this.collectionName}_${id}`);
             }
+
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { collection: this.collectionName, id } }));
         }
     }
+
+    DatabaseService.clearCache = function(collectionName) {
+        if (collectionName) {
+            delete memoryCache['all_' + collectionName];
+            Object.keys(memoryCache).forEach(k => {
+                if (k.startsWith('doc_' + collectionName + '_')) delete memoryCache[k];
+            });
+        } else {
+            Object.keys(memoryCache).forEach(k => delete memoryCache[k]);
+        }
+    };
+    window.clearDatabaseCache = DatabaseService.clearCache;
+    window.DatabaseService = DatabaseService;
 
     // Factory method exposed globally
     window.createService = (collectionName) => new DatabaseService(collectionName);

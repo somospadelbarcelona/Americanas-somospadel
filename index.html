@@ -1113,37 +1113,6 @@
         <main id="content-area" style="min-height: 100vh; padding-top: 108px; background: #ffffff;">
             <!-- Live Active Initial Cards (Sin Skeletons Grises) -->
             <div style="padding: 15px; display: flex; flex-direction: column; gap: 16px;">
-                <!-- Tarjeta 1: Partidas Abiertas Destacadas -->
-                <div class="match-promo-card" onclick="if(window.Router) window.Router.navigate('open-matches')" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 22px; color: white; position: relative; overflow: hidden; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15); border: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer;">
-                    <div style="position: absolute; top: -30px; right: -30px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(204, 255, 0, 0.25) 0%, rgba(204, 255, 0, 0) 70%); pointer-events: none;"></div>
-                    <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 14px;">
-                        <div style="width: 52px; height: 52px; border-radius: 16px; background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                            <i class="fas fa-table-tennis-paddle-ball" style="font-size: 1.4rem; color: #CCFF00;"></i>
-                        </div>
-                        <div>
-                            <span style="font-size: 0.65rem; font-weight: 900; background: rgba(204, 255, 0, 0.2); color: #CCFF00; padding: 3px 8px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 4px;">
-                                <i class="fas fa-bolt" style="margin-right: 4px;"></i> Pistas Activas
-                            </span>
-                            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 900; color: #ffffff; letter-spacing: -0.3px; line-height: 1.2;">
-                                Partidas Abiertas en Barcelona
-                            </h3>
-                        </div>
-                    </div>
-                    <p style="font-size: 0.82rem; color: #94a3b8; margin: 0 0 16px 0; line-height: 1.4; font-weight: 500;">
-                        Encuentra parejas y rivales de tu mismo nivel. ¡Apúntate en 1 clic y sal a la pista!
-                    </p>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 0.75rem; color: #cbd5e1; font-weight: 700; display: flex; align-items: center; gap: 6px;">
-                            <span style="display: inline-block; width: 8px; height: 8px; background: #00E36D; border-radius: 50%; box-shadow: 0 0 8px #00E36D;"></span>
-                            Partidas en directo disponibles
-                        </span>
-                        <div style="background: #CCFF00; color: #0f172a; font-weight: 950; font-size: 0.8rem; padding: 9px 18px; border-radius: 12px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(204, 255, 0, 0.3);">
-                            <span>Ver Partidas</span>
-                            <i class="fas fa-arrow-right" style="font-size: 0.75rem;"></i>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Tarjeta 2: Comunidad & Ranking -->
                 <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 22px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -2270,10 +2239,6 @@
                 --item-color: #ffd700;
                 --item-color-rgb: 255, 215, 0;
             }
-            #nav-partidas_abiertas {
-                --item-color: #25d366;
-                --item-color-rgb: 37, 211, 102;
-            }
             #nav-teams {
                 --item-color: #ff5e00;
                 --item-color-rgb: 255, 94, 0;
@@ -2454,10 +2419,6 @@
                 <i class="fas fa-trophy"></i>
                 <span>Ranking</span>
             </div>
-            <div class="nav-item haptic-feedback" onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('partidas_abiertas')" id="nav-partidas_abiertas">
-                <i class="fab fa-whatsapp"></i>
-                <span>Partidas Abiertas</span>
-            </div>
             <div class="nav-item" id="nav-teams" onclick="window.Router.navigate('teams')">
                 <i class="fas fa-users"></i>
                 <span>EQUIPOS</span>
@@ -2476,109 +2437,6 @@
     </div>
 
     <!-- Modals -->
-
-    <!-- ===================== MODAL CONTRASEÑA PARTIDAS ABIERTAS ===================== -->
-    <div id="modal-password-abiertas" style="display:none; position:fixed; inset:0; z-index:99999; align-items:center; justify-content:center; background:rgba(0,0,0,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);" onclick="if(event.target===this) window._hidePwdAbiertas();">
-        <div id="modal-pwd-card" style="background:linear-gradient(145deg,#0a192f,#0d2137); border:1px solid rgba(204,255,0,0.2); border-radius:28px; padding:44px 36px 36px; max-width:340px; width:88%; text-align:center; box-shadow:0 30px 80px rgba(0,0,0,0.65), 0 0 50px rgba(204,255,0,0.06); position:relative; animation:pwdBounceIn 0.38s cubic-bezier(0.34,1.56,0.64,1);">
-            <!-- Línea neon superior -->
-            <div style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:55%; height:3px; background:linear-gradient(90deg,transparent,#CCFF00,transparent); border-radius:0 0 4px 4px;"></div>
-            <!-- Icono -->
-            <div id="pwd-icon" style="font-size:2.8rem; margin-bottom:14px; transition:transform 0.3s;">🔐</div>
-            <!-- Título -->
-            <div style="font-size:1.2rem; font-weight:900; color:#ffffff; letter-spacing:0.5px; margin-bottom:4px;">Zona Privada</div>
-            <div style="font-size:0.75rem; color:rgba(204,255,0,0.7); font-weight:700; text-transform:uppercase; letter-spacing:2px; margin-bottom:24px;">Partidas Abiertas</div>
-            <!-- Input contraseña -->
-            <div style="position:relative; margin-bottom:8px;">
-                <input id="pwd-abiertas-input" type="password" placeholder="Introduce el código de acceso" maxlength="10"
-                    style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.12); border-radius:14px; padding:14px 48px 14px 18px; color:#fff; font-size:1rem; font-weight:700; letter-spacing:3px; outline:none; transition:border-color 0.25s, box-shadow 0.25s; text-align:center;"
-                    onfocus="this.style.borderColor='#CCFF00'; this.style.boxShadow='0 0 20px rgba(204,255,0,0.18)'"
-                    onblur="this.style.borderColor='rgba(255,255,255,0.12)'; this.style.boxShadow='none'"
-                    onkeydown="if(event.key==='Enter') window._checkPwdAbiertas()"
-                    oninput="document.getElementById('pwd-error-msg').style.opacity='0'">
-                <!-- Ojo toggle -->
-                <span onclick="var i=document.getElementById('pwd-abiertas-input'); i.type=i.type==='password'?'text':'password'; this.textContent=i.type==='password'?'👁️':'🙈';"
-                    style="position:absolute; right:14px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:1rem; user-select:none;">👁️</span>
-            </div>
-            <!-- Mensaje de error -->
-            <div id="pwd-error-msg" style="font-size:0.75rem; color:#ff4d6d; font-weight:700; height:20px; margin-bottom:16px; opacity:0; transition:opacity 0.3s;">
-                ❌ Código incorrecto. Inténtalo de nuevo.
-            </div>
-            <!-- Botones -->
-            <div style="display:flex; gap:10px;">
-                <button onclick="window._hidePwdAbiertas()"
-                    style="flex:1; background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.6); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:13px; font-weight:800; font-size:0.85rem; cursor:pointer; transition:background 0.2s;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">Cancelar</button>
-                <button onclick="window._checkPwdAbiertas()"
-                    style="flex:2; background:#CCFF00; color:#0a192f; border:none; border-radius:14px; padding:13px; font-weight:900; font-size:0.9rem; cursor:pointer; letter-spacing:0.5px; box-shadow:0 6px 20px rgba(204,255,0,0.3); transition:transform 0.15s, box-shadow 0.15s;"
-                    onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">Acceder →</button>
-            </div>
-        </div>
-    </div>
-    <style>
-        @keyframes pwdBounceIn {
-            from { opacity:0; transform:scale(0.78) translateY(20px); }
-            to   { opacity:1; transform:scale(1) translateY(0); }
-        }
-        @keyframes pwdShake {
-            0%,100% { transform:translateX(0); }
-            20%     { transform:translateX(-8px); }
-            40%     { transform:translateX(8px); }
-            60%     { transform:translateX(-5px); }
-            80%     { transform:translateX(5px); }
-        }
-        @keyframes pwdSuccess {
-            0%   { border-color:rgba(204,255,0,0.2); box-shadow:0 30px 80px rgba(0,0,0,0.65); }
-            50%  { border-color:#CCFF00; box-shadow:0 0 60px rgba(204,255,0,0.35); }
-            100% { border-color:rgba(204,255,0,0.2); box-shadow:0 30px 80px rgba(0,0,0,0.65); }
-        }
-    </style>
-    <script>
-        window._showEnConstruccion = function() {
-            var m = document.getElementById('modal-password-abiertas');
-            if (!m) return;
-            m.style.display = 'flex';
-            var inp = document.getElementById('pwd-abiertas-input');
-            if (inp) { inp.value = ''; inp.focus(); }
-            var err = document.getElementById('pwd-error-msg');
-            if (err) err.style.opacity = '0';
-        };
-        window._hidePwdAbiertas = function() {
-            var m = document.getElementById('modal-password-abiertas');
-            if (m) m.style.display = 'none';
-        };
-        window._hideEnConstruccion = window._hidePwdAbiertas;
-        window._checkPwdAbiertas = function() {
-            var inp = document.getElementById('pwd-abiertas-input');
-            if (!inp) return;
-            var val = inp.value.trim().toUpperCase();
-            if (val === 'NOA21') {
-                // Éxito — efecto verde y navegar
-                var card = document.getElementById('modal-pwd-card');
-                var icon = document.getElementById('pwd-icon');
-                if (card) card.style.animation = 'pwdSuccess 0.5s ease forwards';
-                if (icon) icon.textContent = '✅';
-                setTimeout(function() {
-                    window._hidePwdAbiertas();
-                    if (window.Router) window.Router.navigate('partidas_abiertas');
-                    if (card) card.style.animation = '';
-                    if (icon) icon.textContent = '🔐';
-                }, 550);
-            } else {
-                // Error — shake + mensaje
-                var card = document.getElementById('modal-pwd-card');
-                var err = document.getElementById('pwd-error-msg');
-                var icon = document.getElementById('pwd-icon');
-                if (err) err.style.opacity = '1';
-                if (icon) { icon.textContent = '❌'; setTimeout(function(){ icon.textContent='🔐'; }, 800); }
-                if (card) {
-                    card.style.animation = 'pwdShake 0.4s ease';
-                    setTimeout(function(){ card.style.animation = 'none'; }, 420);
-                }
-                if (inp) { inp.value = ''; inp.focus(); }
-            }
-        };
-    </script>
-    <!-- ===================== FIN MODAL CONTRASEÑA PARTIDAS ABIERTAS ===================== -->
 
     <!-- Force Login Modal on Load (Removido por la persistencia local de sesión en StateManager y App) -->
 
@@ -3346,12 +3204,12 @@
     <script src="js/core/SmartTicker.js?v=3" defer></script>
 
     <!-- Layer 3: Logic Business -->
-    <script src="js/modules/common/StandingsService.js" defer></script>
+    <script src="js/modules/common/StandingsService.js?v=2.0" defer></script>
     <script src="js/modules/common/GeoService.js" defer></script>
     <script src="js/modules/common/EventService.js" defer></script>
     <script src="js/modules/common/ParticipantService.js" defer></script>
     <script src="js/modules/common/LevelService.js" defer></script>
-    <script src="js/modules/common/ShuffleAnimator.js" defer></script>
+    <script src="js/modules/common/ShuffleAnimator.js?v=4.2" defer></script>
     <!-- NOTIFICATIONS -->
     <script src="js/modules/common/NotificationService.js?v=1.1" defer></script>
     <script src="js/modules/ui/NotificationUi.js" defer></script>
@@ -3379,9 +3237,8 @@
     <script src="js/modules/dashboard/ActionGrid.js" defer></script>
 
     <script src="js/modules/dashboard/GeoRadarWidget.js" defer></script>
-    <script src="js/modules/dashboard/StoryFeedWidget.js?v=12" defer></script>
+    <script src="js/modules/dashboard/StoryFeedWidget.js?v=13" defer></script>
     <script src="js/modules/dashboard/PadelPulse.js?v=6.2" defer></script>
-    <script src="js/modules/dashboard/OpenMatchesWidget.js?v=1.3" defer></script>
     <script src="js/modules/dashboard/TacticalCourt3D.js?v=2.0" defer></script>
     <script src="js/modules/dashboard/Tactical3DWidget.js?v=2.0" defer></script>
     <script src="js/modules/dashboard/DashboardView_hotfix.js?v=JOURNAL_PRO_v3" defer></script>
@@ -3389,11 +3246,11 @@
     <script src="js/utils/RoleService.js" defer></script>
     <script src="js/modules/players/PlayerView.js?v=401" defer></script>
     <script src="js/modules/players/PlayerController.js?v=400" defer></script>
-    <script src="js/modules/americanas/ControlTowerStandings.js" defer></script>
-    <script src="js/modules/americanas/ControlTowerBrackets.js" defer></script>
-    <script src="js/modules/americanas/ControlTowerStats.js" defer></script>
+    <script src="js/modules/americanas/ControlTowerStandings.js?v=5.2" defer></script>
+    <script src="js/modules/americanas/ControlTowerBrackets.js?v=5.0" defer></script>
+    <script src="js/modules/americanas/ControlTowerStats.js?v=5.1" defer></script>
     <script src="js/modules/americanas/ControlTowerReport.js" defer></script>
-    <script src="js/modules/americanas/ControlTowerView.js?v=4040" defer></script>
+    <script src="js/modules/americanas/ControlTowerView.js?v=4042" defer></script>
     <script src="js/modules/americanas/TVView.js?v=2.0" defer></script>
     <script src="js/modules/chat/ChatService.js?v=1.1" defer></script>
     <script src="js/modules/chat/ChatView.js?v=1.2" defer></script>
@@ -3410,9 +3267,9 @@
     <!-- UI Components -->
     <script src="js/modules/ui/PremiumModal.js" defer></script>
     <script src="js/modules/ui/PlayerAutocomplete.js" defer></script>
-    <script src="js/modules/ui/EventModals.js" defer></script>
+    <script src="js/modules/ui/EventModals.js?v=5.0" defer></script>
     <script src="js/modules/ui/MatchCard.js?v=3.0" defer></script>
-    <script src="js/modules/ui/EventHeader.js?v=2.0" defer></script>
+    <script src="js/modules/ui/EventHeader.js?v=2.2" defer></script>
 
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
@@ -3420,10 +3277,6 @@
     <!-- Ranking Module -->
     <script src="js/modules/ranking/RankingView.js?v=2.1" defer></script>
     <script src="js/modules/ranking/RankingController.js?v=2" defer></script>
-
-    <!-- Partidas Abiertas Module -->
-    <script src="js/modules/open_matches/OpenMatchesView.js?v=10" defer></script>
-    <script src="js/modules/open_matches/OpenMatchesController.js?v=10" defer></script>
 
     <!-- Teams Module -->
     <script src="js/modules/teams/teams_data.js?v=13" defer></script>
@@ -4067,7 +3920,6 @@
             'dashboard': '¡A por tus objetivos de hoy! 🎾',
             'entrenos': 'Mejora tu técnica en las pistas 📅',
             'ranking': '¡Asciende y domina el ranking! 🏆',
-            'partidas_abiertas': '¡Únete a la partida y juega ya! 💬',
             'teams': 'Compite con tu equipo y gana 👥',
             'tournaments': 'El gran trofeo te espera 🔥',
             'profile': 'Tus estadísticas al siguiente nivel 📈'
