@@ -1054,7 +1054,7 @@
                                 </div>
                                 <div id="header-weather-pill" onclick="window.showWeatherDetails()" style="cursor: pointer; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); padding: 4px 10px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem; color: #cbd5e1; font-weight: 800; transition: all 0.2s;" onmouseover="this.style.borderColor='rgba(56,189,248,0.4)'; this.style.color='#ffffff';" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)'; this.style.color='#cbd5e1';">
                                     <i class="fas fa-cloud-sun" style="color: #38bdf8;"></i>
-                                    <span>24°C Prat</span>
+                                    <span>Meteo Padel</span>
                                 </div>
                             </div>
 
@@ -1879,40 +1879,40 @@
             }, 100);
 
             return `
-                <div class="blog-widget-main-container" style="background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(10, 25, 47, 0.03); position: relative; overflow: hidden; perspective: 1000px; transform-style: preserve-3d;">
+                <div class="blog-widget-main-container" style="background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 28px; padding: 20px; box-shadow: 0 10px 30px rgba(10, 25, 47, 0.03); position: relative; overflow: hidden; perspective: 1000px; transform-style: preserve-3d;">
                     <!-- Efectos de brillo de fondo ultra sutiles (marca SomosPadel) -->
                     <div style="position: absolute; top: -60px; right: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(204,255,0,0.06) 0%, transparent 70%); pointer-events: none; filter: blur(25px);"></div>
                     <div style="position: absolute; bottom: -60px; left: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(46,97,255,0.04) 0%, transparent 70%); pointer-events: none; filter: blur(25px);"></div>
                     
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid rgba(15, 23, 42, 0.06);">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 34px; height: 34px; border-radius: 12px; background: #000000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(204,255,0,0.25); border: 1.5px solid #CCFF00;">
-                                <i class="fas fa-newspaper" style="font-size: 0.85rem; color: #CCFF00;"></i>
+                            <div style="width: 38px; height: 38px; border-radius: 12px; background: #000000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(204,255,0,0.25); border: 1.5px solid #CCFF00; flex-shrink: 0;">
+                                <i class="fas fa-newspaper" style="font-size: 0.95rem; color: #CCFF00;"></i>
                             </div>
                             <div>
-                                <div style="font-size: 0.84rem; font-weight: 1000; color: #0f172a; letter-spacing: -0.3px; text-transform: uppercase; font-family: 'Outfit', sans-serif;">Somos Pádel Journal</div>
-                                <div style="font-size: 0.52rem; color: #64748b; font-weight: 900; letter-spacing: 0.8px; text-transform: uppercase;">NOTICIAS, TÁCTICA Y NOVEDADES</div>
+                                <div style="font-size: 0.95rem; font-weight: 1000; color: #0f172a; letter-spacing: -0.3px; text-transform: uppercase; font-family: 'Outfit', sans-serif;">Somos Pádel Journal</div>
+                                <div style="font-size: 0.62rem; color: #64748b; font-weight: 850; letter-spacing: 0.6px; text-transform: uppercase;">NOTICIAS, TÁCTICA Y NOVEDADES</div>
                             </div>
                         </div>
-                        <div style="background: rgba(204,255,0,0.12); border: 1px solid rgba(132,204,22,0.25); padding: 4px 10px; border-radius: 20px; font-size: 0.52rem; font-weight: 1000; color: #4d7c0f; letter-spacing: 0.8px; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
-                            <span style="width: 5px; height: 5px; background: #CCFF00; border-radius: 50%; display: inline-block; animation: neonPulseGreen 1.5s infinite alternate; box-shadow: 0 0 5px #CCFF00;"></span>OFICIAL
+                        <div style="background: rgba(204,255,0,0.14); border: 1px solid rgba(132,204,22,0.3); padding: 5px 12px; border-radius: 20px; font-size: 0.62rem; font-weight: 1000; color: #3f6212; letter-spacing: 0.8px; text-transform: uppercase; display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
+                            <span style="width: 6px; height: 6px; background: #CCFF00; border-radius: 50%; display: inline-block; animation: neonPulseGreen 1.5s infinite alternate; box-shadow: 0 0 5px #CCFF00;"></span>OFICIAL
                         </div>
                     </div>
 
                     <!-- Fila de filtros de categoría premium con máscara degradada de desvanecimiento horizontal -->
                     <div style="position: relative; margin-bottom: 16px;">
-                        <div class="blog-categories-filter" style="display: flex; gap: 7px; overflow-x: auto; padding-bottom: 4px; padding-right: 20px; scrollbar-width: none; -ms-overflow-style: none; -webkit-mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%); mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%);">
-                            <button onclick="window.DashboardView.filterBlogCategory('ALL')" class="blog-filter-btn active" style="flex-shrink: 0; background: #CCFF00; border: 1px solid #CCFF00; color: #000; padding: 6px 14px; border-radius: 14px; font-size: 0.62rem; font-weight: 900; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 4px 10px rgba(204,255,0,0.2);">TODAS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('TORNEOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 6px 14px; border-radius: 14px; font-size: 0.62rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🏆 TORNEOS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('CONSEJOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 6px 14px; border-radius: 14px; font-size: 0.62rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">💡 CONSEJOS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('RANKING')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 6px 14px; border-radius: 14px; font-size: 0.62rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📊 RANKING</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('CRÓNICAS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 6px 14px; border-radius: 14px; font-size: 0.62rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📝 CRÓNICAS</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('COMUNIDAD')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 6px 14px; border-radius: 14px; font-size: 0.62rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">👥 COMUNIDAD</button>
-                            <button onclick="window.DashboardView.filterBlogCategory('FAVORITOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.08); color: #475569; padding: 6px 14px; border-radius: 14px; font-size: 0.62rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">⭐ GUARDADOS</button>
+                        <div class="blog-categories-filter" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; padding-right: 20px; scrollbar-width: none; -ms-overflow-style: none; -webkit-mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%); mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%);">
+                            <button onclick="window.DashboardView.filterBlogCategory('ALL')" class="blog-filter-btn active" style="flex-shrink: 0; background: #CCFF00; border: 1px solid #CCFF00; color: #000; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 900; cursor: pointer; transition: all 0.25s; font-family: 'Outfit'; box-shadow: 0 4px 10px rgba(204,255,0,0.2);">TODAS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('TORNEOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">🏆 TORNEOS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('CONSEJOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">💡 CONSEJOS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('RANKING')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📊 RANKING</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('CRÓNICAS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">📝 CRÓNICAS</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('COMUNIDAD')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">👥 COMUNIDAD</button>
+                            <button onclick="window.DashboardView.filterBlogCategory('FAVORITOS')" class="blog-filter-btn" style="flex-shrink: 0; background: transparent; border: 1px solid rgba(15, 23, 42, 0.09); color: #475569; padding: 7px 16px; border-radius: 14px; font-size: 0.72rem; font-weight: 850; cursor: pointer; transition: all 0.25s; font-family: 'Outfit';">⭐ GUARDADOS</button>
                         </div>
                     </div>
                     
-                    <div id="dynamic-blog-posts-container" style="display: flex; flex-direction: column; gap: 10px;">
+                    <div id="dynamic-blog-posts-container" style="display: flex; flex-direction: column; gap: 12px;">
                         <!-- Cargando posts dinámicos -->
                         <div style="text-align: center; padding: 25px; color: #94a3b8; font-size: 0.75rem; font-family: 'Outfit';">
                             <i class="fas fa-circle-notch fa-spin" style="color: #CCFF00; font-size: 1.2rem; margin-bottom: 6px; display: block;"></i>
@@ -1949,40 +1949,97 @@
                         transform: scale(1.08);
                     }
                     
-                    /* Microbotones interactivos en hover */
+                    /* Botones táctiles optimizados para móvil y escritorio */
                     .card-quick-actions {
                         display: flex;
                         align-items: center;
-                        gap: 6px;
+                        gap: 8px;
                     }
                     .card-quick-btn {
-                        width: 28px;
-                        height: 28px;
+                        width: 36px;
+                        height: 36px;
                         border-radius: 50%;
                         display: inline-flex;
                         align-items: center;
                         justify-content: center;
                         background: rgba(15, 23, 42, 0.04);
-                        border: 1px solid rgba(15, 23, 42, 0.08);
+                        border: 1px solid rgba(15, 23, 42, 0.09);
                         color: #64748b;
                         cursor: pointer;
                         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-                        font-size: 0.72rem;
+                        font-size: 0.88rem;
+                        touch-action: manipulation;
+                        -webkit-tap-highlight-color: transparent;
+                        flex-shrink: 0;
                     }
-                    .card-quick-btn:hover {
-                        transform: scale(1.15);
+                    .card-quick-btn:hover, .card-quick-btn:active {
+                        transform: scale(1.1);
                         background: #090f1e;
                         color: #CCFF00;
                         border-color: #CCFF00;
-                        box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+                        box-shadow: 0 3px 8px rgba(0,0,0,0.15);
                     }
-                    .card-quick-btn.whatsapp-btn:hover {
-                        background: #25D366;
-                        color: #ffffff;
-                        border-color: #25D366;
-                        box-shadow: 0 3px 8px rgba(37,211,102,0.4);
+                    .card-quick-btn.whatsapp-btn {
+                        background: rgba(37, 211, 102, 0.1);
+                        border-color: rgba(37, 211, 102, 0.25);
+                        color: #16a34a;
+                    }
+                    .card-quick-btn.whatsapp-btn:hover, .card-quick-btn.whatsapp-btn:active {
+                        background: #25D366 !important;
+                        color: #ffffff !important;
+                        border-color: #25D366 !important;
+                        box-shadow: 0 3px 10px rgba(37,211,102,0.35);
                     }
                     
+                    /* Responsive Móvil Exclusivo */
+                    @media (max-width: 600px) {
+                        .blog-widget-main-container {
+                            padding: 16px 12px !important;
+                            border-radius: 22px !important;
+                        }
+                        .blog-categories-filter {
+                            gap: 7px !important;
+                            padding-bottom: 4px !important;
+                        }
+                        .blog-filter-btn {
+                            padding: 7px 14px !important;
+                            font-size: 0.7rem !important;
+                            border-radius: 12px !important;
+                        }
+                        .premium-blog-compact-card {
+                            padding: 12px 10px !important;
+                            gap: 12px !important;
+                            border-radius: 18px !important;
+                        }
+                        .compact-blog-thumb-box {
+                            width: 82px !important;
+                            height: 82px !important;
+                            border-radius: 14px !important;
+                        }
+                        .compact-blog-title {
+                            font-size: 0.96rem !important;
+                            line-height: 1.28 !important;
+                            margin: 2px 0 3px 0 !important;
+                        }
+                        .compact-blog-snippet {
+                            font-size: 0.74rem !important;
+                            line-height: 1.35 !important;
+                            -webkit-line-clamp: 2 !important;
+                        }
+                        .compact-blog-cat {
+                            font-size: 0.6rem !important;
+                            padding: 2px 7px !important;
+                        }
+                        .compact-blog-time {
+                            font-size: 0.64rem !important;
+                        }
+                        .card-quick-btn {
+                            width: 34px !important;
+                            height: 34px !important;
+                            font-size: 0.82rem !important;
+                        }
+                    }
+
                     /* Animación premium de desvanecimiento para las tarjetas del blog */
                     .blog-animate-fade-in {
                         animation: postFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -3135,7 +3192,7 @@
                     const dateText = this.formatDateShort ? this.formatDateShort(topEvt.date) : 'HOY';
 
                     hubHtml += `
-                    <div onclick="window.dashNavigate('entrenos', 'event')" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(249, 115, 22, 0.1) 45%, rgba(15, 23, 42, 0.85) 100%); border: 1.5px solid rgba(239, 68, 68, 0.4); border-radius: 20px; padding: 16px; cursor: pointer; position: relative; overflow: hidden; margin-bottom: 14px; box-shadow: 0 10px 30px rgba(239,68,68,0.12); transition: transform 0.2s;" onmousedown="this.style.transform='scale(0.99)'" onmouseup="this.style.transform='scale(1)'">
+                    <div onclick="window.dashNavigate('entrenos', 'event')" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(249, 115, 22, 0.1) 45%, rgba(15, 23, 42, 0.85) 100%); border: 1.5px solid rgba(239, 68, 68, 0.4); border-radius: 20px; padding: 16px; cursor: pointer; position: relative; overflow: hidden; margin-bottom: 14px; box-shadow: 0 10px 30px rgba(239,68,68,0.12); transition: transform 0.15s ease; user-select: none; -webkit-tap-highlight-color: transparent;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                         <div style="position: absolute; top: -30px; right: -30px; width: 110px; height: 110px; background: rgba(239, 68, 68, 0.3); filter: blur(40px); border-radius: 50%; pointer-events: none;"></div>
                         <div style="position: absolute; bottom: -20px; left: -20px; width: 90px; height: 90px; background: rgba(249, 115, 22, 0.2); filter: blur(35px); border-radius: 50%; pointer-events: none;"></div>
 
@@ -3143,39 +3200,39 @@
                             <span style="background: #ef4444; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 4px 10px; border-radius: 7px; letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 0 12px rgba(239,68,68,0.5);">
                                 🔥 RETO DESTACADO
                             </span>
-                            <span style="font-size: 0.68rem; color: #fed7aa; font-weight: 850; background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(249,115,22,0.3);">
-                                ⚡ ${spotsLeft > 0 ? spotsLeft + ' plazas libres' : 'Completando'}
+                            <span style="font-size: 0.68rem; color: ${spotsLeft > 0 ? '#fed7aa' : '#fca5a5'}; font-weight: 850; background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px; border: 1px solid ${spotsLeft > 0 ? 'rgba(249,115,22,0.3)' : 'rgba(239,68,68,0.3)'};">
+                                ${spotsLeft > 0 ? `⚡ ${spotsLeft} plazas libres` : '🔴 COMPLETO (RESERVA)'}
                             </span>
                         </div>
 
-                        <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2;">
-                            <div style="flex: 1; padding-right: 12px;">
-                                <div style="color: #ffffff; font-size: 0.98rem; font-weight: 950; line-height: 1.25; margin-bottom: 4px; text-shadow: 0 2px 8px rgba(0,0,0,0.5);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; position: relative; z-index: 2;">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="color: #ffffff; font-size: 0.96rem; font-weight: 950; line-height: 1.25; margin-bottom: 4px; text-shadow: 0 2px 8px rgba(0,0,0,0.5); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                                     ${(topEvt.name || 'Americana SomosPadel').toUpperCase()}
                                 </div>
-                                <div style="font-size: 0.72rem; color: #cbd5e1; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                                <div style="font-size: 0.72rem; color: #cbd5e1; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                                     <i class="far fa-calendar-check" style="color: #CCFF00;"></i>
                                     <span>${dateText} • ${topEvt.time || '18:00'}</span>
                                     <span style="color: #94a3b8;">• Nivel 2.5 - 4.5</span>
                                 </div>
                             </div>
-                            <button style="background: #CCFF00; color: #000000; font-size: 0.75rem; font-weight: 950; padding: 10px 16px; border-radius: 12px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 18px rgba(204,255,0,0.4); flex-shrink: 0; transition: transform 0.2s;">
+                            <div style="background: #CCFF00; color: #000000; font-size: 0.75rem; font-weight: 950; padding: 10px 16px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 18px rgba(204,255,0,0.4); flex-shrink: 0; pointer-events: none;">
                                 APUNTARME <i class="fas fa-arrow-right" style="font-size: 0.62rem;"></i>
-                            </button>
+                            </div>
                         </div>
                     </div>
                     `;
                 } else {
                     // Quick challenge fallback
                     hubHtml += `
-                    <div onclick="window.dashNavigate('partidas_abiertas', 'hub')" style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.14) 0%, rgba(15, 23, 42, 0.85) 100%); border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 20px; padding: 16px; cursor: pointer; margin-bottom: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.25);">
+                    <div onclick="window.dashNavigate('partidas_abiertas', 'hub')" style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.14) 0%, rgba(15, 23, 42, 0.85) 100%); border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 20px; padding: 16px; cursor: pointer; margin-bottom: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); user-select: none; -webkit-tap-highlight-color: transparent;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
                                 <span style="background: #0ea5e9; color: white; font-size: 0.58rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; text-transform: uppercase;">🎾 PISTAS Y PARTIDAS</span>
                                 <div style="color: white; font-size: 0.95rem; font-weight: 950; margin-top: 6px;">¿Ganas de jugar hoy?</div>
                                 <div style="font-size: 0.70rem; color: #94a3b8; margin-top: 2px;">Encuentra o crea una partida abierta con jugadores de tu nivel.</div>
                             </div>
-                            <div style="background: #38bdf8; color: #000; font-size: 0.72rem; font-weight: 950; padding: 9px 14px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                            <div style="background: #38bdf8; color: #000; font-size: 0.72rem; font-weight: 950; padding: 9px 14px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; pointer-events: none;">
                                 BUSCAR <i class="fas fa-search" style="font-size: 0.65rem;"></i>
                             </div>
                         </div>
@@ -3185,10 +3242,10 @@
 
                 // 5. SMART QUICK ACTIONS DOCK (GRID 2x2 WITH LIVE METRICS)
                 hubHtml += `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; user-select: none; -webkit-tap-highlight-color: transparent;">
                     
                     <!-- 1. AMERICANAS / RETOS -->
-                    <div onclick="window.dashNavigate('americanas', 'command_hub')" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: all 0.2s; position: relative;" onmouseover="this.style.background='rgba(255,255,255,0.07)'; this.style.borderColor='rgba(204,255,0,0.35)';" onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.08)';">
+                    <div onclick="window.dashNavigate('americanas', 'command_hub')" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; position: relative;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='rgba(255,255,255,0.07)'; this.style.borderColor='rgba(204,255,0,0.35)';" onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.08)';">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span style="font-size: 1.3rem;">🏆</span>
                             <span style="background: rgba(204, 255, 0, 0.12); color: #CCFF00; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid rgba(204, 255, 0, 0.3);">
@@ -3200,7 +3257,7 @@
                     </div>
 
                     <!-- 2. PARTIDAS ABIERTAS -->
-                    <div onclick="window.dashNavigate('partidas_abiertas', 'command_hub')" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: all 0.2s; position: relative;" onmouseover="this.style.background='rgba(255,255,255,0.07)'; this.style.borderColor='rgba(56,189,248,0.35)';" onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.08)';">
+                    <div onclick="window.dashNavigate('partidas_abiertas', 'command_hub')" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; position: relative;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='rgba(255,255,255,0.07)'; this.style.borderColor='rgba(56,189,248,0.35)';" onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.08)';">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span style="font-size: 1.3rem;">⚡</span>
                             <span style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.3);">
@@ -3212,11 +3269,11 @@
                     </div>
 
                     <!-- 3. MI RANKING & NIVEL -->
-                    <div onclick="window.dashNavigate('ranking', 'command_hub')" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: all 0.2s; position: relative;" onmouseover="this.style.background='rgba(255,255,255,0.07)'; this.style.borderColor='rgba(245,158,11,0.35)';" onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.08)';">
+                    <div onclick="window.dashNavigate('ranking', 'command_hub')" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; position: relative;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='rgba(255,255,255,0.07)'; this.style.borderColor='rgba(245,158,11,0.35)';" onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.08)';">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span style="font-size: 1.3rem;">📈</span>
                             <span style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3);">
-                                #${userRank} RANK
+                                #${userRank !== '-' ? userRank : 'PRO'} RANK
                             </span>
                         </div>
                         <div style="color: #ffffff; font-size: 0.84rem; font-weight: 950; margin-bottom: 2px;">Nivel ${userLevel}</div>
@@ -3224,7 +3281,7 @@
                     </div>
 
                     <!-- 4. MI AGENDA -->
-                    <div onclick="window.dashNavigate('agenda', 'command_hub')" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: all 0.2s; position: relative;" onmouseover="this.style.background='rgba(255,255,255,0.07)'; this.style.borderColor='rgba(168,85,247,0.35)';" onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.08)';">
+                    <div onclick="window.dashNavigate('agenda', 'command_hub')" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; position: relative;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='rgba(255,255,255,0.07)'; this.style.borderColor='rgba(168,85,247,0.35)';" onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.08)';">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span style="font-size: 1.3rem;">📅</span>
                             <span style="background: ${upcomingCount > 0 ? 'rgba(34, 197, 94, 0.15)' : 'rgba(148, 163, 184, 0.1)'}; color: ${upcomingCount > 0 ? '#4ade80' : '#94a3b8'}; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid ${upcomingCount > 0 ? 'rgba(34, 197, 94, 0.3)' : 'rgba(148, 163, 184, 0.2)'};">

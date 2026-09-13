@@ -372,7 +372,7 @@
                             const displayLabel = rawLabel ? (rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1).toLowerCase()) : '';
 
                             return `
-                                <div class="story-v3-item" onclick="window.StoryFeedWidget.showStory('${story.id}')" title="${displayLabel}">
+                                <div class="story-v3-item" role="button" tabindex="0" onclick="window.StoryFeedWidget.showStory('${story.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.StoryFeedWidget.showStory('${story.id}');}" title="${displayLabel}">
                                     <div class="story-v3-outer" style="background: ${ringBg};">
                                         <div class="story-v3-inner" style="background: ${innerBg};">
                                             <i class="fas ${story.icon}" style="color: ${baseColor};"></i>
@@ -389,6 +389,20 @@
         }
 
         async showStory(id) {
+            try {
+                if (navigator.vibrate) navigator.vibrate(10);
+            } catch (_) {}
+
+            // Cancel any pending hide or story timeouts immediately
+            if (this.hideTimeout) {
+                clearTimeout(this.hideTimeout);
+                this.hideTimeout = null;
+            }
+            if (this.storyTimeout) {
+                clearTimeout(this.storyTimeout);
+                this.storyTimeout = null;
+            }
+
             let modal = document.getElementById('story-v3-modal');
             if (!modal) {
                 modal = document.createElement('div');
@@ -397,6 +411,11 @@
                 document.body.appendChild(modal);
             }
 
+            // Instant display and entrance animation reset
+            modal.style.pointerEvents = 'auto';
+            modal.style.animation = 'storyEnter 0.35s both cubic-bezier(0.19, 1, 0.22, 1)';
+            modal.style.display = 'flex';
+
             const index = this.stories.findIndex(s => s.id === id);
             if (index === -1) return;
 
@@ -404,57 +423,72 @@
             const story = this.stories[index];
             let contentHtml = '';
 
-            // FETCH REAL DATA CORE
-            let playersData = [];
-            let rankedData = [];
-            try {
-                if (window.RankingController) {
-                    rankedData = await window.RankingController.calculateSilently();
-                    playersData = rankedData;
-                } else if (window.PlayerService) {
-                    playersData = await window.PlayerService.getAllPlayers();
-                } else if (window.db) {
-                    const snap = await window.db.collection('players').get();
-                    playersData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                }
-            } catch (e) { console.warn("Players fetch failed", e); }
+            // Setup ESC key listener once
+            if (!this._keyListenerAttached) {
+                window.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const m = document.getElementById('story-v3-modal');
+                        if (m && m.style.display === 'flex') this.hideStory();
+                    }
+                });
+                this._keyListenerAttached = true;
+            }
 
-            const [allEvents, weatherData] = await Promise.all([
-                window.AmericanaService ? window.AmericanaService.getAllActiveEvents() : [],
-                window.WeatherService ? window.WeatherService.getDashboardWeather() : []
-            ]);
-
-            const allPlayers = playersData;
-            const topRanked = rankedData.length > 0 ? rankedData : allPlayers.sort((a, b) => (b.points || 0) - (a.points || 0));
-
-            // Fetch dynamic blog news for the News story
-            let latestNews = null;
-            try {
-                if (window.DashboardView && window.DashboardView.cachedBlogPosts && window.DashboardView.cachedBlogPosts.length > 0) {
-                    latestNews = window.DashboardView.cachedBlogPosts[0];
-                } else if (window.db) {
-                    const newsSnap = await window.db.collection('blog_posts').orderBy('timestamp', 'desc').limit(1).get();
-                    if (!newsSnap.empty) {
-                        latestNews = { id: newsSnap.docs[0].id, ...newsSnap.docs[0].data() };
+            // FAST ON-DEMAND DATA FETCHING (Only fetch what's needed for the active story)
+            let topRanked = [];
+            if (id === 'ranking') {
+                if (this.currentRankingData && this.currentRankingData.length > 0) {
+                    topRanked = this.currentRankingData;
+                } else {
+                    try {
+                        if (window.RankingController) {
+                            topRanked = await Promise.race([
+                                window.RankingController.calculateSilently(),
+                                new Promise(res => setTimeout(() => res([]), 800))
+                            ]);
+                        }
+                    } catch (e) { console.warn("Story ranking fetch failed", e); }
+                    if (!topRanked || topRanked.length === 0) {
+                        try {
+                            if (window.PlayerService) {
+                                const pList = await window.PlayerService.getAllPlayers();
+                                topRanked = (pList || []).sort((a, b) => (b.points || 0) - (a.points || 0));
+                            }
+                        } catch (e) { console.warn("PlayerService fallback failed", e); }
                     }
                 }
-            } catch (err) {
-                console.warn("Story news fetch:", err);
             }
-            if (!latestNews && window.SomosPadelNewsEngine) {
-                const fPosts = window.SomosPadelNewsEngine.getDeterministicFallbackPosts();
-                if (fPosts && fPosts.length > 0) latestNews = fPosts[0];
-            }
-            if (!latestNews) {
-                latestNews = {
-                    id: 'torneo-primavera',
-                    title: 'Gran Torneo de Primavera 2026',
-                    category: '🏆 TORNEOS',
-                    snippet: '¡Inscripciones abiertas! 120 plazas, Welcome Pack premium y barbacoa final.',
-                    content: 'Llega el evento más esperado del año en SomosPadel.',
-                    date: 'Hoy',
-                    readTime: '2 min'
-                };
+
+            // Fetch dynamic blog news only if id is 'noticias'
+            let latestNews = null;
+            if (id === 'noticias') {
+                try {
+                    if (window.DashboardView && window.DashboardView.cachedBlogPosts && window.DashboardView.cachedBlogPosts.length > 0) {
+                        latestNews = window.DashboardView.cachedBlogPosts[0];
+                    } else if (window.db) {
+                        const newsSnap = await window.db.collection('blog_posts').orderBy('timestamp', 'desc').limit(1).get();
+                        if (!newsSnap.empty) {
+                            latestNews = { id: newsSnap.docs[0].id, ...newsSnap.docs[0].data() };
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Story news fetch:", err);
+                }
+                if (!latestNews && window.SomosPadelNewsEngine) {
+                    const fPosts = window.SomosPadelNewsEngine.getDeterministicFallbackPosts();
+                    if (fPosts && fPosts.length > 0) latestNews = fPosts[0];
+                }
+                if (!latestNews) {
+                    latestNews = {
+                        id: 'torneo-primavera',
+                        title: 'Gran Torneo de Primavera 2026',
+                        category: '🏆 TORNEOS',
+                        snippet: '¡Inscripciones abiertas! 120 plazas, Welcome Pack premium y barbacoa final.',
+                        content: 'Llega el evento más esperado del año en SomosPadel.',
+                        date: 'Hoy',
+                        readTime: '2 min'
+                    };
+                }
             }
 
             // CONTENT INJECTION
@@ -1007,16 +1041,25 @@
         }
 
         hideStory(event) {
-            if (event) event.stopPropagation();
-            if (this.storyTimeout) clearTimeout(this.storyTimeout);
+            if (event && event.stopPropagation) event.stopPropagation();
+            if (this.storyTimeout) {
+                clearTimeout(this.storyTimeout);
+                this.storyTimeout = null;
+            }
 
             const modal = document.getElementById('story-v3-modal');
             if (modal) {
-                modal.style.animation = 'storyExit 0.3s both cubic-bezier(0.19, 1, 0.22, 1)';
-                setTimeout(() => {
+                modal.style.pointerEvents = 'none';
+                modal.style.animation = 'storyExit 0.25s both cubic-bezier(0.19, 1, 0.22, 1)';
+                
+                if (this.hideTimeout) clearTimeout(this.hideTimeout);
+                this.hideTimeout = setTimeout(() => {
                     modal.style.display = 'none';
                     modal.innerHTML = '';
-                }, 300);
+                    modal.style.animation = '';
+                    modal.style.pointerEvents = '';
+                    this.hideTimeout = null;
+                }, 250);
             }
         }
 
