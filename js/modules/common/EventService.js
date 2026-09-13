@@ -38,6 +38,8 @@ window.EventService = {
         try {
             const result = await collection.create(payload);
             console.log(`✅ [EventService] ${type} created:`, result);
+            if (window.clearDatabaseCache) window.clearDatabaseCache(type === 'entreno' ? 'entrenos' : 'americanas');
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { type, id: result?.id } }));
             return result;
         } catch (error) {
             console.error(`❌ [EventService] Create Error:`, error);
@@ -61,6 +63,8 @@ window.EventService = {
 
             await collection.update(id, updates);
             console.log(`✅ [EventService] ${type} updated: ${id}`);
+            if (window.clearDatabaseCache) window.clearDatabaseCache(type === 'entreno' ? 'entrenos' : 'americanas');
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { type, id } }));
         } catch (error) {
             console.error(`❌ [EventService] Update Error:`, error);
             throw error;
@@ -80,6 +84,8 @@ window.EventService = {
             await collection.delete(id);
             // TODO: Optional - delete associated matches?
             console.log(`✅ [EventService] ${type} deleted: ${id}`);
+            if (window.clearDatabaseCache) window.clearDatabaseCache(type === 'entreno' ? 'entrenos' : 'americanas');
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { type, id } }));
         } catch (error) {
             console.error(`❌ [EventService] Delete Error:`, error);
             throw error;

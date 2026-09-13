@@ -507,15 +507,6 @@
                                         <i class="fas fa-chevron-right drawer-row-chevron"></i>
                                     </div>
 
-                                    <div class="drawer-nav-row" onclick="window.smartNavigate('partidas_abiertas', null)">
-                                        <div class="drawer-row-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">
-                                            <i class="fas fa-table-tennis-paddle-ball"></i>
-                                        </div>
-                                        <span class="drawer-row-title" style="color: #ffffff !important; font-weight: 800; font-size: 0.88rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Partidas Abiertas</span>
-                                        <span class="drawer-row-badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">PISTAS</span>
-                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
-                                    </div>
-
                                     <div class="drawer-nav-row" onclick="window.smartNavigate('ranking', null)">
                                         <div class="drawer-row-icon" style="background: rgba(249, 115, 22, 0.15); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.3);">
                                             <i class="fas fa-ranking-star"></i>

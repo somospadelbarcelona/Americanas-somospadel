@@ -455,6 +455,8 @@ const FirebaseDB = {
 
             // Invalidate cache
             if (window.CacheService) window.CacheService.remove('americanas', 'all');
+            if (window.clearDatabaseCache) window.clearDatabaseCache('americanas');
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { type: 'americana', id: docRef.id } }));
 
             const doc = await docRef.get();
             return { id: doc.id, ...doc.data() };
@@ -464,6 +466,8 @@ const FirebaseDB = {
             await db.collection('americanas').doc(id).update(data);
             // Invalidate cache
             if (window.CacheService) window.CacheService.remove('americanas', 'all');
+            if (window.clearDatabaseCache) window.clearDatabaseCache('americanas');
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { type: 'americana', id } }));
 
             const doc = await db.collection('americanas').doc(id).get();
             return { id: doc.id, ...doc.data() };
@@ -474,6 +478,8 @@ const FirebaseDB = {
                 players: firebase.firestore.FieldValue.arrayUnion(playerId)
             });
             if (window.CacheService) window.CacheService.remove('americanas', 'all');
+            if (window.clearDatabaseCache) window.clearDatabaseCache('americanas');
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { type: 'americana', id: americanaId } }));
         },
 
         async removePlayer(americanaId, playerId) {
@@ -481,6 +487,8 @@ const FirebaseDB = {
                 players: firebase.firestore.FieldValue.arrayRemove(playerId)
             });
             if (window.CacheService) window.CacheService.remove('americanas', 'all');
+            if (window.clearDatabaseCache) window.clearDatabaseCache('americanas');
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { type: 'americana', id: americanaId } }));
         },
 
         async delete(id) {
@@ -498,6 +506,8 @@ const FirebaseDB = {
             console.log(`✅ [Telemetry] Cleanup successful. ${matchesSnap.size} matches purged.`);
 
             if (window.CacheService) window.CacheService.remove('americanas', 'all');
+            if (window.clearDatabaseCache) window.clearDatabaseCache('americanas');
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { type: 'americana', id } }));
         },
 
         // ========== WAITLIST MANAGEMENT ==========
@@ -680,6 +690,8 @@ const FirebaseDB = {
             });
 
             if (window.CacheService) window.CacheService.remove('entrenos', 'all');
+            if (window.clearDatabaseCache) window.clearDatabaseCache('entrenos');
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { type: 'entreno', id: docRef.id } }));
 
             const doc = await docRef.get();
             return { id: doc.id, ...doc.data() };
@@ -687,6 +699,8 @@ const FirebaseDB = {
         async update(id, data) {
             await db.collection('entrenos').doc(id).update(data);
             if (window.CacheService) window.CacheService.remove('entrenos', 'all');
+            if (window.clearDatabaseCache) window.clearDatabaseCache('entrenos');
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { type: 'entreno', id } }));
             const doc = await db.collection('entrenos').doc(id).get();
             return { id: doc.id, ...doc.data() };
         },
@@ -705,6 +719,8 @@ const FirebaseDB = {
             console.log(`✅ [Telemetry] Cleanup successful. ${matchesSnap.size} matches purged.`);
 
             if (window.CacheService) window.CacheService.remove('entrenos', 'all');
+            if (window.clearDatabaseCache) window.clearDatabaseCache('entrenos');
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { type: 'entreno', id } }));
         },
 
         // ========== WAITLIST MANAGEMENT ==========
@@ -730,12 +746,16 @@ const FirebaseDB = {
             });
 
             await this.update(eventId, { waitlist });
+            if (window.clearDatabaseCache) window.clearDatabaseCache('entrenos');
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { type: 'entreno', id: eventId } }));
         },
 
         async removeFromWaitlist(eventId, playerId) {
             const event = await this.getById(eventId);
             const waitlist = (event.waitlist || []).filter(p => p.uid !== playerId);
             await this.update(eventId, { waitlist });
+            if (window.clearDatabaseCache) window.clearDatabaseCache('entrenos');
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { type: 'entreno', id: eventId } }));
         },
 
         async promoteFromWaitlist(eventId) {
@@ -759,6 +779,8 @@ const FirebaseDB = {
                 waitlist,
                 registeredPlayers: players // Sync
             });
+            if (window.clearDatabaseCache) window.clearDatabaseCache('entrenos');
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { type: 'entreno', id: eventId } }));
 
             return promoted;
         }

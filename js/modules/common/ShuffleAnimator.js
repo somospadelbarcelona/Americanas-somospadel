@@ -380,7 +380,7 @@
                         position: relative;
                         z-index: 10;
                         display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(340px, 380px));
+                        grid-template-columns: repeat(auto-fit, minmax(360px, 440px));
                         justify-content: center;
                         gap: 24px;
                         width: 100%;
@@ -388,305 +388,389 @@
                         margin: 0 auto;
                     }
 
-                    /* Court Card */
+                    /* Court Card - La Pista es la Protagonista */
                     .sp-court-card {
-                        background: rgba(13, 20, 36, 0.75);
+                        background: rgba(10, 16, 30, 0.82);
                         backdrop-filter: blur(20px);
                         -webkit-backdrop-filter: blur(20px);
-                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border: 1px solid rgba(255, 255, 255, 0.12);
                         border-radius: 24px;
                         overflow: hidden;
                         display: flex;
                         flex-direction: column;
-                        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                        height: 420px;
+                        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.12);
                         opacity: 0;
                         transform: translateY(25px) scale(0.96);
                         transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+                        position: relative;
                     }
                     .sp-court-card.visible {
                         opacity: 1;
                         transform: translateY(0) scale(1);
                     }
                     .sp-court-card:hover {
-                        border-color: rgba(0, 196, 255, 0.4);
-                        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 25px rgba(0, 196, 255, 0.15);
+                        border-color: rgba(0, 196, 255, 0.45);
+                        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 196, 255, 0.2);
                     }
 
-                    /* 3D Padel Court Stage */
+                    /* Stadium Arena Stage */
                     .sp-court-stage {
-                        height: 140px;
+                        height: 100%;
                         width: 100%;
                         position: relative;
-                        background: linear-gradient(180deg, #07101f 0%, #0d1a33 100%);
+                        background: radial-gradient(circle at 50% 25%, #0e1c38 0%, #060b16 100%);
+                        display: flex;
+                        flex-direction: column;
+                        padding: 12px 14px 14px;
+                        box-sizing: border-box;
+                        overflow: hidden;
+                    }
+
+                    /* Header bar of the Court */
+                    .sp-court-header-bar {
                         display: flex;
                         align-items: center;
-                        justify-content: center;
-                        overflow: hidden;
-                        perspective: 600px;
-                        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                        justify-content: space-between;
+                        width: 100%;
+                        height: 32px;
+                        margin-bottom: 8px;
+                        z-index: 15;
                     }
                     .sp-court-badge-top {
-                        position: absolute;
-                        top: 12px;
-                        left: 14px;
                         background: #CCFF00;
                         color: #050b14;
                         font-size: 0.75rem;
                         font-weight: 900;
-                        padding: 4px 10px;
+                        padding: 4px 12px;
                         border-radius: 8px;
-                        letter-spacing: 0.5px;
-                        box-shadow: 0 0 15px rgba(204, 255, 0, 0.5);
-                        z-index: 5;
+                        letter-spacing: 0.8px;
+                        box-shadow: 0 0 16px rgba(204, 255, 0, 0.5);
+                        user-select: none;
                     }
                     .sp-court-status-tag {
-                        position: absolute;
-                        top: 12px;
-                        right: 14px;
                         background: rgba(255, 255, 255, 0.08);
                         border: 1px solid rgba(255, 255, 255, 0.15);
                         color: rgba(255, 255, 255, 0.8);
                         font-size: 0.65rem;
                         font-weight: 800;
-                        padding: 4px 10px;
+                        padding: 4px 12px;
                         border-radius: 20px;
                         letter-spacing: 1px;
-                        z-index: 5;
                         transition: all 0.3s;
+                        user-select: none;
                     }
                     .sp-court-status-tag.active {
                         background: rgba(0, 196, 255, 0.15);
                         border-color: #00C4FF;
                         color: #00C4FF;
-                        box-shadow: 0 0 12px rgba(0, 196, 255, 0.3);
+                        box-shadow: 0 0 14px rgba(0, 196, 255, 0.35);
                     }
 
-                    /* 3D Floor Graphic */
-                    .sp-padel-carpet {
-                        width: 85%;
-                        height: 160%;
-                        background: #004fb0;
-                        transform: rotateX(55deg) translateY(-8%);
+                    /* Pista de Pádel Césped Azul WPT Reglamentario */
+                    .sp-padel-court {
+                        flex: 1;
+                        width: 100%;
                         position: relative;
-                        border-radius: 4px;
-                        box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 79, 176, 0.4);
-                        border: 2px solid rgba(255, 255, 255, 0.3);
+                        background: #004fb0;
                         background-image: 
-                            radial-gradient(ellipse at center, rgba(255, 255, 255, 0.12) 0%, transparent 70%),
-                            linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-                        background-size: 100% 100%, 20px 20px, 20px 20px;
+                            radial-gradient(ellipse at 50% 50%, rgba(0, 196, 255, 0.22) 0%, transparent 75%),
+                            linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                            linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+                        background-size: 100% 100%, 18px 18px, 18px 18px;
+                        border-radius: 14px;
+                        border: 2px solid rgba(255, 255, 255, 0.35);
+                        box-shadow: 
+                            inset 0 0 45px rgba(0, 0, 0, 0.7),
+                            0 8px 30px rgba(0, 0, 0, 0.5),
+                            0 0 25px rgba(0, 79, 176, 0.35);
+                        overflow: hidden;
+                        display: flex;
+                        flex-direction: column;
                     }
-                    .sp-carpet-lines {
+
+                    /* Focos LED en las 4 esquinas de la pista */
+                    .sp-stadium-spot {
                         position: absolute;
-                        inset: 8%;
-                        border: 2px solid rgba(255, 255, 255, 0.85);
-                        box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+                        width: 44px;
+                        height: 44px;
+                        border-radius: 50%;
+                        background: radial-gradient(circle, rgba(255, 255, 255, 0.85) 0%, rgba(0, 196, 255, 0.25) 45%, transparent 70%);
+                        filter: blur(4px);
+                        pointer-events: none;
+                        z-index: 6;
                     }
-                    .sp-carpet-line-center {
+                    .spot-tl { top: -10px; left: -10px; }
+                    .spot-tr { top: -10px; right: -10px; }
+                    .spot-bl { bottom: -10px; left: -10px; }
+                    .spot-br { bottom: -10px; right: -10px; }
+
+                    /* Líneas reglamentarias blancas */
+                    .sp-court-lines-wrap {
                         position: absolute;
-                        top: 0;
-                        bottom: 0;
+                        inset: 0;
+                        pointer-events: none;
+                        z-index: 2;
+                    }
+                    .sp-court-line-perimeter {
+                        position: absolute;
+                        inset: 8px;
+                        border: 1.5px solid rgba(255, 255, 255, 0.75);
+                        border-radius: 4px;
+                        box-shadow: 0 0 6px rgba(255, 255, 255, 0.25);
+                    }
+                    .sp-court-service-top {
+                        position: absolute;
+                        top: 26%;
+                        left: 8px;
+                        right: 8px;
+                        height: 1.5px;
+                        background: rgba(255, 255, 255, 0.7);
+                    }
+                    .sp-court-service-bottom {
+                        position: absolute;
+                        bottom: 26%;
+                        left: 8px;
+                        right: 8px;
+                        height: 1.5px;
+                        background: rgba(255, 255, 255, 0.7);
+                    }
+                    .sp-court-center-top {
+                        position: absolute;
+                        top: 26%;
+                        bottom: 50%;
                         left: 50%;
-                        width: 2px;
-                        background: rgba(255, 255, 255, 0.85);
+                        width: 1.5px;
+                        background: rgba(255, 255, 255, 0.7);
+                        transform: translateX(-50%);
                     }
-                    .sp-carpet-line-service {
+                    .sp-court-center-bottom {
                         position: absolute;
-                        top: 32%;
-                        left: 0;
-                        right: 0;
-                        height: 2px;
-                        background: rgba(255, 255, 255, 0.85);
+                        top: 50%;
+                        bottom: 26%;
+                        left: 50%;
+                        width: 1.5px;
+                        background: rgba(255, 255, 255, 0.7);
+                        transform: translateX(-50%);
                     }
-                    .sp-padel-net {
+
+                    /* Red central y chip VS */
+                    .sp-court-net-bar {
                         position: absolute;
                         top: 50%;
                         left: 0;
                         right: 0;
-                        height: 10px;
-                        background: repeating-linear-gradient(90deg, #111 0 2px, #fff 2px 4px);
+                        transform: translateY(-50%);
+                        height: 14px;
+                        background: repeating-linear-gradient(90deg, #09121f 0 3px, #2a3c57 3px 5px);
                         border-top: 2px solid #ffffff;
-                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-                        z-index: 3;
-                    }
-                    .sp-stadium-spot {
-                        position: absolute;
-                        width: 30px;
-                        height: 30px;
-                        border-radius: 50%;
-                        background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, transparent 70%);
-                        filter: blur(3px);
-                        z-index: 4;
-                    }
-                    .spot-tl { top: 8px; left: 10px; }
-                    .spot-tr { top: 8px; right: 10px; }
-
-                    /* Matchup Section */
-                    .sp-court-matchup {
-                        padding: 18px 18px 20px;
-                        display: flex;
-                        flex-direction: column;
-                        gap: 12px;
-                    }
-
-                    .sp-team-block {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 8px;
-                    }
-
-                    /* Player Slot */
-                    .sp-player-slot {
-                        min-height: 52px;
-                        background: rgba(255, 255, 255, 0.03);
-                        border: 1px solid rgba(255, 255, 255, 0.06);
-                        border-radius: 12px;
+                        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.75);
+                        z-index: 8;
                         display: flex;
                         align-items: center;
-                        padding: 6px 12px;
-                        gap: 12px;
+                        justify-content: center;
+                        pointer-events: none;
+                    }
+                    .sp-court-vs-chip {
+                        background: #070d18;
+                        border: 1.5px solid rgba(255, 255, 255, 0.35);
+                        color: #ffffff;
+                        font-size: 0.68rem;
+                        font-weight: 900;
+                        letter-spacing: 1.5px;
+                        padding: 2px 10px;
+                        border-radius: 12px;
+                        box-shadow: 0 0 16px rgba(0, 196, 255, 0.5), 0 2px 8px rgba(0, 0, 0, 0.9);
+                        user-select: none;
+                    }
+
+                    /* Capa de Cuadrantes dentro de la pista */
+                    .sp-court-quadrants {
+                        position: absolute;
+                        inset: 0;
+                        z-index: 10;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        padding: 10px 10px;
+                        box-sizing: border-box;
+                        pointer-events: none;
+                    }
+                    .sp-court-half {
+                        flex: 1;
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 8px;
+                        align-items: center;
+                        position: relative;
+                        pointer-events: auto;
+                    }
+                    .sp-court-half.team-a-half {
+                        padding-bottom: 12px;
+                    }
+                    .sp-court-half.team-b-half {
+                        padding-top: 12px;
+                    }
+
+                    /* Cápsula de Jugador sobre el Césped */
+                    .sp-court-player-chip {
+                        background: rgba(8, 14, 28, 0.85);
+                        backdrop-filter: blur(10px);
+                        -webkit-backdrop-filter: blur(10px);
+                        border-radius: 12px;
+                        padding: 7px 9px;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
                         position: relative;
                         overflow: hidden;
+                        min-height: 52px;
+                        box-sizing: border-box;
                         transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-                    }
-                    .sp-team-a .sp-player-slot {
-                        border-left: 3px solid rgba(0, 196, 255, 0.4);
-                    }
-                    .sp-team-b .sp-player-slot {
-                        border-left: 3px solid rgba(204, 255, 0, 0.4);
+                        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
                     }
 
-                    .sp-player-slot.revealed {
-                        background: rgba(255, 255, 255, 0.06);
-                        border-color: rgba(255, 255, 255, 0.12);
+                    /* Pareja A (Cyan) */
+                    .sp-court-player-chip.team-a {
+                        border: 1.5px solid rgba(0, 196, 255, 0.35);
+                        border-left: 3.5px solid #00C4FF;
                     }
-                    .sp-team-a .sp-player-slot.revealed {
-                        border-left: 4px solid #00C4FF;
-                        background: linear-gradient(90deg, rgba(0, 196, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 100%);
-                    }
-                    .sp-team-b .sp-player-slot.revealed {
-                        border-left: 4px solid #CCFF00;
-                        background: linear-gradient(90deg, rgba(204, 255, 0, 0.12) 0%, rgba(255, 255, 255, 0.02) 100%);
+                    .sp-court-player-chip.team-a.revealed {
+                        border-color: rgba(0, 196, 255, 0.7);
+                        border-left: 3.5px solid #00C4FF;
+                        background: linear-gradient(135deg, rgba(0, 196, 255, 0.16) 0%, rgba(8, 14, 28, 0.92) 100%);
+                        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 18px rgba(0, 196, 255, 0.35);
+                        animation: spSlotLockIn 0.38s cubic-bezier(0.16, 1, 0.3, 1);
                     }
 
-                    /* Avatar styling */
-                    .sp-player-avatar {
-                        width: 36px;
-                        height: 36px;
+                    /* Pareja B (Lima Neón) */
+                    .sp-court-player-chip.team-b {
+                        border: 1.5px solid rgba(204, 255, 0, 0.35);
+                        border-left: 3.5px solid #CCFF00;
+                    }
+                    .sp-court-player-chip.team-b.revealed {
+                        border-color: rgba(204, 255, 0, 0.7);
+                        border-left: 3.5px solid #CCFF00;
+                        background: linear-gradient(135deg, rgba(204, 255, 0, 0.16) 0%, rgba(8, 14, 28, 0.92) 100%);
+                        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 18px rgba(204, 255, 0, 0.35);
+                        animation: spSlotLockIn 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+                    }
+
+                    .sp-court-player-chip.slot-empty {
+                        border: 1px dashed rgba(255, 255, 255, 0.2);
+                        border-left: 1px dashed rgba(255, 255, 255, 0.2);
+                        background: rgba(8, 14, 28, 0.45);
+                        box-shadow: none;
+                    }
+
+                    @keyframes spSlotLockIn {
+                        0% { transform: scale(0.92); opacity: 0.75; }
+                        50% { transform: scale(1.03); }
+                        100% { transform: scale(1); opacity: 1; }
+                    }
+
+                    /* Avatar dentro del Chip */
+                    .sp-court-player-chip .sp-player-avatar {
+                        width: 32px;
+                        height: 32px;
                         border-radius: 50%;
-                        background: #111a2e;
-                        border: 1.5px solid rgba(255, 255, 255, 0.15);
+                        background: #0f182c;
+                        border: 1.5px solid rgba(255, 255, 255, 0.2);
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         font-weight: 800;
-                        font-size: 0.75rem;
+                        font-size: 0.72rem;
                         color: #ffffff;
                         flex-shrink: 0;
                         overflow: hidden;
                     }
-                    .sp-team-a .sp-player-avatar {
+                    .sp-court-player-chip.team-a .sp-player-avatar {
                         background: linear-gradient(135deg, #072a4d, #00C4FF);
                         color: #ffffff;
+                        border-color: rgba(0, 196, 255, 0.6);
                     }
-                    .sp-team-b .sp-player-avatar {
+                    .sp-court-player-chip.team-b .sp-player-avatar {
                         background: linear-gradient(135deg, #1b3307, #CCFF00);
                         color: #000000;
+                        border-color: rgba(204, 255, 0, 0.6);
                     }
-                    .sp-player-avatar img {
+                    .sp-court-player-chip .sp-player-avatar img {
                         width: 100%;
                         height: 100%;
                         object-fit: cover;
                     }
 
-                    /* Shuffling roller text */
-                    .sp-roller-container {
+                    /* Ruleta durante Shuffling */
+                    .sp-court-player-chip .sp-roller-container {
                         flex: 1;
                         overflow: hidden;
-                        height: 24px;
+                        height: 22px;
                         display: flex;
                         align-items: center;
                     }
-                    .sp-roller-text {
-                        color: rgba(0, 196, 255, 0.7);
-                        font-size: 0.85rem;
+                    .sp-court-player-chip .sp-roller-text {
+                        color: rgba(0, 196, 255, 0.85);
+                        font-size: clamp(0.72rem, 1.8vw, 0.82rem);
                         font-weight: 800;
                         letter-spacing: 0.5px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
                         animation: spRollerFlicker 0.25s infinite alternate ease-in-out;
                     }
+                    .sp-court-player-chip.team-b .sp-roller-text {
+                        color: rgba(204, 255, 0, 0.85);
+                    }
                     @keyframes spRollerFlicker {
-                        0% { opacity: 0.4; transform: translateY(2px); }
-                        100% { opacity: 0.9; transform: translateY(-2px); }
+                        0% { opacity: 0.45; transform: translateY(2px); }
+                        100% { opacity: 1; transform: translateY(-2px); }
                     }
 
-                    /* Revealed details */
-                    .sp-player-details {
+                    /* Detalles del Jugador Revelado */
+                    .sp-court-player-chip .sp-player-details {
                         flex: 1;
                         min-width: 0;
                         display: flex;
                         flex-direction: column;
                         justify-content: center;
+                        line-height: 1.15;
                     }
-                    .sp-player-name {
-                        font-size: 0.98rem;
+                    .sp-court-player-chip .sp-player-name {
+                        font-size: clamp(0.74rem, 1.9vw, 0.88rem);
                         font-weight: 800;
                         color: #ffffff;
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
-                        letter-spacing: 0.3px;
+                        letter-spacing: 0.2px;
+                        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
                     }
-                    .sp-player-meta {
+                    .sp-court-player-chip .sp-player-meta {
                         display: flex;
                         align-items: center;
-                        gap: 8px;
+                        gap: 6px;
                         margin-top: 3px;
                     }
-                    .sp-player-team {
-                        font-size: 0.65rem;
+                    .sp-court-player-chip .sp-player-level {
+                        font-size: 0.62rem;
+                        font-weight: 900;
+                        padding: 1px 5px;
+                        border-radius: 4px;
+                        color: #050b14;
+                        flex-shrink: 0;
+                        line-height: 1.2;
+                    }
+                    .sp-court-player-chip .sp-player-team {
+                        font-size: 0.62rem;
                         font-weight: 700;
-                        color: rgba(255, 255, 255, 0.5);
+                        color: rgba(255, 255, 255, 0.6);
                         text-transform: uppercase;
-                        letter-spacing: 0.5px;
+                        letter-spacing: 0.4px;
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
-                        max-width: 150px;
-                    }
-                    .sp-player-level {
-                        font-size: 0.65rem;
-                        font-weight: 900;
-                        padding: 1px 6px;
-                        border-radius: 4px;
-                        color: #000000;
-                        flex-shrink: 0;
-                    }
-
-                    /* VS Divider */
-                    .sp-vs-divider {
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        position: relative;
-                        margin: 2px 0;
-                    }
-                    .sp-vs-divider::before, .sp-vs-divider::after {
-                        content: '';
-                        flex: 1;
-                        height: 1px;
-                        background: rgba(255, 255, 255, 0.08);
-                    }
-                    .sp-vs-chip {
-                        background: #090f1d;
-                        border: 1px solid rgba(255, 255, 255, 0.15);
-                        color: #ffffff;
-                        font-size: 0.68rem;
-                        font-weight: 900;
-                        letter-spacing: 1.5px;
-                        padding: 3px 12px;
-                        border-radius: 12px;
-                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+                        max-width: 90px;
                     }
 
                     /* Bottom Floating Dock */
@@ -833,6 +917,34 @@
                             grid-template-columns: 1fr;
                             gap: 18px;
                         }
+                        .sp-court-card {
+                            height: 380px;
+                        }
+                        .sp-court-stage {
+                            padding: 10px;
+                        }
+                        .sp-court-quadrants {
+                            padding: 8px 8px;
+                        }
+                        .sp-court-half {
+                            gap: 6px;
+                        }
+                        .sp-court-player-chip {
+                            padding: 6px 8px;
+                            min-height: 48px;
+                            gap: 6px;
+                        }
+                        .sp-court-player-chip .sp-player-avatar {
+                            width: 28px;
+                            height: 28px;
+                            font-size: 0.65rem;
+                        }
+                        .sp-court-player-chip .sp-player-name {
+                            font-size: 0.76rem;
+                        }
+                        .sp-court-player-chip .sp-player-team {
+                            max-width: 70px;
+                        }
                         .sp-bottom-dock {
                             bottom: calc(14px + env(safe-area-inset-bottom, 0px));
                             width: 96%;
@@ -850,6 +962,24 @@
                         }
                         .sp-dock-cta-btn {
                             padding: 8px 12px;
+                        }
+                    }
+                    @media (max-width: 380px) {
+                        .sp-court-card {
+                            height: 360px;
+                        }
+                        .sp-court-player-chip {
+                            padding: 4px 6px;
+                            min-height: 44px;
+                            gap: 5px;
+                        }
+                        .sp-court-player-chip .sp-player-avatar {
+                            width: 24px;
+                            height: 24px;
+                            font-size: 0.6rem;
+                        }
+                        .sp-court-player-chip .sp-player-team {
+                            display: none;
                         }
                     }
                 </style>
@@ -876,51 +1006,66 @@
                 card.id = `sp-court-card-${i}`;
                 card.innerHTML = `
                     <div class="sp-court-stage">
-                        <div class="sp-court-badge-top">PISTA ${i}</div>
-                        <div class="sp-court-status-tag" id="court-status-${i}">SORTEANDO...</div>
-                        <div class="sp-stadium-spot spot-tl"></div>
-                        <div class="sp-stadium-spot spot-tr"></div>
-                        <div class="sp-padel-carpet">
-                            <div class="sp-carpet-lines">
-                                <div class="sp-carpet-line-center"></div>
-                                <div class="sp-carpet-line-service"></div>
-                            </div>
-                            <div class="sp-padel-net"></div>
-                        </div>
-                    </div>
-                    <div class="sp-court-matchup">
-                        <!-- TEAM A -->
-                        <div class="sp-team-block sp-team-a">
-                            <div class="sp-player-slot" id="slot-${i}-p1">
-                                <div class="sp-player-avatar">?</div>
-                                <div class="sp-roller-container">
-                                    <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
-                                </div>
-                            </div>
-                            <div class="sp-player-slot" id="slot-${i}-p2">
-                                <div class="sp-player-avatar">?</div>
-                                <div class="sp-roller-container">
-                                    <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
-                                </div>
-                            </div>
+                        <!-- HEADER DE PISTA -->
+                        <div class="sp-court-header-bar">
+                            <div class="sp-court-badge-top">PISTA ${i}</div>
+                            <div class="sp-court-status-tag" id="court-status-${i}">SORTEANDO...</div>
                         </div>
 
-                        <div class="sp-vs-divider">
-                            <span class="sp-vs-chip">VS</span>
-                        </div>
+                        <!-- PISTA DE PÁDEL REGLAMENTARIA CON JUGADORES EN CUADRANTES -->
+                        <div class="sp-padel-court">
+                            <!-- Focos de iluminación LED en las esquinas -->
+                            <div class="sp-stadium-spot spot-tl"></div>
+                            <div class="sp-stadium-spot spot-tr"></div>
+                            <div class="sp-stadium-spot spot-bl"></div>
+                            <div class="sp-stadium-spot spot-br"></div>
 
-                        <!-- TEAM B -->
-                        <div class="sp-team-block sp-team-b">
-                            <div class="sp-player-slot" id="slot-${i}-p3">
-                                <div class="sp-player-avatar">?</div>
-                                <div class="sp-roller-container">
-                                    <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
-                                </div>
+                            <!-- Líneas de saque y división de juego reglamentarias -->
+                            <div class="sp-court-lines-wrap">
+                                <div class="sp-court-line-perimeter"></div>
+                                <div class="sp-court-service-top"></div>
+                                <div class="sp-court-service-bottom"></div>
+                                <div class="sp-court-center-top"></div>
+                                <div class="sp-court-center-bottom"></div>
                             </div>
-                            <div class="sp-player-slot" id="slot-${i}-p4">
-                                <div class="sp-player-avatar">?</div>
-                                <div class="sp-roller-container">
-                                    <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
+
+                            <!-- Red central con divisor VS -->
+                            <div class="sp-court-net-bar">
+                                <div class="sp-court-vs-chip">VS</div>
+                            </div>
+
+                            <!-- CUADRANTES DE JUEGO (4 JUGADORES DENTRO DE LA PISTA) -->
+                            <div class="sp-court-quadrants">
+                                <!-- CAMPO SUPERIOR (PAREJA A / CYAN) -->
+                                <div class="sp-court-half team-a-half">
+                                    <div class="sp-player-slot sp-court-player-chip team-a" id="slot-${i}-p1">
+                                        <div class="sp-player-avatar">?</div>
+                                        <div class="sp-roller-container">
+                                            <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
+                                        </div>
+                                    </div>
+                                    <div class="sp-player-slot sp-court-player-chip team-a" id="slot-${i}-p2">
+                                        <div class="sp-player-avatar">?</div>
+                                        <div class="sp-roller-container">
+                                            <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- CAMPO INFERIOR (PAREJA B / LIMA NEÓN) -->
+                                <div class="sp-court-half team-b-half">
+                                    <div class="sp-player-slot sp-court-player-chip team-b" id="slot-${i}-p3">
+                                        <div class="sp-player-avatar">?</div>
+                                        <div class="sp-roller-container">
+                                            <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
+                                        </div>
+                                    </div>
+                                    <div class="sp-player-slot sp-court-player-chip team-b" id="slot-${i}-p4">
+                                        <div class="sp-player-avatar">?</div>
+                                        <div class="sp-roller-container">
+                                            <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1007,11 +1152,11 @@
                         for (let p = 1; p <= 4; p++) {
                             const slot = overlay.querySelector(`#slot-${i}-p${p}`);
                             if (slot) {
-                                slot.classList.add('revealed');
+                                slot.classList.add('revealed', 'slot-empty');
                                 slot.innerHTML = `
-                                    <div class="sp-player-avatar" style="opacity:0.3;">-</div>
+                                    <div class="sp-player-avatar" style="opacity:0.35;">-</div>
                                     <div class="sp-player-details">
-                                        <div class="sp-player-name" style="color:rgba(255,255,255,0.4); font-size:0.85rem;">PISTA LIBRE</div>
+                                        <div class="sp-player-name" style="color:rgba(255,255,255,0.45); font-size:0.78rem;">PISTA LIBRE</div>
                                     </div>
                                 `;
                             }
@@ -1097,11 +1242,11 @@
                     for (let p = 1; p <= 4; p++) {
                         const slot = overlay.querySelector(`#slot-${i}-p${p}`);
                         if (slot) {
-                            slot.classList.add('revealed');
+                            slot.classList.add('revealed', 'slot-empty');
                             slot.innerHTML = `
-                                <div class="sp-player-avatar" style="opacity:0.3;">-</div>
+                                <div class="sp-player-avatar" style="opacity:0.35;">-</div>
                                 <div class="sp-player-details">
-                                    <div class="sp-player-name" style="color:rgba(255,255,255,0.4); font-size:0.85rem;">PISTA LIBRE</div>
+                                    <div class="sp-player-name" style="color:rgba(255,255,255,0.45); font-size:0.78rem;">PISTA LIBRE</div>
                                 </div>
                             `;
                         }
@@ -1127,6 +1272,10 @@
          */
         _renderPlayerSlot(slot, p, teamSide) {
             slot.classList.add('revealed');
+            if (teamSide) {
+                slot.classList.remove('team-a', 'team-b');
+                slot.classList.add(teamSide);
+            }
             const levelVal = parseFloat(p.level) || 0;
             const levelColor = this.getLevelColor(levelVal);
             const initials = this._getInitials(p.name);
@@ -1138,8 +1287,8 @@
                 <div class="sp-player-details">
                     <div class="sp-player-name" title="${p.name}">${p.name}</div>
                     <div class="sp-player-meta">
-                        <span class="sp-player-team">${p.team}</span>
                         <span class="sp-player-level" style="background:${levelColor};">${p.level}</span>
+                        <span class="sp-player-team" title="${p.team}">${p.team}</span>
                     </div>
                 </div>
             `;

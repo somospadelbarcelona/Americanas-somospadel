@@ -1239,10 +1239,35 @@
             const matches = this.allMatches || [];
             const isEntreno = !!this.currentAmericanaDoc?.isEntreno;
             const maxRound = matches.length > 0 ? Math.max(...matches.map(m => parseInt(m.round || 1))) : 1;
+            const currentRoundMatches = matches.filter(m => parseInt(m.round) === maxRound).sort((a, b) => a.court - b.court);
+
+            // Calcular estadísticas flash en vivo
+            const finishedMatches = matches.filter(m => m.status === 'finished' || m.status === 'finalizado');
+            const totalGamesPlayed = finishedMatches.reduce((acc, m) => acc + (parseInt(m.score_a || 0) + parseInt(m.score_b || 0)), 0);
+            const liveMatches = currentRoundMatches.filter(m => m.status !== 'finished' && m.status !== 'finalizado');
+
+            // Reacciones
+            const reactions = [
+                { emoji: '🔥', label: '¡Fuego!' },
+                { emoji: '👏', label: '¡Bravo!' },
+                { emoji: '🏆', label: '¡Vamos!' },
+                { emoji: '⚡', label: '¡Puntazo!' }
+            ];
 
             return `
-                <div class="live-feed-container" style="padding: 14px 16px; padding-bottom: calc(145px + env(safe-area-inset-bottom, 24px)); display: flex; flex-direction: column; gap: 16px;">
-                    <div style="background: linear-gradient(135deg, #090d16 0%, #111827 100%); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 18px; color: white;">
+                <div class="live-feed-container fade-in" style="padding: 14px 16px; padding-bottom: calc(145px + env(safe-area-inset-bottom, 24px)); display: flex; flex-direction: column; gap: 16px;">
+                    <style>
+                        @keyframes floatUpEmoji {
+                            0% { transform: translateY(0) scale(0.8); opacity: 1; }
+                            50% { transform: translateY(-70px) scale(1.3); opacity: 0.95; }
+                            100% { transform: translateY(-150px) scale(1.6); opacity: 0; }
+                        }
+                    </style>
+                    
+                    <!-- 1. BROADCAST HERO BANNER -->
+                    <div style="background: linear-gradient(135deg, #090d16 0%, #111827 100%); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 18px; color: white; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+                        <div style="position: absolute; top: -30px; right: -30px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(239, 68, 68, 0.25) 0%, rgba(239, 68, 68, 0) 70%); pointer-events: none;"></div>
+                        
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); padding: 4px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 950; color: #f87171; text-transform: uppercase; letter-spacing: 0.8px;">
@@ -1251,18 +1276,161 @@
                                 </span>
                                 <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 800;">RONDA ${maxRound}</span>
                             </div>
-                            <button type="button" onclick="window.ControlTowerView ? window.ControlTowerView.switchTab('live_feed') : window.openTVMode('${this.currentAmericanaId}', '${isEntreno ? 'entreno' : 'americana'}')"
-                                    title="Abrir Centro en Vivo y Minuto a Minuto"
-                                    style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #ffffff; padding: 6px 12px; border-radius: 12px; font-weight: 950; font-size: 0.68rem; cursor: pointer;">
-                                <i class="fas fa-broadcast-tower" style="color: #ef4444;"></i>
-                                <span>EN VIVO / TV</span>
+
+                            <button type="button" onclick="window.openTVMode('${this.currentAmericanaId}', '${isEntreno ? 'entreno' : 'americana'}')"
+                                    title="Abrir vista completa para TV del club"
+                                    style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); color: #ffffff; padding: 6px 12px; border-radius: 12px; font-weight: 950; font-size: 0.68rem; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: transform 0.2s;"
+                                    onmouseover="this.style.transform='scale(1.05)'"
+                                    onmouseout="this.style.transform='scale(1)'">
+                                <i class="fas fa-tv" style="color: #4ade80;"></i>
+                                <span>MODO TV PANTALLA COMPLETA</span>
                             </button>
                         </div>
+
+                        <!-- Mini stats bar -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; background: rgba(255, 255, 255, 0.04); border-radius: 14px; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.06);">
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.6rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Pistas en Vivo</div>
+                                <div style="font-size: 1.15rem; font-weight: 1000; color: #22c55e;">${liveMatches.length}</div>
+                            </div>
+                            <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.08); border-right: 1px solid rgba(255,255,255,0.08);">
+                                <div style="font-size: 0.6rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Finalizados</div>
+                                <div style="font-size: 1.15rem; font-weight: 1000; color: #ffffff;">${finishedMatches.length}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.6rem; color: #94a3b8; font-weight: 800; text-transform: uppercase;">Juegos Hoy</div>
+                                <div style="font-size: 1.15rem; font-weight: 1000; color: #CCFF00;">${totalGamesPlayed}</div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- 2. LIVE FAN CHEERING (REACCIONES CON EFECTO FLOTANTE) -->
+                    <div style="background: #ffffff; border-radius: 18px; padding: 14px 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="font-size: 0.68rem; font-weight: 950; color: #0a192f; text-transform: uppercase; letter-spacing: 0.8px;">
+                                <i class="fas fa-heart" style="color: #ef4444; margin-right: 4px;"></i> ÁNIMOS Y REACCIONES EN PISTA
+                            </span>
+                            <span style="font-size: 0.6rem; color: #64748b; font-weight: 800;">¡PULSA PARA ANIMAR!</span>
+                        </div>
+                        <div style="display: flex; gap: 8px; justify-content: space-between;">
+                            ${reactions.map(r => {
+                                const key = `sp_reactions_${this.currentAmericanaId || 'live'}_${r.emoji}`;
+                                const count = parseInt(localStorage.getItem(key) || 0);
+                                return `
+                                    <button type="button" 
+                                            onclick="window.ControlTowerView.sendReaction('${r.emoji}')"
+                                            style="flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 10px 4px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s;"
+                                            onmouseover="this.style.transform='scale(1.06)'; this.style.borderColor='#CCFF00';"
+                                            onmouseout="this.style.transform='scale(1)'; this.style.borderColor='#e2e8f0';"
+                                            onmousedown="this.style.transform='scale(0.92)'">
+                                        <span style="font-size: 1.4rem; line-height: 1;">${r.emoji}</span>
+                                        <span id="reaction-count-${encodeURIComponent(r.emoji)}" style="font-size: 0.65rem; font-weight: 950; color: #0f172a;">${count}</span>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 3. RADAR DE PISTAS DE LA RONDA ACTUAL -->
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 4px;">
+                            <span style="font-size: 0.72rem; font-weight: 950; color: #0f172a; text-transform: uppercase; letter-spacing: 0.8px;">
+                                <i class="fas fa-table-tennis-paddle-ball" style="color: #72a800; margin-right: 4px;"></i> PISTAS DE LA RONDA ${maxRound}
+                            </span>
+                            <span style="font-size: 0.65rem; color: #64748b; font-weight: 800;">${currentRoundMatches.length} pistas en total</span>
+                        </div>
+
+                        ${currentRoundMatches.length === 0 ? `
+                            <div style="background: #f8fafc; border-radius: 16px; padding: 30px; text-align: center; border: 1px dashed #cbd5e1; color: #64748b;">
+                                <i class="fas fa-hourglass-half" style="font-size: 1.8rem; color: #94a3b8; margin-bottom: 8px;"></i>
+                                <div style="font-weight: 900; font-size: 0.85rem; color: #0f172a;">Ronda pendiente de inicio</div>
+                                <div style="font-size: 0.72rem; margin-top: 4px;">Los cruces aparecerán aquí tan pronto como comience el juego.</div>
+                            </div>
+                        ` : `
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px;">
+                                ${currentRoundMatches.map(m => {
+                                    const teamA = Array.isArray(m.team_a_names) ? m.team_a_names.join(' / ') : (m.teamA || 'Equipo A');
+                                    const teamB = Array.isArray(m.team_b_names) ? m.team_b_names.join(' / ') : (m.teamB || 'Equipo B');
+                                    const sA = parseInt(m.score_a || 0);
+                                    const sB = parseInt(m.score_b || 0);
+                                    const isDone = m.status === 'finished' || m.status === 'finalizado';
+
+                                    return `
+                                        <div style="background: #ffffff; border-radius: 16px; border: ${isDone ? '1px solid #e2e8f0' : '2px solid #22c55e'}; padding: 12px 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.03); position: relative;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                                <span style="font-size: 0.65rem; font-weight: 950; background: #0f172a; color: #ffffff; padding: 3px 8px; border-radius: 8px; text-transform: uppercase;">
+                                                    PISTA ${m.court}
+                                                </span>
+                                                <span style="font-size: 0.6rem; font-weight: 900; color: ${isDone ? '#059669' : '#15803d'}; background: ${isDone ? '#ecfdf5' : 'rgba(34, 197, 94, 0.12)'}; padding: 3px 8px; border-radius: 12px;">
+                                                    ${isDone ? '✓ FINALIZADO' : '⚡ EN JUEGO'}
+                                                </span>
+                                            </div>
+
+                                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                                                <div style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+                                                    <div style="font-size: 0.78rem; font-weight: ${sA > sB && isDone ? '1000' : '800'}; color: ${sA > sB && isDone ? '#0f172a' : '#334155'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                        ${sA > sB && isDone ? '🏆 ' : ''}${teamA}
+                                                    </div>
+                                                    <div style="font-size: 0.78rem; font-weight: ${sB > sA && isDone ? '1000' : '800'}; color: ${sB > sA && isDone ? '#0f172a' : '#334155'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                        ${sB > sA && isDone ? '🏆 ' : ''}${teamB}
+                                                    </div>
+                                                </div>
+
+                                                <div style="display: flex; align-items: center; gap: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 6px 12px;">
+                                                    <span style="font-size: 1.15rem; font-weight: 1000; color: ${sA > sB ? '#059669' : '#0f172a'};">${sA}</span>
+                                                    <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 800;">-</span>
+                                                    <span style="font-size: 1.15rem; font-weight: 1000; color: ${sB > sA ? '#059669' : '#0f172a'};">${sB}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        `}
+                    </div>
+
+                    <!-- 4. TIMELINE MINUTO A MINUTO (CRÓNICA EN DIRECTO) -->
+                    <div style="background: #ffffff; border-radius: 18px; padding: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+                            <span style="font-size: 0.72rem; font-weight: 950; color: #0f172a; text-transform: uppercase; letter-spacing: 0.8px;">
+                                <i class="fas fa-clock" style="color: #0284c7; margin-right: 4px;"></i> MINUTO A MINUTO
+                            </span>
+                            <span style="font-size: 0.62rem; color: #059669; font-weight: 900; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 10px;">
+                                ACTUALIZACIÓN EN VIVO
+                            </span>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 14px; position: relative; padding-left: 18px; border-left: 2px solid #e2e8f0;">
+                            ${finishedMatches.length > 0 ? finishedMatches.slice(-5).reverse().map(m => {
+                                const teamA = Array.isArray(m.team_a_names) ? m.team_a_names.join(' / ') : (m.teamA || 'Equipo A');
+                                const teamB = Array.isArray(m.team_b_names) ? m.team_b_names.join(' / ') : (m.teamB || 'Equipo B');
+                                const sA = parseInt(m.score_a || 0);
+                                const sB = parseInt(m.score_b || 0);
+                                const winnerName = sA > sB ? teamA : (sB > sA ? teamB : null);
+
+                                return `
+                                    <div style="position: relative;">
+                                        <div style="position: absolute; left: -24px; top: 2px; width: 10px; height: 10px; border-radius: 50%; background: #059669; border: 2px solid #ffffff; box-shadow: 0 0 6px #059669;"></div>
+                                        <div style="font-size: 0.65rem; color: #64748b; font-weight: 800;">RONDA ${m.round} • PISTA ${m.court}</div>
+                                        <div style="font-size: 0.78rem; font-weight: 900; color: #0f172a; margin-top: 2px;">
+                                            ${winnerName ? `Victoria de <b>${winnerName}</b> (${sA} - ${sB})` : `Empate ${sA} - ${sB}`}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('') : ''}
+
+                            <div style="position: relative;">
+                                <div style="position: absolute; left: -24px; top: 2px; width: 10px; height: 10px; border-radius: 50%; background: #3b82f6; border: 2px solid #ffffff;"></div>
+                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 800;">ARRANQUE OFICIAL</div>
+                                <div style="font-size: 0.78rem; font-weight: 800; color: #0f172a; margin-top: 2px;">
+                                    Silbato de inicio: Torneo y pistas activas en SomosPadel Barcelona.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             `;
-        }
-        
         }
 
         renderTournamentCard(match, options = {}) {
@@ -3021,23 +3189,6 @@
                     <!-- ========================================== -->
                     <div id="sp-help-panel-community" class="sp-help-panel">
                         
-                        <!-- Chat Evento -->
-                        <div class="sp-card">
-                            <div class="sp-card-header">
-                                <div class="sp-card-icon" style="background: rgba(59,130,246,0.15); color: #3b82f6;">
-                                    <i class="fas fa-comments"></i>
-                                </div>
-                                <div>
-                                    <h3 class="sp-card-title">Chat Táctico en Vivo por Evento</h3>
-                                    <div class="sp-card-subtitle">Canal de comunicación instantáneo exclusivo para cada torneo activo</div>
-                                </div>
-                            </div>
-
-                            <p style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 14px;">
-                                Cada evento tiene su propio canal de mensajería en tiempo real. Utilízalo para avisar de retrasos en el tráfico, coordinarte con tu pareja o recibir avisos directos del organizador.
-                            </p>
-                        </div>
-
                         <!-- Alerta SOS Express -->
                         <div class="sp-card" style="border-color: rgba(236,72,153,0.4); background: linear-gradient(135deg, rgba(236,72,153,0.08) 0%, rgba(6,8,14,0.7) 100%);">
                             <div class="sp-card-header">

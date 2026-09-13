@@ -47,18 +47,11 @@
                                 <i class="fas fa-random" style="color: ${heroAccent}; font-size: 0.75rem;"></i>
                                 <span>SORTEO</span>
                             </button>
-                            <button type="button" onclick="window.ChatView.init('${americanaDoc?.id}', '${amName}')" 
-                                    title="Abrir chat del evento"
-                                    style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #ffffff; padding: 7px 13px; border-radius: 12px; font-weight: 900; font-size: 0.68rem; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.16); display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                                <i class="fas fa-comment-dots" style="color: #38bdf8; font-size: 0.75rem;"></i>
-                                <span>CHAT</span>
-                            </button>
                             <button type="button" onclick="window.ControlTowerView ? window.ControlTowerView.switchTab('live_feed') : window.openTVMode('${americanaDoc?.id}', '${isEntreno ? 'entreno' : 'americana'}')" 
                                     title="Abrir Centro en Vivo y Minuto a Minuto"
                                     style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #ffffff; padding: 7px 13px; border-radius: 12px; font-weight: 900; font-size: 0.68rem; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.16); display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                                 <i class="fas fa-broadcast-tower" style="color: #ef4444; font-size: 0.75rem;"></i>
                                 <span>EN VIVO / TV</span>
-                            </button>
                             </button>
                         </div>
                     </div>
