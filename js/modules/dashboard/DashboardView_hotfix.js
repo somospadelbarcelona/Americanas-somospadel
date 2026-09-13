@@ -1039,36 +1039,39 @@
 
                     <!-- 3. SOMOSPADEL PLAYER COMMAND CENTER (PRO MATCH & ACTION HUB) -->
                     <div id="registration-widget-root" style="margin: 0 15px 20px !important; animation: floatUp 0.8s ease-out forwards;">
-                        <!-- Match Hub Card Container (SomosPadel Light Sport Club: Clean Pure White + Brand Navy #0a192f + Accents) -->
-                        <div style="background: #ffffff; border-radius: 24px; border: 1.5px solid #e2e8f0; box-shadow: 0 12px 35px rgba(10, 25, 47, 0.05), 0 2px 8px rgba(0, 0, 0, 0.02); padding: 18px; position: relative; overflow: hidden;">
+                        <!-- Match Hub Card Container (Dark Sport Club: Slate #131b2e to #0d1322 + Neon Lima #CCFF00 + Accents) -->
+                        <div style="background: linear-gradient(180deg, #131b2e 0%, #0d1322 100%); border-radius: 24px; border: 1.5px solid rgba(255, 255, 255, 0.08); box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4); padding: 18px; position: relative; overflow: hidden;">
                             
-                            <!-- Ambient Light Accents (Subtle Court Glow) -->
-                            <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
-                            <div style="position: absolute; bottom: -40px; left: -40px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(56, 189, 248, 0.06) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                            <!-- Ambient Light Accents (Subtle Glow) -->
+                            <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(204, 255, 0, 0.06) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                            <div style="position: absolute; bottom: -40px; left: -40px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
 
-                            <!-- Header Bar: Live Status + Weather Mini-Pill -->
+                            <!-- Header Bar: Star Lima + DESTACADOS + Acción a la derecha -->
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; position: relative; z-index: 2;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 10px rgba(16,185,129,0.5); animation: pulseDot 1.5s infinite; flex-shrink: 0;"></span>
-                                    <span style="font-size: 0.74rem; font-weight: 950; color: #0a192f; letter-spacing: 1.2px; text-transform: uppercase;">CENTRO DE JUEGO</span>
+                                    <span style="font-size: 1rem; color: #CCFF00; filter: drop-shadow(0 0 8px rgba(204, 255, 0, 0.6)); line-height: 1;">⭐</span>
+                                    <span style="font-size: 0.78rem; font-weight: 900; color: #ffffff; letter-spacing: 1.2px; text-transform: uppercase;">DESTACADOS</span>
                                 </div>
-                                <div id="header-weather-pill" onclick="window.showWeatherDetails()" style="cursor: pointer; background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px 11px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem; color: #0a192f; font-weight: 800; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.03);" onmouseover="this.style.borderColor='#94a3b8'; this.style.background='#f1f5f9';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
-                                    <i class="fas fa-cloud-sun" style="color: #0284c7;"></i>
-                                    <span>Meteo Padel</span>
+                                <div id="header-destacados-action" onclick="window.dashNavigate('entrenos', 'header')" style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #CCFF00; font-weight: 900; letter-spacing: 0.5px; transition: opacity 0.2s; -webkit-tap-highlight-color: transparent;" onmouseover="this.style.opacity='0.8';" onmouseout="this.style.opacity='1';">
+                                    <span>Ver todo</span>
+                                    <i class="fas fa-arrow-right" style="font-size: 0.62rem;"></i>
                                 </div>
                             </div>
 
                             <!-- Dynamic Content Container -->
                             <div id="live-scroller-inner">
                                 <div style="display: flex; flex-direction: column; gap: 12px;">
-                                    <!-- Skeleton for Hero Match -->
-                                    <div style="height: 100px; border-radius: 18px; background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite;"></div>
+                                    <!-- Skeleton for 2-column Top Cards -->
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                        <div style="height: 140px; border-radius: 20px; background: #1e2638; border: 1px solid rgba(255,255,255,0.08);"></div>
+                                        <div style="height: 140px; border-radius: 20px; background: #1e2638; border: 1px solid rgba(255,255,255,0.08);"></div>
+                                    </div>
                                     <!-- Skeleton for 4 Quick Actions -->
                                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                        <div style="height: 64px; border-radius: 14px; background: #f8fafc; border: 1px solid #e2e8f0;"></div>
-                                        <div style="height: 64px; border-radius: 14px; background: #f8fafc; border: 1px solid #e2e8f0;"></div>
-                                        <div style="height: 64px; border-radius: 14px; background: #f8fafc; border: 1px solid #e2e8f0;"></div>
-                                        <div style="height: 64px; border-radius: 14px; background: #f8fafc; border: 1px solid #e2e8f0;"></div>
+                                        <div style="height: 64px; border-radius: 16px; background: #1e2638; border: 1px solid rgba(255,255,255,0.08);"></div>
+                                        <div style="height: 64px; border-radius: 16px; background: #1e2638; border: 1px solid rgba(255,255,255,0.08);"></div>
+                                        <div style="height: 64px; border-radius: 16px; background: #1e2638; border: 1px solid rgba(255,255,255,0.08);"></div>
+                                        <div style="height: 64px; border-radius: 16px; background: #1e2638; border: 1px solid rgba(255,255,255,0.08);"></div>
                                     </div>
                                 </div>
                             </div>
