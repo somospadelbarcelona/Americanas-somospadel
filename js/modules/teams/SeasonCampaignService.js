@@ -840,11 +840,11 @@
          */
         isCampaignActiveSync() {
             try {
-                if (typeof localStorage === 'undefined') return true;
+                if (typeof localStorage === 'undefined') return false;
                 const val = localStorage.getItem(CONFIG.STORAGE_KEY_ACTIVE);
-                return val !== 'false';
+                return val === 'true';
             } catch (e) {
-                return true;
+                return false;
             }
         }
 
@@ -896,6 +896,13 @@
                     console.log(`✅ [SeasonCampaignService] Estado de campaña en INICIO actualizado a: ${isActive ? 'ACTIVADA' : 'DESACTIVADA'}`);
                 } catch (err) {
                     console.warn('⚠️ [SeasonCampaignService] Error guardando estado en Firestore:', err.message);
+                }
+            }
+
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('sp_campaign_status_changed', { detail: { active: isActive } }));
+                if (window.SmartTicker && typeof window.SmartTicker.update === 'function') {
+                    window.SmartTicker.update();
                 }
             }
 

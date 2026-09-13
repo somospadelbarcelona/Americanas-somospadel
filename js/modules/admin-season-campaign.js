@@ -745,6 +745,12 @@
                 if (window.SeasonCampaignService) {
                     await window.SeasonCampaignService.setCampaignActive(newState);
                 }
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('sp_campaign_status_changed', { detail: { active: newState } }));
+                    if (window.SmartTicker && typeof window.SmartTicker.update === 'function') {
+                        window.SmartTicker.update();
+                    }
+                }
                 this.isCampaignActive = newState;
                 this.render();
                 alert(newState 

@@ -359,7 +359,7 @@
     <link rel="apple-touch-startup-image" href="https://cdn-icons-png.flaticon.com/512/33/33736.png">
 
     <!-- CSS Dependencies -->
-    <link rel="stylesheet" href="css/theme-playtomic.css?v=800">
+    <link rel="stylesheet" href="css/theme-playtomic.css?v=803">
     <link rel="stylesheet" href="css/notifications.css?v=1.0">
     <link rel="stylesheet" href="css/nav-mobile.css?v=1.0">
     <link rel="stylesheet" href="css/glassmorphism.css?v=1.0">
@@ -370,7 +370,7 @@
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Inter:wght@400;500;700;900&family=Montserrat:wght@700;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/mobile-header-fix.css?v=1.2">
+    <link rel="stylesheet" href="css/mobile-header-fix.css?v=1.4">
 
     <script>
         // registry initialization
@@ -733,22 +733,20 @@
         <!-- GLOBAL FIXED HEADER (Ticker + Command Bar) -->
         <div class="dashboard-fixed-header"
             style="background: #ffffff !important; box-shadow: 0 4px 25px rgba(0,0,0,0.05); z-index: 10001;">
-            <!-- TOP TICKER - LIGHT COURT BLUE -->
-            <div class="ticker-container" onclick="window.Router && window.Router.navigate('entrenos')"
-                style="cursor: pointer; background: #00d2ff !important; height: 40px; display: flex; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05);">
+            <!-- TOP TICKER - BROADCAST SPORTS BAR -->
+            <div class="ticker-container" id="smart-ticker-container" role="region" aria-label="SomosPadel Live Broadcast Feed">
                 <div class="ticker-track" id="ticker-track">
-                    <div class="ticker-item" onclick="event.stopPropagation(); window.SeasonCampaignView && window.SeasonCampaignView.openModal();" style="color: #ffffff !important; font-weight: 800; font-size: 0.75rem; cursor: pointer;">
-                        <span style="background: #CCFF00; color: #000; padding: 2px 8px; border-radius: 5px; margin-right: 10px; font-weight: 950; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">🔥 EQUIPOS 2027</span>
-                        Inscripciones Equipos SomosPadel (Fem 2ª-3ª-4ª, Mix 3ª-4ª, Masc 3ª-4ª). Toca aquí para ver.
+                    <div class="ticker-item" data-index="0" onclick="if(window.SmartTicker&&window.SmartTicker.openDetailModal){window.SmartTicker.openDetailModal(0);}else if(window.Router){window.Router.navigate('americanas');}">
+                        <span class="ticker-label-tag tag-live"><i class="fas fa-bolt"></i> EN DIRECTO</span>
+                        <span class="ticker-text">¡Pistas Centrales activas! Reserva tu plaza en los próximos torneos.</span>
                     </div>
-                    <div class="ticker-item" style="color: #ffffff !important; font-weight: 800; font-size: 0.75rem;">
-                        <span
-                            style="background: #CCFF00; color: #000; padding: 2px 8px; border-radius: 5px; margin-right: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">V.2.9</span>
-                        ¡Pistas Centrales abiertas! Reserva tu Americano Pro.
+                    <div class="ticker-item" data-index="1" onclick="if(window.SmartTicker&&window.SmartTicker.openDetailModal){window.SmartTicker.openDetailModal(1);}else if(window.Router){window.Router.navigate('ranking');}">
+                        <span class="ticker-label-tag tag-ranking"><i class="fas fa-trophy"></i> RANKING TOP</span>
+                        <span class="ticker-text">Alejandro lidera el ranking de esta semana. Consulta las posiciones.</span>
                     </div>
-                    <div class="ticker-item" style="color: #ffffff !important; font-weight: 800; font-size: 0.75rem;">
-                        <span style="color: #CCFF00; margin-right: 5px;">🏆</span> Alejandro lidera el ranking de esta
-                        semana.
+                    <div class="ticker-item" data-index="2" onclick="if(window.SmartTicker&&window.SmartTicker.openDetailModal){window.SmartTicker.openDetailModal(2);}">
+                        <span class="ticker-label-tag tag-protip"><i class="fas fa-lightbulb"></i> PRO TIP</span>
+                        <span class="ticker-text">La Chiquita: Tira suave a los pies del rival cuando suba para forzar un globo cómodo.</span>
                     </div>
                 </div>
             </div>
@@ -758,8 +756,11 @@
                 style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px; height: 72px; background: #ffffff !important; border-bottom: 1px solid #e2e8f0;">
 
                 <div class="header-burger-btn haptic-feedback"
-                style="color: #0a192f; font-size: 1.3rem; cursor: pointer; background: #f1f5f9; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid #e2e8f0;"
-                    onclick="window.PlayerView?.haptic?.(20); document.getElementById('side-drawer-container').classList.add('open'); document.getElementById('side-drawer-menu').classList.add('open');">
+                    id="btn-open-side-drawer"
+                    title="Menú lateral de opciones"
+                    aria-label="Abrir Menú SomosPadel"
+                    style="color: #0a192f; font-size: 1.35rem; cursor: pointer; background: #f8fafc; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid #e2e8f0; transition: all 0.2s;"
+                    onclick="window.PlayerView?.haptic?.(20); window.openDrawer ? window.openDrawer() : (document.getElementById('side-drawer-container')?.classList.add('open'), document.getElementById('side-drawer-menu')?.classList.add('open'));">
                     <i class="fas fa-bars"></i>
                 </div>
 
@@ -779,8 +780,10 @@
                     </div>
                 </div>
 
+                <!-- USER PROFILE DROPDOWN (PRO ATHLETE EDITION) -->
+                <div class="user-dropdown-backdrop" id="user-dropdown-backdrop" onclick="window._toggleUserDropdown(event)"></div>
                 <div class="user-dropdown-container" id="user-dropdown-container">
-                    <div class="user-dropdown-trigger haptic-feedback" onclick="window._toggleUserDropdown(event)">
+                    <div class="user-dropdown-trigger haptic-feedback" onclick="window._toggleUserDropdown(event)" role="button" aria-label="Abrir menú de perfil">
                         <div id="header-user-level"
                             style="background: #CCFF00; color: #0a192f; padding: 4px 8px; border-radius: 8px; font-weight: 950; font-size: 0.85rem; border: 1px solid #ffffff; box-shadow: 0 0 10px rgba(204,255,0,0.3);">
                             --
@@ -792,71 +795,140 @@
                     </div>
 
                     <div class="user-dropdown-menu">
+                        <!-- Header de Perfil Pro -->
                         <div class="user-dropdown-header">
-                            <div style="width: 50px; height: 50px; border-radius: 14px; background: #CCFF00; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 950; color: #0a192f; border: 2px solid #ffffff;"
-                                id="header-user-avatar-menu">
-                                --
+                            <div class="user-dropdown-header-top">
+                                <div class="user-dropdown-avatar-wrap">
+                                    <div class="user-dropdown-avatar" id="header-user-avatar-menu">
+                                        --
+                                    </div>
+                                    <div class="user-dropdown-online-dot"></div>
+                                </div>
+                                <div class="user-dropdown-name-container">
+                                    <div class="user-dropdown-name" id="header-user-name">--</div>
+                                    <div class="user-dropdown-badges">
+                                        <span class="user-dropdown-role-badge">EXECUTIVE PLAYER</span>
+                                        <span id="header-user-level-menu" class="user-dropdown-level-badge">LVL --</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="user-dropdown-name-container">
-                                <div class="user-dropdown-name" id="header-user-name">--</div>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <div class="user-dropdown-role">EXECUTIVE PLAYER</div>
-                                    <div id="header-user-level-menu"
-                                        style="font-size: 0.65rem; background: rgba(255,255,255,0.1); color: #fff; padding: 1px 6px; border-radius: 4px; font-weight: 900;">
-                                        --</div>
+
+                            <!-- Barra de Progreso de Nivel Dinámica (Gamificación) -->
+                            <div class="user-dropdown-level-progress-wrap" id="header-level-progress-container">
+                                <div class="user-dropdown-level-meta">
+                                    <span class="level-progress-label-left" id="header-level-progress-current">Nivel --</span>
+                                    <span class="level-progress-label-right" id="header-level-progress-next">Siguiente: --</span>
+                                </div>
+                                <div class="user-dropdown-level-track">
+                                    <div class="user-dropdown-level-fill" id="header-level-progress-bar" style="width: 0%;"></div>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Dashboard de Estadísticas (Stats Grid) -->
                         <div class="user-dropdown-stats-grid">
                             <div class="user-dropdown-stat-card">
-                                <div class="user-dropdown-stat-label">Racha</div>
-                                <div id="header-user-streak" class="user-dropdown-stat-value" style="color: #ff4757;">🔥
-                                    --</div>
+                                <span class="user-dropdown-stat-label">Racha</span>
+                                <div id="header-user-streak" class="user-dropdown-stat-value stat-streak">🔥 --</div>
                             </div>
                             <div class="user-dropdown-stat-card">
-                                <div class="user-dropdown-stat-label">Ranking</div>
-                                <div id="header-user-rank" class="user-dropdown-stat-value" style="color: #00d2ff;">🏆
-                                    --</div>
+                                <span class="user-dropdown-stat-label">Ranking</span>
+                                <div id="header-user-rank" class="user-dropdown-stat-value stat-rank">🏆 --</div>
                             </div>
                             <div class="user-dropdown-stat-card">
-                                <div class="user-dropdown-stat-label">Partidos</div>
-                                <div id="header-user-matches" class="user-dropdown-stat-value">--</div>
+                                <span class="user-dropdown-stat-label">Partidos</span>
+                                <div id="header-user-matches" class="user-dropdown-stat-value stat-matches">🎾 --</div>
                             </div>
                             <div class="user-dropdown-stat-card">
-                                <div class="user-dropdown-stat-label">Victorias</div>
-                                <div id="header-user-winrate" class="user-dropdown-stat-value" style="color: #CCFF00;">
-                                    --%</div>
+                                <span class="user-dropdown-stat-label">Victorias %</span>
+                                <div id="header-user-winrate" class="user-dropdown-stat-value stat-winrate">--%</div>
                             </div>
                         </div>
 
+                        <!-- Menú de Acciones Pro -->
+                        <div class="user-dropdown-actions">
+                            <button type="button" class="user-dropdown-item haptic-feedback" onclick="window.Router && window.Router.navigate('profile'); window._toggleUserDropdown(event)">
+                                <div class="user-dropdown-item-icon icon-profile">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <div class="user-dropdown-item-content">
+                                    <span class="user-dropdown-item-title">Mi Perfil Pro</span>
+                                    <span class="user-dropdown-item-subtitle">Ver estadísticas completas</span>
+                                </div>
+                                <i class="fas fa-chevron-right user-dropdown-item-arrow"></i>
+                            </button>
+
+                            <button type="button" class="user-dropdown-item haptic-feedback" onclick="window._shareUserProfile && window._shareUserProfile()">
+                                <div class="user-dropdown-item-icon icon-share">
+                                    <i class="fas fa-share-nodes"></i>
+                                </div>
+                                <div class="user-dropdown-item-content">
+                                    <span class="user-dropdown-item-title">Compartir Ficha</span>
+                                    <span class="user-dropdown-item-subtitle">Retar a rivales o enviar perfil</span>
+                                </div>
+                                <i class="fas fa-chevron-right user-dropdown-item-arrow"></i>
+                            </button>
+
+                            <button type="button" class="user-dropdown-item haptic-feedback" onclick="window._closeUserDropdown && window._closeUserDropdown(); window.forceUpdateApp && window.forceUpdateApp()">
+                                <div class="user-dropdown-item-icon icon-refresh">
+                                    <i class="fas fa-sync-alt"></i>
+                                </div>
+                                <div class="user-dropdown-item-content">
+                                    <span class="user-dropdown-item-title">Actualizar App</span>
+                                    <span class="user-dropdown-item-subtitle">Sincronizar última versión</span>
+                                </div>
+                                <i class="fas fa-chevron-right user-dropdown-item-arrow"></i>
+                            </button>
+
+                            <div class="user-dropdown-divider"></div>
+
+                            <button type="button" class="user-dropdown-item user-dropdown-item-logout haptic-feedback" onclick="window._closeUserDropdown && window._closeUserDropdown(); window.AuthController && window.AuthController.handleLogout()">
+                                <div class="user-dropdown-item-icon icon-logout">
+                                    <i class="fas fa-power-off"></i>
+                                </div>
+                                <div class="user-dropdown-item-content">
+                                    <span class="user-dropdown-item-title">Cerrar Sesión</span>
+                                    <span class="user-dropdown-item-subtitle">Salir de tu cuenta</span>
+                                </div>
+                                <i class="fas fa-chevron-right user-dropdown-item-arrow"></i>
+                            </button>
+                        </div>
+
+                        <!-- Footer de Branding del Club Oficial -->
                         <div class="user-dropdown-footer">
-                            <div class="user-dropdown-btn user-dropdown-btn-profile haptic-feedback"
-                                onclick="window.Router && window.Router.navigate('profile'); window._toggleUserDropdown()">
-                                <i class="fas fa-user-circle"></i> Mi Perfil Pro
-                            </div>
-                            <div class="user-dropdown-btn user-dropdown-btn-refresh haptic-feedback"
-                                onclick="window.forceUpdateApp()" style="color: #CCFF00;">
-                                <i class="fas fa-sync-alt"></i> Actualizar App
-                            </div>
-                            <div class="user-dropdown-btn user-dropdown-btn-logout haptic-feedback"
-                                onclick="window.AuthController && window.AuthController.handleLogout()">
-                                <i class="fas fa-power-off"></i> Cerrar Sesión
-                            </div>
+                            <span class="user-dropdown-footer-brand">SOMOS PÁDEL BCN • PRO PLAYER NETWORK</span>
+                            <span class="user-dropdown-footer-version">v60.2 Pro Edition</span>
                         </div>
                     </div>
                 </div>
 
                 <script>
-                    window._toggleUserDropdown = function (e) {
-                        if (e) e.stopPropagation();
+                    window._closeUserDropdown = function () {
                         const container = document.getElementById('user-dropdown-container');
+                        const backdrop = document.getElementById('user-dropdown-backdrop');
+                        if (container) container.classList.remove('open');
+                        if (backdrop) backdrop.classList.remove('active');
+                    };
+
+                    window._toggleUserDropdown = function (e) {
+                        if (e) {
+                            e.stopPropagation();
+                            if (e.preventDefault) e.preventDefault();
+                        }
+                        const container = document.getElementById('user-dropdown-container');
+                        const backdrop = document.getElementById('user-dropdown-backdrop');
                         if (container) {
-                            container.classList.toggle('open');
-                            if (container.classList.contains('open')) {
+                            const isOpen = container.classList.toggle('open');
+                            if (backdrop) {
+                                backdrop.classList.toggle('active', isOpen);
+                            }
+                            if (isOpen) {
                                 window.PlayerView?.haptic?.(20);
-                                // Close other menus if any
-                                document.getElementById('side-drawer-container')?.classList.remove('open');
+                                if (typeof window.closeDrawer === 'function') {
+                                    window.closeDrawer();
+                                } else {
+                                    document.getElementById('side-drawer-container')?.classList.remove('open');
+                                }
                             }
                         }
                     };
@@ -864,10 +936,82 @@
                     // Close on click outside
                     document.addEventListener('click', function (e) {
                         const container = document.getElementById('user-dropdown-container');
+                        const backdrop = document.getElementById('user-dropdown-backdrop');
                         if (container && !container.contains(e.target)) {
                             container.classList.remove('open');
+                            if (backdrop) backdrop.classList.remove('active');
                         }
                     });
+
+                    // Close on Escape key
+                    document.addEventListener('keydown', function (e) {
+                        if (e.key === 'Escape') {
+                            window._closeUserDropdown && window._closeUserDropdown();
+                        }
+                    });
+
+                    // Share User Profile Action
+                    window._shareUserProfile = async function () {
+                        if (window.PlayerView?.haptic) {
+                            window.PlayerView.haptic(25);
+                        } else if (window.navigator?.vibrate) {
+                            try { window.navigator.vibrate(25); } catch (e) {}
+                        }
+
+                        let user = null;
+                        try {
+                            user = window.Store ? window.Store.getState('currentUser') : null;
+                            if (!user && window.currentUser) user = window.currentUser;
+                            if (!user) {
+                                const cached = localStorage.getItem('currentUser') || localStorage.getItem('adminUser');
+                                if (cached) user = JSON.parse(cached);
+                            }
+                        } catch (e) {}
+
+                        const userName = user ? (user.name || user.displayName || 'Jugador Pro') : 'Jugador Pro';
+                        const userId = user ? (user.id || user.uid || '') : '';
+                        const origin = window.location.origin || (window.location.protocol + '//' + window.location.host);
+                        const shareUrl = `${origin}${window.location.pathname}?player=${encodeURIComponent(userId)}`;
+                        const shareTitle = `Ficha de Jugador - ${userName} | Somos Pádel BCN`;
+                        const shareText = `🎾 ¡Hola! Échale un vistazo a mi ficha de jugador y estadísticas en Somos Pádel Barcelona:`;
+
+                        if (navigator.share) {
+                            try {
+                                await navigator.share({
+                                    title: shareTitle,
+                                    text: shareText,
+                                    url: shareUrl
+                                });
+                                return;
+                            } catch (err) {
+                                if (err && err.name === 'AbortError') return;
+                            }
+                        }
+
+                        // Portapapeles fallback
+                        try {
+                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                                await navigator.clipboard.writeText(shareUrl);
+                            } else {
+                                const input = document.createElement('textarea');
+                                input.value = shareUrl;
+                                input.style.position = 'fixed';
+                                input.style.opacity = '0';
+                                document.body.appendChild(input);
+                                input.select();
+                                document.execCommand('copy');
+                                document.body.removeChild(input);
+                            }
+
+                            if (window.NotificationService && window.NotificationService.showToast) {
+                                window.NotificationService.showToast('¡Enlace copiado al portapapeles! 🚀', 'success');
+                            } else {
+                                alert('¡Enlace copiado al portapapeles!');
+                            }
+                        } catch (err) {
+                            console.error('Error al compartir/copiar perfil:', err);
+                        }
+                    };
                 </script>
             </div>
 
@@ -984,30 +1128,19 @@
             </div>
         </div>
 
-        <!-- GLOBAL SIDE DRAWER -->
+        <!-- GLOBAL SIDE DRAWER (CYBER-PADEL PRO) -->
         <div id="side-drawer-container" class="side-drawer-overlay"
-            onclick="this.classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');">
+            onclick="window.closeDrawer ? window.closeDrawer() : (this.classList.remove('open'), document.getElementById('side-drawer-menu')?.classList.remove('open'));">
         </div>
-        <div id="side-drawer-menu" class="side-drawer" style="z-index: 20000;">
-            <div class="drawer-header">
-                <div style="font-weight:800; color:white; font-size:1.2rem;">MENÚ</div>
-                <i class="fas fa-times" style="color:white; font-size:1.4rem;"
-                    onclick="document.getElementById('side-drawer-container').classList.remove('open'); document.getElementById('side-drawer-menu').classList.remove('open');"></i>
-            </div>
-            <!-- Dynamic Menu Section -->
+        <aside id="side-drawer-menu" class="side-drawer" role="dialog" aria-label="Menú principal de SomosPadel">
+            <!-- Dynamic Menu Section (Generado por AppInstance.loadSideMenu) -->
             <div id="dynamic-menu-items">
-                <div style="padding: 20px; text-align: center; color: #888;">
-                    <span class="loader-mini"></span> Cargando menú...
+                <div style="padding: 40px 20px; text-align: center; color: #94a3b8;">
+                    <span class="loader-mini"></span>
+                    <div style="margin-top: 12px; font-weight: 700; font-size: 0.85rem;">Cargando menú SomosPadel...</div>
                 </div>
             </div>
-
-            <!-- New Logout Drawer Item -->
-            <div class="drawer-item"
-                style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20px; color: #ff4d4d;"
-                onclick="window.AuthController && window.AuthController.handleLogout()">
-                <i class="fas fa-power-off"></i> <span>Cerrar Sesión</span>
-            </div>
-        </div>
+        </aside>
 
         <!-- Main Content Area (Scrollable) -->
         <!-- Added pt-130 class logic conceptually via CSS .full-width-mobile applied to children or logic -->
@@ -3244,7 +3377,7 @@
     <script src="js/core/DatabaseService.js" defer></script>
     <script src="js/core/AuthService.js?v=12.3" defer></script>
     <script src="js/core/Router.js?v=6.0" defer></script>
-    <script src="js/core/SmartTicker.js?v=2" defer></script>
+    <script src="js/core/SmartTicker.js?v=3" defer></script>
 
     <!-- Layer 3: Logic Business -->
     <script src="js/modules/common/StandingsService.js" defer></script>
@@ -3260,7 +3393,7 @@
     <script src="js/modules/americanas/AmericanaLogic.js" defer></script>
     <script src="js/modules/americanas/AmericanaService.js?v=1014" defer></script>
     <script src="js/app-init.js" defer></script>
-    <script src="js/app.js?v=3004" defer></script>
+    <script src="js/app.js?v=3005" defer></script>
     <script src="js/modules/common/WhatsAppService.js?v=8.9" defer charset="UTF-8"></script>
     <script src="js/fixed-pairs-logic.js?v=5013" defer></script>
     <script src="js/rotating-pozo-logic.js?v=5013" defer></script>

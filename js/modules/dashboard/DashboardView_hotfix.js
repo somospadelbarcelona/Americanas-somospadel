@@ -606,6 +606,10 @@
                 }
             };
 
+            // Helpers de Categoría y Centro de Juego
+            window.getEventCategoryTheme = (evt) => this.getEventCategoryTheme(evt);
+            window.filterCommandCenterCategory = (cat) => this.filterCommandCenterCategory(cat);
+
             if (window.Store) {
                 this.unsubDashboard = window.Store.subscribe('dashboardData', (data) => {
                     if (window.Router && window.Router.currentRoute === 'dashboard') {
@@ -1038,6 +1042,12 @@
 
 
                     <!-- 3. SOMOSPADEL PLAYER COMMAND CENTER (PRO MATCH & ACTION HUB) -->
+                    <style>
+                        @keyframes pulseDot {
+                            0%, 100% { opacity: 1; transform: scale(1); }
+                            50% { opacity: 0.4; transform: scale(0.85); }
+                        }
+                    </style>
                     <div id="registration-widget-root" style="margin: 0 15px 20px !important; animation: floatUp 0.8s ease-out forwards;">
                         <!-- Match Hub Card Container (Dark Sport Club: Slate #131b2e to #0d1322 + Neon Lima #CCFF00 + Accents) -->
                         <div style="background: linear-gradient(180deg, #131b2e 0%, #0d1322 100%); border-radius: 24px; border: 1.5px solid rgba(255, 255, 255, 0.08); box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4); padding: 18px; position: relative; overflow: hidden;">
@@ -1046,17 +1056,20 @@
                             <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(204, 255, 0, 0.06) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
                             <div style="position: absolute; bottom: -40px; left: -40px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
 
-                            <!-- Header Bar: Star Lima + DESTACADOS + Acción a la derecha -->
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; position: relative; z-index: 2;">
+                            <!-- Header Bar: Dot Neón Lima + CENTRO DE JUEGO + Live Status Pill -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; position: relative; z-index: 2;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="font-size: 1rem; color: #CCFF00; filter: drop-shadow(0 0 8px rgba(204, 255, 0, 0.6)); line-height: 1;">⭐</span>
-                                    <span style="font-size: 0.78rem; font-weight: 900; color: #ffffff; letter-spacing: 1.2px; text-transform: uppercase;">DESTACADOS</span>
+                                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #CCFF00; display: inline-block; box-shadow: 0 0 10px #CCFF00; animation: pulseDot 1.5s infinite; flex-shrink: 0;"></span>
+                                    <span style="font-size: 0.78rem; font-weight: 950; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase;">CENTRO DE JUEGO</span>
                                 </div>
-                                <div id="header-destacados-action" onclick="window.dashNavigate('entrenos', 'header')" style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #CCFF00; font-weight: 900; letter-spacing: 0.5px; transition: opacity 0.2s; -webkit-tap-highlight-color: transparent;" onmouseover="this.style.opacity='0.8';" onmouseout="this.style.opacity='1';">
-                                    <span>Ver todo</span>
-                                    <i class="fas fa-arrow-right" style="font-size: 0.62rem;"></i>
+                                <div id="header-hub-status" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); padding: 4px 10px; border-radius: 10px; font-size: 0.65rem; color: #cbd5e1; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+                                    <span id="header-hub-status-dot" style="width: 6px; height: 6px; border-radius: 50%; background: #22c55e; flex-shrink: 0; display: inline-block;"></span>
+                                    <span id="header-hub-status-text">EN DIRECTO</span>
                                 </div>
                             </div>
+
+                            <!-- Chips de Navegación Rápida / Filtros de Categoría -->
+                            <div id="command-center-chips-root" style="margin-bottom: 12px; position: relative; z-index: 2;"></div>
 
                             <!-- Dynamic Content Container -->
                             <div id="live-scroller-inner">
@@ -3129,254 +3142,630 @@
                 </div>`;
         }
 
+        /**
+         * SISTEMA CROMÁTICO INTELIGENTE POR CATEGORÍA DE EVENTO
+         * Retorna la identidad visual deportiva premium según la naturaleza de la actividad
+         * @param {Object} evt 
+         * @returns {Object} Tema completo con colores, gradientes, bordes, badges e iconos
+         */
+        getEventCategoryTheme(evt) {
+            if (!evt) {
+                return {
+                    categoryName: 'open',
+                    badgeText: '🏆 OPEN',
+                    badgeBg: '#0284c7',
+                    badgeTextColor: '#ffffff',
+                    badgeShadow: 'box-shadow: 0 0 14px rgba(2, 132, 199, 0.5);',
+                    iconHtml: '<i class="fas fa-trophy" style="color: #38bdf8;"></i>',
+                    cardBg: 'linear-gradient(145deg, #071629 0%, #0e2746 100%)',
+                    cardBorder: '1px solid rgba(56, 189, 248, 0.3)',
+                    ctaColor: '#38bdf8',
+                    targetRoute: 'americanas',
+                    accentColor: '#38bdf8'
+                };
+            }
+
+            const type = (evt.type || evt.event_type || evt.eventType || '').toLowerCase();
+            const name = (evt.name || evt.title || evt.eventName || evt.tournamentName || '').toLowerCase();
+            const format = (evt.format || evt.mode || '').toLowerCase();
+            const cat = (evt.category || '').toLowerCase();
+            const gender = (evt.gender || evt.sexo || '').toLowerCase();
+            const combined = `${type} ${name} ${format} ${cat} ${gender}`;
+
+            // 1. 🎾 Entreno / Pozo / Clase Técnica
+            if (
+                type === 'entreno' || type === 'pozo' || type === 'clase' ||
+                combined.includes('entreno') || combined.includes('entrenamiento') ||
+                combined.includes('pozo') || combined.includes('clase') ||
+                combined.includes('tecnica') || combined.includes('técnica')
+            ) {
+                return {
+                    categoryName: 'entreno',
+                    badgeText: '🎾 ENTRENO',
+                    badgeBg: '#ef4444',
+                    badgeTextColor: '#ffffff',
+                    badgeShadow: 'box-shadow: 0 0 14px rgba(239, 68, 68, 0.5);',
+                    iconHtml: '<i class="fas fa-fire-alt" style="color: #ef4444;"></i>',
+                    cardBg: 'linear-gradient(145deg, #18080c 0%, #2a0c14 100%)',
+                    cardBorder: '1px solid rgba(239, 68, 68, 0.3)',
+                    ctaColor: '#ff7a59',
+                    targetRoute: 'entrenos',
+                    accentColor: '#ef4444'
+                };
+            }
+
+            // 5. ⭐ Torneo Especial / Master / Express
+            if (
+                combined.includes('master') || combined.includes('especial') ||
+                combined.includes('express') || combined.includes('oro') ||
+                combined.includes('pro') || combined.includes('final') ||
+                combined.includes('champions') || combined.includes('nocturna')
+            ) {
+                return {
+                    categoryName: 'especial',
+                    badgeText: '⭐ MASTER',
+                    badgeBg: '#CCFF00',
+                    badgeTextColor: '#0a192f',
+                    badgeShadow: 'box-shadow: 0 0 14px rgba(204, 255, 0, 0.4);',
+                    iconHtml: '<i class="fas fa-medal" style="color: #CCFF00;"></i>',
+                    cardBg: 'linear-gradient(145deg, #1a1804 0%, #2d2a07 100%)',
+                    cardBorder: '1px solid rgba(204, 255, 0, 0.3)',
+                    ctaColor: '#CCFF00',
+                    targetRoute: 'americanas',
+                    accentColor: '#CCFF00'
+                };
+            }
+
+            // 2. 🌸 Americana / Torneo Femenino
+            if (
+                combined.includes('femenin') || combined.includes('chicas') ||
+                combined.includes('women') || combined.includes('fem') ||
+                gender === 'f' || gender === 'femenino'
+            ) {
+                return {
+                    categoryName: 'femenino',
+                    badgeText: '🌸 FEMENINO',
+                    badgeBg: '#d946ef',
+                    badgeTextColor: '#ffffff',
+                    badgeShadow: 'box-shadow: 0 0 14px rgba(217, 70, 239, 0.5);',
+                    iconHtml: '<i class="fas fa-crown" style="color: #d946ef;"></i>',
+                    cardBg: 'linear-gradient(145deg, #190a24 0%, #2a0e3a 100%)',
+                    cardBorder: '1px solid rgba(217, 70, 239, 0.3)',
+                    ctaColor: '#f472b6',
+                    targetRoute: 'americanas',
+                    accentColor: '#d946ef'
+                };
+            }
+
+            // 3. ⚡ Americana / Torneo Mixto
+            if (
+                combined.includes('mixt') || combined.includes('mix') ||
+                gender === 'mxt' || gender === 'mixto'
+            ) {
+                return {
+                    categoryName: 'mixto',
+                    badgeText: '⚡ MIXTO',
+                    badgeBg: '#f97316',
+                    badgeTextColor: '#ffffff',
+                    badgeShadow: 'box-shadow: 0 0 14px rgba(249, 115, 22, 0.5);',
+                    iconHtml: '<i class="fas fa-bolt" style="color: #f97316;"></i>',
+                    cardBg: 'linear-gradient(145deg, #1f1205 0%, #331e08 100%)',
+                    cardBorder: '1px solid rgba(249, 115, 22, 0.3)',
+                    ctaColor: '#fb923c',
+                    targetRoute: 'americanas',
+                    accentColor: '#f97316'
+                };
+            }
+
+            // 4. 🏆 Americana / Torneo Masculino u Open
+            const isMasc = combined.includes('masculin') || combined.includes('chicos') || combined.includes('men') || gender === 'm' || gender === 'masculino';
+            return {
+                categoryName: isMasc ? 'masculino' : 'open',
+                badgeText: isMasc ? '🏆 MASCULINO' : '🏆 OPEN',
+                badgeBg: '#0284c7',
+                badgeTextColor: '#ffffff',
+                badgeShadow: 'box-shadow: 0 0 14px rgba(2, 132, 199, 0.5);',
+                iconHtml: '<i class="fas fa-trophy" style="color: #38bdf8;"></i>',
+                cardBg: 'linear-gradient(145deg, #071629 0%, #0e2746 100%)',
+                cardBorder: '1px solid rgba(56, 189, 248, 0.3)',
+                ctaColor: '#38bdf8',
+                targetRoute: 'americanas',
+                accentColor: '#38bdf8'
+            };
+        }
+
+        /**
+         * Manejador de filtrado y navegación rápida por categorías en el Centro de Juego
+         * @param {string} cat 'todos' | 'entrenos' | 'americanas' | 'partidas'
+         */
+        filterCommandCenterCategory(cat) {
+            if (window._ccActiveFilter === cat && cat !== 'todos') {
+                // Segundo toque: navegación directa al listado completo
+                const route = (cat === 'entrenos') ? 'entrenos' : (cat === 'partidas' ? 'partidas_abiertas' : 'americanas');
+                window.dashNavigate(route, 'chips_double_tap');
+                return;
+            }
+            if (cat === 'partidas') {
+                window.dashNavigate('partidas_abiertas', 'chips');
+                return;
+            }
+            window._ccActiveFilter = cat;
+            if (window.DashboardView && typeof window.DashboardView.renderLiveWidget === 'function') {
+                window.DashboardView.renderLiveWidget(window._lastDashboardContext || {});
+            }
+        }
+
         async renderLiveWidget(context = {}) {
             try {
-                // 1. DATA GATHERING (INTEL) - Fresh fetch for real-time accuracy
-                const [allEvents, weatherData] = await Promise.all([
-                    window.AmericanaService ? window.AmericanaService.getAllActiveEvents() : [],
-                    window.WeatherService ? window.WeatherService.getDashboardWeather() : []
-                ]);
+                // Ensure global helpers exist
+                window._lastDashboardContext = context || {};
+                window.getEventCategoryTheme = (evt) => this.getEventCategoryTheme(evt);
+                window.filterCommandCenterCategory = (cat) => this.filterCommandCenterCategory(cat);
 
-                console.log(`🧠[Match Command Center] Processing ${allEvents.length} events for player command hub.`);
-
-                // 2. HEADER WEATHER PILL SYNC
-                const weatherPill = document.getElementById('header-weather-pill');
-                if (weatherPill && weatherData && weatherData[0]) {
-                    const w = weatherData[0];
-                    const ballSpeed = w.temp > 20 ? 'Rápida' : 'Lenta';
-                    weatherPill.innerHTML = `
-                        <span>${w.icon || '☀️'}</span>
-                        <span style="color:#0a192f; font-weight:850;">${w.temp}°C ${w.name.toUpperCase()}</span>
-                        <span style="color:#0284c7; font-size:0.62rem; font-weight:900;">• BOLA ${ballSpeed.toUpperCase()}</span>
-                    `;
+                if (!window.showWeatherDetails) {
+                    window.showWeatherDetails = function() {
+                        const weatherWidget = document.getElementById('weather-widget-root');
+                        if (weatherWidget) {
+                            weatherWidget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    };
                 }
 
-                // 3. USER CONTEXT & EVENT CLASSIFICATION (ENTRENO VS AMERICANA)
+                // 1. DATA GATHERING (INTEL) - Fresh fetch with memory caching for sub-millisecond filtering
+                let allEvents = [];
+                let weatherData = [];
+
+                if (window._lastEventsData && window._lastWeatherData && window._ccEventsFetchedRecently) {
+                    allEvents = window._lastEventsData;
+                    weatherData = window._lastWeatherData;
+                } else {
+                    [allEvents, weatherData] = await Promise.all([
+                        window.AmericanaService ? window.AmericanaService.getAllActiveEvents() : [],
+                        window.WeatherService ? window.WeatherService.getDashboardWeather() : []
+                    ]);
+                    window._lastEventsData = allEvents;
+                    window._lastWeatherData = weatherData;
+                    window._ccEventsFetchedRecently = true;
+                    setTimeout(() => { window._ccEventsFetchedRecently = false; }, 30000); // 30s cache
+                }
+
+                console.log(`🧠 [Match Command Center] Processing ${allEvents.length} events for player command hub.`);
+
+                // 2. USER CONTEXT & EVENT CLASSIFICATION
                 const user = (window.Store ? window.Store.getState('currentUser') : null) || {};
                 const userLevel = parseFloat(user.level || user.self_rate_level || 3.5).toFixed(2);
                 const userRank = (context && context.newRank && context.newRank !== '-') ? context.newRank : (user.rank || '12');
                 const upcomingCount = (context && context.upcomingMatches) ? context.upcomingMatches : 0;
 
-                // Precision helper to distinguish Entreno vs Americana
-                const isEntrenoEvent = (evt) => {
-                    if (!evt) return false;
-                    const type = (evt.type || '').toLowerCase();
-                    const name = (evt.name || '').toLowerCase();
-                    return type === 'entreno' || name.includes('entreno') || name.includes('pozo') || name.includes('clase');
-                };
-
-                // Open active events
+                // Open active events sorted by date
                 const openEvents = allEvents
                     .filter(a => ['open', 'upcoming', 'scheduled'].includes(a.status))
                     .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                const openEntrenos = openEvents.filter(isEntrenoEvent);
-                const openAmericanas = openEvents.filter(e => !isEntrenoEvent(e));
+                const openEntrenos = openEvents.filter(e => this.getEventCategoryTheme(e).categoryName === 'entreno');
+                const openAmericanas = openEvents.filter(e => this.getEventCategoryTheme(e).categoryName !== 'entreno');
+
+                // Current Active Filter ('todos' default)
+                const activeFilter = window._ccActiveFilter || 'todos';
+
+                // Update Live Status Pill in Centro de Juego Header (No arbitrary redirection)
+                const hubStatusText = document.getElementById('header-hub-status-text');
+                const hubStatusDot = document.getElementById('header-hub-status-dot');
+                if (hubStatusText) {
+                    let statusLabel = `${openEvents.length} ACTIVOS`;
+                    if (activeFilter === 'entrenos') {
+                        statusLabel = `${openEntrenos.length} ${openEntrenos.length === 1 ? 'ENTRENO' : 'ENTRENOS'}`;
+                    } else if (activeFilter === 'americanas') {
+                        statusLabel = `${openAmericanas.length} ${openAmericanas.length === 1 ? 'AMERICANA' : 'AMERICANAS'}`;
+                    } else if (openEvents.length > 0) {
+                        statusLabel = `${openEvents.length} ACTIVOS`;
+                    } else {
+                        statusLabel = 'EN DIRECTO';
+                    }
+                    hubStatusText.textContent = statusLabel;
+                    if (hubStatusDot) {
+                        hubStatusDot.style.background = (openEvents.length > 0) ? '#22c55e' : '#94a3b8';
+                        hubStatusDot.style.boxShadow = (openEvents.length > 0) ? '0 0 6px rgba(34, 197, 94, 0.6)' : 'none';
+                    }
+                }
+
+                // Render Quick Category Filter Chips in header root
+                const chipsRoot = document.getElementById('command-center-chips-root');
+                if (chipsRoot) {
+                    const chipsConfig = [
+                        { id: 'todos', label: 'Todos', badge: '' },
+                        { id: 'entrenos', label: '🎾 Entrenos', badge: openEntrenos.length > 0 ? `${openEntrenos.length}` : '' },
+                        { id: 'americanas', label: '🏆 Americanas', badge: openAmericanas.length > 0 ? `${openAmericanas.length}` : '' },
+                        { id: 'partidas', label: '⚡ Partidas', badge: '' }
+                    ];
+
+                    let chipsHtml = `
+                    <div style="display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px;">
+                    `;
+
+                    chipsConfig.forEach(chip => {
+                        const isActive = activeFilter === chip.id;
+                        const activeStyle = isActive 
+                            ? 'background: rgba(204, 255, 0, 0.15); border: 1.5px solid #CCFF00; color: #CCFF00; box-shadow: 0 0 12px rgba(204, 255, 0, 0.35); font-weight: 950;' 
+                            : 'background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; font-weight: 800;';
+                        const dotHtml = (chip.id === 'todos' && isActive) 
+                            ? '<span style="width: 6px; height: 6px; background: #CCFF00; border-radius: 50%; display: inline-block; box-shadow: 0 0 6px #CCFF00;"></span>' 
+                            : '';
+                        const badgeCountHtml = chip.badge 
+                            ? `<span style="background: ${isActive ? '#CCFF00' : 'rgba(255,255,255,0.15)'}; color: ${isActive ? '#0a192f' : '#ffffff'}; font-size: 0.54rem; font-weight: 900; padding: 1px 5px; border-radius: 6px; margin-left: 3px;">${chip.badge}</span>` 
+                            : '';
+
+                        chipsHtml += `
+                        <button onclick="window.filterCommandCenterCategory('${chip.id}')" 
+                                style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 9999px; font-size: 0.68rem; cursor: pointer; white-space: nowrap; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); user-select: none; -webkit-tap-highlight-color: transparent; outline: none; ${activeStyle}">
+                            ${dotHtml}
+                            <span>${chip.label}</span>
+                            ${badgeCountHtml}
+                        </button>
+                        `;
+                    });
+                    chipsHtml += `</div>`;
+                    chipsRoot.innerHTML = chipsHtml;
+                }
+
+                // Filter events based on active category
+                let displayEvents = openEvents;
+                if (activeFilter === 'entrenos') {
+                    displayEvents = openEntrenos;
+                } else if (activeFilter === 'americanas') {
+                    displayEvents = openAmericanas;
+                }
+
+                // Weather data extraction for Meteo Card
+                const w = (weatherData && weatherData[0]) ? weatherData[0] : null;
+                const weatherTemp = (w && w.temp !== undefined && w.temp !== '--') ? w.temp : 24;
+                const weatherIcon = (w && w.icon) ? w.icon : '☁️';
+                const weatherCity = (w && w.name) ? w.name : 'EL PRAT';
+                const weatherHumidity = (w && w.humidity !== undefined && w.humidity !== '--') ? w.humidity : 79;
+                let ballSpeed = 'RÁPIDA';
+                if (w && w.intelligence && w.intelligence.ballSpeed) {
+                    ballSpeed = w.intelligence.ballSpeed;
+                } else if (w && w.temp !== undefined && w.temp !== '--') {
+                    ballSpeed = w.temp > 20 ? 'RÁPIDA' : 'LENTA';
+                }
+
+                // Tactical tip recommendation based on real padel conditions
+                let tacticalTip = 'Condiciones óptimas • Varía efectos';
+                if (weatherHumidity > 70) {
+                    tacticalTip = 'Paredes pesadas • Usa tiros planos';
+                } else if (weatherTemp > 22) {
+                    tacticalTip = 'Bola viva • Acelera el remate';
+                } else if (weatherTemp < 16) {
+                    tacticalTip = 'Bola lenta • Construye el punto';
+                }
 
                 let hubHtml = '';
 
-                // 4. SMART IMPACT CARD (HERO MATCH OR PRIORITY CHALLENGE)
-                if (context && (context.hasMatchToday || context.hasMatchThisWeek)) {
-                    // Player has an upcoming match!
-                    const isMyEntreno = (context.matchType === 'entreno') || ((context.eventName || '').toLowerCase().includes('entreno'));
-                    const matchBadgeText = isMyEntreno ? '🎾 TU PRÓXIMO ENTRENO' : '🏆 TU PRÓXIMO PARTIDO';
-                    const targetRoute = isMyEntreno ? 'entrenos' : 'agenda';
+                // 3. METEO CARD (LEFT COLUMN) WITH TACTICAL PADEL TIP
+                const meteoCardHtml = `
+                <div onclick="if(window.showWeatherDetails){window.showWeatherDetails();}else if(window.DashboardView&&window.DashboardView.toggleWeatherDetails){window.DashboardView.toggleWeatherDetails('EL_PRAT');}" 
+                     style="background: linear-gradient(145deg, #1a2232 0%, #242f44 100%); border-radius: 20px; border: 1px solid rgba(56, 189, 248, 0.25); padding: 13px 12px; display: flex; flex-direction: column; justify-content: space-between; min-height: 154px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 8px 22px rgba(0,0,0,0.3); position: relative; overflow: hidden;" 
+                     onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+                    
+                    <!-- Ambient Glow -->
+                    <div style="position: absolute; top: -20px; right: -20px; width: 70px; height: 70px; background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
 
-                    hubHtml += `
-                    <div onclick="window.dashNavigate('${targetRoute}', 'match')" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1.5px solid #93c5fd; border-radius: 20px; padding: 16px; cursor: pointer; position: relative; overflow: hidden; margin-bottom: 14px; box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08); transition: transform 0.15s ease; user-select: none; -webkit-tap-highlight-color: transparent;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; position: relative; z-index: 2;">
-                            <span style="background: #2563eb; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 4px 10px; border-radius: 7px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(37,99,235,0.3);">
-                                ${matchBadgeText}
-                            </span>
-                            <span style="font-size: 0.72rem; color: #1e40af; font-weight: 950; background: #ffffff; padding: 3px 9px; border-radius: 6px; border: 1px solid #bfdbfe;">
-                                ${context.matchTime || 'Hoy'} • PISTA ${context.court || '?'}
-                            </span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2;">
+                        <span style="background: #2563eb; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(37,99,235,0.4);">
+                            METEO
+                        </span>
+                        <div style="background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 2px 5px; font-size: 0.56rem; font-weight: 800; color: #38bdf8; display: inline-flex; align-items: center; gap: 2px; white-space: nowrap;">
+                            <span>💧</span> ${weatherHumidity}%
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2;">
-                            <div style="flex: 1; padding-right: 12px;">
-                                <div style="color: #0a192f; font-size: 0.96rem; font-weight: 950; line-height: 1.25; margin-bottom: 4px;">
-                                    ${context.eventName || 'Partido Oficial SomosPadel'}
-                                </div>
-                                <div style="font-size: 0.70rem; color: #475569; font-weight: 600;">
-                                    Pareja: <strong style="color: #0a192f;">${context.partner || 'Asignando...'}</strong>
-                                    ${context.opponents ? ` • vs <span style="color:#64748b;">${context.opponents}</span>` : ''}
-                                </div>
-                            </div>
-                            <div style="background: #0a192f; color: #ffffff; font-size: 0.70rem; font-weight: 900; padding: 9px 14px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; box-shadow: 0 4px 14px rgba(10,25,47,0.25); pointer-events: none;">
-                                VER PISTA <i class="fas fa-chevron-right" style="color: #CCFF00; font-size: 0.6rem;"></i>
+                    </div>
+
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin: 2px 0; position: relative; z-index: 2;">
+                        <span style="color: #ffffff; font-size: 1.85rem; font-weight: 900; line-height: 1; letter-spacing: -1px;">${weatherTemp}°C</span>
+                        <span style="font-size: 1.45rem; line-height: 1; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));">${weatherIcon}</span>
+                    </div>
+
+                    <div style="position: relative; z-index: 2;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.60rem; margin-bottom: 3px;">
+                            <span style="color: #ffffff; font-weight: 900; letter-spacing: 0.4px; text-transform: uppercase;">${weatherCity}</span>
+                            <span style="color: #94a3b8; font-weight: 750;">BOLA: <span style="color: #38bdf8; font-weight: 900;">${ballSpeed.toUpperCase()}</span></span>
+                        </div>
+
+                        <!-- Mini Tactical Tip Widget (Inteligencia de Juego) -->
+                        <div style="background: rgba(10, 16, 30, 0.75); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 4px 6px; display: flex; align-items: center; gap: 5px;" title="Consejo táctico según el clima">
+                            <span style="font-size: 0.65rem; line-height: 1; flex-shrink: 0;">🎯</span>
+                            <div style="color: #cbd5e1; font-size: 0.54rem; font-weight: 800; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                ${tacticalTip}
                             </div>
                         </div>
                     </div>
-                    `;
-                } else if (openEvents.length > 0) {
-                    const topEvt = openEvents[0];
-                    const isEntreno = isEntrenoEvent(topEvt);
-                    const maxPlayers = topEvt.max_players || 24;
-                    const currentPlayers = (topEvt.registeredPlayers || topEvt.players || []).length;
-                    const spotsLeft = Math.max(0, maxPlayers - currentPlayers);
-                    const dateText = this.formatDateShort ? this.formatDateShort(topEvt.date) : 'HOY';
+                </div>
+                `;
 
-                    // Light Sport Club Palette: Soft mint for Entreno, Warm champagne for Americana
-                    const cardBg = isEntreno
-                        ? 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)'
-                        : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)';
-                    const cardBorder = isEntreno ? '#86efac' : '#fde68a';
-                    const badgeBg = isEntreno ? '#10b981' : '#f59e0b';
-                    const badgeText = isEntreno ? '🎾 ENTRENO POZO DESTACADO' : '🏆 AMERICANA DESTACADA';
-                    const titleColor = isEntreno ? '#064e3b' : '#78350f';
-                    const dateColor = isEntreno ? '#047857' : '#92400e';
-                    const spotsColor = isEntreno ? '#15803d' : '#b45309';
-                    const spotsBorder = isEntreno ? '#86efac' : '#fde68a';
-                    const targetRoute = isEntreno ? 'entrenos' : 'americanas';
+                // 4. FEATURED / MULTI-EVENT SWIPE TRACK (RIGHT COLUMN)
+                let featuredCardHtml = '';
 
-                    hubHtml += `
-                    <div onclick="window.dashNavigate('${targetRoute}', 'event')" style="background: ${cardBg}; border: 1.5px solid ${cardBorder}; border-radius: 20px; padding: 16px; cursor: pointer; position: relative; overflow: hidden; margin-bottom: 14px; box-shadow: 0 8px 25px rgba(10, 25, 47, 0.04); transition: transform 0.15s ease; user-select: none; -webkit-tap-highlight-color: transparent;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+                if (context && (context.hasMatchToday || context.hasMatchThisWeek)) {
+                    // Personal upcoming match priority card
+                    const isMyEntreno = (context.matchType === 'entreno') || ((context.eventName || '').toLowerCase().includes('entreno')) || ((context.eventName || '').toLowerCase().includes('pozo'));
+                    const matchBadgeText = isMyEntreno ? '🎾 TU ENTRENO' : '🏆 TU PARTIDO';
+                    const targetRoute = isMyEntreno ? 'entrenos' : 'agenda';
+                    const myMatchTitle = (context.eventName || (isMyEntreno ? 'Entreno Semanal' : 'Partido Oficial')).toUpperCase();
+                    const myMatchTime = `${context.matchTime || 'Hoy'} • PISTA ${context.court || '?'}`;
+
+                    featuredCardHtml = `
+                    <div onclick="window.dashNavigate('${targetRoute}', 'featured_match')" 
+                         style="background: linear-gradient(145deg, #0c1a2e 0%, #172c4c 100%); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 20px; padding: 13px 12px; display: flex; flex-direction: column; justify-content: space-between; min-height: 154px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 8px 22px rgba(0,0,0,0.3);" 
+                         onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; position: relative; z-index: 2;">
-                            <span style="background: ${badgeBg}; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 4px 10px; border-radius: 7px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.12);">
-                                ${badgeText}
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="background: #2563eb; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 0 14px rgba(37, 99, 235, 0.5);">
+                                ${matchBadgeText}
                             </span>
-                            <span style="font-size: 0.68rem; color: ${spotsColor}; font-weight: 850; background: #ffffff; padding: 3px 9px; border-radius: 6px; border: 1px solid ${spotsBorder}; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-                                ${spotsLeft > 0 ? `⚡ ${spotsLeft} plazas libres` : '🔴 COMPLETO (RESERVA)'}
-                            </span>
+                            <i class="fas fa-calendar-check" style="color: #38bdf8; font-size: 0.95rem;"></i>
                         </div>
 
-                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; position: relative; z-index: 2;">
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="color: ${titleColor}; font-size: 0.98rem; font-weight: 950; line-height: 1.25; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                    ${(topEvt.name || (isEntreno ? 'Entreno SomosPadel' : 'Americana SomosPadel')).toUpperCase()}
-                                </div>
-                                <div style="font-size: 0.72rem; color: ${dateColor}; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                    <i class="far fa-calendar-check" style="color: ${isEntreno ? '#10b981' : '#f59e0b'};"></i>
-                                    <span>${dateText} • ${topEvt.time || '18:00'}</span>
-                                    <span style="opacity: 0.75;">• ${isEntreno ? 'Formato Pozo' : 'Americana Oficial'}</span>
+                        <div style="margin: 2px 0;">
+                            <div style="color: #ffffff; font-size: 0.84rem; font-weight: 900; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                ${myMatchTitle}
+                            </div>
+                            <div style="font-size: 0.62rem; color: #94a3b8; font-weight: 700; margin-top: 3px;">
+                                ${myMatchTime}
+                            </div>
+                        </div>
+
+                        <div style="color: #CCFF00; font-size: 0.65rem; font-weight: 950; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.5px;">
+                            VER PISTA <i class="fas fa-arrow-right" style="font-size: 0.55rem;"></i>
+                        </div>
+                    </div>
+                    `;
+                } else if (displayEvents.length > 0) {
+                    // Multi-event swipe track with exact chromatic identity per category
+                    const slidesHtml = displayEvents.map((evt, idx) => {
+                        const theme = this.getEventCategoryTheme(evt);
+                        const eventNameText = (evt.name || evt.title || (theme.categoryName === 'entreno' ? 'ENTRENO MIXTO' : 'AMERICANA')).toUpperCase();
+                        const dateText = this.formatDateShort ? this.formatDateShort(evt.date) : 'HOY';
+                        const timeText = `${dateText} • ${evt.time || '18:00'}`;
+
+                        // Urgency & Capacity calculations
+                        const max = evt.max_players || evt.maxPlayers || 16;
+                        const current = (evt.registeredPlayers || evt.players || []).length;
+                        const spotsLeft = Math.max(0, max - current);
+                        const percentFilled = Math.min(100, Math.max(8, Math.round((current / max) * 100)));
+                        const minLevel = evt.min_level || evt.minLevel || '2.5';
+                        const maxLevel = evt.max_level || evt.maxLevel || '4.5';
+
+                        const urgencyColor = spotsLeft <= 3 ? '#ef4444' : (spotsLeft <= 6 ? '#f59e0b' : '#34d399');
+                        const urgencyText = spotsLeft > 0 ? `${spotsLeft} libres` : 'Completo';
+                        const barGradient = spotsLeft <= 3 
+                            ? 'linear-gradient(90deg, #f59e0b, #ef4444)' 
+                            : 'linear-gradient(90deg, #10b981, #38bdf8)';
+
+                        return `
+                        <div onclick="window.dashNavigate('${theme.targetRoute}', 'featured_event')" 
+                             style="min-width: 100%; max-width: 100%; flex-shrink: 0; scroll-snap-align: start; box-sizing: border-box; background: ${theme.cardBg}; border: ${theme.cardBorder}; border-radius: 20px; padding: 13px 12px; display: flex; flex-direction: column; justify-content: space-between; min-height: 154px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 8px 22px rgba(0,0,0,0.3); position: relative; overflow: hidden;" 
+                             onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="background: ${theme.badgeBg}; color: ${theme.badgeTextColor || '#ffffff'}; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase; ${theme.badgeShadow}">
+                                    ${theme.badgeText}
+                                </span>
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    ${displayEvents.length > 1 ? `<span style="font-size: 0.50rem; color: #94a3b8; font-weight: 850; background: rgba(0,0,0,0.45); padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08);">${idx + 1}/${displayEvents.length}</span>` : ''}
+                                    <span style="font-size: 0.90rem; line-height: 1; filter: drop-shadow(0 0 6px ${theme.accentColor});">${theme.iconHtml}</span>
                                 </div>
                             </div>
-                            <div style="background: #0a192f; color: #CCFF00; font-size: 0.75rem; font-weight: 950; padding: 10px 16px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(10,25,47,0.3); flex-shrink: 0; pointer-events: none;">
-                                APUNTARME <i class="fas fa-arrow-right" style="font-size: 0.62rem;"></i>
+
+                            <div style="margin: 2px 0;">
+                                <div style="color: #ffffff; font-size: 0.82rem; font-weight: 900; line-height: 1.18; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;" title="${eventNameText}">
+                                    ${eventNameText}
+                                </div>
+                                <div style="font-size: 0.58rem; color: #94a3b8; font-weight: 700; margin-top: 2px;">
+                                    ${timeText} • <span style="color: #cbd5e1; font-weight: 800;">Niv ${minLevel}-${maxLevel}</span>
+                                </div>
+
+                                <!-- Mini Progress Bar / Aforo Urgente -->
+                                <div style="margin-top: 4px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.54rem; font-weight: 850; margin-bottom: 2px;">
+                                        <span style="color: ${urgencyColor}; display: inline-flex; align-items: center; gap: 2px;">
+                                            <span>⚡</span> ${urgencyText}
+                                        </span>
+                                        <span style="color: #64748b; font-size: 0.50rem;">${current}/${max}</span>
+                                    </div>
+                                    <div style="width: 100%; height: 3px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                                        <div style="width: ${percentFilled}%; height: 100%; background: ${barGradient}; border-radius: 3px;"></div>
+                                    </div>
+                                </div>
                             </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="color: ${theme.ctaColor}; font-size: 0.65rem; font-weight: 950; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.5px;">
+                                    RESERVAR AHORA <i class="fas fa-arrow-right" style="font-size: 0.55rem;"></i>
+                                </div>
+                                ${displayEvents.length > 1 ? `<span style="font-size: 0.48rem; color: #64748b; font-weight: 700; letter-spacing: 0.2px;">👉 desliza</span>` : ''}
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+
+                    featuredCardHtml = `
+                    <div style="width: 100%; overflow: hidden; position: relative; border-radius: 20px;">
+                        <div class="events-carousel-track" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; width: 100%; gap: 8px;">
+                            ${slidesHtml}
                         </div>
                     </div>
                     `;
                 } else {
-                    // Quick challenge fallback
-                    hubHtml += `
-                    <div onclick="window.dashNavigate('partidas_abiertas', 'hub')" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1.5px solid #bae6fd; border-radius: 20px; padding: 16px; cursor: pointer; margin-bottom: 14px; box-shadow: 0 8px 24px rgba(2, 132, 199, 0.06); user-select: none; -webkit-tap-highlight-color: transparent;">
+                    // Empty state fallback tailored to current filter
+                    const emptyTitle = activeFilter === 'entrenos' ? 'Sin Entrenos Hoy' : (activeFilter === 'americanas' ? 'Sin Americanas' : '¿Ganas de jugar?');
+                    const emptySub = activeFilter === 'entrenos' ? 'Ver americanas abiertas' : 'Monta una partida libre';
+                    const emptyRoute = activeFilter === 'entrenos' ? 'americanas' : 'partidas_abiertas';
+                    const emptyAction = activeFilter === 'entrenos' ? 'VER AMERICANAS' : 'BUSCAR PISTA';
+
+                    featuredCardHtml = `
+                    <div onclick="window.dashNavigate('${emptyRoute}', 'featured_empty')" 
+                         style="background: linear-gradient(145deg, #0d1527 0%, #152038 100%); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 20px; padding: 13px 12px; display: flex; flex-direction: column; justify-content: space-between; min-height: 154px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 8px 22px rgba(0,0,0,0.3);" 
+                         onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <span style="background: #0284c7; color: white; font-size: 0.58rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; text-transform: uppercase;">🎾 PISTAS Y PARTIDAS</span>
-                                <div style="color: #0c4a6e; font-size: 0.95rem; font-weight: 950; margin-top: 6px;">¿Ganas de jugar hoy?</div>
-                                <div style="font-size: 0.70rem; color: #475569; margin-top: 2px;">Encuentra o crea una partida abierta con jugadores de tu nivel.</div>
+                            <span style="background: #0284c7; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase;">
+                                🎾 ACTIVIDADES
+                            </span>
+                            <i class="fas fa-bolt" style="color: #38bdf8; font-size: 0.95rem;"></i>
+                        </div>
+
+                        <div style="margin: 2px 0;">
+                            <div style="color: #ffffff; font-size: 0.84rem; font-weight: 900; line-height: 1.2;">
+                                ${emptyTitle}
                             </div>
-                            <div style="background: #0a192f; color: #ffffff; font-size: 0.72rem; font-weight: 950; padding: 9px 14px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; pointer-events: none;">
-                                BUSCAR <i class="fas fa-search" style="color: #38bdf8; font-size: 0.65rem;"></i>
+                            <div style="font-size: 0.62rem; color: #94a3b8; font-weight: 600; margin-top: 3px;">
+                                ${emptySub}
                             </div>
+                        </div>
+
+                        <div style="color: #38bdf8; font-size: 0.65rem; font-weight: 950; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.5px;">
+                            ${emptyAction} <i class="fas fa-arrow-right" style="font-size: 0.55rem;"></i>
                         </div>
                     </div>
                     `;
                 }
 
-                // Dynamic Action Card 1: Accurate calculation for Americanas vs Entrenos (Light Palette)
+                // Combine Top Grid (Meteo + Featured / Swipe Carousel)
+                hubHtml += `
+                <style>
+                    .events-carousel-track::-webkit-scrollbar { display: none !important; }
+                    @keyframes pulseBadgeDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
+                </style>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; user-select: none; -webkit-tap-highlight-color: transparent;">
+                    ${meteoCardHtml}
+                    ${featuredCardHtml}
+                </div>
+                `;
+
+                // 5. SMART QUICK ACTIONS DOCK 2x2 WITH LUMINOUS IDENTITY PER CARD
+                // Dock Card 1 (Eventos / Entrenos) adapts directly to the top active activity
                 let eventCardTitle = 'Americanas & Entrenos';
                 let eventCardIcon = '🏆';
                 let eventCardBadge = `${openEvents.length} DISPONIBLES`;
-                let eventCardBadgeBg = '#dcfce7';
-                let eventCardBadgeBorder = '#86efac';
-                let eventCardBadgeColor = '#15803d';
+                let eventCardBadgeBg = 'rgba(16, 185, 129, 0.18)';
+                let eventCardBadgeBorder = 'rgba(16, 185, 129, 0.35)';
+                let eventCardBadgeColor = '#34d399';
+                let eventCardBadgeShadow = '0 0 10px rgba(16, 185, 129, 0.25)';
                 let eventCardSubtext = 'Torneos y pozos';
                 let eventCardRoute = 'americanas';
+                let eventCardBg = 'linear-gradient(145deg, #111a2c 0%, #17243b 100%)';
+                let eventCardBorder = '1px solid rgba(56, 189, 248, 0.28)';
 
-                if (openEntrenos.length > 0 && openAmericanas.length === 0) {
-                    // Only Entrenos open
-                    eventCardTitle = 'Entrenos';
-                    eventCardIcon = '🎾';
-                    eventCardBadge = `${openEntrenos.length} DISPONIBLE${openEntrenos.length > 1 ? 'S' : ''}`;
-                    eventCardBadgeBg = '#dcfce7';
-                    eventCardBadgeBorder = '#86efac';
-                    eventCardBadgeColor = '#15803d';
-                    eventCardSubtext = 'Pozos y técnica';
-                    eventCardRoute = 'entrenos';
-                } else if (openAmericanas.length > 0 && openEntrenos.length === 0) {
-                    // Only Americanas open
-                    eventCardTitle = 'Americanas';
-                    eventCardIcon = '🏆';
-                    eventCardBadge = `${openAmericanas.length} DISPONIBLE${openAmericanas.length > 1 ? 'S' : ''}`;
-                    eventCardBadgeBg = '#fef3c7';
-                    eventCardBadgeBorder = '#fde68a';
-                    eventCardBadgeColor = '#b45309';
-                    eventCardSubtext = 'Competición oficial';
-                    eventCardRoute = 'americanas';
-                } else if (openAmericanas.length > 0 && openEntrenos.length > 0) {
-                    // Both open
-                    eventCardTitle = 'Americanas & Entrenos';
-                    eventCardIcon = '🏆';
-                    eventCardBadge = `${openAmericanas.length} Am • ${openEntrenos.length} Ent`;
-                    eventCardBadgeBg = '#dcfce7';
-                    eventCardBadgeBorder = '#86efac';
-                    eventCardBadgeColor = '#15803d';
-                    eventCardSubtext = 'Torneos y pozos';
-                    eventCardRoute = 'americanas';
+                if (openEvents.length > 0) {
+                    const leaderTheme = this.getEventCategoryTheme(openEvents[0]);
+                    eventCardBorder = leaderTheme.cardBorder;
+                    eventCardBg = leaderTheme.cardBg;
+
+                    if (openEntrenos.length > 0 && openAmericanas.length === 0) {
+                        eventCardTitle = 'Entrenos & Pozos';
+                        eventCardIcon = '🎾';
+                        eventCardBadge = `${openEntrenos.length} DISPONIBLE${openEntrenos.length > 1 ? 'S' : ''}`;
+                        eventCardBadgeBg = 'rgba(239, 68, 68, 0.22)';
+                        eventCardBadgeBorder = 'rgba(239, 68, 68, 0.4)';
+                        eventCardBadgeColor = '#f87171';
+                        eventCardBadgeShadow = '0 0 10px rgba(239, 68, 68, 0.3)';
+                        eventCardSubtext = 'Pozos y técnica';
+                        eventCardRoute = 'entrenos';
+                    } else if (openAmericanas.length > 0 && openEntrenos.length === 0) {
+                        eventCardTitle = leaderTheme.categoryName === 'femenino' ? 'Torneo Femenino' : (leaderTheme.categoryName === 'mixto' ? 'Torneo Mixto' : 'Americanas');
+                        eventCardIcon = leaderTheme.categoryName === 'femenino' ? '🌸' : (leaderTheme.categoryName === 'mixto' ? '⚡' : '🏆');
+                        eventCardBadge = `${openAmericanas.length} DISPONIBLE${openAmericanas.length > 1 ? 'S' : ''}`;
+                        eventCardBadgeBg = leaderTheme.badgeBg;
+                        eventCardBadgeBorder = leaderTheme.cardBorder;
+                        eventCardBadgeColor = leaderTheme.badgeTextColor || '#ffffff';
+                        eventCardBadgeShadow = leaderTheme.badgeShadow;
+                        eventCardSubtext = 'Competición oficial';
+                        eventCardRoute = 'americanas';
+                    } else if (openAmericanas.length > 0 && openEntrenos.length > 0) {
+                        eventCardTitle = 'Americanas & Entrenos';
+                        eventCardIcon = '🏆';
+                        eventCardBadge = `${openAmericanas.length} Am • ${openEntrenos.length} Ent`;
+                        eventCardBadgeBg = 'rgba(56, 189, 248, 0.2)';
+                        eventCardBadgeBorder = 'rgba(56, 189, 248, 0.4)';
+                        eventCardBadgeColor = '#38bdf8';
+                        eventCardBadgeShadow = '0 0 10px rgba(56, 189, 248, 0.25)';
+                        eventCardSubtext = 'Torneos y pozos activos';
+                        eventCardRoute = 'americanas';
+                    }
                 } else {
                     eventCardTitle = 'Torneos & Entrenos';
                     eventCardIcon = '🏆';
                     eventCardBadge = 'PRÓXIMAMENTE';
-                    eventCardBadgeBg = '#f1f5f9';
-                    eventCardBadgeBorder = '#cbd5e1';
-                    eventCardBadgeColor = '#64748b';
+                    eventCardBadgeBg = 'rgba(148, 163, 184, 0.12)';
+                    eventCardBadgeBorder = 'rgba(148, 163, 184, 0.2)';
+                    eventCardBadgeColor = '#94a3b8';
+                    eventCardBadgeShadow = 'none';
                     eventCardSubtext = 'Nuevas convocatorias';
                     eventCardRoute = 'americanas';
                 }
 
-                // 5. SMART QUICK ACTIONS DOCK (GRID 2x2 WITH LIVE METRICS - LIGHT CLUB THEME)
+                // Dock Card 3 (Nivel) calculations
+                const levelNum = parseFloat(userLevel) || 3.5;
+                const levelPct = Math.min(100, Math.max(15, Math.round((levelNum / 7.0) * 100)));
+
                 hubHtml += `
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; user-select: none; -webkit-tap-highlight-color: transparent;">
                     
-                    <!-- 1. RETOS / ENTRENOS / AMERICANAS -->
-                    <div onclick="window.dashNavigate('${eventCardRoute}', 'command_hub')" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.02);" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='#ffffff'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.background='#f8fafc'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.02)';">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-size: 1.3rem;">${eventCardIcon}</span>
-                            <span style="background: ${eventCardBadgeBg}; color: ${eventCardBadgeColor}; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid ${eventCardBadgeBorder};">
+                    <!-- 1. RETOS / ENTRENOS / AMERICANAS (Cromática según Categoría) -->
+                    <div onclick="window.dashNavigate('${eventCardRoute}', 'command_hub')" 
+                         style="background: ${eventCardBg}; border: ${eventCardBorder}; border-radius: 16px; padding: 12px 13px; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.25);" 
+                         onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px;">
+                            <span style="font-size: 1.25rem;">${eventCardIcon}</span>
+                            <span style="background: ${eventCardBadgeBg}; color: ${eventCardBadgeColor}; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; border: 1px solid ${eventCardBadgeBorder}; box-shadow: ${eventCardBadgeShadow};">
                                 ${eventCardBadge}
                             </span>
                         </div>
-                        <div style="color: #0a192f; font-size: 0.86rem; font-weight: 950; margin-bottom: 2px;">${eventCardTitle}</div>
-                        <div style="color: #64748b; font-size: 0.65rem; font-weight: 650;">${eventCardSubtext}</div>
+                        <div style="color: #ffffff; font-size: 0.84rem; font-weight: 950; margin-bottom: 2px;">${eventCardTitle}</div>
+                        <div style="color: #94a3b8; font-size: 0.63rem; font-weight: 650;">${eventCardSubtext}</div>
                     </div>
 
-                    <!-- 2. PARTIDAS ABIERTAS -->
-                    <div onclick="window.dashNavigate('partidas_abiertas', 'command_hub')" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.02);" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='#ffffff'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.background='#f8fafc'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.02)';">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-size: 1.3rem;">⚡</span>
-                            <span style="background: #e0f2fe; color: #0284c7; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid #bae6fd;">
-                                EN VIVO
+                    <!-- 2. PARTIDAS ABIERTAS (Acento Cyan Neón #0284c7 / #38bdf8) -->
+                    <div onclick="window.dashNavigate('partidas_abiertas', 'command_hub')" 
+                         style="background: linear-gradient(145deg, #07192c 0%, #0d2546 100%); border: 1px solid rgba(56, 189, 248, 0.32); border-radius: 16px; padding: 12px 13px; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.25);" 
+                         onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px;">
+                            <span style="font-size: 1.25rem; filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.6));">⚡</span>
+                            <span style="background: rgba(2, 132, 199, 0.22); color: #38bdf8; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.38); box-shadow: 0 0 10px rgba(56, 189, 248, 0.25); display: inline-flex; align-items: center; gap: 4px;">
+                                <span style="width: 5px; height: 5px; background: #38bdf8; border-radius: 50%; box-shadow: 0 0 5px #38bdf8; animation: pulseBadgeDot 1.5s infinite;"></span> EN VIVO
                             </span>
                         </div>
-                        <div style="color: #0a192f; font-size: 0.86rem; font-weight: 950; margin-bottom: 2px;">Partidas Libres</div>
-                        <div style="color: #64748b; font-size: 0.65rem; font-weight: 650;">Buscar o montar</div>
+                        <div style="color: #ffffff; font-size: 0.84rem; font-weight: 950; margin-bottom: 2px;">Partidas Libres</div>
+                        <div style="color: #94a3b8; font-size: 0.63rem; font-weight: 650;">Buscar o montar</div>
                     </div>
 
-                    <!-- 3. MI RANKING & NIVEL -->
-                    <div onclick="window.dashNavigate('ranking', 'command_hub')" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.02);" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='#ffffff'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.background='#f8fafc'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.02)';">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-size: 1.3rem;">📈</span>
-                            <span style="background: #fef3c7; color: #b45309; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid #fde68a;">
+                    <!-- 3. MI RANKING & NIVEL (Acento Púrpura Neón #8b5cf6) -->
+                    <div onclick="window.dashNavigate('ranking', 'command_hub')" 
+                         style="background: linear-gradient(145deg, #170d2b 0%, #22123d 100%); border: 1px solid rgba(139, 92, 246, 0.32); border-radius: 16px; padding: 12px 13px; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.25);" 
+                         onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px;">
+                            <span style="font-size: 1.25rem;">📈</span>
+                            <span style="background: rgba(139, 92, 246, 0.22); color: #c084fc; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; border: 1px solid rgba(139, 92, 246, 0.38); box-shadow: 0 0 10px rgba(139, 92, 246, 0.25);">
                                 #${userRank !== '-' ? userRank : 'PRO'} RANK
                             </span>
                         </div>
-                        <div style="color: #0a192f; font-size: 0.86rem; font-weight: 950; margin-bottom: 2px;">Nivel ${userLevel}</div>
-                        <div style="color: #64748b; font-size: 0.65rem; font-weight: 650;">Ver ranking y progreso</div>
+                        <div style="color: #ffffff; font-size: 0.84rem; font-weight: 950; margin-bottom: 2px;">Nivel ${userLevel}</div>
+                        <div style="width: 100%; height: 3px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden; margin: 3px 0 2px;">
+                            <div style="width: ${levelPct}%; height: 100%; background: linear-gradient(90deg, #8b5cf6, #38bdf8); border-radius: 3px;"></div>
+                        </div>
+                        <div style="color: #94a3b8; font-size: 0.60rem; font-weight: 650;">Progreso y ranking</div>
                     </div>
 
-                    <!-- 4. MI AGENDA -->
-                    <div onclick="window.dashNavigate('agenda', 'command_hub')" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.02);" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='#ffffff'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.background='#f8fafc'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.02)';">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-size: 1.3rem;">📅</span>
-                            <span style="background: ${upcomingCount > 0 ? '#dcfce7' : '#f1f5f9'}; color: ${upcomingCount > 0 ? '#15803d' : '#64748b'}; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid ${upcomingCount > 0 ? '#86efac' : '#cbd5e1'};">
-                                ${upcomingCount} CITAS
+                    <!-- 4. MI AGENDA (Acento Esmeralda #10b981) -->
+                    <div onclick="window.dashNavigate('agenda', 'command_hub')" 
+                         style="background: linear-gradient(145deg, #081d16 0%, #0e2d22 100%); border: 1px solid rgba(16, 185, 129, 0.32); border-radius: 16px; padding: 12px 13px; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.25);" 
+                         onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px;">
+                            <span style="font-size: 1.25rem;">📅</span>
+                            <span style="background: ${upcomingCount > 0 ? 'rgba(16, 185, 129, 0.22)' : 'rgba(148, 163, 184, 0.12)'}; color: ${upcomingCount > 0 ? '#34d399' : '#94a3b8'}; font-size: 0.58rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; border: 1px solid ${upcomingCount > 0 ? 'rgba(16, 185, 129, 0.38)' : 'rgba(148, 163, 184, 0.2)'}; box-shadow: ${upcomingCount > 0 ? '0 0 10px rgba(16, 185, 129, 0.25)' : 'none'};">
+                                ${upcomingCount} CITA${upcomingCount === 1 ? '' : 'S'}
                             </span>
                         </div>
-                        <div style="color: #0a192f; font-size: 0.86rem; font-weight: 950; margin-bottom: 2px;">Mi Agenda</div>
-                        <div style="color: #64748b; font-size: 0.65rem; font-weight: 650;">Tus partidos y horarios</div>
+                        <div style="color: #ffffff; font-size: 0.84rem; font-weight: 950; margin-bottom: 2px;">Mi Agenda</div>
+                        <div style="color: #94a3b8; font-size: 0.63rem; font-weight: 650;">${upcomingCount > 0 ? 'Tienes partidos agendados' : 'Tus partidos y horarios'}</div>
                     </div>
 
                 </div>
@@ -3494,14 +3883,18 @@
                 // 2026 UPDATE: Fetch active tournaments for ActionGrid badge
                 if (window.AmericanaService) {
                     const activeEvents = await window.AmericanaService.getAllActiveEvents();
-                    context.activeTournaments = activeEvents.filter(e => e.type === 'americana' && e.status !== 'finished').length;
+                    context.activeTournaments = activeEvents.filter(e => {
+                        const title = (e.name || e.title || '').toLowerCase();
+                        const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase');
+                        return !isEnt && e.status !== 'finished';
+                    }).length;
 
                     // Specific active tournament for QuickStats (if user is in one)
-                    context.activeTournament = activeEvents.find(e =>
-                        e.type === 'americana' &&
-                        e.status !== 'finished' &&
-                        (e.players || []).some(p => p.id === userId)
-                    );
+                    context.activeTournament = activeEvents.find(e => {
+                        const title = (e.name || e.title || '').toLowerCase();
+                        const isEnt = e.type === 'entreno' || title.includes('entreno') || title.includes('pozo') || title.includes('clase');
+                        return !isEnt && e.status !== 'finished' && (e.players || []).some(p => p.id === userId);
+                    });
                 }
 
                 // 5. User's specific participation (re-ordered)
