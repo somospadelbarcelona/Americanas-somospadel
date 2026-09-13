@@ -155,18 +155,18 @@
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    gap: 5px;
+                    gap: 6px;
                     cursor: pointer;
                     transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
                     scroll-snap-align: start;
                     flex-shrink: 0 !important;
-                    min-width: 64px !important;
+                    min-width: 72px !important;
                     -webkit-tap-highlight-color: transparent;
                 }
                 @media (max-width: 600px) {
                     .story-v3-item {
-                        min-width: 56px !important;
-                        gap: 4px;
+                        min-width: 68px !important;
+                        gap: 5px;
                     }
                 }
                 
@@ -185,13 +185,13 @@
 
                 /* Modern Story Ring (Instagram / App Stories Style) */
                 .story-v3-outer {
-                    width: 58px;
-                    height: 58px;
+                    width: 64px;
+                    height: 64px;
                     border-radius: 50%;
                     padding: 2.5px;
                     position: relative;
                     transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
-                    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
                     box-sizing: border-box;
                     display: flex;
                     align-items: center;
@@ -199,9 +199,9 @@
                 }
                 @media (max-width: 600px) {
                     .story-v3-outer {
-                        width: 50px;
-                        height: 50px;
-                        padding: 2px;
+                        width: 62px;
+                        height: 62px;
+                        padding: 2.5px;
                     }
                 }
                 
@@ -227,12 +227,12 @@
                 }
                 
                 .story-v3-inner i {
-                    font-size: 1.25rem;
+                    font-size: 1.35rem;
                     transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
                 }
                 @media (max-width: 600px) {
                     .story-v3-inner i {
-                        font-size: 1.1rem;
+                        font-size: 1.3rem;
                     }
                 }
                 
@@ -242,8 +242,8 @@
                 
                 /* Refined Typography */
                 .story-v3-label {
-                    font-size: 0.68rem;
-                    font-weight: 700; 
+                    font-size: 0.74rem;
+                    font-weight: 800; 
                     color: #475569 !important; 
                     letter-spacing: -0.1px;
                     white-space: nowrap;
@@ -261,8 +261,8 @@
                 }
                 @media (max-width: 600px) {
                     .story-v3-label {
-                        font-size: 0.62rem;
-                        margin-top: 1px;
+                        font-size: 0.72rem;
+                        margin-top: 2px;
                     }
                 }
                 .story-v3-item:hover .story-v3-label {

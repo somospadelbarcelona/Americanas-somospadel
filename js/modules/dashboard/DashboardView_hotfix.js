@@ -1038,22 +1038,22 @@
 
 
                     <!-- 3. SOMOSPADEL PLAYER COMMAND CENTER (PRO MATCH & ACTION HUB) -->
-                    <div id="registration-widget-root" style="margin: 0 15px 22px !important; animation: floatUp 0.8s ease-out forwards;">
-                        <!-- Match Hub Card Container -->
-                        <div style="background: linear-gradient(145deg, #090e1a 0%, #0d1527 50%, #080d1a 100%); border-radius: 26px; border: 1.5px solid rgba(255, 255, 255, 0.08); box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.5), 0 0 25px rgba(204, 255, 0, 0.04); padding: 18px; position: relative; overflow: hidden;">
+                    <div id="registration-widget-root" style="margin: 0 15px 20px !important; animation: floatUp 0.8s ease-out forwards;">
+                        <!-- Match Hub Card Container (SomosPadel Light Sport Club: Clean Pure White + Brand Navy #0a192f + Accents) -->
+                        <div style="background: #ffffff; border-radius: 24px; border: 1.5px solid #e2e8f0; box-shadow: 0 12px 35px rgba(10, 25, 47, 0.05), 0 2px 8px rgba(0, 0, 0, 0.02); padding: 18px; position: relative; overflow: hidden;">
                             
-                            <!-- Ambient Light Accents -->
-                            <div style="position: absolute; top: -40px; right: -40px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(204, 255, 0, 0.15) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
-                            <div style="position: absolute; bottom: -30px; left: -30px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                            <!-- Ambient Light Accents (Subtle Court Glow) -->
+                            <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                            <div style="position: absolute; bottom: -40px; left: -40px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(56, 189, 248, 0.06) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
 
                             <!-- Header Bar: Live Status + Weather Mini-Pill -->
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; position: relative; z-index: 2;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #CCFF00; display: inline-block; box-shadow: 0 0 10px #CCFF00, 0 0 20px rgba(204,255,0,0.5); animation: pulseDot 1.5s infinite; flex-shrink: 0;"></span>
-                                    <span style="font-size: 0.72rem; font-weight: 950; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase;">CENTRO DE JUEGO</span>
+                                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 10px rgba(16,185,129,0.5); animation: pulseDot 1.5s infinite; flex-shrink: 0;"></span>
+                                    <span style="font-size: 0.74rem; font-weight: 950; color: #0a192f; letter-spacing: 1.2px; text-transform: uppercase;">CENTRO DE JUEGO</span>
                                 </div>
-                                <div id="header-weather-pill" onclick="window.showWeatherDetails()" style="cursor: pointer; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); padding: 4px 10px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem; color: #cbd5e1; font-weight: 800; transition: all 0.2s;" onmouseover="this.style.borderColor='rgba(56,189,248,0.4)'; this.style.color='#ffffff';" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)'; this.style.color='#cbd5e1';">
-                                    <i class="fas fa-cloud-sun" style="color: #38bdf8;"></i>
+                                <div id="header-weather-pill" onclick="window.showWeatherDetails()" style="cursor: pointer; background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px 11px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem; color: #0a192f; font-weight: 800; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.03);" onmouseover="this.style.borderColor='#94a3b8'; this.style.background='#f1f5f9';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
+                                    <i class="fas fa-cloud-sun" style="color: #0284c7;"></i>
                                     <span>Meteo Padel</span>
                                 </div>
                             </div>
@@ -1062,13 +1062,13 @@
                             <div id="live-scroller-inner">
                                 <div style="display: flex; flex-direction: column; gap: 12px;">
                                     <!-- Skeleton for Hero Match -->
-                                    <div style="height: 100px; border-radius: 18px; background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.03) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite;"></div>
+                                    <div style="height: 100px; border-radius: 18px; background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite;"></div>
                                     <!-- Skeleton for 4 Quick Actions -->
                                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                        <div style="height: 64px; border-radius: 14px; background: rgba(255,255,255,0.04);"></div>
-                                        <div style="height: 64px; border-radius: 14px; background: rgba(255,255,255,0.04);"></div>
-                                        <div style="height: 64px; border-radius: 14px; background: rgba(255,255,255,0.04);"></div>
-                                        <div style="height: 64px; border-radius: 14px; background: rgba(255,255,255,0.04);"></div>
+                                        <div style="height: 64px; border-radius: 14px; background: #f8fafc; border: 1px solid #e2e8f0;"></div>
+                                        <div style="height: 64px; border-radius: 14px; background: #f8fafc; border: 1px solid #e2e8f0;"></div>
+                                        <div style="height: 64px; border-radius: 14px; background: #f8fafc; border: 1px solid #e2e8f0;"></div>
+                                        <div style="height: 64px; border-radius: 14px; background: #f8fafc; border: 1px solid #e2e8f0;"></div>
                                     </div>
                                 </div>
                             </div>
@@ -1991,10 +1991,13 @@
                         box-shadow: 0 3px 10px rgba(37,211,102,0.35);
                     }
                     
-                    /* Responsive Móvil Exclusivo */
+                    /* Responsive Móvil Exclusivo - Full-Width Experience */
                     @media (max-width: 600px) {
+                        #blog-news-widget-root {
+                            margin: 0 6px 14px !important;
+                        }
                         .blog-widget-main-container {
-                            padding: 16px 12px !important;
+                            padding: 14px 10px !important;
                             border-radius: 22px !important;
                         }
                         .blog-categories-filter {
@@ -2003,40 +2006,23 @@
                         }
                         .blog-filter-btn {
                             padding: 7px 14px !important;
-                            font-size: 0.7rem !important;
+                            font-size: 0.72rem !important;
                             border-radius: 12px !important;
                         }
-                        .premium-blog-compact-card {
-                            padding: 12px 10px !important;
-                            gap: 12px !important;
+                        .premium-blog-magazine-card {
                             border-radius: 18px !important;
                         }
-                        .compact-blog-thumb-box {
-                            width: 82px !important;
-                            height: 82px !important;
-                            border-radius: 14px !important;
+                        .magazine-card-thumb-wrap {
+                            height: 150px !important;
                         }
-                        .compact-blog-title {
-                            font-size: 0.96rem !important;
-                            line-height: 1.28 !important;
-                            margin: 2px 0 3px 0 !important;
+                        .magazine-card-title {
+                            font-size: 1.08rem !important;
+                            line-height: 1.3 !important;
                         }
-                        .compact-blog-snippet {
-                            font-size: 0.74rem !important;
-                            line-height: 1.35 !important;
+                        .magazine-card-snippet {
+                            font-size: 0.8rem !important;
+                            line-height: 1.4 !important;
                             -webkit-line-clamp: 2 !important;
-                        }
-                        .compact-blog-cat {
-                            font-size: 0.6rem !important;
-                            padding: 2px 7px !important;
-                        }
-                        .compact-blog-time {
-                            font-size: 0.64rem !important;
-                        }
-                        .card-quick-btn {
-                            width: 34px !important;
-                            height: 34px !important;
-                            font-size: 0.82rem !important;
                         }
                     }
 
@@ -2262,40 +2248,63 @@
                 const catName = (post.category || 'NOTICIAS').replace(/^[^\s]+\s/, '');
                 return `
                     <div onclick="window.DashboardView.openBlogPost('${post.id}')"
-                         class="premium-blog-compact-card blog-animate-fade-in"
-                         style="display: flex; gap: 14px; align-items: center; padding: 14px 16px; border-radius: 20px; cursor: pointer; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(10,25,47,0.03); animation-delay: ${(index + 1) * 0.04}s;"
-                         onmouseover="this.style.background='#f8fafc';this.style.borderColor='rgba(15,23,42,0.14)';this.style.transform='translateX(3px)';"
-                         onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(15,23,42,0.08)';this.style.transform='translateX(0)';"
+                         class="premium-blog-magazine-card blog-animate-fade-in"
+                         style="display: flex; flex-direction: column; border-radius: 22px; cursor: pointer; background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; box-shadow: 0 4px 18px rgba(10,25,47,0.04); animation-delay: ${(index + 1) * 0.04}s;"
+                         onmouseover="this.style.background='#ffffff';this.style.borderColor='rgba(15,23,42,0.16)';this.style.transform='translateY(-2px)';"
+                         onmouseout="this.style.background='#ffffff';this.style.borderColor='rgba(15,23,42,0.08)';this.style.transform='translateY(0)';"
                     >
-                        <!-- Miniatura Realista de Pádel -->
-                        <div class="compact-blog-thumb-box" style="width: 88px; height: 88px; border-radius: 16px; overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid rgba(15,23,42,0.06);">
-                            <div class="compact-blog-thumb" style="width: 100%; height: 100%; background-image: url('${postImagesMap[post.id]}'); background-size: cover; background-position: center; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);"></div>
-                        </div>
-                        
-                        <!-- Contenido Principal Legible y Amplio -->
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; gap: 6px;">
-                                <span class="compact-blog-cat" style="font-size: 0.65rem; font-weight: 1000; letter-spacing: 0.6px; color: #3f6212; text-transform: uppercase; background: rgba(204,255,0,0.18); border: 1px solid rgba(204,255,0,0.32); padding: 3px 8px; border-radius: 6px;">${catName}</span>
-                                <span class="compact-blog-time" style="font-size: 0.68rem; color: #64748b; font-weight: 750; display: flex; align-items: center; gap: 4px; white-space: nowrap;"><i class="far fa-clock" style="font-size: 0.6rem; color: #4d7c0f;"></i>${post.readTime||'3 min'}</span>
+                        <!-- Imagen Panorámica Grande de Pádel -->
+                        <div class="magazine-card-thumb-wrap" style="position: relative; width: 100%; height: 165px; overflow: hidden; background: #0f172a;">
+                            <div style="width: 100%; height: 100%; background-image: url('${postImagesMap[post.id]}'); background-size: cover; background-position: center; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);" class="compact-blog-thumb"></div>
+                            
+                            <!-- Degradado suave superior e inferior sobre la imagen -->
+                            <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,0.45) 0%, transparent 40%, rgba(15,23,42,0.65) 100%); pointer-events: none;"></div>
+
+                            <!-- Badge de Categoría Flotante (Esquina Superior Izquierda) -->
+                            <div style="position: absolute; top: 12px; left: 12px; z-index: 2;">
+                                <span style="background: #CCFF00; color: #000000; font-size: 0.64rem; font-weight: 1000; padding: 4px 10px; border-radius: 8px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-family: 'Outfit', sans-serif;">${catName}</span>
                             </div>
-                            <h4 class="compact-blog-title" style="margin: 3px 0 4px 0; color: #0f172a; font-weight: 950; font-size: 1.02rem; line-height: 1.32; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif;">${post.title}</h4>
-                            <p class="compact-blog-snippet" style="margin: 0; color: #475569; font-size: 0.78rem; font-weight: 500; line-height: 1.42; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', sans-serif;">${post.snippet}</p>
+
+                            <!-- Acciones Rápidas Flotantes (WhatsApp + Favorito) (Esquina Superior Derecha) -->
+                            <div style="position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; align-items: center; gap: 7px;">
+                                <button onclick="window.DashboardView.shareToWhatsApp('${post.id}', '${post.title.replace(/'/g, "\\'")}', event)"
+                                        class="card-quick-btn whatsapp-btn"
+                                        style="background: rgba(0,0,0,0.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.25); color: #25D366; width: 34px; height: 34px;"
+                                        title="Compartir por WhatsApp">
+                                    <i class="fab fa-whatsapp" style="font-size: 0.95rem;"></i>
+                                </button>
+                                <button onclick="window.DashboardView.toggleSaveBlogPost('${post.id}', event)"
+                                        class="card-quick-btn journal-bookmark-btn"
+                                        data-post-id="${post.id}"
+                                        style="background: rgba(0,0,0,0.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid ${isSaved ? '#CCFF00' : 'rgba(255,255,255,0.25)'}; color: ${isSaved ? '#CCFF00' : '#ffffff'}; width: 34px; height: 34px;"
+                                        title="${isSaved ? 'Eliminar de guardados' : 'Guardar táctica'}">
+                                    <i class="${isSaved ? 'fas' : 'far'} fa-bookmark" style="font-size: 0.85rem;"></i>
+                                </button>
+                            </div>
+
+                            <!-- Meta info sobre la foto (Esquina Inferior Izquierda) -->
+                            <div style="position: absolute; bottom: 10px; left: 14px; z-index: 2; display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 0.68rem; color: #ffffff; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 4px;">
+                                    <i class="far fa-clock" style="color: #CCFF00; font-size: 0.62rem;"></i> ${post.readTime||'3 min'}
+                                </span>
+                                <span style="font-size: 0.68rem; color: rgba(255,255,255,0.85); font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">
+                                    ${post.date||'Hoy'}
+                                </span>
+                            </div>
                         </div>
                         
-                        <!-- Acciones Táctiles (WhatsApp + Favorito) con target táctil cómodo -->
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; margin-left: 2px;">
-                            <button onclick="window.DashboardView.shareToWhatsApp('${post.id}', '${post.title.replace(/'/g, "\\'")}', event)"
-                                    class="card-quick-btn whatsapp-btn"
-                                    title="Compartir por WhatsApp">
-                                <i class="fab fa-whatsapp"></i>
-                            </button>
-                            <button onclick="window.DashboardView.toggleSaveBlogPost('${post.id}', event)"
-                                    class="card-quick-btn journal-bookmark-btn"
-                                    data-post-id="${post.id}"
-                                    style="${isSaved ? 'color:#15803d; border-color:#86efac; background:rgba(34,197,94,0.15);' : ''}"
-                                    title="${isSaved ? 'Eliminar de guardados' : 'Guardar táctica'}">
-                                <i class="${isSaved ? 'fas' : 'far'} fa-bookmark"></i>
-                            </button>
+                        <!-- Contenido Principal: 100% Ancho, Título Grande y Legible -->
+                        <div style="padding: 14px 16px 14px; display: flex; flex-direction: column; gap: 5px;">
+                            <h4 class="magazine-card-title" style="margin: 0; color: #0f172a; font-weight: 950; font-size: 1.15rem; line-height: 1.3; letter-spacing: -0.3px; font-family: 'Outfit', sans-serif;">${post.title}</h4>
+                            <p class="magazine-card-snippet" style="margin: 0; color: #475569; font-size: 0.82rem; font-weight: 500; line-height: 1.45; font-family: 'Inter', sans-serif; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${post.snippet}</p>
+                            
+                            <!-- Pie con enlace "Leer artículo completo" -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; padding-top: 8px; border-top: 1px solid rgba(15, 23, 42, 0.06);">
+                                <span style="font-size: 0.76rem; font-weight: 900; color: #15803d; display: flex; align-items: center; gap: 5px; font-family: 'Outfit', sans-serif;">
+                                    LEER ARTÍCULO <i class="fas fa-arrow-right" style="font-size: 0.65rem; transition: transform 0.2s;"></i>
+                                </span>
+                                <span style="font-size: 0.62rem; color: #94a3b8; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">SOMOSPADEL JOURNAL</span>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -2314,7 +2323,7 @@
                 </div>
             `;
 
-            container.innerHTML = featuredCard + `<div style="display:flex;flex-direction:column;gap:12px;margin-top:12px;">${compactCards}</div>` + historyButtonHtml;
+            container.innerHTML = featuredCard + `<div style="display:flex;flex-direction:column;gap:14px;margin-top:14px;">${compactCards}</div>` + historyButtonHtml;
         }
 
         async openBlogHistory() {
@@ -3134,88 +3143,113 @@
                     const ballSpeed = w.temp > 20 ? 'Rápida' : 'Lenta';
                     weatherPill.innerHTML = `
                         <span>${w.icon || '☀️'}</span>
-                        <span style="color:#ffffff;">${w.temp}°C ${w.name.toUpperCase()}</span>
-                        <span style="color:#38bdf8; font-size:0.62rem; font-weight:900;">• BOLA ${ballSpeed.toUpperCase()}</span>
+                        <span style="color:#0a192f; font-weight:850;">${w.temp}°C ${w.name.toUpperCase()}</span>
+                        <span style="color:#0284c7; font-size:0.62rem; font-weight:900;">• BOLA ${ballSpeed.toUpperCase()}</span>
                     `;
                 }
 
-                // 3. USER CONTEXT EXTRACTION
+                // 3. USER CONTEXT & EVENT CLASSIFICATION (ENTRENO VS AMERICANA)
                 const user = (window.Store ? window.Store.getState('currentUser') : null) || {};
                 const userLevel = parseFloat(user.level || user.self_rate_level || 3.5).toFixed(2);
                 const userRank = (context && context.newRank && context.newRank !== '-') ? context.newRank : (user.rank || '12');
                 const upcomingCount = (context && context.upcomingMatches) ? context.upcomingMatches : 0;
+
+                // Precision helper to distinguish Entreno vs Americana
+                const isEntrenoEvent = (evt) => {
+                    if (!evt) return false;
+                    const type = (evt.type || '').toLowerCase();
+                    const name = (evt.name || '').toLowerCase();
+                    return type === 'entreno' || name.includes('entreno') || name.includes('pozo') || name.includes('clase');
+                };
 
                 // Open active events
                 const openEvents = allEvents
                     .filter(a => ['open', 'upcoming', 'scheduled'].includes(a.status))
                     .sort((a, b) => new Date(a.date) - new Date(b.date));
 
+                const openEntrenos = openEvents.filter(isEntrenoEvent);
+                const openAmericanas = openEvents.filter(e => !isEntrenoEvent(e));
+
                 let hubHtml = '';
 
                 // 4. SMART IMPACT CARD (HERO MATCH OR PRIORITY CHALLENGE)
                 if (context && (context.hasMatchToday || context.hasMatchThisWeek)) {
                     // Player has an upcoming match!
+                    const isMyEntreno = (context.matchType === 'entreno') || ((context.eventName || '').toLowerCase().includes('entreno'));
+                    const matchBadgeText = isMyEntreno ? '🎾 TU PRÓXIMO ENTRENO' : '🏆 TU PRÓXIMO PARTIDO';
+                    const targetRoute = isMyEntreno ? 'entrenos' : 'agenda';
+
                     hubHtml += `
-                    <div onclick="window.dashNavigate('agenda', 'match')" style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.16) 0%, rgba(15, 23, 42, 0.85) 100%); border: 1.5px solid rgba(34, 197, 94, 0.45); border-radius: 20px; padding: 16px; cursor: pointer; position: relative; overflow: hidden; margin-bottom: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: transform 0.2s;" onmousedown="this.style.transform='scale(0.99)'" onmouseup="this.style.transform='scale(1)'">
-                        <div style="position: absolute; top: -25px; right: -25px; width: 90px; height: 90px; background: rgba(34, 197, 94, 0.25); filter: blur(35px); border-radius: 50%; pointer-events: none;"></div>
+                    <div onclick="window.dashNavigate('${targetRoute}', 'match')" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1.5px solid #93c5fd; border-radius: 20px; padding: 16px; cursor: pointer; position: relative; overflow: hidden; margin-bottom: 14px; box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08); transition: transform 0.15s ease; user-select: none; -webkit-tap-highlight-color: transparent;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; position: relative; z-index: 2;">
-                            <span style="background: #22c55e; color: #000000; font-size: 0.58rem; font-weight: 950; padding: 3px 9px; border-radius: 6px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 0 10px rgba(34,197,94,0.4);">
-                                🟢 TU PRÓXIMO PARTIDO
+                            <span style="background: #2563eb; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 4px 10px; border-radius: 7px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(37,99,235,0.3);">
+                                ${matchBadgeText}
                             </span>
-                            <span style="font-size: 0.72rem; color: #86efac; font-weight: 950; background: rgba(0,0,0,0.35); padding: 3px 8px; border-radius: 6px;">
+                            <span style="font-size: 0.72rem; color: #1e40af; font-weight: 950; background: #ffffff; padding: 3px 9px; border-radius: 6px; border: 1px solid #bfdbfe;">
                                 ${context.matchTime || 'Hoy'} • PISTA ${context.court || '?'}
                             </span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2;">
                             <div style="flex: 1; padding-right: 12px;">
-                                <div style="color: #ffffff; font-size: 0.95rem; font-weight: 950; line-height: 1.25; margin-bottom: 4px;">
+                                <div style="color: #0a192f; font-size: 0.96rem; font-weight: 950; line-height: 1.25; margin-bottom: 4px;">
                                     ${context.eventName || 'Partido Oficial SomosPadel'}
                                 </div>
-                                <div style="font-size: 0.70rem; color: #cbd5e1; font-weight: 600;">
-                                    Pareja: <strong style="color: #ffffff;">${context.partner || 'Asignando...'}</strong>
-                                    ${context.opponents ? ` • vs <span style="color:#94a3b8;">${context.opponents}</span>` : ''}
+                                <div style="font-size: 0.70rem; color: #475569; font-weight: 600;">
+                                    Pareja: <strong style="color: #0a192f;">${context.partner || 'Asignando...'}</strong>
+                                    ${context.opponents ? ` • vs <span style="color:#64748b;">${context.opponents}</span>` : ''}
                                 </div>
                             </div>
-                            <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ffffff; font-size: 0.70rem; font-weight: 900; padding: 9px 14px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.25);">
-                                VER PISTA <i class="fas fa-chevron-right" style="font-size: 0.6rem;"></i>
+                            <div style="background: #0a192f; color: #ffffff; font-size: 0.70rem; font-weight: 900; padding: 9px 14px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; box-shadow: 0 4px 14px rgba(10,25,47,0.25); pointer-events: none;">
+                                VER PISTA <i class="fas fa-chevron-right" style="color: #CCFF00; font-size: 0.6rem;"></i>
                             </div>
                         </div>
                     </div>
                     `;
                 } else if (openEvents.length > 0) {
-                    // Open event available to sign up!
                     const topEvt = openEvents[0];
+                    const isEntreno = isEntrenoEvent(topEvt);
                     const maxPlayers = topEvt.max_players || 24;
                     const currentPlayers = (topEvt.registeredPlayers || topEvt.players || []).length;
                     const spotsLeft = Math.max(0, maxPlayers - currentPlayers);
                     const dateText = this.formatDateShort ? this.formatDateShort(topEvt.date) : 'HOY';
 
-                    hubHtml += `
-                    <div onclick="window.dashNavigate('entrenos', 'event')" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(249, 115, 22, 0.1) 45%, rgba(15, 23, 42, 0.85) 100%); border: 1.5px solid rgba(239, 68, 68, 0.4); border-radius: 20px; padding: 16px; cursor: pointer; position: relative; overflow: hidden; margin-bottom: 14px; box-shadow: 0 10px 30px rgba(239,68,68,0.12); transition: transform 0.15s ease; user-select: none; -webkit-tap-highlight-color: transparent;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
-                        <div style="position: absolute; top: -30px; right: -30px; width: 110px; height: 110px; background: rgba(239, 68, 68, 0.3); filter: blur(40px); border-radius: 50%; pointer-events: none;"></div>
-                        <div style="position: absolute; bottom: -20px; left: -20px; width: 90px; height: 90px; background: rgba(249, 115, 22, 0.2); filter: blur(35px); border-radius: 50%; pointer-events: none;"></div>
+                    // Light Sport Club Palette: Soft mint for Entreno, Warm champagne for Americana
+                    const cardBg = isEntreno
+                        ? 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)'
+                        : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)';
+                    const cardBorder = isEntreno ? '#86efac' : '#fde68a';
+                    const badgeBg = isEntreno ? '#10b981' : '#f59e0b';
+                    const badgeText = isEntreno ? '🎾 ENTRENO POZO DESTACADO' : '🏆 AMERICANA DESTACADA';
+                    const titleColor = isEntreno ? '#064e3b' : '#78350f';
+                    const dateColor = isEntreno ? '#047857' : '#92400e';
+                    const spotsColor = isEntreno ? '#15803d' : '#b45309';
+                    const spotsBorder = isEntreno ? '#86efac' : '#fde68a';
+                    const targetRoute = isEntreno ? 'entrenos' : 'americanas';
 
+                    hubHtml += `
+                    <div onclick="window.dashNavigate('${targetRoute}', 'event')" style="background: ${cardBg}; border: 1.5px solid ${cardBorder}; border-radius: 20px; padding: 16px; cursor: pointer; position: relative; overflow: hidden; margin-bottom: 14px; box-shadow: 0 8px 25px rgba(10, 25, 47, 0.04); transition: transform 0.15s ease; user-select: none; -webkit-tap-highlight-color: transparent;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+                        
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; position: relative; z-index: 2;">
-                            <span style="background: #ef4444; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 4px 10px; border-radius: 7px; letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 0 12px rgba(239,68,68,0.5);">
-                                🔥 RETO DESTACADO
+                            <span style="background: ${badgeBg}; color: #ffffff; font-size: 0.58rem; font-weight: 950; padding: 4px 10px; border-radius: 7px; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.12);">
+                                ${badgeText}
                             </span>
-                            <span style="font-size: 0.68rem; color: ${spotsLeft > 0 ? '#fed7aa' : '#fca5a5'}; font-weight: 850; background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px; border: 1px solid ${spotsLeft > 0 ? 'rgba(249,115,22,0.3)' : 'rgba(239,68,68,0.3)'};">
+                            <span style="font-size: 0.68rem; color: ${spotsColor}; font-weight: 850; background: #ffffff; padding: 3px 9px; border-radius: 6px; border: 1px solid ${spotsBorder}; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                                 ${spotsLeft > 0 ? `⚡ ${spotsLeft} plazas libres` : '🔴 COMPLETO (RESERVA)'}
                             </span>
                         </div>
 
                         <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; position: relative; z-index: 2;">
                             <div style="flex: 1; min-width: 0;">
-                                <div style="color: #ffffff; font-size: 0.96rem; font-weight: 950; line-height: 1.25; margin-bottom: 4px; text-shadow: 0 2px 8px rgba(0,0,0,0.5); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                    ${(topEvt.name || 'Americana SomosPadel').toUpperCase()}
+                                <div style="color: ${titleColor}; font-size: 0.98rem; font-weight: 950; line-height: 1.25; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                    ${(topEvt.name || (isEntreno ? 'Entreno SomosPadel' : 'Americana SomosPadel')).toUpperCase()}
                                 </div>
-                                <div style="font-size: 0.72rem; color: #cbd5e1; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                    <i class="far fa-calendar-check" style="color: #CCFF00;"></i>
+                                <div style="font-size: 0.72rem; color: ${dateColor}; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                    <i class="far fa-calendar-check" style="color: ${isEntreno ? '#10b981' : '#f59e0b'};"></i>
                                     <span>${dateText} • ${topEvt.time || '18:00'}</span>
-                                    <span style="color: #94a3b8;">• Nivel 2.5 - 4.5</span>
+                                    <span style="opacity: 0.75;">• ${isEntreno ? 'Formato Pozo' : 'Americana Oficial'}</span>
                                 </div>
                             </div>
-                            <div style="background: #CCFF00; color: #000000; font-size: 0.75rem; font-weight: 950; padding: 10px 16px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 18px rgba(204,255,0,0.4); flex-shrink: 0; pointer-events: none;">
+                            <div style="background: #0a192f; color: #CCFF00; font-size: 0.75rem; font-weight: 950; padding: 10px 16px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(10,25,47,0.3); flex-shrink: 0; pointer-events: none;">
                                 APUNTARME <i class="fas fa-arrow-right" style="font-size: 0.62rem;"></i>
                             </div>
                         </div>
@@ -3224,71 +3258,122 @@
                 } else {
                     // Quick challenge fallback
                     hubHtml += `
-                    <div onclick="window.dashNavigate('partidas_abiertas', 'hub')" style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.14) 0%, rgba(15, 23, 42, 0.85) 100%); border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 20px; padding: 16px; cursor: pointer; margin-bottom: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); user-select: none; -webkit-tap-highlight-color: transparent;">
+                    <div onclick="window.dashNavigate('partidas_abiertas', 'hub')" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1.5px solid #bae6fd; border-radius: 20px; padding: 16px; cursor: pointer; margin-bottom: 14px; box-shadow: 0 8px 24px rgba(2, 132, 199, 0.06); user-select: none; -webkit-tap-highlight-color: transparent;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <span style="background: #0ea5e9; color: white; font-size: 0.58rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; text-transform: uppercase;">🎾 PISTAS Y PARTIDAS</span>
-                                <div style="color: white; font-size: 0.95rem; font-weight: 950; margin-top: 6px;">¿Ganas de jugar hoy?</div>
-                                <div style="font-size: 0.70rem; color: #94a3b8; margin-top: 2px;">Encuentra o crea una partida abierta con jugadores de tu nivel.</div>
+                                <span style="background: #0284c7; color: white; font-size: 0.58rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; text-transform: uppercase;">🎾 PISTAS Y PARTIDAS</span>
+                                <div style="color: #0c4a6e; font-size: 0.95rem; font-weight: 950; margin-top: 6px;">¿Ganas de jugar hoy?</div>
+                                <div style="font-size: 0.70rem; color: #475569; margin-top: 2px;">Encuentra o crea una partida abierta con jugadores de tu nivel.</div>
                             </div>
-                            <div style="background: #38bdf8; color: #000; font-size: 0.72rem; font-weight: 950; padding: 9px 14px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; pointer-events: none;">
-                                BUSCAR <i class="fas fa-search" style="font-size: 0.65rem;"></i>
+                            <div style="background: #0a192f; color: #ffffff; font-size: 0.72rem; font-weight: 950; padding: 9px 14px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; pointer-events: none;">
+                                BUSCAR <i class="fas fa-search" style="color: #38bdf8; font-size: 0.65rem;"></i>
                             </div>
                         </div>
                     </div>
                     `;
                 }
 
-                // 5. SMART QUICK ACTIONS DOCK (GRID 2x2 WITH LIVE METRICS)
+                // Dynamic Action Card 1: Accurate calculation for Americanas vs Entrenos (Light Palette)
+                let eventCardTitle = 'Americanas & Entrenos';
+                let eventCardIcon = '🏆';
+                let eventCardBadge = `${openEvents.length} DISPONIBLES`;
+                let eventCardBadgeBg = '#dcfce7';
+                let eventCardBadgeBorder = '#86efac';
+                let eventCardBadgeColor = '#15803d';
+                let eventCardSubtext = 'Torneos y pozos';
+                let eventCardRoute = 'americanas';
+
+                if (openEntrenos.length > 0 && openAmericanas.length === 0) {
+                    // Only Entrenos open
+                    eventCardTitle = 'Entrenos';
+                    eventCardIcon = '🎾';
+                    eventCardBadge = `${openEntrenos.length} DISPONIBLE${openEntrenos.length > 1 ? 'S' : ''}`;
+                    eventCardBadgeBg = '#dcfce7';
+                    eventCardBadgeBorder = '#86efac';
+                    eventCardBadgeColor = '#15803d';
+                    eventCardSubtext = 'Pozos y técnica';
+                    eventCardRoute = 'entrenos';
+                } else if (openAmericanas.length > 0 && openEntrenos.length === 0) {
+                    // Only Americanas open
+                    eventCardTitle = 'Americanas';
+                    eventCardIcon = '🏆';
+                    eventCardBadge = `${openAmericanas.length} DISPONIBLE${openAmericanas.length > 1 ? 'S' : ''}`;
+                    eventCardBadgeBg = '#fef3c7';
+                    eventCardBadgeBorder = '#fde68a';
+                    eventCardBadgeColor = '#b45309';
+                    eventCardSubtext = 'Competición oficial';
+                    eventCardRoute = 'americanas';
+                } else if (openAmericanas.length > 0 && openEntrenos.length > 0) {
+                    // Both open
+                    eventCardTitle = 'Americanas & Entrenos';
+                    eventCardIcon = '🏆';
+                    eventCardBadge = `${openAmericanas.length} Am • ${openEntrenos.length} Ent`;
+                    eventCardBadgeBg = '#dcfce7';
+                    eventCardBadgeBorder = '#86efac';
+                    eventCardBadgeColor = '#15803d';
+                    eventCardSubtext = 'Torneos y pozos';
+                    eventCardRoute = 'americanas';
+                } else {
+                    eventCardTitle = 'Torneos & Entrenos';
+                    eventCardIcon = '🏆';
+                    eventCardBadge = 'PRÓXIMAMENTE';
+                    eventCardBadgeBg = '#f1f5f9';
+                    eventCardBadgeBorder = '#cbd5e1';
+                    eventCardBadgeColor = '#64748b';
+                    eventCardSubtext = 'Nuevas convocatorias';
+                    eventCardRoute = 'americanas';
+                }
+
+                // 5. SMART QUICK ACTIONS DOCK (GRID 2x2 WITH LIVE METRICS - LIGHT CLUB THEME)
                 hubHtml += `
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; user-select: none; -webkit-tap-highlight-color: transparent;">
                     
-                    <!-- 1. AMERICANAS / RETOS -->
-                    <div onclick="window.dashNavigate('americanas', 'command_hub')" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; position: relative;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='rgba(255,255,255,0.07)'; this.style.borderColor='rgba(204,255,0,0.35)';" onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.08)';">
+                    <!-- 1. RETOS / ENTRENOS / AMERICANAS -->
+                    <div onclick="window.dashNavigate('${eventCardRoute}', 'command_hub')" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.02);" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='#ffffff'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.background='#f8fafc'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.02)';">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-size: 1.3rem;">🏆</span>
-                            <span style="background: rgba(204, 255, 0, 0.12); color: #CCFF00; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid rgba(204, 255, 0, 0.3);">
-                                ${openEvents.length} DISPONIBLES
+                            <span style="font-size: 1.3rem;">${eventCardIcon}</span>
+                            <span style="background: ${eventCardBadgeBg}; color: ${eventCardBadgeColor}; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid ${eventCardBadgeBorder};">
+                                ${eventCardBadge}
                             </span>
                         </div>
-                        <div style="color: #ffffff; font-size: 0.84rem; font-weight: 950; margin-bottom: 2px;">Americanas</div>
-                        <div style="color: #94a3b8; font-size: 0.65rem; font-weight: 650;">Inscripción oficial</div>
+                        <div style="color: #0a192f; font-size: 0.86rem; font-weight: 950; margin-bottom: 2px;">${eventCardTitle}</div>
+                        <div style="color: #64748b; font-size: 0.65rem; font-weight: 650;">${eventCardSubtext}</div>
                     </div>
 
                     <!-- 2. PARTIDAS ABIERTAS -->
-                    <div onclick="window.dashNavigate('partidas_abiertas', 'command_hub')" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; position: relative;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='rgba(255,255,255,0.07)'; this.style.borderColor='rgba(56,189,248,0.35)';" onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.08)';">
+                    <div onclick="window.dashNavigate('partidas_abiertas', 'command_hub')" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.02);" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='#ffffff'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.background='#f8fafc'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.02)';">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span style="font-size: 1.3rem;">⚡</span>
-                            <span style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.3);">
+                            <span style="background: #e0f2fe; color: #0284c7; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid #bae6fd;">
                                 EN VIVO
                             </span>
                         </div>
-                        <div style="color: #ffffff; font-size: 0.84rem; font-weight: 950; margin-bottom: 2px;">Partidas Libres</div>
-                        <div style="color: #94a3b8; font-size: 0.65rem; font-weight: 650;">Buscar o montar</div>
+                        <div style="color: #0a192f; font-size: 0.86rem; font-weight: 950; margin-bottom: 2px;">Partidas Libres</div>
+                        <div style="color: #64748b; font-size: 0.65rem; font-weight: 650;">Buscar o montar</div>
                     </div>
 
                     <!-- 3. MI RANKING & NIVEL -->
-                    <div onclick="window.dashNavigate('ranking', 'command_hub')" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; position: relative;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='rgba(255,255,255,0.07)'; this.style.borderColor='rgba(245,158,11,0.35)';" onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.08)';">
+                    <div onclick="window.dashNavigate('ranking', 'command_hub')" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.02);" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='#ffffff'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.background='#f8fafc'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.02)';">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span style="font-size: 1.3rem;">📈</span>
-                            <span style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3);">
+                            <span style="background: #fef3c7; color: #b45309; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid #fde68a;">
                                 #${userRank !== '-' ? userRank : 'PRO'} RANK
                             </span>
                         </div>
-                        <div style="color: #ffffff; font-size: 0.84rem; font-weight: 950; margin-bottom: 2px;">Nivel ${userLevel}</div>
-                        <div style="color: #94a3b8; font-size: 0.65rem; font-weight: 650;">Ver ranking y progreso</div>
+                        <div style="color: #0a192f; font-size: 0.86rem; font-weight: 950; margin-bottom: 2px;">Nivel ${userLevel}</div>
+                        <div style="color: #64748b; font-size: 0.65rem; font-weight: 650;">Ver ranking y progreso</div>
                     </div>
 
                     <!-- 4. MI AGENDA -->
-                    <div onclick="window.dashNavigate('agenda', 'command_hub')" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; position: relative;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='rgba(255,255,255,0.07)'; this.style.borderColor='rgba(168,85,247,0.35)';" onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.08)';">
+                    <div onclick="window.dashNavigate('agenda', 'command_hub')" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 13px 14px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.02);" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseover="this.style.background='#ffffff'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.background='#f8fafc'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.02)';">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span style="font-size: 1.3rem;">📅</span>
-                            <span style="background: ${upcomingCount > 0 ? 'rgba(34, 197, 94, 0.15)' : 'rgba(148, 163, 184, 0.1)'}; color: ${upcomingCount > 0 ? '#4ade80' : '#94a3b8'}; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid ${upcomingCount > 0 ? 'rgba(34, 197, 94, 0.3)' : 'rgba(148, 163, 184, 0.2)'};">
+                            <span style="background: ${upcomingCount > 0 ? '#dcfce7' : '#f1f5f9'}; color: ${upcomingCount > 0 ? '#15803d' : '#64748b'}; font-size: 0.60rem; font-weight: 950; padding: 3px 7px; border-radius: 6px; border: 1px solid ${upcomingCount > 0 ? '#86efac' : '#cbd5e1'};">
                                 ${upcomingCount} CITAS
                             </span>
                         </div>
-                        <div style="color: #ffffff; font-size: 0.84rem; font-weight: 950; margin-bottom: 2px;">Mi Agenda</div>
-                        <div style="color: #94a3b8; font-size: 0.65rem; font-weight: 650;">Tus partidos y horarios</div>
+                        <div style="color: #0a192f; font-size: 0.86rem; font-weight: 950; margin-bottom: 2px;">Mi Agenda</div>
+                        <div style="color: #64748b; font-size: 0.65rem; font-weight: 650;">Tus partidos y horarios</div>
                     </div>
 
                 </div>
