@@ -824,6 +824,28 @@
                                 <i class="fas fa-chevron-right user-dropdown-item-arrow"></i>
                             </button>
 
+                            <button type="button" class="user-dropdown-item haptic-feedback" onclick="window._closeUserDropdown && window._closeUserDropdown(); window.PadelFutCard && window.PadelFutCard.open()">
+                                <div class="user-dropdown-item-icon" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">
+                                    <i class="fas fa-id-card"></i>
+                                </div>
+                                <div class="user-dropdown-item-content">
+                                    <span class="user-dropdown-item-title">Mi Carta FUT</span>
+                                    <span class="user-dropdown-item-subtitle">FUT Card 3D & Stories de Victoria</span>
+                                </div>
+                                <span style="background: #fbbf24; color: #000; font-size: 0.55rem; font-weight: 950; padding: 2px 6px; border-radius: 6px;">PRO</span>
+                            </button>
+
+                            <button type="button" class="user-dropdown-item haptic-feedback" onclick="window._closeUserDropdown && window._closeUserDropdown(); window.CourtScoreboard && window.CourtScoreboard.open()">
+                                <div class="user-dropdown-item-icon" style="background: rgba(204, 255, 0, 0.15); color: #CCFF00;">
+                                    <i class="fas fa-calculator"></i>
+                                </div>
+                                <div class="user-dropdown-item-content">
+                                    <span class="user-dropdown-item-title">Marcador de Pista</span>
+                                    <span class="user-dropdown-item-subtitle">Modo Pista FIP con Punto de Oro</span>
+                                </div>
+                                <span style="background: #CCFF00; color: #000; font-size: 0.55rem; font-weight: 950; padding: 2px 6px; border-radius: 6px;">LIVE</span>
+                            </button>
+
                             <button type="button" class="user-dropdown-item haptic-feedback" onclick="window._shareUserProfile && window._shareUserProfile()">
                                 <div class="user-dropdown-item-icon icon-share">
                                     <i class="fas fa-share-nodes"></i>
@@ -1889,6 +1911,16 @@
             <div class="dsb-card">
                 <p class="dsb-card-title"><i class="fas fa-grid-2"></i> Acceso Rápido</p>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button onclick="window.CourtScoreboard && window.CourtScoreboard.open()"
+                            style="background: linear-gradient(135deg,#06070a,#111827); color:#CCFF00; border: 1.5px solid rgba(204,255,0,0.6); border-radius:12px; padding:10px 8px; font-size:0.65rem; font-weight:950; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:transform 0.15s; box-shadow: 0 0 10px rgba(204,255,0,0.15);"
+                            onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+                        <i class="fas fa-digital-tachograph" style="font-size:1rem; color:#CCFF00;"></i> Marcador
+                    </button>
+                    <button onclick="window.PadelFutCard && window.PadelFutCard.open(window.Store ? window.Store.getState('currentUser') : {})"
+                            style="background: linear-gradient(135deg,#FFD700,#F59E0B); color:#000; border:none; border-radius:12px; padding:10px 8px; font-size:0.65rem; font-weight:950; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:transform 0.15s;"
+                            onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+                        <i class="fas fa-id-card" style="font-size:1rem;"></i> Carta FUT
+                    </button>
                     <button onclick="window.Router?.navigate('ranking')"
                             style="background: linear-gradient(135deg,#2E61FF,#6366f1); color:#fff; border:none; border-radius:12px; padding:10px 8px; font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:transform 0.15s;"
                             onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
@@ -3202,14 +3234,15 @@
     <script src="js/core/AuthService.js?v=12.3" defer></script>
     <script src="js/core/Router.js?v=6.0" defer></script>
     <script src="js/core/SmartTicker.js?v=3" defer></script>
+    <script src="js/core/UpdateManager.js" defer></script>
 
     <!-- Layer 3: Logic Business -->
-    <script src="js/modules/common/StandingsService.js" defer></script>
+    <script src="js/modules/common/StandingsService.js?v=2.0" defer></script>
     <script src="js/modules/common/GeoService.js" defer></script>
     <script src="js/modules/common/EventService.js" defer></script>
     <script src="js/modules/common/ParticipantService.js" defer></script>
     <script src="js/modules/common/LevelService.js" defer></script>
-    <script src="js/modules/common/ShuffleAnimator.js?v=4.1" defer></script>
+    <script src="js/modules/common/ShuffleAnimator.js?v=4.2" defer></script>
     <!-- NOTIFICATIONS -->
     <script src="js/modules/common/NotificationService.js?v=1.1" defer></script>
     <script src="js/modules/ui/NotificationUi.js" defer></script>
@@ -3217,7 +3250,7 @@
     <script src="js/modules/americanas/AmericanaLogic.js" defer></script>
     <script src="js/modules/americanas/AmericanaService.js?v=1014" defer></script>
     <script src="js/app-init.js" defer></script>
-    <script src="js/app.js?v=3005" defer></script>
+    <script src="js/app.js?v=3006" defer></script>
     <script src="js/modules/common/WhatsAppService.js?v=9.0" defer charset="UTF-8"></script>
     <script src="js/fixed-pairs-logic.js?v=5013" defer></script>
     <script src="js/rotating-pozo-logic.js?v=5013" defer></script>
@@ -3234,28 +3267,29 @@
     <script src="js/modules/dashboard/HeroCard.js" defer></script>
     <script src="js/modules/dashboard/PowerLevelCard.js" defer></script>
     <script src="js/modules/dashboard/QuickStats.js" defer></script>
-    <script src="js/modules/dashboard/ActionGrid.js" defer></script>
+    <script src="js/modules/dashboard/ActionGrid.js?v=ACTION_GRID_FUT_v4" defer></script>
 
     <script src="js/modules/dashboard/GeoRadarWidget.js" defer></script>
-    <script src="js/modules/dashboard/StoryFeedWidget.js?v=12" defer></script>
+    <script src="js/modules/dashboard/StoryFeedWidget.js?v=13" defer></script>
     <script src="js/modules/dashboard/PadelPulse.js?v=6.2" defer></script>
     <script src="js/modules/dashboard/TacticalCourt3D.js?v=2.0" defer></script>
     <script src="js/modules/dashboard/Tactical3DWidget.js?v=2.0" defer></script>
-    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=JOURNAL_PRO_v3" defer></script>
+    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=ACTION_GRID_FUT_v4" defer></script>
     <script src="js/modules/dashboard/DashboardController.js" defer></script>
     <script src="js/utils/RoleService.js" defer></script>
     <script src="js/modules/players/PlayerView.js?v=401" defer></script>
     <script src="js/modules/players/PlayerController.js?v=400" defer></script>
-    <script src="js/modules/americanas/ControlTowerStandings.js" defer></script>
-    <script src="js/modules/americanas/ControlTowerBrackets.js" defer></script>
-    <script src="js/modules/americanas/ControlTowerStats.js" defer></script>
+    <script src="js/modules/ui/EventModals.js?v=5.2" defer></script>
+    <script src="js/modules/americanas/ControlTowerStandings.js?v=5.3" defer></script>
+    <script src="js/modules/americanas/ControlTowerBrackets.js?v=5.0" defer></script>
+    <script src="js/modules/americanas/ControlTowerStats.js?v=5.2" defer></script>
     <script src="js/modules/americanas/ControlTowerReport.js" defer></script>
-    <script src="js/modules/americanas/ControlTowerView.js?v=4041" defer></script>
+    <script src="js/modules/americanas/ControlTowerView.js?v=4044" defer></script>
     <script src="js/modules/americanas/TVView.js?v=2.0" defer></script>
     <script src="js/modules/chat/ChatService.js?v=1.1" defer></script>
     <script src="js/modules/chat/ChatView.js?v=1.2" defer></script>
     <script src="js/modules/americanas/EntrenoLiveView.js" defer></script>
-    <script src="js/modules/americanas/EventsController_V6.js?v=11.6" defer></script>
+    <script src="js/modules/americanas/EventsController_V6.js?v=BATTLE_READY_PRO_v13" defer></script>
     <script src="js/modules/common/SocialShareService.js" defer></script>
     <script src="js/modules/admin/SocialShareView.js" defer></script>
 
@@ -3267,9 +3301,8 @@
     <!-- UI Components -->
     <script src="js/modules/ui/PremiumModal.js" defer></script>
     <script src="js/modules/ui/PlayerAutocomplete.js" defer></script>
-    <script src="js/modules/ui/EventModals.js" defer></script>
     <script src="js/modules/ui/MatchCard.js?v=3.0" defer></script>
-    <script src="js/modules/ui/EventHeader.js?v=2.1" defer></script>
+    <script src="js/modules/ui/EventHeader.js?v=2.2" defer></script>
 
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
@@ -3302,42 +3335,144 @@
 
     <!-- Match Story Card (Post-Match Shareable) -->
     <script src="js/modules/players/MatchStoryCard.js?v=1.4" defer></script>
+    <script src="js/modules/players/PadelFutCard.js?v=1.0" defer></script>
+    <script src="js/modules/court/CourtScoreboard.js?v=1.0" defer></script>
 
     <!-- Entry Point -->
     <script src="js/modules/admin/AICopilot_v4.js?v=4.0" defer></script>
-</body>
 
-<!-- PWA Service Worker AUTO-CLEAN PROTOCOL -->
+<!-- PWA Service Worker REGISTRATION & LIFECYCLE -->
 <script>
-    // ENGINEERS NOTE: Deep Cache Clean SAFEGUARDED
-    try {
-        if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
-            console.log("🛡️ Checking Service Worker Registrations...");
-            navigator.serviceWorker.getRegistrations()
-                .then(function (registrations) {
-                    for (let registration of registrations) {
-                        console.log('🚨 [ENGINEER FIX] Unregistering SW:', registration);
-                        registration.unregister();
-                    }
-                })
-                .catch(err => console.warn("SW Cleanup Skipped (Local/Restricted):", err));
-
-            // Clear Caches if possible
-            if ('caches' in window) {
-                caches.keys().then(function (names) {
-                    for (let name of names) {
-                        console.log('🚨 [ENGINEER FIX] Deleting Cache:', name);
-                        caches.delete(name);
-                    }
-                }).catch(e => console.warn("Cache clear failed:", e));
-            }
-        } else {
-            console.log("📂 Running in FILE protocol - Service Workers disabled by default.");
+    (function () {
+        if (!('serviceWorker' in navigator) || window.location.protocol === 'file:') {
+            console.log("📂 [PWA] Service Workers no disponibles en protocolo file:// o no soportados por el navegador.");
+            return;
         }
-    } catch (e) {
-        console.warn("⚠️ Service Worker/Cache Cleanup bypassed due to environment restrictions.");
-    }
-    console.log("✅ [ENGINEER FIX] System cleansed. Ready for fresh boot.");
+
+        // Notificación flotante elegante y no agresiva de nueva versión disponible
+        function notifyUpdateAvailable(worker) {
+            if (document.getElementById('sp-pwa-update-toast')) return;
+
+            const toast = document.createElement('div');
+            toast.id = 'sp-pwa-update-toast';
+            toast.style.cssText = [
+                'position: fixed',
+                'bottom: 85px',
+                'left: 50%',
+                'transform: translateX(-50%)',
+                'background: rgba(18, 18, 28, 0.96)',
+                'border: 1.5px solid #CCFF00',
+                'border-radius: 16px',
+                'padding: 12px 18px',
+                'color: #ffffff',
+                'z-index: 999999',
+                'display: flex',
+                'align-items: center',
+                'gap: 12px',
+                'box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75)',
+                'backdrop-filter: blur(12px)',
+                '-webkit-backdrop-filter: blur(12px)',
+                'font-family: "Outfit", sans-serif',
+                'font-size: 0.85rem',
+                'max-width: 92vw',
+                'animation: pwaSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1)'
+            ].join(';');
+
+            toast.innerHTML = `
+                <i class="fas fa-bolt" style="color: #CCFF00; font-size: 1.1rem;"></i>
+                <div style="display: flex; flex-direction: column;">
+                    <strong style="font-size: 0.85rem; color: #fff;">Actualización disponible</strong>
+                    <span style="font-size: 0.75rem; color: #94a3b8;">Nueva versión con mejoras de rendimiento</span>
+                </div>
+                <button id="sp-btn-update-now" style="
+                    background: #CCFF00;
+                    color: #000;
+                    border: none;
+                    border-radius: 20px;
+                    padding: 6px 14px;
+                    font-weight: 800;
+                    font-size: 0.75rem;
+                    cursor: pointer;
+                    margin-left: 4px;
+                    white-space: nowrap;
+                ">ACTUALIZAR</button>
+                <button id="sp-btn-update-dismiss" style="
+                    background: transparent;
+                    border: none;
+                    color: #64748b;
+                    cursor: pointer;
+                    padding: 4px;
+                    font-size: 0.9rem;
+                    display: flex;
+                    align-items: center;
+                "><i class="fas fa-times"></i></button>
+            `;
+
+            if (!document.getElementById('sp-pwa-styles')) {
+                const style = document.createElement('style');
+                style.id = 'sp-pwa-styles';
+                style.textContent = '@keyframes pwaSlideUp { from { transform: translate(-50%, 30px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }';
+                document.head.appendChild(style);
+            }
+
+            document.body.appendChild(toast);
+
+            const btnUpdate = toast.querySelector('#sp-btn-update-now');
+            if (btnUpdate) {
+                btnUpdate.addEventListener('click', function () {
+                    btnUpdate.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> APLICANDO...';
+                    if (worker) {
+                        worker.postMessage({ type: 'SKIP_WAITING' });
+                    }
+                    toast.remove();
+                });
+            }
+
+            const btnDismiss = toast.querySelector('#sp-btn-update-dismiss');
+            if (btnDismiss) {
+                btnDismiss.addEventListener('click', function () {
+                    toast.remove();
+                });
+            }
+        }
+
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('./sw.js', { scope: './' })
+                .then(function (registration) {
+                    console.log('🎾 [PWA] Service Worker registrado con éxito. Scope:', registration.scope);
+
+                    // Si ya hay un worker instalado y esperando
+                    if (registration.waiting) {
+                        notifyUpdateAvailable(registration.waiting);
+                    }
+
+                    // Escuchar eventos cuando se descubre una nueva versión
+                    registration.addEventListener('updatefound', function () {
+                        const newWorker = registration.installing;
+                        if (!newWorker) return;
+
+                        newWorker.addEventListener('statechange', function () {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                console.log('✨ [PWA] Nueva versión lista para ser activada.');
+                                notifyUpdateAvailable(newWorker);
+                            }
+                        });
+                    });
+                })
+                .catch(function (error) {
+                    console.warn('⚠️ [PWA] Registro de Service Worker omitido o no disponible:', error);
+                });
+
+            // Recarga limpia cuando el nuevo Service Worker toma el control
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', function () {
+                if (refreshing) return;
+                refreshing = true;
+                console.log('🔄 [PWA] Nuevo Service Worker activado. Recargando de forma transparente...');
+                window.location.reload();
+            });
+        });
+    })();
 </script>
 
 <!-- PRIVACY POLICY MODAL (Fase 6 - Cumplimiento RGPD) -->

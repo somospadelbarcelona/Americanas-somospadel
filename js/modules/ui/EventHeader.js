@@ -96,8 +96,8 @@
                     <button class="tour-subnav-btn ${activeTab === 'results' ? 'active' : ''}" 
                             onclick="window.ControlTowerView.switchTab('results')"
                             style="${activeTab === 'results' ? 'background: #0f172a; color: #ffffff; border-color: #0f172a; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);' : 'background: #f1f5f9; color: #64748b; border-color: #e2e8f0;'}">
-                        <i class="fas fa-calendar-check" style="${activeTab === 'results' ? `color: ${heroAccent};` : ''}"></i>
-                        <span>CALENDARIO</span>
+                        <i class="fas fa-clipboard-check" style="${activeTab === 'results' ? `color: ${heroAccent};` : ''}"></i>
+                        <span>RESULTADOS</span>
                     </button>
                     <button class="tour-subnav-btn ${activeTab === 'live_feed' ? 'active' : ''}" 
                             onclick="window.ControlTowerView.switchTab('live_feed')"

@@ -415,25 +415,65 @@
         }
 
         closeRoundFinishedModal() {
-            window.EventModals.closeRoundFinishedModal();
+            if (window.EventModals?.closeRoundFinishedModal) {
+                window.EventModals.closeRoundFinishedModal();
+            }
         }
 
         showTrainingFinishedModal(finalRound) {
+            if (!window.EventModals?.showTrainingFinishedModal) {
+                console.warn("⚠️ EventModals.showTrainingFinishedModal no está disponible.");
+                return;
+            }
+
             window.EventModals.showTrainingFinishedModal(
                 finalRound,
                 this.allMatches,
                 this.currentAmericanaDoc,
-                (rankingItems, isFixedPairs) => {
+                (rankingItems, isFixedPairs, pairResults) => {
                     const eventDate = this.currentAmericanaDoc?.date || '';
-                    const medals = ['🏆', '🥈', '🥉'];
-                    const shareText = rankingItems.slice(0, 3)
-                        .map((p, i) => `${medals[i]} ${p.name} — ${isFixedPairs ? p.won + ' V' : p.points + ' pts'}`)
+                    const medals = ['🥇', '🥈', '🥉'];
+
+                    let pairShareText = '';
+                    if (pairResults?.winningPair?.names?.length) {
+                        const winNames = pairResults.winningPair.names.join(' & ');
+                        const winScore = (pairResults.winningPair.score !== null && pairResults.winningPair.score !== undefined)
+                            ? ` (${pairResults.winningPair.score}-${pairResults.winningPair.rivalScore})`
+                            : '';
+                        pairShareText += `👑 PAREJA GANADORA (PISTA 1): ${winNames}${winScore}\n`;
+                    }
+                    if (pairResults?.finalistPair?.names?.length) {
+                        const finNames = pairResults.finalistPair.names.join(' & ');
+                        pairShareText += `🥈 PAREJA FINALISTA (PISTA 1): ${finNames}\n`;
+                    }
+                    if (pairShareText) pairShareText += '\n';
+
+                    const shareText = (rankingItems || []).slice(0, 3)
+                        .map((p, i) => {
+                            const diff = (p.diff !== undefined) ? p.diff : ((p.points || 0) - (p.gamesLost || 0));
+                            const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
+                            return `${medals[i]} ${(p.name || 'Jugador').toUpperCase()} — ${p.won || 0}V (${p.played || 0}PJ) • ${p.points || 0} PTS (Dif: ${diffStr})`;
+                        })
                         .join('\n');
-                    const fullText = `🎾 FIN DEL ENTRENO\n📅 ${eventDate}\n\n${shareText}\n\n¡Hasta la próxima! 🏆`;
-                    if (window.WhatsAppService) window.WhatsAppService.shareText(fullText);
+
+                    const fullText = `🏆 CLASIFICACIÓN OFICIAL SOMOSPADEL BCN\n🎾 ${this.currentAmericanaDoc?.name || 'Entreno'}\n📅 ${eventDate}\n\n${pairShareText}🏆 PODIO INDIVIDUAL (TOP 3):\n${shareText}\n\n🎯 Todos los partidos y juegos computan para tu Nivel Oficial SomosPadel.\n📲 Consulta cuadros y estadísticas en la app oficial de SomosPadel BCN 🔥`;
+                    if (window.WhatsAppService?.shareText) {
+                        window.WhatsAppService.shareText(fullText);
+                    } else if (navigator.share) {
+                        navigator.share({ text: fullText }).catch(() => {});
+                    } else {
+                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`, '_blank');
+                    }
                 },
-                (tab) => { this.switchTab(tab); document.getElementById('training-finished-modal')?.remove(); },
-                () => { document.getElementById('training-finished-modal')?.remove(); window.Router.navigate('dashboard'); }
+                (tab) => {
+                    this.mainSection = 'playing';
+                    this.switchTab(tab);
+                    document.getElementById('training-finished-modal')?.remove();
+                },
+                () => {
+                    document.getElementById('training-finished-modal')?.remove();
+                    window.Router?.navigate ? window.Router.navigate('dashboard') : (window.location.hash = '#dashboard');
+                }
             );
         }
 
@@ -686,6 +726,10 @@
         switchTab(tab) {
             this.activeTab = tab;
             this.recalc();
+        }
+
+        setTab(tab) {
+            this.switchTab(tab);
         }
 
         async switchSection(section) {
@@ -1155,9 +1199,10 @@
                             ` : isRoundComplete ? `
                                 <!-- AVANCE DE RONDA / FINALIZACIÓN -->
                                 ${isLastPlannedRound ? `
-                                    <button type="button" onclick="window.ControlTowerView.finishTournament()"
+                                    <button type="button" id="btn-finish-and-standings" 
+                                            onclick="event.stopPropagation(); window.ControlTowerView.finishTournament();"
                                             class="btn-primary-pro"
-                                            style="padding: 15px 22px; font-size: 0.95rem; background: linear-gradient(135deg, #72a800 0%, #00e36d 100%); color: #000000; border: none; border-radius: 16px; font-weight: 1000; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 25px rgba(114, 168, 0, 0.32); cursor: pointer;">
+                                            style="padding: 16px 22px; font-size: 0.96rem; background: linear-gradient(135deg, #CCFF00 0%, #00e36d 100%); color: #000000; border: none; border-radius: 16px; font-weight: 1000; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 25px rgba(204, 255, 0, 0.35); cursor: pointer; transition: transform 0.15s ease;">
                                         🏆 FINALIZAR EVENTO Y VER CLASIFICACIÓN
                                     </button>
                                     <button type="button" onclick="window.ControlTowerView.triggerNextRound(${roundNum})"
@@ -1916,36 +1961,70 @@
         }
 
         async finishTournament() {
-            const confirmed = await window.PremiumModal.confirm({
-                title: "🏆 FINALIZAR TORNEO",
-                message: "¿Estás seguro de dar por finalizado el evento? Se guardará el estado final y podrás consultar la clasificación definitiva.",
-                confirmText: "SÍ, FINALIZAR",
-                cancelText: "CANCELAR",
-                type: 'success'
-            });
-            if (!confirmed) return;
-
-            const isEntreno = this.currentAmericanaDoc?.isEntreno;
-            const col = isEntreno ? 'entrenos' : 'americanas';
             try {
-                await window.db.collection(col).doc(this.currentAmericanaDoc.id).update({
-                    status: 'finished'
-                });
+                // 1. Confirmación segura con fallback
+                let confirmed = true;
+                if (window.PremiumModal && typeof window.PremiumModal.confirm === 'function') {
+                    confirmed = await window.PremiumModal.confirm({
+                        title: "🏆 FINALIZAR EVENTO",
+                        message: "¿Estás seguro de dar por finalizado el evento? Se guardará el estado final y podrás consultar la clasificación definitiva.",
+                        confirmText: "SÍ, FINALIZAR Y VER",
+                        cancelText: "CANCELAR",
+                        type: 'success'
+                    });
+                } else {
+                    confirmed = window.confirm("¿Estás seguro de dar por finalizado el evento y ver la clasificación?");
+                }
+                if (!confirmed) return;
+
+                const eventId = this.currentAmericanaDoc?.id || this.currentAmericanaId || this.eventId;
+                const isEntreno = !!(this.currentAmericanaDoc?.isEntreno || this.isEntreno);
+                const col = isEntreno ? 'entrenos' : 'americanas';
+
+                // 2. Actualización segura en Firestore sin bloquear si hay restricción de red/permisos
+                if (eventId && window.db) {
+                    try {
+                        await window.db.collection(col).doc(eventId).update({
+                            status: 'finished'
+                        });
+                    } catch (dbErr) {
+                        console.warn("Could not update status in primary db (non-fatal):", dbErr);
+                        if (window.FirebaseDB?.americanas?.update) {
+                            try {
+                                await window.FirebaseDB.americanas.update(eventId, { status: 'finished' });
+                            } catch (_) {}
+                        }
+                    }
+                }
+
+                // 3. Actualizar estado local
                 if (this.currentAmericanaDoc) {
                     this.currentAmericanaDoc.status = 'finished';
                 }
+
+                // 4. Efecto de celebración con confeti
                 if (window.confetti) {
-                    window.confetti({ particleCount: 200, spread: 90, origin: { y: 0.5 }, colors: ['#CCFF00', '#00E36D', '#ffffff'] });
+                    try {
+                        window.confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 }, colors: ['#CCFF00', '#00E36D', '#ffffff'] });
+                    } catch (_) {}
                 }
-                window.PremiumModal.alert({
-                    title: "🎉 ¡EVENTO FINALIZADO!",
-                    message: "El evento ha concluido. Consulta ahora el podio y la clasificación general.",
-                    type: 'success'
-                });
-                this.setTab('standings');
-            } catch (e) {
-                console.error("Finish tournament failed:", e);
-                window.PremiumModal.alert({ title: "❌ ERROR", message: e.message, type: 'error' });
+
+                // 5. Si es entreno, desplegar el nuevo modal de gala de fin de entreno
+                const maxRound = (this.allMatches && this.allMatches.length > 0)
+                    ? Math.max(...this.allMatches.map(m => parseInt(m.round || 1)))
+                    : 1;
+
+                if (isEntreno && typeof this.showTrainingFinishedModal === 'function') {
+                    this.showTrainingFinishedModal(maxRound);
+                }
+
+                // 6. Cambiar vista a la pestaña de Posiciones / Clasificación técnica
+                this.switchTab('standings');
+
+            } catch (err) {
+                console.error("Error in finishTournament:", err);
+                // Si ocurre cualquier imprevisto, asegurar que el usuario ve las posiciones
+                this.switchTab('standings');
             }
         }
 

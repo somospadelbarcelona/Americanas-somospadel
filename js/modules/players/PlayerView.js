@@ -181,11 +181,17 @@
                             </div>
 
                             <!-- ACTION BUTTONS -->
-                            <div style="display:flex; gap:10px; margin-top: 25px;">
-                                <button onclick="window.PlayerView.haptic(50); window.PlayerView.shareProfileCard()" class="haptic-feedback" style="background: rgba(204,255,0,0.05); border: 1px solid #CCFF00; color: #CCFF00; padding: 12px 20px; border-radius: 16px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top: 25px;">
+                                <button onclick="window.PlayerView.haptic(50); window.PadelFutCard && window.PadelFutCard.open(window.Store ? window.Store.getState('currentUser') : {})" class="haptic-feedback" style="background: linear-gradient(135deg, #CCFF00, #00E36D); border: none; color: #000; padding: 12px 18px; border-radius: 16px; font-weight: 950; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(204,255,0,0.35);">
+                                    <span>🎴</span> CARTA FUT
+                                </button>
+                                <button onclick="window.PlayerView.haptic(30); window.CourtScoreboard && window.CourtScoreboard.open()" class="haptic-feedback" style="background: #0F172A; border: 1px solid rgba(204,255,0,0.4); color: #CCFF00; padding: 12px 18px; border-radius: 16px; font-weight: 950; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                                    <span>📟</span> MARCADOR
+                                </button>
+                                <button onclick="window.PlayerView.haptic(50); window.PlayerView.shareProfileCard()" class="haptic-feedback" style="background: rgba(204,255,0,0.05); border: 1px solid #CCFF00; color: #CCFF00; padding: 12px 18px; border-radius: 16px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                                     <i class="fas fa-share-alt"></i> COMPARTIR
                                 </button>
-                                <button onclick="window.PlayerView.haptic(30); window.PlayerView.showUpdatePasswordPrompt()" class="haptic-feedback" style="background: #ffffff; border: 1px solid #e2e8f0; color: #0a192f; padding: 12px 20px; border-radius: 16px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer;">
+                                <button onclick="window.PlayerView.haptic(30); window.PlayerView.showUpdatePasswordPrompt()" class="haptic-feedback" style="background: #ffffff; border: 1px solid #e2e8f0; color: #0a192f; padding: 12px 16px; border-radius: 16px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer;">
                                     <i class="fas fa-cog"></i>
                                 </button>
                             </div>

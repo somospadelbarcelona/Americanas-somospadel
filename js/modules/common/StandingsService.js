@@ -63,14 +63,30 @@
 
             return Object.values(stats).sort((a, b) => {
                 if (type === 'entreno') {
-                    // REGLAS DE DESEMPATE ENTRENO (POZO)
-                    // 1. Victorias (Wins)
+                    // 🎾 REGLAS OFICIALES DE DESEMPATE Y CAMPEONES - ENTRENOS SOMOSPADEL BCN
+                    // 1. Victorias totales en el entreno (Won) - Mérito principal de victorias
                     if (b.won !== a.won) return b.won - a.won;
-                    // 2. Veces en Pista 1 (Court 1 Count)
-                    if (b.court1Count !== a.court1Count) return b.court1Count - a.court1Count;
-                    // 3. Posición Final (Last Match Court) - Menor es mejor
+
+                    // 2. DESEMPATE 1: Victoria en el último partido en Pista 1 (Disputan y ganan la victoria anecdótica del entreno en caso de empate)
+                    const aWinLastC1 = (a.lastMatchCourt === 1 && a.lastMatchWon) ? 1 : 0;
+                    const bWinLastC1 = (b.lastMatchCourt === 1 && b.lastMatchWon) ? 1 : 0;
+                    if (bWinLastC1 !== aWinLastC1) return bWinLastC1 - aWinLastC1;
+
+                    // 3. DESEMPATE 2: Pista en el último partido disputado (Pista 1 > Pista 2 > Pista 3...)
                     if (a.lastMatchCourt !== b.lastMatchCourt) return a.lastMatchCourt - b.lastMatchCourt;
-                    // 4. Puntos Totales (Games Won)
+
+                    // 4. DESEMPATE 3: Resultado en la última pista disputada (Ganador de su última pista sobre perdedor de esa misma pista)
+                    const aLastWon = a.lastMatchWon ? 1 : 0;
+                    const bLastWon = b.lastMatchWon ? 1 : 0;
+                    if (bLastWon !== aLastWon) return bLastWon - aLastWon;
+
+                    // 5. DESEMPATE 4: Veces disputadas en Pista 1 a lo largo del entreno (Court 1 Count)
+                    if (b.court1Count !== a.court1Count) return b.court1Count - a.court1Count;
+
+                    // 6. DESEMPATE 5: Diferencia de juegos (Diff: JF - JC)
+                    if (b.diff !== a.diff) return b.diff - a.diff;
+
+                    // 7. DESEMPATE 6: Puntos totales / Juegos ganados a favor (Points / JF)
                     return b.points - a.points;
                 } else {
                     // AMERICANA STANDARD
@@ -180,7 +196,9 @@
                     court1Count: 0,
                     bestCourt: 99,
                     lastMatchCourt: 99,
-                    lastMatchRound: 0
+                    lastMatchRound: 0,
+                    lastMatchWon: false,
+                    wonLastMatchCourt1: false
                 };
             }
             return key;
@@ -192,22 +210,28 @@
             p.gamesLost += scoreOther;
             p.diff = p.points - p.gamesLost;
 
-            if (scoreSelf > scoreOther) {
+            const isWin = scoreSelf > scoreOther;
+            const isDraw = scoreSelf === scoreOther && scoreSelf > 0;
+
+            if (isWin) {
                 p.won++;
                 p.leaguePoints += 3;
-            } else if (scoreSelf === scoreOther && scoreSelf > 0) {
+            } else if (isDraw) {
                 p.draw++;
                 p.leaguePoints += 1;
             } else {
                 p.lost++;
             }
 
-            if (parseInt(court) === 1) p.court1Count++;
-            if (parseInt(court) < p.bestCourt) p.bestCourt = parseInt(court);
+            const courtNum = parseInt(court) || 99;
+            if (courtNum === 1) p.court1Count++;
+            if (courtNum < p.bestCourt) p.bestCourt = courtNum;
 
             if (roundNum >= p.lastMatchRound) {
                 p.lastMatchRound = roundNum;
-                p.lastMatchCourt = parseInt(court);
+                p.lastMatchCourt = courtNum;
+                p.lastMatchWon = isWin;
+                p.wonLastMatchCourt1 = (courtNum === 1 && isWin);
             }
         }
     }

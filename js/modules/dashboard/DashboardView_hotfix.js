@@ -621,32 +621,32 @@
                         window.clearDatabaseCache('americanas');
                         window.clearDatabaseCache('entrenos');
                     }
-                    if (window.DatabaseService && typeof window.DatabaseService.clearCache === 'function') {
-                        window.DatabaseService.clearCache('americanas');
-                        window.DatabaseService.clearCache('entrenos');
-                    }
                     if (window.CacheService) {
                         window.CacheService.remove('americanas', 'all');
                         window.CacheService.remove('entrenos', 'all');
                         window.CacheService.remove('database', 'all_americanas');
                         window.CacheService.remove('database', 'all_entrenos');
                     }
-                    if (window.Router && window.Router.currentRoute === 'dashboard') {
-                        const currentUser = window.Store ? window.Store.getState('currentUser') : null;
-                        if (currentUser && typeof this.buildContext === 'function') {
-                            this.buildContext(currentUser).then(freshContext => {
-                                this.renderLiveWidget(freshContext, true);
-                                if (window.HeroCard) {
-                                    const heroRoot = document.getElementById('hero-card-root');
-                                    if (heroRoot) heroRoot.innerHTML = window.HeroCard.render(freshContext);
-                                }
-                            }).catch(() => {
+                    // DEBOUNCE: evita ráfagas de renders si llegan varios eventModified seguidos
+                    clearTimeout(this._eventModifiedDebounce);
+                    this._eventModifiedDebounce = setTimeout(() => {
+                        if (window.Router && window.Router.currentRoute === 'dashboard') {
+                            const currentUser = window.Store ? window.Store.getState('currentUser') : null;
+                            if (currentUser && typeof this.buildContext === 'function') {
+                                this.buildContext(currentUser).then(freshContext => {
+                                    this.renderLiveWidget(freshContext, true);
+                                    if (window.HeroCard) {
+                                        const heroRoot = document.getElementById('hero-card-root');
+                                        if (heroRoot) heroRoot.innerHTML = window.HeroCard.render(freshContext);
+                                    }
+                                }).catch(() => {
+                                    this.renderLiveWidget(window._lastDashboardContext || {}, true);
+                                });
+                            } else {
                                 this.renderLiveWidget(window._lastDashboardContext || {}, true);
-                            });
-                        } else {
-                            this.renderLiveWidget(window._lastDashboardContext || {}, true);
+                            }
                         }
-                    }
+                    }, 400);
                 });
             }
 
@@ -690,10 +690,7 @@
                 window.clearDatabaseCache('americanas');
                 window.clearDatabaseCache('entrenos');
             }
-            if (window.DatabaseService && typeof window.DatabaseService.clearCache === 'function') {
-                window.DatabaseService.clearCache('americanas');
-                window.DatabaseService.clearCache('entrenos');
-            }
+            // NOTE: window.DatabaseService no existe — ya cubierto por clearDatabaseCache arriba
             if (window.CacheService) {
                 window.CacheService.remove('americanas', 'all');
                 window.CacheService.remove('entrenos', 'all');
@@ -840,6 +837,8 @@
                     <div id="hero-card-root" style="animation: floatUp 0.8s ease-out forwards;">
                         <!-- Content loaded via JS (HeroCard) -->
                     </div>
+
+
 
                     <!-- 🔥 HERO CARD PREMIUM: TEMPORADA 2027 | EQUIPOS SOMOSPADEL -->
                     <div id="season-campaign-banner-root" style="margin: 0 15px 20px !important; animation: floatUp 0.5s ease-out forwards;">
@@ -3310,7 +3309,7 @@
             }
             window._ccActiveFilter = cat;
             if (window.DashboardView && typeof window.DashboardView.renderLiveWidget === 'function') {
-                window.DashboardView.renderLiveWidget(window._lastDashboardContext || {});
+                window.DashboardView.renderLiveWidget(window._lastDashboardContext || {}, true);
             }
         }
 
@@ -3347,10 +3346,7 @@
                         window.clearDatabaseCache('americanas');
                         window.clearDatabaseCache('entrenos');
                     }
-                    if (window.DatabaseService && typeof window.DatabaseService.clearCache === 'function') {
-                        window.DatabaseService.clearCache('americanas');
-                        window.DatabaseService.clearCache('entrenos');
-                    }
+                    // NOTE: window.DatabaseService no existe — ya cubierto por clearDatabaseCache arriba
                     if (window.CacheService) {
                         window.CacheService.remove('americanas', 'all');
                         window.CacheService.remove('entrenos', 'all');
@@ -3458,7 +3454,7 @@
 
                         return `
                         <div onclick="window.dashNavigate('${theme.targetRoute}', 'strip_card')" 
-                             style="min-width: 100%; max-width: 100%; flex-shrink: 0; scroll-snap-align: start; box-sizing: border-box; background: ${theme.cardBg}; border: ${theme.cardBorder}; border-radius: 18px; padding: 10px 14px; min-height: 76px; max-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
+                             style="min-width: 100%; max-width: 100%; flex-shrink: 0; scroll-snap-align: start; box-sizing: border-box; margin-right: 8px; background: ${theme.cardBg}; border: ${theme.cardBorder}; border-radius: 18px; padding: 10px 14px; min-height: 76px; max-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease;"
                              onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                             
                             <!-- Ambient Category Glow -->
@@ -3504,7 +3500,7 @@
                     <style>
                         .compact-strip-track::-webkit-scrollbar { display: none !important; }
                     </style>
-                    <div class="compact-strip-track" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; width: 100%; gap: 8px;">
+                    <div class="compact-strip-track" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; width: 100%; gap: 0;">
                         ${slidesHtml}
                     </div>
                     `;
@@ -3976,6 +3972,16 @@
                 }
             } catch (e) {
                 console.error("❌ HeroCard render failed:", e);
+            }
+
+            // 0.1 Render Action Grid (Accesos Rápidos: Marcador Pista LIVE & Carta FUT PRO)
+            try {
+                const actionGridRoot = document.getElementById('action-grid-root');
+                if (actionGridRoot && window.ActionGrid) {
+                    actionGridRoot.innerHTML = window.ActionGrid.render(context);
+                }
+            } catch (e) {
+                console.error("❌ ActionGrid render failed:", e);
             }
             try {
                 await this.renderLiveWidget(context);

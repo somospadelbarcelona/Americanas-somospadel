@@ -95,7 +95,7 @@
                     </div>
 
                     <!-- 2.5 COMPARACIÓN DE RENDIMIENTO (Powerful Radar Chart) -->
-                    <div id="ranking-performance-chart-container" style="padding: 0 25px 20px; position: relative; z-index: 4; display: none;">
+                    <div id="ranking-performance-chart-container" style="padding: 0 clamp(12px, 3.5vw, 25px) 20px; position: relative; z-index: 4; display: none;">
                         <div style="
                             background: #ffffff;
                             border: 1px solid #e2e8f0;
@@ -130,7 +130,7 @@
                     </div>
 
                     <!-- 3. MI RENDIMIENTO (High-Tech Card) -->
-                    <div style="padding: 0 25px 30px; position: relative; z-index: 4;">
+                    <div style="padding: 0 clamp(12px, 3.5vw, 25px) 25px; position: relative; z-index: 4;">
                         <div style="
                             background: #ffffff;
                             border: 1px solid #e2e8f0;
@@ -174,17 +174,17 @@
                     </div>
 
                     <!-- 🏓 PADEL PULSE / GLOBAL BROADCAST — Widget personalizado -->
-                    <div style="padding: 0 25px 20px; position: relative; z-index: 4;">
+                    <div style="padding: 0 clamp(12px, 3.5vw, 25px) 20px; position: relative; z-index: 4;">
                         <div id="padel-pulse-widget-root" style="animation: floatUp 0.5s ease-out forwards;"></div>
                     </div>
 
                     <!-- STICKY HEADER: TABS + SEARCH -->
-                    <div style="position: sticky; top: 108px; z-index: 1001; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 15px 25px 20px;">
+                    <div style="position: sticky; top: 108px; z-index: 1001; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 12px clamp(12px, 3.5vw, 25px) 16px;">
                         
                         <!-- Navigation Tabs (AMERICANAS / ENTRENOS) -->
                         <div style="background: #e2e8f0; padding: 4px; border-radius: 18px; display: flex; border: 1px solid #cbd5e1; margin-bottom: 14px; gap: 4px;">
                             <button onclick="window.RankingView.switchView('americanas')" 
-                                style="flex: 1; padding: 11px; border-radius: 14px; border: none; font-weight: 950; transition: all 0.25s ease; cursor: pointer; background: ${this.currentView === 'americanas' ? '#0f172a' : 'transparent'}; color: ${this.currentView === 'americanas' ? '#ccff00' : '#475569'}; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 1px; box-shadow: ${this.currentView === 'americanas' ? '0 4px 12px rgba(15, 23, 42, 0.2)' : 'none'};">
+                                 style="flex: 1; padding: 11px; border-radius: 14px; border: none; font-weight: 950; transition: all 0.25s ease; cursor: pointer; background: ${this.currentView === 'americanas' ? '#0f172a' : 'transparent'}; color: ${this.currentView === 'americanas' ? '#ccff00' : '#475569'}; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 1px; box-shadow: ${this.currentView === 'americanas' ? '0 4px 12px rgba(15, 23, 42, 0.2)' : 'none'};">
                                 <i class="fas fa-trophy" style="margin-right: 5px; font-size: 0.7rem; ${this.currentView === 'americanas' ? 'color: #ccff00;' : 'color: #94a3b8;'}"></i> AMERICANAS
                             </button>
                             <button onclick="window.RankingView.switchView('entrenos')" 
@@ -265,7 +265,7 @@
                     </div>
 
                     <!-- Player List Container -->
-                    <div id="ranking-list-body" style="padding: 0 20px calc(140px + env(safe-area-inset-bottom, 20px));">
+                    <div id="ranking-list-body" style="padding: 0 clamp(10px, 3vw, 16px) calc(140px + env(safe-area-inset-bottom, 20px));">
                         ${this.renderRankingList('')}
                     </div>
                 </div>
@@ -603,7 +603,7 @@
                                     ">${p.rank}</div>
                                 </div>
                                 <div style="text-align: center; width: 100%;">
-                                    <div style="font-weight: 950; font-size: 0.78rem; color: #0a192f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 98px; margin: 0 auto;" title="${p.name}">
+                                    <div style="font-weight: 950; font-size: 0.78rem; color: #0a192f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; max-width: 104px; line-height: 1.2; margin: 0 auto;" title="${p.name}">
                                         ${p.name}
                                     </div>
                                     <div style="font-weight: 950; font-size: 0.78rem; color: ${cfg.textColor}; margin-top: 2px;">
@@ -688,29 +688,30 @@
             const index = rank - 1;
 
             // Gamification Badge
-            const badge = p.badge || (window.RankingController ? window.RankingController.getLevelBadge(p.level) : { stars: 3, label: 'GOLD', color: '#b45309', bg: '#fef3c7', border: '#fcd34d', starColor: '#f59e0b', shadow: 'none' });
+            const rawBadge = p.badge || (window.RankingController ? window.RankingController.getLevelBadge(p.level) : { stars: 3, label: 'GOLD' });
+            const badge = this.getBadgeStyles(rawBadge);
             const badgeColor = badge.color || '#b45309';
             const badgeBg = badge.bg || '#fef3c7';
             const badgeBorder = badge.border || '#fcd34d';
             const starColor = badge.starColor || badgeColor;
             const starsHtml = Array(5).fill(0).map((_, i) => 
-                `<i class="fas fa-star" style="font-size: 0.55rem; color: ${i < badge.stars ? starColor : '#cbd5e1'}; margin-right: 1.5px; ${i < badge.stars && badge.shadow ? 'filter: drop-shadow(' + badge.shadow + ');' : ''}"></i>`
+                `<i class="fas fa-star" style="font-size: 0.52rem; color: ${i < badge.stars ? starColor : '#cbd5e1'}; margin-right: 1.5px; ${i < badge.stars && badge.shadow ? 'filter: drop-shadow(' + badge.shadow + ');' : ''}"></i>`
             ).join('');
 
             // Note: pointsToNext logic will be slightly inaccurate when filtered but UX is better this way
             const pointsToNext = prevPlayer ? (prevPlayer.stats[this.currentView].points - pStats.points) : 0;
 
             const trend = (index < 5 && Math.random() > 0.6) ? 'up' : (index > 10 && Math.random() > 0.8 ? 'down' : 'stable');
-            const trendIcon = trend === 'up' ? '<i class="fas fa-caret-up" style="color:#16a34a; font-size:0.85rem;"></i>' : (trend === 'down' ? '<i class="fas fa-caret-down" style="color:#dc2626; font-size:0.85rem;"></i>' : '');
+            const trendIcon = trend === 'up' ? '<i class="fas fa-caret-up" style="color:#16a34a; font-size:0.75rem;"></i>' : (trend === 'down' ? '<i class="fas fa-caret-down" style="color:#dc2626; font-size:0.75rem;"></i>' : '');
 
             return `
                 <div style="
                     background: #ffffff;
-                    border-radius: 20px;
-                    padding: 14px 16px;
+                    border-radius: 18px;
+                    padding: 12px 14px;
                     display: flex;
                     align-items: center;
-                    gap: 12px;
+                    gap: 10px;
                     border: 1px solid #e2e8f0;
                     box-shadow: 0 4px 12px rgba(0,0,0,0.02);
                     animation: floatUp ${0.3 + (index * 0.05)}s ease-out both;
@@ -718,61 +719,61 @@
                     overflow: hidden;
                 ">
                     <!-- Rank & Trend -->
-                    <div style="width: 35px; text-align: center; z-index: 2;">
-                        <div style="font-weight: 950; font-size: ${isTop3 ? '1.2rem' : '0.9rem'}; color: ${rankColor}; line-height: 1;">
+                    <div style="width: 26px; min-width: 26px; flex-shrink: 0; text-align: center; z-index: 2;">
+                        <div style="font-weight: 950; font-size: ${isTop3 ? '1.15rem' : '0.92rem'}; color: ${rankColor}; line-height: 1;">
                             ${rank}
                         </div>
-                        <div style="font-size: 0.7rem; margin-top: 2px;">${trendIcon}</div>
+                        <div style="font-size: 0.65rem; margin-top: 2px;">${trendIcon}</div>
                     </div>
 
                     <!-- Avatar Card -->
-                    <div style="position: relative; z-index: 2;">
+                    <div style="position: relative; z-index: 2; flex-shrink: 0;">
                         <div style="
-                            width: 52px; height: 52px; 
-                            border-radius: 16px; 
+                            width: 46px; height: 46px; min-width: 46px;
+                            border-radius: 14px; 
                             background: #f1f5f9;
                             border: 2px solid ${isTop3 ? rankColor + '66' : '#e2e8f0'};
                             background: ${p.photo_url ? `url('${p.photo_url}') center/cover` : '#f1f5f9'};
                             display: flex; align-items: center; justify-content: center;
                             overflow: hidden;
                         ">
-                            ${!p.photo_url ? `<span style="font-weight:950; color:#334155; font-size:1.1rem;">${p.name.substring(0, 2).toUpperCase()}</span>` : ''}
+                            ${!p.photo_url ? `<span style="font-weight:950; color:#334155; font-size:1rem;">${p.name.substring(0, 2).toUpperCase()}</span>` : ''}
                         </div>
-                        ${isTop3 ? `<div style="position:absolute; top:-8px; left:-8px; font-size:1rem; filter: drop-shadow(0 0 5px ${rankColor});">👑</div>` : ''}
+                        ${isTop3 ? `<div style="position:absolute; top:-7px; left:-7px; font-size:0.95rem; filter: drop-shadow(0 0 5px ${rankColor});">👑</div>` : ''}
                     </div>
 
                     <!-- Info Area -->
                     <div style="flex: 1; min-width: 0; z-index: 2;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div style="font-weight: 950; font-size: 1.05rem; color: #0a192f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                ${p.name}
-                            </div>
-                            <div style="font-size: 0.55rem; font-weight: 950; padding: 2px 7px; border-radius: 6px; background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder}; text-transform: uppercase; letter-spacing: 0.5px;">
-                                ${badge.label}
-                            </div>
+                        <!-- Player Name: Full width with up to 2-line wrap so names are completely readable on mobile -->
+                        <div style="font-weight: 950; font-size: 0.98rem; color: #0a192f; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;" title="${p.name}">
+                            ${p.name}
                         </div>
                         
-                        <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <div style="display: flex;">${starsHtml}</div>
-                            <span style="font-size: 0.7rem; color: #475569; font-weight: 900; text-transform: uppercase;">
+                        <!-- Level, Tier Badge & Role Subtitle -->
+                        <div style="margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <div style="font-size: 0.52rem; font-weight: 950; padding: 2px 6px; border-radius: 5px; background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder}; text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0;">
+                                ${badge.label}
+                            </div>
+                            <span style="font-size: 0.68rem; color: #475569; font-weight: 900; text-transform: uppercase;">
                                 LVL ${p.level.toFixed(2)}
                             </span>
+                            <div style="display: inline-flex; align-items: center;">${starsHtml}</div>
                             ${window.RoleService ? window.RoleService.getBadgeHtml(p.role, true) : ''}
                         </div>
 
                         ${pointsToNext > 0 && pointsToNext < 15 ? `
-                            <div style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.6rem; background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 6px; font-weight: 900; margin-top: 5px; letter-spacing: 0.3px;">
-                                <i class="fas fa-fire" style="color: #ea580c; font-size: 0.6rem;"></i> A ${pointsToNext} PTS DEL PROX. PUESTO
+                            <div style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.58rem; background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 2px 7px; border-radius: 5px; font-weight: 900; margin-top: 4px; letter-spacing: 0.2px;">
+                                <i class="fas fa-fire" style="color: #ea580c; font-size: 0.58rem;"></i> A ${pointsToNext} PTS DEL PROX. PUESTO
                             </div>
                         ` : ''}
                     </div>
 
                     <!-- Score Card -->
-                    <div style="text-align: right; background: ${isTop3 ? '#fefce8' : '#f8fafc'}; padding: 10px 14px; border-radius: 14px; min-width: 82px; border: 1.5px solid ${isTop3 ? '#fef08a' : '#e2e8f0'}; z-index: 2; box-shadow: ${isTop3 ? '0 4px 12px rgba(250, 204, 21, 0.12)' : 'none'};">
-                        <div style="font-weight: 950; font-size: 1.35rem; color: #0a192f; line-height: 1;">
+                    <div style="flex-shrink: 0; text-align: center; background: ${isTop3 ? '#fefce8' : '#f8fafc'}; padding: 8px 10px; border-radius: 14px; min-width: 62px; border: 1.5px solid ${isTop3 ? '#fef08a' : '#e2e8f0'}; z-index: 2; box-shadow: ${isTop3 ? '0 4px 12px rgba(250, 204, 21, 0.12)' : 'none'};">
+                        <div style="font-weight: 950; font-size: 1.25rem; color: #0a192f; line-height: 1;">
                             ${pStats.points}
                         </div>
-                        <div style="font-size: 0.62rem; color: ${isTop3 ? '#854d0e' : '#64748b'}; font-weight: 950; letter-spacing: 0.8px; text-transform: uppercase; margin-top: 4px;">
+                        <div style="font-size: 0.58rem; color: ${isTop3 ? '#854d0e' : '#64748b'}; font-weight: 950; letter-spacing: 0.7px; text-transform: uppercase; margin-top: 3px;">
                             PUNTOS
                         </div>
                     </div>

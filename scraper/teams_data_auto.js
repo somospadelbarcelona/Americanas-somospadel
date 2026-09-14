@@ -274,11 +274,11 @@ window.ExtractedTeamsData = [
       {
         "pos": 3,
         "team": "PÁDEL PEÑA MALAGA 3G",
-        "pj": 6,
-        "pg": 3,
+        "pj": 7,
+        "pg": 4,
         "pp": 3,
         "df": 0,
-        "pts": 10
+        "pts": 12
       },
       {
         "pos": 4,
@@ -292,11 +292,11 @@ window.ExtractedTeamsData = [
       {
         "pos": 5,
         "team": "DAVID LLOYD 3 M",
-        "pj": 6,
+        "pj": 7,
         "pg": 2,
-        "pp": 4,
+        "pp": 5,
         "df": 0,
-        "pts": 8
+        "pts": 9
       },
       {
         "pos": 6,
@@ -537,10 +537,10 @@ window.ExtractedTeamsData = [
         "date": "Dium 13 Set",
         "time": "10:00h",
         "opponent": "CLUB TENNIS VILANOVA 3M",
-        "score": "Pendiente",
+        "score": "En juego",
         "venue": "Club tennis vilanova",
         "isHome": false,
-        "status": "upcoming"
+        "status": "live"
       },
       {
         "j": 10,
@@ -594,13 +594,13 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 9,
-      "date": "Dium 13 Set",
-      "time": "10:00h",
-      "opponent": "CLUB TENNIS VILANOVA 3M",
+      "j": 10,
+      "date": "Diss 19 Set",
+      "time": "16:30h",
+      "opponent": "CPI B EL CASINO GASTROBAR",
       "score": "Pendiente",
-      "venue": "Club tennis vilanova",
-      "isHome": false,
+      "venue": "Padel bcn - el prat",
+      "isHome": true,
       "status": "upcoming"
     },
     "groupStandings": [
@@ -1030,10 +1030,10 @@ window.ExtractedTeamsData = [
     "captain": "Pendiente",
     "subcaptain": "Pendiente",
     "ranking": 1,
-    "points": 17,
+    "points": 19,
     "stats": {
-      "pj": 8,
-      "pg": 6,
+      "pj": 9,
+      "pg": 7,
       "pp": 2,
       "sf": 0,
       "sc": 0
@@ -1230,10 +1230,10 @@ window.ExtractedTeamsData = [
         "date": "Dium 13 Set",
         "time": "13:30h",
         "opponent": "CRAZYXPADEL 4MIXTA LILA",
-        "score": "Pendiente",
+        "score": "2 - 1",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 10,
@@ -1287,24 +1287,24 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 9,
-      "date": "Dium 13 Set",
-      "time": "13:30h",
-      "opponent": "CRAZYXPADEL 4MIXTA LILA",
+      "j": 10,
+      "date": "Dium 20 Set",
+      "time": "16:30h",
+      "opponent": "SOMOS PÁDEL BCN 4XB",
       "score": "Pendiente",
       "venue": "Padel bcn - el prat",
-      "isHome": true,
+      "isHome": false,
       "status": "upcoming"
     },
     "groupStandings": [
       {
         "pos": 1,
         "team": "SOMOS PÁDEL BCN 4XA",
-        "pj": 8,
-        "pg": 6,
+        "pj": 9,
+        "pg": 7,
         "pp": 2,
         "df": 0,
-        "pts": 17,
+        "pts": 19,
         "isCurrent": true
       },
       {
@@ -1319,11 +1319,11 @@ window.ExtractedTeamsData = [
       {
         "pos": 3,
         "team": "CRAZYXPADEL 4MIXTA LILA",
-        "pj": 8,
+        "pj": 9,
         "pg": 5,
-        "pp": 3,
+        "pp": 4,
         "df": 0,
-        "pts": 14
+        "pts": 15
       },
       {
         "pos": 4,
@@ -1336,28 +1336,28 @@ window.ExtractedTeamsData = [
       },
       {
         "pos": 5,
-        "team": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
+        "team": "SOMOS PÁDEL BCN 4XB",
         "pj": 8,
         "pg": 3,
         "pp": 5,
         "df": 0,
-        "pts": 9
+        "pts": 11
       },
       {
         "pos": 6,
+        "team": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
+        "pj": 9,
+        "pg": 3,
+        "pp": 6,
+        "df": 0,
+        "pts": 10
+      },
+      {
+        "pos": 7,
         "team": "MASQUEPADEL",
         "pj": 8,
         "pg": 2,
         "pp": 6,
-        "df": 0,
-        "pts": 9
-      },
-      {
-        "pos": 7,
-        "team": "SOMOS PÁDEL BCN 4XB",
-        "pj": 7,
-        "pg": 2,
-        "pp": 5,
         "df": 0,
         "pts": 9
       },
@@ -1382,11 +1382,11 @@ window.ExtractedTeamsData = [
     "group": "4XB FASE 2 G1",
     "captain": "Pendiente",
     "subcaptain": "Pendiente",
-    "ranking": 7,
-    "points": 9,
+    "ranking": 5,
+    "points": 11,
     "stats": {
-      "pj": 7,
-      "pg": 2,
+      "pj": 8,
+      "pg": 3,
       "pp": 5,
       "sf": 0,
       "sc": 0
@@ -1587,10 +1587,10 @@ window.ExtractedTeamsData = [
         "date": "Dium 13 Set",
         "time": "13:00h",
         "opponent": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
-        "score": "Pendiente",
+        "score": "2 - 1",
         "venue": "Aurial Vilapadel",
         "isHome": false,
-        "status": "upcoming"
+        "status": "completed"
       },
       {
         "j": 10,
@@ -1644,24 +1644,24 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 9,
-      "date": "Dium 13 Set",
-      "time": "13:00h",
-      "opponent": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
+      "j": 10,
+      "date": "Dium 20 Set",
+      "time": "16:30h",
+      "opponent": "SOMOS PÁDEL BCN 4XA",
       "score": "Pendiente",
-      "venue": "Aurial Vilapadel",
-      "isHome": false,
+      "venue": "Padel bcn - el prat",
+      "isHome": true,
       "status": "upcoming"
     },
     "groupStandings": [
       {
         "pos": 1,
         "team": "SOMOS PÁDEL BCN 4XA",
-        "pj": 8,
-        "pg": 6,
+        "pj": 9,
+        "pg": 7,
         "pp": 2,
         "df": 0,
-        "pts": 17
+        "pts": 19
       },
       {
         "pos": 2,
@@ -1675,11 +1675,11 @@ window.ExtractedTeamsData = [
       {
         "pos": 3,
         "team": "CRAZYXPADEL 4MIXTA LILA",
-        "pj": 8,
+        "pj": 9,
         "pg": 5,
-        "pp": 3,
+        "pp": 4,
         "df": 0,
-        "pts": 14
+        "pts": 15
       },
       {
         "pos": 4,
@@ -1692,31 +1692,31 @@ window.ExtractedTeamsData = [
       },
       {
         "pos": 5,
-        "team": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
+        "team": "SOMOS PÁDEL BCN 4XB",
         "pj": 8,
         "pg": 3,
         "pp": 5,
         "df": 0,
-        "pts": 9
+        "pts": 11,
+        "isCurrent": true
       },
       {
         "pos": 6,
+        "team": "CRAZYXPADEL 4MIXTA BLANCO VALLES",
+        "pj": 9,
+        "pg": 3,
+        "pp": 6,
+        "df": 0,
+        "pts": 10
+      },
+      {
+        "pos": 7,
         "team": "MASQUEPADEL",
         "pj": 8,
         "pg": 2,
         "pp": 6,
         "df": 0,
         "pts": 9
-      },
-      {
-        "pos": 7,
-        "team": "SOMOS PÁDEL BCN 4XB",
-        "pj": 7,
-        "pg": 2,
-        "pp": 5,
-        "df": 0,
-        "pts": 9,
-        "isCurrent": true
       },
       {
         "pos": 8,
@@ -1948,10 +1948,10 @@ window.ExtractedTeamsData = [
         "date": "Dium 13 Set",
         "time": "15:00h",
         "opponent": "MX3 INDOOR GAVÀ",
-        "score": "Pendiente",
+        "score": "En juego",
         "venue": "Padel indoor gavà",
         "isHome": false,
-        "status": "upcoming"
+        "status": "live"
       },
       {
         "j": 10,
@@ -2005,13 +2005,13 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 9,
-      "date": "Dium 13 Set",
-      "time": "15:00h",
-      "opponent": "MX3 INDOOR GAVÀ",
+      "j": 10,
+      "date": "Dium 20 Set",
+      "time": "13:30h",
+      "opponent": "NOVA PADEL MIXTO PIH",
       "score": "Pendiente",
-      "venue": "Padel indoor gavà",
-      "isHome": false,
+      "venue": "Padel bcn - el prat",
+      "isHome": true,
       "status": "upcoming"
     },
     "groupStandings": [
@@ -2346,20 +2346,20 @@ window.ExtractedTeamsData = [
       {
         "pos": 1,
         "team": "ACCURA SANT BOI 4F",
-        "pj": 8,
-        "pg": 7,
+        "pj": 9,
+        "pg": 8,
         "pp": 1,
         "df": 0,
-        "pts": 19
+        "pts": 21
       },
       {
         "pos": 2,
         "team": "AURIAL CORNELLÀ",
-        "pj": 8,
-        "pg": 6,
+        "pj": 9,
+        "pg": 7,
         "pp": 2,
         "df": 0,
-        "pts": 16
+        "pts": 18
       },
       {
         "pos": 3,
@@ -2374,11 +2374,11 @@ window.ExtractedTeamsData = [
       {
         "pos": 4,
         "team": "CRAZYXPADEL 4F LILA",
-        "pj": 7,
+        "pj": 8,
         "pg": 4,
-        "pp": 3,
+        "pp": 4,
         "df": 0,
-        "pts": 10
+        "pts": 11
       },
       {
         "pos": 5,
@@ -2392,29 +2392,29 @@ window.ExtractedTeamsData = [
       {
         "pos": 6,
         "team": "VALKIRIAS CPV",
-        "pj": 7,
+        "pj": 8,
         "pg": 2,
-        "pp": 5,
+        "pp": 6,
         "df": 0,
-        "pts": 8
+        "pts": 9
       },
       {
         "pos": 7,
         "team": "QUEENS OF PADEL",
-        "pj": 7,
+        "pj": 8,
         "pg": 2,
-        "pp": 5,
+        "pp": 6,
         "df": 0,
         "pts": 7
       },
       {
         "pos": 8,
         "team": "BLACK PADEL PRAT MUNAY CLUB 4F",
-        "pj": 7,
-        "pg": 1,
+        "pj": 8,
+        "pg": 2,
         "pp": 6,
         "df": 0,
-        "pts": 6
+        "pts": 9
       }
     ],
     "logo": "img/logo_somospadel.png",
@@ -2585,10 +2585,10 @@ window.ExtractedTeamsData = [
         "date": "Dium 13 Set",
         "time": "16:30h",
         "opponent": "CLUB PADEL VILANOVA C",
-        "score": "Pendiente",
+        "score": "En juego",
         "venue": "Padel bcn - el prat",
         "isHome": true,
-        "status": "upcoming"
+        "status": "live"
       },
       {
         "j": 10,
@@ -2642,10 +2642,10 @@ window.ExtractedTeamsData = [
       }
     ],
     "nextMatch": {
-      "j": 9,
-      "date": "Dium 13 Set",
+      "j": 10,
+      "date": "Dium 20 Set",
       "time": "16:30h",
-      "opponent": "CLUB PADEL VILANOVA C",
+      "opponent": "PADELARIUM - OLD SCHOOL",
       "score": "Pendiente",
       "venue": "Padel bcn - el prat",
       "isHome": true,

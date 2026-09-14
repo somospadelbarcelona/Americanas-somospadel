@@ -561,10 +561,11 @@
                         left: 0;
                         right: 0;
                         transform: translateY(-50%);
-                        height: 14px;
+                        height: 16px;
                         background: repeating-linear-gradient(90deg, #09121f 0 3px, #2a3c57 3px 5px);
-                        border-top: 2px solid #ffffff;
-                        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.75);
+                        border-top: 2.5px solid #00F0FF;
+                        border-bottom: 2.5px solid #CCFF00;
+                        box-shadow: 0 -3px 15px rgba(0, 240, 255, 0.55), 0 3px 15px rgba(204, 255, 0, 0.55);
                         z-index: 8;
                         display: flex;
                         align-items: center;
@@ -572,15 +573,15 @@
                         pointer-events: none;
                     }
                     .sp-court-vs-chip {
-                        background: #070d18;
-                        border: 1.5px solid rgba(255, 255, 255, 0.35);
+                        background: #060c18;
+                        border: 2px solid #ffffff;
                         color: #ffffff;
-                        font-size: 0.68rem;
-                        font-weight: 900;
-                        letter-spacing: 1.5px;
-                        padding: 2px 10px;
-                        border-radius: 12px;
-                        box-shadow: 0 0 16px rgba(0, 196, 255, 0.5), 0 2px 8px rgba(0, 0, 0, 0.9);
+                        font-size: 0.72rem;
+                        font-weight: 950;
+                        letter-spacing: 2px;
+                        padding: 3px 12px;
+                        border-radius: 14px;
+                        box-shadow: 0 0 20px rgba(0, 240, 255, 0.7), 0 0 20px rgba(204, 255, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.95);
                         user-select: none;
                     }
 
@@ -592,7 +593,7 @@
                         display: flex;
                         flex-direction: column;
                         justify-content: space-between;
-                        padding: 10px 10px;
+                        padding: 8px 8px;
                         box-sizing: border-box;
                         pointer-events: none;
                     }
@@ -604,62 +605,65 @@
                         align-items: center;
                         position: relative;
                         pointer-events: auto;
+                        border-radius: 12px;
+                        transition: all 0.3s;
                     }
                     .sp-court-half.team-a-half {
-                        padding-bottom: 12px;
+                        padding: 6px 6px 14px 6px;
+                        background: radial-gradient(ellipse at 50% 25%, rgba(0, 240, 255, 0.22) 0%, transparent 80%);
                     }
                     .sp-court-half.team-b-half {
-                        padding-top: 12px;
+                        padding: 14px 6px 6px 6px;
+                        background: radial-gradient(ellipse at 50% 75%, rgba(204, 255, 0, 0.22) 0%, transparent 80%);
                     }
 
                     /* Cápsula de Jugador sobre el Césped */
                     .sp-court-player-chip {
-                        background: rgba(8, 14, 28, 0.85);
-                        backdrop-filter: blur(10px);
-                        -webkit-backdrop-filter: blur(10px);
+                        background: rgba(8, 14, 28, 0.92);
+                        backdrop-filter: blur(12px);
+                        -webkit-backdrop-filter: blur(12px);
                         border-radius: 12px;
-                        padding: 7px 9px;
+                        padding: 6px 8px;
                         display: flex;
                         align-items: center;
                         gap: 8px;
                         position: relative;
                         overflow: hidden;
-                        min-height: 52px;
+                        min-height: 56px;
                         box-sizing: border-box;
                         transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-                        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+                        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.65);
                     }
 
-                    /* Pareja A (Cyan) */
+                    /* Pareja A (Cyan Neón Intenso) */
                     .sp-court-player-chip.team-a {
-                        border: 1.5px solid rgba(0, 196, 255, 0.35);
-                        border-left: 3.5px solid #00C4FF;
+                        border: 2px solid rgba(0, 240, 255, 0.6);
+                        background: linear-gradient(135deg, rgba(0, 240, 255, 0.24) 0%, rgba(5, 20, 42, 0.94) 100%);
+                        box-shadow: 0 0 16px rgba(0, 240, 255, 0.35), inset 0 0 10px rgba(0, 240, 255, 0.15);
                     }
                     .sp-court-player-chip.team-a.revealed {
-                        border-color: rgba(0, 196, 255, 0.7);
-                        border-left: 3.5px solid #00C4FF;
-                        background: linear-gradient(135deg, rgba(0, 196, 255, 0.16) 0%, rgba(8, 14, 28, 0.92) 100%);
-                        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 18px rgba(0, 196, 255, 0.35);
+                        border: 2px solid #00F0FF;
+                        background: linear-gradient(135deg, rgba(0, 240, 255, 0.35) 0%, rgba(4, 24, 52, 0.96) 100%);
+                        box-shadow: 0 0 26px rgba(0, 240, 255, 0.65), inset 0 0 16px rgba(0, 240, 255, 0.28), 0 10px 30px rgba(0, 0, 0, 0.8);
                         animation: spSlotLockIn 0.38s cubic-bezier(0.16, 1, 0.3, 1);
                     }
 
-                    /* Pareja B (Lima Neón) */
+                    /* Pareja B (Lima Neón Intenso) */
                     .sp-court-player-chip.team-b {
-                        border: 1.5px solid rgba(204, 255, 0, 0.35);
-                        border-left: 3.5px solid #CCFF00;
+                        border: 2px solid rgba(204, 255, 0, 0.6);
+                        background: linear-gradient(135deg, rgba(204, 255, 0, 0.24) 0%, rgba(20, 36, 6, 0.94) 100%);
+                        box-shadow: 0 0 16px rgba(204, 255, 0, 0.35), inset 0 0 10px rgba(204, 255, 0, 0.15);
                     }
                     .sp-court-player-chip.team-b.revealed {
-                        border-color: rgba(204, 255, 0, 0.7);
-                        border-left: 3.5px solid #CCFF00;
-                        background: linear-gradient(135deg, rgba(204, 255, 0, 0.16) 0%, rgba(8, 14, 28, 0.92) 100%);
-                        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 18px rgba(204, 255, 0, 0.35);
+                        border: 2px solid #CCFF00;
+                        background: linear-gradient(135deg, rgba(204, 255, 0, 0.35) 0%, rgba(24, 42, 6, 0.96) 100%);
+                        box-shadow: 0 0 26px rgba(204, 255, 0, 0.65), inset 0 0 16px rgba(204, 255, 0, 0.28), 0 10px 30px rgba(0, 0, 0, 0.8);
                         animation: spSlotLockIn 0.38s cubic-bezier(0.16, 1, 0.3, 1);
                     }
 
                     .sp-court-player-chip.slot-empty {
-                        border: 1px dashed rgba(255, 255, 255, 0.2);
-                        border-left: 1px dashed rgba(255, 255, 255, 0.2);
-                        background: rgba(8, 14, 28, 0.45);
+                        border: 1.5px dashed rgba(255, 255, 255, 0.25);
+                        background: rgba(8, 14, 28, 0.5);
                         box-shadow: none;
                     }
 
@@ -669,31 +673,67 @@
                         100% { transform: scale(1); opacity: 1; }
                     }
 
+                    /* Badge Neón de Pareja en cada Chip */
+                    .sp-pair-badge {
+                        font-size: 0.58rem;
+                        font-weight: 950;
+                        letter-spacing: 0.8px;
+                        padding: 1px 6px;
+                        border-radius: 4px;
+                        text-transform: uppercase;
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 3px;
+                        flex-shrink: 0;
+                        line-height: 1.2;
+                    }
+                    .sp-pair-badge.pair-a {
+                        background: rgba(0, 240, 255, 0.25);
+                        border: 1px solid #00F0FF;
+                        color: #00F0FF;
+                        box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+                        text-shadow: 0 0 6px #00F0FF;
+                    }
+                    .sp-pair-badge.pair-b {
+                        background: rgba(204, 255, 0, 0.25);
+                        border: 1px solid #CCFF00;
+                        color: #CCFF00;
+                        box-shadow: 0 0 10px rgba(204, 255, 0, 0.5);
+                        text-shadow: 0 0 6px #CCFF00;
+                    }
+
+                    .sp-player-top-line {
+                        display: flex;
+                        align-items: center;
+                        gap: 5px;
+                        margin-bottom: 2px;
+                    }
+
                     /* Avatar dentro del Chip */
                     .sp-court-player-chip .sp-player-avatar {
-                        width: 32px;
-                        height: 32px;
+                        width: 34px;
+                        height: 34px;
                         border-radius: 50%;
-                        background: #0f182c;
-                        border: 1.5px solid rgba(255, 255, 255, 0.2);
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        font-weight: 800;
+                        font-weight: 900;
                         font-size: 0.72rem;
-                        color: #ffffff;
                         flex-shrink: 0;
                         overflow: hidden;
+                        transition: all 0.3s;
                     }
                     .sp-court-player-chip.team-a .sp-player-avatar {
-                        background: linear-gradient(135deg, #072a4d, #00C4FF);
+                        background: linear-gradient(135deg, #0099ff, #00F0FF);
                         color: #ffffff;
-                        border-color: rgba(0, 196, 255, 0.6);
+                        border: 2px solid #00F0FF;
+                        box-shadow: 0 0 14px rgba(0, 240, 255, 0.7);
                     }
                     .sp-court-player-chip.team-b .sp-player-avatar {
-                        background: linear-gradient(135deg, #1b3307, #CCFF00);
+                        background: linear-gradient(135deg, #a6ff00, #CCFF00);
                         color: #000000;
-                        border-color: rgba(204, 255, 0, 0.6);
+                        border: 2px solid #CCFF00;
+                        box-shadow: 0 0 14px rgba(204, 255, 0, 0.7);
                     }
                     .sp-court-player-chip .sp-player-avatar img {
                         width: 100%;
@@ -705,14 +745,14 @@
                     .sp-court-player-chip .sp-roller-container {
                         flex: 1;
                         overflow: hidden;
-                        height: 22px;
+                        height: 20px;
                         display: flex;
                         align-items: center;
                     }
                     .sp-court-player-chip .sp-roller-text {
-                        color: rgba(0, 196, 255, 0.85);
-                        font-size: clamp(0.72rem, 1.8vw, 0.82rem);
-                        font-weight: 800;
+                        color: rgba(0, 240, 255, 0.95);
+                        font-size: clamp(0.72rem, 1.8vw, 0.84rem);
+                        font-weight: 900;
                         letter-spacing: 0.5px;
                         white-space: nowrap;
                         overflow: hidden;
@@ -720,7 +760,7 @@
                         animation: spRollerFlicker 0.25s infinite alternate ease-in-out;
                     }
                     .sp-court-player-chip.team-b .sp-roller-text {
-                        color: rgba(204, 255, 0, 0.85);
+                        color: rgba(204, 255, 0, 0.95);
                     }
                     @keyframes spRollerFlicker {
                         0% { opacity: 0.45; transform: translateY(2px); }
@@ -735,26 +775,28 @@
                         flex-direction: column;
                         justify-content: center;
                         line-height: 1.15;
+                        text-align: left;
                     }
                     .sp-court-player-chip .sp-player-name {
-                        font-size: clamp(0.74rem, 1.9vw, 0.88rem);
-                        font-weight: 800;
+                        font-size: clamp(0.72rem, 1.8vw, 0.86rem);
+                        font-weight: 900;
                         color: #ffffff;
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
                         letter-spacing: 0.2px;
-                        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+                        text-shadow: 0 2px 4px rgba(0, 0, 0, 1);
+                        text-align: left;
                     }
                     .sp-court-player-chip .sp-player-meta {
                         display: flex;
                         align-items: center;
                         gap: 6px;
-                        margin-top: 3px;
+                        margin-top: 2px;
                     }
                     .sp-court-player-chip .sp-player-level {
                         font-size: 0.62rem;
-                        font-weight: 900;
+                        font-weight: 950;
                         padding: 1px 5px;
                         border-radius: 4px;
                         color: #050b14;
@@ -764,13 +806,14 @@
                     .sp-court-player-chip .sp-player-team {
                         font-size: 0.62rem;
                         font-weight: 700;
-                        color: rgba(255, 255, 255, 0.6);
+                        color: rgba(255, 255, 255, 0.75);
                         text-transform: uppercase;
                         letter-spacing: 0.4px;
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
-                        max-width: 90px;
+                        max-width: 110px;
+                        text-align: left;
                     }
 
                     /* Bottom Floating Dock */
@@ -1036,34 +1079,54 @@
 
                             <!-- CUADRANTES DE JUEGO (4 JUGADORES DENTRO DE LA PISTA) -->
                             <div class="sp-court-quadrants">
-                                <!-- CAMPO SUPERIOR (PAREJA A / CYAN) -->
+                                <!-- CAMPO SUPERIOR (PAREJA 1 / CYAN NEÓN) -->
                                 <div class="sp-court-half team-a-half">
                                     <div class="sp-player-slot sp-court-player-chip team-a" id="slot-${i}-p1">
                                         <div class="sp-player-avatar">?</div>
-                                        <div class="sp-roller-container">
-                                            <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
+                                        <div class="sp-player-details">
+                                            <div class="sp-player-top-line">
+                                                <span class="sp-pair-badge pair-a">PAREJA 1</span>
+                                            </div>
+                                            <div class="sp-roller-container">
+                                                <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="sp-player-slot sp-court-player-chip team-a" id="slot-${i}-p2">
                                         <div class="sp-player-avatar">?</div>
-                                        <div class="sp-roller-container">
-                                            <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
+                                        <div class="sp-player-details">
+                                            <div class="sp-player-top-line">
+                                                <span class="sp-pair-badge pair-a">PAREJA 1</span>
+                                            </div>
+                                            <div class="sp-roller-container">
+                                                <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- CAMPO INFERIOR (PAREJA B / LIMA NEÓN) -->
+                                <!-- CAMPO INFERIOR (PAREJA 2 / LIMA NEÓN) -->
                                 <div class="sp-court-half team-b-half">
                                     <div class="sp-player-slot sp-court-player-chip team-b" id="slot-${i}-p3">
                                         <div class="sp-player-avatar">?</div>
-                                        <div class="sp-roller-container">
-                                            <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
+                                        <div class="sp-player-details">
+                                            <div class="sp-player-top-line">
+                                                <span class="sp-pair-badge pair-b">PAREJA 2</span>
+                                            </div>
+                                            <div class="sp-roller-container">
+                                                <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="sp-player-slot sp-court-player-chip team-b" id="slot-${i}-p4">
                                         <div class="sp-player-avatar">?</div>
-                                        <div class="sp-roller-container">
-                                            <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
+                                        <div class="sp-player-details">
+                                            <div class="sp-player-top-line">
+                                                <span class="sp-pair-badge pair-b">PAREJA 2</span>
+                                            </div>
+                                            <div class="sp-roller-container">
+                                                <div class="sp-roller-text">${this.getRandomName(playerPool)}</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1280,16 +1343,18 @@
             const levelColor = this.getLevelColor(levelVal);
             const initials = this._getInitials(p.name);
 
+            const isTeamA = teamSide === 'team-a';
             slot.innerHTML = `
                 <div class="sp-player-avatar">
                     ${p.photo ? `<img src="${p.photo}" alt="${p.name}" onerror="this.parentElement.innerHTML='${initials}'"/>` : `<span>${initials}</span>`}
                 </div>
                 <div class="sp-player-details">
-                    <div class="sp-player-name" title="${p.name}">${p.name}</div>
-                    <div class="sp-player-meta">
+                    <div class="sp-player-top-line">
+                        <span class="sp-pair-badge ${isTeamA ? 'pair-a' : 'pair-b'}">${isTeamA ? 'PAREJA 1' : 'PAREJA 2'}</span>
                         <span class="sp-player-level" style="background:${levelColor};">${p.level}</span>
-                        <span class="sp-player-team" title="${p.team}">${p.team}</span>
                     </div>
+                    <div class="sp-player-name" title="${p.name}">${p.name}</div>
+                    <div class="sp-player-team" title="${p.team}">${p.team}</div>
                 </div>
             `;
         }

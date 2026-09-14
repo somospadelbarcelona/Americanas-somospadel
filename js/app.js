@@ -122,38 +122,8 @@
             // UPDATE GLOBAL HEADER
             this.updateGlobalHeader(user);
 
-            if (user && user.uid && window.db) {
-                // Evitar duplicar logs en la misma sesión/pestaña del navegador
-                if (!sessionStorage.getItem('somospadel_session_logged')) {
-                    sessionStorage.setItem('somospadel_session_logged', 'true');
-                    
-                    const telemetryData = {
-                        userId: user.uid,
-                        userName: user.name || user.displayName || "Jugador Pro",
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        device: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
-                        language: navigator.language || 'es',
-                        appVersion: 'v9.1-Premium'
-                    };
-
-                    // Guardar log en la colección raíz de Firestore para análisis global de DAU/MAU
-                    window.db.collection('access_logs').add(telemetryData)
-                        .then(() => console.log(`📡 [TELEMETRÍA] Acceso registrado con éxito para: ${telemetryData.userName}`))
-                        .catch(e => console.warn("⏳ [App] Telemetría omitida por red lenta o bloqueador:", e));
-
-                    // Actualizar el perfil del jugador con contadores en tiempo real
-                    window.db.collection('players').doc(user.uid).update({
-                        lastLogin: new Date().toISOString(),
-                        lastActive: firebase.firestore.FieldValue.serverTimestamp(),
-                        sessionCount: firebase.firestore.FieldValue.increment(1)
-                    }).catch(e => console.warn("⏳ [App] Error actualizando actividad en base de datos:", e));
-                } else {
-                    // Si ya se registró en esta sesión, solo actualizamos el timestamp de último login activo
-                    window.db.collection('players').doc(user.uid).update({
-                        lastLogin: new Date().toISOString()
-                    }).catch(e => console.warn("⏳ [App] Error actualizando timestamp activo:", e));
-                }
-            }
+            // Telemetría de acceso enriquecida (DAU/MAU, procedencia, geolocalización)
+            this.recordAccessTelemetry(user);
 
             const authModal = document.getElementById('auth-modal');
             if (authModal) {
@@ -483,6 +453,24 @@
                                         <span class="drawer-row-title" style="color: #ffffff !important; font-weight: 800; font-size: 0.88rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Equipos SomosPadel</span>
                                         <i class="fas fa-chevron-right drawer-row-chevron"></i>
                                     </div>
+
+                                    <div class="drawer-nav-row" onclick="window.closeDrawer(); window.CourtScoreboard && window.CourtScoreboard.open()">
+                                        <div class="drawer-row-icon" style="background: rgba(204, 255, 0, 0.15); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.3);">
+                                            <i class="fas fa-calculator"></i>
+                                        </div>
+                                        <span class="drawer-row-title" style="color: #ffffff !important; font-weight: 800; font-size: 0.88rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Marcador de Pista</span>
+                                        <span class="drawer-row-badge" style="background: rgba(204, 255, 0, 0.2); color: #CCFF00; border: 1px solid rgba(204, 255, 0, 0.4);">LIVE</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
+
+                                    <div class="drawer-nav-row" onclick="window.closeDrawer(); window.PadelFutCard && window.PadelFutCard.open()">
+                                        <div class="drawer-row-icon" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3);">
+                                            <i class="fas fa-id-card"></i>
+                                        </div>
+                                        <span class="drawer-row-title" style="color: #ffffff !important; font-weight: 800; font-size: 0.88rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Mi Carta FUT & Stories</span>
+                                        <span class="drawer-row-badge" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4);">PRO</span>
+                                        <i class="fas fa-chevron-right drawer-row-chevron"></i>
+                                    </div>
                                 </div>
                             </div>
 
@@ -633,6 +621,10 @@
         handleGuest() {
             this.updateGlobalHeader(null);
             this.loadSideMenu();
+
+            // Telemetría de acceso para visitante / invitado
+            this.recordAccessTelemetry(null);
+
             const authModal = document.getElementById('auth-modal');
             if (authModal) {
                 authModal.classList.remove('hidden');
@@ -641,6 +633,176 @@
 
             const appShell = document.getElementById('app-shell');
             if (appShell) appShell.classList.add('hidden');
+        }
+
+        /**
+         * Telemetría avanzada de red, geolocalización, adquisición y auditoría de accesos.
+         * Registra tanto usuarios autenticados como visitantes con control de 30 min de ventana.
+         */
+        async recordAccessTelemetry(user = null) {
+            try {
+                // Esperar a que Firestore DB esté disponible con timeout
+                if (!window.db) {
+                    let retries = 0;
+                    while (!window.db && retries < 20) {
+                        await new Promise(r => setTimeout(r, 100));
+                        retries++;
+                    }
+                }
+                if (!window.db || typeof firebase === 'undefined' || !firebase.firestore) return;
+
+                const isAuth = !!(user && user.uid);
+                
+                // Visitor ID persistente para invitados/visitantes
+                let visitorId = localStorage.getItem('somospadel_visitor_id');
+                if (!visitorId) {
+                    visitorId = `visitor_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+                    localStorage.setItem('somospadel_visitor_id', visitorId);
+                }
+
+                const currentEntityId = isAuth ? user.uid : visitorId;
+
+                // Control de spam: ventana de 30 minutos o por sesión de pestaña
+                const now = Date.now();
+                const lastSessionTime = parseInt(localStorage.getItem('somospadel_last_session_time') || '0', 10);
+                const lastSessionEntity = localStorage.getItem('somospadel_last_session_entity') || '';
+                const hasSessionMark = sessionStorage.getItem('somospadel_session_logged') === 'true';
+
+                const isWithin30Min = (now - lastSessionTime) < (30 * 60 * 1000);
+                const isSameEntity = (lastSessionEntity === currentEntityId);
+
+                // Si ya se registró en esta sesión y no ha expirado la ventana de 30m para la misma entidad
+                if (hasSessionMark && isSameEntity && isWithin30Min) {
+                    if (isAuth) {
+                        window.db.collection('players').doc(user.uid).update({
+                            lastLogin: new Date().toISOString()
+                        }).catch(() => {});
+                    }
+                    return;
+                }
+
+                // Fijar marcas de sesión activas
+                sessionStorage.setItem('somospadel_session_logged', 'true');
+                localStorage.setItem('somospadel_last_session_time', now.toString());
+                localStorage.setItem('somospadel_last_session_entity', currentEntityId);
+
+                // 1. Detección Geográfica segura con fallback y timeout de 1200ms
+                let geo = { city: 'Barcelona', region: 'Catalunya', country: 'España', countryCode: 'ES' };
+                try {
+                    const cachedGeo = sessionStorage.getItem('somospadel_geo_cache');
+                    if (cachedGeo) {
+                        geo = JSON.parse(cachedGeo);
+                    } else {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 1200);
+                        const res = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+                        clearTimeout(timeoutId);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data && (data.city || data.country_name)) {
+                                geo = {
+                                    city: data.city || 'Barcelona',
+                                    region: data.region || 'Catalunya',
+                                    country: data.country_name || 'España',
+                                    countryCode: data.country_code || 'ES'
+                                };
+                                sessionStorage.setItem('somospadel_geo_cache', JSON.stringify(geo));
+                            }
+                        }
+                    }
+                } catch (geoErr) {
+                    // Fallback silencioso y seguro
+                }
+
+                // 2. Detección de Dispositivo, Sistema Operativo y Navegador
+                const ua = navigator.userAgent || '';
+                const isMob = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+                
+                let os = 'Desconocido';
+                if (/iPhone/i.test(ua)) os = 'iOS (iPhone)';
+                else if (/iPad/i.test(ua)) os = 'iOS (iPad)';
+                else if (/Android/i.test(ua)) os = 'Android';
+                else if (/Windows NT 10/i.test(ua) || /Windows NT 11/i.test(ua)) os = 'Windows 10/11';
+                else if (/Windows NT/i.test(ua)) os = 'Windows PC';
+                else if (/Macintosh|Mac OS X/i.test(ua)) os = 'Mac OS';
+                else if (/Linux/i.test(ua)) os = 'Linux';
+
+                let browser = 'Web Browser';
+                if (/Instagram/i.test(ua)) browser = 'Instagram WebView';
+                else if (/WhatsApp/i.test(ua)) browser = 'WhatsApp WebView';
+                else if (/Edg\//i.test(ua)) browser = 'Microsoft Edge';
+                else if (/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) browser = 'Google Chrome';
+                else if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) browser = 'Apple Safari';
+                else if (/Firefox\//i.test(ua)) browser = 'Mozilla Firefox';
+                else if (/SamsungBrowser/i.test(ua)) browser = 'Samsung Internet';
+
+                // 3. Detección de Canal de Procedencia (Origin / Referrer)
+                const ref = (document.referrer || '').toLowerCase();
+                const urlParams = new URLSearchParams(window.location.search);
+                const utmSource = (urlParams.get('utm_source') || '').toLowerCase();
+                const utmMedium = (urlParams.get('utm_medium') || '').toLowerCase();
+
+                let origin = 'Directo / App';
+                if ((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone) {
+                    origin = 'PWA Instalada';
+                } else if (utmSource.includes('whatsapp') || utmMedium.includes('whatsapp') || ref.includes('whatsapp') || ref.includes('wa.me')) {
+                    origin = 'WhatsApp';
+                } else if (utmSource.includes('instagram') || ref.includes('instagram.com') || browser.includes('Instagram')) {
+                    origin = 'Instagram';
+                } else if (utmSource.includes('google') || ref.includes('google.')) {
+                    origin = 'Google Search';
+                } else if (utmSource.includes('facebook') || ref.includes('facebook.com')) {
+                    origin = 'Facebook';
+                } else if (ref && !ref.includes(window.location.hostname)) {
+                    try {
+                        origin = new URL(ref).hostname.replace(/^www\./, '');
+                    } catch (e) {
+                        origin = 'Enlace Externo';
+                    }
+                }
+
+                // 4. Obtener estadísticas / nivel si están disponibles
+                const playerStats = window.Store ? window.Store.getState('playerStats') : null;
+                const level = user?.level || user?.self_rate_level || playerStats?.level || null;
+                const phone = user?.phone || user?.phoneNumber || '';
+
+                // 5. Estructura de documento de telemetría completa
+                const telemetryData = {
+                    userId: currentEntityId,
+                    userName: isAuth ? (user.name || user.displayName || "Jugador Pro") : "Visitante Anónimo",
+                    userPhone: phone,
+                    role: isAuth ? (user.role || 'player') : 'guest',
+                    level: level,
+                    isRegistered: isAuth,
+                    device: isMob ? 'Mobile' : 'Desktop',
+                    os: os,
+                    browser: browser,
+                    origin: origin,
+                    city: geo.city,
+                    region: geo.region,
+                    country: geo.country,
+                    countryCode: geo.countryCode,
+                    language: navigator.language || 'es',
+                    appVersion: 'v9.1-Premium',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                // Guardar en colección Firestore 'access_logs'
+                window.db.collection('access_logs').add(telemetryData)
+                    .then(() => console.log(`📡 [TELEMETRÍA] Acceso registrado (${telemetryData.role}): ${telemetryData.userName} [${telemetryData.city} | ${telemetryData.origin}]`))
+                    .catch(e => console.warn("⏳ [App] Telemetría omitida por red lenta o bloqueador:", e));
+
+                // Si es usuario autenticado, actualizar perfil en tiempo real
+                if (isAuth) {
+                    window.db.collection('players').doc(user.uid).update({
+                        lastLogin: new Date().toISOString(),
+                        lastActive: firebase.firestore.FieldValue.serverTimestamp(),
+                        sessionCount: firebase.firestore.FieldValue.increment(1)
+                    }).catch(() => {});
+                }
+            } catch (err) {
+                console.warn("⏳ [App] Telemetría omitida o error seguro:", err);
+            }
         }
 
         updateGlobalHeader(user) {
