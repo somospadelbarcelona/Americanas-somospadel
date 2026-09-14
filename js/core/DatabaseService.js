@@ -263,6 +263,7 @@
                 console.error(`❌ [DatabaseService] Failed to create in "${this.collectionName}":`, err);
                 throw err;
             }
+
         }
 
         /**
@@ -377,6 +378,8 @@
                     }
                 });
             }
+
+            window.dispatchEvent(new CustomEvent('eventModified', { detail: { collection: this.collectionName, id } }));
         }
     }
 

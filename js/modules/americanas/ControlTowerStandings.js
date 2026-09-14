@@ -44,6 +44,31 @@
                 return '#10b981';
             };
 
+            const top1 = ranking[0] || null;
+            const top2 = ranking[1] || null;
+            const top3 = ranking[2] || null;
+
+            // Robust avatar initials (Fixes AUNDEFINED bug)
+            const getInitials = (name) => {
+                if (!name || typeof name !== 'string') return 'SP';
+                const parts = name.trim().split(/\s+/).filter(Boolean);
+                if (parts.length >= 2 && parts[0] && parts[1] && parts[0][0] && parts[1][0]) {
+                    return (parts[0][0] + parts[1][0]).toUpperCase();
+                }
+                const clean = name.trim();
+                if (clean.length >= 2) return clean.substring(0, 2).toUpperCase();
+                if (clean.length === 1) return clean.toUpperCase();
+                return 'SP';
+            };
+
+            const getLevelColor = (lv) => {
+                const num = parseFloat(lv) || 0;
+                if (num >= 5.0) return '#ef4444';
+                if (num >= 4.0) return '#f59e0b';
+                if (num >= 3.0) return '#0ea5e9';
+                return '#10b981';
+            };
+
             return `
                 <style>
                     .sp-standings-wrap {
@@ -379,7 +404,6 @@
                         color: #94a3b8;
                         font-size: 0.72rem;
                     }
-
                     /* Mode Switcher Segmented Control */
                     .sp-mode-switcher {
                         display: inline-flex;
@@ -467,6 +491,8 @@
 
                     /* Table Styles */
                     .sp-standings-table-wrap {
+                    /* Table Styles */
+                    .sp-standings-table-wrap {
                         width: 100%;
                         box-sizing: border-box;
                         overflow-x: auto;
@@ -525,6 +551,7 @@
                     .sp-player-row:active {
                         background: #f1f5f9;
                     }
+
 
                     .sp-col-pos {
                         font-weight: 950;
@@ -591,6 +618,7 @@
                         text-align: center;
                         font-weight: 700;
                     }
+
                     .sp-diff-pos { color: #10b981; font-weight: 800; }
                     .sp-diff-neg { color: #ef4444; font-weight: 800; }
                     .sp-diff-zero { color: #94a3b8; }
@@ -1100,6 +1128,219 @@
                                     <strong>En caso de empate a victorias:</strong> 1º Victoria último partido Pista 1 • 2º Pista final disputada • 3º Ganador última pista • 4º Veces en P1 • 5º Dif. Juegos • 6º Puntos.
                                 </p>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- MODAL COMPLETO DE NORMAS (ACCESIBLE POR BOTÓN) -->
+                    <div id="sp-rules-modal-overlay" class="sp-rules-modal-overlay" onclick="if(event.target === this) window.ControlTowerStandings.toggleRulesModal(false)">
+                        <div class="sp-rules-modal-card">
+                            <div class="sp-rules-modal-header">
+                                <h3>
+                                    <i class="fas fa-book-open"></i>
+                                    <span>${isEntreno ? 'NORMAS DEL ENTRENO • SOMOSPADEL BCN' : 'REGLAS OFICIALES • SOMOSPADEL BCN'}</span>
+                                </h3>
+                                <button class="sp-rules-modal-close" onclick="window.ControlTowerStandings.toggleRulesModal(false)">✕</button>
+                            </div>
+                            <div class="sp-rules-modal-content">
+                                <div class="sp-rule-box" style="border-left: 4px solid #10b981;">
+                                    <div class="sp-rule-box-header" style="color:#065f46;">
+                                        <span style="font-size:1.2rem;">🎯</span>
+                                        <span style="font-size:0.82rem;">1. OBJETIVO FORMATIVO Y COMPAÑERISMO</span>
+                                    </div>
+                                    <p class="sp-rule-box-desc" style="font-size:0.76rem;">
+                                        El objetivo primordial del entreno es mejorar nuestro nivel de juego y ayudar a mejorar el nivel a los compañeros de entreno. El respeto, el fair play y el buen ambiente en pista son la máxima prioridad de SomosPadel Barcelona.
+                                    </p>
+                                </div>
+
+                                <div class="sp-rule-box" style="border-left: 4px solid #f59e0b;">
+                                    <div class="sp-rule-box-header" style="color:#92400e;">
+                                        <span style="font-size:1.2rem;">👑</span>
+                                        <span style="font-size:0.82rem;">2. ALCANZAR LA PISTA 1 EN EL ÚLTIMO PARTIDO</span>
+                                    </div>
+                                    <p class="sp-rule-box-desc" style="font-size:0.76rem;">
+                                        Intentar alcanzar la <strong>Pista 1 en el último partido del entreno</strong> para poder disputar la victoria del entreno. Esta victoria sólo sirve de <strong>forma anecdótica</strong> para marcar un objetivo motivador y dinámico durante la sesión.
+                                    </p>
+                                </div>
+
+                                <div class="sp-rule-box" style="border-left: 4px solid #0284c7;">
+                                    <div class="sp-rule-box-header" style="color:#0369a1;">
+                                        <span style="font-size:1.2rem;">📈</span>
+                                        <span style="font-size:0.82rem;">3. REFLEJO EN TU NIVEL, LOGROS Y RÁNKINGS</span>
+                                    </div>
+                                    <p class="sp-rule-box-desc" style="font-size:0.76rem;">
+                                        Nuestros <strong>partidos ganados y perdidos</strong>, y nuestros <strong>juegos ganados y perdidos</strong>, se reflejan fielmente en nuestro nivel de jugador en la app oficial de SomosPadelBarcelona. Todos los jugadores pueden consultar su nivel y el de sus compañeros, así como las tablas de logros y rankings actualizados.
+                                    </p>
+                                </div>
+
+                                <div class="sp-rule-box" style="border-left: 4px solid #8b5cf6; background:#f5f3ff;">
+                                    <div class="sp-rule-box-header" style="color:#6d28d9;">
+                                        <span style="font-size:1.2rem;">⚖️</span>
+                                        <span style="font-size:0.82rem;">SISTEMA OFICIAL DE DESEMPATE Y CLASIFICACIÓN</span>
+                                    </div>
+                                    <p class="sp-rule-box-desc" style="font-size:0.74rem; color:#334155;">
+                                        <strong>1. Partidos Ganados Totales:</strong> El orden de mérito principal se basa en el número de victorias conseguidas en el entreno.<br><br>
+                                        <strong>2. Criterios de Desempate (en caso de igual número de victorias):</strong><br>
+                                        • <strong>1º:</strong> Pareja ganadora del último partido en Pista 1 (Campeones anecdóticos del entreno).<br>
+                                        • <strong>2º:</strong> Finalistas en Pista 1 en la última ronda.<br>
+                                        • <strong>3º:</strong> Pista final alcanzada (Pista 1 &gt; Pista 2 &gt; Pista 3...).<br>
+                                        • <strong>4º:</strong> Resultado en la última pista (ganador por delante de perdedor).<br>
+                                        • <strong>5º:</strong> Veces jugadas en Pista 1 a lo largo del entreno.<br>
+                                        • <strong>6º:</strong> Diferencia global de juegos (Juegos a Favor - Juegos en Contra).<br>
+                                        • <strong>7º:</strong> Juegos ganados totales (Puntos).
+                                    </p>
+                                </div>
+
+                                <button class="sp-btn-share-ranking" style="justify-content:center; padding:12px; margin-top:6px;" onclick="window.ControlTowerStandings.toggleRulesModal(false)">
+                                    <i class="fas fa-check"></i>
+                                    <span>ENTENDIDO, ¡A POR EL PARTIDO!</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${ranking.length > 0 ? `
+                        <!-- OLYMPIC PODIUM -->
+                        <div class="sp-podium-card">
+                            <div class="sp-podium-title">
+                                <span>🏆 PODIO DE HONOR</span>
+                                <span>•</span>
+                                <span>SOMOSPADEL BCN</span>
+                            </div>
+                            <div class="sp-podium-grid">
+                                <!-- SILVER (2ND) -->
+                                ${top2 ? `
+                                    <div class="sp-podium-col silver">
+                                        <div class="sp-podium-avatar-wrap">
+                                            <div class="sp-podium-avatar">${getInitials(top2.name)}</div>
+                                            <div class="sp-podium-badge-medal">2</div>
+                                        </div>
+                                        <div class="sp-podium-name" title="${top2.name}">${top2.name}</div>
+                                        <div class="sp-podium-score-pill">${top2.points} pts • ${top2.won}V</div>
+                                    </div>
+                                ` : ''}
+
+                                <!-- GOLD (1ST) -->
+                                ${top1 ? `
+                                    <div class="sp-podium-col gold">
+                                        <div class="sp-podium-avatar-wrap">
+                                            <div class="sp-podium-crown">👑</div>
+                                            <div class="sp-podium-avatar">${getInitials(top1.name)}</div>
+                                            <div class="sp-podium-badge-medal">1</div>
+                                        </div>
+                                        <div class="sp-podium-name" title="${top1.name}">${top1.name}</div>
+                                        <div class="sp-podium-score-pill">${top1.points} pts • ${top1.won}V</div>
+                                    </div>
+                                ` : ''}
+
+                                <!-- BRONZE (3RD) -->
+                                ${top3 ? `
+                                    <div class="sp-podium-col bronze">
+                                        <div class="sp-podium-avatar-wrap">
+                                            <div class="sp-podium-avatar">${getInitials(top3.name)}</div>
+                                            <div class="sp-podium-badge-medal">3</div>
+                                        </div>
+                                        <div class="sp-podium-name" title="${top3.name}">${top3.name}</div>
+                                        <div class="sp-podium-score-pill">${top3.points} pts • ${top3.won}V</div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- DETAILED TECHNICAL STANDINGS TABLE -->
+                    <div class="sp-table-card">
+                        <div class="sp-table-toolbar">
+                            <div class="sp-table-search">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="sp-standings-filter" placeholder="Buscar jugador..." oninput="window.ControlTowerStandings.filterTable(this.value)">
+                            </div>
+                            <div class="sp-legend-pills">
+                                <span class="sp-legend-champions"><i class="fas fa-star" style="font-size:0.6rem;"></i> ZONA TOP</span>
+                            </div>
+                        </div>
+
+                        <div class="sp-standings-table-wrap">
+                            <table class="sp-standings-table" id="sp-table-rankings">
+                                <thead>
+                                    <tr>
+                                        <th class="sp-col-pos">#</th>
+                                        <th class="sp-col-player">JUGADOR</th>
+                                        <th class="sp-col-num" title="Partidos Jugados">PJ</th>
+                                        <th class="sp-col-num" title="Partidos Ganados">PG</th>
+                                        <th class="sp-col-num" title="Partidos Perdidos">PP</th>
+                                        <th class="sp-col-num" title="Juegos a Favor">JF</th>
+                                        <th class="sp-col-num" title="Juegos en Contra">JC</th>
+                                        <th class="sp-col-num" title="Diferencia de Juegos">DIF</th>
+                                        <th class="sp-col-pts" title="Puntos Totales">PTS</th>
+                                        <th class="sp-col-num" title="Porcentaje de Efectividad">% EFIC</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${ranking.length === 0 ? `
+                                        <tr>
+                                            <td colspan="10" style="text-align:center; padding: 40px 10px; color:#94a3b8; font-style:italic;">
+                                                Aún no se han disputado partidos en este evento.
+                                            </td>
+                                        </tr>
+                                    ` : ranking.map((p, i) => {
+                                        const rank = i + 1;
+                                        const isChamp = rank <= 4;
+                                        const isTopGold = rank === 1;
+                                        const diff = parseInt(p.diff || (p.points - (p.gamesLost || 0))) || 0;
+                                        const diffClass = diff > 0 ? 'sp-diff-pos' : (diff < 0 ? 'sp-diff-neg' : 'sp-diff-zero');
+                                        const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
+                                        const winPct = Math.round((p.won / Math.max(1, p.played)) * 100) || 0;
+                                        const barColor = winPct >= 65 ? '#10b981' : (winPct >= 40 ? '#f59e0b' : '#ef4444');
+                                        const rowClass = (isTopGold ? 'sp-row-gold' : (isChamp ? 'sp-row-champions' : '')) + ' sp-player-row';
+                                        
+                                        // Trend simulation (based on diff)
+                                        const trendIcon = diff > 2 ? '<i class="fas fa-caret-up sp-trend-icon trend-up"></i>' : (diff < -2 ? '<i class="fas fa-caret-down sp-trend-icon trend-down"></i>' : '<i class="fas fa-minus sp-trend-icon trend-same"></i>');
+
+                                        return `
+                                            <tr class="${rowClass}" data-name="${(p.name || '').toLowerCase()}">
+                                                <td class="sp-col-pos">
+                                                    ${rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : rank))}
+                                                    ${trendIcon}
+                                                </td>
+                                                 <td class="sp-col-player">
+                                                    <div class="sp-player-cell">
+                                                        <div class="sp-table-avatar">${getInitials(p.name)}</div>
+                                                        <div>
+                                                            <div class="sp-table-player-name">${p.name}</div>
+                                                            <div style="display:flex; gap:4px; align-items:center; margin-top:2px;">
+                                                                <span class="sp-table-level-badge" style="background:${getLevelColor(p.level || 3.5)}">Nv ${p.level || '3.5'}</span>
+                                                                ${isEntreno && p.lastMatchCourt && p.lastMatchCourt < 90 ? `
+                                                                    <span style="font-size:0.58rem; font-weight:900; padding:1px 5px; border-radius:4px; background:${p.lastMatchCourt === 1 ? '#CCFF00' : '#e2e8f0'}; color:${p.lastMatchCourt === 1 ? '#000000' : '#475569'}; border:1px solid ${p.lastMatchCourt === 1 ? '#a3e635' : '#cbd5e1'};">
+                                                                        ${p.lastMatchCourt === 1 ? '👑 PISTA 1' : `PISTA ${p.lastMatchCourt}`}
+                                                                    </span>
+                                                                ` : ''}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                 </td>
+                                                <td class="sp-col-num">${p.played || 0}</td>
+                                                <td class="sp-col-num" style="color:#10b981; font-weight:800;">${p.won || 0}</td>
+                                                <td class="sp-col-num" style="color:#ef4444;">${p.lost || (p.played - p.won) || 0}</td>
+                                                <td class="sp-col-num">${p.points || 0}</td>
+                                                <td class="sp-col-num">${p.gamesLost || 0}</td>
+                                                <td class="sp-col-num ${diffClass}">${diffStr}</td>
+                                                <td class="sp-col-pts">${p.points || 0}</td>
+                                                <td class="sp-col-num">
+                                                    <div class="sp-efic-bar-wrap">
+                                                        <span>${winPct}%</span>
+                                                        <div class="sp-efic-bar-track">
+                                                            <div class="sp-efic-bar-fill" style="width:${winPct}%; background:${barColor};"></div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                         </div>
                     </div>
 
