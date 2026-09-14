@@ -1,13 +1,13 @@
 // ============================================================================
 // 🎾 SOMOSPADEL PWA SERVICE WORKER
-// Versión: somospadel-pwa-v2.0.1
+// Versión: somospadel-pwa-v2.0.2
 // Estrategias:
 //  - Documentos de navegación: Network First con fallback a caché offline
 //  - Recursos estáticos pesados (fuentes, imágenes, CSS, JS): Stale-While-Revalidate / Cache First
 //  - Firestore y APIs externas: Excluidas de caché (conexión directa)
 // ============================================================================
 
-const CACHE_NAME = 'somospadel-pwa-v2.0.1';
+const CACHE_NAME = 'somospadel-pwa-v2.0.2';
 
 // Recursos críticos para el funcionamiento offline básico (App Shell)
 const PRECACHE_ASSETS = [
@@ -25,7 +25,11 @@ const PRECACHE_ASSETS = [
     './img/ball.png',
     './img/ball-masculina.png',
     './img/ball-femenina.png',
-    './img/ball-mixta.png'
+    './img/ball-mixta.png',
+    './audio/speaker/entreno_bcn_prat.mp3',
+    './audio/speaker/entreno_general.mp3',
+    './audio/speaker/torneo_intro.mp3',
+    './audio/speaker/speaker_call.mp3'
 ];
 
 // Dominios excluidos del Service Worker (APIs dinámicas y Firebase)
