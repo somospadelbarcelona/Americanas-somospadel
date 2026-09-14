@@ -3469,7 +3469,52 @@
                     .eq-bar:nth-child(3) { animation-delay: 0.3s; }
                     .eq-bar:nth-child(4) { animation-delay: 0.45s; }
 
-                    /* Confeti */
+                    #battle-top-bar {
+                        background: #ffffff !important;
+                    }
+                    .battle-tabs-wrapper {
+                        display: flex;
+                        gap: 8px;
+                        margin-bottom: 18px;
+                        background: #e2e8f0;
+                        padding: 5px;
+                        border-radius: 16px;
+                        border: 1px solid #cbd5e1;
+                        width: fit-content;
+                        max-width: 100%;
+                        box-sizing: border-box;
+                    }
+                    @media (max-width: 640px) {
+                        .battle-tabs-wrapper {
+                            display: grid !important;
+                            grid-template-columns: 1fr 1fr !important;
+                            gap: 6px !important;
+                            width: 100% !important;
+                        }
+                        .battle-tabs-wrapper .battle-tab-btn {
+                            justify-content: center !important;
+                            padding: 10px 8px !important;
+                            font-size: 0.72rem !important;
+                            width: 100% !important;
+                            box-sizing: border-box !important;
+                        }
+                    }
+                    .battle-pills-row {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        overflow-x: auto;
+                        overflow-y: hidden;
+                        scrollbar-width: none !important;
+                        -ms-overflow-style: none !important;
+                        -webkit-overflow-scrolling: touch;
+                        padding-bottom: 4px;
+                    }
+                    .battle-pills-row::-webkit-scrollbar {
+                        display: none !important;
+                        width: 0 !important;
+                        height: 0 !important;
+                    }
                     @keyframes confettiFall {
                         0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
                         100% { transform: translateY(240px) rotate(480deg); opacity: 0; }
@@ -3477,7 +3522,7 @@
                 </style>
 
                 <!-- STICKY TOP NAVIGATION BAR -->
-                <div style="position: sticky; top: 0; z-index: 30010; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(16px); border-bottom: 1px solid #e2e8f0; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                <div id="battle-top-bar" style="position: sticky; top: 0; z-index: 30010; background: #ffffff !important; border-bottom: 1px solid #e2e8f0; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; gap: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
                     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                         <span style="background: #0f172a; color: #ccff00; padding: 4px 10px; border-radius: 8px; font-weight: 950; font-size: 0.68rem; letter-spacing: 1.5px;">BROADCAST</span>
                         <div style="display: flex; align-items: center; gap: 6px;">
@@ -3662,7 +3707,7 @@
                     </div>
 
                     <!-- 🎛️ QUAD TAB SWITCHER: ROSTER VS AI WAR ROOM VS ROULETTE VS DUEL ARENA -->
-                    <div style="display: flex; gap: 8px; margin-bottom: 18px; background: #e2e8f0; padding: 5px; border-radius: 16px; border: 1px solid #cbd5e1; width: fit-content; max-width: 100%; flex-wrap: wrap;">
+                    <div class="battle-tabs-wrapper">
                         <button id="battle-tab-btn-roster" class="battle-tab-btn" onclick="window.switchBattleReadyTab('roster')" style="background: #0f172a; color: #ffffff; border-color: #0f172a; box-shadow: 0 4px 12px rgba(15,23,42,0.15);">
                             <i class="fas fa-users"></i> ROSTER (${totalPlayers + slotsLeft})
                         </button>
@@ -3689,7 +3734,7 @@
                                        onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.02)';">
                             </div>
 
-                            <div style="display: flex; align-items: center; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
+                            <div class="battle-pills-row">
                                 <button id="battle-pill-all" class="battle-filter-pill active" onclick="window.filterBattleReady('all')">Todos (${totalPlayers + slotsLeft})</button>
                                 <button id="battle-pill-pair" class="battle-filter-pill" onclick="window.filterBattleReady('pair')">Parejas (${pairsCount})</button>
                                 <button id="battle-pill-solo" class="battle-filter-pill" onclick="window.filterBattleReady('solo')">Buscando Pareja 🔍 (${solosCount})</button>
@@ -3700,7 +3745,7 @@
                         <!-- HIGH DENSITY GRID -->
                         <div class="broadcast-grid" style="
                             display: grid; 
-                            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); 
+                            grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); 
                             gap: 14px; 
                             margin-bottom: 40px;
                         ">

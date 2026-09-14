@@ -157,7 +157,7 @@
 
                     <!-- THE 3D FUT CARD -->
                     <div id="padel-fut-card-element" style="
-                        width: 330px; height: 490px;
+                        width: min(330px, calc(100vw - 32px)); max-width: 100%; height: auto; aspect-ratio: 330/490; max-height: 80vh;
                         background: linear-gradient(160deg, #111422 0%, #07090e 60%, #151a0b 100%);
                         border-radius: 28px;
                         position: relative;

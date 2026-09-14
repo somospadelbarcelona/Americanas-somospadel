@@ -179,7 +179,7 @@
                     </div>
 
                     <!-- STICKY HEADER: TABS + SEARCH -->
-                    <div style="position: sticky; top: 108px; z-index: 1001; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 12px clamp(12px, 3.5vw, 25px) 16px;">
+                    <div style="position: sticky; top: clamp(64px, 10vw, 85px); z-index: 1001; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 12px clamp(12px, 3.5vw, 25px) 16px;">
                         
                         <!-- Navigation Tabs (AMERICANAS / ENTRENOS) -->
                         <div style="background: #e2e8f0; padding: 4px; border-radius: 18px; display: flex; border: 1px solid #cbd5e1; margin-bottom: 14px; gap: 4px;">
@@ -228,7 +228,7 @@
                         </div>
 
                         <!-- CATEGORIES HORIZONTAL -->
-                        <div style="display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; align-items: center; padding-bottom: 4px;">
+                        <div class="ranking-categories-bar" style="display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; align-items: center; padding-bottom: 4px;">
                             ${['todas', 'male', 'female', 'mixed'].map(cat => {
                                 const isActive = this.currentCategory === cat;
                                 const label = cat === 'todas' ? 'GLOBAL' : (cat === 'male' ? 'MASC.' : (cat === 'female' ? 'FEM.' : 'MIXTA'));

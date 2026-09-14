@@ -271,7 +271,7 @@
                         </div>
                         
                         <!-- 📊 4 KPIS DEL CLUB (GLASSMORPHISM MARCADOR DEPORTIVO) -->
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 24px; position: relative; z-index: 2;">
+                        <div class="team-club-kpis" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 24px; position: relative; z-index: 2;">
                             <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 6px; text-align: center; transition: all 0.2s ease;">
                                 <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 3px;">
                                     <i class="fas fa-shield-alt" style="color: #38bdf8; font-size: 0.75rem;"></i>
@@ -600,7 +600,7 @@
                                     <i class="fas fa-crown" style="font-size: 0.58rem; color: #f59e0b;"></i> ${cleanCap}
                                 </span>
                                 <span style="font-size: 0.62rem; color: ${catBadgeText}; font-weight: 900; background: ${catBadgeBg}; padding: 3px 8px; border-radius: 7px; text-transform: uppercase;">
-                                    Grupo ${team.group.split(' ').pop()}
+                                    Grupo ${team.group ? team.group.split(' ').pop() : (team.category || 'A')}
                                 </span>
                                 <span style="font-size: 0.62rem; color: #475569; font-weight: 800; background: #f8fafc; padding: 3px 7px; border-radius: 7px; border: 1px solid #edf2f7;">
                                     G:${winCount} P:${ppCount}

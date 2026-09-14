@@ -937,5 +937,73 @@ body {
     flex-shrink: 0 !important;
 }
 
+/* ==========================================================================
+   SOMOSPADEL GLOBAL RESPONSIVE & MOBILE / TABLET BLINDAJE
+   Universal Viewport & Layout Optimization for Phones, Tablets and Desktops
+   ========================================================================== */
 
+/* 1. Global Viewport Lock against Horizontal Wobbling */
+html, body {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+}
 
+#content-area {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 2. Universal Scrollbar Cleaners for Touch Carousels & Pills */
+.story-v3-feed,
+.events-submenu-pro-bar,
+.cat-pills-container,
+.battle-pills-row,
+.ranking-categories-bar,
+.subnav-tabs-container {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+.story-v3-feed::-webkit-scrollbar,
+.events-submenu-pro-bar::-webkit-scrollbar,
+.cat-pills-container::-webkit-scrollbar,
+.battle-pills-row::-webkit-scrollbar,
+.ranking-categories-bar::-webkit-scrollbar,
+.subnav-tabs-container::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* 3. Tablet Optimization (768px to 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .dashboard-v2-container,
+    .ranking-global-wrapper,
+    .broadcast-container {
+        max-width: 900px !important;
+        margin: 0 auto !important;
+    }
+    
+    .broadcast-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px !important;
+    }
+}
+
+/* 4. Mobile Narrow Screens (< 520px) */
+@media (max-width: 520px) {
+    .team-club-kpis {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+    }
+}
+
+/* 5. Accessible Touch Targets */
+.nav-item,
+.battle-filter-pill,
+.cat-pill-btn,
+.battle-tab-btn {
+    min-height: 38px;
+    -webkit-tap-highlight-color: transparent;
+}

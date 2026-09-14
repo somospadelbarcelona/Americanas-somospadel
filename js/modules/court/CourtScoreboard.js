@@ -29,8 +29,10 @@
             // Estado del partido
             this.state = this.getInitialState();
             this.history = []; // Pila para deshacer (Undo)
+            this.layoutMode = 'auto'; // 'auto' | 'stacked' | 'side-by-side'
 
             this.initKeyboardShortcuts();
+            this.initResponsiveListeners();
         }
 
         getInitialState() {
@@ -675,6 +677,19 @@
                             </select>
                         </div>
 
+                        <div>
+                            <label style="font-size: 0.75rem; color: #8892b0; font-weight: 800; text-transform: uppercase;">Disposición en Pantalla</label>
+                            <select id="cfg-layout" style="width: 100%; background: #1a202c; border: 1px solid #334155; color: #CCFF00; padding: 12px; border-radius: 12px; font-weight: 900; margin-top: 6px; font-size: 0.9rem; box-sizing: border-box;">
+                                <option value="auto" ${this.layoutMode === 'auto' ? 'selected' : ''}>📱 Automática (Detecta Móvil o Tablet)</option>
+                                <option value="stacked" ${this.layoutMode === 'stacked' ? 'selected' : ''}>📱 Arriba / Abajo (Ideal móvil vertical)</option>
+                                <option value="side-by-side" ${this.layoutMode === 'side-by-side' ? 'selected' : ''}>📺 Izquierda / Derecha (Estilo TV / Pista)</option>
+                            </select>
+                        </div>
+
+                        <button type="button" onclick="window.CourtScoreboard.confirmReset(); document.getElementById('court-settings-modal')?.remove();" style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1.5px solid rgba(239,68,68,0.35); padding: 12px; border-radius: 12px; font-weight: 900; font-size: 0.85rem; text-transform: uppercase; cursor: pointer; margin-top: 4px;">
+                            🔄 Reiniciar Marcador a 0-0
+                        </button>
+
                         <button id="cfg-save-btn" style="background: #CCFF00; color: #000; border: none; padding: 14px; border-radius: 14px; font-weight: 950; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; margin-top: 10px;">
                             💾 Guardar Cambios
                         </button>
@@ -692,11 +707,38 @@
                 this.soundEnabled = document.getElementById('cfg-sounds').checked;
                 this.config.maxSets = parseInt(document.getElementById('cfg-sets').value, 10) || 3;
                 this.config.tiebreakPoints = parseInt(document.getElementById('cfg-tiebreak-pts').value, 10) || 7;
+                const layoutEl = document.getElementById('cfg-layout');
+                if (layoutEl) this.layoutMode = layoutEl.value;
 
                 modal.remove();
                 this.render();
                 this.showNotice('Ajustes actualizados');
             };
+        }
+
+        initResponsiveListeners() {
+            if (this._responsiveBound || typeof window === 'undefined') return;
+            this._responsiveBound = true;
+            window.addEventListener('resize', () => {
+                if (this.isOpen) this.render();
+            });
+            window.addEventListener('orientationchange', () => {
+                if (this.isOpen) setTimeout(() => this.render(), 120);
+            });
+        }
+
+        toggleLayoutMode() {
+            if (this.layoutMode === 'auto') this.layoutMode = 'stacked';
+            else if (this.layoutMode === 'stacked') this.layoutMode = 'side-by-side';
+            else this.layoutMode = 'auto';
+
+            const labels = {
+                'stacked': '📱 Vista: Arriba / Abajo (Vertical)',
+                'side-by-side': '📱 Vista: Izquierda / Derecha (Columnas)',
+                'auto': '📱 Vista: Automática Adaptativa'
+            };
+            this.showNotice(labels[this.layoutMode] || '📱 Vista cambiada', 1400);
+            this.render();
         }
 
         confirmReset() {
@@ -716,212 +758,356 @@
             const isTb = this.state.isTiebreak;
             const ptsDispA = isTb ? this.state.tiebreakPointsA : this.getPointDisplay(this.state.pointsA, this.state.pointsB);
             const ptsDispB = isTb ? this.state.tiebreakPointsB : this.getPointDisplay(this.state.pointsB, this.state.pointsA);
-
             const isGoldenPointNow = !isTb && this.config.goldenPoint && this.state.pointsA === 3 && this.state.pointsB === 3;
 
             // Historial de sets
             const setsHistoryHtml = this.state.completedSets.map((s, idx) => `
-                <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); padding: 4px 10px; border-radius: 8px; font-weight: 900; font-size: clamp(0.7rem, 2vw, 1rem); display: flex; gap: 6px; align-items: center;">
-                    <span style="color: #8892b0; font-size: 0.65em;">S${idx + 1}</span>
+                <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); padding: 2px 8px; border-radius: 6px; font-weight: 900; font-size: clamp(0.65rem, 1.8vw, 0.85rem); display: flex; gap: 4px; align-items: center; white-space: nowrap;">
+                    <span style="color: #8892b0; font-size: 0.8em;">S${idx + 1}</span>
                     <span style="color: #00E5FF;">${s.a}</span>
                     <span style="color: #555;">-</span>
                     <span style="color: #CCFF00;">${s.b}</span>
-                    ${s.tbA !== undefined ? `<span style="color: #FFD700; font-size: 0.6em;">(${Math.min(s.tbA, s.tbB)})</span>` : ''}
+                    ${s.tbA !== undefined ? `<span style="color: #FFD700; font-size: 0.75em;">(${Math.min(s.tbA, s.tbB)})</span>` : ''}
                 </div>
             `).join('');
+
+            // Detección de orientación para layout inteligente
+            const winW = window.innerWidth || document.documentElement.clientWidth || 360;
+            const winH = window.innerHeight || document.documentElement.clientHeight || 640;
+            const isPortraitDevice = winW < winH && winW <= 768;
+            const useStacked = (this.layoutMode === 'stacked') || (this.layoutMode === 'auto' && isPortraitDevice);
 
             overlay.innerHTML = `
                 <!-- CANVAS CONFETTI PARA CELEBRACIÓN -->
                 <canvas id="court-confetti-canvas" style="position: absolute; inset: 0; pointer-events: none; z-index: 99;"></canvas>
 
-                <!-- TOP BAR HEADER (Compacta y accesible) -->
-                <header style="height: clamp(50px, 8vh, 70px); background: #0b0d13; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; padding: 0 clamp(10px, 3vw, 24px); position: relative; z-index: 10;">
-                    
-                    <!-- Logo / Brand & Sets Badge -->
-                    <div style="display: flex; align-items: center; gap: clamp(8px, 2vw, 16px);">
-                        <div style="display: flex; align-items: center; gap: 6px; font-weight: 950; font-size: clamp(0.75rem, 2.2vw, 1.1rem); letter-spacing: 1px; color: #fff;">
+                <!-- TOP BAR HEADER (Ultra Compacta y Adaptada a Móvil) -->
+                <header class="court-top-bar" style="
+                    height: clamp(48px, 7vh, 64px);
+                    background: #080a0f;
+                    border-bottom: 1px solid rgba(255,255,255,0.08);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0 clamp(8px, 2vw, 20px);
+                    position: relative;
+                    z-index: 10;
+                    box-sizing: border-box;
+                    width: 100%;
+                ">
+                    <!-- Brand & Sets -->
+                    <div style="display: flex; align-items: center; gap: clamp(6px, 1.5vw, 12px); min-width: 0;">
+                        <div style="display: flex; align-items: center; gap: 4px; font-weight: 950; font-size: clamp(0.72rem, 2.2vw, 1.05rem); letter-spacing: 0.5px; color: #fff; white-space: nowrap;">
                             <span style="color: #CCFF00;">SOMOS</span>PADEL
-                            <span style="background: rgba(204,255,0,0.15); color: #CCFF00; border: 1px solid rgba(204,255,0,0.3); font-size: 0.55rem; padding: 2px 6px; border-radius: 6px; font-weight: 900;">PISTA</span>
+                            <span style="background: rgba(204,255,0,0.15); color: #CCFF00; border: 1px solid rgba(204,255,0,0.3); font-size: 0.52rem; padding: 1px 5px; border-radius: 4px; font-weight: 900;">PISTA</span>
                         </div>
                         
                         <!-- Completed Sets Pills -->
-                        <div style="display: flex; gap: 6px;">
+                        <div style="display: flex; gap: 4px; overflow-x: auto; max-width: 130px; scrollbar-width: none;">
                             ${setsHistoryHtml}
                         </div>
                     </div>
 
                     <!-- Center Mode Badges (Punto de Oro / Tiebreak indicator / Ganador) -->
-                    <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="display: flex; align-items: center; justify-content: center; min-width: 0; flex-shrink: 1;">
                         ${this.state.isFinished ? `
-                            <div style="background: linear-gradient(90deg, #CCFF00, #00E36D); color: #000; font-weight: 950; font-size: clamp(0.7rem, 2vw, 0.95rem); padding: 5px 16px; border-radius: 20px; box-shadow: 0 0 20px rgba(204,255,0,0.7); letter-spacing: 1px; animation: spPulse 1s infinite alternate;">
-                                🏆 ¡GANADOR: ${this.getTeamName(this.state.winner).toUpperCase()}!
+                            <div style="background: linear-gradient(90deg, #CCFF00, #00E36D); color: #000; font-weight: 950; font-size: clamp(0.65rem, 1.8vw, 0.85rem); padding: 3px 10px; border-radius: 16px; box-shadow: 0 0 15px rgba(204,255,0,0.7); letter-spacing: 0.5px; animation: spPulse 1s infinite alternate; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px;">
+                                🏆 ${this.getTeamName(this.state.winner).toUpperCase()}
                             </div>
                         ` : `
                             ${isGoldenPointNow ? `
-                                <div style="background: linear-gradient(90deg, #FFD700, #FFA500); color: #000; font-weight: 950; font-size: clamp(0.65rem, 2vw, 0.85rem); padding: 4px 12px; border-radius: 20px; box-shadow: 0 0 15px rgba(255,215,0,0.6); animation: spPulse 1s infinite alternate; letter-spacing: 1px;">
+                                <div style="background: linear-gradient(90deg, #FFD700, #FFA500); color: #000; font-weight: 950; font-size: clamp(0.6rem, 1.6vw, 0.75rem); padding: 2px 8px; border-radius: 12px; box-shadow: 0 0 12px rgba(255,215,0,0.6); animation: spPulse 1s infinite alternate; letter-spacing: 0.5px; white-space: nowrap;">
                                     ⚡ PUNTO DE ORO
                                 </div>
                             ` : ''}
                             ${isTb ? `
-                                <div style="background: #ff0055; color: #fff; font-weight: 950; font-size: clamp(0.65rem, 2vw, 0.85rem); padding: 4px 12px; border-radius: 20px; box-shadow: 0 0 15px rgba(255,0,85,0.6); animation: spPulse 1s infinite alternate; letter-spacing: 1px;">
-                                    🔥 TIE-BREAK (${this.config.tiebreakPoints} pts)
+                                <div style="background: #ff0055; color: #fff; font-weight: 950; font-size: clamp(0.6rem, 1.6vw, 0.75rem); padding: 2px 8px; border-radius: 12px; box-shadow: 0 0 12px rgba(255,0,85,0.6); animation: spPulse 1s infinite alternate; letter-spacing: 0.5px; white-space: nowrap;">
+                                    🔥 TIE-BREAK (${this.config.tiebreakPoints})
                                 </div>
                             ` : ''}
                         `}
                     </div>
 
-                    <!-- Controls Toolbar -->
-                    <div style="display: flex; align-items: center; gap: clamp(6px, 1.5vw, 12px);">
-                        <button onclick="window.CourtScoreboard.undo()" title="Deshacer último punto (U)" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: clamp(34px, 5vw, 42px); height: clamp(34px, 5vw, 42px); border-radius: 12px; font-size: clamp(0.85rem, 2vw, 1.1rem); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <!-- Controls Toolbar (Con iconos optimizados para móvil) -->
+                    <div style="display: flex; align-items: center; gap: clamp(3px, 1vw, 8px); flex-shrink: 0;">
+                        <!-- Undo -->
+                        <button onclick="window.CourtScoreboard.undo()" title="Deshacer último punto" class="court-btn-icon" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: clamp(30px, 4.5vw, 38px); height: clamp(30px, 4.5vw, 38px); border-radius: 10px; font-size: clamp(0.8rem, 2vw, 1rem); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">
                             ↩
                         </button>
-                        <button onclick="window.CourtScoreboard.swapSides()" title="Cambiar de lado" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: clamp(34px, 5vw, 42px); height: clamp(34px, 5vw, 42px); border-radius: 12px; font-size: clamp(0.85rem, 2vw, 1.1rem); cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                            🔄
-                        </button>
-                        <button onclick="window.CourtScoreboard.toggleServer()" title="Cambiar sacador (S)" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: clamp(34px, 5vw, 42px); height: clamp(34px, 5vw, 42px); border-radius: 12px; font-size: clamp(0.85rem, 2vw, 1.1rem); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <!-- Cambiar sacador -->
+                        <button onclick="window.CourtScoreboard.toggleServer()" title="Cambiar sacador (🎾)" class="court-btn-icon" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: clamp(30px, 4.5vw, 38px); height: clamp(30px, 4.5vw, 38px); border-radius: 10px; font-size: clamp(0.75rem, 1.8vw, 0.95rem); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">
                             🎾
                         </button>
-                        <button onclick="window.CourtScoreboard.toggleFullscreen()" title="Pantalla completa (F)" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: clamp(34px, 5vw, 42px); height: clamp(34px, 5vw, 42px); border-radius: 12px; font-size: clamp(0.85rem, 2vw, 1.1rem); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <!-- Cambiar lados -->
+                        <button onclick="window.CourtScoreboard.swapSides()" title="Cambiar de lado" class="court-btn-icon" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: clamp(30px, 4.5vw, 38px); height: clamp(30px, 4.5vw, 38px); border-radius: 10px; font-size: clamp(0.75rem, 1.8vw, 0.95rem); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">
+                            🔄
+                        </button>
+                        <!-- Cambiar orientación / vista (Arriba/Abajo vs Izq/Der) -->
+                        <button onclick="window.CourtScoreboard.toggleLayoutMode()" title="Cambiar distribución (Vertical / Dividido)" class="court-btn-icon" style="background: ${useStacked ? 'rgba(204,255,0,0.15)' : 'rgba(255,255,255,0.08)'}; border: 1px solid ${useStacked ? '#CCFF00' : 'rgba(255,255,255,0.15)'}; color: ${useStacked ? '#CCFF00' : '#fff'}; width: clamp(30px, 4.5vw, 38px); height: clamp(30px, 4.5vw, 38px); border-radius: 10px; font-size: clamp(0.75rem, 1.8vw, 0.95rem); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">
+                            ${useStacked ? '⇅' : '⇄'}
+                        </button>
+                        <!-- Fullscreen -->
+                        <button onclick="window.CourtScoreboard.toggleFullscreen()" title="Pantalla completa" class="court-btn-icon court-btn-desktop-only" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: clamp(30px, 4.5vw, 38px); height: clamp(30px, 4.5vw, 38px); border-radius: 10px; font-size: clamp(0.75rem, 1.8vw, 0.95rem); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">
                             ⛶
                         </button>
-                        <button onclick="window.CourtScoreboard.openSettings()" title="Ajustes" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: clamp(34px, 5vw, 42px); height: clamp(34px, 5vw, 42px); border-radius: 12px; font-size: clamp(0.85rem, 2vw, 1.1rem); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <!-- Settings -->
+                        <button onclick="window.CourtScoreboard.openSettings()" title="Ajustes y Reinicio" class="court-btn-icon" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: clamp(30px, 4.5vw, 38px); height: clamp(30px, 4.5vw, 38px); border-radius: 10px; font-size: clamp(0.75rem, 1.8vw, 0.95rem); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">
                             ⚙️
                         </button>
-                        <button onclick="window.CourtScoreboard.confirmReset()" title="Reiniciar" style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; width: clamp(34px, 5vw, 42px); height: clamp(34px, 5vw, 42px); border-radius: 12px; font-size: clamp(0.85rem, 2vw, 1.1rem); cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                            🗑️
-                        </button>
-                        <button onclick="window.CourtScoreboard.close()" title="Salir" style="background: rgba(255,255,255,0.12); border: none; color: #fff; width: clamp(34px, 5vw, 42px); height: clamp(34px, 5vw, 42px); border-radius: 12px; font-size: clamp(0.85rem, 2vw, 1.1rem); cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 900;">
+                        <!-- Close -->
+                        <button onclick="window.CourtScoreboard.close()" title="Salir del marcador" class="court-btn-icon" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #ff6b6b; width: clamp(30px, 4.5vw, 38px); height: clamp(30px, 4.5vw, 38px); border-radius: 10px; font-size: clamp(0.85rem, 2vw, 1.05rem); cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 900; padding: 0;">
                             ✕
                         </button>
                     </div>
                 </header>
 
                 <!-- NOTIFICACIÓN HUD FLOTANTE -->
-                <div id="sp-court-notice" style="position: absolute; top: clamp(65px, 10vh, 85px); left: 50%; transform: translate(-50%, -15px) scale(0.95); opacity: 0; background: rgba(18,22,32,0.95); border: 1.5px solid #CCFF00; color: #fff; padding: 10px 24px; border-radius: 30px; font-weight: 900; font-size: clamp(0.75rem, 2vw, 1rem); letter-spacing: 0.5px; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.8); pointer-events: none; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); white-space: nowrap;"></div>
+                <div id="sp-court-notice" style="position: absolute; top: clamp(54px, 8vh, 72px); left: 50%; transform: translate(-50%, -15px) scale(0.95); opacity: 0; background: rgba(15,20,30,0.96); border: 1.5px solid #CCFF00; color: #fff; padding: 8px 18px; border-radius: 24px; font-weight: 900; font-size: clamp(0.72rem, 2vw, 0.95rem); letter-spacing: 0.5px; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.8); pointer-events: none; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); white-space: nowrap;"></div>
 
-                <!-- MAIN SPLIT SCREEN AREA (MITAD IZQUIERDA = EQUIPO A, MITAD DERECHA = EQUIPO B) -->
-                <main style="flex: 1; display: flex; width: 100%; height: calc(100% - clamp(50px, 8vh, 70px)); position: relative; overflow: hidden;">
-                    
-                    <!-- COURT NET DIVIDER (Línea central divisoria de pista) -->
-                    <div style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(255,255,255,0.1); transform: translateX(-50%); z-index: 4; pointer-events: none;">
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #06070a; border: 1px solid rgba(255,255,255,0.15); border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #8892b0; font-weight: 900;">
-                            VS
-                        </div>
-                    </div>
-
-                    <!-- LEFT HALF: TEAM A (NEON CYAN #00E5FF) -->
-                    <div onclick="window.CourtScoreboard.addPoint('A')" style="
-                        flex: 1; height: 100%; display: flex; flex-direction: column;
-                        justify-content: space-between; padding: clamp(16px, 3vh, 32px) clamp(16px, 3vw, 40px);
-                        background: radial-gradient(circle at 30% 50%, rgba(0, 229, 255, 0.08) 0%, #06070a 70%);
-                        cursor: pointer; position: relative; transition: background 0.15s ease;
-                        border-right: 1px solid rgba(0, 229, 255, 0.1);
-                    " onmouseover="this.style.background='radial-gradient(circle at 30% 50%, rgba(0, 229, 255, 0.13) 0%, #06070a 70%)'" onmouseout="this.style.background='radial-gradient(circle at 30% 50%, rgba(0, 229, 255, 0.08) 0%, #06070a 70%)'">
+                ${useStacked ? `
+                    <!-- ======================================================= -->
+                    <!-- 📱 MODO VERTICAL / APILADO (TOP: EQUIPO A / BOTTOM: EQUIPO B) -->
+                    <!-- ======================================================= -->
+                    <main style="flex: 1; display: flex; flex-direction: column; width: 100%; height: calc(100% - clamp(48px, 7vh, 64px)); position: relative; overflow: hidden;">
                         
-                        <!-- Top Team Info -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; z-index: 2;">
-                            <div>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="color: #00E5FF; font-size: clamp(1rem, 3vw, 1.8rem); font-weight: 950; text-transform: uppercase; letter-spacing: -0.5px;">${this.config.teamAName}</span>
+                        <!-- TOP HALF: TEAM A (NEON CYAN #00E5FF) -->
+                        <div onclick="window.CourtScoreboard.addPoint('A')" class="court-touch-zone" style="
+                            flex: 1; display: flex; flex-direction: column; justify-content: space-between;
+                            padding: clamp(8px, 2vh, 16px) clamp(12px, 3vw, 24px);
+                            background: radial-gradient(circle at 50% 40%, rgba(0, 229, 255, 0.12) 0%, #06070a 75%);
+                            cursor: pointer; position: relative; transition: background 0.15s ease;
+                        ">
+                            <!-- Team A Header Row -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; z-index: 2;">
+                                <div style="display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 65%;">
+                                    <span style="color: #00E5FF; font-size: clamp(0.95rem, 3.8vw, 1.4rem); font-weight: 950; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.config.teamAName}</span>
                                     ${this.state.serverTeam === 'A' ? `
-                                        <div style="background: rgba(0,229,255,0.2); border: 1.5px solid #00E5FF; color: #00E5FF; padding: 3px 10px; border-radius: 12px; font-size: clamp(0.6rem, 1.5vw, 0.75rem); font-weight: 950; display: flex; align-items: center; gap: 4px; box-shadow: 0 0 12px rgba(0,229,255,0.4); animation: spBounce 1.2s infinite ease-in-out;">
+                                        <div style="background: rgba(0,229,255,0.2); border: 1px solid #00E5FF; color: #00E5FF; padding: 2px 7px; border-radius: 10px; font-size: clamp(0.55rem, 1.6vw, 0.7rem); font-weight: 950; display: flex; align-items: center; gap: 3px; white-space: nowrap; box-shadow: 0 0 10px rgba(0,229,255,0.3); animation: spBounce 1.2s infinite ease-in-out; flex-shrink: 0;">
                                             🎾 SAQUE
                                         </div>
                                     ` : ''}
                                 </div>
-                                <div style="color: #8892b0; font-size: clamp(0.65rem, 1.8vw, 0.85rem); font-weight: 800; text-transform: uppercase; margin-top: 2px;">
-                                    SETS GANADOS: <strong style="color: #fff; font-size: 1.1em;">${this.state.setsA}</strong>
+
+                                <!-- Set & Games Badges -->
+                                <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                                    <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); padding: 4px 8px; border-radius: 10px; text-align: center;">
+                                        <div style="color: #8892b0; font-size: 0.55rem; font-weight: 900; text-transform: uppercase;">SETS</div>
+                                        <div style="color: #ffffff; font-size: 1.1rem; font-weight: 950; line-height: 1;">${this.state.setsA}</div>
+                                    </div>
+                                    <div style="background: rgba(0, 229, 255, 0.15); border: 2px solid #00E5FF; border-radius: 12px; padding: 4px 12px; text-align: center; box-shadow: 0 0 15px rgba(0, 229, 255, 0.25);">
+                                        <div style="color: #00E5FF; font-size: 0.55rem; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">JUEGOS</div>
+                                        <div style="color: #ffffff; font-size: 1.3rem; font-weight: 950; line-height: 1;">${this.state.gamesA}</div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Set Games Counter Pill -->
-                            <div style="background: rgba(0, 229, 255, 0.12); border: 2px solid #00E5FF; border-radius: 18px; padding: clamp(6px, 1.5vh, 12px) clamp(14px, 2.5vw, 24px); text-align: center; box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);">
-                                <div style="color: #00E5FF; font-size: clamp(0.6rem, 1.5vw, 0.75rem); font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">JUEGOS</div>
-                                <div style="color: #ffffff; font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 950; line-height: 1;">${this.state.gamesA}</div>
+                            <!-- Big Score Center -->
+                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
+                                <div style="
+                                    font-size: clamp(65px, 20vw, 150px);
+                                    font-weight: 950;
+                                    line-height: 0.9;
+                                    color: #ffffff;
+                                    text-shadow: 0 0 35px rgba(0, 229, 255, 0.7), 0 0 70px rgba(0, 229, 255, 0.25);
+                                    font-variant-numeric: tabular-nums;
+                                    letter-spacing: -2px;
+                                ">
+                                    ${ptsDispA}
+                                </div>
+                                <div style="margin-top: 4px; color: rgba(0, 229, 255, 0.75); font-weight: 900; font-size: clamp(0.6rem, 1.8vw, 0.8rem); text-transform: uppercase; letter-spacing: 1.5px;">
+                                    TOCAR PARA +1 PUNTO
+                                </div>
                             </div>
                         </div>
 
-                        <!-- GIGANTIC NEON SCORE -->
-                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
-                            <div style="
-                                font-size: clamp(90px, 23vw, 260px);
-                                font-weight: 950;
-                                line-height: 0.85;
-                                color: #ffffff;
-                                text-shadow: 0 0 40px rgba(0, 229, 255, 0.6), 0 0 80px rgba(0, 229, 255, 0.2);
-                                font-variant-numeric: tabular-nums;
-                                letter-spacing: -2px;
-                            ">
-                                ${ptsDispA}
-                            </div>
-                            <div style="margin-top: 10px; color: rgba(0, 229, 255, 0.7); font-weight: 900; font-size: clamp(0.7rem, 1.8vw, 1rem); text-transform: uppercase; letter-spacing: 2px;">
-                                TOCAR PARA +1 PUNTO
+                        <!-- NET HORIZONTAL DIVIDER (Red Central de Pista) -->
+                        <div style="position: relative; height: 2px; width: 100%; background: rgba(255,255,255,0.15); z-index: 4; flex-shrink: 0;">
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0b0d13; border: 1.5px solid rgba(255,255,255,0.25); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #8892b0; font-weight: 900; box-shadow: 0 0 15px rgba(0,0,0,0.9);">
+                                VS
                             </div>
                         </div>
 
-                        <!-- Bottom Footer Info -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; color: rgba(255,255,255,0.4); font-size: clamp(0.6rem, 1.5vw, 0.75rem); font-weight: 800; z-index: 2;">
-                            <span>SET ${this.state.currentSet} DE ${this.config.maxSets}</span>
-                            <span>TECLA [←] O [1]</span>
-                        </div>
-                    </div>
-
-                    <!-- RIGHT HALF: TEAM B (NEON LIME #CCFF00) -->
-                    <div onclick="window.CourtScoreboard.addPoint('B')" style="
-                        flex: 1; height: 100%; display: flex; flex-direction: column;
-                        justify-content: space-between; padding: clamp(16px, 3vh, 32px) clamp(16px, 3vw, 40px);
-                        background: radial-gradient(circle at 70% 50%, rgba(204, 255, 0, 0.08) 0%, #06070a 70%);
-                        cursor: pointer; position: relative; transition: background 0.15s ease;
-                    " onmouseover="this.style.background='radial-gradient(circle at 70% 50%, rgba(204, 255, 0, 0.13) 0%, #06070a 70%)'" onmouseout="this.style.background='radial-gradient(circle at 70% 50%, rgba(204, 255, 0, 0.08) 0%, #06070a 70%)'">
-                        
-                        <!-- Top Team Info -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; z-index: 2;">
-                            <!-- Set Games Counter Pill -->
-                            <div style="background: rgba(204, 255, 0, 0.12); border: 2px solid #CCFF00; border-radius: 18px; padding: clamp(6px, 1.5vh, 12px) clamp(14px, 2.5vw, 24px); text-align: center; box-shadow: 0 0 20px rgba(204, 255, 0, 0.2);">
-                                <div style="color: #CCFF00; font-size: clamp(0.6rem, 1.5vw, 0.75rem); font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">JUEGOS</div>
-                                <div style="color: #ffffff; font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 950; line-height: 1;">${this.state.gamesB}</div>
+                        <!-- BOTTOM HALF: TEAM B (NEON LIME #CCFF00) -->
+                        <div onclick="window.CourtScoreboard.addPoint('B')" class="court-touch-zone" style="
+                            flex: 1; display: flex; flex-direction: column; justify-content: space-between;
+                            padding: clamp(8px, 2vh, 16px) clamp(12px, 3vw, 24px);
+                            background: radial-gradient(circle at 50% 60%, rgba(204, 255, 0, 0.12) 0%, #06070a 75%);
+                            cursor: pointer; position: relative; transition: background 0.15s ease;
+                        ">
+                            <!-- Big Score Center -->
+                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
+                                <div style="
+                                    font-size: clamp(65px, 20vw, 150px);
+                                    font-weight: 950;
+                                    line-height: 0.9;
+                                    color: #ffffff;
+                                    text-shadow: 0 0 35px rgba(204, 255, 0, 0.7), 0 0 70px rgba(204, 255, 0, 0.25);
+                                    font-variant-numeric: tabular-nums;
+                                    letter-spacing: -2px;
+                                ">
+                                    ${ptsDispB}
+                                </div>
+                                <div style="margin-top: 4px; color: rgba(204, 255, 0, 0.75); font-weight: 900; font-size: clamp(0.6rem, 1.8vw, 0.8rem); text-transform: uppercase; letter-spacing: 1.5px;">
+                                    TOCAR PARA +1 PUNTO
+                                </div>
                             </div>
 
-                            <div style="text-align: right;">
-                                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                            <!-- Team B Footer Row -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; z-index: 2;">
+                                <div style="display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 65%;">
+                                    <span style="color: #CCFF00; font-size: clamp(0.95rem, 3.8vw, 1.4rem); font-weight: 950; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.config.teamBName}</span>
                                     ${this.state.serverTeam === 'B' ? `
-                                        <div style="background: rgba(204,255,0,0.2); border: 1.5px solid #CCFF00; color: #CCFF00; padding: 3px 10px; border-radius: 12px; font-size: clamp(0.6rem, 1.5vw, 0.75rem); font-weight: 950; display: flex; align-items: center; gap: 4px; box-shadow: 0 0 12px rgba(204,255,0,0.4); animation: spBounce 1.2s infinite ease-in-out;">
+                                        <div style="background: rgba(204,255,0,0.2); border: 1px solid #CCFF00; color: #CCFF00; padding: 2px 7px; border-radius: 10px; font-size: clamp(0.55rem, 1.6vw, 0.7rem); font-weight: 950; display: flex; align-items: center; gap: 3px; white-space: nowrap; box-shadow: 0 0 10px rgba(204,255,0,0.3); animation: spBounce 1.2s infinite ease-in-out; flex-shrink: 0;">
                                             🎾 SAQUE
                                         </div>
                                     ` : ''}
-                                    <span style="color: #CCFF00; font-size: clamp(1rem, 3vw, 1.8rem); font-weight: 950; text-transform: uppercase; letter-spacing: -0.5px;">${this.config.teamBName}</span>
                                 </div>
-                                <div style="color: #8892b0; font-size: clamp(0.65rem, 1.8vw, 0.85rem); font-weight: 800; text-transform: uppercase; margin-top: 2px;">
-                                    SETS GANADOS: <strong style="color: #fff; font-size: 1.1em;">${this.state.setsB}</strong>
+
+                                <!-- Set & Games Badges -->
+                                <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                                    <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); padding: 4px 8px; border-radius: 10px; text-align: center;">
+                                        <div style="color: #8892b0; font-size: 0.55rem; font-weight: 900; text-transform: uppercase;">SETS</div>
+                                        <div style="color: #ffffff; font-size: 1.1rem; font-weight: 950; line-height: 1;">${this.state.setsB}</div>
+                                    </div>
+                                    <div style="background: rgba(204, 255, 0, 0.15); border: 2px solid #CCFF00; border-radius: 12px; padding: 4px 12px; text-align: center; box-shadow: 0 0 15px rgba(204, 255, 0, 0.25);">
+                                        <div style="color: #CCFF00; font-size: 0.55rem; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">JUEGOS</div>
+                                        <div style="color: #ffffff; font-size: 1.3rem; font-weight: 950; line-height: 1;">${this.state.gamesB}</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- GIGANTIC NEON SCORE -->
-                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
-                            <div style="
-                                font-size: clamp(90px, 23vw, 260px);
-                                font-weight: 950;
-                                line-height: 0.85;
-                                color: #ffffff;
-                                text-shadow: 0 0 40px rgba(204, 255, 0, 0.6), 0 0 80px rgba(204, 255, 0, 0.2);
-                                font-variant-numeric: tabular-nums;
-                                letter-spacing: -2px;
-                            ">
-                                ${ptsDispB}
-                            </div>
-                            <div style="margin-top: 10px; color: rgba(204, 255, 0, 0.7); font-weight: 900; font-size: clamp(0.7rem, 1.8vw, 1rem); text-transform: uppercase; letter-spacing: 2px;">
-                                TOCAR PARA +1 PUNTO
+                        <!-- Mini Footer Bar (Status) -->
+                        <div style="height: 24px; background: #06070a; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; padding: 0 16px; font-size: 0.65rem; color: #64748b; font-weight: 800;">
+                            <span>SET ${this.state.currentSet} DE ${this.config.maxSets}</span>
+                            <span>${this.config.goldenPoint ? '⚡ PUNTO DE ORO' : 'VENTAJAS'}</span>
+                        </div>
+                    </main>
+                ` : `
+                    <!-- ======================================================= -->
+                    <!-- 📺 MODO HORIZONTAL / COLUMNAS (SIDE-BY-SIDE) -->
+                    <!-- ======================================================= -->
+                    <main style="flex: 1; display: flex; width: 100%; height: calc(100% - clamp(48px, 7vh, 64px)); position: relative; overflow: hidden;">
+                        
+                        <!-- COURT NET DIVIDER -->
+                        <div style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(255,255,255,0.1); transform: translateX(-50%); z-index: 4; pointer-events: none;">
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #06070a; border: 1px solid rgba(255,255,255,0.15); border-radius: 50%; width: clamp(34px, 4vw, 44px); height: clamp(34px, 4vw, 44px); display: flex; align-items: center; justify-content: center; font-size: clamp(0.8rem, 1.5vw, 1.1rem); color: #8892b0; font-weight: 900;">
+                                VS
                             </div>
                         </div>
 
-                        <!-- Bottom Footer Info -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; color: rgba(255,255,255,0.4); font-size: clamp(0.6rem, 1.5vw, 0.75rem); font-weight: 800; z-index: 2;">
-                            <span>TECLA [→] O [2]</span>
-                            <span>REGLA: ${this.config.goldenPoint ? 'PUNTO DE ORO' : 'VENTAJAS'}</span>
+                        <!-- LEFT HALF: TEAM A (NEON CYAN #00E5FF) -->
+                        <div onclick="window.CourtScoreboard.addPoint('A')" class="court-touch-zone" style="
+                            flex: 1; height: 100%; display: flex; flex-direction: column;
+                            justify-content: space-between; padding: clamp(10px, 2.5vh, 28px) clamp(10px, 2.5vw, 32px);
+                            background: radial-gradient(circle at 30% 50%, rgba(0, 229, 255, 0.08) 0%, #06070a 70%);
+                            cursor: pointer; position: relative; transition: background 0.15s ease;
+                            border-right: 1px solid rgba(0, 229, 255, 0.1); box-sizing: border-box;
+                        ">
+                            <!-- Top Team Info (Stacked flex for zero overflow) -->
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; z-index: 2; width: 100%;">
+                                <div style="min-width: 0; flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                        <span style="color: #00E5FF; font-size: clamp(0.9rem, 2.6vw, 1.6rem); font-weight: 950; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">${this.config.teamAName}</span>
+                                        ${this.state.serverTeam === 'A' ? `
+                                            <div style="background: rgba(0,229,255,0.2); border: 1.5px solid #00E5FF; color: #00E5FF; padding: 2px 7px; border-radius: 10px; font-size: clamp(0.55rem, 1.4vw, 0.72rem); font-weight: 950; display: flex; align-items: center; gap: 3px; white-space: nowrap; box-shadow: 0 0 10px rgba(0,229,255,0.4); animation: spBounce 1.2s infinite ease-in-out;">
+                                                🎾 SAQUE
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                    <div style="color: #8892b0; font-size: clamp(0.6rem, 1.5vw, 0.8rem); font-weight: 800; text-transform: uppercase; margin-top: 2px;">
+                                        SETS: <strong style="color: #fff; font-size: 1.1em;">${this.state.setsA}</strong>
+                                    </div>
+                                </div>
+
+                                <!-- Set Games Counter Pill -->
+                                <div style="background: rgba(0, 229, 255, 0.12); border: 2px solid #00E5FF; border-radius: 14px; padding: clamp(4px, 1vh, 10px) clamp(10px, 1.8vw, 18px); text-align: center; box-shadow: 0 0 15px rgba(0, 229, 255, 0.2); flex-shrink: 0;">
+                                    <div style="color: #00E5FF; font-size: clamp(0.55rem, 1.2vw, 0.7rem); font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">JUEGOS</div>
+                                    <div style="color: #ffffff; font-size: clamp(1.4rem, 4vw, 2.5rem); font-weight: 950; line-height: 1;">${this.state.gamesA}</div>
+                                </div>
+                            </div>
+
+                            <!-- GIGANTIC NEON SCORE -->
+                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
+                                <div style="
+                                    font-size: clamp(65px, 18vw, 220px);
+                                    font-weight: 950;
+                                    line-height: 0.85;
+                                    color: #ffffff;
+                                    text-shadow: 0 0 35px rgba(0, 229, 255, 0.6), 0 0 70px rgba(0, 229, 255, 0.2);
+                                    font-variant-numeric: tabular-nums;
+                                    letter-spacing: -2px;
+                                ">
+                                    ${ptsDispA}
+                                </div>
+                                <div style="margin-top: 6px; color: rgba(0, 229, 255, 0.75); font-weight: 900; font-size: clamp(0.6rem, 1.5vw, 0.85rem); text-transform: uppercase; letter-spacing: 1.5px; text-align: center;">
+                                    TOCAR PARA +1 PUNTO
+                                </div>
+                            </div>
+
+                            <!-- Bottom Footer Info -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; color: rgba(255,255,255,0.4); font-size: clamp(0.55rem, 1.3vw, 0.72rem); font-weight: 800; z-index: 2;">
+                                <span>SET ${this.state.currentSet} DE ${this.config.maxSets}</span>
+                                <span class="court-desktop-only">TECLA [←] O [1]</span>
+                            </div>
                         </div>
-                    </div>
-                </main>
+
+                        <!-- RIGHT HALF: TEAM B (NEON LIME #CCFF00) -->
+                        <div onclick="window.CourtScoreboard.addPoint('B')" class="court-touch-zone" style="
+                            flex: 1; height: 100%; display: flex; flex-direction: column;
+                            justify-content: space-between; padding: clamp(10px, 2.5vh, 28px) clamp(10px, 2.5vw, 32px);
+                            background: radial-gradient(circle at 70% 50%, rgba(204, 255, 0, 0.08) 0%, #06070a 70%);
+                            cursor: pointer; position: relative; transition: background 0.15s ease; box-sizing: border-box;
+                        ">
+                            <!-- Top Team Info (Stacked flex for zero overflow) -->
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; z-index: 2; width: 100%;">
+                                <!-- Set Games Counter Pill -->
+                                <div style="background: rgba(204, 255, 0, 0.12); border: 2px solid #CCFF00; border-radius: 14px; padding: clamp(4px, 1vh, 10px) clamp(10px, 1.8vw, 18px); text-align: center; box-shadow: 0 0 15px rgba(204, 255, 0, 0.2); flex-shrink: 0;">
+                                    <div style="color: #CCFF00; font-size: clamp(0.55rem, 1.2vw, 0.7rem); font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">JUEGOS</div>
+                                    <div style="color: #ffffff; font-size: clamp(1.4rem, 4vw, 2.5rem); font-weight: 950; line-height: 1;">${this.state.gamesB}</div>
+                                </div>
+
+                                <div style="text-align: right; min-width: 0; flex: 1;">
+                                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap;">
+                                        ${this.state.serverTeam === 'B' ? `
+                                            <div style="background: rgba(204,255,0,0.2); border: 1.5px solid #CCFF00; color: #CCFF00; padding: 2px 7px; border-radius: 10px; font-size: clamp(0.55rem, 1.4vw, 0.72rem); font-weight: 950; display: flex; align-items: center; gap: 3px; white-space: nowrap; box-shadow: 0 0 10px rgba(204,255,0,0.4); animation: spBounce 1.2s infinite ease-in-out;">
+                                                🎾 SAQUE
+                                            </div>
+                                        ` : ''}
+                                        <span style="color: #CCFF00; font-size: clamp(0.9rem, 2.6vw, 1.6rem); font-weight: 950; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">${this.config.teamBName}</span>
+                                    </div>
+                                    <div style="color: #8892b0; font-size: clamp(0.6rem, 1.5vw, 0.8rem); font-weight: 800; text-transform: uppercase; margin-top: 2px;">
+                                        SETS: <strong style="color: #fff; font-size: 1.1em;">${this.state.setsB}</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- GIGANTIC NEON SCORE -->
+                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;">
+                                <div style="
+                                    font-size: clamp(65px, 18vw, 220px);
+                                    font-weight: 950;
+                                    line-height: 0.85;
+                                    color: #ffffff;
+                                    text-shadow: 0 0 35px rgba(204, 255, 0, 0.6), 0 0 70px rgba(204, 255, 0, 0.2);
+                                    font-variant-numeric: tabular-nums;
+                                    letter-spacing: -2px;
+                                ">
+                                    ${ptsDispB}
+                                </div>
+                                <div style="margin-top: 6px; color: rgba(204, 255, 0, 0.75); font-weight: 900; font-size: clamp(0.6rem, 1.5vw, 0.85rem); text-transform: uppercase; letter-spacing: 1.5px; text-align: center;">
+                                    TOCAR PARA +1 PUNTO
+                                </div>
+                            </div>
+
+                            <!-- Bottom Footer Info -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; color: rgba(255,255,255,0.4); font-size: clamp(0.55rem, 1.3vw, 0.72rem); font-weight: 800; z-index: 2;">
+                                <span class="court-desktop-only">TECLA [→] O [2]</span>
+                                <span>REGLA: ${this.config.goldenPoint ? 'PUNTO DE ORO' : 'VENTAJAS'}</span>
+                            </div>
+                        </div>
+                    </main>
+                `}
 
                 <style>
                     @keyframes spPulse {
@@ -931,6 +1117,20 @@
                     @keyframes spBounce {
                         0%, 100% { transform: translateY(0); }
                         50% { transform: translateY(-3px); }
+                    }
+                    .court-touch-zone:active {
+                        opacity: 0.85;
+                        filter: brightness(1.2);
+                    }
+                    @media (hover: none) and (pointer: coarse) {
+                        .court-desktop-only {
+                            display: none !important;
+                        }
+                    }
+                    @media (max-width: 500px) {
+                        .court-btn-desktop-only {
+                            display: none !important;
+                        }
                     }
                 </style>
             `;
