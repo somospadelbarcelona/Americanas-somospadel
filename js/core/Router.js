@@ -9,6 +9,10 @@
                 'dashboard': () => this.renderDashboard(),
                 'americanas': () => this.handleControllerTab('EventsController', 'events'),
                 'events': () => this.handleControllerTab('EventsController', 'events'),
+                'finished_americanas': () => this.handleControllerTab('EventsController', 'finished_americanas'),
+                'agenda_americanas': () => this.handleControllerTab('EventsController', 'agenda_americanas'),
+                'help_americanas': () => this.handleControllerTab('EventsController', 'help_americanas'),
+                'finished': () => this.handleControllerTab('EventsController', 'finished'),
                 'profile': () => window.PlayerController?.init(),
                 'live': () => window.ControlTowerView?.handleLiveRoute(),
                 'live-entreno': () => window.EntrenoLiveView?.handleRoute(),
@@ -173,10 +177,16 @@
             let activeColor = 'rgba(204, 255, 0, 0.15)'; // color por defecto (lime)
             
             document.querySelectorAll('.nav-item').forEach(btn => {
-                // Determine if this nav-item corresponds to the current route
-                // We check if the ID contains the route name or if it's a direct match
                 const navRoute = btn.id.replace('nav-', '');
-                const isActive = navRoute === route;
+                let effectiveRoute = route;
+                if (['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas'].includes(route)) {
+                    effectiveRoute = 'americanas';
+                } else if (['entrenos', 'agenda', 'help', 'finished', 'partidas_abiertas'].includes(route)) {
+                    effectiveRoute = 'entrenos';
+                } else if (['equipos', 'teams'].includes(route)) {
+                    effectiveRoute = 'teams';
+                }
+                const isActive = navRoute === effectiveRoute;
                 btn.classList.toggle('active', isActive);
 
                 if (isActive) {

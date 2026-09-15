@@ -572,9 +572,15 @@
                 }
             }
 
-            const tabs = [
-                { id: 'entrenos', label: 'ENTRENOS', icon: 'fa-user-ninja' },
+            const isAmericanasSection = ['events', 'agenda_americanas', 'help_americanas', 'finished_americanas'].includes(this.state.activeTab);
+
+            const tabs = isAmericanasSection ? [
                 { id: 'events', label: 'AMERICANAS', icon: 'fa-trophy' },
+                { id: 'agenda_americanas', label: 'AGENDA', icon: 'fa-circle' },
+                { id: 'help_americanas', label: 'INFO', icon: 'fa-info-circle' },
+                { id: 'finished_americanas', label: 'FINALIZADAS', icon: 'fa-history' }
+            ] : [
+                { id: 'entrenos', label: 'ENTRENOS', icon: 'fa-user-ninja' },
                 { id: 'agenda', label: 'AGENDA', icon: 'fa-circle' },
                 { id: 'help', label: 'INFO', icon: 'fa-info-circle' },
                 { id: 'finished', label: 'FINALIZADOS', icon: 'fa-history' }
@@ -732,10 +738,13 @@
                 switch (this.state.activeTab) {
                     case 'events': contentHtml = this.renderEventsList(false, false); break;
                     case 'entrenos': contentHtml = this.renderEventsList(false, true); break;
-                    case 'agenda': contentHtml = this.renderAgendaView(); break;
+                    case 'agenda': contentHtml = this.renderAgendaView('entreno'); break;
+                    case 'agenda_americanas': contentHtml = this.renderAgendaView('americana'); break;
                     case 'results': contentHtml = await this.renderResultsView(); break;
-                    case 'finished': contentHtml = this.renderFinishedView(); break;
+                    case 'finished': contentHtml = this.renderFinishedView('entreno'); break;
+                    case 'finished_americanas': contentHtml = this.renderFinishedView('americana'); break;
                     case 'help': contentHtml = window.ControlTowerView ? window.ControlTowerView.renderHelpContent() : '<div style="padding:40px; color:white;">Cargando ayuda...</div>'; break;
+                    case 'help_americanas': contentHtml = window.ControlTowerView ? window.ControlTowerView.renderHelpContent() : '<div style="padding:40px; color:white;">Cargando ayuda...</div>'; break;
                 }
             }
 
@@ -1007,7 +1016,8 @@
                     const sede = (e.sede || e.location || '').toLowerCase();
                     const format = (e.pair_mode || e.format || '').toLowerCase();
                     const cat = (e.category || '').toLowerCase();
-                    return name.includes(q) || sede.includes(q) || format.includes(q) || cat.includes(q);
+                    const club = (e.club || e.organizer || (e.is_external ? 'externa' : 'somospadel')).toLowerCase();
+                    return name.includes(q) || sede.includes(q) || format.includes(q) || cat.includes(q) || club.includes(q);
                 });
             }
 
@@ -1109,9 +1119,11 @@
                                 🎾
                             </div>
                             <div style="min-width: 0; overflow: hidden;">
-                                <h2 style="font-size: 1.05rem; font-weight: 950; margin: 0; color: #ffffff; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Eventos <span style="color: #CCFF00;">SomosPadel BCN</span></h2>
+                                <h2 style="font-size: 1.05rem; font-weight: 950; margin: 0; color: #ffffff; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    ${this.state.activeTab === 'events' ? 'Americanas <span style="color: #CCFF00;">Barcelona</span>' : 'Entrenos <span style="color: #CCFF00;">SomosPadel BCN</span>'}
+                                </h2>
                                 <p style="color: #94a3b8; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 2px 0 0; display: flex; align-items: center; gap: 5px;">
-                                    <span>Inscripción en tiempo real</span>
+                                    <span>${this.state.activeTab === 'events' ? 'SomosPadel & Externas' : 'Inscripción en tiempo real'}</span>
                                     <span style="display:inline-block; width:4px; height:4px; border-radius:50%; background:#22c55e;"></span>
                                     <span style="color:#22c55e; font-size:0.58rem; font-weight:900;">EN VIVO</span>
                                 </p>
@@ -1143,12 +1155,18 @@
             `;
         }
 
-        renderAgendaView() {
+        renderAgendaView(typeFilter = null) {
             const uid = this.state.currentUser ? this.state.currentUser.uid : null;
             if (!uid) return `<div style="text-align:center; padding:80px 20px; color:#888;"><i class="fas fa-lock" style="font-size:3rem; margin-bottom:15px; opacity:0.1;"></i><br><h3 style="color:#64748b;">ACCESO RESTRINGIDO</h3><p style="font-size:0.85rem;">Inicia sesión para ver tu agenda.</p></div>`;
 
             const todayStr = this.getTodayStr();
             const myEvents = this.getAllSortedEvents().filter(e => {
+                if (typeFilter) {
+                    const isType = typeFilter === 'americana' 
+                        ? (e.type === 'americana' || (!e.type && !e.name?.toUpperCase().includes('ENTRENO')))
+                        : (e.type === 'entreno' || e.name?.toUpperCase().includes('ENTRENO'));
+                    if (!isType) return false;
+                }
                 if (e.status === 'finished') return false;
                 if (e.normDate < todayStr && e.status !== 'live') return false;
                 const players = e.players || e.registeredPlayers || [];
@@ -1216,12 +1234,19 @@
             `;
         }
 
-        renderFinishedView() {
+        renderFinishedView(typeFilter = null) {
             const todayStr = this.getTodayStr();
             const { month, category } = this.state.filters;
+            const isAmericana = typeFilter === 'americana';
             
             // ✅ Logic: Archive includes explicitly finished/cancelled events OR events that have passed the today marker
             let finishedEvents = this.getAllSortedEvents().filter(e => {
+                if (typeFilter) {
+                    const isType = isAmericana 
+                        ? (e.type === 'americana' || (!e.type && !e.name?.toUpperCase().includes('ENTRENO')))
+                        : (e.type === 'entreno' || e.name?.toUpperCase().includes('ENTRENO'));
+                    if (!isType) return false;
+                }
                 const isPast = e.normDate && e.normDate < todayStr && e.normDate !== '9999-99-99';
                 const isExplicitlyFinished = e.status === 'finished' || e.status === 'cancelled';
                 return isExplicitlyFinished || isPast;
@@ -1310,7 +1335,7 @@
                             </div>
                             <span style="color: #64748b; font-size: 0.75rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;">Archivo de Retransmisiones</span>
                         </div>
-                        <h2 style="font-size: 2.2rem; font-weight: 950; color: #0a192f; margin: 0; line-height: 1; letter-spacing: -1px;">EVENTOS <span style="color: #72a800;">PASADOS</span></h2>
+                        <h2 style="font-size: 2.2rem; font-weight: 950; color: #0a192f; margin: 0; line-height: 1; letter-spacing: -1px;">${isAmericana ? 'AMERICANAS' : 'EVENTOS'} <span style="color: #72a800;">${isAmericana ? 'FINALIZADAS' : 'PASADOS'}</span></h2>
                         <div style="display: flex; align-items: center; gap: 15px; margin-top: 15px;">
                             <div style="background: rgba(255,255,255,0.05); padding: 8px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 8px;">
                                 <i class="fas fa-database" style="color: #CCFF00; font-size: 0.7rem;"></i>
@@ -1660,6 +1685,11 @@
                                 ` : `
                                     <span style="background: ${themeColor}; color: #000; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">${formatLabel}</span>
                                     <span style="background: rgba(255,255,255,0.08); color: #fff; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); font-size: 0.6rem; font-weight: 800; backdrop-filter: blur(6px);">${maxCourts} PISTAS</span>
+                                    ${(evt.is_external || evt.external || evt.organizer_type === 'external' || evt.origin === 'external') ? `
+                                        <span style="background: linear-gradient(135deg, #0ea5e9, #2563eb); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 8px rgba(14, 165, 233, 0.35);"><i class="fas fa-globe"></i> ${evt.club || evt.organizer || 'EXTERNA'}</span>
+                                    ` : `
+                                        <span style="background: rgba(204,255,0,0.12); color: #CCFF00; border: 1px solid rgba(204,255,0,0.35); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-certificate"></i> SOMOSPADEL BCN</span>
+                                    `}
                                 `}
                             </div>
                         </div>

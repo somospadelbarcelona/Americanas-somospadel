@@ -3444,10 +3444,12 @@
                         const timeDisplay = `${dateText === 'HOY' ? 'Hoy' : dateText} ${timeStr}`;
 
                         // Capacity & Urgency
-                        const max = evt.max_players || evt.maxPlayers || 16;
-                        const current = (evt.registeredPlayers || evt.players || []).length;
+                        const maxCourts = parseInt(evt.max_courts || evt.courts || 0);
+                        const max = maxCourts > 0 ? (maxCourts * 4) : parseInt(evt.max_players || evt.maxPlayers || 16);
+                        const playersList = (evt.players && evt.players.length > 0) ? evt.players : (evt.registeredPlayers || []);
+                        const current = playersList.length;
                         const spotsLeft = Math.max(0, max - current);
-                        const urgencyColor = spotsLeft <= 3 ? '#ef4444' : (spotsLeft <= 6 ? '#f59e0b' : '#34d399');
+                        const urgencyColor = spotsLeft <= 2 ? '#ef4444' : (spotsLeft <= 4 ? '#f59e0b' : '#34d399');
                         const urgencyText = spotsLeft > 0 ? `${spotsLeft} plazas libres` : 'Completo';
                         const minLevel = evt.min_level || evt.minLevel || '2.5';
                         const maxLevel = evt.max_level || evt.maxLevel || '4.5';
@@ -3629,8 +3631,10 @@
                     context.tournamentDate = this.formatFriendlyDate(nextTournament.date);
                     context.tournamentTime = nextTournament.time || '18:00';
                     context.tournamentId = nextTournament.id;
-                    context.maxPlayers = nextTournament.max_players || 24;
-                    context.currentPlayers = (nextTournament.registeredPlayers || []).length;
+                    const maxCourtsTournament = parseInt(nextTournament.max_courts || nextTournament.courts || 0);
+                    context.maxPlayers = maxCourtsTournament > 0 ? (maxCourtsTournament * 4) : parseInt(nextTournament.max_players || nextTournament.maxPlayers || 16);
+                    const pList = (nextTournament.players && nextTournament.players.length > 0) ? nextTournament.players : (nextTournament.registeredPlayers || []);
+                    context.currentPlayers = pList.length;
                 }
 
                 // 5. STATS & ARCHIVE (Calculated silently in background)

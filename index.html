@@ -2267,6 +2267,10 @@
                 --item-color: #ff007f;
                 --item-color-rgb: 255, 0, 127;
             }
+            #nav-americanas {
+                --item-color: #CCFF00;
+                --item-color-rgb: 204, 255, 0;
+            }
             #nav-ranking {
                 --item-color: #ffd700;
                 --item-color-rgb: 255, 215, 0;
@@ -2289,7 +2293,9 @@
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                gap: 4px;
+                gap: 2px;
+                padding: 0 1px;
+                min-width: 0;
                 color: #8892b0;
                 transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
                 text-decoration: none;
@@ -2305,9 +2311,9 @@
             }
 
             .nav-item i {
-                font-size: 1.25rem;
-                width: 1.25rem;
-                height: 1.25rem;
+                font-size: 1.15rem;
+                width: 1.15rem;
+                height: 1.15rem;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -2317,20 +2323,24 @@
             }
 
             .nav-item span {
-                font-size: 0.52rem;
+                font-size: 0.48rem;
                 font-weight: 800;
                 text-transform: uppercase;
-                letter-spacing: 0.5px;
+                letter-spacing: 0.2px;
                 line-height: 1;
                 text-align: center;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
                 transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), text-shadow 0.3s;
             }
 
             /* Icono activo flotante y brillante */
             .nav-item.active i {
                 color: var(--item-color) !important;
-                transform: translateY(-5px) scale(1.2);
-                filter: drop-shadow(0 0 10px rgba(var(--item-color-rgb), 0.7));
+                transform: translateY(-4px) scale(1.15);
+                filter: drop-shadow(0 0 8px rgba(var(--item-color-rgb), 0.7));
             }
 
             /* Texto activo */
@@ -2345,9 +2355,9 @@
                 content: '';
                 position: absolute;
                 bottom: 15px;
-                width: 42px;
-                height: 42px;
-                border-radius: 14px;
+                width: 36px;
+                height: 36px;
+                border-radius: 12px;
                 background: rgba(var(--item-color-rgb), 0.08);
                 z-index: 0;
                 opacity: 0;
@@ -2444,11 +2454,15 @@
                 onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('entrenos')"
                 id="nav-entrenos">
                 <i class="fas fa-calendar-check"></i>
-                <span>Eventos</span>
+                <span>Entrenos</span>
+            </div>
+            <div class="nav-item haptic-feedback" onclick="window.PlayerView?.haptic?.(20); window.Router && window.Router.navigate('americanas')" id="nav-americanas">
+                <i class="fas fa-trophy"></i>
+                <span>Americanas</span>
             </div>
             <div class="nav-item haptic-feedback" onclick="window.Router && window.Router.navigate('ranking')"
                 id="nav-ranking">
-                <i class="fas fa-trophy"></i>
+                <i class="fas fa-chart-line"></i>
                 <span>Ranking</span>
             </div>
             <div class="nav-item" id="nav-teams" onclick="window.Router.navigate('teams')">
@@ -2456,7 +2470,7 @@
                 <span>EQUIPOS</span>
             </div>
             <div class="nav-item" id="nav-tournaments" onclick="window.Router.navigate('tournaments')">
-                <i class="fas fa-trophy"></i>
+                <i class="fas fa-medal"></i>
                 <span>TORNEOS</span>
             </div>
             <div class="nav-item haptic-feedback"
@@ -3274,7 +3288,7 @@
     <script src="js/modules/dashboard/PadelPulse.js?v=6.2" defer></script>
     <script src="js/modules/dashboard/TacticalCourt3D.js?v=2.0" defer></script>
     <script src="js/modules/dashboard/Tactical3DWidget.js?v=2.0" defer></script>
-    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=ACTION_GRID_FUT_v4" defer></script>
+    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=SPOTS_FIX_v5" defer></script>
     <script src="js/modules/dashboard/DashboardController.js" defer></script>
     <script src="js/utils/RoleService.js" defer></script>
     <script src="js/modules/players/PlayerView.js?v=401" defer></script>
@@ -4054,6 +4068,8 @@
         const messages = {
             'dashboard': '¡A por tus objetivos de hoy! 🎾',
             'entrenos': 'Mejora tu técnica en las pistas 📅',
+            'americanas': '¡Todas las Americanas de Barcelona! 🎾',
+            'events': '¡Todas las Americanas de Barcelona! 🎾',
             'ranking': '¡Asciende y domina el ranking! 🏆',
             'teams': 'Compite con tu equipo y gana 👥',
             'tournaments': 'El gran trofeo te espera 🔥',
