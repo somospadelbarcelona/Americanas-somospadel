@@ -54,6 +54,105 @@
             padding: 3rem;
         }
 
+        /* 🎾 SEDE / CLUB COMBOBOX (Buscador y Desplegable) */
+        .sede-combobox-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .sede-combobox-input {
+            width: 100%;
+            padding-right: 36px !important;
+            cursor: text;
+        }
+        .sede-combobox-toggle {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            padding: 6px 8px;
+            font-size: 0.85rem;
+            transition: color 0.2s ease;
+            z-index: 2;
+        }
+        .sede-combobox-toggle:hover {
+            color: #0284c7;
+        }
+        .sede-combobox-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            max-height: 280px;
+            overflow-y: auto;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 14px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.18);
+            z-index: 99999;
+            padding: 6px 0;
+        }
+        .sede-combobox-dropdown::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sede-combobox-dropdown::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .sede-combobox-group {
+            padding: 7px 12px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            color: #0284c7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: #f0f9ff;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 4px;
+        }
+        .sede-combobox-group:first-child {
+            border-top: none;
+            margin-top: 0;
+        }
+        .sede-combobox-item {
+            padding: 9px 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1e293b;
+            cursor: pointer;
+            border-radius: 8px;
+            margin: 2px 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.15s ease;
+        }
+        .sede-combobox-item:hover {
+            background: #e0f2fe;
+            color: #0284c7;
+            transform: translateX(2px);
+        }
+        .sede-combobox-custom-item {
+            padding: 10px 14px;
+            font-size: 0.82rem;
+            color: #0284c7;
+            cursor: pointer;
+            background: #f8fafc;
+            border-top: 1px dashed #cbd5e1;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+        .sede-combobox-custom-item:hover {
+            background: #e0f2fe;
+        }
+
         /* --- 💎 ENTERPRISE MATTE LIGHT THEME FOR ADMIN INTERFACE --- */
         :root {
             --text: #0f172a !important;
@@ -1126,7 +1225,10 @@
                     </button>
                     <div class="submenu-content">
                         <button class="submenu-item nav-group-americana-sub" data-view="americanas_mgmt" onclick="loadAdminView('americanas_mgmt')">
-                            <span class="nav-text">Gestión</span>
+                            <span class="nav-text">Gestor</span>
+                        </button>
+                        <button class="submenu-item nav-group-americana-sub" data-view="americanas_create" onclick="loadAdminView('americanas_create')">
+                            <span class="nav-text">Crear</span>
                         </button>
                         <button class="submenu-item nav-group-americana-sub" data-view="matches" onclick="loadAdminView('matches')">
                             <span class="nav-text">Resultados</span>
@@ -1493,6 +1595,7 @@
                         <option value="player_somospadel">JUGADOR SOMOSPADEL 🎾</option>
                         <option value="player">JUGADOR EXTERNO 👤</option>
                         <option value="collaborator">COLABORADOR 🤝</option>
+                        <option value="organizer">ORGANIZADOR / CLUB 🏛️</option>
                     </select>
                 </div>
 
@@ -1610,22 +1713,29 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>SEDE</label>
-                                <select name="location" class="pro-input">
-                                    <option value="Barcelona Pádel el Prat">EL PRAT</option>
-                                    <option value="Delfos Cornellá">DELFOS</option>
-                                </select>
+                                <label><i class="fas fa-map-marker-alt" style="color: #a855f7;"></i> SEDE / CLUB</label>
+                                <div class="sede-combobox-wrapper">
+                                    <input type="text" 
+                                           name="location" 
+                                           id="edit-entreno-location-input" 
+                                           class="pro-input sede-combobox-input" 
+                                           placeholder="🔍 Buscar o escribir sede / club..." 
+                                           autocomplete="off" 
+                                           required>
+                                    <button type="button" class="sede-combobox-toggle" title="Ver lista de sedes">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div class="sede-combobox-dropdown"></div>
+                                </div>
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px;">
                             <div class="form-group">
                                 <label>MODO DE JUEGO</label>
-                                <select name="pair_mode" class="pro-input">
-                                    <option value="fixed">🔒 PAREJA FIJA (Manual)</option>
-                                    <option value="fixed_admin">👔 PAREJA FIJA (Admin)</option>
-                                    <option value="fixed_auto">🤖 PAREJA FIJA (Auto)</option>
-                                    <option value="rotating">🌪️ TWISTER / INDIVIDUAL</option>
+                                <select name="pair_mode" id="edit-entreno-pair-mode" class="pro-input" onchange="window.updatePairModeHelper(this, 'edit-entreno-pair-mode-desc')">
+                                    <option value="fixed">🔒 PAREJA FIJA</option>
+                                    <option value="rotating">🌪️ TWISTER INDIVIDUAL</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1638,6 +1748,10 @@
                                     <option value="cancelled">⛔ ANULADO</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <!-- EXPLICACIÓN DINÁMICA DEL MODO DE JUEGO -->
+                        <div id="edit-entreno-pair-mode-desc" style="background: rgba(168, 85, 247, 0.08); border-left: 3px solid #a855f7; padding: 8px 12px; border-radius: 8px; font-size: 0.72rem; color: #cbd5e1; margin-bottom: 15px; line-height: 1.35;">
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
@@ -1676,16 +1790,46 @@
                         </div>
 
                         <div class="form-group" style="margin-top: 15px;">
-                            <label>IMAGEN DE PORTADA</label>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <label style="margin: 0; font-weight: 800; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase;">
+                                    <i class="fas fa-camera" style="color: #a855f7;"></i> Imagen de Portada / Cartel
+                                </label>
+                                <span style="font-size: 0.65rem; color: #64748b;">(JPG, PNG o WebP)</span>
+                            </div>
+
+                            <!-- Banner Preview & Drop Zone -->
+                            <div id="edit-entreno-img-dropzone" 
+                                 onclick="document.getElementById('edit-entreno-file-input').click()"
+                                 style="position: relative; width: 100%; height: 110px; border-radius: 12px; border: 2px dashed rgba(168, 85, 247, 0.35); background: #111; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.2s ease; margin-bottom: 10px;">
+                                 
+                                <img id="edit-entreno-img-preview" src="" alt="Portada" 
+                                     style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; display: none;">
+                                
+                                <div style="position: relative; z-index: 2; text-align: center; pointer-events: none;">
+                                    <div style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); color: #c084fc; font-size: 0.75rem; font-weight: 900; padding: 6px 14px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+                                        <i class="fas fa-cloud-upload-alt" style="font-size: 0.95rem;"></i>
+                                        <span>SUBIR FOTO O CARTEL DEL ENTRENO</span>
+                                    </div>
+                                    <p style="margin: 5px 0 0; font-size: 0.62rem; color: #94a3b8;">Haz clic para elegir foto desde tu dispositivo o arrástrala aquí</p>
+                                </div>
+                            </div>
+
+                            <!-- Hidden File Input -->
+                            <input type="file" id="edit-entreno-file-input" accept="image/*" style="display: none;" onchange="window.handleAmericanaImageUpload(this, 'edit-entreno-img-input', 'edit-entreno-img-preview')">
+
+                            <!-- URL Input & Secondary Actions -->
                             <div style="display: flex; gap: 8px; margin-bottom: 8px;">
                                 <input type="text" name="image_url" id="edit-entreno-img-input" class="pro-input"
-                                    placeholder="URL de la imagen...">
-                                <img id="edit-entreno-img-preview" src=""
-                                    style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: #333;">
+                                    placeholder="O escribe una URL directa..." oninput="window.updateAmericanaImagePreview(this.value, 'edit-entreno-img-preview')">
+                                <button type="button" class="btn-micro" onclick="document.getElementById('edit-entreno-file-input').click()" 
+                                        title="Subir archivo" style="background: #8b5cf6; color: white; padding: 0 14px; height: 38px; border-radius: 8px; font-weight: 800; display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; cursor: pointer;">
+                                    <i class="fas fa-folder-open"></i> SUBIR
+                                </button>
                             </div>
 
                             <!-- Quick Image Selectors -->
-                            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                            <div style="display: flex; gap: 5px; flex-wrap: wrap; align-items: center;">
+                                <span style="font-size: 0.62rem; color: #64748b; font-weight: 700; margin-right: 2px;">PRESETS:</span>
                                 <button type="button" class="btn-micro"
                                     onclick="selectEntrenoImage('img/entreno masculino prat.jpg')">Prat Masc</button>
                                 <button type="button" class="btn-micro"
@@ -1693,8 +1837,7 @@
                                 <button type="button" class="btn-micro" style="background: #ccff00; color: #000;"
                                     onclick="selectEntrenoImage('img/entreno mixto prat.jpg')">Prat Mixto</button>
                                 <button type="button" class="btn-micro"
-                                    onclick="selectEntrenoImage('img/entreno masculino delfos.jpg')">Delfos
-                                    Masc</button>
+                                    onclick="selectEntrenoImage('img/entreno masculino delfos.jpg')">Delfos Masc</button>
                                 <button type="button" class="btn-micro"
                                     onclick="selectEntrenoImage('img/entreno femenino delfos.jpg')">Delfos Fem</button>
                                 <button type="button" class="btn-micro" style="background: #ccff00; color: #000;"
@@ -1765,173 +1908,287 @@
     </div>
 
 
-    <!-- Edit Americana Modal -->
+    <!-- Edit Americana Modal (Cloned from Entreno Modal - 100% Unified Pro Architecture) -->
     <div id="admin-americana-modal" class="modal-overlay hidden">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h2>Editar Americana</h2>
-                <button class="close-modal-btn" onclick="closeAmericanaModal()">&times;</button>
+        <div class="modal-content"
+            style="max-width: 950px; width: 95%; padding: 0; display: flex; flex-direction: column; max-height: 95vh; overflow: hidden;">
+
+            <!-- HEADER -->
+            <div class="modal-header"
+                style="padding: 20px 30px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2);">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div
+                        style="background: rgba(204,255,0,0.1); padding: 10px; border-radius: 12px; border: 1px solid rgba(204,255,0,0.2);">
+                        <i class="fas fa-trophy" style="color: #CCFF00; font-size: 1.2rem;"></i>
+                    </div>
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.2rem; letter-spacing: 1px;">GESTIÓN DE AMERICANA</h2>
+                        <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600; margin-top: 4px;">EDITA
+                            DETALLES Y GESTIONA JUGADORES</div>
+                    </div>
+                </div>
+                <button class="close-modal-btn" onclick="window.closeAmericanaModal()"
+                    style="font-size: 2rem; color: #fff;">&times;</button>
             </div>
-            <form id="edit-americana-form" class="pro-form compact-admin-form">
-                <input type="hidden" name="id">
 
-                <!-- Bloque 1: Identificación -->
-                <div class="form-group">
-                    <label><i class="fas fa-trophy"></i> NOMBRE DE LA AMERICANA</label>
-                    <input type="text" name="name" class="pro-input" required placeholder="AMERICANA...">
+            <div class="modal-body-grid"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; flex: 1; overflow-y: auto !important;">
+
+                <!-- COLUMNA IZQUIERDA: CONFIGURACIÓN (Scrollable) -->
+                <div class="config-column" style="padding: 30px; border-right: 1px solid rgba(255,255,255,0.05);">
+                    <form id="edit-americana-form" class="pro-form compact-admin-form">
+                        <input type="hidden" name="id">
+
+                        <h3
+                            style="color: #CCFF00; font-size: 0.85rem; margin-bottom: 15px; border-bottom: 1px solid rgba(204,255,0,0.2); padding-bottom: 8px;">
+                            <i class="fas fa-sliders-h"></i> CONFIGURACIÓN GENERAL
+                        </h3>
+
+                        <div class="form-group">
+                            <label>NOMBRE DE LA AMERICANA</label>
+                            <input type="text" name="name" class="pro-input" required
+                                style="font-weight: 800; font-size: 1rem;" placeholder="Ej: Americana Torneo Oro">
+                        </div>
+
+                        <!-- DESCRIPCIÓN & AVISOS PARA JUGADORES -->
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <label style="margin: 0; font-weight: 800; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase;">
+                                    <i class="fas fa-align-left" style="color: #38bdf8;"></i> DESCRIPCIÓN & AVISOS PARA JUGADORES
+                                </label>
+                                <span style="font-size: 0.65rem; color: #64748b;">(Visible para todos los jugadores)</span>
+                            </div>
+                            <textarea name="description" class="pro-input" rows="3" 
+                                placeholder="Escribe aquí los detalles que quieras que lean los jugadores: vermut/tapa incluida, premios, sistema de puntuación, pistas, normas, etc."
+                                style="width: 100%; resize: vertical; min-height: 70px; font-size: 0.85rem; line-height: 1.4; border-radius: 10px;"></textarea>
+                        </div>
+
+                        <!-- Tipo de Evento / Club Organizador -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                            <div class="form-group">
+                                <label><i class="fas fa-building-columns"></i> TIPO EVENTO</label>
+                                <select name="is_external" class="pro-input" onchange="const cf = document.getElementById('edit-americana-club-group'); if (cf) cf.style.display = (this.value === 'true' ? 'block' : 'none');">
+                                    <option value="false">🏆 OFICIAL SOMOSPADEL</option>
+                                    <option value="true">🏛️ CLUB ASOCIADO / EXTERNA</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="edit-americana-club-group" style="display: none;">
+                                <label><i class="fas fa-signature"></i> NOMBRE DEL CLUB</label>
+                                <input type="text" name="club" id="edit-americana-club-input" list="padel-clubs-datalist" class="pro-input" placeholder="Ej: CEM Tennis & Pádel Hospitalet">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                            <div class="form-group">
+                                <label>FECHA</label>
+                                <input type="date" name="date" class="pro-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label>INICIO</label>
+                                <input type="time" name="time" class="pro-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label>FIN</label>
+                                <input type="time" name="time_end" class="pro-input">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                            <div class="form-group">
+                                <label>CATEGORÍA</label>
+                                <select name="category" class="pro-input">
+                                    <option value="open">TODOS / OPEN</option>
+                                    <option value="male">MASCULINO</option>
+                                    <option value="female">FEMENINO</option>
+                                    <option value="mixed">MIXTO</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-map-marker-alt" style="color: #38bdf8;"></i> SEDE / CLUB</label>
+                                <div class="sede-combobox-wrapper">
+                                    <input type="text" 
+                                           name="location" 
+                                           id="edit-americana-location-input" 
+                                           class="pro-input sede-combobox-input" 
+                                           placeholder="🔍 Buscar o escribir sede / club..." 
+                                           autocomplete="off" 
+                                           required>
+                                    <button type="button" class="sede-combobox-toggle" title="Ver lista de sedes">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div class="sede-combobox-dropdown"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px;">
+                            <div class="form-group">
+                                <label>MODO DE JUEGO</label>
+                                <select name="pair_mode" id="edit-americana-pair-mode" class="pro-input" onchange="window.updatePairModeHelper(this, 'edit-americana-pair-mode-desc')">
+                                    <option value="fixed">🔒 PAREJA FIJA</option>
+                                    <option value="rotating">🌪️ TWISTER INDIVIDUAL</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>ESTADO</label>
+                                <select name="status" class="pro-input" style="font-weight: 800;">
+                                    <option value="open">🟢 ABIERTA</option>
+                                    <option value="pairing">🔀 EMPAREJAMIENTO</option>
+                                    <option value="live">🎾 EN JUEGO</option>
+                                    <option value="finished">🏁 FINALIZADA</option>
+                                    <option value="cancelled">⛔ ANULADO</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- EXPLICACIÓN DINÁMICA DEL MODO DE JUEGO -->
+                        <div id="edit-americana-pair-mode-desc" style="background: rgba(204, 255, 0, 0.06); border-left: 3px solid #CCFF00; padding: 8px 12px; border-radius: 8px; font-size: 0.72rem; color: #cbd5e1; margin-bottom: 15px; line-height: 1.35;">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label><i class="fas fa-signal" style="color: #CCFF00;"></i> NIVEL MÍNIMO</label>
+                                <input type="text" name="level_min" class="pro-input" placeholder="Ej: 3.5">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-signal" style="color: #CCFF00;"></i> NIVEL MÁXIMO</label>
+                                <input type="text" name="level_max" class="pro-input" placeholder="Ej: 4.5">
+                            </div>
+                        </div>
+
+                        <h3
+                            style="color: #60A5FA; font-size: 0.85rem; margin-bottom: 15px; border-bottom: 1px solid rgba(96,165,250,0.2); padding-bottom: 8px; margin-top: 20px;">
+                            <i class="fas fa-cogs"></i> LOGÍSTICA
+                        </h3>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
+                            <div class="form-group">
+                                <label>PISTAS</label>
+                                <input type="number" name="max_courts" class="pro-input" placeholder="4">
+                            </div>
+                            <div class="form-group">
+                                <label>RONDAS</label>
+                                <input type="number" name="rounds_count" class="pro-input" value="6">
+                            </div>
+                            <div class="form-group">
+                                <label>€ SOCIO</label>
+                                <input type="number" name="price_members" step="0.1" class="pro-input">
+                            </div>
+                            <div class="form-group">
+                                <label>€ EXT.</label>
+                                <input type="number" name="price_external" step="0.1" class="pro-input">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <label style="margin: 0; font-weight: 800; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase;">
+                                    <i class="fas fa-camera" style="color: #CCFF00;"></i> Imagen de Portada / Cartel
+                                </label>
+                                <span style="font-size: 0.65rem; color: #64748b;">(JPG, PNG o WebP)</span>
+                            </div>
+
+                            <!-- Banner Preview & Drop Zone -->
+                            <div id="edit-americana-img-dropzone" 
+                                 onclick="document.getElementById('edit-americana-file-input').click()"
+                                 style="position: relative; width: 100%; height: 110px; border-radius: 12px; border: 2px dashed rgba(204, 255, 0, 0.35); background: #111; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.2s ease; margin-bottom: 10px;">
+                                 
+                                <img id="edit-americana-img-preview" src="" alt="Portada" 
+                                     style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; display: none;">
+                                
+                                <div style="position: relative; z-index: 2; text-align: center; pointer-events: none;">
+                                    <div style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); color: #CCFF00; font-size: 0.75rem; font-weight: 900; padding: 6px 14px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+                                        <i class="fas fa-cloud-upload-alt" style="font-size: 0.95rem;"></i>
+                                        <span>SUBIR FOTO O CARTEL DE LA AMERICANA</span>
+                                    </div>
+                                    <p style="margin: 5px 0 0; font-size: 0.62rem; color: #94a3b8;">Haz clic para elegir foto desde tu móvil/ordenador o arrástrala aquí</p>
+                                </div>
+                            </div>
+
+                            <!-- Hidden File Input -->
+                            <input type="file" id="edit-americana-file-input" accept="image/*" style="display: none;" onchange="window.handleAmericanaImageUpload(this, 'edit-americana-img-input', 'edit-americana-img-preview')">
+
+                            <!-- URL Input & Secondary Actions -->
+                            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                <input type="text" name="image_url" id="edit-americana-img-input" class="pro-input"
+                                    placeholder="O escribe una URL directa..." oninput="window.updateAmericanaImagePreview(this.value, 'edit-americana-img-preview')">
+                                <button type="button" class="btn-micro" onclick="document.getElementById('edit-americana-file-input').click()" 
+                                        title="Subir archivo" style="background: #3b82f6; color: white; padding: 0 14px; height: 38px; border-radius: 8px; font-weight: 800; display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; cursor: pointer;">
+                                    <i class="fas fa-folder-open"></i> SUBIR
+                                </button>
+                            </div>
+
+                            <!-- Quick Image Selectors -->
+                            <div style="display: flex; gap: 5px; flex-wrap: wrap; align-items: center;">
+                                <span style="font-size: 0.62rem; color: #64748b; font-weight: 700; margin-right: 2px;">PRESETS:</span>
+                                <button type="button" class="btn-micro" onclick="window.selectAmericanaImage('img/americana masculina.jpg')" style="background: #25d366; color: black;">Masc</button>
+                                <button type="button" class="btn-micro" onclick="window.selectAmericanaImage('img/americana femeninas.jpg')" style="background: #ff69b4; color: black;">Fem</button>
+                                <button type="button" class="btn-micro" onclick="window.selectAmericanaImage('img/americana mixta.jpg')" style="background: #ccff00; color: black;">Mixta</button>
+                                <button type="button" class="btn-micro" onclick="window.selectAmericanaImage('img/entreno todo prat.jpg')" style="background: #ffffff; color: black;">Prat</button>
+                                <button type="button" class="btn-micro" onclick="window.selectAmericanaImage('img/entreno todo delfos.jpg')" style="background: #ffffff; color: black;">Delfos</button>
+                                <button type="button" class="btn-micro" onclick="window.selectAmericanaImage('img/ball-mixta.png')">Pelota</button>
+                            </div>
+                        </div>
+
+                    </form>
                 </div>
 
-                <!-- Bloque 2: Fecha y Hora -->
-                <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 10px;">
-                    <div class="form-group">
-                        <label><i class="fas fa-calendar-alt"></i> FECHA</label>
-                        <input type="date" name="date" class="pro-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-clock"></i> INICIO</label>
-                        <input type="time" name="time" class="pro-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-hourglass-end"></i> FIN</label>
-                        <input type="time" name="time_end" class="pro-input">
-                    </div>
-                </div>
+                <!-- COLUMNA DERECHA: GESTIÓN DE JUGADORES (Fixed Header, Scrollable List) -->
+                <div class="participants-column" style="padding: 0; background: rgba(0,0,0,0.2);">
 
-                <!-- Bloque 3: Configuración -->
-                <div class="form-row-compact">
-                    <div class="form-group">
-                        <label><i class="fas fa-tags"></i> CATEGORÍA</label>
-                        <select name="category" class="pro-input">
-                            <option value="open">TODOS</option>
-                            <option value="male">MASCULINA</option>
-                            <option value="female">FEMENINA</option>
-                            <option value="mixed">MIXTA</option>
-                        </select>
+                    <div style="padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <h3 style="color: #00E36D; font-size: 0.9rem; margin-bottom: 5px; letter-spacing: 1px;">
+                            <i class="fas fa-users"></i> JUGADORES & RESERVAS
+                        </h3>
+                        <p style="font-size: 0.75rem; color: #64748b; margin: 0;">Gestiona las inscripciones y parejas</p>
                     </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-map-marker-alt"></i> SEDE</label>
-                        <select name="location" class="pro-input">
-                            <option value="Barcelona Pádel el Prat">Barcelona Pádel el Prat</option>
-                            <option value="Delfos Cornellá">Delfos Cornellá</option>
-                        </select>
-                    </div>
-                </div>
 
-                <div class="form-row-compact">
-                    <div class="form-group">
-                        <label><i class="fas fa-users"></i> MODO PAREJAS (PRO)</label>
-                        <select name="pair_mode" class="pro-input">
-                            <option value="fixed">🔒 PAREJA FIJA (Elige pareja)</option>
-                            <option value="fixed_admin">👔 PAREJA FIJA (Admin elige)</option>
-                            <option value="fixed_auto">🤖 PAREJA FIJA (Automática)</option>
-                            <option value="rotating">🌪️ TWISTER</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-info-circle"></i> ESTADO</label>
-                        <select name="status" class="pro-input">
-                            <option value="open">ABIERTA</option>
-                            <option value="pairing">🔀 EMPAREJAMIENTO</option>
-                            <option value="live">🎾 EN JUEGO</option>
-                            <option value="finished">🏁 FINALIZADA</option>
-                            <option value="cancelled">⛔ ANULADO</option>
-                        </select>
+                    <div style="padding: 20px 25px;">
+
+                        <!-- Lista Participantes (Container handled by JS) -->
+                        <div id="participants-list-americana">
+                            <!-- JS will inject the 'ADD PLAYER' button here at the top -->
+                        </div>
+
+                        <!-- Fixed Pairs Area (Waitlist logic inside) -->
+                        <div id="americana-fixed-pairs-area" style="margin-top: 20px;"></div>
+
+                        <!-- Waitlist Section -->
+                        <div
+                            style="margin-top: 25px; background: rgba(255,165,0,0.05); border: 1px solid rgba(255,165,0,0.1); border-radius: 12px; padding: 15px;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h4 style="margin: 0; color: #000000 !important; font-size: 0.8rem; font-weight: 800;">
+                                    RESERVA / WAITLIST</h4>
+                                <button id="btn-promote-waitlist-americana" class="btn-micro"
+                                    style="background: rgba(255,165,0,0.2); color: #000000 !important; border: 1px solid rgba(255,165,0,0.3);">
+                                    <i class="fas fa-arrow-up"></i> PROMOVER
+                                </button>
+                            </div>
+                            <div id="waitlist-americana" style="min-height: 50px;">
+                                <!-- JS populates this -->
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
-                <div class="form-row-compact">
-                    <div class="form-group">
-                        <label><i class="fas fa-signal"></i> NIVEL MÍNIMO</label>
-                        <input type="text" name="level_min" class="pro-input" placeholder="Ej: 3.5">
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-signal"></i> NIVEL MÁXIMO</label>
-                        <input type="text" name="level_max" class="pro-input" placeholder="Ej: 4.5">
-                    </div>
-                </div>
-
-                <!-- Bloque 4: Logística y Precios -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
-                    <div class="form-group">
-                        <label><i class="fas fa-table-tennis"></i> PISTAS</label>
-                        <input type="number" name="max_courts" class="pro-input" placeholder="0">
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-redo"></i> RONDAS</label>
-                        <input type="number" name="rounds_count" class="pro-input" placeholder="6" value="6">
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-euro-sign"></i> SOCIO</label>
-                        <input type="number" name="price_members" step="0.1" class="pro-input" placeholder="0.00">
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-euro-sign"></i> EXT.</label>
-                        <input type="number" name="price_external" step="0.1" class="pro-input" placeholder="0.00">
-                    </div>
-                </div>
-
-                <!-- Bloque 5: Imagen -->
-                <div class="form-group">
-                    <label><i class="fas fa-image"></i> IMAGEN (URL)</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" name="image_url" id="edit-img-input" class="pro-input"
-                            placeholder="https://..." style="flex:1;">
-                    </div>
-
-                    <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;">
-                        <!-- AMERICANA -->
-                        <button type="button" class="btn-micro" onclick="selectImage('img/americana masculina.jpg')"
-                            style="background: #25d366; color: black;">Masc</button>
-                        <button type="button" class="btn-micro" onclick="selectImage('img/americana femeninas.jpg')"
-                            style="background: #ff69b4; color: black;">Fem</button>
-                        <button type="button" class="btn-micro" onclick="selectImage('img/americana mixta.jpg')"
-                            style="background: #ccff00; color: black;">Mixta</button>
-
-                        <!-- PRAT -->
-                        <button type="button" class="btn-micro" onclick="selectImage('img/entreno todo prat.jpg')"
-                            style="background: #ffffff; color: black;">Prat</button>
-
-                        <!-- DELFOS -->
-                        <button type="button" class="btn-micro" onclick="selectImage('img/entreno todo delfos.jpg')"
-                            style="background: #ffffff; color: black;">Delfos</button>
-
-                        <button type="button" class="btn-micro"
-                            onclick="selectImage('img/ball-mixta.png')">Pelota</button>
-                    </div>
-                </div>
-
-                <div style="margin-top: 10px; text-align: center;">
-                    <img id="edit-americana-img-preview" src=""
-                        style="max-height: 80px; border-radius: 8px; border: 1px solid var(--primary); display: none;"
-                        onerror="this.style.display='none'">
-                </div>
-
-                <button type="submit" class="btn-primary-pro"
-                    style="width: 100%; margin-top: 0.5rem; height: 44px; font-weight: 800;">GUARDAR CAMBIOS 💾</button>
-            </form>
-
-            <!-- PARTICIPANTS MANAGEMENT SECTION -->
-            <div style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">
-                <h3 style="color: var(--primary); font-size: 1rem; margin-bottom: 1rem;">GESTIONAR
-                    PARTICIPANTES</h3>
-
-                <!-- Add Player Control -->
-                <div style="display: flex; gap: 10px; margin-bottom: 1rem; align-items: flex-start;">
-                    <div id="autocomplete-container-americana" style="flex: 1;"></div>
-                </div>
-
-                <!-- Participants List -->
-                <div id="participants-list"
-                    style="max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px;">
-                    <!-- Populated via JS -->
-                    <div style="text-align: center; color: #888; font-size: 0.8rem; padding: 10px;">
-                        Cargando
-                        participantes...</div>
-                </div>
-
-                <!-- FIXED PAIRS MANAGEMENT AREA (Injected via AdminPairsUI) -->
-                <div id="americana-fixed-pairs-area" style="margin-top: 20px;"></div>
             </div>
+
+            <!-- FOOTER FLOTANTE -->
+            <div class="modal-footer"
+                style="padding: 15px 30px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 15px; position: sticky; bottom: 0; z-index: 100; border-radius: 0 0 12px 12px;">
+                <button type="button" class="btn-outline-pro" onclick="window.closeAmericanaModal()"
+                    style="width: auto; padding: 10px 25px; height: 50px; border: 1px solid #cbd5e1; color: #64748b; font-weight: 700; border-radius: 10px; background: transparent; cursor: pointer;">
+                    CANCELAR
+                </button>
+                <button type="submit" form="edit-americana-form" class="btn-primary-pro"
+                    style="width: auto; padding: 0 40px; margin: 0; height: 50px; font-weight: 900; font-size: 1rem; box-shadow: 0 4px 15px rgba(204,255,0,0.3); background: #CCFF00; color: #000; border: none; border-radius: 10px; cursor: pointer;">
+                    GUARDAR CAMBIOS 💾
+                </button>
+            </div>
+        </div>
+    </div>
 
 
             <!-- Dynamic Menu Modal (HAMB) -->
@@ -2037,7 +2294,7 @@
             <script src="js/firebase-init.js?v=5007"></script>
 
             <!-- CORE ARCHITECTURE (Absolute Priority) -->
-            <script src="js/modules/core/Constants.js?v=2000"></script>
+            <script src="js/modules/core/Constants.js?v=5040_SEDE_COMBOBOX"></script>
             <script src="js/core/StateManager.js?v=1101"></script>
             <script src="js/core/CacheService.js?v=1101"></script>
             <script src="js/modules/ui/PremiumModal.js?v=1101"></script>
@@ -2045,7 +2302,7 @@
 
             <!-- SERVICES & AUTH (Session Management) -->
             <script src="js/core/AuthService.js?v=1101"></script>
-            <script src="js/admin.js?v=1122"></script>
+            <script src="js/admin.js?v=1124_SUPERADMIN_CONSOLE"></script>
 
             <!-- Module Logic -->
             <script src="js/modules/ui/PlayerAutocomplete.js"></script>
@@ -2085,9 +2342,9 @@
             <script src="js/modules/admin/BatSignalAgent.js"></script>
             <script src="js/modules/admin/AdminNotifications.js?v=1.0"></script>
 
-            <script src="js/utils/RoleService.js"></script>
+            <script src="js/utils/RoleService.js?v=ORGANIZER_v1"></script>
             <script src="js/modules/admin-users.js?v=1.1"></script>
-            <script src="js/modules/admin-americanas.js?v=5012"></script>
+            <script src="js/modules/admin-americanas.js?v=5040_SEDE_COMBOBOX"></script>
             <script src="js/modules/admin-matches.js"></script>
             <script src="js/modules/admin-results.js"></script>
 
@@ -2098,7 +2355,7 @@
             <script src="js/modules/admin-dashboard.js"></script>
             <script src="js/modules/admin-analytics.js"></script>
             <script src="js/modules/common/WhatsAppService.js?v=9000"></script>
-            <script src="js/modules/admin-entrenos.js?v=5012"></script>
+            <script src="js/modules/admin-entrenos.js?v=5040_SEDE_COMBOBOX"></script>
             <script src="js/modules/admin-open-matches.js?v=3" defer></script>
             <script src="js/modules/admin-database-health.js"></script>
             <script src="js/modules/admin-fix-players.js"></script>
@@ -2669,13 +2926,32 @@
                 </div>
             </div>
 
-            <!-- Botón flotante para abrir consola -->
-            <button onclick="document.getElementById('emergency-console').style.display='block'"
-                style="position:fixed; bottom:20px; right:20px; background:#00ff00; color:black; border:none; padding:15px 20px; border-radius:50px; cursor:pointer; font-weight:bold; z-index:99998; box-shadow:0 4px 15px rgba(0,255,0,0.4); font-size:14px;">
+            <!-- Botón flotante para abrir consola (Solo visible para Superadmin) -->
+            <button id="emergency-console-trigger-btn" onclick="window.openEmergencyConsole()"
+                style="display:none; position:fixed; bottom:20px; right:20px; background:#00ff00; color:black; border:none; padding:15px 20px; border-radius:50px; cursor:pointer; font-weight:bold; z-index:99998; box-shadow:0 4px 15px rgba(0,255,0,0.4); font-size:14px;">
                 🔧 CONSOLA
             </button>
 
             <script>
+                // Control de visibilidad exclusivo para Superadmin
+                window.openEmergencyConsole = function() {
+                    const user = window.AdminAuth?.user || JSON.parse(localStorage.getItem('adminUser') || localStorage.getItem('currentUser') || 'null');
+                    const role = (user?.role || '').toLowerCase().trim();
+                    if (['super_admin', 'superadmin'].includes(role)) {
+                        const c = document.getElementById('emergency-console');
+                        if (c) c.style.display = 'block';
+                    }
+                };
+
+                window.checkEmergencyConsoleVisibility = function() {
+                    const user = window.AdminAuth?.user || JSON.parse(localStorage.getItem('adminUser') || localStorage.getItem('currentUser') || 'null');
+                    const role = (user?.role || '').toLowerCase().trim();
+                    const btn = document.getElementById('emergency-console-trigger-btn');
+                    if (btn) {
+                        btn.style.display = ['super_admin', 'superadmin'].includes(role) ? 'block' : 'none';
+                    }
+                };
+
                 // Interceptar console.log y mostrarlo en nuestra consola
                 (function () {
                     const originalLog = console.log;
@@ -2709,6 +2985,13 @@
 
                     // Ejecutar comandos desde la consola
                     window.executeConsoleCommand = function () {
+                        const user = window.AdminAuth?.user || JSON.parse(localStorage.getItem('adminUser') || localStorage.getItem('currentUser') || 'null');
+                        const role = (user?.role || '').toLowerCase().trim();
+                        if (!['super_admin', 'superadmin'].includes(role)) {
+                            alert("Acceso restringido únicamente a Superadmin.");
+                            return;
+                        }
+
                         const input = document.getElementById('console-input');
                         const command = input.value.trim();
 
@@ -2735,6 +3018,7 @@
 
                     // Permitir Enter para ejecutar
                     document.addEventListener('DOMContentLoaded', () => {
+                        window.checkEmergencyConsoleVisibility();
                         const input = document.getElementById('console-input');
                         if (input) {
                             input.addEventListener('keypress', (e) => {
@@ -2746,6 +3030,7 @@
                         setTimeout(() => {
                             addToConsole('✅ Consola de emergencia cargada', 'log');
                             addToConsole('Puedes ejecutar comandos JavaScript aquí', 'log');
+                            window.checkEmergencyConsoleVisibility();
                         }, 1000);
                     });
                     // Helpers for Image and Icon Selectors
@@ -2786,7 +3071,7 @@
                 })();
             </script>
             <!-- CORE SERVICES (Consolidated) -->
-            <script src="js/modules/core/Constants.js"></script>
+            <script src="js/modules/core/Constants.js?v=5040_SEDE_COMBOBOX"></script>
             <script src="js/modules/common/EventService.js"></script>
             <script src="js/modules/logic/MatchMakingService.js"></script>
             <script src="js/modules/logic/LevelAdjustmentService.js"></script>

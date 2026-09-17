@@ -141,14 +141,15 @@ window.WhatsAppService = {
         const dateStr = this._formatDate(event.date);
         const timeStr = event.time || '10:00';
         const endTimeStr = event.time_end ? ` a ${event.time_end}` : '';
-        const location = event.location || 'SomosPadel BCN';
+        const location = event.location || event.sede || event.club || 'SomosPadel BCN';
 
-        const players = event.players || [];
-        const maxPlayers = (parseInt(event.max_courts) || 4) * 4;
+        const players = event.players || event.registeredPlayers || [];
+        const maxCourts = parseInt(event.max_courts || event.courts || 4) || 4;
+        const maxPlayers = event.max_players || (maxCourts * 4);
         const spotsLeft = Math.max(0, maxPlayers - players.length);
 
-        const pMember = event.price_members || 10;
-        const pExt = event.price_external || 10;
+        const pMember = event.price_members || event.price_socio || event.price || 10;
+        const pExt = event.price_external || event.price_no_socio || event.price_externo || event.price || 10;
 
         // Formateo de nivel
         let levelText = '3.0 - 4.5';
@@ -271,6 +272,9 @@ window.WhatsAppService = {
             msg += `📊 *Nivel medio:* ${metrics.avgLevel}\n`;
         }
         msg += `✨ *Extras:* ${extrasStr}\n\n`;
+        if (event.description && String(event.description).trim()) {
+            msg += `📢 *Nota del organizador:*\n_${String(event.description).trim()}_\n\n`;
+        }
 
         // Ocupación y balance
         msg += `📊 *Ocupación (${players.length}/${maxPlayers}):*\n`;
@@ -320,7 +324,8 @@ window.WhatsAppService = {
 
             // Enriquecer jugadores con niveles actualizados y género
             let richPlayers = null;
-            if (event.players && event.players.length > 0) {
+            const eventPlayers = event.players || event.registeredPlayers || [];
+            if (eventPlayers && eventPlayers.length > 0) {
                 try {
                     let allUsers = window._allPlayersCache || window.allUsersCache;
                     if (!allUsers && window.FirebaseDB?.players?.getAll) {
@@ -332,7 +337,7 @@ window.WhatsAppService = {
                         }
                     }
                     if (allUsers && Array.isArray(allUsers) && allUsers.length > 0) {
-                        richPlayers = event.players.map(p => {
+                        richPlayers = eventPlayers.map(p => {
                             const pid = (typeof p === 'string') ? p : (p.id || p.uid);
                             const user = allUsers.find(u => (u.id === pid) || (u.uid === pid));
                             return {

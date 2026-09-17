@@ -54,6 +54,34 @@
         }
     };
 
+    // Global handlers for Cartel / Poster Lightbox Modal
+    window.openPosterModal = (imageUrl, eventName, clubName) => {
+        if (window.EventsController && window.EventsController.openPosterModal) {
+            window.EventsController.openPosterModal(imageUrl, eventName, clubName);
+        } else {
+            console.warn("⚠️ EventsController not ready for openPosterModal");
+        }
+    };
+    window.closePosterModal = () => {
+        if (window.EventsController && window.EventsController.closePosterModal) {
+            window.EventsController.closePosterModal();
+        }
+    };
+
+    // Global handlers for Description / Info Modal
+    window.openDescriptionModal = (id, type) => {
+        if (window.EventsController && window.EventsController.openDescriptionModal) {
+            window.EventsController.openDescriptionModal(id, type);
+        } else {
+            console.warn("⚠️ EventsController not ready for openDescriptionModal");
+        }
+    };
+    window.closeDescriptionModal = () => {
+        if (window.EventsController && window.EventsController.closeDescriptionModal) {
+            window.EventsController.closeDescriptionModal();
+        }
+    };
+
     class EventsController {
         constructor() {
             this.state = {
@@ -973,6 +1001,98 @@
             document.getElementById('close-guide-action').onclick = close;
         }
 
+        renderClubBenefitsModal() {
+            const modalId = 'club-benefits-modal';
+            if (document.getElementById(modalId)) return;
+
+            const modal = document.createElement('div');
+            modal.id = modalId;
+            modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); z-index: 13000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); animation: fadeIn 0.3s ease; padding: 18px; box-sizing: border-box;`;
+
+            modal.innerHTML = `
+                <div style="background: linear-gradient(145deg, #0f172a 0%, #020617 100%); width: 100%; max-width: 520px; border-radius: 24px; border: 1.5px solid rgba(204, 255, 0, 0.3); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.8), 0 0 30px rgba(204, 255, 0, 0.15); font-family: 'Outfit', -apple-system, sans-serif;">
+                    <div style="padding: 20px 22px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 38px; height: 38px; background: rgba(204,255,0,0.12); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(204,255,0,0.3);">
+                                <i class="fas fa-handshake" style="color: #CCFF00; font-size: 1.1rem;"></i>
+                            </div>
+                            <div>
+                                <h2 style="margin:0; color: white; font-size: 1.15rem; font-weight: 900; letter-spacing: -0.3px;">ESPACIO <span style="color: #CCFF00;">CLUBES & ORGANIZADORES</span></h2>
+                                <p style="margin: 2px 0 0; color: #94a3b8; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Impulsa tus Americanas en Barcelona</p>
+                            </div>
+                        </div>
+                        <button id="close-club-btn" style="background: rgba(255,255,255,0.08); border: none; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div style="padding: 22px 24px; overflow-y: auto; max-height: 65vh; display: flex; flex-direction: column; gap: 16px;">
+                        <div style="background: rgba(204,255,0,0.05); border: 1px dashed rgba(204,255,0,0.3); border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 12px;">
+                            <i class="fas fa-bolt" style="color: #CCFF00; font-size: 1.4rem;"></i>
+                            <div>
+                                <div style="color: #CCFF00; font-weight: 900; font-size: 0.85rem;">Publica tus torneos y llena pistas</div>
+                                <div style="color: #cbd5e1; font-size: 0.75rem; margin-top: 2px;">Conéctate con la mayor comunidad de jugadores de pádel de Barcelona y digitaliza tu operativa.</div>
+                            </div>
+                        </div>
+
+                        <!-- Ventaja 1 -->
+                        <div style="display: flex; gap: 14px; align-items: flex-start;">
+                            <div style="width: 36px; height: 36px; min-width: 36px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-users" style="color: #38bdf8; font-size: 0.95rem;"></i>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0; color: #fff; font-size: 0.9rem; font-weight: 800;">1. Jugadores Activos de Inmediato</h4>
+                                <p style="margin: 4px 0 0; color: #94a3b8; font-size: 0.78rem; line-height: 1.45;">No empieces de cero para llenar tus pistas. Tus eventos se muestran en tiempo real con inscripciones abiertas y avisos a jugadores por nivel.</p>
+                            </div>
+                        </div>
+
+                        <!-- Ventaja 2 -->
+                        <div style="display: flex; gap: 14px; align-items: flex-start;">
+                            <div style="width: 36px; height: 36px; min-width: 36px; background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.3); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-tv" style="color: #CCFF00; font-size: 0.95rem;"></i>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0; color: #fff; font-size: 0.9rem; font-weight: 800;">2. Torre de Control Digital (Sin Papel ni Boli)</h4>
+                                <p style="margin: 4px 0 0; color: #94a3b8; font-size: 0.78rem; line-height: 1.45;">Rotaciones automáticas de pistas, subidas/bajadas, tanteo en directo desde el móvil de los jugadores y ranking instantáneo.</p>
+                            </div>
+                        </div>
+
+                        <!-- Ventaja 3 -->
+                        <div style="display: flex; gap: 14px; align-items: flex-start;">
+                            <div style="width: 36px; height: 36px; min-width: 36px; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-shield-halved" style="color: #c084fc; font-size: 0.95rem;"></i>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0; color: #fff; font-size: 0.9rem; font-weight: 800;">3. Ficha de Club Colaborador & GPS</h4>
+                                <p style="margin: 4px 0 0; color: #94a3b8; font-size: 0.78rem; line-height: 1.45;">Tu club destacado con insignia de Club Verificado, fotos, dirección e indicaciones GPS directas en un toque para los asistentes.</p>
+                            </div>
+                        </div>
+
+                        <!-- Ventaja 4 -->
+                        <div style="display: flex; gap: 14px; align-items: flex-start;">
+                            <div style="width: 36px; height: 36px; min-width: 36px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-gift" style="color: #4ade80; font-size: 0.95rem;"></i>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0; color: #fff; font-size: 0.9rem; font-weight: 800;">4. Prueba Gratuita Sin Compromiso</h4>
+                                <p style="margin: 4px 0 0; color: #94a3b8; font-size: 0.78rem; line-height: 1.45;">Colabora con nosotros sin cuotas fijas. Gestiona tus primeros eventos con el software de SomosPadel 100% gratis.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="padding: 16px 22px; background: rgba(0,0,0,0.4); border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 10px;">
+                        <a href="https://wa.me/34649219350?text=¡Hola%20Alex!%20Soy%20organizador/club%20de%20pádel%20y%20me%20gustaría%20publicar%20mis%20americanas%20en%20SomosPadel%20BCN." 
+                           target="_blank" 
+                           rel="noopener noreferrer" 
+                           style="background: #25D366; color: #000; padding: 14px; border-radius: 14px; font-weight: 950; font-size: 0.88rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4); transition: transform 0.2s;">
+                            <i class="fab fa-whatsapp" style="font-size: 1.25rem;"></i> CONTACTAR PARA PUBLICAR TORNEO
+                        </a>
+                        <button id="close-club-action" style="background: transparent; border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; padding: 10px; border-radius: 12px; font-weight: 700; font-size: 0.8rem; cursor: pointer;">CERRAR</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            const close = () => { modal.style.opacity = '0'; setTimeout(() => modal.remove(), 300); };
+            document.getElementById('close-club-btn').onclick = close;
+            document.getElementById('close-club-action').onclick = close;
+        }
+
         renderEventsList(onlyMine, onlyEntrenos = false, showBothTypes = false) {
             let events = this.getAllSortedEvents();
             const { month, category } = this.state.filters;
@@ -1020,6 +1140,59 @@
                     return name.includes(q) || sede.includes(q) || format.includes(q) || cat.includes(q) || club.includes(q);
                 });
             }
+
+            const isAmericanasSection = this.state.activeTab === 'events';
+            const organizerBannerHtml = isAmericanasSection ? `
+                <div class="organizer-promo-banner" style="
+                    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%);
+                    border: 1.5px solid rgba(204, 255, 0, 0.35);
+                    border-radius: 20px;
+                    padding: 16px 18px;
+                    margin-bottom: 18px;
+                    position: relative;
+                    overflow: hidden;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(204,255,0,0.05);
+                ">
+                    <!-- Glow decoration -->
+                    <div style="position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(204,255,0,0.2) 0%, transparent 70%); pointer-events: none;"></div>
+                    
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; position: relative; z-index: 2;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(204, 255, 0, 0.15); border: 1px solid rgba(204, 255, 0, 0.4); padding: 3px 10px; border-radius: 20px; margin-bottom: 8px;">
+                                <i class="fas fa-crown" style="color: #CCFF00; font-size: 0.65rem;"></i>
+                                <span style="color: #CCFF00; font-size: 0.62rem; font-weight: 950; text-transform: uppercase; letter-spacing: 0.5px;">Espacio Clubes & Organizadores</span>
+                            </div>
+                            <h3 style="margin: 0; color: #ffffff; font-size: 1.02rem; font-weight: 950; line-height: 1.25; letter-spacing: -0.3px;">
+                                ¿Organizas Americanas en Barcelona?
+                            </h3>
+                            <p style="margin: 5px 0 12px; color: #cbd5e1; font-size: 0.74rem; line-height: 1.4; font-weight: 500;">
+                                Publica tus torneos aquí, llena tus pistas con nuestra comunidad y gestiona con la <strong style="color: #CCFF00;">Torre de Control digital</strong> en vivo.
+                            </p>
+                            
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                <a href="https://wa.me/34649219350?text=¡Hola%20Alex!%20Soy%20organizador/club%20de%20pádel%20y%20me%20gustaría%20publicar%20mis%20americanas%20en%20SomosPadel%20BCN." 
+                                   target="_blank" 
+                                   rel="noopener noreferrer" 
+                                   style="background: #CCFF00; color: #000; padding: 8px 16px; border-radius: 12px; font-weight: 950; font-size: 0.75rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(204, 255, 0, 0.35); transition: transform 0.2s;"
+                                   onmouseover="this.style.transform='scale(1.03)';"
+                                   onmouseout="this.style.transform='scale(1)';"
+                                   onmousedown="this.style.transform='scale(0.96)';">
+                                    <i class="fab fa-whatsapp" style="font-size: 0.95rem;"></i> PUBLICAR MI EVENTO
+                                </a>
+                                <button onclick="window.EventsController.renderClubBenefitsModal()" 
+                                        style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #ffffff; padding: 8px 14px; border-radius: 12px; font-weight: 800; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s;"
+                                        onmouseover="this.style.background='rgba(255, 255, 255, 0.15)';"
+                                        onmouseout="this.style.background='rgba(255, 255, 255, 0.08)';">
+                                    <i class="fas fa-info-circle" style="color: #38bdf8;"></i> VENTAJAS CLUBES
+                                </button>
+                            </div>
+                        </div>
+                        <div style="width: 44px; height: 44px; background: rgba(204,255,0,0.1); border: 1.5px solid rgba(204,255,0,0.3); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fas fa-trophy" style="color: #CCFF00; font-size: 1.25rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            ` : '';
 
             const eventsHtml = events.map(evt => this.renderCard(evt)).join('');
             const filterBarHtml = !onlyMine ? this.renderFilterBar(this.getAllSortedEvents().filter(e => e.status !== 'finished' && (e.status === 'live' || e.normDate >= todayStr))) : '';
@@ -1086,6 +1259,15 @@
                             border-color: rgba(139, 92, 246, 0.45) !important;
                             box-shadow: 0 25px 50px rgba(0,0,0,0.85), 0 0 35px rgba(139, 92, 246, 0.25) !important;
                         }
+                        .americana-premium-card {
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                            cursor: pointer;
+                        }
+                        .americana-premium-card:hover, .americana-premium-card:active {
+                            transform: translateY(-4px) scale(1.01) !important;
+                            border-color: rgba(204, 255, 0, 0.45) !important;
+                            box-shadow: 0 25px 50px rgba(0,0,0,0.85), 0 0 35px rgba(204, 255, 0, 0.25) !important;
+                        }
                         .entreno-tile-interactive {
                             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
                             cursor: pointer;
@@ -1136,6 +1318,7 @@
                     </div>
                     ${filterBarHtml}
                     <div style="padding-bottom: 80px; padding-left:10px; padding-right:10px;">
+                        ${organizerBannerHtml}
                         ${events.length === 0 ? `<div style="padding:100px 40px; text-align:center; color:#444;"><i class="fas fa-filter" style="font-size: 4rem; opacity: 0.1;"></i><h3 style="color:#666;">SIN RESULTADOS</h3></div>` : eventsHtml}
                         <div style="margin-top: 25px; display: flex; flex-direction: column; align-items: center; padding-bottom: 20px; gap: 20px;">
                             
@@ -1143,6 +1326,12 @@
                             <div id="geo-radar-root" style="width: 100%; max-width: 500px; margin: 5px auto; animation: floatUp 0.8s ease-out forwards;">
                                 <!-- Cargado vía JS -->
                             </div>
+
+                            ${(this.state.activeTab === 'events') ? `
+                            <button onclick="window.EventsController.renderClubBenefitsModal()" style="background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(10px); color: #CCFF00; border: 1px solid rgba(204,255,0,0.35); padding: 12px 25px; border-radius: 30px; font-size: 0.8rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)';" onmouseout="this.style.transform='scale(1)';">
+                                <i class="fas fa-building-columns" style="color: #CCFF00;"></i> ¿ERES UN CLUB? BENEFICIOS Y PUBLICACIÓN
+                            </button>
+                            ` : ''}
 
                             ${(this.state.activeTab === 'entrenos') ? `
                             <button onclick="window.EventsController.renderEntrenoGuideModal()" style="background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); padding: 12px 25px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px;">
@@ -1459,9 +1648,17 @@
             const dayNum = dateObj ? dateObj.start.getDate() : '--';
             const dayName = dateObj ? dateObj.start.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase().replace('.', '') : '---';
 
-            // Prices
-            const priceSoc = evt.price_members || evt.price_socio || evt.price_member || '20€';
-            const priceExt = evt.price_external || evt.price_externo || evt.price_external || '25€';
+            // Prices Socio & No Socio
+            const cleanMoney = (val) => {
+                if (val === null || val === undefined || val === '') return null;
+                const match = String(val).match(/[0-9]+([.,][0-9]+)?/);
+                return match ? match[0].replace(',', '.') : null;
+            };
+
+            const numSoc = cleanMoney(evt.price_members ?? evt.price_socio ?? evt.price_member ?? evt.price) ?? '20';
+            const numExt = cleanMoney(evt.price_external ?? evt.price_externo ?? evt.price_no_socio) ?? (parseFloat(numSoc) ? String(parseFloat(numSoc) + 2) : '25');
+            const priceSoc = numSoc;
+            const priceExt = numExt;
 
             // Category & Format Logic
             const catMap = { 'male': 'MASCULINO', 'female': 'FEMENINO', 'mixed': 'MIXTO', 'open': 'OPEN' };
@@ -1543,12 +1740,12 @@
             // 🌈 BROADCAST V7: HYPER-COMPACT & ULTRA-COLORFUL (MATTE AESTHETIC)
             const themeColor = isLive ? '#FF2D55' : (isCancelled ? '#ef4444' : (isEntreno ? '#8b5cf6' : categoryColor));
             
-            // Estilos específicos para entrenos
-            const cardBg = isEntreno ? 'linear-gradient(145deg, #18112b 0%, #0c0914 100%)' : '#141414';
-            const cardBorder = isEntreno ? '1px solid rgba(139, 92, 246, 0.15)' : '1px solid rgba(255,255,255,0.04)';
-            const cardGlow = isEntreno ? '0 20px 40px rgba(0,0,0,0.8), 0 0 25px rgba(139, 92, 246, 0.1)' : '0 20px 40px rgba(0,0,0,0.6)';
+            // Estilos específicos para entrenos y americanas
+            const cardBg = isEntreno ? 'linear-gradient(145deg, #18112b 0%, #0c0914 100%)' : 'linear-gradient(145deg, #181c24 0%, #11141a 100%)';
+            const cardBorder = isEntreno ? '1px solid rgba(139, 92, 246, 0.15)' : '1px solid rgba(204, 255, 0, 0.12)';
+            const cardGlow = isEntreno ? '0 20px 40px rgba(0,0,0,0.8), 0 0 25px rgba(139, 92, 246, 0.1)' : '0 20px 40px rgba(0,0,0,0.6), 0 0 20px rgba(204, 255, 0, 0.05)';
             const tileClass = isEntreno ? 'entreno-tile-interactive' : 'premium-tile-interactive';
-            const cardClass = isEntreno ? 'entreno-premium-card' : '';
+            const cardClass = isEntreno ? 'entreno-premium-card' : 'americana-premium-card';
             
             // Iconos y colores por tipo
             const timeIconBg = isEntreno ? 'rgba(139, 92, 246, 0.15)' : 'rgba(204, 255, 0, 0.12)';
@@ -1582,23 +1779,44 @@
             }
 
             // Analizar e integrar recomendador de nivel inteligente (Matchmaking)
-            const rawEventLevel = evt.level || (evt.name ? (evt.name.match(/\b[1-7]\.[0-9]\b/) || [])[0] : null);
+            let rawEventLevel = evt.level || null;
+            if (!rawEventLevel && (evt.level_min || evt.level_max)) {
+                rawEventLevel = evt.level_min && evt.level_max ? `${evt.level_min} - ${evt.level_max}` : (evt.level_min || evt.level_max);
+            }
+            if (!rawEventLevel && evt.name) {
+                const matched = evt.name.match(/\b[1-7]\.[0-9]\b/);
+                if (matched) rawEventLevel = matched[0];
+            }
+
             let levelBadgeHtml = '';
             let levelFeedbackHtml = '';
             if (rawEventLevel) {
-                const eventLvl = parseFloat(rawEventLevel);
                 levelBadgeHtml = `<span style="background: rgba(255,255,255,0.08); color: #fff; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.6rem; font-weight: 700; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-graduation-cap"></i> NIVEL ${rawEventLevel}</span>`;
                 
                 const userLevelVal = user ? (user.level || user.self_rate_level) : null;
                 if (userLevelVal) {
                     const userLvl = parseFloat(userLevelVal);
-                    const diff = Math.abs(userLvl - eventLvl);
-                    if (diff <= 0.35) {
-                        levelFeedbackHtml = `<span style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.3) 0%, rgba(202, 138, 4, 0.2) 100%); color: #facc15; border: 1.5px solid rgba(250, 204, 21, 0.5); padding: 4px 10px; border-radius: 8px; font-size: 0.62rem; font-weight: 950; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(234, 179, 8, 0.3); animation: pulse 2.2s infinite;"><i class="fas fa-star" style="color: #facc15;"></i> ¡IDEAL PARA TI!</span>`;
-                    } else if (userLvl > eventLvl) {
-                        levelFeedbackHtml = `<span style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-angle-double-up"></i> NIVEL CÓMODO</span>`;
-                    } else {
-                        levelFeedbackHtml = `<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-exclamation-triangle"></i> EXIGENTE</span>`;
+                    const minLvl = evt.level_min ? parseFloat(evt.level_min) : null;
+                    const maxLvl = evt.level_max ? parseFloat(evt.level_max) : null;
+                    const singleLvl = parseFloat(rawEventLevel);
+
+                    if (minLvl !== null && maxLvl !== null && !isNaN(minLvl) && !isNaN(maxLvl)) {
+                        if (userLvl >= minLvl - 0.25 && userLvl <= maxLvl + 0.25) {
+                            levelFeedbackHtml = `<span style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.3) 0%, rgba(202, 138, 4, 0.2) 100%); color: #facc15; border: 1.5px solid rgba(250, 204, 21, 0.5); padding: 4px 10px; border-radius: 8px; font-size: 0.62rem; font-weight: 950; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(234, 179, 8, 0.3); animation: pulse 2.2s infinite;"><i class="fas fa-star" style="color: #facc15;"></i> ¡IDEAL PARA TI!</span>`;
+                        } else if (userLvl > maxLvl + 0.25) {
+                            levelFeedbackHtml = `<span style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-angle-double-up"></i> NIVEL CÓMODO</span>`;
+                        } else {
+                            levelFeedbackHtml = `<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-exclamation-triangle"></i> EXIGENTE</span>`;
+                        }
+                    } else if (!isNaN(singleLvl)) {
+                        const diff = Math.abs(userLvl - singleLvl);
+                        if (diff <= 0.35) {
+                            levelFeedbackHtml = `<span style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.3) 0%, rgba(202, 138, 4, 0.2) 100%); color: #facc15; border: 1.5px solid rgba(250, 204, 21, 0.5); padding: 4px 10px; border-radius: 8px; font-size: 0.62rem; font-weight: 950; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(234, 179, 8, 0.3); animation: pulse 2.2s infinite;"><i class="fas fa-star" style="color: #facc15;"></i> ¡IDEAL PARA TI!</span>`;
+                        } else if (userLvl > singleLvl) {
+                            levelFeedbackHtml = `<span style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-angle-double-up"></i> NIVEL CÓMODO</span>`;
+                        } else {
+                            levelFeedbackHtml = `<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 900; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-exclamation-triangle"></i> EXIGENTE</span>`;
+                        }
                     }
                 }
             }
@@ -1640,7 +1858,9 @@
                     <div style="display: flex; flex-direction: column;">
                         
                         <!-- IMAGE AREA -->
-                        <div style="height: 125px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative;">
+                        <div onclick="event.stopPropagation(); window.EventsController.openPosterModal('${(evt.image_url || 'img/padel-event.jpg').replace(/'/g, "\\'")}', '${(evt.name || '').replace(/'/g, "\\'")}', '${(evt.sede || evt.location || '').replace(/'/g, "\\'")}')" 
+                             title="Toca para ver el Cartel Oficial"
+                             style="height: 125px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative; cursor: pointer;">
                             <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(10,14,26,0.3) 0%, rgba(10,14,26,0.85) 75%, ${isEntreno ? '#0c0914' : '#141414'} 100%);"></div>
                             
                             <!-- FLOATING BADGES -->
@@ -1656,7 +1876,36 @@
                                 ` : ''}
                             </div>
 
-                            <div style="position: absolute; top: 12px; right: 12px; display: flex; align-items: center; gap: 6px;">
+                            <div style="position: absolute; top: 12px; right: 12px; display: flex; align-items: center; gap: 6px; z-index: 10;">
+                                <!-- Botón Cartel Oficial -->
+                                <button onclick="event.stopPropagation(); window.EventsController.openPosterModal('${(evt.image_url || 'img/padel-event.jpg').replace(/'/g, "\\'")}', '${(evt.name || '').replace(/'/g, "\\'")}', '${(evt.sede || evt.location || '').replace(/'/g, "\\'")}')" 
+                                        title="Ver Cartel Oficial" 
+                                        aria-label="Ver cartel del evento"
+                                        style="
+                                            background: rgba(15, 23, 42, 0.88);
+                                            height: 38px;
+                                            padding: 0 12px;
+                                            border-radius: 12px;
+                                            border: 1.5px solid rgba(204, 255, 0, 0.5);
+                                            color: #CCFF00;
+                                            display: flex;
+                                            align-items: center;
+                                            gap: 6px;
+                                            cursor: pointer;
+                                            backdrop-filter: blur(12px);
+                                            box-shadow: 0 4px 15px rgba(0,0,0,0.4), 0 0 12px rgba(204,255,0,0.18);
+                                            font-size: 0.72rem;
+                                            font-weight: 950;
+                                            letter-spacing: 0.6px;
+                                            transition: transform 0.2s, box-shadow 0.2s;
+                                        "
+                                        onmouseover="this.style.transform='scale(1.06)';"
+                                        onmouseout="this.style.transform='scale(1)';"
+                                        onmousedown="this.style.transform='scale(0.94)';">
+                                    <i class="fas fa-image" style="font-size: 0.85rem; color: #CCFF00;"></i>
+                                    <span>CARTEL</span>
+                                </button>
+
                                 <!-- Botón Compartir WhatsApp Pro -->
                                 <button onclick="event.stopPropagation(); window.EventsController.shareEvent('${evt.id}', '${evt.type || 'americana'}')" 
                                         title="Compartir por WhatsApp" 
@@ -1668,8 +1917,17 @@
                                     <i class="fab fa-whatsapp" style="font-size: 1.15rem;"></i>
                                 </button>
                                 
-                                <div style="background: rgba(15, 23, 42, 0.85); border-radius: 12px; padding: 7px 14px; border: 1px solid rgba(255,255,255,0.12); color: #fff; font-size: 0.85rem; font-weight: 950; display: flex; align-items: center; backdrop-filter: blur(12px); box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
-                                    <span style="color: #CCFF00;">${priceSoc}€</span>
+                                <!-- Dual Price Badge: Socio & No Socio -->
+                                <div style="background: rgba(15, 23, 42, 0.88); border-radius: 12px; padding: 5px 9px; border: 1px solid rgba(255,255,255,0.14); color: #fff; display: flex; align-items: center; gap: 7px; backdrop-filter: blur(12px); box-shadow: 0 4px 15px rgba(0,0,0,0.4); flex-shrink: 0;">
+                                    <div style="display: flex; flex-direction: column; align-items: center; line-height: 1;">
+                                        <span style="font-size: 0.48rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.4px;">SOCIO</span>
+                                        <span style="font-size: 0.82rem; font-weight: 950; color: #CCFF00; margin-top: 2px;">${numSoc}€</span>
+                                    </div>
+                                    <div style="width: 1px; height: 18px; background: rgba(255,255,255,0.18);"></div>
+                                    <div style="display: flex; flex-direction: column; align-items: center; line-height: 1;">
+                                        <span style="font-size: 0.48rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.4px;">NO SOCIO</span>
+                                        <span style="font-size: 0.82rem; font-weight: 950; color: #ffffff; margin-top: 2px;">${numExt}€</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1683,10 +1941,16 @@
                                     ${levelBadgeHtml}
                                     ${levelFeedbackHtml}
                                 ` : `
-                                    <span style="background: ${themeColor}; color: #000; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">${formatLabel}</span>
+                                    ${isTwister ? 
+                                        `<span style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 4px 10px rgba(6, 182, 212, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-wind"></i> TWISTER</span>` :
+                                        `<span style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; text-transform: uppercase; box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-lock"></i> PAREJA FIJA</span>`
+                                    }
                                     <span style="background: rgba(255,255,255,0.08); color: #fff; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); font-size: 0.6rem; font-weight: 800; backdrop-filter: blur(6px);">${maxCourts} PISTAS</span>
+                                    ${levelBadgeHtml}
+                                    ${levelFeedbackHtml}
                                     ${(evt.is_external || evt.external || evt.organizer_type === 'external' || evt.origin === 'external') ? `
-                                        <span style="background: linear-gradient(135deg, #0ea5e9, #2563eb); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 8px rgba(14, 165, 233, 0.35);"><i class="fas fa-globe"></i> ${evt.club || evt.organizer || 'EXTERNA'}</span>
+                                        <span style="background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 8px rgba(14, 165, 233, 0.35); border: 1px solid rgba(255,255,255,0.18);"><i class="fas fa-building-columns"></i> ${evt.club || evt.organizer || 'CLUB ASOCIADO'}</span>
+                                        <span style="background: rgba(14, 165, 233, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); padding: 4px 8px; border-radius: 8px; font-size: 0.58rem; font-weight: 900; display: inline-flex; align-items: center; gap: 3px;"><i class="fas fa-check-circle"></i> VERIFICADO</span>
                                     ` : `
                                         <span style="background: rgba(204,255,0,0.12); color: #CCFF00; border: 1px solid rgba(204,255,0,0.35); padding: 4px 10px; border-radius: 8px; font-size: 0.6rem; font-weight: 950; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-certificate"></i> SOMOSPADEL BCN</span>
                                     `}
@@ -1696,9 +1960,67 @@
 
                         <!-- CONTENT AREA -->
                         <div style="padding: 16px 16px 14px;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                                <h3 style="margin: 0; font-size: 1.22rem; font-weight: 950; color: #fff; line-height: 1.15; letter-spacing: -0.4px; text-transform: uppercase;">${evt.name}</h3>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 8px;">
+                                <h3 style="margin: 0; font-size: 1.22rem; font-weight: 950; color: #fff; line-height: 1.15; letter-spacing: -0.4px; text-transform: uppercase; flex: 1;">${evt.name}</h3>
+                                ${evt.description && evt.description.trim() ? `
+                                    <button onclick="event.stopPropagation(); window.EventsController.openDescriptionModal('${evt.id}', '${evt.type || 'americana'}')"
+                                            title="Ver descripción y notas para jugadores"
+                                            aria-label="Ver descripción"
+                                            style="
+                                                background: rgba(56, 189, 248, 0.12);
+                                                border: 1.5px solid rgba(56, 189, 248, 0.4);
+                                                color: #38bdf8;
+                                                padding: 6px 12px;
+                                                border-radius: 12px;
+                                                font-size: 0.72rem;
+                                                font-weight: 950;
+                                                display: inline-flex;
+                                                align-items: center;
+                                                gap: 6px;
+                                                cursor: pointer;
+                                                flex-shrink: 0;
+                                                box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                                                transition: transform 0.2s, background 0.2s;
+                                            "
+                                            onmouseover="this.style.transform='scale(1.05)'; this.style.background='rgba(56, 189, 248, 0.2)';"
+                                            onmouseout="this.style.transform='scale(1)'; this.style.background='rgba(56, 189, 248, 0.12)';"
+                                            onmousedown="this.style.transform='scale(0.95)';">
+                                        <i class="fas fa-info-circle" style="font-size: 0.82rem; color: #38bdf8;"></i>
+                                        <span>INFO</span>
+                                    </button>
+                                ` : ''}
                             </div>
+
+                            ${evt.description && evt.description.trim() ? `
+                                <div onclick="event.stopPropagation(); window.EventsController.openDescriptionModal('${evt.id}', '${evt.type || 'americana'}')" 
+                                     title="Toca para leer el aviso completo"
+                                     style="
+                                        background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(37, 99, 235, 0.06) 100%);
+                                        border: 1px solid rgba(56, 189, 248, 0.25);
+                                        border-left: 3.5px solid #38bdf8;
+                                        border-radius: 12px;
+                                        padding: 8px 12px;
+                                        margin-bottom: 12px;
+                                        cursor: pointer;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: space-between;
+                                        gap: 8px;
+                                        transition: transform 0.15s, background 0.15s;
+                                     "
+                                     onmouseover="this.style.background='rgba(56, 189, 248, 0.16)';"
+                                     onmouseout="this.style.background='linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(37, 99, 235, 0.06) 100%)';">
+                                    <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; min-width: 0;">
+                                        <i class="fas fa-bullhorn" style="color: #38bdf8; font-size: 0.85rem; flex-shrink: 0;"></i>
+                                        <span style="font-size: 0.74rem; color: #f1f5f9; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                            ${evt.description.replace(/\n/g, ' ')}
+                                        </span>
+                                    </div>
+                                    <span style="font-size: 0.62rem; font-weight: 950; color: #38bdf8; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px;">
+                                        LEER <i class="fas fa-chevron-right" style="font-size: 0.6rem;"></i>
+                                    </span>
+                                </div>
+                            ` : ''}
                             
                             <!-- 💎 2 ESSENTIAL PILLS -->
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
@@ -1752,7 +2074,7 @@
                                     </div>
                                     <div style="display: flex; flex-direction: column; min-width: 0;">
                                         <div style="display: flex; align-items: center; gap: 4px;">
-                                            <span style="font-size: 0.52rem; font-weight: 800; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">Sede Oficial</span>
+                                            <span style="font-size: 0.52rem; font-weight: 800; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">${(evt.is_external || evt.external || evt.organizer_type === 'external' || evt.origin === 'external') ? 'Club Organizador' : 'Sede Oficial'}</span>
                                             <span style="font-size: 0.52rem; font-weight: 950; color: #38bdf8; text-transform: uppercase;">GPS ↗</span>
                                         </div>
                                         <span style="font-size: 0.82rem; font-weight: 950; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${evt.sede || evt.location || 'Bcn Pádel'}</span>
@@ -1848,30 +2170,51 @@
             `;
         }
 
-        shareEvent(id, type = 'americana') {
+        async shareEvent(id, type = 'americana') {
+            console.log("🔗 [EventsController] shareEvent triggered for:", id, type);
             const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
-            const evt = events.find(e => e.id === id);
-            if (!evt) return;
+            let evt = events.find(e => e.id === id);
 
-            const maxCourts = parseInt(evt.max_courts || evt.courts || 4);
-            const maxPlayers = maxCourts * 4;
-            const players = evt.players || evt.registeredPlayers || [];
-            const remaining = Math.max(0, maxPlayers - players.length);
-            const price = evt.price_socio || evt.price || 10;
-            const sede = evt.sede || evt.location || 'Barcelona Pádel el Prat';
-
-            const shareText = `🎾 *SOMOSPADEL BCN - CONVOCATORIA DE PÁDEL* 🎾\n\n🏆 *${evt.name}*\n📅 *Fecha:* ${evt.date}\n🕒 *Horario:* ${evt.time || '19:30 - 21:30'}\n📍 *Sede:* ${sede}\n👥 *Plazas libres:* ${remaining} de ${maxPlayers} plazas\n💰 *Precio:* ${price}€\n\n⚡ ¡Apúntate antes de que se agoten las plazas!\n👉 ${window.location.origin}`;
-
-            if (navigator.share) {
-                navigator.share({
-                    title: `SomosPadel BCN: ${evt.name}`,
-                    text: shareText,
-                    url: window.location.href
-                }).catch(() => {});
-            } else {
-                const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
-                window.open(whatsappUrl, '_blank');
+            if (!evt && window.EventService) {
+                try {
+                    evt = await window.EventService.getById(type === 'entreno' ? 'entreno' : 'americana', id);
+                } catch (e) {
+                    console.warn("⚠️ [EventsController] Fallback fetch:", e);
+                }
             }
+
+            if (!evt) {
+                console.warn("⚠️ Evento no encontrado para compartir:", id);
+                return;
+            }
+
+            // Normalización idéntica al Admin de Entrenos y Americanas
+            const normalizedEvt = {
+                ...evt,
+                id: evt.id || id,
+                type: evt.type || type,
+                location: evt.sede || evt.location || evt.club || 'SomosPadel BCN',
+                sede: evt.sede || evt.location || evt.club || 'SomosPadel BCN',
+                players: evt.players || evt.registeredPlayers || [],
+                registeredPlayers: evt.registeredPlayers || evt.players || [],
+                price_members: evt.price_members || evt.price_socio || evt.price || 10,
+                price_external: evt.price_external || evt.price_no_socio || evt.price_externo || evt.price || 10,
+                max_courts: evt.max_courts || evt.courts || 4
+            };
+
+            if (window.WhatsAppService && typeof window.WhatsAppService.shareStartFromAdmin === 'function') {
+                await window.WhatsAppService.shareStartFromAdmin(normalizedEvt);
+                return;
+            }
+
+            // Fallback de seguridad en caso de no disponibilidad de WhatsAppService
+            const maxCourts = parseInt(normalizedEvt.max_courts || 4);
+            const maxPlayers = maxCourts * 4;
+            const remaining = Math.max(0, maxPlayers - normalizedEvt.players.length);
+            const shareText = `🎾 *SOMOSPADEL BCN - CONVOCATORIA DE PÁDEL* 🎾\n\n🏆 *${normalizedEvt.name}*\n📅 *Fecha:* ${normalizedEvt.date}\n🕒 *Horario:* ${normalizedEvt.time || '19:30 - 21:30'}\n📍 *Sede:* ${normalizedEvt.location}\n👥 *Plazas libres:* ${remaining} de ${maxPlayers} plazas\n💰 *Precio:* ${normalizedEvt.price_members}€\n\n⚡ ¡Apúntate antes de que se agoten las plazas!\n👉 ${window.location.origin}`;
+
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+            window.open(whatsappUrl, '_blank');
         }
 
         addToCalendar(id, type = 'americana') {
@@ -1900,6 +2243,344 @@
             
             console.log("🗺️ [EventsController] Opening directions to:", club);
             window.open(mapsUrl, '_blank');
+        }
+
+        openPosterModal(imageUrl, eventName, clubName) {
+            const finalImg = (imageUrl && imageUrl.trim()) ? imageUrl.trim() : 'img/padel-event.jpg';
+            const finalName = (eventName && eventName.trim()) ? eventName.trim() : 'Americana SomosPadel';
+            const finalClub = (clubName && clubName.trim()) ? clubName.trim() : 'Sede Oficial';
+
+            let overlay = document.getElementById('sp-americana-poster-modal');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'sp-americana-poster-modal';
+                overlay.style.cssText = `
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(4, 7, 15, 0.92);
+                    backdrop-filter: blur(14px);
+                    -webkit-backdrop-filter: blur(14px);
+                    z-index: 9999999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 16px;
+                    box-sizing: border-box;
+                    opacity: 0;
+                    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+                    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+                `;
+                document.body.appendChild(overlay);
+
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) this.closePosterModal();
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && overlay.style.display !== 'none') {
+                        this.closePosterModal();
+                    }
+                });
+            }
+
+            overlay.innerHTML = `
+                <div style="
+                    position: relative;
+                    width: 100%;
+                    max-width: 480px;
+                    max-height: 92vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    background: #090e18;
+                    border: 1.5px solid rgba(204, 255, 0, 0.45);
+                    border-radius: 22px;
+                    padding: 14px 14px 16px;
+                    box-shadow: 0 25px 60px rgba(0,0,0,0.9), 0 0 35px rgba(204,255,0,0.2);
+                    box-sizing: border-box;
+                ">
+                    <!-- Botón Cerrar Circular Flotante -->
+                    <button type="button" onclick="window.EventsController.closePosterModal()"
+                            aria-label="Cerrar cartel"
+                            style="
+                                position: absolute;
+                                top: -14px;
+                                right: -14px;
+                                width: 38px;
+                                height: 38px;
+                                border-radius: 50%;
+                                background: #0f172a;
+                                color: #CCFF00;
+                                border: 2px solid #CCFF00;
+                                font-size: 1.1rem;
+                                font-weight: 900;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+                                z-index: 30;
+                                transition: transform 0.15s;
+                            "
+                            onmouseover="this.style.transform='scale(1.1) rotate(90deg)';"
+                            onmouseout="this.style.transform='scale(1) rotate(0deg)';">
+                        ✕
+                    </button>
+
+                    <!-- Header del Lightbox -->
+                    <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 2px;">
+                        <span style="background: #CCFF00; color: #000; font-size: 0.65rem; font-weight: 950; padding: 4px 10px; border-radius: 8px; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-image"></i> CARTEL OFICIAL
+                        </span>
+                        <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 58%;">
+                            <i class="fas fa-map-marker-alt" style="color: #38bdf8;"></i> ${finalClub}
+                        </span>
+                    </div>
+
+                    <!-- Título del Evento -->
+                    <h3 style="margin: 0 0 10px; font-size: 1.05rem; font-weight: 950; color: #fff; text-transform: uppercase; text-align: center; width: 100%; line-height: 1.25; letter-spacing: -0.3px;">
+                        ${finalName}
+                    </h3>
+
+                    <!-- Contenedor del Cartel HD -->
+                    <div style="
+                        width: 100%;
+                        max-height: 60vh;
+                        overflow: hidden;
+                        border-radius: 14px;
+                        border: 1px solid rgba(255,255,255,0.1);
+                        background: #000;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: inset 0 0 20px rgba(0,0,0,0.7);
+                    ">
+                        <img src="${finalImg}" 
+                             alt="Cartel ${finalName}" 
+                             style="
+                                width: 100%;
+                                height: auto;
+                                max-height: 60vh;
+                                object-fit: contain;
+                                display: block;
+                             "
+                             onerror="this.src='img/padel-event.jpg'"
+                        />
+                    </div>
+
+                    <!-- Botones de Acción al pie del Modal -->
+                    <div style="display: flex; gap: 10px; width: 100%; margin-top: 14px;">
+                        <a href="${finalImg}" target="_blank" rel="noopener noreferrer" download
+                           style="
+                                flex: 1;
+                                padding: 11px 12px;
+                                background: rgba(255,255,255,0.08);
+                                border: 1px solid rgba(255,255,255,0.2);
+                                border-radius: 12px;
+                                color: #fff;
+                                font-weight: 900;
+                                font-size: 0.78rem;
+                                text-decoration: none;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 6px;
+                           ">
+                            <i class="fas fa-external-link-alt"></i> ABRIR IMAGEN
+                        </a>
+                        <button type="button" onclick="window.EventsController.closePosterModal()"
+                                style="
+                                    flex: 1;
+                                    padding: 11px 12px;
+                                    background: #CCFF00;
+                                    color: #000;
+                                    border: none;
+                                    border-radius: 12px;
+                                    font-weight: 950;
+                                    font-size: 0.78rem;
+                                    cursor: pointer;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    gap: 6px;
+                                    box-shadow: 0 4px 14px rgba(204,255,0,0.3);
+                                ">
+                            <i class="fas fa-check"></i> CERRAR
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            overlay.style.display = 'flex';
+            requestAnimationFrame(() => {
+                overlay.style.opacity = '1';
+            });
+        }
+
+        closePosterModal() {
+            const overlay = document.getElementById('sp-americana-poster-modal');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 250);
+            }
+        }
+
+        openDescriptionModal(id, type = 'americana') {
+            const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
+            const evt = events.find(e => e.id === id) || {};
+            const title = evt.name || 'Americana SomosPadel';
+            const club = evt.sede || evt.location || evt.club || 'Sede Oficial';
+            const desc = (evt.description && evt.description.trim()) ? evt.description.trim() : 'No hay notas o avisos adicionales para esta convocatoria.';
+
+            let modal = document.getElementById('sp-description-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'sp-description-modal';
+                modal.style.cssText = `
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(4, 7, 15, 0.92);
+                    backdrop-filter: blur(14px);
+                    -webkit-backdrop-filter: blur(14px);
+                    z-index: 9999999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 16px;
+                    box-sizing: border-box;
+                    opacity: 0;
+                    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+                    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+                `;
+                document.body.appendChild(modal);
+
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) this.closeDescriptionModal();
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && modal.style.display !== 'none') {
+                        this.closeDescriptionModal();
+                    }
+                });
+            }
+
+            modal.innerHTML = `
+                <div style="
+                    position: relative;
+                    width: 100%;
+                    max-width: 480px;
+                    max-height: 90vh;
+                    display: flex;
+                    flex-direction: column;
+                    background: #090e18;
+                    border: 1.5px solid rgba(56, 189, 248, 0.45);
+                    border-radius: 22px;
+                    padding: 16px 16px 18px;
+                    box-shadow: 0 25px 60px rgba(0,0,0,0.9), 0 0 35px rgba(56, 189, 248, 0.15);
+                    box-sizing: border-box;
+                ">
+                    <!-- Botón Cerrar Circular Flotante -->
+                    <button type="button" onclick="window.EventsController.closeDescriptionModal()"
+                            aria-label="Cerrar avisos"
+                            style="
+                                position: absolute;
+                                top: -14px;
+                                right: -14px;
+                                width: 38px;
+                                height: 38px;
+                                border-radius: 50%;
+                                background: #0f172a;
+                                color: #38bdf8;
+                                border: 2px solid #38bdf8;
+                                font-size: 1.1rem;
+                                font-weight: 900;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+                                z-index: 30;
+                                transition: transform 0.15s;
+                            "
+                            onmouseover="this.style.transform='scale(1.1) rotate(90deg)';"
+                            onmouseout="this.style.transform='scale(1) rotate(0deg)';">
+                        ✕
+                    </button>
+
+                    <!-- Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 2px;">
+                        <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 0.65rem; font-weight: 950; padding: 4px 10px; border-radius: 8px; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-bullhorn"></i> AVISOS DEL ORGANIZADOR
+                        </span>
+                        <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50%;">
+                            <i class="fas fa-map-marker-alt" style="color: #38bdf8;"></i> ${club}
+                        </span>
+                    </div>
+
+                    <!-- Título -->
+                    <h3 style="margin: 0 0 12px; font-size: 1.1rem; font-weight: 950; color: #fff; text-transform: uppercase; line-height: 1.25; letter-spacing: -0.3px;">
+                        ${title}
+                    </h3>
+
+                    <!-- Caja de Contenido de la Descripción -->
+                    <div style="
+                        background: rgba(15, 23, 42, 0.75);
+                        border: 1px solid rgba(255, 255, 255, 0.08);
+                        border-radius: 14px;
+                        padding: 16px;
+                        color: #f1f5f9;
+                        font-size: 0.92rem;
+                        line-height: 1.6;
+                        overflow-y: auto;
+                        max-height: 52vh;
+                        white-space: pre-wrap;
+                        word-break: break-word;
+                        box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+                    ">${desc}</div>
+
+                    <!-- Botón Cerrar Inferior -->
+                    <div style="margin-top: 14px; width: 100%;">
+                        <button type="button" onclick="window.EventsController.closeDescriptionModal()"
+                                style="
+                                    width: 100%;
+                                    padding: 12px 16px;
+                                    background: linear-gradient(135deg, #0284c7, #2563eb);
+                                    color: #ffffff;
+                                    border: none;
+                                    border-radius: 12px;
+                                    font-weight: 950;
+                                    font-size: 0.82rem;
+                                    cursor: pointer;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    gap: 6px;
+                                    box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
+                                    letter-spacing: 0.5px;
+                                ">
+                            <i class="fas fa-check"></i> ENTENDIDO
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            modal.style.display = 'flex';
+            requestAnimationFrame(() => {
+                modal.style.opacity = '1';
+            });
+        }
+
+        closeDescriptionModal() {
+            const modal = document.getElementById('sp-description-modal');
+            if (modal) {
+                modal.style.opacity = '0';
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 250);
+            }
         }
 
         async openLiveEvent(id, type = 'americana', action = null) {

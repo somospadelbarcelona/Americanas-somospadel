@@ -198,22 +198,29 @@ window.AdminViews.entrenos_create = async function () {
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>SEDE</label>
-                            <select name="location" class="pro-input">
-                                <option value="Barcelona Pádel el Prat">EL PRAT</option>
-                                <option value="Delfos Cornellá">DELFOS</option>
-                            </select>
+                            <label><i class="fas fa-map-marker-alt" style="color: #38bdf8;"></i> SEDE / CLUB</label>
+                            <div class="sede-combobox-wrapper">
+                                <input type="text" 
+                                       name="location" 
+                                       id="create-entreno-location-input" 
+                                       class="pro-input sede-combobox-input" 
+                                       placeholder="🔍 Buscar o escribir sede / club..." 
+                                       autocomplete="off" 
+                                       required>
+                                <button type="button" class="sede-combobox-toggle" title="Ver lista de sedes">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="sede-combobox-dropdown"></div>
+                            </div>
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px;">
                         <div class="form-group">
                             <label>MODO DE JUEGO</label>
-                            <select name="pair_mode" class="pro-input">
-                                <option value="fixed">🔒 PAREJA FIJA (Manual)</option>
-                                <option value="fixed_admin">👔 PAREJA FIJA (Admin)</option>
-                                <option value="fixed_auto">🤖 PAREJA FIJA (Auto)</option>
-                                <option value="rotating">🌪️ TWISTER / INDIVIDUAL</option>
+                            <select name="pair_mode" id="create-entreno-pair-mode" class="pro-input" onchange="window.updatePairModeHelper(this, 'create-entreno-pair-mode-desc')">
+                                <option value="fixed">🔒 PAREJA FIJA</option>
+                                <option value="rotating" selected>🌪️ TWISTER INDIVIDUAL</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -226,6 +233,10 @@ window.AdminViews.entrenos_create = async function () {
                                 <option value="cancelled">⛔ ANULADO</option>
                             </select>
                         </div>
+                    </div>
+
+                    <!-- EXPLICACIÓN DINÁMICA DEL MODO DE JUEGO -->
+                    <div id="create-entreno-pair-mode-desc" style="background: rgba(59, 130, 246, 0.08); border-left: 3px solid #3b82f6; padding: 8px 12px; border-radius: 8px; font-size: 0.72rem; color: #cbd5e1; margin-bottom: 15px; line-height: 1.35;">
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
@@ -463,6 +474,11 @@ function setupCreateForm() {
     const form = document.getElementById('create-entreno-form');
     if (!form) return;
 
+    // Attach Sede Combobox
+    if (window.setupSedeCombobox) {
+        window.setupSedeCombobox('create-entreno-location-input');
+    }
+
     // Auto-Sync Logic (Images & Names)
     const cat = form.querySelector('[name=category]');
     const loc = form.querySelector('[name=location]');
@@ -473,6 +489,12 @@ function setupCreateForm() {
     // Pre-fill date with today
     if (date && !date.value) {
         date.valueAsDate = new Date();
+    }
+
+    const pairMode = form.querySelector('[name=pair_mode]');
+    if (pairMode && window.updatePairModeHelper) {
+        pairMode.onchange = () => window.updatePairModeHelper(pairMode, 'create-entreno-pair-mode-desc');
+        window.updatePairModeHelper(pairMode, 'create-entreno-pair-mode-desc');
     }
 
     const sync = () => {
@@ -665,6 +687,15 @@ window.openEditEntrenoModal = async (entreno) => {
         if (input) input.value = value;
     }
 
+    // Setup Sede Combobox & Sync Sede
+    if (window.setupSedeCombobox) {
+        window.setupSedeCombobox('edit-entreno-location-input');
+    }
+    const locationInput = form.querySelector('[name=location]');
+    if (locationInput) {
+        locationInput.value = entreno.location || entreno.sede || '';
+    }
+
     // Ensure level fields have values if undefined
     const minInput = form.querySelector('[name="level_min"]');
     if (minInput && (entreno.level_min === undefined || entreno.level_min === null || entreno.level_min === '')) {
@@ -675,9 +706,17 @@ window.openEditEntrenoModal = async (entreno) => {
         maxInput.value = '4.5';
     }
 
-    // Special Image Preview
-    const preview = document.getElementById('edit-entreno-img-preview');
-    if (preview && entreno.image_url) preview.src = entreno.image_url;
+    // Special Image Preview & Dropzone
+    if (window.updateAmericanaImagePreview) {
+        window.updateAmericanaImagePreview(entreno.image_url || '', 'edit-entreno-img-preview');
+        window.setupAmericanaDropzone('edit-entreno-img-dropzone', 'edit-entreno-file-input', 'edit-entreno-img-input', 'edit-entreno-img-preview');
+    } else {
+        const preview = document.getElementById('edit-entreno-img-preview');
+        if (preview && entreno.image_url) {
+            preview.src = entreno.image_url;
+            preview.style.display = 'block';
+        }
+    }
 
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
@@ -686,14 +725,23 @@ window.openEditEntrenoModal = async (entreno) => {
     const pairModeSelect = form.querySelector('[name=pair_mode]');
     const pairsArea = document.getElementById('entreno-fixed-pairs-area');
 
+    if (pairModeSelect) {
+        if (pairModeSelect.value !== 'rotating') {
+            pairModeSelect.value = 'fixed';
+        }
+    }
+
     const togglePairsArea = () => {
         if (pairsArea) {
-            const val = pairModeSelect.value;
-            if (val === 'fixed' || val === 'fixed_admin' || val === 'fixed_auto') {
+            const val = pairModeSelect?.value;
+            if (val === 'fixed') {
                 pairsArea.style.display = 'block';
             } else {
                 pairsArea.style.display = 'none';
             }
+        }
+        if (window.updatePairModeHelper) {
+            window.updatePairModeHelper(pairModeSelect, 'edit-entreno-pair-mode-desc');
         }
     };
 
@@ -795,7 +843,18 @@ window.launchWhatsAppShareEntreno = async (id) => {
 
 window.selectEntrenoImage = (url) => {
     const input = document.getElementById('edit-entreno-img-input');
-    if (input) input.value = url;
+    if (input) {
+        input.value = url;
+        if (window.updateAmericanaImagePreview) {
+            window.updateAmericanaImagePreview(url, 'edit-entreno-img-preview');
+        } else {
+            const preview = document.getElementById('edit-entreno-img-preview');
+            if (preview) {
+                preview.src = url;
+                preview.style.display = 'block';
+            }
+        }
+    }
 };
 
 window.openAddPlayerToEntrenoSelector = async (eventId) => {
