@@ -783,6 +783,14 @@ window.openEditEntrenoModal = async (entreno) => {
         const id = data.id;
         delete data.id;
 
+        // Sincronización de pistas y plazas
+        if (data.max_courts || data.courts) {
+            const courts = parseInt(data.max_courts || data.courts) || 4;
+            data.max_courts = courts;
+            data.courts = courts;
+            data.max_players = courts * 4;
+        }
+
         try {
             await EventService.updateEvent('entreno', id, data);
             alert("✅ Guardado");
@@ -804,19 +812,23 @@ window.closeEntrenoModal = () => {
 window.launchWhatsAppShareEntreno = async (id) => {
     console.log("🔗 launchWhatsAppShareEntreno called for:", id);
     try {
-        // 1. Intentar obtener el entreno desde la memoria activa (instantáneo, 0 peticiones de red)
-        let evt = window._currentEntrenosCache?.find(e => e.id === id);
+        let evt = null;
 
-        // 2. Si no está en memoria, consultar EventService con fallback a CacheService
-        if (!evt && window.EventService) {
+        // 1. Siempre consultar Firestore primero para tener datos 100% reales y actualizados
+        if (window.EventService) {
             try {
                 evt = await EventService.getById('entreno', id);
             } catch (fetchErr) {
-                console.warn("⚠️ [launchWhatsAppShareEntreno] Error al consultar Firestore, buscando en caché local:", fetchErr.message);
-                if (window.CacheService) {
-                    const cached = await window.CacheService.get('entrenos', 'all');
-                    evt = cached?.find(e => e.id === id);
-                }
+                console.warn("⚠️ [launchWhatsAppShareEntreno] Error al consultar Firestore:", fetchErr.message);
+            }
+        }
+
+        // 2. Fallback a memoria activa / caché local si falla la red
+        if (!evt) {
+            evt = window._currentEntrenosCache?.find(e => e.id === id);
+            if (!evt && window.CacheService) {
+                const cached = await window.CacheService.get('entrenos', 'all');
+                evt = cached?.find(e => e.id === id);
             }
         }
 

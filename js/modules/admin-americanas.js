@@ -1095,8 +1095,14 @@ window.openEditAmericanaModal = async (americana) => {
         const id = data.id;
         delete data.id;
 
-        // Normalización booleana
+        // Normalización booleana y sincronización de pistas
         data.is_external = (data.is_external === 'true');
+        if (data.max_courts || data.courts) {
+            const courts = parseInt(data.max_courts || data.courts) || 4;
+            data.max_courts = courts;
+            data.courts = courts;
+            data.max_players = courts * 4;
+        }
 
         try {
             await EventService.updateEvent('americana', id, data);
@@ -1119,17 +1125,23 @@ window.closeAmericanaModal = () => {
 window.launchWhatsAppShareAmericana = async (id) => {
     console.log("🔗 launchWhatsAppShareAmericana called for:", id);
     try {
-        let evt = window._currentAmericanasCache?.find(e => e.id === id);
+        let evt = null;
 
-        if (!evt && window.EventService) {
+        // 1. Siempre consultar Firestore primero para tener datos 100% reales y actualizados
+        if (window.EventService) {
             try {
                 evt = await EventService.getById('americana', id);
             } catch (fetchErr) {
-                console.warn("⚠️ [launchWhatsAppShareAmericana] Error al consultar Firestore, buscando en caché local:", fetchErr.message);
-                if (window.CacheService) {
-                    const cached = await window.CacheService.get('americanas', 'all');
-                    evt = cached?.find(e => e.id === id);
-                }
+                console.warn("⚠️ [launchWhatsAppShareAmericana] Error al consultar Firestore:", fetchErr.message);
+            }
+        }
+
+        // 2. Fallback a memoria / caché local si falla la red
+        if (!evt) {
+            evt = window._currentAmericanasCache?.find(e => e.id === id);
+            if (!evt && window.CacheService) {
+                const cached = await window.CacheService.get('americanas', 'all');
+                evt = cached?.find(e => e.id === id);
             }
         }
 

@@ -341,7 +341,22 @@
     <script>
         // registry initialization
         window._matchRegistry = window._matchRegistry || {};
+        // Comprobación ultrarrápida de sesión para evitar parpadeo del login en el arranque
+        try {
+            var _cached = localStorage.getItem('currentUser');
+            if (_cached && _cached !== 'null') {
+                document.documentElement.classList.add('has-session');
+            }
+        } catch(e) {}
     </script>
+    <style>
+        html.has-session #auth-modal {
+            display: none !important;
+        }
+        html.has-session #app-shell {
+            display: block !important;
+        }
+    </style>
     <style>
         /* 🚀 PERFORMANCE OVERRIDE PARA MÓVILES (Fase 2) */
         @media (max-width: 768px) {
@@ -3245,8 +3260,8 @@
     <script src="js/core/StateManager.js?v=1.1" defer></script>
     <script src="js/core/CacheService.js" defer></script>
     <script src="js/core/DatabaseService.js" defer></script>
-    <script src="js/core/AuthService.js?v=12.3" defer></script>
-    <script src="js/core/Router.js?v=6.0" defer></script>
+    <script src="js/core/AuthService.js?v=12.4" defer></script>
+    <script src="js/core/Router.js?v=6.2_ENTERPRISE_NAV" defer></script>
     <script src="js/core/SmartTicker.js?v=3" defer></script>
     <script src="js/core/UpdateManager.js" defer></script>
 
@@ -3263,9 +3278,9 @@
     <script src="js/modules/logic/MatchMakingService.js?v=5011" defer></script>
     <script src="js/modules/americanas/AmericanaLogic.js" defer></script>
     <script src="js/modules/americanas/AmericanaService.js?v=1014" defer></script>
-    <script src="js/app-init.js" defer></script>
-    <script src="js/app.js?v=3006" defer></script>
-    <script src="js/modules/common/WhatsAppService.js?v=9.1" defer charset="UTF-8"></script>
+    <script src="js/app-init.js?v=2.0_FAST_BOOT" defer></script>
+    <script src="js/app.js?v=3007_NO_FLICKER" defer></script>
+    <script src="js/modules/common/WhatsAppService.js?v=9.2_SYNC_COURTS" defer charset="UTF-8"></script>
     <script src="js/fixed-pairs-logic.js?v=5013" defer></script>
     <script src="js/rotating-pozo-logic.js?v=5013" defer></script>
     <script src="js/modules/logic/LevelAdjustmentService.js" defer></script>
@@ -3288,7 +3303,7 @@
     <script src="js/modules/dashboard/PadelPulse.js?v=6.2" defer></script>
     <script src="js/modules/dashboard/TacticalCourt3D.js?v=2.0" defer></script>
     <script src="js/modules/dashboard/Tactical3DWidget.js?v=2.0" defer></script>
-    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=SPOTS_FIX_v5" defer></script>
+    <script src="js/modules/dashboard/DashboardView_hotfix.js?v=SPOTS_FIX_v6_FAST_CACHE" defer></script>
     <script src="js/modules/dashboard/DashboardController.js" defer></script>
     <script src="js/utils/RoleService.js" defer></script>
     <script src="js/modules/players/PlayerView.js?v=401" defer></script>
@@ -3303,7 +3318,7 @@
     <script src="js/modules/chat/ChatService.js?v=1.1" defer></script>
     <script src="js/modules/chat/ChatView.js?v=1.2" defer></script>
     <script src="js/modules/americanas/EntrenoLiveView.js" defer></script>
-    <script src="js/modules/americanas/EventsController_V6.js?v=UNIFIED_AMERICANAS_v27_PRICES" defer></script>
+    <script src="js/modules/americanas/EventsController_V6.js?v=UNIFIED_AMERICANAS_v31_FIXED" defer></script>
     <script src="js/modules/common/SocialShareService.js" defer></script>
     <script src="js/modules/admin/SocialShareView.js" defer></script>
 
@@ -4022,8 +4037,8 @@
     clearInterval(_patchInterval);
 
     var _origNavigate = window.Router.navigate.bind(window.Router);
-    window.Router.navigate = function (route, isBack) {
-      _origNavigate(route, isBack);
+    window.Router.navigate = function (route, isBack, force) {
+      _origNavigate(route, isBack, force);
       // Show mascot ONLY on dashboard
       var dashRoutes = ['dashboard'];
       if (dashRoutes.indexOf(route) !== -1) {

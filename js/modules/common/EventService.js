@@ -16,12 +16,15 @@ window.EventService = {
         this._validateEventType(type);
 
         // normalizing inputs
+        const courts = parseInt(data.max_courts || data.courts) || AppConstants.DEFAULTS.MAX_COURTS;
         const payload = {
             ...data,
             name: (data.name || '').toUpperCase(),
             price_members: parseFloat(data.price_members) || AppConstants.DEFAULTS.PRICE_MEMBERS,
             price_external: parseFloat(data.price_external) || AppConstants.DEFAULTS.PRICE_EXTERNAL,
-            max_courts: parseInt(data.max_courts) || AppConstants.DEFAULTS.MAX_COURTS,
+            max_courts: courts,
+            courts: courts,
+            max_players: courts * 4,
             status: AppConstants.STATUS.OPEN,
             createdAt: new Date().toISOString(),
 
@@ -58,10 +61,20 @@ window.EventService = {
         const collection = type === AppConstants.EVENT_TYPES.AMERICANA ? FirebaseDB.americanas : FirebaseDB.entrenos;
 
         try {
-            // Basic Validation
-            if (updates.max_courts && updates.max_courts < 1) throw new Error("Max courts must be at least 1");
+            // Basic Validation & Court Capacity Synchronization
+            const cleanUpdates = { ...updates };
+            if (cleanUpdates.max_courts !== undefined || cleanUpdates.courts !== undefined) {
+                const c = parseInt(cleanUpdates.max_courts || cleanUpdates.courts);
+                if (c && c >= 1) {
+                    cleanUpdates.max_courts = c;
+                    cleanUpdates.courts = c;
+                    cleanUpdates.max_players = c * 4;
+                } else if (cleanUpdates.max_courts < 1) {
+                    throw new Error("Max courts must be at least 1");
+                }
+            }
 
-            await collection.update(id, updates);
+            await collection.update(id, cleanUpdates);
             console.log(`✅ [EventService] ${type} updated: ${id}`);
             if (window.clearDatabaseCache) window.clearDatabaseCache(type === 'entreno' ? 'entrenos' : 'americanas');
             // NOTE: eventModified is dispatched by FirebaseDB — do NOT dispatch here (would cause double-dispatch)

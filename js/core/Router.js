@@ -13,29 +13,18 @@
                 'agenda_americanas': () => this.handleControllerTab('EventsController', 'agenda_americanas'),
                 'help_americanas': () => this.handleControllerTab('EventsController', 'help_americanas'),
                 'finished': () => this.handleControllerTab('EventsController', 'finished'),
-                'profile': () => window.PlayerController?.init(),
-                'live': () => window.ControlTowerView?.handleLiveRoute(),
-                'live-entreno': () => window.EntrenoLiveView?.handleRoute(),
-                'ranking': () => window.RankingController?.init(),
-                'equipos': () => window.TeamController?.init(),
-                'teams': () => window.TeamController?.init(),
-                'tournaments': () => window.TournamentController?.init(),
+                'profile': () => this.executeControllerInit('PlayerController', 'profile'),
+                'live': () => this.executeControllerInit('ControlTowerView', 'live', (c) => c.handleLiveRoute()),
+                'live-entreno': () => this.executeControllerInit('EntrenoLiveView', 'live-entreno', (c) => c.handleRoute()),
+                'ranking': () => this.executeControllerInit('RankingController', 'ranking'),
+                'equipos': () => this.executeControllerInit('TeamController', 'equipos'),
+                'teams': () => this.executeControllerInit('TeamController', 'teams'),
+                'tournaments': () => this.executeControllerInit('TournamentController', 'tournaments'),
                 'agenda': () => this.handleControllerTab('EventsController', 'agenda'),
                 'results': () => this.handleControllerTab('EventsController', 'results'),
                 'entrenos': () => this.handleControllerTab('EventsController', 'entrenos'),
                 'partidas_abiertas': () => this.handleControllerTab('EventsController', 'entrenos'),
-                'records': () => {
-                    console.log("🛣️ [Router] Executing records route...");
-                    if (window.RecordsController) {
-                        window.RecordsController.init();
-                    } else {
-                        console.error("❌ [Router] RecordsController not found in window!");
-                        // Emergency render if controller missing
-                        const content = document.getElementById('content-area');
-                        if (content) content.innerHTML = '<div style="padding:100px; color:white; text-align:center;">Error: Controller no listo. Reintenta en 1s...</div>';
-                        setTimeout(() => window.Router.navigate('records'), 1500);
-                    }
-                }
+                'records': () => this.executeControllerInit('RecordsController', 'records')
             };
 
             // Determinar la ruta inicial desde el hash de la URL o parámetros de consulta (Deep Linking)
@@ -91,11 +80,62 @@
             console.log("🛣️ Enterprise Router System v2.0 Initialized");
         }
 
-        handleControllerTab(controllerName, tabName) {
+        executeControllerInit(controllerName, route, customAction = null, retries = 0) {
             const controller = window[controllerName];
             if (controller) {
-                if (typeof controller.init === 'function') controller.init();
-                if (typeof controller.setTab === 'function') controller.setTab(tabName);
+                try {
+                    if (typeof customAction === 'function') {
+                        customAction(controller);
+                    } else if (typeof controller.init === 'function') {
+                        controller.init();
+                    }
+                } catch (err) {
+                    console.error(`[Router] Error ejecutando ${controllerName}:`, err);
+                    this.renderError(route, err);
+                }
+            } else if (retries < 80) {
+                if (retries === 4) {
+                    const content = document.getElementById('content-area');
+                    if (content && !content.querySelector('.loader')) {
+                        content.innerHTML = '<div class="loader-container" style="display:flex; justify-content:center; align-items:center; height:50vh;"><div class="loader"></div></div>';
+                    }
+                }
+                setTimeout(() => this.executeControllerInit(controllerName, route, customAction, retries + 1), 50);
+            } else {
+                console.error(`❌ [Router] Controlador ${controllerName} no encontrado tras varios intentos`);
+                this.renderError(route, new Error(`El módulo ${route} tardó demasiado en responder.`));
+            }
+        }
+
+        handleControllerTab(controllerName, tabName, retries = 0) {
+            const controller = window[controllerName];
+            if (controller) {
+                try {
+                    if (controller.state && typeof controller.state === 'object') {
+                        controller.state.activeTab = tabName;
+                    }
+                    if (!controller.state?.viewInitialized && typeof controller.init === 'function') {
+                        controller.init();
+                    } else if (typeof controller.setTab === 'function') {
+                        controller.setTab(tabName);
+                    } else if (typeof controller.render === 'function') {
+                        controller.render();
+                    }
+                } catch (err) {
+                    console.error(`[Router] Error en handleControllerTab (${controllerName}, ${tabName}):`, err);
+                    this.renderError(tabName, err);
+                }
+            } else if (retries < 80) {
+                if (retries === 4) {
+                    const content = document.getElementById('content-area');
+                    if (content && !content.querySelector('.loader')) {
+                        content.innerHTML = '<div class="loader-container" style="display:flex; justify-content:center; align-items:center; height:50vh;"><div class="loader"></div></div>';
+                    }
+                }
+                setTimeout(() => this.handleControllerTab(controllerName, tabName, retries + 1), 50);
+            } else {
+                console.error(`❌ [Router] Controlador ${controllerName} no listo para pestaña ${tabName}`);
+                this.renderError(tabName, new Error(`El módulo de ${tabName} tardó demasiado en cargar.`));
             }
         }
 
@@ -152,17 +192,27 @@
             const controllersToCleanup = [
                 { name: 'DashboardView', routes: ['dashboard'] },
                 { name: 'DashboardController', routes: ['dashboard'] },
-                { name: 'EventsController', routes: ['events', 'americanas', 'results', 'agenda', 'entrenos'] },
+                { name: 'EventsController', routes: ['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas', 'finished', 'agenda', 'results', 'entrenos', 'partidas_abiertas'] },
                 { name: 'ControlTowerView', routes: ['live'] },
                 { name: 'TVView', routes: ['tv'] },
                 { name: 'PlayerController', routes: ['profile'] },
                 { name: 'RecordsController', routes: ['records'] },
                 { name: 'RankingController', routes: ['ranking'] },
-                { name: 'TeamController', routes: ['teams', 'equipos'] }
+                { name: 'TeamController', routes: ['teams', 'equipos'] },
+                { name: 'TournamentController', routes: ['tournaments'] }
             ];
 
             controllersToCleanup.forEach(ctrl => {
-                if (ctrl.routes.includes(this.currentRoute)) {
+                if (ctrl.routes.includes(this.currentRoute) && !ctrl.routes.includes(newRoute)) {
+                    // Mantener el servicio de fondo de EventsController activo para transiciones instantáneas
+                    if (ctrl.name === 'EventsController') {
+                        const instance = window.EventsController;
+                        if (instance && typeof instance.stopAutoRefreshPolling === 'function') {
+                            instance.stopAutoRefreshPolling();
+                        }
+                        return;
+                    }
+
                     const instance = window[ctrl.name];
                     if (instance && typeof instance.destroy === 'function') {
                         console.log(`[Router] Cleaning up ${ctrl.name}`);

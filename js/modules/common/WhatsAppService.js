@@ -144,8 +144,10 @@ window.WhatsAppService = {
         const location = event.location || event.sede || event.club || 'SomosPadel BCN';
 
         const players = event.players || event.registeredPlayers || [];
-        const maxCourts = parseInt(event.max_courts || event.courts || 4) || 4;
-        const maxPlayers = event.max_players || (maxCourts * 4);
+        const rawCourts = parseInt(event.max_courts || event.courts || 0);
+        const maxCourts = rawCourts > 0 ? rawCourts : (event.max_players ? Math.max(1, Math.round(event.max_players / 4)) : 4);
+        // Court capacity in padel is strictly 4 players per court
+        const maxPlayers = maxCourts * 4;
         const spotsLeft = Math.max(0, maxPlayers - players.length);
 
         const pMember = event.price_members || event.price_socio || event.price || 10;
@@ -322,9 +324,23 @@ window.WhatsAppService = {
             // Vibración táctil sutil
             if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(25);
 
+            // 100% FRESH FETCH from Firestore to prevent stale in-memory data
+            let freshEvent = event;
+            if (event.id && window.EventService?.getById) {
+                try {
+                    const evtType = (event.type === 'entreno' || (event.name && event.name.toUpperCase().includes('ENTRENO'))) ? 'entreno' : 'americana';
+                    const fetched = await window.EventService.getById(evtType, event.id);
+                    if (fetched) {
+                        freshEvent = { ...event, ...fetched, id: event.id, type: evtType };
+                    }
+                } catch (fetchErr) {
+                    console.warn("⚠️ [WhatsAppService] Error fetching fresh event from Firestore, using in-memory event:", fetchErr);
+                }
+            }
+
             // Enriquecer jugadores con niveles actualizados y género
             let richPlayers = null;
-            const eventPlayers = event.players || event.registeredPlayers || [];
+            const eventPlayers = freshEvent.players || freshEvent.registeredPlayers || [];
             if (eventPlayers && eventPlayers.length > 0) {
                 try {
                     let allUsers = window._allPlayersCache || window.allUsersCache;
@@ -354,8 +370,8 @@ window.WhatsAppService = {
                 }
             }
 
-            // Generar el mensaje optimizado para WhatsApp
-            const text = this.generateMessage(event, richPlayers);
+            // Generar el mensaje optimizado para WhatsApp con el evento 100% actualizado
+            const text = this.generateMessage(freshEvent, richPlayers);
 
             // Copia de seguridad automática en el portapapeles (por si el navegador bloquea popups en escritorio)
             try {
@@ -370,7 +386,7 @@ window.WhatsAppService = {
             }
 
             // Abrir directamente WhatsApp
-            await this.shareText(text, `SomosPadel: ${event.name || 'Convocatoria'}`);
+            await this.shareText(text, `SomosPadel: ${freshEvent.name || 'Convocatoria'}`);
 
         } catch (e) {
             console.error("❌ Error en shareStartFromAdmin:", e);

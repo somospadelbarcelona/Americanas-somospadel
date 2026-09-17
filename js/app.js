@@ -137,13 +137,10 @@
             // NEW: Load Side Menu from DB
             this.loadSideMenu();
 
-            // Force initial render of the current route (Dashboard)
-            if (window.Router) {
-                window.Router.navigate(window.Router.currentRoute || 'dashboard', false, true);
-            }
-
-            if (window.DashboardController) {
-                window.DashboardController.init();
+            // Solo navegar a la ruta inicial si el Router no tiene una ruta activa ya renderizada
+            if (window.Router && !window.Router.currentRoute) {
+                const initialHash = window.location.hash.replace('#', '') || 'dashboard';
+                window.Router.navigate(initialHash, false, false);
             }
         }
 

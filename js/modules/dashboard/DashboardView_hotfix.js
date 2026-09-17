@@ -683,20 +683,9 @@
             const container = document.getElementById('content-area');
             if (!container) return;
 
-            // Invalida caché de eventos para cargar SIEMPRE los datos más recientes modificados
+            // Invalida variables temporales de eventos comunitarios
             window._ccEventsFetchedRecently = false;
             delete window._lastEventsData;
-            if (window.clearDatabaseCache) {
-                window.clearDatabaseCache('americanas');
-                window.clearDatabaseCache('entrenos');
-            }
-            // NOTE: window.DatabaseService no existe — ya cubierto por clearDatabaseCache arriba
-            if (window.CacheService) {
-                window.CacheService.remove('americanas', 'all');
-                window.CacheService.remove('entrenos', 'all');
-                window.CacheService.remove('database', 'all_americanas');
-                window.CacheService.remove('database', 'all_entrenos');
-            }
 
             // 1. Get Real User Data
             const user = window.Store ? window.Store.getState('currentUser') : null;

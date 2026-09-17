@@ -1121,9 +1121,10 @@
             if (category !== 'all') {
                 events = events.filter(e => {
                     const cat = (e.category || '').toLowerCase();
-                    if (category === 'male') return ['male', 'masculina', 'masculino', 'chicos', 'hombres'].includes(cat);
-                    if (category === 'female') return ['female', 'femenina', 'femenino', 'chicas', 'mujeres'].includes(cat);
-                    if (category === 'mixed') return ['mixed', 'mixta', 'mixto'].includes(cat);
+                    const name = (e.name || '').toLowerCase();
+                    if (category === 'male') return ['male', 'masculina', 'masculino', 'chicos', 'hombres'].includes(cat) || name.includes('masculin') || name.includes('chicos');
+                    if (category === 'female') return ['female', 'femenina', 'femenino', 'chicas', 'mujeres'].includes(cat) || name.includes('femenin') || name.includes('chicas');
+                    if (category === 'mixed') return ['mixed', 'mixta', 'mixto'].includes(cat) || name.includes('mixt');
                     return cat === category;
                 });
             }
@@ -1250,23 +1251,29 @@
                             border-color: #CCFF00 !important;
                             z-index: 5;
                         }
-                        .entreno-premium-card {
+                        .entreno-premium-card, .americana-premium-card {
                             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
                             cursor: pointer;
                         }
-                        .entreno-premium-card:hover, .entreno-premium-card:active {
+                        .card-theme-male:hover, .card-theme-male:active {
                             transform: translateY(-4px) scale(1.01) !important;
-                            border-color: rgba(139, 92, 246, 0.45) !important;
-                            box-shadow: 0 25px 50px rgba(0,0,0,0.85), 0 0 35px rgba(139, 92, 246, 0.25) !important;
+                            border-color: rgba(56, 189, 248, 0.65) !important;
+                            box-shadow: 0 25px 50px rgba(0,0,0,0.85), 0 0 35px rgba(56, 189, 248, 0.32) !important;
                         }
-                        .americana-premium-card {
-                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-                            cursor: pointer;
-                        }
-                        .americana-premium-card:hover, .americana-premium-card:active {
+                        .card-theme-female:hover, .card-theme-female:active {
                             transform: translateY(-4px) scale(1.01) !important;
-                            border-color: rgba(204, 255, 0, 0.45) !important;
-                            box-shadow: 0 25px 50px rgba(0,0,0,0.85), 0 0 35px rgba(204, 255, 0, 0.25) !important;
+                            border-color: rgba(236, 72, 153, 0.65) !important;
+                            box-shadow: 0 25px 50px rgba(0,0,0,0.85), 0 0 35px rgba(236, 72, 153, 0.32) !important;
+                        }
+                        .card-theme-mixed:hover, .card-theme-mixed:active {
+                            transform: translateY(-4px) scale(1.01) !important;
+                            border-color: rgba(245, 158, 11, 0.65) !important;
+                            box-shadow: 0 25px 50px rgba(0,0,0,0.85), 0 0 35px rgba(245, 158, 11, 0.32) !important;
+                        }
+                        .card-theme-open:hover, .card-theme-open:active {
+                            transform: translateY(-4px) scale(1.01) !important;
+                            border-color: rgba(132, 204, 22, 0.65) !important;
+                            box-shadow: 0 25px 50px rgba(0,0,0,0.85), 0 0 35px rgba(132, 204, 22, 0.32) !important;
                         }
                         .entreno-tile-interactive {
                             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1275,8 +1282,8 @@
                         .entreno-tile-interactive:hover, .entreno-tile-interactive:active {
                             background: rgba(255,255,255,0.15) !important;
                             transform: translateY(-2px) scale(1.02);
-                            box-shadow: 0 8px 20px rgba(139,92,246,0.2), inset 0 0 15px rgba(139, 92, 246, 0.05) !important;
-                            border-color: #a855f7 !important;
+                            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.2), inset 0 0 15px rgba(245, 158, 11, 0.05) !important;
+                            border-color: #f59e0b !important;
                             z-index: 5;
                         }
                     </style>
@@ -1660,14 +1667,66 @@
             const priceSoc = numSoc;
             const priceExt = numExt;
 
-            // Category & Format Logic
-            const catMap = { 'male': 'MASCULINO', 'female': 'FEMENINO', 'mixed': 'MIXTO', 'open': 'OPEN' };
-            const categoryLabel = catMap[evt.category] || (evt.category || 'MASCULINO').toUpperCase();
+            // Category & Format Logic - Robust Category Normalization
+            const rawCat = (evt.category || '').toLowerCase().trim();
+            const rawName = (evt.name || '').toLowerCase();
 
-            let categoryIcon = 'fa-mars', categoryColor = '#38bdf8';
-            if (evt.category === 'female') { categoryIcon = 'fa-venus'; categoryColor = '#ea4c89'; }
-            else if (evt.category === 'mixed') { categoryIcon = 'fa-venus-mars'; categoryColor = '#eab308'; }
-            else if (evt.category === 'open') { categoryIcon = 'fa-globe'; categoryColor = '#84cc16'; }
+            let catType = 'male';
+            if (
+                ['female', 'femenina', 'femenino', 'chicas', 'mujeres'].includes(rawCat) ||
+                rawCat.includes('fem') ||
+                rawName.includes('femenin') ||
+                rawName.includes('chicas')
+            ) {
+                catType = 'female';
+            } else if (
+                ['mixed', 'mixto', 'mixta'].includes(rawCat) ||
+                rawCat.includes('mix') ||
+                rawName.includes('mixt')
+            ) {
+                catType = 'mixed';
+            } else if (
+                rawCat.includes('open') ||
+                rawName.includes('open')
+            ) {
+                catType = 'open';
+            } else {
+                catType = 'male';
+            }
+
+            let categoryLabel = 'MASCULINO';
+            let categoryIcon = 'fa-mars';
+            let categoryColor = '#38bdf8'; // Electric Sky Blue
+            let categoryGradient = 'linear-gradient(90deg, #0284c7 0%, #38bdf8 100%)';
+            let catCardClass = 'card-theme-male';
+            let catBg = 'linear-gradient(145deg, #0d1726 0%, #080d17 100%)';
+            let catFadeBottom = '#080d17';
+
+            if (catType === 'female') {
+                categoryLabel = 'FEMENINO';
+                categoryIcon = 'fa-venus';
+                categoryColor = '#ec4899'; // Neon Pink / Fuchsia
+                categoryGradient = 'linear-gradient(90deg, #db2777 0%, #ec4899 100%)';
+                catCardClass = 'card-theme-female';
+                catBg = 'linear-gradient(145deg, #220d1c 0%, #120610 100%)';
+                catFadeBottom = '#120610';
+            } else if (catType === 'mixed') {
+                categoryLabel = 'MIXTO';
+                categoryIcon = 'fa-venus-mars';
+                categoryColor = '#f59e0b'; // Electric Golden Amber
+                categoryGradient = 'linear-gradient(90deg, #d97706 0%, #fbbf24 100%)';
+                catCardClass = 'card-theme-mixed';
+                catBg = 'linear-gradient(145deg, #1d150b 0%, #100c06 100%)';
+                catFadeBottom = '#100c06';
+            } else if (catType === 'open') {
+                categoryLabel = 'OPEN';
+                categoryIcon = 'fa-globe';
+                categoryColor = '#84cc16'; // Neon Lime
+                categoryGradient = 'linear-gradient(90deg, #65a30d 0%, #a3e635 100%)';
+                catCardClass = 'card-theme-open';
+                catBg = 'linear-gradient(145deg, #111a0c 0%, #091007 100%)';
+                catFadeBottom = '#091007';
+            }
 
             const mode = (evt.pair_mode || evt.format || '').toLowerCase();
             const nameUpper = (evt.name || '').toUpperCase();
@@ -1689,11 +1748,10 @@
             const userGender = user ? (user.gender || '').toLowerCase() : '';
             const isChico = ['m', 'chico', 'male', 'masculino', 'hombre'].includes(userGender);
             const isChica = ['f', 'chica', 'female', 'femenina', 'femenino', 'mujer'].includes(userGender);
-            const cat = (evt.category || 'open').toLowerCase();
             let isGenderMismatch = false, mismatchCase = '';
 
-            const isEventMale = ['male', 'masculina', 'masculino', 'chicos', 'hombres'].includes(cat);
-            const isEventFemale = ['female', 'femenina', 'femenino', 'chicas', 'mujeres'].includes(cat);
+            const isEventMale = catType === 'male';
+            const isEventFemale = catType === 'female';
 
             const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin' || user.role === 'admin_player');
             if (isEventMale && !isChico && !isAdmin) { isGenderMismatch = true; mismatchCase = 'male'; }
@@ -1737,22 +1795,22 @@
             const progress = Math.min((playerCount / maxPlayers) * 100, 100);
             const progressColor = isFull ? '#FF3B30' : (progress > 80 ? '#eab308' : '#CCFF00');
 
-            // 🌈 BROADCAST V7: HYPER-COMPACT & ULTRA-COLORFUL (MATTE AESTHETIC)
-            const themeColor = isLive ? '#FF2D55' : (isCancelled ? '#ef4444' : (isEntreno ? '#8b5cf6' : categoryColor));
+            // 🌈 BROADCAST V7: CATEGORY-THEMED AESTHETIC (Distinct Colors for Male, Female, Mixed)
+            const themeColor = isLive ? '#FF2D55' : (isCancelled ? '#ef4444' : categoryGradient);
             
-            // Estilos específicos para entrenos y americanas
-            const cardBg = isEntreno ? 'linear-gradient(145deg, #18112b 0%, #0c0914 100%)' : 'linear-gradient(145deg, #181c24 0%, #11141a 100%)';
-            const cardBorder = isEntreno ? '1px solid rgba(139, 92, 246, 0.15)' : '1px solid rgba(204, 255, 0, 0.12)';
-            const cardGlow = isEntreno ? '0 20px 40px rgba(0,0,0,0.8), 0 0 25px rgba(139, 92, 246, 0.1)' : '0 20px 40px rgba(0,0,0,0.6), 0 0 20px rgba(204, 255, 0, 0.05)';
+            // Estilos específicos para entrenos y americanas basados en categoría
+            const cardBg = catBg;
+            const cardBorder = isLive ? '1.5px solid rgba(255, 45, 85, 0.6)' : (isCancelled ? '1px solid rgba(239, 68, 68, 0.3)' : `1.5px solid ${categoryColor}45`);
+            const cardGlow = isLive ? '0 20px 40px rgba(0,0,0,0.8), 0 0 30px rgba(255, 45, 85, 0.3)' : `0 20px 40px rgba(0,0,0,0.75), 0 0 25px ${categoryColor}20`;
             const tileClass = isEntreno ? 'entreno-tile-interactive' : 'premium-tile-interactive';
-            const cardClass = isEntreno ? 'entreno-premium-card' : 'americana-premium-card';
+            const cardClass = `${isEntreno ? 'entreno-premium-card' : 'americana-premium-card'} ${catCardClass}`;
             
-            // Iconos y colores por tipo
-            const timeIconBg = isEntreno ? 'rgba(139, 92, 246, 0.15)' : 'rgba(204, 255, 0, 0.12)';
-            const timeIconColor = isEntreno ? '#a855f7' : '#CCFF00';
-            const capacityIconColor = isEntreno ? '#06b6d4' : '#FF2D55';
-            const locIconBg = isEntreno ? 'rgba(139, 92, 246, 0.15)' : 'rgba(255, 45, 85, 0.15)';
-            const locIconColor = isEntreno ? '#8b5cf6' : '#FF2D55';
+            // Iconos y colores sincronizados con la categoría
+            const timeIconBg = `${categoryColor}20`;
+            const timeIconColor = categoryColor;
+            const capacityIconColor = categoryColor;
+            const locIconBg = `${categoryColor}20`;
+            const locIconColor = categoryColor;
 
             // Estado dinámico
             let statusBg = '';
@@ -1767,15 +1825,9 @@
             } else if (isFinished || evt.status === 'finished') {
                 statusBg = 'linear-gradient(135deg, #555, #333)';
             } else {
-                if (isEntreno) {
-                    statusBg = 'linear-gradient(135deg, #8b5cf6, #6366f1)';
-                    statusColorText = '#fff';
-                    statusGlowColor = 'rgba(139,92,246,0.4)';
-                } else {
-                    statusBg = 'linear-gradient(135deg, #CCFF00, #a3e600)';
-                    statusColorText = '#000';
-                    statusGlowColor = '#CCFF0055';
-                }
+                statusBg = categoryGradient;
+                statusColorText = '#fff';
+                statusGlowColor = `${categoryColor}40`;
             }
 
             // Analizar e integrar recomendador de nivel inteligente (Matchmaking)
@@ -1861,7 +1913,7 @@
                         <div onclick="event.stopPropagation(); window.EventsController.openPosterModal('${(evt.image_url || 'img/padel-event.jpg').replace(/'/g, "\\'")}', '${(evt.name || '').replace(/'/g, "\\'")}', '${(evt.sede || evt.location || '').replace(/'/g, "\\'")}')" 
                              title="Toca para ver el Cartel Oficial"
                              style="height: 125px; background: url('${(evt.image_url || 'img/padel-event.jpg').replace(/ /g, '%20')}') no-repeat center/cover; position: relative; cursor: pointer;">
-                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(10,14,26,0.3) 0%, rgba(10,14,26,0.85) 75%, ${isEntreno ? '#0c0914' : '#141414'} 100%);"></div>
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(10,14,26,0.3) 0%, rgba(10,14,26,0.85) 75%, ${catFadeBottom} 100%);"></div>
                             
                             <!-- FLOATING BADGES -->
                             <div style="position: absolute; top: 12px; left: 12px; display: flex; align-items: center; gap: 8px;">
@@ -2032,11 +2084,11 @@
                                     <span style="font-weight: 900; font-size: 0.82rem; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${timeLabel}</span>
                                 </div>
                                 <!-- Category Tile -->
-                                <div class="${tileClass}" style="background: rgba(255,255,255,0.06); border-radius: 14px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                <div class="${tileClass}" style="background: rgba(255,255,255,0.06); border-radius: 14px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; border: 1.5px solid ${categoryColor}45; box-shadow: 0 2px 10px ${categoryColor}20;">
                                     <div style="width: 26px; height: 26px; background: ${categoryColor}25; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <i class="fas ${categoryIcon}" style="color: ${categoryColor}; font-size: 0.8rem;"></i>
+                                        <i class="fas ${categoryIcon}" style="color: ${categoryColor}; font-size: 0.82rem;"></i>
                                     </div>
-                                    <span style="font-weight: 900; font-size: 0.82rem; color: #eee; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${categoryLabel}</span>
+                                    <span style="font-weight: 950; font-size: 0.82rem; color: ${categoryColor}; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.4px;">${categoryLabel}</span>
                                 </div>
                             </div>
 
@@ -2050,7 +2102,7 @@
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 6px;">
                                         ${urgencyHtml}
-                                        <span id="event-status-capacity-${evt.id}" style="font-size: 0.65rem; font-weight: 950; color: ${isFull ? '#FF3B30' : (isEntreno ? '#a855f7' : '#CCFF00')}; text-transform: uppercase; letter-spacing: 0.5px;">${isFull ? 'COMPLETO' : 'DISPONIBLE'}</span>
+                                        <span id="event-status-capacity-${evt.id}" style="font-size: 0.65rem; font-weight: 950; color: ${isFull ? '#FF3B30' : categoryColor}; text-transform: uppercase; letter-spacing: 0.5px;">${isFull ? 'COMPLETO' : 'DISPONIBLE'}</span>
                                     </div>
                                 </div>
                                 <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden;">
@@ -2084,7 +2136,7 @@
                                 <!-- ⚡ PRIMARY PRO ACTION BUTTON (Unifies FAB & Status Badge) -->
                                 <div style="position: relative; flex-shrink: 0;">
                                     ${isLive ? `<div style="position: absolute; inset: -3px; border-radius: 16px; background: #FF2D55; opacity: 0.5; animation: status-breathe 1.2s ease-in-out infinite; filter: blur(5px);"></div>` : ''}
-                                    ${!isLive && !isCancelled && !isFinished && !isJoined ? `<div style="position: absolute; inset: -2px; border-radius: 16px; background: ${isEntreno ? '#8b5cf6' : '#CCFF00'}; opacity: 0.25; animation: status-breathe 2.2s ease-in-out infinite; filter: blur(4px);"></div>` : ''}
+                                    ${!isLive && !isCancelled && !isFinished && !isJoined ? `<div style="position: absolute; inset: -2px; border-radius: 16px; background: ${categoryColor}; opacity: 0.25; animation: status-breathe 2.2s ease-in-out infinite; filter: blur(4px);"></div>` : ''}
                                     
                                     ${(() => {
                                         // Definir contraste perfecto para el botón de acción principal (APUNTARME / DENTRO / LIVE / ESPERA)
@@ -2172,21 +2224,30 @@
 
         async shareEvent(id, type = 'americana') {
             console.log("🔗 [EventsController] shareEvent triggered for:", id, type);
-            const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
-            let evt = events.find(e => e.id === id);
+            let evt = null;
 
-            if (!evt && window.EventService) {
+            // 1. Siempre obtener datos 100% frescos y actualizados de Firestore
+            if (window.EventService) {
                 try {
                     evt = await window.EventService.getById(type === 'entreno' ? 'entreno' : 'americana', id);
                 } catch (e) {
-                    console.warn("⚠️ [EventsController] Fallback fetch:", e);
+                    console.warn("⚠️ [EventsController] Error al obtener evento fresco de Firestore:", e);
                 }
+            }
+
+            // 2. Fallback a estado local
+            if (!evt) {
+                const events = type === 'entreno' ? this.state.entrenos : this.state.americanas;
+                evt = events.find(e => e.id === id);
             }
 
             if (!evt) {
                 console.warn("⚠️ Evento no encontrado para compartir:", id);
                 return;
             }
+
+            const rawCourts = parseInt(evt.max_courts || evt.courts || 0);
+            const maxCourts = rawCourts > 0 ? rawCourts : (evt.max_players ? Math.max(1, Math.round(evt.max_players / 4)) : 4);
 
             // Normalización idéntica al Admin de Entrenos y Americanas
             const normalizedEvt = {
@@ -2199,7 +2260,9 @@
                 registeredPlayers: evt.registeredPlayers || evt.players || [],
                 price_members: evt.price_members || evt.price_socio || evt.price || 10,
                 price_external: evt.price_external || evt.price_no_socio || evt.price_externo || evt.price || 10,
-                max_courts: evt.max_courts || evt.courts || 4
+                max_courts: maxCourts,
+                courts: maxCourts,
+                max_players: maxCourts * 4
             };
 
             if (window.WhatsAppService && typeof window.WhatsAppService.shareStartFromAdmin === 'function') {
@@ -2208,9 +2271,9 @@
             }
 
             // Fallback de seguridad en caso de no disponibilidad de WhatsAppService
-            const maxCourts = parseInt(normalizedEvt.max_courts || 4);
-            const maxPlayers = maxCourts * 4;
-            const remaining = Math.max(0, maxPlayers - normalizedEvt.players.length);
+            const fallbackCourts = parseInt(normalizedEvt.max_courts || maxCourts || 4);
+            const maxPlayers = fallbackCourts * 4;
+            const remaining = Math.max(0, maxPlayers - (normalizedEvt.players ? normalizedEvt.players.length : 0));
             const shareText = `🎾 *SOMOSPADEL BCN - CONVOCATORIA DE PÁDEL* 🎾\n\n🏆 *${normalizedEvt.name}*\n📅 *Fecha:* ${normalizedEvt.date}\n🕒 *Horario:* ${normalizedEvt.time || '19:30 - 21:30'}\n📍 *Sede:* ${normalizedEvt.location}\n👥 *Plazas libres:* ${remaining} de ${maxPlayers} plazas\n💰 *Precio:* ${normalizedEvt.price_members}€\n\n⚡ ¡Apúntate antes de que se agoten las plazas!\n👉 ${window.location.origin}`;
 
             const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;

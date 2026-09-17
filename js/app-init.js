@@ -24,8 +24,8 @@ window.AppInit = {
 
         try {
             // 1. ESPERA A FIREBASE (El pilar básico)
-            await this.waitForDependency('db', 25); // Reducimos a 25 intentos (5s máx)
-            await this.waitForDependency('auth', 25); 
+            await this.waitForDependency('db', 60); // 60 intentos a 50ms = 3s máx (0ms si ya está cargado)
+            await this.waitForDependency('auth', 60); 
             console.log("✅ [AppInit] Firebase DB y Auth detectados.");
 
             // 2. REGISTRO Y LANZAMIENTO DE SERVICIOS
@@ -57,19 +57,23 @@ window.AppInit = {
     /**
      * Espera a que una variable global esté definida (Firebase, etc)
      */
-    waitForDependency(globalVar, maxAttempts = 50) {
+    waitForDependency(globalVar, maxAttempts = 60) {
         return new Promise((resolve, reject) => {
+            if (window[globalVar]) {
+                return resolve(window[globalVar]);
+            }
             let attempts = 0;
             const check = setInterval(() => {
                 if (window[globalVar]) {
                     clearInterval(check);
                     resolve(window[globalVar]);
+                    return;
                 }
-                if (attempts++ >= maxAttempts) {
+                if (++attempts >= maxAttempts) {
                     clearInterval(check);
                     reject(`Timeout esperando a ${globalVar}`);
                 }
-            }, 200);
+            }, 50);
         });
     },
 
