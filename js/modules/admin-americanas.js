@@ -209,6 +209,14 @@ window.AdminViews.americanas_create = async function () {
                         </div>
                     </div>
 
+                    <!-- Nombre del Organizador -->
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="font-weight: 800; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase;">
+                            <i class="fas fa-user-tie" style="color: #CCFF00;"></i> ORGANIZADOR DE LA AMERICANA
+                        </label>
+                        <input type="text" name="organizer" id="create-organizer-input" class="pro-input" placeholder="Ej: Alex / SomosPadel / Club Pádel" style="width: 100%; font-size: 0.85rem; border-radius: 10px;">
+                    </div>
+
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px;">
                         <div class="form-group">
                             <label>FECHA</label>
@@ -482,7 +490,13 @@ function renderAmericanaCard(e) {
     const isExternal = e.is_external || e.external || e.organizer_type === 'external' || e.club;
     const clubBadge = isExternal ? `
         <div style="background: rgba(14, 165, 233, 0.12); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 6px; padding: 2px 8px; font-size: 0.65rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; margin-top: 3px;">
-            <i class="fas fa-building-columns"></i> ${e.club || e.organizer || 'CLUB ASOCIADO'}
+            <i class="fas fa-building-columns"></i> ${e.club || 'CLUB ASOCIADO'}
+        </div>
+    ` : '';
+
+    const organizerBadge = e.organizer ? `
+        <div style="background: rgba(204, 255, 0, 0.15); color: #3f6212; border: 1px solid rgba(204, 255, 0, 0.45); border-radius: 6px; padding: 2px 8px; font-size: 0.65rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; margin-top: 3px;">
+            <i class="fas fa-user-tie" style="color: #65a30d;"></i> ${e.organizer}
         </div>
     ` : '';
 
@@ -501,7 +515,10 @@ function renderAmericanaCard(e) {
                     <div style="font-weight: 950; font-size: 1.1rem; color: #000000; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
                         ${(e.name || 'AMERICANA').toUpperCase()}
                     </div>
-                    ${clubBadge}
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                        ${clubBadge}
+                        ${organizerBadge}
+                    </div>
                     <div style="display: flex; gap: 0.8rem; font-size: 0.75rem; color: #333333; flex-wrap: wrap; align-items: center; margin-top: 4px;">
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-calendar-alt" style="color: #60A5FA;"></i> <span style="color:#333; font-weight: 600;">${formatDate(e.date)}</span></span>
                          <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-clock" style="color: #A78BFA;"></i> <span style="color:#333; font-weight: 600;">${e.time || '18:00'}</span></span>
@@ -1004,6 +1021,12 @@ window.openEditAmericanaModal = async (americana) => {
     const descInput = form.querySelector('[name=description]');
     if (descInput) {
         descInput.value = americana.description || '';
+    }
+
+    // Prefill Organizer
+    const orgInput = form.querySelector('[name=organizer]');
+    if (orgInput) {
+        orgInput.value = americana.organizer || '';
     }
 
     // Setup Sede Combobox & Sync Sede

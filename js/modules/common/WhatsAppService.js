@@ -268,6 +268,9 @@ window.WhatsAppService = {
         msg += `📅 *Fecha:* ${dateStr}\n`;
         msg += `⏰ *Horario:* ${timeStr}${endTimeStr}\n`;
         msg += `📍 *Club:* ${location}\n`;
+        if (event.organizer && String(event.organizer).trim()) {
+            msg += `👤 *Organizador:* ${String(event.organizer).trim()}\n`;
+        }
         msg += `🎾 *Modo:* ${modeLabel}\n`;
         msg += `⚡ *Nivel:* ${levelText}\n`;
         if (metrics.avgLevel) {
