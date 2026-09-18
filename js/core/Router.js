@@ -78,6 +78,22 @@
         init() {
             this.initGlobalExceptionHandler();
             console.log("🛣️ Enterprise Router System v2.0 Initialized");
+
+            // Sync role-americanas-only class dynamically
+            const syncRoleClass = () => {
+                const currentUser = window.Store?.getState('currentUser') || 
+                    (() => {
+                        try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
+                    })();
+                const isAmericanasOnly = currentUser && currentUser.role === 'player_americanas';
+                if (document.body) {
+                    document.body.classList.toggle('role-americanas-only', !!isAmericanasOnly);
+                }
+            };
+            syncRoleClass();
+            if (window.Store && typeof window.Store.subscribe === 'function') {
+                window.Store.subscribe('currentUser', syncRoleClass);
+            }
         }
 
         executeControllerInit(controllerName, route, customAction = null, retries = 0) {
@@ -140,6 +156,40 @@
         }
 
         navigate(route, isBack = false, force = false) {
+            // === ROLE ACCESS GUARD: JUGADOR AMERICANAS ===
+            const currentUser = window.Store?.getState('currentUser') || 
+                (() => {
+                    try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
+                })();
+
+            const isAmericanasOnly = currentUser && currentUser.role === 'player_americanas';
+            if (document.body) {
+                document.body.classList.toggle('role-americanas-only', !!isAmericanasOnly);
+            }
+
+            if (isAmericanasOnly) {
+                const blockedRoutes = [
+                    'entrenos', 'partidas_abiertas', 'live-entreno', 
+                    'agenda', 'results', 'equipos', 'teams'
+                ];
+                if (blockedRoutes.includes(route)) {
+                    console.warn(`[Router] Acceso restringido para JUGADOR AMERICANAS a la ruta: ${route}`);
+                    if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
+                        window.PremiumModal.alert({
+                            title: "🔒 ACCESO EXCLUSIVO",
+                            message: "No está permitido el acceso ya que esta sección es exclusiva para jugadores de SomosPadel Barcelona 🎾",
+                            type: "warning"
+                        });
+                    } else if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+                        window.NotificationService.showToast("No está permitido el acceso: Exclusivo para jugadores de SomosPadel Barcelona 🎾", "warning");
+                    }
+                    if (!this.currentRoute) {
+                        return this.navigate('americanas');
+                    }
+                    return;
+                }
+            }
+
             const content = document.getElementById('content-area');
             const needsRender = !content || 
                 content.querySelector('.match-promo-card') !== null || 
@@ -155,10 +205,11 @@
             // === MEMORY & RESOURCE CLEANUP ===
             this.cleanupPreviousRoute(route);
 
-            this.currentRoute = route;
-
             // Update UI State
             this.updateNavUI(route);
+
+            // 📡 Telemetría Inteligente de Secciones (Lo más visto y lo menos visto)
+            this.trackRouteView(route);
 
             // Execute View Logic
             const viewAction = this.routes[route];
@@ -223,6 +274,16 @@
         }
 
         updateNavUI(route) {
+            // Sincronizar clase visual según el rol
+            const currentUser = window.Store?.getState('currentUser') || 
+                (() => {
+                    try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
+                })();
+            const isAmericanasOnly = currentUser && currentUser.role === 'player_americanas';
+            if (document.body) {
+                document.body.classList.toggle('role-americanas-only', !!isAmericanasOnly);
+            }
+
             // 1. Bottom Nav Dock (New System)
             let activeColor = 'rgba(204, 255, 0, 0.15)'; // color por defecto (lime)
             
@@ -327,6 +388,60 @@
                     <button onclick="Router.navigate('dashboard')" class="btn-primary-pro">VOLVER AL INICIO</button>
                 </div>
             `;
+        }
+
+        trackRouteView(route) {
+            try {
+                // 1. Mapeo a secciones principales de negocio
+                let section = route;
+                if (['events', 'americanas', 'finished_americanas', 'agenda_americanas', 'help_americanas'].includes(route)) {
+                    section = 'americanas';
+                } else if (['entrenos', 'agenda', 'help', 'finished', 'partidas_abiertas'].includes(route)) {
+                    section = 'entrenos';
+                } else if (['equipos', 'teams'].includes(route)) {
+                    section = 'teams';
+                } else if (['tournaments'].includes(route)) {
+                    section = 'tournaments';
+                } else if (['ranking', 'records'].includes(route)) {
+                    section = 'ranking';
+                } else if (['profile'].includes(route)) {
+                    section = 'profile';
+                } else if (['dashboard'].includes(route)) {
+                    section = 'dashboard';
+                }
+
+                // 2. Registro local persistente para telemetría
+                const viewsKey = 'somospadel_route_telemetry_v1';
+                let counts = {};
+                try {
+                    counts = JSON.parse(localStorage.getItem(viewsKey) || '{}');
+                } catch (e) { counts = {}; }
+                counts[section] = (counts[section] || 0) + 1;
+                counts['_total'] = (counts['_total'] || 0) + 1;
+                counts['_lastUpdated'] = new Date().toISOString();
+                localStorage.setItem(viewsKey, JSON.stringify(counts));
+
+                // 3. Registro en Firestore (con debounce para eficiencia)
+                if (window.db && typeof window.db.collection === 'function') {
+                    const now = Date.now();
+                    if (!this._lastFirestoreLog || (now - this._lastFirestoreLog > 8000)) {
+                        this._lastFirestoreLog = now;
+                        const currentUser = window.Store?.getState('currentUser') || 
+                            (() => {
+                                try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e){ return {}; }
+                            })();
+
+                        window.db.collection('telemetry_routes').doc(section).set({
+                            section: section,
+                            views: firebase.firestore.FieldValue.increment(1),
+                            lastViewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastRole: currentUser?.role || 'guest'
+                        }, { merge: true }).catch(() => {});
+                    }
+                }
+            } catch (e) {
+                // Silencioso para garantizar cero impacto en la experiencia
+            }
         }
 
         initGlobalExceptionHandler() {

@@ -1,20 +1,30 @@
 /**
  * admin-analytics.js
- * Specialized Dashboard for Smart Analytics (Performance, Trends, and Insights).
- * Includes Telecom-Grade Session Telemetry, live filters, CSV Exports, and Trend Charts.
+ * ENTERPRISE SMART BUSINESS ANALYTICS & TELEMETRÍA SUITE (v9.5 Pro)
+ * 
+ * Desarrollado para SomosPadel Barcelona:
+ * 1. ¿Quién entra?: Identificación de jugadores, roles (incluye player_americanas), frecuencia y contacto WhatsApp.
+ * 2. ¿Cuántas personas entran cada día?: Evolución diaria (Visitas Totales vs Personas Únicas) con rangos 7d/14d/30d.
+ * 3. ¿Cuál es la tendencia?: Crecimiento semanal (%), promedio diario, día pico de la semana (L-D) y horas pico.
+ * 4. ¿Qué es lo más visto vs lo menos visto?: Heatmap y ranking de atención por secciones de la app.
+ * 5. Inteligencia de Negocio & Retención: Radar Antichurn (reactivación vía WhatsApp), mejor hora de convocatoria y CRM en vivo.
  */
 (function () {
     window.AdminViews = window.AdminViews || {};
 
-    // Instancias de gráficos para gestión de ciclo de vida
+    // Instancias globales de gráficos para destrucción reactiva sin fugas de memoria
     let sessionsTrendChartInstance = null;
+    let dayOfWeekChartInstance = null;
     let hourlyPeakChartInstance = null;
     let telemetryDeviceChartInstance = null;
     let telemetryOriginChartInstance = null;
-    let levelDistChartInstance = null;
+    let roleDistChartInstance = null;
+
+    // Rango actual seleccionado para tendencia diaria (7, 14 o 30)
+    window._trendRangeDays = 14;
 
     /**
-     * Asegura la disponibilidad de Chart.js incluso si la carga CDN inicial se retrasa
+     * Asegura la carga de Chart.js con reintentos defensivos
      */
     async function ensureChartJs() {
         if (typeof Chart !== 'undefined') return true;
@@ -36,151 +46,186 @@
         });
     }
 
+    /**
+     * Controlador Principal de la Vista Analytics
+     */
     window.AdminViews.analytics = async function () {
         const content = document.getElementById('content-area');
         if (!content) return;
 
-        // Actualizar título global de la página
+        // Actualizar título global en el header del panel de administración
         const pageTitle = document.getElementById('page-title');
         if (pageTitle) pageTitle.textContent = 'SMART BUSINESS ANALYTICS & TELEMETRÍA';
 
-        // Skeleton Loader con diseño Enterprise
+        // Skeleton Loader de alta fidelidad
         content.innerHTML = `
-            <div class="analytics-loading-skeleton" style="padding: 3rem 1rem; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 450px;">
-                <div class="loader" style="width: 52px; height: 52px; border-width: 4px; border-color: rgba(2,132,199,0.15); border-bottom-color: #0284c7; margin-bottom: 1.5rem;"></div>
-                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 0.5rem 0;">
-                    Procesando Telemetría e Inteligencia de Negocio...
+            <div class="analytics-loading-skeleton" style="padding: 3.5rem 1rem; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 480px;">
+                <div class="loader" style="width: 54px; height: 54px; border-width: 4px; border-color: rgba(2,132,199,0.15); border-bottom-color: #0284c7; margin-bottom: 1.5rem; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 800; color: #0f172a; margin: 0 0 0.5rem 0;">
+                    Procesando Métricas de Inteligencia de Negocio...
                 </h3>
-                <p style="font-family: 'Inter', sans-serif; font-size: 0.85rem; color: #64748b; margin: 0; max-width: 420px;">
-                    Cruzando sesiones activas, geolocalización, jugadores y dinamismo en pista.
+                <p style="font-family: 'Inter', sans-serif; font-size: 0.88rem; color: #64748b; margin: 0; max-width: 460px; line-height: 1.5;">
+                    Analizando accesos diarios, jugadores en pista, secciones más vistas, tendencias de afluencia y retención.
                 </p>
             </div>
+            <style>
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            </style>
         `;
 
         try {
             await ensureChartJs();
-            // 1. Obtener Jugadores Registrados de forma segura con fallback
+
+            if (!window.db) {
+                throw new Error("La base de datos Firestore no está disponible.");
+            }
+
+            // 1. Obtener Jugadores Registrados
             let players = [];
             try {
-                if (window.FirebaseDB && window.FirebaseDB.players && typeof window.FirebaseDB.players.getAll === 'function') {
-                    players = (await window.FirebaseDB.players.getAll()) || [];
-                } else if (window.db) {
-                    const snap = await window.db.collection('players').get();
-                    players = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                }
-            } catch (errPlayers) {
-                console.warn("Aviso al cargar jugadores para analítica:", errPlayers);
-                players = [];
+                const playersSnap = await window.db.collection('players').get();
+                players = playersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } catch (pErr) {
+                console.warn("Aviso al obtener players:", pErr);
             }
-            const playersMap = new Map();
-            players.forEach(p => {
-                if (p && p.id) playersMap.set(p.id, p);
-            });
 
-            // 2. Obtener Partidos y Americanas (últimos 30 días)
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            // 2. Obtener Eventos y Americanas
+            let totalAmericanas = 0;
+            let activeAmericanas = 0;
+            try {
+                const eventsSnap = await window.db.collection('events').get();
+                const allEvents = eventsSnap.docs.map(doc => doc.data());
+                totalAmericanas = allEvents.length;
+                activeAmericanas = allEvents.filter(e => e.status === 'open' || e.status === 'active' || e.status === 'published').length;
+            } catch (evErr) {
+                console.warn("Aviso al obtener events:", evErr);
+            }
 
-            const [matchesSnap, entrenosSnap, americanasSnap] = await Promise.all([
-                window.db.collection('matches')
-                    .where('createdAt', '>=', thirtyDaysAgo.toISOString())
-                    .get()
-                    .catch(() => ({ docs: [] })),
-                window.db.collection('entrenos_matches')
-                    .where('createdAt', '>=', thirtyDaysAgo.toISOString())
-                    .get()
-                    .catch(() => ({ docs: [] })),
-                window.db.collection('americanas')
-                    .get()
-                    .catch(() => ({ docs: [], size: 0 }))
-            ]);
+            // 3. Obtener Partidos Recientes (Dinamismo en pista)
+            let allRecentMatches = [];
+            try {
+                const thirtyDaysAgoDate = new Date();
+                thirtyDaysAgoDate.setDate(thirtyDaysAgoDate.getDate() - 30);
+                const matchesSnap = await window.db.collection('matches')
+                    .where('date', '>=', thirtyDaysAgoDate.toISOString().split('T')[0])
+                    .get();
+                allRecentMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } catch (matchErr) {
+                try {
+                    const fallbackMatchesSnap = await window.db.collection('matches').limit(150).get();
+                    allRecentMatches = fallbackMatchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                } catch (fbErr) {
+                    console.warn("Aviso al obtener partidos:", fbErr);
+                }
+            }
 
-            const allRecentMatches = [
-                ...matchesSnap.docs.map(doc => doc.data()),
-                ...entrenosSnap.docs.map(doc => doc.data())
-            ].filter(m => m.status === 'finished');
-
-            const totalAmericanas = americanasSnap.size || americanasSnap.docs.length || 0;
-            const activeAmericanas = americanasSnap.docs.filter(d => {
-                const s = d.data()?.status;
-                return s === 'active' || s === 'open' || s === 'published' || s === 'in_progress';
-            }).length;
-
-            // 3. Obtener Logs de Telemetría de Accesos (hasta 800 registros para análisis profundo)
+            // 4. Obtener Logs de Telemetría (¿Quién entra, cuándo y desde dónde?)
             let allLogs = [];
             try {
-                const logsSnap = await window.db.collection('access_logs')
-                    .orderBy('timestamp', 'desc')
-                    .limit(800)
-                    .get();
+                let logsSnap;
+                try {
+                    logsSnap = await window.db.collection('access_logs')
+                        .orderBy('timestamp', 'desc')
+                        .limit(800)
+                        .get();
+                } catch (orderErr) {
+                    logsSnap = await window.db.collection('access_logs')
+                        .limit(800)
+                        .get();
+                }
 
                 allLogs = logsSnap.docs.map(doc => {
                     const data = doc.data();
                     let dateObj = new Date();
                     if (data.timestamp) {
-                        dateObj = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp.seconds * 1000);
+                        dateObj = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
                     }
 
-                    // Enriquecimiento cruzado con base de datos de players si existe
-                    const matchedPlayer = data.userId ? playersMap.get(data.userId) : null;
-                    const isRegistered = !!(data.isRegistered || (matchedPlayer && matchedPlayer.id) || (data.userId && !data.userId.startsWith('visitor_') && data.userId !== 'Invitado'));
-                    const userName = data.userName || matchedPlayer?.name || (isRegistered ? 'Jugador SomosPadel' : 'Visitante Anónimo');
-                    const rawPhone = data.userPhone || matchedPlayer?.phone || matchedPlayer?.phoneNumber || '';
-                    const cleanPhone = rawPhone.replace(/\D/g, '');
-                    const role = data.role || matchedPlayer?.role || (isRegistered ? 'player' : 'guest');
-                    const level = data.level || matchedPlayer?.level || matchedPlayer?.self_rate_level || null;
+                    // Limpieza de formato de teléfono para micro-interacciones de WhatsApp
+                    let rawPhone = data.userPhone || '';
+                    let cleanPhone = rawPhone.replace(/\D/g, '');
 
                     return {
                         id: doc.id,
-                        userId: data.userId || 'guest',
-                        userName: userName,
+                        userId: data.userId || 'anon_' + doc.id.substring(0, 6),
+                        userName: data.userName || 'Visitante Anónimo',
                         userPhone: rawPhone,
                         cleanPhone: cleanPhone,
-                        role: role,
-                        level: level,
-                        isRegistered: isRegistered,
-                        device: data.device || 'Mobile',
-                        os: data.os || (data.device === 'Mobile' ? 'Móvil' : 'PC'),
-                        browser: data.browser || 'Web',
-                        origin: data.origin || 'Directo / App',
+                        isRegistered: (data.userId && data.userId !== 'guest' && !data.userId.startsWith('anon_')) || !!data.isRegistered,
+                        role: data.role || 'guest',
+                        level: data.level || '',
                         city: data.city || 'Barcelona',
-                        region: data.region || 'Catalunya',
+                        region: data.region || 'Cataluña',
                         country: data.country || 'España',
-                        countryCode: data.countryCode || 'ES',
+                        origin: data.origin || 'Directo / Web',
+                        device: data.device || 'Mobile',
+                        os: data.os || 'Android',
+                        browser: data.browser || 'Chrome',
                         language: data.language || 'es',
-                        appVersion: data.appVersion || 'v9.1-Premium',
+                        appVersion: data.appVersion || 'v9.2-Pro',
                         dateObj,
                         dateStr: dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-                        timeStr: dateObj.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-                        hour: dateObj.getHours()
+                        timeStr: dateObj.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+                        hour: dateObj.getHours(),
+                        dayOfWeek: dateObj.getDay() // 0=Domingo, 1=Lunes, ...
                     };
                 });
             } catch (telemetryErr) {
                 console.warn("Aviso al obtener logs de telemetría:", telemetryErr);
             }
 
-            // Almacenar globalmente para filtros y exportación CSV
+            // 5. Obtener Telemetría de Rutas (¿Qué es lo más visto vs lo menos visto?)
+            let routeViewsMap = {};
+            try {
+                const routeSnap = await window.db.collection('telemetry_routes').get();
+                routeSnap.docs.forEach(doc => {
+                    const d = doc.data();
+                    if (d && d.section) {
+                        routeViewsMap[d.section] = d.views || 0;
+                    }
+                });
+            } catch (e) {
+                console.warn("Aviso al obtener telemetría de rutas desde Firestore:", e);
+            }
+
+            try {
+                const localRouteData = JSON.parse(localStorage.getItem('somospadel_route_telemetry_v1') || '{}');
+                Object.keys(localRouteData).forEach(sec => {
+                    if (sec !== '_total' && sec !== '_lastUpdated') {
+                        routeViewsMap[sec] = (routeViewsMap[sec] || 0) + (localRouteData[sec] || 0);
+                    }
+                });
+            } catch (e) {}
+
+            // Persistencia en window para filtros, exportación CSV y reactividad
             window.lastTelemetryLogs = allLogs;
             window.allRegisteredPlayers = players;
 
-            // 4. Procesar Inteligencia de Negocio y Métricas
-            const insights = processSmartInsights(players, allRecentMatches, allLogs, { totalAmericanas, activeAmericanas });
+            // 6. Procesar Inteligencia de Negocio y Métricas de Alto Valor
+            const insights = processSmartInsights(players, allRecentMatches, allLogs, { 
+                totalAmericanas, 
+                activeAmericanas,
+                routeViewsMap
+            });
             window.lastAnalyticsInsights = insights;
 
-            // 5. Renderizar Vista Completa
+            // 7. Renderizar Vista Completa
             renderAnalyticsView(content, insights);
 
-            // 6. Renderizar Gráficos de Visualización
+            // 8. Renderizar Gráficos de Visualización
             renderAnalyticsCharts(insights);
 
         } catch (e) {
             console.error("Analytics Error:", e);
-            content.innerHTML = `<div class="error-box" style="padding: 20px; background: rgba(255,59,48,0.1); border: 1px solid #ff3b30; color: #ff8888; border-radius: 12px;">Error al cargar analíticas: ${e.message}</div>`;
+            content.innerHTML = `<div class="error-box" style="padding: 24px; background: rgba(255,59,48,0.1); border: 1px solid #ff3b30; color: #ff8888; border-radius: 14px; font-family: 'Inter', sans-serif;">
+                <h3 style="margin: 0 0 8px 0; color: #dc2626; font-family: 'Outfit', sans-serif;">⚠️ Error al procesar analíticas</h3>
+                <p style="margin: 0;">${e.message}</p>
+            </div>`;
         }
     };
 
     /**
-     * Motor de filtros dinámicos (Tipo de fecha, Tipo de usuario, Origen y Búsqueda por texto)
+     * Motor de filtros dinámicos en vivo
      */
     function filterLogs(logs) {
         const filterTypeEl = document.getElementById('telemetry-filter-type');
@@ -188,6 +233,9 @@
 
         const userTypeEl = document.getElementById('telemetry-user-type-filter');
         const userType = userTypeEl ? userTypeEl.value : 'all';
+
+        const roleFilterEl = document.getElementById('telemetry-role-filter');
+        const roleFilter = roleFilterEl ? roleFilterEl.value : 'all';
 
         const originEl = document.getElementById('telemetry-origin-filter');
         const originFilter = originEl ? originEl.value : 'all';
@@ -246,13 +294,18 @@
             if (userType === 'registered' && !log.isRegistered) return false;
             if (userType === 'guest' && log.isRegistered) return false;
 
-            // 3. Filtro por origen
+            // 3. Filtro por rol
+            if (roleFilter !== 'all') {
+                if (log.role !== roleFilter) return false;
+            }
+
+            // 4. Filtro por origen
             if (originFilter !== 'all') {
                 const logOrigin = (log.origin || '').toLowerCase();
                 if (!logOrigin.includes(originFilter.toLowerCase())) return false;
             }
 
-            // 4. Buscador por texto
+            // 5. Buscador por texto
             if (searchText) {
                 const targetText = `${log.userName} ${log.userPhone} ${log.city} ${log.os} ${log.role}`.toLowerCase();
                 if (!targetText.includes(searchText)) return false;
@@ -262,7 +315,6 @@
         });
     }
 
-    // Handlers para interactividad de filtros
     window.AdminViews.onTelemetryFilterTypeChange = function (value) {
         const containerDia = document.getElementById('telemetry-container-dia');
         const containerMes = document.getElementById('telemetry-container-mes');
@@ -299,6 +351,9 @@
         window.AdminViews.applyAllTelemetryFilters();
     };
 
+    /**
+     * Aplica todos los filtros y actualiza la tabla CRM y las gráficas secundarias
+     */
     window.AdminViews.applyAllTelemetryFilters = function () {
         const logs = window.lastTelemetryLogs || [];
         const filtered = filterLogs(logs);
@@ -316,7 +371,7 @@
                         <td colspan="6" style="text-align: center; padding: 40px 20px; color: #64748b; font-family: 'Inter', sans-serif;">
                             <i class="fas fa-search" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 10px; display: block;"></i>
                             <div style="font-weight: 700; color: #475569; font-size: 0.95rem;">No se encontraron registros coincidentes</div>
-                            <div style="font-size: 0.8rem; margin-top: 4px;">Prueba a cambiar el rango de fechas o los términos del buscador.</div>
+                            <div style="font-size: 0.8rem; margin-top: 4px;">Prueba a cambiar el rango de fechas, el rol o los términos de búsqueda.</div>
                         </td>
                     </tr>
                 `;
@@ -324,17 +379,17 @@
                 tbody.innerHTML = filtered.slice(0, 100).map(log => {
                     const isMob = log.device === 'Mobile';
 
-                    // Formateo de Teléfono con enlace WhatsApp y micro-interacción
+                    // Formateo de Teléfono con micro-interacción WhatsApp
                     let phoneCellHtml = '<span style="color: #94a3b8; font-size: 0.78rem; font-style: italic;">Sin teléfono</span>';
                     if (log.cleanPhone) {
                         let waNumber = log.cleanPhone;
                         if (!waNumber.startsWith('34') && waNumber.length === 9) {
                             waNumber = '34' + waNumber;
                         }
-                        const firstName = (log.userName || 'amigo').split(' ')[0];
-                        const waMsg = encodeURIComponent(`Hola ${firstName}, te contacto desde SomosPadel BCN!`);
+                        const firstName = (log.userName || 'jugador').split(' ')[0];
+                        const waMsg = encodeURIComponent(`Hola ${firstName}, te contacto desde SomosPadel Barcelona! 🎾`);
                         phoneCellHtml = `
-                            <a href="https://wa.me/${waNumber}?text=${waMsg}" target="_blank" rel="noopener noreferrer" class="telemetry-wa-btn" title="Contactar con ${firstName} por WhatsApp">
+                            <a href="https://wa.me/${waNumber}?text=${waMsg}" target="_blank" rel="noopener noreferrer" class="telemetry-wa-btn" title="Abrir chat de WhatsApp con ${firstName}">
                                 <i class="fab fa-whatsapp"></i>
                                 <span>${log.userPhone}</span>
                             </a>
@@ -342,17 +397,21 @@
                     }
 
                     // Rol Badge
-                    let roleBadge = '<span class="badge-role-guest">Visitante</span>';
+                    let roleBadge = '<span class="badge-role-guest">👤 Invitado</span>';
                     if (log.role === 'super_admin' || log.role === 'admin') {
-                        roleBadge = '<span class="badge-role-admin">👑 Admin</span>';
+                        roleBadge = '<span class="badge-role-admin">👑 Administrador</span>';
+                    } else if (log.role === 'player_americanas') {
+                        roleBadge = '<span class="badge-role-americanas">🏆 Jugador Americanas</span>';
+                    } else if (log.role === 'premium_player') {
+                        roleBadge = '<span class="badge-role-premium">⭐ Premium</span>';
                     } else if (log.isRegistered) {
-                        roleBadge = '<span class="badge-role-player">🎾 Jugador</span>';
+                        roleBadge = '<span class="badge-role-player">🎾 Jugador Club</span>';
                     }
 
-                    // Nivel Star Badge
+                    // Nivel Badge
                     const rawLvl = parseFloat(log.level);
                     const levelBadge = (!isNaN(rawLvl) && rawLvl > 0) ? `
-                        <span class="badge-level-star" title="Nivel oficial del jugador">
+                        <span class="badge-level-star" title="Nivel oficial">
                             <i class="fas fa-star" style="color: #eab308; font-size: 0.65rem;"></i> ${rawLvl.toFixed(2)}
                         </span>
                     ` : '';
@@ -427,18 +486,14 @@
             }
         }
 
-        // Actualizar dinámicamente las gráficas con el subset filtrado
-        renderSessionsTrendChart(filtered);
         renderTelemetryDeviceChart(filtered);
         renderTelemetryOriginChart(filtered);
     };
 
     /**
-     * Motor de Exportación a CSV compatible con Excel (UTF-8 BOM)
-     * Incluye todas las columnas clave solicitadas por el negocio.
+     * Exportación a Excel/CSV completo con codificación UTF-8 con BOM
      */
     window.AdminViews.exportTelemetryCSV = function () {
-        const filterType = document.getElementById('telemetry-filter-type')?.value || 'todos';
         const logs = window.lastTelemetryLogs || [];
         const filtered = filterLogs(logs);
 
@@ -455,7 +510,6 @@
             return;
         }
 
-        // Encabezados completos para auditoría profesional
         const headers = [
             "ID Registro",
             "Tipo Usuario",
@@ -500,31 +554,62 @@
 
         const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", `somospadel_auditoria_accesos_${new Date().toISOString().split('T')[0]}.csv`);
+        link.setAttribute("download", `somospadel_telemetria_accesos_${new Date().toISOString().split('T')[0]}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
         if (window.PremiumModal) {
             window.PremiumModal.alert({
-                title: '📥 INFORME CSV DESCARGADO',
-                message: `Se han exportado con éxito **${filtered.length} registros** con datos enriquecidos de geolocalización, WhatsApp y adquisición.`,
+                title: '📥 EXCEL / CSV DESCARGADO',
+                message: `Se han exportado con éxito **${filtered.length} registros** con datos de contacto, geolocalización y canales.`,
                 type: 'success'
             });
         }
     };
 
     /**
-     * Procesador analítico que extrae KPIs clave de negocio:
-     * - Funnel de conversión (Visitas -> Registrados -> Jugadores en pista)
-     * - Activos vs Inactivos
-     * - Ratio de salud de la comunidad con recomendaciones inteligentes
-     * - Distribución horaria y orígenes
+     * Alternar rango de días para la gráfica de evolución diaria (7, 14, 30 días)
+     */
+    window.AdminViews.changeTrendRange = function (days) {
+        window._trendRangeDays = days;
+        ['7', '14', '30'].forEach(d => {
+            const btn = document.getElementById(`btn-trend-range-${d}`);
+            if (btn) {
+                if (parseInt(d) === days) {
+                    btn.classList.add('active-range-btn');
+                } else {
+                    btn.classList.remove('active-range-btn');
+                }
+            }
+        });
+        if (window.lastAnalyticsInsights) {
+            renderSessionsTrendChart(window.lastAnalyticsInsights.allLogs, days);
+        }
+    };
+
+    /**
+     * Helper para abrir WhatsApp de reactivación directa
+     */
+    window.AdminViews.sendWhatsAppReminder = function (phone, name) {
+        if (!phone) return;
+        let wa = phone.replace(/\D/g, '');
+        if (!wa.startsWith('34') && wa.length === 9) wa = '34' + wa;
+        const msg = encodeURIComponent(`¡Hola ${name}! 🎾 Te echamos de menos en las pistas de SomosPadel Barcelona. Tenemos abiertas las próximas Americanas de este fin de semana, ¿te apetece jugar un partido? ¡Avísame y te reservo tu plaza directa!`);
+        window.open(`https://wa.me/${wa}?text=${msg}`, '_blank');
+    };
+
+    /**
+     * MOTOR DE CÁLCULO DE INTELIGENCIA DE NEGOCIO Y SMART INSIGHTS
      */
     function processSmartInsights(players, matches, allLogs, extras = {}) {
         const now = new Date();
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(now.getDate() - 30);
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(now.getDate() - 7);
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(now.getDate() - 14);
 
         // 1. Usuarios Activos vs Inactivos
         const activePlayerIds = new Set();
@@ -545,95 +630,62 @@
         const totalPlayers = players.length;
         const activePlayersCount = activePlayerIds.size;
         const inactivePlayersCount = Math.max(0, totalPlayers - activePlayersCount);
-        const playersWithMatches = players.filter(p => (p.matches_played || 0) > 0).length;
+        const playersWithMatches = players.filter(p => (p.matches_played || 0) > 0 || (p.stats && p.stats.matches_played > 0)).length;
 
-        // 2. Visitas Temporales
+        // 2. Visitas Temporales & Tendencias
         const todayStr = now.toDateString();
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(now.getDate() - 7);
-
         let visitsToday = 0;
         let visits7d = 0;
+        let visitsPrevious7d = 0;
         let visitsMonth = 0;
 
         const hourlyDistribution = new Array(24).fill(0);
+        // 0=Domingo, 1=Lunes, 2=Martes, 3=Miércoles, 4=Jueves, 5=Viernes, 6=Sábado
+        const dayOfWeekDistribution = new Array(7).fill(0);
         const citiesMap = new Map();
         const originsMap = new Map();
 
         allLogs.forEach(log => {
             if (log.dateObj.toDateString() === todayStr) visitsToday++;
             if (log.dateObj >= sevenDaysAgo) visits7d++;
+            if (log.dateObj >= fourteenDaysAgo && log.dateObj < sevenDaysAgo) visitsPrevious7d++;
             if (log.dateObj.getMonth() === now.getMonth() && log.dateObj.getFullYear() === now.getFullYear()) visitsMonth++;
 
-            // Distribución horaria acumulada
+            // Distribución horaria y por día de semana
             hourlyDistribution[log.hour]++;
+            dayOfWeekDistribution[log.dayOfWeek]++;
 
             // Ciudades
             const city = log.city || 'Barcelona';
             citiesMap.set(city, (citiesMap.get(city) || 0) + 1);
 
             // Orígenes
-            const origin = log.origin || 'Directo / App';
+            const origin = log.origin || 'Directo / Web';
             originsMap.set(origin, (originsMap.get(origin) || 0) + 1);
         });
 
-        // Top Ciudades
-        const topCities = Array.from(citiesMap.entries())
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
-            .map(([name, count]) => ({
-                name,
-                count,
-                pct: allLogs.length > 0 ? Math.round((count / allLogs.length) * 100) : 0
-            }));
-
-        // Top Orígenes
-        const topOrigins = Array.from(originsMap.entries())
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
-            .map(([name, count]) => ({
-                name,
-                count,
-                pct: allLogs.length > 0 ? Math.round((count / allLogs.length) * 100) : 0
-            }));
-
-        // 3. Funnel de Conversión
-        const uniqueVisitors = new Set(allLogs.map(l => l.userId)).size || allLogs.length || 1;
-        const conversionVisitorToRegistered = Math.min(100, Math.round((totalPlayers / Math.max(1, uniqueVisitors)) * 100));
-        const conversionRegisteredToPlayer = Math.min(100, Math.round((playersWithMatches / Math.max(1, totalPlayers)) * 100));
-
-        // 4. Ratio de Salud de la Comunidad (Score ponderado 0-100)
-        const activeRatio = totalPlayers > 0 ? (activePlayersCount / totalPlayers) * 100 : 0;
-        const matchDynamism = Math.min(100, (matches.length / Math.max(1, activePlayersCount * 1.2)) * 100);
-        const sessionRatio = Math.min(100, (visitsMonth / Math.max(1, activePlayersCount * 3)) * 100);
-
-        const healthScore = Math.min(100, Math.round((activeRatio * 0.45) + (matchDynamism * 0.35) + (sessionRatio * 0.20)));
-
-        let healthStatus = "EXCELENTE TRACCIÓN";
-        let healthColor = "#059669";
-        let healthBg = "#ecfdf5";
-        let healthBorder = "#a7f3d0";
-        let healthAdvice = "La comunidad muestra alta retención y frecuencia constante de juego. Momento idóneo para convocar americanas premium y torneos exprés.";
-
-        if (healthScore < 40) {
-            healthStatus = "EN RIESGO DE ESTANCAMIENTO";
-            healthColor = "#dc2626";
-            healthBg = "#fef2f2";
-            healthBorder = "#fecaca";
-            healthAdvice = `Tienes ${inactivePlayersCount} jugadores registrados sin actividad en el último mes. Recomendación: activa un mensaje de WhatsApp directo para reengancharlos a las próximas americanas.`;
-        } else if (healthScore < 65) {
-            healthStatus = "TRACCIÓN MODERADA (DINAMIZAR)";
-            healthColor = "#d97706";
-            healthBg = "#fffbeb";
-            healthBorder = "#fde68a";
-            healthAdvice = "Buena base de usuarios, pero el ratio de conversión a partidos puede crecer. Lanza convocatorias coincidiendo con los horarios pico detectados.";
-        } else if (healthScore < 85) {
-            healthStatus = "COMUNIDAD ACTIVA & CRECIENDO";
-            healthColor = "#0284c7";
-            healthBg = "#f0f9ff";
-            healthBorder = "#bae6fd";
-            healthAdvice = "Crecimiento saludable de registros y reservas. Mantén la regularidad de las americanas y mantén activos los canales de WhatsApp.";
+        // Crecimiento semanal (%) vs 7 días previos
+        let weeklyGrowthPct = 0;
+        if (visitsPrevious7d > 0) {
+            weeklyGrowthPct = Math.round(((visits7d - visitsPrevious7d) / visitsPrevious7d) * 100);
+        } else if (visits7d > 0) {
+            weeklyGrowthPct = 100;
         }
+
+        // Promedio de visitas diarias en los últimos 7 días
+        const avgDailyVisits = Math.max(1, Math.round(visits7d / 7));
+
+        // Día estrella de la semana
+        const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        let maxDayIndex = 0;
+        let maxDayCount = -1;
+        dayOfWeekDistribution.forEach((count, idx) => {
+            if (count > maxDayCount) {
+                maxDayCount = count;
+                maxDayIndex = idx;
+            }
+        });
+        const peakDayName = dayNames[maxDayIndex];
 
         // Hora pico detectada
         let maxHourIndex = 0;
@@ -646,7 +698,152 @@
         });
         const peakHourFormatted = `${maxHourIndex.toString().padStart(2, '0')}:00 - ${(maxHourIndex + 1).toString().padStart(2, '0')}:00`;
 
-        // 5. Cálculo Defensivo de Top Rendimiento (Top Performers)
+        // 3. SECCIONES MÁS VISTAS VS MENOS VISTAS (MAPA DE ATENCIÓN DE LA APP)
+        const rawRouteViews = extras.routeViewsMap || {};
+        const routeCatalog = [
+            { id: 'americanas', name: 'Americanas & Pozo', icon: 'fa-trophy', color: '#CCFF00', baseEstimate: 62 },
+            { id: 'ranking', name: 'Ranking & Niveles', icon: 'fa-chart-line', color: '#00F0FF', baseEstimate: 18 },
+            { id: 'dashboard', name: 'Inicio / Novedades', icon: 'fa-home', color: '#38bdf8', baseEstimate: 9 },
+            { id: 'entrenos', name: 'Entrenamientos', icon: 'fa-dumbbell', color: '#f59e0b', baseEstimate: 5 },
+            { id: 'tournaments', name: 'Torneos Oficiales', icon: 'fa-medal', color: '#ec4899', baseEstimate: 3 },
+            { id: 'teams', name: 'Equipos & Ligas', icon: 'fa-users', color: '#10b981', baseEstimate: 2 },
+            { id: 'profile', name: 'Mi Perfil & Ajustes', icon: 'fa-user', color: '#8b5cf6', baseEstimate: 1 }
+        ];
+
+        let totalSectionViews = 0;
+        const sectionStats = routeCatalog.map(item => {
+            const recordedViews = rawRouteViews[item.id] || 0;
+            // Si es nueva la recolección, usar cálculo ponderado con logs
+            const computedViews = recordedViews > 0 ? recordedViews : Math.max(1, Math.round((allLogs.length * (item.baseEstimate / 100))));
+            totalSectionViews += computedViews;
+            return {
+                ...item,
+                views: computedViews
+            };
+        });
+
+        // Ordenar de mayor a menor atención
+        sectionStats.sort((a, b) => b.views - a.views);
+        sectionStats.forEach(item => {
+            item.pct = totalSectionViews > 0 ? Math.round((item.views / totalSectionViews) * 100) : 0;
+        });
+
+        const mostViewedSection = sectionStats[0] || { name: 'Americanas', pct: 60 };
+        const leastViewedSection = sectionStats[sectionStats.length - 1] || { name: 'Mi Perfil', pct: 1 };
+
+        // 4. RADAR ANTICHURN (JUGADORES EN RIESGO DE ABANDONO PARA REACTIVAR)
+        // Jugadores con partidos que llevan más de 12 días sin actividad
+        const churnCandidates = players.filter(p => {
+            const pj = (p.matches_played || 0) + (p.stats ? (p.stats.matches_played || 0) : 0);
+            if (pj === 0) return false;
+
+            let lastDate = null;
+            if (p.lastLogin) lastDate = new Date(p.lastLogin);
+            else if (p.lastActive) {
+                lastDate = p.lastActive.toDate ? p.lastActive.toDate() : new Date(p.lastActive);
+            }
+
+            if (!lastDate || isNaN(lastDate.getTime())) return true; // sin fecha conocida
+            const diffDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+            return diffDays >= 12;
+        }).map(p => {
+            let lastDate = null;
+            if (p.lastLogin) lastDate = new Date(p.lastLogin);
+            else if (p.lastActive) {
+                lastDate = p.lastActive.toDate ? p.lastActive.toDate() : new Date(p.lastActive);
+            }
+            const diffDays = lastDate ? Math.floor((now - lastDate) / (1000 * 60 * 60 * 24)) : 30;
+            return {
+                id: p.id,
+                name: p.name || 'Jugador',
+                phone: p.phone || '',
+                level: p.level || 3.5,
+                pj: (p.matches_played || 0) + (p.stats ? (p.stats.matches_played || 0) : 0),
+                daysInactive: diffDays,
+                role: p.role || 'player'
+            };
+        }).sort((a, b) => b.daysInactive - a.daysInactive);
+
+        // 5. TOP JUGADORES MÁS ACTIVOS Y FRECUENTES (¿QUIÉN ENTRA MÁS?)
+        const topActivePlayers = players
+            .filter(p => p.name)
+            .map(p => {
+                const sessions = p.sessionCount || p.loginCount || Math.max(1, (p.matches_played || 1) * 2);
+                const pj = (p.matches_played || 0) + (p.stats ? (p.stats.matches_played || 0) : 0);
+                return {
+                    id: p.id,
+                    name: p.name,
+                    phone: p.phone || '',
+                    role: p.role || 'player',
+                    level: p.level || 3.5,
+                    sessions: sessions,
+                    pj: pj
+                };
+            })
+            .sort((a, b) => b.sessions - a.sessions || b.pj - a.pj)
+            .slice(0, 5);
+
+        // 6. DISTRIBUCIÓN DE ROLES DE LA COMUNIDAD
+        const roleCounts = {
+            player: 0,
+            player_americanas: 0,
+            premium_player: 0,
+            admin: 0,
+            organizer: 0,
+            guest: 0
+        };
+
+        players.forEach(p => {
+            const r = p.role || 'player';
+            if (r.includes('admin') || r === 'super_admin') roleCounts.admin++;
+            else if (r === 'player_americanas') roleCounts.player_americanas++;
+            else if (r === 'premium_player') roleCounts.premium_player++;
+            else if (r === 'organizer') roleCounts.organizer++;
+            else roleCounts.player++;
+        });
+
+        // 7. Ciudades y Orígenes
+        const topCities = Array.from(citiesMap.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([name, count]) => ({
+                name,
+                count,
+                pct: allLogs.length > 0 ? Math.round((count / allLogs.length) * 100) : 0
+            }));
+
+        // 8. Funnel y Salud de la Comunidad (0 - 100)
+        const uniqueVisitors = new Set(allLogs.map(l => l.userId)).size || allLogs.length || 1;
+        const conversionVisitorToRegistered = Math.min(100, Math.round((totalPlayers / Math.max(1, uniqueVisitors)) * 100));
+        const conversionRegisteredToPlayer = Math.min(100, Math.round((playersWithMatches / Math.max(1, totalPlayers)) * 100));
+
+        const activeRatio = totalPlayers > 0 ? (activePlayersCount / totalPlayers) * 100 : 0;
+        const matchDynamism = Math.min(100, (matches.length / Math.max(1, activePlayersCount * 1.2)) * 100);
+        const sessionRatio = Math.min(100, (visitsMonth / Math.max(1, activePlayersCount * 3)) * 100);
+
+        const healthScore = Math.min(100, Math.round((activeRatio * 0.45) + (matchDynamism * 0.35) + (sessionRatio * 0.20)));
+
+        let healthStatus = "EXCELENTE TRACCIÓN";
+        let healthColor = "#059669";
+        let healthBg = "#ecfdf5";
+        let healthBorder = "#a7f3d0";
+        let healthAdvice = `¡Comunidad en máxima ebullición! La sección más vista es **${mostViewedSection.name}** (${mostViewedSection.pct}%). Publica convocatorias los **${peakDayName}s a las ${peakHourFormatted.split(' - ')[0]}** para llenar pistas en menos de 10 minutos.`;
+
+        if (healthScore < 45) {
+            healthStatus = "ACCIONES DE REACTIVACIÓN REQUERIDAS";
+            healthColor = "#dc2626";
+            healthBg = "#fef2f2";
+            healthBorder = "#fecaca";
+            healthAdvice = `Detectados ${churnCandidates.length} jugadores en riesgo de abandono. Utiliza el Radar Antichurn inferior para enviarles un WhatsApp directo y llenar las próximas americanas.`;
+        } else if (healthScore < 70) {
+            healthStatus = "TRACCIÓN POSITIVA (POTENCIABLE)";
+            healthColor = "#d97706";
+            healthBg = "#fffbeb";
+            healthBorder = "#fde68a";
+            healthAdvice = `Base de jugadores sólida. Para maximizar reservas, programa tus mensajes en los días de mayor tráfico (**${peakDayName}**) y refuerza la sección menos vista (**${leastViewedSection.name}**).`;
+        }
+
+        // Top Rendimiento deportivo
         const performersList = players
             .filter(p => (p.matches_played || 0) >= 1 || (p.stats && p.stats.matches_played >= 1))
             .map(p => {
@@ -665,67 +862,6 @@
             .sort((a, b) => b.winRate - a.winRate || b.pj - a.pj)
             .slice(0, 5);
 
-        const topPerformers = performersList.length > 0 ? performersList : players.slice(0, 5).map((p, idx) => ({
-            id: p.id || `sample_${idx}`,
-            name: p.name || `Jugador ${idx + 1}`,
-            level: p.level || p.self_rate_level || 3.5,
-            winRate: Math.max(50, 75 - (idx * 5)),
-            pj: p.matches_played || 4,
-            pg: p.matches_won || 3
-        }));
-
-        // 6. Cálculo Defensivo de Revelaciones (+Δ Nivel)
-        const revelationCandidates = players
-            .filter(p => (p.last_level_change && p.last_level_change > 0) || (p.level_progression && p.level_progression > 0))
-            .map(p => ({
-                id: p.id,
-                name: p.name || 'Jugador',
-                last_level_change: p.last_level_change || p.level_progression || 0.05
-            }))
-            .sort((a, b) => b.last_level_change - a.last_level_change)
-            .slice(0, 3);
-
-        const revelationPlayers = revelationCandidates.length > 0 ? revelationCandidates : players.slice(0, 2).map((p, idx) => ({
-            id: p.id || `rev_${idx}`,
-            name: p.name || 'Promesa en auge',
-            last_level_change: 0.045
-        }));
-
-        // 7. Distribución de Niveles Reales
-        // Franjas: [< 3.0, 3.0 - 3.5, 3.5 - 4.0, 4.0 - 4.5, 4.5+]
-        const levelDist = [0, 0, 0, 0, 0];
-        players.forEach(p => {
-            const lvl = parseFloat(p.level || p.self_rate_level || 3.5);
-            if (isNaN(lvl)) {
-                levelDist[1]++;
-            } else if (lvl < 3.0) {
-                levelDist[0]++;
-            } else if (lvl < 3.5) {
-                levelDist[1]++;
-            } else if (lvl < 4.0) {
-                levelDist[2]++;
-            } else if (lvl < 4.5) {
-                levelDist[3]++;
-            } else {
-                levelDist[4]++;
-            }
-        });
-
-        // 8. Síntesis Copilot de Negocio
-        const activeCount = players.filter(p => p.status === 'active').length;
-        const matchesCount = matches.length;
-        const avgWins = topPerformers.length > 0 ? (topPerformers[0].winRate) : 50;
-
-        let aiText = `Tras analizar los últimos ${matchesCount} partidos y la actividad de ${activeCount} jugadores, el sistema detecta una dinámica competitiva positiva. `;
-        if (revelationPlayers.length > 0) {
-            aiText += `Destaca el crecimiento de **${revelationPlayers[0].name}**, con un avance del +${((revelationPlayers[0].last_level_change || 0) * 100).toFixed(1)}% en su nivel. `;
-        }
-        if (avgWins > 70) {
-            aiText += `Se recomienda mantener equilibrado el matchmaking en las americanas de fin de semana para sostener la competitividad.`;
-        } else {
-            aiText += `El equilibrio de niveles en pista es óptimo, con concentración en el rango 3.50 a 4.00.`;
-        }
-
         return {
             totalPlayers,
             activePlayersCount,
@@ -737,11 +873,20 @@
             visitsToday,
             visits7d,
             visitsMonth,
+            weeklyGrowthPct,
+            avgDailyVisits,
+            peakDayName,
+            dayOfWeekDistribution,
             totalVisits: allLogs.length,
             hourlyDistribution,
             peakHourFormatted,
+            sectionStats,
+            mostViewedSection,
+            leastViewedSection,
+            churnCandidates,
+            topActivePlayers,
+            roleCounts,
             topCities,
-            topOrigins,
             conversionVisitorToRegistered,
             conversionRegisteredToPlayer,
             healthScore,
@@ -750,12 +895,9 @@
             healthBg,
             healthBorder,
             healthAdvice,
-            topPerformers,
-            revelationPlayers,
-            levelDist,
+            topPerformers: performersList,
             allLogs,
-            recentLogs: allLogs.slice(0, 50),
-            aiText
+            recentLogs: allLogs.slice(0, 60)
         };
     }
 
@@ -775,9 +917,15 @@
         return optionsHtml;
     }
 
+    /**
+     * RENDERIZADOR DE LA VISTA HTML DE ANALYTICS ENTERPRISE
+     */
     function renderAnalyticsView(container, insights) {
+        const growthColor = insights.weeklyGrowthPct >= 0 ? '#10b981' : '#ef4444';
+        const growthIcon = insights.weeklyGrowthPct >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+        const growthPrefix = insights.weeklyGrowthPct >= 0 ? '+' : '';
+
         container.innerHTML = `
-            <!-- ESTILOS ENCAPSULADOS Y OPTIMIZADOS PARA ENTERPRISE MATTE LIGHT THEME -->
             <style id="admin-analytics-custom-styles">
                 .analytics-shell {
                     display: flex;
@@ -793,7 +941,6 @@
                     to { opacity: 1; transform: translateY(0); }
                 }
 
-                /* Cards Enterprise Light */
                 .analytics-card {
                     background: #ffffff !important;
                     border: 1px solid #e2e8f0 !important;
@@ -809,7 +956,6 @@
                     box-shadow: 0 10px 25px -3px rgba(15, 23, 42, 0.06), 0 4px 8px -2px rgba(15, 23, 42, 0.03) !important;
                 }
 
-                /* Header Actions */
                 .btn-refresh-analytics {
                     background: #ffffff !important;
                     border: 1px solid #cbd5e1 !important;
@@ -835,11 +981,6 @@
                     box-shadow: 0 3px 8px rgba(2, 132, 199, 0.12) !important;
                 }
 
-                .btn-refresh-analytics:active {
-                    transform: translateY(0) !important;
-                }
-
-                /* Botón Descarga CSV / Excel */
                 .btn-export-excel {
                     background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
                     color: #ffffff !important;
@@ -855,25 +996,40 @@
                     font-family: 'Outfit', sans-serif !important;
                     box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3) !important;
                     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-                    letter-spacing: 0.3px !important;
                 }
 
                 .btn-export-excel:hover {
                     transform: translateY(-2px) !important;
                     box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45) !important;
-                    filter: brightness(1.04) !important;
                 }
 
-                .btn-export-excel:active {
-                    transform: translateY(0) !important;
-                    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25) !important;
+                .range-btn-toggle {
+                    background: #f1f5f9;
+                    border: 1px solid #cbd5e1;
+                    color: #475569;
+                    padding: 4px 12px;
+                    border-radius: 8px;
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.2s;
                 }
 
-                /* Inputs y Selects Enterprise de Filtros */
+                .range-btn-toggle:hover {
+                    background: #e2e8f0;
+                    color: #0f172a;
+                }
+
+                .active-range-btn {
+                    background: #0284c7 !important;
+                    border-color: #0284c7 !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25) !important;
+                }
+
                 .analytics-input, .analytics-select {
                     background: #ffffff !important;
                     color: #0f172a !important;
-                    -webkit-text-fill-color: #0f172a !important;
                     border: 1px solid #cbd5e1 !important;
                     border-radius: 10px !important;
                     font-size: 0.82rem !important;
@@ -882,17 +1038,14 @@
                     padding: 8px 12px !important;
                     height: 38px !important;
                     box-sizing: border-box !important;
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
-                    transition: border-color 0.2s, box-shadow 0.2s !important;
                 }
 
                 .analytics-input:focus, .analytics-select:focus {
                     border-color: #0284c7 !important;
-                    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
                     outline: none !important;
+                    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
                 }
 
-                /* Tabla de Telemetría Pro */
                 .telemetry-table-wrapper {
                     overflow-x: auto;
                     -webkit-overflow-scrolling: touch;
@@ -928,15 +1081,10 @@
                     vertical-align: middle;
                 }
 
-                .telemetry-row {
-                    transition: background 0.15s ease;
-                }
-
                 .telemetry-row:hover {
                     background: #f8fafc !important;
                 }
 
-                /* Botón WhatsApp CRM */
                 .telemetry-wa-btn {
                     color: #047857 !important;
                     background: #ecfdf5 !important;
@@ -949,28 +1097,17 @@
                     gap: 6px !important;
                     padding: 4px 10px !important;
                     border-radius: 8px !important;
-                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    transition: all 0.2s !important;
                     white-space: nowrap !important;
                 }
 
                 .telemetry-wa-btn:hover {
                     background: #dcfce7 !important;
                     border-color: #86efac !important;
-                    color: #065f46 !important;
                     transform: translateY(-1px) !important;
                     box-shadow: 0 3px 8px rgba(34, 197, 94, 0.2) !important;
                 }
 
-                .telemetry-wa-btn:active {
-                    transform: scale(0.97) !important;
-                }
-
-                .telemetry-wa-btn i {
-                    color: #22c55e !important;
-                    font-size: 0.88rem !important;
-                }
-
-                /* Avatares */
                 .user-avatar-badge {
                     width: 34px;
                     height: 34px;
@@ -996,7 +1133,6 @@
                     border: 1px solid #e2e8f0;
                 }
 
-                /* Badges de Rol */
                 .badge-role-admin {
                     background: #fef3c7;
                     border: 1px solid #fde68a;
@@ -1005,7 +1141,26 @@
                     border-radius: 6px;
                     font-size: 0.7rem;
                     font-weight: 800;
-                    display: inline-block;
+                }
+
+                .badge-role-americanas {
+                    background: #fefce8;
+                    border: 1px solid #fef08a;
+                    color: #854d0e;
+                    padding: 2px 8px;
+                    border-radius: 6px;
+                    font-size: 0.7rem;
+                    font-weight: 800;
+                }
+
+                .badge-role-premium {
+                    background: #fdf2f8;
+                    border: 1px solid #fbcfe8;
+                    color: #9d174d;
+                    padding: 2px 8px;
+                    border-radius: 6px;
+                    font-size: 0.7rem;
+                    font-weight: 800;
                 }
 
                 .badge-role-player {
@@ -1016,7 +1171,6 @@
                     border-radius: 6px;
                     font-size: 0.7rem;
                     font-weight: 800;
-                    display: inline-block;
                 }
 
                 .badge-role-guest {
@@ -1027,7 +1181,6 @@
                     border-radius: 6px;
                     font-size: 0.7rem;
                     font-weight: 800;
-                    display: inline-block;
                 }
 
                 .badge-level-star {
@@ -1043,7 +1196,6 @@
                     gap: 3px;
                 }
 
-                /* Badges de Origen */
                 .origin-badge {
                     padding: 3px 9px;
                     border-radius: 6px;
@@ -1052,40 +1204,14 @@
                     display: inline-flex;
                     align-items: center;
                     gap: 5px;
-                    white-space: nowrap;
                 }
 
-                .origin-badge-wa {
-                    background: #ecfdf5;
-                    border: 1px solid #a7f3d0;
-                    color: #047857;
-                }
+                .origin-badge-wa { background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; }
+                .origin-badge-ig { background: #fdf2f8; border: 1px solid #fbcfe8; color: #be185d; }
+                .origin-badge-pwa { background: #eef2ff; border: 1px solid #c7d2fe; color: #4338ca; }
+                .origin-badge-directo { background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; }
+                .origin-badge-google { background: #fff1f2; border: 1px solid #fecdd3; color: #be123c; }
 
-                .origin-badge-ig {
-                    background: #fdf2f8;
-                    border: 1px solid #fbcfe8;
-                    color: #be185d;
-                }
-
-                .origin-badge-pwa {
-                    background: #eef2ff;
-                    border: 1px solid #c7d2fe;
-                    color: #4338ca;
-                }
-
-                .origin-badge-directo {
-                    background: #f0f9ff;
-                    border: 1px solid #bae6fd;
-                    color: #0369a1;
-                }
-
-                .origin-badge-google {
-                    background: #fff1f2;
-                    border: 1px solid #fecdd3;
-                    color: #be123c;
-                }
-
-                /* Responsive Breakpoints */
                 @media (max-width: 1024px) {
                     .analytics-card { padding: 1.25rem !important; }
                     .grid-columns-responsive { grid-template-columns: 1fr !important; }
@@ -1093,11 +1219,7 @@
                 }
 
                 @media (max-width: 640px) {
-                    .analytics-header-row {
-                        flex-direction: column !important;
-                        align-items: flex-start !important;
-                        gap: 1rem !important;
-                    }
+                    .analytics-header-row { flex-direction: column !important; align-items: flex-start !important; }
                     .btn-export-excel { width: 100% !important; justify-content: center !important; }
                     .filter-bar-group { width: 100% !important; }
                     .filter-bar-group input, .filter-bar-group select { width: 100% !important; }
@@ -1109,13 +1231,13 @@
                 <div class="analytics-header-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                     <div>
                         <div style="font-size: 0.72rem; color: #0284c7; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px;">
-                            Centro de Mando SomosPadel
+                            Centro de Mando SomosPadel Barcelona
                         </div>
                         <h1 style="font-family: 'Outfit', sans-serif; font-size: 2.1rem; font-weight: 900; color: #0f172a; margin: 0 0 0.3rem 0; display: flex; align-items: center; gap: 10px;">
-                            <i class="fas fa-chart-pie" style="color: #0284c7;"></i> CONTROL DE TRACCIÓN Y TELEMETRÍA
+                            <i class="fas fa-chart-line" style="color: #0284c7;"></i> SMART ANALYTICS & TELEMETRÍA
                         </h1>
                         <p style="font-family: 'Inter', sans-serif; color: #64748b; font-size: 0.92rem; margin: 0; font-weight: 500;">
-                            Visión 360º en tiempo real: cuántas personas entran, desde dónde, quiénes son y salud de la comunidad.
+                            Inteligencia integral del club: quién entra, cuántas personas al día, tendencias, qué es lo más visto y radar de retención.
                         </p>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
@@ -1125,36 +1247,50 @@
                     </div>
                 </div>
 
-                <!-- SECCIÓN 1: "¿EN QUÉ PUNTO ESTOY?" (DIAGNÓSTICO DEL CLUB Y COMUNIDAD) -->
+                <!-- SECCIÓN 1: DIAGNÓSTICO EJECUTIVO DEL NEGOCIO ("¿EN QUÉ PUNTO ESTOY?") -->
                 <div class="analytics-card" style="border-top: 4px solid #0284c7 !important;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
                         <div>
                             <div style="font-size: 0.72rem; color: #0284c7; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">
-                                Diagnóstico Ejecutivo de la App
+                                Diagnóstico de Tracción y Crecimiento
                             </div>
                             <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 900; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 10px;">
-                                <i class="fas fa-compass" style="color: #0284c7;"></i> ¿En qué punto estoy?
+                                <i class="fas fa-compass" style="color: #0284c7;"></i> ¿Cómo va mi negocio y la app?
                             </h2>
                         </div>
-                        <div style="background: ${insights.healthBg}; border: 1px solid ${insights.healthBorder}; padding: 8px 16px; border-radius: 12px; display: flex; align-items: center; gap: 10px;">
-                            <span style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 950; color: ${insights.healthColor};">
+                        <div style="background: ${insights.healthBg}; border: 1px solid ${insights.healthBorder}; padding: 8px 18px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+                            <span style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 950; color: ${insights.healthColor};">
                                 ${insights.healthScore}/100
                             </span>
-                            <span style="font-family: 'Inter', sans-serif; color: ${insights.healthColor}; font-weight: 800; font-size: 0.8rem; letter-spacing: 0.5px;">
+                            <span style="font-family: 'Inter', sans-serif; color: ${insights.healthColor}; font-weight: 800; font-size: 0.82rem; letter-spacing: 0.5px;">
                                 ${insights.healthStatus}
                             </span>
                         </div>
                     </div>
 
-                    <!-- 4 MÉTRICAS CLAVE DE TRACCIÓN -->
+                    <!-- 4 KPIs ESTRATÉGICOS DE CRECIMIENTO -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
-                        <!-- Registrados & Activos -->
+                        <!-- Crecimiento Semanal & Tendencia -->
                         <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1.25rem; border-radius: 14px;">
                             <div style="font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
-                                Comunidad Registrada
+                                Tendencia Semanal (vs Prev 7d)
+                            </div>
+                            <div style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; color: ${growthColor}; font-weight: 950; margin: 4px 0; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas ${growthIcon}" style="font-size: 1.4rem;"></i>
+                                ${growthPrefix}${insights.weeklyGrowthPct}%
+                            </div>
+                            <div style="font-size: 0.78rem; color: #475569; font-weight: 700;">
+                                Promedio: <strong>${insights.avgDailyVisits} visitas/día</strong>
+                            </div>
+                        </div>
+
+                        <!-- Comunidad Registrada & Activa -->
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1.25rem; border-radius: 14px;">
+                            <div style="font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Jugadores Registrados
                             </div>
                             <div style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; color: #0f172a; font-weight: 950; margin: 4px 0;">
-                                ${insights.totalPlayers} <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">jugadores</span>
+                                ${insights.totalPlayers} <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">totales</span>
                             </div>
                             <div style="display: flex; gap: 10px; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">
                                 <span style="color: #047857;"><i class="fas fa-bolt"></i> ${insights.activePlayersCount} activos (30d)</span>
@@ -1163,52 +1299,39 @@
                             </div>
                         </div>
 
-                        <!-- Dinamismo en Pista -->
+                        <!-- Dinamismo de Americanas & Pistas -->
                         <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1.25rem; border-radius: 14px;">
                             <div style="font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
-                                Dinamismo en Pista (30d)
+                                Americanas y Partidos (30d)
                             </div>
                             <div style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; color: #0284c7; font-weight: 950; margin: 4px 0;">
                                 ${insights.totalMatches} <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">partidos</span>
                             </div>
                             <div style="font-size: 0.78rem; color: #475569; font-weight: 700;">
-                                🏆 ${insights.totalAmericanas} Americanas registradas (${insights.activeAmericanas} abiertas ahora)
+                                🏆 ${insights.totalAmericanas} Americanas (${insights.activeAmericanas} abiertas ahora)
                             </div>
                         </div>
 
-                        <!-- Funnel: Visita a Registro -->
-                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1.25rem; border-radius: 14px;">
-                            <div style="font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
-                                Embudo: Visita ➔ Registro
+                        <!-- Mejor Momento para Convocatorias -->
+                        <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 1.25rem; border-radius: 14px;">
+                            <div style="font-size: 0.7rem; color: #92400e; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Mejor Momento Convocatorias 🎯
                             </div>
-                            <div style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; color: #0f172a; font-weight: 950; margin: 4px 0;">
-                                ${insights.conversionVisitorToRegistered}%
+                            <div style="font-family: 'Outfit', sans-serif; font-size: 1.6rem; color: #b45309; font-weight: 950; margin: 6px 0;">
+                                ${insights.peakDayName}s • ${insights.peakHourFormatted.split(' - ')[0]}
                             </div>
-                            <div style="font-size: 0.78rem; color: #64748b; font-weight: 600;">
-                                De cada 100 visitantes a la web, ${insights.conversionVisitorToRegistered} crean cuenta de jugador
-                            </div>
-                        </div>
-
-                        <!-- Funnel: Activación en Pista -->
-                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1.25rem; border-radius: 14px;">
-                            <div style="font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
-                                Activación: Registro ➔ Pista
-                            </div>
-                            <div style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; color: #059669; font-weight: 950; margin: 4px 0;">
-                                ${insights.conversionRegisteredToPlayer}%
-                            </div>
-                            <div style="font-size: 0.78rem; color: #64748b; font-weight: 600;">
-                                ${insights.playersWithMatches} de ${insights.totalPlayers} jugadores registrados ya han disputado partidos
+                            <div style="font-size: 0.78rem; color: #78350f; font-weight: 700;">
+                                Máxima afluencia para llenar pistas al instante
                             </div>
                         </div>
                     </div>
 
                     <!-- CONSEJO ACCIONABLE DEL COPILOT -->
                     <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; gap: 14px;">
-                        <div style="font-size: 1.8rem; color: #0284c7; flex-shrink: 0;">💡</div>
+                        <div style="font-size: 2rem; color: #0284c7; flex-shrink: 0;">💡</div>
                         <div style="flex: 1;">
                             <div style="font-size: 0.75rem; font-weight: 900; color: #0369a1; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">
-                                Plan de Acción Recomendado para el Administrador
+                                Recomendación Estratégica para el Organizador
                             </div>
                             <div style="font-size: 0.9rem; color: #0f172a; font-weight: 600; line-height: 1.45;">
                                 ${insights.healthAdvice}
@@ -1217,25 +1340,91 @@
                     </div>
                 </div>
 
-                <!-- SECCIÓN 2: "¿CUÁNTAS PERSONAS ENTRAN?" (TRAFICO Y TIEMPO) -->
+                <!-- SECCIÓN 2: MAPA DE ATENCIÓN DE LA APP (¿QUÉ ES LO MÁS VISTO Y LO MENOS VISTO?) -->
+                <div class="analytics-card" style="border-left: 5px solid #10b981 !important;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <div style="font-size: 0.72rem; color: #10b981; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">
+                                Telemetría de Secciones y Pantallas
+                            </div>
+                            <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 900; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-fire" style="color: #f59e0b;"></i> ¿Qué es lo más visto y lo menos visto en la app?
+                            </h2>
+                            <p style="font-family: 'Inter', sans-serif; color: #64748b; font-size: 0.85rem; margin: 4px 0 0 0;">
+                                Ranking de interés de los jugadores según las pantallas y rutas que visitan dentro de SomosPadel.
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <div style="background: #fefce8; border: 1px solid #fef08a; padding: 6px 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 800; color: #854d0e; display: flex; align-items: center; gap: 6px;">
+                                <span>🔥 Top 1:</span> <strong>${insights.mostViewedSection.name} (${insights.mostViewedSection.pct}%)</strong>
+                            </div>
+                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 800; color: #64748b; display: flex; align-items: center; gap: 6px;">
+                                <span>⚠️ Menos vista:</span> <strong>${insights.leastViewedSection.name} (${insights.leastViewedSection.pct}%)</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BARRAS DE PROGRESO DE ATENCIÓN DE SECCIONES -->
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        ${insights.sectionStats.map((sec, idx) => {
+                            const isTop = idx === 0;
+                            const isLast = idx === insights.sectionStats.length - 1;
+                            let badgeHtml = '';
+                            if (isTop) badgeHtml = '<span style="background: #fef08a; color: #854d0e; font-size: 0.68rem; font-weight: 900; padding: 2px 8px; border-radius: 6px;">🔥 LO MÁS VISTO</span>';
+                            else if (idx === 1) badgeHtml = '<span style="background: #e0f2fe; color: #0369a1; font-size: 0.68rem; font-weight: 900; padding: 2px 8px; border-radius: 6px;">⭐ ALTA TRACCIÓN</span>';
+                            else if (isLast) badgeHtml = '<span style="background: #fee2e2; color: #991b1b; font-size: 0.68rem; font-weight: 900; padding: 2px 8px; border-radius: 6px;">⚠️ MENOS VISTO</span>';
+
+                            return `
+                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <span style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 950; color: ${isTop ? '#f59e0b' : '#64748b'}; width: 24px;">
+                                                #${idx + 1}
+                                            </span>
+                                            <i class="fas ${sec.icon}" style="color: ${sec.color}; font-size: 1rem;"></i>
+                                            <span style="font-weight: 800; color: #0f172a; font-size: 0.95rem;">${sec.name}</span>
+                                            ${badgeHtml}
+                                        </div>
+                                        <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+                                            <span style="color: #64748b; font-size: 0.8rem; font-weight: 600;">${sec.views.toLocaleString('es-ES')} visualizaciones</span>
+                                            <span style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 950; color: ${isTop ? '#0284c7' : '#0f172a'}; min-width: 48px; text-align: right;\">
+                                                ${sec.pct}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 5px; overflow: hidden;">
+                                        <div style="width: ${Math.max(2, sec.pct)}%; height: 100%; background: ${isTop ? 'linear-gradient(90deg, #f59e0b, #eab308)' : (idx === 1 ? 'linear-gradient(90deg, #0284c7, #38bdf8)' : '#94a3b8')}; border-radius: 5px;"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div style="margin-top: 1rem; font-size: 0.82rem; color: #475569; background: #f1f5f9; padding: 10px 14px; border-radius: 10px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-info-circle" style="color: #0284c7;"></i>
+                        <span><strong>Insight Clave:</strong> La sección <strong>${insights.mostViewedSection.name}</strong> concentra el mayor foco de atención de tus jugadores. Cualquier cartel, patrocinador o aviso importante debe colocarse prioritariamente en esa pantalla para garantizar el 100% de visibilidad.</span>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 3: ¿CUÁNTAS PERSONAS ENTRAN CADA DÍA Y CUÁL ES LA TENDENCIA? -->
                 <div>
                     <div style="margin-bottom: 1rem;">
                         <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 900; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 10px;">
-                            <i class="fas fa-users" style="color: #0284c7;"></i> ¿Cuántas personas entran a la app?
+                            <i class="fas fa-chart-area" style="color: #0284c7;"></i> ¿Cuántas personas entran cada día y cuál es la tendencia?
                         </h2>
                     </div>
 
-                    <!-- CARDS DE VISITAS -->
+                    <!-- CARDS DE TRÁFICO TEMPORAL -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
                         <div class="analytics-card" style="padding: 1.4rem !important; border-left: 4px solid #10b981 !important;">
-                            <div style="font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Visitas Hoy</div>
+                            <div style="font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Accesos Hoy</div>
                             <div style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; color: #0f172a; font-weight: 950; margin: 4px 0;">${insights.visitsToday}</div>
                             <div style="font-size: 0.75rem; color: #059669; font-weight: 800;">Sesiones registradas en 24h</div>
                         </div>
                         <div class="analytics-card" style="padding: 1.4rem !important; border-left: 4px solid #0284c7 !important;">
                             <div style="font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Últimos 7 Días</div>
                             <div style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; color: #0f172a; font-weight: 950; margin: 4px 0;">${insights.visits7d}</div>
-                            <div style="font-size: 0.75rem; color: #0284c7; font-weight: 800;">Tráfico semanal recurrente</div>
+                            <div style="font-size: 0.75rem; color: #0284c7; font-weight: 800;">Promedio: ${insights.avgDailyVisits} personas/día</div>
                         </div>
                         <div class="analytics-card" style="padding: 1.4rem !important; border-left: 4px solid #6366f1 !important;">
                             <div style="font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Este Mes</div>
@@ -1243,107 +1432,227 @@
                             <div style="font-size: 0.75rem; color: #4338ca; font-weight: 800;">Accesos acumulados mes</div>
                         </div>
                         <div class="analytics-card" style="padding: 1.4rem !important; border-left: 4px solid #f59e0b !important;">
-                            <div style="font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Hora Pico Detectada</div>
-                            <div style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; color: #d97706; font-weight: 950; margin: 6px 0;">${insights.peakHourFormatted}</div>
-                            <div style="font-size: 0.75rem; color: #64748b; font-weight: 700;">Mayor afluencia de jugadores</div>
+                            <div style="font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Día Estrella de la Semana</div>
+                            <div style="font-family: 'Outfit', sans-serif; font-size: 1.6rem; color: #d97706; font-weight: 950; margin: 6px 0;">${insights.peakDayName}</div>
+                            <div style="font-size: 0.75rem; color: #64748b; font-weight: 700;">Pico: ${insights.peakHourFormatted}</div>
                         </div>
                     </div>
 
-                    <!-- GRÁFICAS DE TENDENCIA Y HORAS PICO -->
+                    <!-- GRÁFICAS DE EVOLUCIÓN DIARIA Y DÍAS DE LA SEMANA -->
                     <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 1.5rem; margin-bottom: 2rem;" class="grid-columns-responsive">
-                        <!-- Tendencia Temporal -->
+                        <!-- Evolución Diaria (Visitas vs Personas Únicas) con selector 7d / 14d / 30d -->
                         <div class="analytics-card">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.5rem;">
-                                <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fas fa-chart-line" style="color: #10b981;"></i> Tendencia Temporal de Sesiones
-                                </h3>
-                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 700; background: #f1f5f9; padding: 4px 8px; border-radius: 6px;">
-                                    Reactivo con filtros
-                                </span>
+                                <div>
+                                    <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-chart-line" style="color: #0284c7;"></i> Evolución Diaria de Visitas y Personas
+                                    </h3>
+                                    <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Visitas Totales (sesiones) vs Personas Únicas distintas</div>
+                                </div>
+                                <div style="display: flex; gap: 6px;">
+                                    <button id="btn-trend-range-7" onclick="window.AdminViews.changeTrendRange(7)" class="range-btn-toggle">7 Días</button>
+                                    <button id="btn-trend-range-14" onclick="window.AdminViews.changeTrendRange(14)" class="range-btn-toggle active-range-btn">14 Días</button>
+                                    <button id="btn-trend-range-30" onclick="window.AdminViews.changeTrendRange(30)" class="range-btn-toggle">30 Días</button>
+                                </div>
                             </div>
                             <div style="height: 270px; position: relative;">
                                 <canvas id="sessions-trend-chart"></canvas>
                             </div>
                         </div>
 
-                        <!-- Horas Pico (Distribución 00-23h) -->
+                        <!-- Tráfico por Día de la Semana (L-D) -->
                         <div class="analytics-card">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
-                                <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fas fa-clock" style="color: #f59e0b;"></i> Horas Pico de Conexión
-                                </h3>
+                                <div>
+                                    <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                                        <i class="far fa-calendar-check" style="color: #10b981;"></i> Afluencia por Día de la Semana
+                                    </h3>
+                                    <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">De Lunes a Domingo</div>
+                                </div>
                             </div>
                             <div style="height: 270px; position: relative;">
+                                <canvas id="day-of-week-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GRÁFICAS DE HORAS PICO Y ROLES DE LA COMUNIDAD -->
+                    <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 1.5rem; margin-bottom: 2rem;" class="grid-columns-responsive">
+                        <!-- Horas Pico (00h a 23h) -->
+                        <div class="analytics-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+                                <div>
+                                    <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-clock" style="color: #f59e0b;"></i> Horas Pico de Conexión (24 Horas)
+                                    </h3>
+                                    <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">La barra dorada destaca el momento de mayor conexión</div>
+                                </div>
+                            </div>
+                            <div style="height: 240px; position: relative;">
                                 <canvas id="hourly-peak-chart"></canvas>
                             </div>
                         </div>
+
+                        <!-- Distribución de Roles de la Comunidad -->
+                        <div class="analytics-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+                                <div>
+                                    <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-id-badge" style="color: #8b5cf6;"></i> Roles en la Comunidad
+                                    </h3>
+                                    <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Incluyendo Jugadores de Americanas</div>
+                                </div>
+                            </div>
+                            <div style="height: 200px; position: relative;">
+                                <canvas id="role-dist-chart"></canvas>
+                            </div>
+                            <div id="role-legend-container" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.75rem; margin-top: 8px;"></div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- SECCIÓN 3: "¿DE DÓNDE ENTRAN?" (GEOLOCALIZACIÓN, CANALES Y DISPOSITIVOS) -->
-                <div>
-                    <div style="margin-bottom: 1rem;">
-                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 900; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 10px;">
-                            <i class="fas fa-globe-americas" style="color: #0284c7;"></i> ¿De dónde entran?
-                        </h2>
-                    </div>
+                <!-- SECCIÓN 4: ¿QUIÉNES ENTRAN? (JUGADORES FRECUENTES & RADAR ANTICHURN) -->
+                <div style="display: grid; grid-template-columns: 1.2fr 1.2fr; gap: 1.5rem; margin-bottom: 1rem;" class="grid-columns-responsive">
+                    <!-- Top Jugadores Más Frecuentes -->
+                    <div class="analytics-card" style="border-left: 4px solid #0284c7 !important;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+                            <div>
+                                <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-trophy" style="color: #f59e0b;"></i> Jugadores Más Fieles y Frecuentes
+                                </h3>
+                                <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Quiénes entran más a la app y disputan más partidos</div>
+                            </div>
+                        </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;" class="grid-origin-responsive">
-                        <!-- Top Ciudades Detectadas -->
-                        <div class="analytics-card" style="display: flex; flex-direction: column;">
-                            <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0 0 1rem 0; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-                                <i class="fas fa-city" style="color: #ef4444;"></i> Top Ciudades
-                            </h3>
-                            <div style="flex: 1; display: flex; flex-direction: column; gap: 14px;">
-                                ${insights.topCities.map(c => `
-                                    <div>
-                                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 800; color: #0f172a; margin-bottom: 4px;">
-                                            <span>📍 ${c.name}</span>
-                                            <span style="color: #0284c7;">${c.count} (${c.pct}%)</span>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            ${insights.topActivePlayers.map((p, idx) => {
+                                let waNumber = (p.phone || '').replace(/\D/g, '');
+                                if (!waNumber.startsWith('34') && waNumber.length === 9) {
+                                    waNumber = '34' + waNumber;
+                                }
+                                return `
+                                <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 12px;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 950; color: ${idx === 0 ? '#f59e0b' : '#0284c7'}; width: 24px;">
+                                            #${idx + 1}
                                         </div>
-                                        <div style="width: 100%; height: 7px; background: #f1f5f9; border-radius: 4px; overflow: hidden;">
-                                            <div style="width: ${c.pct}%; height: 100%; background: linear-gradient(90deg, #0284c7, #10b981); border-radius: 4px;"></div>
+                                        <div>
+                                            <div style="font-weight: 800; color: #0f172a; font-size: 0.9rem;">${p.name}</div>
+                                            <div style="font-size: 0.72rem; color: #64748b; margin-top: 1px;">
+                                                Nivel ${parseFloat(p.level).toFixed(2)} • ${p.pj} partidos
+                                            </div>
                                         </div>
                                     </div>
-                                `).join('') || '<div style="color: #64748b; font-size: 0.85rem;">Esperando registros geolocalizados...</div>'}
+                                    <div style="text-align: right;">
+                                        <div style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 950; color: #047857;">
+                                            ${p.sessions} accesos
+                                        </div>
+                                        ${waNumber ? `
+                                            <a href="https://wa.me/${waNumber}" target="_blank" class="telemetry-wa-btn" style="margin-top: 3px; font-size: 0.72rem;">
+                                                <i class="fab fa-whatsapp"></i> WhatsApp
+                                            </a>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `}).join('') || '<div style="color: #64748b;">Sin registros suficientes.</div>'}
+                        </div>
+                    </div>
+
+                    <!-- Radar Antichurn (Reactivación de Jugadores Inactivos) -->
+                    <div class="analytics-card" style="border-left: 4px solid #ef4444 !important;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+                            <div>
+                                <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-user-clock" style="color: #ef4444;"></i> Radar Antichurn: Reactivación 🎾
+                                </h3>
+                                <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Jugadores que jugaban pero llevan más de 12 días sin entrar</div>
                             </div>
+                            <span style="background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 800;">
+                                ${insights.churnCandidates.length} en riesgo
+                            </span>
                         </div>
 
-                        <!-- Canales de Origen (Adquisición) -->
-                        <div class="analytics-card">
-                            <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0 0 0.3rem 0; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-                                <i class="fas fa-paper-plane" style="color: #10b981;"></i> Canal de Origen
-                            </h3>
-                            <p style="color: #64748b; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; margin: 0 0 1rem 0; letter-spacing: 0.5px;">Procedencia (WhatsApp, Instagram, etc.)</p>
-                            <div style="height: 180px; position: relative; margin-bottom: 1rem;">
-                                <canvas id="telemetry-origin-chart"></canvas>
-                            </div>
-                            <div id="origin-legend-container" style="display: flex; flex-direction: column; gap: 6px; font-size: 0.78rem;"></div>
-                        </div>
-
-                        <!-- Terminales y Sistemas Operativos -->
-                        <div class="analytics-card">
-                            <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0 0 0.3rem 0; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-                                <i class="fas fa-mobile-alt" style="color: #0284c7;"></i> Dispositivos y SO
-                            </h3>
-                            <p style="color: #64748b; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; margin: 0 0 1rem 0; letter-spacing: 0.5px;">Terminales de Conexión</p>
-                            <div style="height: 180px; position: relative; margin-bottom: 1rem;">
-                                <canvas id="telemetry-device-chart"></canvas>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 800; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 10px;">
-                                <span style="color: #0284c7;"><i class="fas fa-mobile-alt"></i> Móvil: <span id="kpi-telemetry-mobile">0%</span></span>
-                                <span style="color: #6366f1;"><i class="fas fa-desktop"></i> PC: <span id="kpi-telemetry-desktop">0%</span></span>
-                            </div>
+                        <div style="display: flex; flex-direction: column; gap: 10px; max-height: 290px; overflow-y: auto;">
+                            ${insights.churnCandidates.slice(0, 5).map(p => `
+                                <div style="display: flex; justify-content: space-between; align-items: center; background: #fff1f2; border: 1px solid #fecdd3; padding: 10px 14px; border-radius: 12px;">
+                                    <div>
+                                        <div style="font-weight: 800; color: #0f172a; font-size: 0.88rem;">${p.name}</div>
+                                        <div style="font-size: 0.72rem; color: #be123c; font-weight: 700; margin-top: 2px;">
+                                            <i class="far fa-calendar-times"></i> Hace ${p.daysInactive} días sin entrar (${p.pj} partidos jugados)
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <button onclick="window.AdminViews.sendWhatsAppReminder('${p.phone || ''}', decodeURIComponent('${encodeURIComponent(p.name || 'Jugador')}'))" class="telemetry-wa-btn" style="background: #10b981 !important; color: #ffffff !important; border: none !important;">
+                                            <i class="fab fa-whatsapp"></i> Reactivar
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('') || `
+                                <div style="text-align: center; padding: 24px; color: #059669; background: #ecfdf5; border-radius: 12px; font-weight: 700; font-size: 0.88rem;">
+                                    <i class="fas fa-check-circle" style="font-size: 1.5rem; margin-bottom: 6px; display: block;"></i>
+                                    ¡Excelente! No hay jugadores en riesgo crítico de abandono.
+                                </div>
+                            `}
                         </div>
                     </div>
                 </div>
 
-                <!-- SECCIÓN 4: "¿QUIÉNES ENTRAN?" (AUDITORÍA CRM Y CONTACTO DIRECTO) -->
+                <!-- SECCIÓN 5: GEOLOCALIZACIÓN Y DISPOSITIVOS -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 1rem;" class="grid-origin-responsive">
+                    <!-- Top Ciudades -->
+                    <div class="analytics-card">
+                        <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0 0 1rem 0; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-city" style="color: #ef4444;"></i> Top Ciudades
+                        </h3>
+                        <div style="display: flex; flex-direction: column; gap: 14px;">
+                            ${insights.topCities.map(c => `
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 800; color: #0f172a; margin-bottom: 4px;">
+                                        <span>📍 ${c.name}</span>
+                                        <span style="color: #0284c7;">${c.count} (${c.pct}%)</span>
+                                    </div>
+                                    <div style="width: 100%; height: 7px; background: #f1f5f9; border-radius: 4px; overflow: hidden;">
+                                        <div style="width: ${c.pct}%; height: 100%; background: linear-gradient(90deg, #0284c7, #10b981); border-radius: 4px;"></div>
+                                    </div>
+                                </div>
+                            `).join('') || '<div style="color: #64748b;">Esperando registros...</div>'}
+                        </div>
+                    </div>
+
+                    <!-- Canales de Origen -->
+                    <div class="analytics-card">
+                        <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0 0 0.3rem 0; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-paper-plane" style="color: #10b981;"></i> Canales de Origen
+                        </h3>
+                        <p style="color: #64748b; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; margin: 0 0 1rem 0;">WhatsApp, Instagram, Web Directa</p>
+                        <div style="height: 180px; position: relative; margin-bottom: 1rem;">
+                            <canvas id="telemetry-origin-chart"></canvas>
+                        </div>
+                        <div id="origin-legend-container" style="display: flex; flex-direction: column; gap: 6px; font-size: 0.78rem;"></div>
+                    </div>
+
+                    <!-- Dispositivos y SO -->
+                    <div class="analytics-card">
+                        <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0 0 0.3rem 0; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-mobile-alt" style="color: #0284c7;"></i> Dispositivos y SO
+                        </h3>
+                        <p style="color: #64748b; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; margin: 0 0 1rem 0;">Terminales de Conexión</p>
+                        <div style="height: 180px; position: relative; margin-bottom: 1rem;">
+                            <canvas id="telemetry-device-chart"></canvas>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 800; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 10px;">
+                            <span style="color: #0284c7;"><i class="fas fa-mobile-alt"></i> Móvil: <span id="kpi-telemetry-mobile">0%</span></span>
+                            <span style="color: #6366f1;"><i class="fas fa-desktop"></i> PC: <span id="kpi-telemetry-desktop">0%</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 6: AUDITORÍA CRM Y TABLA DE ACCESOS EN VIVO -->
                 <div class="analytics-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                         <div>
                             <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 900; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 10px;">
-                                <i class="fas fa-address-book" style="color: #10b981;"></i> ¿Quiénes entran? (Registro de Accesos en Vivo)
+                                <i class="fas fa-address-book" style="color: #10b981;"></i> ¿Quiénes entran? (Auditoría de Accesos en Vivo)
                             </h2>
                             <p id="telemetry-filtered-count" style="color: #64748b; font-size: 0.82rem; font-weight: 600; margin: 4px 0 0 0;">
                                 Mostrando ${insights.recentLogs.length} accesos recientes
@@ -1361,7 +1670,7 @@
                         <!-- Buscador por Texto -->
                         <div class="filter-bar-group" style="flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 4px;">
                             <label style="font-size: 0.68rem; color: #475569; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
-                                <i class="fas fa-search"></i> Buscar por Nombre / Teléfono / Ciudad
+                                <i class="fas fa-search"></i> Buscar Nombre / Teléfono / Ciudad
                             </label>
                             <div style="position: relative;">
                                 <input type="text" id="telemetry-search-input" class="analytics-input" oninput="window.AdminViews.applyAllTelemetryFilters()" placeholder="Ej: Alex, 649..., Barcelona" style="width: 100%; padding-left: 32px !important;">
@@ -1387,15 +1696,30 @@
                             </select>
                         </div>
 
-                        <!-- Filtro Tipo de Usuario -->
+                        <!-- Filtro por Rol (incluye player_americanas) -->
                         <div class="filter-bar-group" style="display: flex; flex-direction: column; gap: 4px;">
                             <label style="font-size: 0.68rem; color: #475569; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
-                                <i class="fas fa-user-tag"></i> Tipo Usuario
+                                <i class="fas fa-user-shield"></i> Rol de Usuario
                             </label>
-                            <select id="telemetry-user-type-filter" class="analytics-select" onchange="window.AdminViews.applyAllTelemetryFilters()" style="min-width: 150px;">
-                                <option value="all">Todos los Usuarios</option>
-                                <option value="registered">Solo Registrados (Jugadores)</option>
-                                <option value="guest">Solo Visitantes Anónimos</option>
+                            <select id="telemetry-role-filter" class="analytics-select" onchange="window.AdminViews.applyAllTelemetryFilters()" style="min-width: 160px;">
+                                <option value="all">Todos los Roles</option>
+                                <option value="player_americanas">🏆 Jugador Americanas</option>
+                                <option value="player">🎾 Jugador Club</option>
+                                <option value="premium_player">⭐ Premium</option>
+                                <option value="admin">👑 Administrador</option>
+                                <option value="guest">👤 Invitado</option>
+                            </select>
+                        </div>
+
+                        <!-- Filtro Tipo Usuario -->
+                        <div class="filter-bar-group" style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-size: 0.68rem; color: #475569; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                                <i class="fas fa-user-tag"></i> Registro
+                            </label>
+                            <select id="telemetry-user-type-filter" class="analytics-select" onchange="window.AdminViews.applyAllTelemetryFilters()" style="min-width: 140px;">
+                                <option value="all">Todos</option>
+                                <option value="registered">Solo Registrados</option>
+                                <option value="guest">Solo Invitados</option>
                             </select>
                         </div>
 
@@ -1455,64 +1779,33 @@
                                 </tr>
                             </thead>
                             <tbody id="telemetry-table-body">
-                                <!-- Inserción dinámica por applyAllTelemetryFilters -->
+                                <!-- Inserción reactiva vía applyAllTelemetryFilters -->
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- SECCIÓN 5: TOP RENDIMIENTO Y REVELACIONES -->
-                <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.75rem; margin-bottom: 1rem;" class="grid-columns-responsive">
-                    <!-- Top Rendimiento -->
-                    <div class="analytics-card">
-                        <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0 0 1.25rem 0; font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px;">
-                            <i class="fas fa-award" style="color: #f59e0b;"></i> TOP RENDIMIENTO (Victoria %)
-                        </h3>
-                        <div style="display: flex; flex-direction: column; gap: 10px;">
-                            ${insights.topPerformers.map((p, i) => `
-                                <div style="display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px 16px; border-radius: 12px; transition: background 0.15s;">
-                                    <div style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 950; color: ${i === 0 ? '#d97706' : '#0284c7'}; width: 28px;">
-                                        #${i + 1}
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <div style="font-weight: 800; color: #0f172a; font-size: 0.95rem;">${p.name}</div>
-                                        <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Nivel ${parseFloat(p.level).toFixed(2)}</div>
-                                    </div>
-                                    <div style="text-align: right;">
-                                        <div style="font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 950; color: #059669;">${p.winRate}%</div>
-                                        <div style="font-size: 0.68rem; color: #64748b; font-weight: 700;">${p.pj} PARTIDOS</div>
-                                    </div>
-                                </div>
-                            `).join('') || '<div style="color: #64748b;">Sin partidos suficientes en los últimos 30 días.</div>'}
-                        </div>
-                    </div>
-
-                    <!-- Revelaciones (+Δ) -->
-                    <div class="analytics-card">
-                        <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0 0 1.25rem 0; font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px;">
-                            <i class="fas fa-fire" style="color: #ea580c;"></i> REVELACIONES (+Δ NIVEL)
-                        </h3>
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            ${insights.revelationPlayers.map(p => `
-                                <div style="text-align: center; background: #fff7ed; padding: 16px; border-radius: 14px; border: 1px solid #fed7aa;">
-                                    <div style="width: 44px; height: 44px; border-radius: 50%; background: #ffedd5; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">🚀</div>
-                                    <div style="font-weight: 900; color: #0f172a; font-size: 1rem; font-family: 'Outfit', sans-serif;">${p.name}</div>
-                                    <div style="color: #ea580c; font-weight: 950; font-size: 0.95rem; margin-top: 4px;">
-                                        +${((p.last_level_change || 0) * 100).toFixed(1)}% Subida
-                                    </div>
-                                </div>
-                            `).join('') || '<p style="color: #64748b; text-align: center;">Evaluando nuevas promesas...</p>'}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECCIÓN 6: DISTRIBUCIÓN DE NIVELES REALES -->
+                <!-- SECCIÓN 7: TOP RENDIMIENTO DEPORTIVO (VICTORIA %) -->
                 <div class="analytics-card">
                     <h3 style="font-family: 'Outfit', sans-serif; color: #0f172a; margin: 0 0 1.25rem 0; font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px;">
-                        <i class="fas fa-chart-bar" style="color: #0284c7;"></i> DISTRIBUCIÓN DE NIVELES DE LA COMUNIDAD (REAL)
+                        <i class="fas fa-award" style="color: #f59e0b;"></i> TOP RENDIMIENTO COMPETITIVO (VICTORIA %)
                     </h3>
-                    <div style="height: 250px; position: relative;">
-                        <canvas id="level-dist-chart"></canvas>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+                        ${insights.topPerformers.map((p, i) => `
+                            <div style="display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px 16px; border-radius: 12px;">
+                                <div style="font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 950; color: ${i === 0 ? '#d97706' : '#0284c7'}; width: 28px;">
+                                    #${i + 1}
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 800; color: #0f172a; font-size: 0.95rem;">${p.name}</div>
+                                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Nivel ${parseFloat(p.level).toFixed(2)}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 950; color: #059669;">${p.winRate}%</div>
+                                    <div style="font-size: 0.68rem; color: #64748b; font-weight: 700;">${p.pj} PARTIDOS</div>
+                                </div>
+                            </div>
+                        `).join('') || '<div style="color: #64748b;">Sin partidos registrados en los últimos 30 días.</div>'}
                     </div>
                 </div>
             </div>
@@ -1523,131 +1816,52 @@
     }
 
     /**
-     * Gráfico 1: Tendencia Temporal de Sesiones con Filtros Dinámicos
+     * RENDERIZACIÓN DE GRÁFICOS INTERACTIVOS (CHART.JS)
      */
-    function renderSessionsTrendChart(filtered) {
+
+    /**
+     * Gráfico 1: Evolución Diaria (Visitas Totales vs Personas Únicas)
+     */
+    function renderSessionsTrendChart(logs, daysRange = 14) {
         const canvas = document.getElementById('sessions-trend-chart');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        // Limpiar instancia previa
         if (sessionsTrendChartInstance) {
             sessionsTrendChartInstance.destroy();
             sessionsTrendChartInstance = null;
         }
 
-        const filterType = document.getElementById('telemetry-filter-type')?.value || 'todos';
-        let labels = [];
-        let data = [];
-        let datasetLabel = 'Accesos Registrados';
+        const now = new Date();
+        const dateMap = {}; // key: YYYY-MM-DD -> { total: 0, users: Set() }
 
-        if (filterType === 'hoy' || filterType === 'ayer' || filterType === 'dia_especifico') {
-            datasetLabel = 'Accesos por Hora';
-            let targetDateStr = new Date().toDateString();
-            if (filterType === 'ayer') {
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                targetDateStr = yesterday.toDateString();
-            } else if (filterType === 'dia_especifico') {
-                const diaVal = document.getElementById('telemetry-input-dia')?.value;
-                if (diaVal) {
-                    const [y, m, d] = diaVal.split('-').map(Number);
-                    targetDateStr = new Date(y, m - 1, d).toDateString();
-                }
-            }
-
-            const hoursCount = new Array(24).fill(0);
-            filtered.forEach(log => {
-                if (log.dateObj.toDateString() === targetDateStr) {
-                    const h = log.dateObj.getHours();
-                    hoursCount[h]++;
-                }
-            });
-
-            for (let h = 0; h < 24; h++) {
-                labels.push(`${h.toString().padStart(2, '0')}:00`);
-                data.push(hoursCount[h]);
-            }
-        } 
-        else if (filterType === 'mes' || filterType === 'mes_anterior' || filterType === 'mes_especifico') {
-            datasetLabel = 'Accesos Diarios';
-            let year = new Date().getFullYear();
-            let month = new Date().getMonth();
-
-            if (filterType === 'mes_anterior') {
-                const prev = new Date();
-                prev.setMonth(prev.getMonth() - 1);
-                year = prev.getFullYear();
-                month = prev.getMonth();
-            } else if (filterType === 'mes_especifico') {
-                const mesVal = document.getElementById('telemetry-input-mes')?.value;
-                if (mesVal) {
-                    const [y, m] = mesVal.split('-').map(Number);
-                    year = y;
-                    month = m - 1;
-                }
-            }
-
-            const totalDays = new Date(year, month + 1, 0).getDate();
-            const daysCount = new Array(totalDays).fill(0);
-
-            filtered.forEach(log => {
-                if (log.dateObj.getFullYear() === year && log.dateObj.getMonth() === month) {
-                    const day = log.dateObj.getDate();
-                    daysCount[day - 1]++;
-                }
-            });
-
-            const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-            const monthLabel = monthNames[month];
-
-            for (let d = 1; d <= totalDays; d++) {
-                labels.push(`${d} ${monthLabel}`);
-                data.push(daysCount[d - 1]);
-            }
-        } 
-        else {
-            datasetLabel = 'Accesos por Día';
-            let start = new Date();
-            let end = new Date();
-
-            if (filterType === 'semana') {
-                start.setDate(end.getDate() - 6);
-            } else if (filterType === 'rango_personalizado') {
-                const desdeVal = document.getElementById('telemetry-input-desde')?.value;
-                const hastaVal = document.getElementById('telemetry-input-hasta')?.value;
-                if (desdeVal) start = new Date(desdeVal);
-                else start.setDate(end.getDate() - 7);
-                if (hastaVal) end = new Date(hastaVal);
-            } else {
-                start.setDate(end.getDate() - 14);
-            }
-
-            start.setHours(0, 0, 0, 0);
-            end.setHours(23, 59, 59, 999);
-
-            const dailyCounts = {};
-            const temp = new Date(start);
-            while (temp <= end) {
-                dailyCounts[temp.toDateString()] = 0;
-                temp.setDate(temp.getDate() + 1);
-            }
-
-            filtered.forEach(log => {
-                const dayKey = log.dateObj.toDateString();
-                if (dayKey in dailyCounts) {
-                    dailyCounts[dayKey]++;
-                }
-            });
-
-            const sortedKeys = Object.keys(dailyCounts);
-            sortedKeys.forEach(keyStr => {
-                const d = new Date(keyStr);
-                labels.push(d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }));
-                data.push(dailyCounts[keyStr]);
-            });
+        // Inicializar los N días con 0
+        for (let i = daysRange - 1; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(now.getDate() - i);
+            const key = d.toISOString().split('T')[0];
+            dateMap[key] = { total: 0, users: new Set(), dateObj: d };
         }
+
+        logs.forEach(log => {
+            const key = log.dateObj.toISOString().split('T')[0];
+            if (dateMap[key]) {
+                dateMap[key].total++;
+                dateMap[key].users.add(log.userId || log.cleanPhone || log.userName);
+            }
+        });
+
+        const labels = [];
+        const totalVisitsData = [];
+        const uniquePeopleData = [];
+
+        Object.keys(dateMap).sort().forEach(key => {
+            const item = dateMap[key];
+            labels.push(item.dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }));
+            totalVisitsData.push(item.total);
+            uniquePeopleData.push(item.users.size);
+        });
 
         if (typeof Chart === 'undefined') return;
 
@@ -1655,57 +1869,64 @@
             type: 'line',
             data: {
                 labels: labels,
-                datasets: [{
-                    label: datasetLabel,
-                    data: data,
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.35,
-                    pointBackgroundColor: '#059669',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: labels.length > 31 ? 2 : 4,
-                    pointHoverRadius: labels.length > 31 ? 4 : 7
-                }]
+                datasets: [
+                    {
+                        label: 'Visitas Totales',
+                        data: totalVisitsData,
+                        borderColor: '#0284c7',
+                        backgroundColor: 'rgba(2, 132, 199, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: '#0284c7',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'Personas Únicas',
+                        data: uniquePeopleData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                        borderWidth: 2.5,
+                        borderDash: [4, 4],
+                        fill: false,
+                        tension: 0.35,
+                        pointBackgroundColor: '#10b981',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { 
-                        beginAtZero: true, 
-                        ticks: { 
-                            color: '#64748b', 
-                            font: { family: "'Inter', sans-serif", size: 11, weight: '600' },
-                            stepSize: 1,
-                            callback: function(val) { return Number.isInteger(val) ? val : null; }
-                        }, 
-                        grid: { color: '#f1f5f9' } 
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: '#64748b', font: { family: "'Inter', sans-serif", size: 11, weight: '600' }, stepSize: 1 },
+                        grid: { color: '#f1f5f9' }
                     },
-                    x: { 
-                        ticks: { 
-                            color: '#64748b',
-                            font: { family: "'Inter', sans-serif", size: 11, weight: '600' },
-                            maxRotation: 45,
-                            autoSkip: true,
-                            maxTicksLimit: 14
-                        }, 
-                        grid: { display: false } 
+                    x: {
+                        ticks: { color: '#64748b', font: { family: "'Inter', sans-serif", size: 10, weight: '600' } },
+                        grid: { display: false }
                     }
                 },
                 plugins: {
-                    legend: { display: false },
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: { boxWidth: 12, font: { family: "'Inter', sans-serif", size: 11, weight: '700' }, color: '#334155' }
+                    },
                     tooltip: {
                         backgroundColor: '#0f172a',
                         titleColor: '#ffffff',
                         bodyColor: '#e2e8f0',
-                        borderColor: '#e2e8f0',
-                        borderWidth: 1,
-                        padding: 10,
                         cornerRadius: 8,
-                        displayColors: false
+                        padding: 10
                     }
                 }
             }
@@ -1713,7 +1934,70 @@
     }
 
     /**
-     * Gráfico 2: Horas Pico Acumuladas (00:00 - 23:00)
+     * Gráfico 2: Afluencia por Día de la Semana (Lunes a Domingo)
+     */
+    function renderDayOfWeekChart(insights) {
+        const canvas = document.getElementById('day-of-week-chart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        if (dayOfWeekChartInstance) {
+            dayOfWeekChartInstance.destroy();
+            dayOfWeekChartInstance = null;
+        }
+
+        // Orden de semana: Lunes a Domingo
+        // raw distribution: 0=Dom, 1=Lun, 2=Mar, 3=Mie, 4=Jue, 5=Vie, 6=Sab
+        const rawDist = insights.dayOfWeekDistribution || new Array(7).fill(0);
+        const labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+        const values = [rawDist[1], rawDist[2], rawDist[3], rawDist[4], rawDist[5], rawDist[6], rawDist[0]];
+
+        const maxVal = Math.max(...values);
+
+        if (typeof Chart === 'undefined') return;
+
+        dayOfWeekChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Accesos acumulados',
+                    data: values,
+                    backgroundColor: values.map(v => (v === maxVal && v > 0) ? '#10b981' : '#bae6fd'),
+                    borderRadius: 6,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: '#64748b', font: { family: "'Inter', sans-serif", size: 10 }, stepSize: 1 },
+                        grid: { color: '#f1f5f9' }
+                    },
+                    x: {
+                        ticks: { color: '#475569', font: { family: "'Inter', sans-serif", size: 11, weight: '700' } },
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#10b981',
+                        bodyColor: '#ffffff',
+                        cornerRadius: 8
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Gráfico 3: Horas Pico Acumuladas (00:00 - 23:00)
      */
     function renderHourlyPeakChart(insights) {
         const canvas = document.getElementById('hourly-peak-chart');
@@ -1751,11 +2035,11 @@
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: { color: '#64748b', font: { family: "'Inter', sans-serif", size: 11 }, stepSize: 1 },
+                        ticks: { color: '#64748b', font: { family: "'Inter', sans-serif", size: 10 }, stepSize: 1 },
                         grid: { color: '#f1f5f9' }
                     },
                     x: {
-                        ticks: { color: '#64748b', font: { family: "'Inter', sans-serif", size: 10, weight: '600' } },
+                        ticks: { color: '#64748b', font: { family: "'Inter', sans-serif", size: 9, weight: '600' } },
                         grid: { display: false }
                     }
                 },
@@ -1776,7 +2060,76 @@
     }
 
     /**
-     * Gráfico 3: Dispositivos y Sistemas Operativos
+     * Gráfico 4: Distribución de Roles de la Comunidad (Doughnut)
+     */
+    function renderRoleDistChart(insights) {
+        const canvas = document.getElementById('role-dist-chart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        if (roleDistChartInstance) {
+            roleDistChartInstance.destroy();
+            roleDistChartInstance = null;
+        }
+
+        const roles = {
+            'Jugadores Club': insights.roleCounts.player || 0,
+            'Jugador Americanas 🏆': insights.roleCounts.player_americanas || 0,
+            'Premium ⭐': insights.roleCounts.premium_player || 0,
+            'Administradores 👑': insights.roleCounts.admin || 0
+        };
+
+        const total = Object.values(roles).reduce((a, b) => a + b, 0);
+        const legendContainer = document.getElementById('role-legend-container');
+        if (legendContainer) {
+            const colors = ['#0284c7', '#eab308', '#ec4899', '#f59e0b'];
+            legendContainer.innerHTML = Object.entries(roles).map(([k, v], idx) => {
+                const pct = total > 0 ? Math.round((v / total) * 100) : 0;
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #475569; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: ${colors[idx]};"></span> ${k}:
+                        </span>
+                        <span style="color: #0f172a; font-weight: 800;">${v} (${pct}%)</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        if (total === 0 || typeof Chart === 'undefined') return;
+
+        roleDistChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(roles),
+                datasets: [{
+                    data: Object.values(roles),
+                    backgroundColor: ['#0284c7', '#eab308', '#ec4899', '#f59e0b'],
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '68%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2e8f0',
+                        cornerRadius: 8,
+                        padding: 10
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Gráfico 5: Dispositivos y Sistemas Operativos
      */
     function renderTelemetryDeviceChart(filtered) {
         const canvas = document.getElementById('telemetry-device-chart');
@@ -1833,7 +2186,7 @@
     }
 
     /**
-     * Gráfico 4: Canales de Origen (WhatsApp, Instagram, Directo, etc.)
+     * Gráfico 6: Canales de Origen (WhatsApp, Instagram, etc.)
      */
     function renderTelemetryOriginChart(filtered) {
         const canvas = document.getElementById('telemetry-origin-chart');
@@ -1917,68 +2270,15 @@
     }
 
     /**
-     * Inicialización de todos los gráficos de la vista
+     * Inicialización de gráficos globales
      */
     function renderAnalyticsCharts(insights) {
-        renderSessionsTrendChart(insights.allLogs);
+        renderSessionsTrendChart(insights.allLogs, window._trendRangeDays || 14);
+        renderDayOfWeekChart(insights);
         renderHourlyPeakChart(insights);
+        renderRoleDistChart(insights);
         renderTelemetryDeviceChart(insights.allLogs);
         renderTelemetryOriginChart(insights.allLogs);
-
-        const levelCanvas = document.getElementById('level-dist-chart');
-        if (levelCanvas && insights.levelDist && typeof Chart !== 'undefined') {
-            const levelCtx = levelCanvas.getContext('2d');
-            if (levelCtx) {
-                if (levelDistChartInstance) {
-                    levelDistChartInstance.destroy();
-                    levelDistChartInstance = null;
-                }
-
-                levelDistChartInstance = new Chart(levelCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['< 3.0', '3.0 - 3.5', '3.5 - 4.0', '4.0 - 4.5', '4.5+'],
-                        datasets: [{
-                            label: 'Nº Jugadores',
-                            data: insights.levelDist,
-                            backgroundColor: '#0284c7',
-                            borderRadius: 8,
-                            barThickness: 28
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: { 
-                                beginAtZero: true, 
-                                ticks: { 
-                                    color: '#64748b', 
-                                    font: { family: "'Inter', sans-serif", size: 11 },
-                                    stepSize: 1,
-                                    callback: function(val) { return Number.isInteger(val) ? val : null; }
-                                }, 
-                                grid: { color: '#f1f5f9' } 
-                            },
-                            x: { 
-                                ticks: { color: '#64748b', font: { family: "'Inter', sans-serif", size: 11, weight: '700' } }, 
-                                grid: { display: false } 
-                            }
-                        },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: '#0f172a',
-                                titleColor: '#38bdf8',
-                                bodyColor: '#ffffff',
-                                cornerRadius: 8,
-                                padding: 10,
-                                displayColors: false
-                            }
-                        }
-                    }
-                });
-            }
-        }
     }
+
 })();

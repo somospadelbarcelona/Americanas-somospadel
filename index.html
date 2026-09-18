@@ -2455,6 +2455,38 @@
                 transform: scale(0.98);
                 background: rgba(255, 255, 255, 0.08) !important;
             }
+
+            /* 🏆 ADAPTACIÓN EXCLUSIVA PARA JUGADOR AMERICANAS (ICONOS PRESENTES CON CANDADO) */
+            body.role-americanas-only #nav-entrenos,
+            body.role-americanas-only #nav-teams {
+                position: relative;
+                opacity: 0.75;
+            }
+            body.role-americanas-only #nav-entrenos::after,
+            body.role-americanas-only #nav-teams::after {
+                content: "\f023"; /* FontAwesome lock icon */
+                font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", sans-serif;
+                font-weight: 900;
+                position: absolute;
+                top: 5px;
+                right: calc(50% - 15px);
+                font-size: 0.52rem;
+                color: #f59e0b;
+                background: rgba(15, 23, 42, 0.9);
+                border-radius: 50%;
+                width: 14px;
+                height: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid rgba(245, 158, 11, 0.5);
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+                pointer-events: none;
+            }
+            body.role-americanas-only #nav-entrenos:active,
+            body.role-americanas-only #nav-teams:active {
+                transform: scale(0.95);
+            }
         </style>
         <!-- HUD Mensaje flotante para el menú -->
         <div id="nav-hud-msg" class="nav-hud-msg"></div>
@@ -3246,6 +3278,7 @@
             </form>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js" defer></script>
@@ -3261,7 +3294,7 @@
     <script src="js/core/CacheService.js" defer></script>
     <script src="js/core/DatabaseService.js" defer></script>
     <script src="js/core/AuthService.js?v=12.4" defer></script>
-    <script src="js/core/Router.js?v=6.2_ENTERPRISE_NAV" defer></script>
+    <script src="js/core/Router.js?v=6.5_SMART_TELEMETRY" defer></script>
     <script src="js/core/SmartTicker.js?v=3" defer></script>
     <script src="js/core/UpdateManager.js" defer></script>
 
@@ -3305,7 +3338,7 @@
     <script src="js/modules/dashboard/Tactical3DWidget.js?v=2.0" defer></script>
     <script src="js/modules/dashboard/DashboardView_hotfix.js?v=SPOTS_FIX_v6_FAST_CACHE" defer></script>
     <script src="js/modules/dashboard/DashboardController.js" defer></script>
-    <script src="js/utils/RoleService.js" defer></script>
+    <script src="js/utils/RoleService.js?v=PLAYER_AMERICANAS_v1" defer></script>
     <script src="js/modules/players/PlayerView.js?v=401" defer></script>
     <script src="js/modules/players/PlayerController.js?v=400" defer></script>
     <script src="js/modules/ui/EventModals.js?v=5.2" defer></script>
@@ -3318,7 +3351,7 @@
     <script src="js/modules/chat/ChatService.js?v=1.1" defer></script>
     <script src="js/modules/chat/ChatView.js?v=1.2" defer></script>
     <script src="js/modules/americanas/EntrenoLiveView.js" defer></script>
-    <script src="js/modules/americanas/EventsController_V6.js?v=UNIFIED_AMERICANAS_v35_ORGANIZER_BANNER_PRO" defer></script>
+    <script src="js/modules/americanas/EventsController_V6.js?v=INSTAGRAM_STORY_SHARE_v1" defer></script>
     <script src="js/modules/common/SocialShareService.js" defer></script>
     <script src="js/modules/admin/SocialShareView.js" defer></script>
 
@@ -3337,7 +3370,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
     <!-- Ranking Module -->
-    <script src="js/modules/ranking/RankingView.js?v=RESPONSIVE_ULTRA_v3" defer></script>
+    <script src="js/modules/ranking/RankingView.js?v=PLAYER_AMERICANAS_v2_ENTRENOS_TAB" defer></script>
     <script src="js/modules/ranking/RankingController.js?v=2" defer></script>
 
     <!-- Teams Module -->

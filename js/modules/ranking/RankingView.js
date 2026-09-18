@@ -47,6 +47,16 @@
             const container = document.getElementById('content-area');
             if (!container) return;
 
+            // Detect player_americanas role and constrain view
+            const currentUser = window.Store?.getState('currentUser') || 
+                (() => {
+                    try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
+                })();
+            const isAmericanasOnly = currentUser && currentUser.role === 'player_americanas';
+            if (isAmericanasOnly) {
+                this.currentView = 'americanas';
+            }
+
             // 0. Process data for current view/category
             const rankedData = this.getProcessedData();
 
@@ -72,7 +82,7 @@
                             <div>
                                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
                                     <div style="width: 10px; height: 10px; border-radius: 2px; background: #65a30d; box-shadow: 0 0 10px rgba(101, 163, 13, 0.4);"></div>
-                                    <span style="color: #64748b; font-size: 0.65rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">Somospadel World Tour</span>
+                                    <span style="color: #64748b; font-size: 0.65rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">${isAmericanasOnly ? 'Ranking Exclusivo Americanas' : 'Somospadel World Tour'}</span>
                                 </div>
                                 <h1 style="font-weight: 950; font-size: 2.3rem; margin: 0; letter-spacing: -1.5px; color: #0f172a; line-height: 1.1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                                     RANKING <span style="background: linear-gradient(135deg, #15803d 0%, #4d7c0f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">PRO</span>
@@ -82,10 +92,16 @@
                                 </h1>
                             </div>
                             <!-- 🏆 TOP RÉCORDS ACCESS -->
+                            ${!isAmericanasOnly ? `
                             <button onclick="window.Router.navigate('records')" 
                                     style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); color: #ffffff; border: none; padding: 10px 18px; border-radius: 14px; font-weight: 950; font-size: 0.65rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 8px 20px rgba(180, 83, 9, 0.25); cursor: pointer; transition: 0.3s; transform: rotate(1deg);">
                                 <i class="fas fa-award"></i> TOP RÉCORDS
                             </button>
+                            ` : `
+                            <div style="background: rgba(204, 255, 0, 0.15); color: #4d7c0f; border: 1.5px solid rgba(204, 255, 0, 0.5); padding: 8px 14px; border-radius: 14px; font-weight: 950; font-size: 0.65rem; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-trophy" style="color: #84cc16;"></i> AMERICANAS
+                            </div>
+                            `}
                         </div>
                     </div>
 
@@ -188,8 +204,8 @@
                                 <i class="fas fa-trophy" style="margin-right: 5px; font-size: 0.7rem; ${this.currentView === 'americanas' ? 'color: #ccff00;' : 'color: #94a3b8;'}"></i> AMERICANAS
                             </button>
                             <button onclick="window.RankingView.switchView('entrenos')" 
-                                style="flex: 1; padding: 11px; border-radius: 14px; border: none; font-weight: 950; transition: all 0.25s ease; cursor: pointer; background: ${this.currentView === 'entrenos' ? '#0f172a' : 'transparent'}; color: ${this.currentView === 'entrenos' ? '#ccff00' : '#475569'}; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 1px; box-shadow: ${this.currentView === 'entrenos' ? '0 4px 12px rgba(15, 23, 42, 0.2)' : 'none'};">
-                                <i class="fas fa-dumbbell" style="margin-right: 5px; font-size: 0.7rem; ${this.currentView === 'entrenos' ? 'color: #ccff00;' : 'color: #94a3b8;'}"></i> ENTRENOS
+                                style="flex: 1; padding: 11px; border-radius: 14px; border: none; font-weight: 950; transition: all 0.25s ease; cursor: pointer; background: ${this.currentView === 'entrenos' ? '#0f172a' : 'transparent'}; color: ${this.currentView === 'entrenos' ? '#ccff00' : '#475569'}; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 1px; box-shadow: ${this.currentView === 'entrenos' ? '0 4px 12px rgba(15, 23, 42, 0.2)' : 'none'}; opacity: ${isAmericanasOnly ? '0.85' : '1'};">
+                                <i class="fas fa-dumbbell" style="margin-right: 5px; font-size: 0.7rem; ${this.currentView === 'entrenos' ? 'color: #ccff00;' : 'color: #94a3b8;'}"></i> ENTRENOS ${isAmericanasOnly ? '<i class="fas fa-lock" style="color: #f59e0b; font-size: 0.65rem; margin-left: 4px;" title="Exclusivo SomosPadel"></i>' : ''}
                             </button>
                         </div>
 
@@ -782,6 +798,22 @@
         }
 
         switchView(view) {
+            const currentUser = window.Store?.getState('currentUser') || 
+                (() => {
+                    try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
+                })();
+            if (currentUser && currentUser.role === 'player_americanas' && view !== 'americanas') {
+                if (window.PremiumModal && typeof window.PremiumModal.alert === 'function') {
+                    window.PremiumModal.alert({
+                        title: "🔒 ACCESO EXCLUSIVO",
+                        message: "No está permitido el acceso ya que los datos de entrenos son exclusivos para jugadores de SomosPadel Barcelona 🎾",
+                        type: "warning"
+                    });
+                } else if (window.NotificationService && typeof window.NotificationService.showToast === 'function') {
+                    window.NotificationService.showToast("No está permitido el acceso: Exclusivo para jugadores de SomosPadel Barcelona 🎾", "warning");
+                }
+                return;
+            }
             this.currentView = view;
             this.render(this.playersData);
         }
